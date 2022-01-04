@@ -13,7 +13,9 @@ import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalPropertie
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>AminePhysicalProperties class.</p>
+ * <p>
+ * AminePhysicalProperties class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -23,13 +25,14 @@ public class AminePhysicalProperties extends LiquidPhysicalProperties {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new AminePhysicalProperties
+     * <p>Constructor for AminePhysicalProperties.</p>
      */
-    public AminePhysicalProperties() {
-    }
+    public AminePhysicalProperties() {}
 
     /**
-     * <p>Constructor for AminePhysicalProperties.</p>
+     * <p>
+     * Constructor for AminePhysicalProperties.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param binaryDiffusionCoefficientMethod a int

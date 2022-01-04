@@ -12,9 +12,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>ReBoiler class.</p>
+ * <p>
+ * ReBoiler class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class ReBoiler extends ProcessEquipmentBaseClass {
@@ -28,15 +30,17 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     private double reboilerDuty = 0.0;
 
     /**
-     * Creates new Heater
+     * <p>Constructor for ReBoiler.</p>
      */
-    public ReBoiler() {
-    }
+    public ReBoiler() {}
 
     /**
-     * <p>Constructor for ReBoiler.</p>
+     * <p>
+     * Constructor for ReBoiler.
+     * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public ReBoiler(StreamInterface inStream) {
         this.inStream = inStream;
@@ -44,7 +48,9 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>outStream</code>.</p>
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -83,13 +89,16 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
-    public void runTransient() {
-    }
+    public void runTransient() {}
 
     /**
-     * <p>Getter for the field <code>reboilerDuty</code>.</p>
+     * <p>
+     * Getter for the field <code>reboilerDuty</code>.
+     * </p>
      *
      * @return a double
      */
@@ -98,7 +107,9 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>reboilerDuty</code>.</p>
+     * <p>
+     * Setter for the field <code>reboilerDuty</code>.
+     * </p>
      *
      * @param reboilerDuty a double
      */

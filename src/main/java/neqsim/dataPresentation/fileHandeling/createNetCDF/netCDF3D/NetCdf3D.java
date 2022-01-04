@@ -7,11 +7,14 @@
 package neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF3D;
 
 import java.io.IOException;
-import ucar.ma2.*;
-import ucar.nc2.*;
+import ucar.ma2.Array;
+import ucar.nc2.Dimension;
+import ucar.nc2.NetcdfFileWriteable;
 
 /**
- * <p>NetCdf3D class.</p>
+ * <p>
+ * NetCdf3D class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -31,13 +34,14 @@ public class NetCdf3D {
     int zLength = 0;
 
     /**
-     * Creates new NetCdf
+     * <p>Constructor for NetCdf3D.</p>
      */
-    public NetCdf3D() {
-    }
+    public NetCdf3D() {}
 
     /**
-     * <p>setOutputFileName.</p>
+     * <p>
+     * setOutputFileName.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -46,7 +50,9 @@ public class NetCdf3D {
     }
 
     /**
-     * <p>Setter for the field <code>xvalues</code>.</p>
+     * <p>
+     * Setter for the field <code>xvalues</code>.
+     * </p>
      *
      * @param x an array of {@link double} objects
      * @param name a {@link java.lang.String} object
@@ -58,7 +64,9 @@ public class NetCdf3D {
     }
 
     /**
-     * <p>Setter for the field <code>yvalues</code>.</p>
+     * <p>
+     * Setter for the field <code>yvalues</code>.
+     * </p>
      *
      * @param y an array of {@link double} objects
      * @param name a {@link java.lang.String} object
@@ -70,7 +78,9 @@ public class NetCdf3D {
     }
 
     /**
-     * <p>Setter for the field <code>zvalues</code>.</p>
+     * <p>
+     * Setter for the field <code>zvalues</code>.
+     * </p>
      *
      * @param z an array of {@link double} objects
      * @param name a {@link java.lang.String} object
@@ -86,7 +96,9 @@ public class NetCdf3D {
     }
 
     /**
-     * <p>createFile.</p>
+     * <p>
+     * createFile.
+     * </p>
      */
     public void createFile() {
         ncfile = new NetcdfFileWriteable();
@@ -105,10 +117,10 @@ public class NetCdf3D {
             ncfile.addVariableAttribute(zName2[i], "units", "degC");
         }
 
-        ncfile.addVariable(latD.getName(), double.class, new Dimension[] { latD });
+        ncfile.addVariable(latD.getName(), double.class, new Dimension[] {latD});
         ncfile.addVariableAttribute(latD.getName(), "units", "degrees_north");
 
-        ncfile.addVariable(lonD.getName(), double.class, new Dimension[] { lonD });
+        ncfile.addVariable(lonD.getName(), double.class, new Dimension[] {lonD});
         ncfile.addVariableAttribute(lonD.getName(), "units", "degrees_east");
 
         ncfile.addGlobalAttribute("title", "Example Data");

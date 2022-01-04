@@ -18,14 +18,18 @@ abstract class Viscosity extends
     public double[] pureComponentViscosity;
 
     /**
-     * Creates new Conductivity
+     * <p>Constructor for Viscosity.</p>
      */
     public Viscosity() {}
 
     /**
-     * <p>Constructor for Viscosity.</p>
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
      *
-     * @param phase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public Viscosity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
@@ -34,7 +38,9 @@ abstract class Viscosity extends
     }
 
     /**
-     * <p>calcPureComponentViscosity.</p>
+     * <p>
+     * calcPureComponentViscosity.
+     * </p>
      */
     public void calcPureComponentViscosity() {
         pureComponentViscosity = new double[phase.getPhase().getNumberOfComponents()];
@@ -76,7 +82,9 @@ abstract class Viscosity extends
     }
 
     /**
-     * <p>getViscosityPressureCorrection.</p>
+     * <p>
+     * getViscosityPressureCorrection.
+     * </p>
      *
      * @param i a int
      * @return a double

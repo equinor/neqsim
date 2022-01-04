@@ -13,9 +13,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>SimpleTPoutPipeline class.</p>
+ * <p>
+ * SimpleTPoutPipeline class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class SimpleTPoutPipeline extends Pipeline {
@@ -27,15 +29,17 @@ public class SimpleTPoutPipeline extends Pipeline {
     double dH = 0.0;
 
     /**
-     * Creates new Heater
+     * <p>Constructor for SimpleTPoutPipeline.</p>
      */
-    public SimpleTPoutPipeline() {
-    }
+    public SimpleTPoutPipeline() {}
 
     /**
-     * <p>Constructor for SimpleTPoutPipeline.</p>
+     * <p>
+     * Constructor for SimpleTPoutPipeline.
+     * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public SimpleTPoutPipeline(StreamInterface inStream) {
         this.inStream = inStream;
@@ -55,7 +59,9 @@ public class SimpleTPoutPipeline extends Pipeline {
     }
 
     /**
-     * <p>setOutTemperature.</p>
+     * <p>
+     * setOutTemperature.
+     * </p>
      *
      * @param temperature a double
      */
@@ -64,7 +70,9 @@ public class SimpleTPoutPipeline extends Pipeline {
     }
 
     /**
-     * <p>setOutPressure.</p>
+     * <p>
+     * setOutPressure.
+     * </p>
      *
      * @param pressure a double
      */
@@ -104,8 +112,7 @@ public class SimpleTPoutPipeline extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {
-    }
+    public void runTransient() {}
 
     /** {@inheritDoc} */
     @Override

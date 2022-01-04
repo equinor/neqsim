@@ -12,7 +12,9 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySolver.FluidBoundarySolverInterface;
 
 /**
- * <p>FluidBoundarySystem class.</p>
+ * <p>
+ * FluidBoundarySystem class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -29,77 +31,79 @@ public class FluidBoundarySystem implements FluidBoundarySystemInterface {
     protected FluidBoundarySolverInterface solver;
 
     /**
-     * Creates new FiniteVolumeBoundary
+     * <p>Constructor for FluidBoundarySystem.</p>
      */
-    public FluidBoundarySystem() {
-    }
+    public FluidBoundarySystem() {}
 
     /**
-     * <p>Constructor for FluidBoundarySystem.</p>
+     * <p>
+     * Constructor for FluidBoundarySystem.
+     * </p>
      *
-     * @param boundary a {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface} object
+     * @param boundary a
+     *        {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface}
+     *        object
      */
     public FluidBoundarySystem(FluidBoundaryInterface boundary) {
         this.boundary = boundary;
         reactive = false;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void addBoundary(FluidBoundaryInterface boundary) {
+    public void addBoundary(FluidBoundaryInterface boundary) {
         this.boundary = boundary;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setNumberOfNodes(int nodes) {
+    public void setNumberOfNodes(int nodes) {
         this.numberOfNodes = nodes;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public int getNumberOfNodes() {
+    public int getNumberOfNodes() {
         return numberOfNodes;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public FluidBoundaryNodeInterface getNode(int i) {
+    public FluidBoundaryNodeInterface getNode(int i) {
         return nodes[i];
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setFilmThickness(double filmThickness) {
+    public void setFilmThickness(double filmThickness) {
         this.filmThickness = filmThickness;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getNodeLength() {
+    public double getNodeLength() {
         return this.filmThickness / this.numberOfNodes;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getFilmThickness() {
+    public double getFilmThickness() {
         return filmThickness;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public FluidBoundaryInterface getFluidBoundary() {
+    public FluidBoundaryInterface getFluidBoundary() {
         return boundary;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void createSystem() {
-    }
+    public void createSystem() {}
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void solve() {
+    public void solve() {
         solver = new FluidBoundarySolver(this, reactive);
         solver.solve();
     }

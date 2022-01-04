@@ -18,7 +18,9 @@ public class ComponentHydrateBallard extends ComponentHydrate {
     static Logger logger = LogManager.getLogger(ComponentHydrateBallard.class);
 
     /**
-     * <p>Constructor for ComponentHydrateBallard.</p>
+     * <p>
+     * Constructor for ComponentHydrateBallard.
+     * </p>
      */
     public ComponentHydrateBallard() {}
 
@@ -75,9 +77,6 @@ public class ComponentHydrateBallard extends ComponentHydrate {
             fugasityCoeffisient = -1e50;
             double val = 0.0;
             double tempy = 1.0;
-            double fugold = 0.0;
-            double tempfugcoef = -1.0e50;
-            fugold = fugasityCoeffisient;
 
             for (int cavType = 0; cavType < 2; cavType++) {
                 tempy = 0.0;

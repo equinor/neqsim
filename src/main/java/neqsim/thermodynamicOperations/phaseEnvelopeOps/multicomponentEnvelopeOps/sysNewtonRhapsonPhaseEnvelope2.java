@@ -10,7 +10,9 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>sysNewtonRhapsonPhaseEnvelope2 class.</p>
+ * <p>
+ * sysNewtonRhapsonPhaseEnvelope2 class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -39,12 +41,14 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     boolean etterCP2 = false;
 
     /**
-     * <p>Constructor for sysNewtonRhapsonPhaseEnvelope2.</p>
+     * <p>
+     * Constructor for sysNewtonRhapsonPhaseEnvelope2.
+     * </p>
      */
     public sysNewtonRhapsonPhaseEnvelope2() {}
 
     /**
-     * Creates new nonlin
+     * <p>Constructor for sysNewtonRhapsonPhaseEnvelope2.</p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -64,7 +68,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>fvec</code>.</p>
+     * <p>
+     * Setter for the field <code>fvec</code>.
+     * </p>
      */
     public void setfvec() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -83,7 +89,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>findSpecEqInit.</p>
+     * <p>
+     * findSpecEqInit.
+     * </p>
      */
     public void findSpecEqInit() {
         speceq = 0;
@@ -107,7 +115,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>findSpecEq.</p>
+     * <p>
+     * findSpecEq.
+     * </p>
      */
     public void findSpecEq() {
         double max = 0;
@@ -122,7 +132,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>setJac.</p>
+     * <p>
+     * setJac.
+     * </p>
      */
     public void setJac() {
         Jac = Jac.scalarMultiply(0.0);
@@ -159,7 +171,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>u</code>.</p>
+     * <p>
+     * Setter for the field <code>u</code>.
+     * </p>
      */
     public void setu() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -172,7 +186,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>init.</p>
+     * <p>
+     * init.
+     * </p>
      */
     public void init() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -186,7 +202,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>calcInc.</p>
+     * <p>
+     * calcInc.
+     * </p>
      *
      * @param np a int
      */
@@ -263,7 +281,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>calcInc2.</p>
+     * <p>
+     * calcInc2.
+     * </p>
      *
      * @param np a int
      */
@@ -395,7 +415,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>Getter for the field <code>npCrit</code>.</p>
+     * <p>
+     * Getter for the field <code>npCrit</code>.
+     * </p>
      *
      * @return a int
      */
@@ -404,7 +426,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>critPassed.</p>
+     * <p>
+     * critPassed.
+     * </p>
      *
      * @return a boolean
      */
@@ -418,7 +442,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>sign.</p>
+     * <p>
+     * sign.
+     * </p>
      *
      * @param a a double
      * @param b a double
@@ -431,7 +457,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>solve.</p>
+     * <p>
+     * solve.
+     * </p>
      *
      * @param np a int
      */
@@ -462,7 +490,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

@@ -8,7 +8,9 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>PHflash class.</p>
+ * <p>
+ * PHflash class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -22,12 +24,14 @@ public class PHflash extends Flash {
     int type = 0;
 
     /**
-     * Creates new PHflash
+     * <p>Constructor for PHflash.</p>
      */
     public PHflash() {}
 
     /**
-     * <p>Constructor for PHflash.</p>
+     * <p>
+     * Constructor for PHflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Hspec a double
@@ -41,7 +45,9 @@ public class PHflash extends Flash {
     }
 
     /**
-     * <p>calcdQdTT.</p>
+     * <p>
+     * calcdQdTT.
+     * </p>
      *
      * @return a double
      */
@@ -51,7 +57,9 @@ public class PHflash extends Flash {
     }
 
     /**
-     * <p>calcdQdT.</p>
+     * <p>
+     * calcdQdT.
+     * </p>
      *
      * @return a double
      */
@@ -61,7 +69,9 @@ public class PHflash extends Flash {
     }
 
     /**
-     * <p>solveQ.</p>
+     * <p>
+     * solveQ.
+     * </p>
      *
      * @return a double
      */
@@ -140,7 +150,9 @@ public class PHflash extends Flash {
     }
 
     /**
-     * <p>solveQ2.</p>
+     * <p>
+     * solveQ2.
+     * </p>
      *
      * @return a double
      */

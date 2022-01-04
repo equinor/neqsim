@@ -7,24 +7,27 @@
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization;
 
 /**
- * <p>TwoPhaseFlowVisualization class.</p>
+ * <p>
+ * TwoPhaseFlowVisualization class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class TwoPhaseFlowVisualization
-        extends neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
+public class TwoPhaseFlowVisualization extends
+        neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
 
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new OnePhaseFlowVisualization
+     * <p>Constructor for TwoPhaseFlowVisualization.</p>
      */
-    public TwoPhaseFlowVisualization() {
-    }
+    public TwoPhaseFlowVisualization() {}
 
     /**
-     * <p>Constructor for TwoPhaseFlowVisualization.</p>
+     * <p>
+     * Constructor for TwoPhaseFlowVisualization.
+     * </p>
      *
      * @param nodes a int
      * @param timeSteps a int

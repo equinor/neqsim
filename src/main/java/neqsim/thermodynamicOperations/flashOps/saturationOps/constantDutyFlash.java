@@ -12,7 +12,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>Abstract constantDutyFlash class.</p>
+ * <p>
+ * Abstract constantDutyFlash class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -30,18 +32,19 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
     double lnOldOldK[], lnK[];
     double lnOldK[];
     double oldDeltalnK[], deltalnK[];
-    double tm[] = { 1, 1 };
+    double tm[] = {1, 1};
     double beta = 1e-5;
     int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
     /**
-     * Creates new bubblePointFlash
+     * <p>Constructor for constantDutyFlash.</p>
      */
-    public constantDutyFlash() {
-    }
+    public constantDutyFlash() {}
 
     /**
-     * <p>Constructor for constantDutyFlash.</p>
+     * <p>
+     * Constructor for constantDutyFlash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -76,10 +79,12 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 system.getPhases()[0].getComponents()[i]
                         .setK(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
-                                / system.getPhases()[1].getComponents()[i].getFugasityCoeffisient());
+                                / system.getPhases()[1].getComponents()[i]
+                                        .getFugasityCoeffisient());
                 system.getPhases()[1].getComponents()[i]
                         .setK(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
-                                / system.getPhases()[1].getComponents()[i].getFugasityCoeffisient());
+                                / system.getPhases()[1].getComponents()[i]
+                                        .getFugasityCoeffisient());
             }
 
             system.calc_x_y();
@@ -93,7 +98,8 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
                         * system.getPhases()[0].getComponents()[i].getK();
                 dxidt = -system.getPhases()[0].getComponents()[i].getx()
                         * system.getPhases()[0].getComponents()[i].getx() * 1.0
-                        / system.getPhases()[0].getComponents()[i].getz() * system.getBeta() * dkidt;
+                        / system.getPhases()[0].getComponents()[i].getz() * system.getBeta()
+                        * dkidt;
                 dyidt = dkidt * system.getPhases()[0].getComponents()[i].getx()
                         + system.getPhases()[0].getComponents()[i].getK() * dxidt;
                 funk = funk + system.getPhases()[1].getComponents()[i].getx()
@@ -110,8 +116,7 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void createNetCdfFile(String name) {
-    }
+    public void createNetCdfFile(String name) {}
 
     /** {@inheritDoc} */
     @Override

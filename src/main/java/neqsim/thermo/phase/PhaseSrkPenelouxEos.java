@@ -9,7 +9,9 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentSrkPeneloux;
 
 /**
- * <p>PhaseSrkPenelouxEos class.</p>
+ * <p>
+ * PhaseSrkPenelouxEos class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,7 +21,7 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new PhaseSrkEos
+     * <p>Constructor for PhaseSrkPenelouxEos.</p>
      */
     public PhaseSrkPenelouxEos() {
         super();
@@ -38,11 +40,13 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
         return clonedPhase;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentSrkPeneloux(componentName, moles, molesInPhase, compNumber);
+        componentArray[compNumber] =
+                new ComponentSrkPeneloux(componentName, moles, molesInPhase, compNumber);
     }
 
 }

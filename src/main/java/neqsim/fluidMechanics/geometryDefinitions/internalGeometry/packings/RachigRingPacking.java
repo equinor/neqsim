@@ -7,7 +7,9 @@
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
 /**
- * <p>RachigRingPacking class.</p>
+ * <p>
+ * RachigRingPacking class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,13 +19,14 @@ public class RachigRingPacking extends Packing {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new PallRingPacking
+     * <p>Constructor for RachigRingPacking.</p>
      */
-    public RachigRingPacking() {
-    }
+    public RachigRingPacking() {}
 
     /**
-     * <p>Constructor for RachigRingPacking.</p>
+     * <p>
+     * Constructor for RachigRingPacking.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -32,7 +35,9 @@ public class RachigRingPacking extends Packing {
     }
 
     /**
-     * <p>Constructor for RachigRingPacking.</p>
+     * <p>
+     * Constructor for RachigRingPacking.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param material a {@link java.lang.String} object

@@ -17,14 +17,18 @@ abstract class Viscosity extends
     static Logger logger = LogManager.getLogger(Viscosity.class);
 
     /**
-     * Creates new Conductivity
+     * <p>Constructor for Viscosity.</p>
      */
     public Viscosity() {}
 
     /**
-     * <p>Constructor for Viscosity.</p>
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
      *
-     * @param gasPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param gasPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public Viscosity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {

@@ -10,7 +10,9 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>NumericalDerivative class.</p>
+ * <p>
+ * NumericalDerivative class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -26,12 +28,14 @@ public class NumericalDerivative implements java.io.Serializable {
     final static double SAFE = 2;
 
     /**
-     * Creates new NumericalDerivative
+     * <p>Constructor for NumericalDerivative.</p>
      */
     public NumericalDerivative() {}
 
     /**
-     * <p>fugcoefDiffPres.</p>
+     * <p>
+     * fugcoefDiffPres.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentInterface} object
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -87,7 +91,9 @@ public class NumericalDerivative implements java.io.Serializable {
     }
 
     /**
-     * <p>fugcoefDiffTemp.</p>
+     * <p>
+     * fugcoefDiffTemp.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentInterface} object
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object

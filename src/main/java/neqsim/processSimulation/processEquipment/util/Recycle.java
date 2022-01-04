@@ -15,9 +15,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Recycle class.</p>
+ * <p>
+ * Recycle class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface {
@@ -38,13 +40,14 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     int maxIterations = 10;
 
     /**
-     * Creates new staticMixer
+     * <p>Constructor for Recycle.</p>
      */
-    public Recycle() {
-    }
+    public Recycle() {}
 
     /**
-     * <p>Constructor for Recycle.</p>
+     * <p>
+     * Constructor for Recycle.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -59,7 +62,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Setter for the field <code>downstreamProperty</code>.</p>
+     * <p>
+     * Setter for the field <code>downstreamProperty</code>.
+     * </p>
      *
      * @param property a {@link java.lang.String} object
      */
@@ -91,7 +96,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>getStream.</p>
+     * <p>
+     * getStream.
+     * </p>
      *
      * @param i a int
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
@@ -101,7 +108,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>mixStream.</p>
+     * <p>
+     * mixStream.
+     * </p>
      */
     public void mixStream() {
         int index = 0;
@@ -109,21 +118,28 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
         for (int k = 1; k < streams.size(); k++) {
 
-            for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
+            for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
+                    .getNumberOfComponents(); i++) {
 
                 boolean gotComponent = false;
-                String componentName = streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
+                String componentName =
+                        streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
                 // System.out.println("adding: " + componentName);
                 int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
 
-                double moles = streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
+                double moles = streams.get(k).getThermoSystem().getPhase(0).getComponent(i)
+                        .getNumberOfmoles();
                 // System.out.println("moles: " + moles + " " +
                 // mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
-                for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); p++) {
-                    if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName().equals(componentName)) {
+                for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0)
+                        .getNumberOfComponents(); p++) {
+                    if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
+                            .equals(componentName)) {
                         gotComponent = true;
-                        index = streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
-                        compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentName();
+                        index = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
+                                .getComponentNumber();
+                        compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
+                                .getComponentName();
 
                     }
                 }
@@ -145,7 +161,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>guessTemperature.</p>
+     * <p>
+     * guessTemperature.
+     * </p>
      *
      * @return a double
      */
@@ -161,7 +179,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>calcMixStreamEnthalpy.</p>
+     * <p>
+     * calcMixStreamEnthalpy.
+     * </p>
      *
      * @return a double
      */
@@ -190,7 +210,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>initiateDownstreamProperties.</p>
+     * <p>
+     * initiateDownstreamProperties.
+     * </p>
      *
      * @param outstream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -199,7 +221,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>setDownstreamProperties.</p>
+     * <p>
+     * setDownstreamProperties.
+     * </p>
      */
     public void setDownstreamProperties() {
         if (downstreamProperty.size() > 0) {
@@ -268,7 +292,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>massBalanceCheck.</p>
+     * <p>
+     * massBalanceCheck.
+     * </p>
      *
      * @return a double
      */
@@ -280,10 +306,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         // mixedStream.getThermoSystem().getTemperature("C"));
         // System.out.println("pressure " +
         // mixedStream.getThermoSystem().getPressure("bara"));
-        if (lastIterationStream.getFluid().getNumberOfComponents() != mixedStream.getFluid().getNumberOfComponents()) {
+        if (lastIterationStream.getFluid().getNumberOfComponents() != mixedStream.getFluid()
+                .getNumberOfComponents()) {
             return 10.0;
         }
-        for (int i = 0; i < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
+        for (int i = 0; i < mixedStream.getThermoSystem().getPhase(0)
+                .getNumberOfComponents(); i++) {
             // System.out.println("x last " +
             // lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
             // System.out.println("x new " +
@@ -310,7 +338,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>setTemperature.</p>
+     * <p>
+     * setTemperature.
+     * </p>
      *
      * @param temp a double
      */
@@ -322,7 +352,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Getter for the field <code>tolerance</code>.</p>
+     * <p>
+     * Getter for the field <code>tolerance</code>.
+     * </p>
      *
      * @return the tolerance
      */
@@ -331,7 +363,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Setter for the field <code>tolerance</code>.</p>
+     * <p>
+     * Setter for the field <code>tolerance</code>.
+     * </p>
      *
      * @param tolerance the tolerance to set
      */
@@ -340,7 +374,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Getter for the field <code>error</code>.</p>
+     * <p>
+     * Getter for the field <code>error</code>.
+     * </p>
      *
      * @return the error
      */
@@ -349,7 +385,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Setter for the field <code>error</code>.</p>
+     * <p>
+     * Setter for the field <code>error</code>.
+     * </p>
      *
      * @param error the error to set
      */
@@ -358,7 +396,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Getter for the field <code>priority</code>.</p>
+     * <p>
+     * Getter for the field <code>priority</code>.
+     * </p>
      *
      * @return a int
      */
@@ -367,7 +407,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Setter for the field <code>priority</code>.</p>
+     * <p>
+     * Setter for the field <code>priority</code>.
+     * </p>
      *
      * @param priority a int
      */
@@ -385,7 +427,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Getter for the field <code>downstreamProperty</code>.</p>
+     * <p>
+     * Getter for the field <code>downstreamProperty</code>.
+     * </p>
      *
      * @return a {@link java.util.ArrayList} object
      */
@@ -394,7 +438,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Setter for the field <code>downstreamProperty</code>.</p>
+     * <p>
+     * Setter for the field <code>downstreamProperty</code>.
+     * </p>
      *
      * @param upstreamProperty a {@link java.util.ArrayList} object
      */
@@ -403,7 +449,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Getter for the field <code>outletStream</code>.</p>
+     * <p>
+     * Getter for the field <code>outletStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -412,9 +460,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
-     * <p>Setter for the field <code>outletStream</code>.</p>
+     * <p>
+     * Setter for the field <code>outletStream</code>.
+     * </p>
      *
-     * @param outletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param outletStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public void setOutletStream(StreamInterface outletStream) {
         this.outletStream = outletStream;

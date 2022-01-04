@@ -7,9 +7,11 @@
 package neqsim.statistics.experimentalEquipmentData;
 
 /**
- * <p>ExperimentalEquipmentData class.</p>
+ * <p>
+ * ExperimentalEquipmentData class.
+ * </p>
  *
- * @author  even solbraa
+ * @author even solbraa
  * @version $Id: $Id
  */
 public class ExperimentalEquipmentData {
@@ -21,8 +23,7 @@ public class ExperimentalEquipmentData {
     protected double diameterUncertaty = 0, lengthUncertanty = 0;
 
     /**
-     * Creates new ExperimentalEquipmentData
+     * <p>Constructor for ExperimentalEquipmentData.</p>
      */
-    public ExperimentalEquipmentData() {
-    }
+    public ExperimentalEquipmentData() {}
 }

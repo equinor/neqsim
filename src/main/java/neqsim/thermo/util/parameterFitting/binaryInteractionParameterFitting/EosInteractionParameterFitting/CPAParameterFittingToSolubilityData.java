@@ -5,7 +5,9 @@ import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
- * <p>CPAParameterFittingToSolubilityData class.</p>
+ * <p>
+ * CPAParameterFittingToSolubilityData class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,14 +20,16 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
     int component = 0;
 
     /**
-     * Creates new Test
+     * <p>Constructor for CPAParameterFittingToSolubilityData.</p>
      */
     public CPAParameterFittingToSolubilityData() {
         params = new double[1];
     }
 
     /**
-     * <p>Constructor for CPAParameterFittingToSolubilityData.</p>
+     * <p>
+     * Constructor for CPAParameterFittingToSolubilityData.
+     * </p>
      *
      * @param phase a int
      * @param component a int
@@ -97,7 +101,9 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
     }
 
     /**
-     * <p>setFittingParams3.</p>
+     * <p>
+     * setFittingParams3.
+     * </p>
      *
      * @param i a int
      * @param value a double
@@ -133,7 +139,9 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
     }
 
     /**
-     * <p>setFittingParams2.</p>
+     * <p>
+     * setFittingParams2.
+     * </p>
      *
      * @param i a int
      * @param value a double

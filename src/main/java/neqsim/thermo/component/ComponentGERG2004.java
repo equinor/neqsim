@@ -1,14 +1,16 @@
 /*
-* System_SRK_EOS.java
-*
-* Created on 8. april 2000, 23:14
-*/
+ * System_SRK_EOS.java
+ *
+ * Created on 8. april 2000, 23:14
+ */
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>ComponentGERG2004 class.</p>
+ * <p>
+ * ComponentGERG2004 class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,13 +20,14 @@ public class ComponentGERG2004 extends ComponentEos {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new System_SRK_EOS Ev liten fil ja.
+     * <p>Constructor for ComponentGERG2004.</p>
      */
-    public ComponentGERG2004() {
-    }
+    public ComponentGERG2004() {}
 
     /**
-     * <p>Constructor for ComponentGERG2004.</p>
+     * <p>
+     * Constructor for ComponentGERG2004.
+     * </p>
      *
      * @param moles a double
      */
@@ -33,20 +36,25 @@ public class ComponentGERG2004 extends ComponentEos {
     }
 
     /**
-     * <p>Constructor for ComponentGERG2004.</p>
+     * <p>
+     * Constructor for ComponentGERG2004.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double
      * @param compnumber a int
      */
-    public ComponentGERG2004(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentGERG2004(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
     }
 
     /**
-     * <p>Constructor for ComponentGERG2004.</p>
+     * <p>
+     * Constructor for ComponentGERG2004.
+     * </p>
      *
      * @param number a int
      * @param TC a double
@@ -73,52 +81,53 @@ public class ComponentGERG2004 extends ComponentEos {
         return clonedComponent;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getVolumeCorrection() {
+    public double getVolumeCorrection() {
         return 0.0;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calca() {
+    public double calca() {
         return 0;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcb() {
+    public double calcb() {
         return 0;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double fugcoef(PhaseInterface phase) {
+    public double fugcoef(PhaseInterface phase) {
 
         return fugasityCoeffisient;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double alpha(double temperature) {
+    public double alpha(double temperature) {
         return 1;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double diffaT(double temperature) {
+    public double diffaT(double temperature) {
         return 1;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double diffdiffaT(double temperature) {
+    public double diffdiffaT(double temperature) {
         return 1;
     }
 }

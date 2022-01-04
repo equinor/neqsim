@@ -18,7 +18,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Compressor class.</p>
+ * <p>
+ * Compressor class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -50,16 +52,19 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     private String polytropicMethod = "detailed";
 
     /**
-     * Creates new ThrottelValve
+     * <p>Constructor for Compressor.</p>
      */
     public Compressor() {
         mechanicalDesign = new CompressorMechanicalDesign(this);
     }
 
     /**
-     * <p>Constructor for Compressor.</p>
+     * <p>
+     * Constructor for Compressor.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Compressor(StreamInterface inletStream) {
         this();
@@ -67,10 +72,13 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Constructor for Compressor.</p>
+     * <p>
+     * Constructor for Compressor.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Compressor(String name, StreamInterface inletStream) {
         this();
@@ -79,7 +87,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Constructor for Compressor.</p>
+     * <p>
+     * Constructor for Compressor.
+     * </p>
      *
      * @param interpolateMapLookup a boolean
      */
@@ -102,7 +112,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>solveAntiSurge.</p>
+     * <p>
+     * solveAntiSurge.
+     * </p>
      */
     public void solveAntiSurge() {
         if (getAntiSurge().isActive()) {
@@ -117,7 +129,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>setOutletPressure.</p>
+     * <p>
+     * setOutletPressure.
+     * </p>
      *
      * @param pressure a double
      * @param unit a {@link java.lang.String} object
@@ -128,7 +142,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>getOutletPressure.</p>
+     * <p>
+     * getOutletPressure.
+     * </p>
      *
      * @return a double
      */
@@ -143,7 +159,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>getPower.</p>
+     * <p>
+     * getPower.
+     * </p>
      *
      * @return a double
      */
@@ -152,7 +170,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>getPower.</p>
+     * <p>
+     * getPower.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -168,7 +188,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>setPower.</p>
+     * <p>
+     * setPower.
+     * </p>
      *
      * @param p a double
      */
@@ -184,7 +206,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>getInStream.</p>
+     * <p>
+     * getInStream.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -235,7 +259,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>findOutPressure.</p>
+     * <p>
+     * findOutPressure.
+     * </p>
      *
      * @param hinn a double
      * @param hout a double
@@ -515,7 +541,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>generateCompressorCurves.</p>
+     * <p>
+     * generateCompressorCurves.
+     * </p>
      */
     public void generateCompressorCurves() {
         double flowRef = getThermoSystem().getFlowRate("m3/hr");
@@ -697,7 +725,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>getTotalWork.</p>
+     * <p>
+     * getTotalWork.
+     * </p>
      *
      * @return a double
      */
@@ -722,7 +752,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>usePolytropicCalc.</p>
+     * <p>
+     * usePolytropicCalc.
+     * </p>
      *
      * @return the usePolytropicCalc
      */
@@ -731,7 +763,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Setter for the field <code>usePolytropicCalc</code>.</p>
+     * <p>
+     * Setter for the field <code>usePolytropicCalc</code>.
+     * </p>
      *
      * @param usePolytropicCalc the usePolytropicCalc to set
      */
@@ -758,18 +792,25 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Getter for the field <code>compressorChart</code>.</p>
+     * <p>
+     * Getter for the field <code>compressorChart</code>.
+     * </p>
      *
-     * @return a {@link neqsim.processSimulation.processEquipment.compressor.CompressorChartInterface} object
+     * @return a
+     *         {@link neqsim.processSimulation.processEquipment.compressor.CompressorChartInterface}
+     *         object
      */
     public CompressorChartInterface getCompressorChart() {
         return compressorChart;
     }
 
     /**
-     * <p>Setter for the field <code>compressorChart</code>.</p>
+     * <p>
+     * Setter for the field <code>compressorChart</code>.
+     * </p>
      *
-     * @param compressorChart a {@link neqsim.processSimulation.processEquipment.compressor.CompressorChart} object
+     * @param compressorChart a
+     *        {@link neqsim.processSimulation.processEquipment.compressor.CompressorChart} object
      */
     public void setCompressorChart(CompressorChart compressorChart) {
         this.compressorChart = compressorChart;
@@ -782,7 +823,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>isSurge.</p>
+     * <p>
+     * isSurge.
+     * </p>
      *
      * @param flow a double
      * @param head a double
@@ -794,7 +837,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>isStoneWall.</p>
+     * <p>
+     * isStoneWall.
+     * </p>
      *
      * @param flow a double
      * @param head a double
@@ -805,16 +850,21 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Setter for the field <code>antiSurge</code>.</p>
+     * <p>
+     * Setter for the field <code>antiSurge</code>.
+     * </p>
      *
-     * @param antiSurge a {@link neqsim.processSimulation.processEquipment.compressor.AntiSurge} object
+     * @param antiSurge a {@link neqsim.processSimulation.processEquipment.compressor.AntiSurge}
+     *        object
      */
     public void setAntiSurge(AntiSurge antiSurge) {
         this.antiSurge = antiSurge;
     }
 
     /**
-     * <p>Getter for the field <code>speed</code>.</p>
+     * <p>
+     * Getter for the field <code>speed</code>.
+     * </p>
      *
      * @return a int
      */
@@ -823,7 +873,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Setter for the field <code>speed</code>.</p>
+     * <p>
+     * Setter for the field <code>speed</code>.
+     * </p>
      *
      * @param speed a int
      */
@@ -832,7 +884,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Getter for the field <code>polytropicHead</code>.</p>
+     * <p>
+     * Getter for the field <code>polytropicHead</code>.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -847,7 +901,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Getter for the field <code>polytropicHead</code>.</p>
+     * <p>
+     * Getter for the field <code>polytropicHead</code>.
+     * </p>
      *
      * @return a double
      */
@@ -856,7 +912,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Getter for the field <code>polytropicFluidHead</code>.</p>
+     * <p>
+     * Getter for the field <code>polytropicFluidHead</code>.
+     * </p>
      *
      * @return a double
      */
@@ -865,7 +923,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Getter for the field <code>polytropicExponent</code>.</p>
+     * <p>
+     * Getter for the field <code>polytropicExponent</code>.
+     * </p>
      *
      * @return a double
      */
@@ -874,7 +934,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Getter for the field <code>polytropicHeadMeter</code>.</p>
+     * <p>
+     * Getter for the field <code>polytropicHeadMeter</code>.
+     * </p>
      *
      * @return a double
      */
@@ -883,7 +945,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Setter for the field <code>polytropicHeadMeter</code>.</p>
+     * <p>
+     * Setter for the field <code>polytropicHeadMeter</code>.
+     * </p>
      *
      * @param polytropicHeadMeter a double
      */
@@ -892,7 +956,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Getter for the field <code>outTemperature</code>.</p>
+     * <p>
+     * Getter for the field <code>outTemperature</code>.
+     * </p>
      *
      * @return a double
      */
@@ -904,7 +970,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Setter for the field <code>outTemperature</code>.</p>
+     * <p>
+     * Setter for the field <code>outTemperature</code>.
+     * </p>
      *
      * @param outTemperature a double
      */
@@ -914,7 +982,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>useOutTemperature.</p>
+     * <p>
+     * useOutTemperature.
+     * </p>
      *
      * @param useOutTemperature a boolean
      */
@@ -923,7 +993,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Getter for the field <code>numberOfCompresorCalcSteps</code>.</p>
+     * <p>
+     * Getter for the field <code>numberOfCompresorCalcSteps</code>.
+     * </p>
      *
      * @return a int
      */
@@ -932,7 +1004,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Setter for the field <code>numberOfCompresorCalcSteps</code>.</p>
+     * <p>
+     * Setter for the field <code>numberOfCompresorCalcSteps</code>.
+     * </p>
      *
      * @param numberOfCompresorCalcSteps a int
      */
@@ -941,7 +1015,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>isUseRigorousPolytropicMethod.</p>
+     * <p>
+     * isUseRigorousPolytropicMethod.
+     * </p>
      *
      * @return a boolean
      */
@@ -950,7 +1026,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Setter for the field <code>useRigorousPolytropicMethod</code>.</p>
+     * <p>
+     * Setter for the field <code>useRigorousPolytropicMethod</code>.
+     * </p>
      *
      * @param useRigorousPolytropicMethod a boolean
      */
@@ -965,7 +1043,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Setter for the field <code>pressure</code>.</p>
+     * <p>
+     * Setter for the field <code>pressure</code>.
+     * </p>
      *
      * @param pressure a double
      * @param unit a {@link java.lang.String} object
@@ -990,7 +1070,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Getter for the field <code>polytropicMethod</code>.</p>
+     * <p>
+     * Getter for the field <code>polytropicMethod</code>.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
@@ -999,7 +1081,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
-     * <p>Setter for the field <code>polytropicMethod</code>.</p>
+     * <p>
+     * Setter for the field <code>polytropicMethod</code>.
+     * </p>
      *
      * @param polytropicMethod a {@link java.lang.String} object
      */

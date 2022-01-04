@@ -10,12 +10,15 @@ import Jama.Matrix;
 import neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem;
 
 /**
- * <p>OnePhasePipeFlowSolver class.</p>
+ * <p>
+ * OnePhasePipeFlowSolver class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class OnePhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.OnePhaseFlowSolver {
+public class OnePhasePipeFlowSolver
+        extends neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.OnePhaseFlowSolver {
 
     private static final long serialVersionUID = 1000;
 
@@ -32,15 +35,18 @@ public class OnePhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
     protected PipeFlowSystem pipe;
 
     /**
-     * Creates new OnePhasePipeFlowSolver
+     * <p>Constructor for OnePhasePipeFlowSolver.</p>
      */
-    public OnePhasePipeFlowSolver() {
-    }
+    public OnePhasePipeFlowSolver() {}
 
     /**
-     * <p>Constructor for OnePhasePipeFlowSolver.</p>
+     * <p>
+     * Constructor for OnePhasePipeFlowSolver.
+     * </p>
      *
-     * @param pipe a {@link neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem} object
+     * @param pipe a
+     *        {@link neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem}
+     *        object
      * @param length a double
      * @param nodes a int
      */
@@ -52,8 +58,10 @@ public class OnePhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
         solMatrix = new Matrix(PbArray, 1).transpose();
         sol2Matrix = new Matrix(PbArray, 1).transpose();
         sol3Matrix = new Matrix(PbArray, 1).transpose();
-        sol4Matrix = new Matrix[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
-        for (int k = 0; k < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); k++) {
+        sol4Matrix =
+                new Matrix[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+        for (int k = 0; k < pipe.getNode(0).getBulkSystem().getPhases()[0]
+                .getNumberOfComponents(); k++) {
             sol4Matrix[k] = new Matrix(PbArray, 1).transpose();
         }
         a = new double[nodes];

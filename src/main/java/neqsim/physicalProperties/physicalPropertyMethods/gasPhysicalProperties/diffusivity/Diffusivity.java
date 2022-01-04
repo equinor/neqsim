@@ -4,7 +4,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>Diffusivity class.</p>
+ * <p>
+ * Diffusivity class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,14 +23,18 @@ public class Diffusivity extends
     double[] effectiveDiffusionCoefficient;
 
     /**
-     * Creates new Conductivity
+     * <p>Constructor for Diffusivity.</p>
      */
     public Diffusivity() {}
 
     /**
-     * <p>Constructor for Diffusivity.</p>
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
      *
-     * @param gasPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param gasPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {

@@ -8,14 +8,13 @@ import no.uib.cipr.matrix.DenseMatrix;
 
 /**
  * <p>
- * GTSurfaceTensionFullGT class.
+ * GTSurfaceTensionFullGT class. Solving for the surface tension by direct Newton method. <br>
+ * todo: Makeuse of binary interaction parameter for the influence parameter \f$\beta_{ij}\f$ when
+ * this becomes available in NeqSIM API.
  * </p>
  *
- * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
- * @author John C. Morud <john.c.morud@sintef.no>
- * @brief Solving for the surface tension by direct Newton method.
- * @todo Make use of binary interaction parameter for the influence parameter \f$\beta_{ij}\f$ when
- *       this becomes available in NeqSIM API.
+ * @author Olaf Trygve Berglihn olaf.trygve.berglihn@sintef.no
+ * @author John C. Morud john.c.morud@sintef.no
  * @version $Id: $Id
  */
 public class GTSurfaceTensionFullGT {
@@ -105,7 +104,6 @@ public class GTSurfaceTensionFullGT {
         this.sys.init_x_y();
         this.sys.setBeta(1.0);
         this.sys.init(3);
-
     }
 
     /**
@@ -263,16 +261,14 @@ public class GTSurfaceTensionFullGT {
 
     /**
      * <p>
-     * Newton.
+     * Newton. Calculate surface tension by full gradient method and Newtons method
+     *
+     * The routine solves the Finite Difference equations for the full Gradient Theory by Newtons
+     * method. Note that the length coordinate is in nm-units. Method: 1. Calculate delta_mu and its
+     * Jacobian 2. Call routine "directsolve" for Newton step 3. Dampen the step if relative step
+     * too large 4. Iterate until convergence or max #iterations (N_Newton)
      * </p>
      *
-     * @brief Calculate surface tension by full gradient method and Newtons method
-     *
-     *        The routine solves the Finite Difference equations for the full Gradient Theory by
-     *        Newtons method. Note that the length coordinate is in nm-units. Method: 1. Calculate
-     *        delta_mu and its Jacobian 2. Call routine "directsolve" for Newton step 3. Dampen the
-     *        step if relative step too large 4. Iterate until convergence or max #iterations
-     *        (N_Newton)
      * @return sigma The surface tension [N/m]
      * @param cij an array of {@link double} objects
      * @param L a double
@@ -432,10 +428,9 @@ public class GTSurfaceTensionFullGT {
 
     /**
      * <p>
-     * directsolve.
+     * directsolve. Solve linear system for Full Gradient method
      * </p>
      *
-     * @brief Solve linear system for Full Gradient method
      * @param rres an array of {@link double} objects
      * @param JJ an array of {@link double} objects
      * @param C an array of {@link double} objects
@@ -523,13 +518,12 @@ public class GTSurfaceTensionFullGT {
 
     /**
      * <p>
-     * sigmaCalc.
+     * sigmaCalc. Calculates the interface tension
+     *
+     * The following integral is solved with the trapezoidal method: \f{equation}{ \sigma =
+     * \int_{-\infty}^{\infty} \boldsymbol{n_z}^T \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
      * </p>
      *
-     * @brief Calculates the interface tension
-     *
-     *        The following integral is solved with the trapezoidal method: \f{equation}{ \sigma =
-     *        \int_{-\infty}^{\infty} \boldsymbol{n_z}^T \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
      * @return sigma The surface tension [N/m]
      * @param h a double
      * @param rrho an array of {@link double} objects
@@ -569,13 +563,12 @@ public class GTSurfaceTensionFullGT {
 
     /**
      * <p>
-     * calc_std_integral.
+     * calc_std_integral. Calculate width of interface region (length scale)
+     *
+     * Estimate the width of interface by calculating the second moment of the surface tension
+     * integrand. Used to adjust the domain size
      * </p>
      *
-     * @brief Calculate width of interface region (length scale)
-     *
-     *        Estimate the width of interface by calculating the second moment of the surface
-     *        tension integrand. Used to adjust the domain size
      * @return Interface width (length scale) [nm]
      * @param z an array of {@link double} objects
      * @param C an array of {@link double} objects
@@ -608,10 +601,9 @@ public class GTSurfaceTensionFullGT {
 
     /**
      * <p>
-     * delta_mu.
+     * delta_mu. Calculate \f$\Delta\mu=\mu-\mu_0\f$ and its number density derivative.
      * </p>
      *
-     * @brief Calculate \f$\Delta\mu=\mu-\mu_0\f$ and its number density derivative.
      * @param sys a {@link neqsim.thermo.system.SystemInterface} object
      * @param ncomp a int
      * @param t a double
@@ -635,10 +627,9 @@ public class GTSurfaceTensionFullGT {
 
     /**
      * <p>
-     * linspace.
+     * linspace. Make an array of double with N values linearly spaced between a and b.
      * </p>
      *
-     * @brief Make an array of double with N values linearly spaced between a and b.
      * @param a start of range
      * @param b end of range
      * @param N number of values.
@@ -657,10 +648,9 @@ public class GTSurfaceTensionFullGT {
 
     /**
      * <p>
-     * debugPlot.
+     * debugPlot. Plotting of density profiles y over the domain x.
      * </p>
      *
-     * @brief Plotting of density profiles y over the domain x.
      * @param x abscissa values
      * @param y array of ordinate value arrays.
      */
@@ -684,11 +674,10 @@ public class GTSurfaceTensionFullGT {
 
     /**
      * <p>
-     * initmu.
+     * initmu. Initialize equilibrium chemical potential, and derivative and test that the bulk
+     * equilibrium is satisfied.
      * </p>
      *
-     * @brief Initialize equilibrium chemical potential, and derivative and test that the bulk
-     *        equilibrium is satisfied.
      * @param sys a {@link neqsim.thermo.system.SystemInterface} object
      * @param ncomp a int
      * @param t a double

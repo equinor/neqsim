@@ -20,7 +20,7 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new ViscosityFunction
+     * <p>Constructor for ViscosityFunction.</p>
      */
     public ViscosityFunction() {}
 

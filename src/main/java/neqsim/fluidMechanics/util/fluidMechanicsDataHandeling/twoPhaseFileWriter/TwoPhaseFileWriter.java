@@ -9,7 +9,9 @@ package neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.twoPhaseFileWrite
 import neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterBaseClass;
 
 /**
- * <p>TwoPhaseFileWriter class.</p>
+ * <p>
+ * TwoPhaseFileWriter class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -19,9 +21,8 @@ public class TwoPhaseFileWriter extends FileWriterBaseClass {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new OnePhaseFileWriter
+     * <p>Constructor for TwoPhaseFileWriter.</p>
      */
-    public TwoPhaseFileWriter() {
-    }
+    public TwoPhaseFileWriter() {}
 
 }

@@ -11,7 +11,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>AtractiveTermBaseClass class.</p>
+ * <p>
+ * AtractiveTermBaseClass class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -28,14 +30,16 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
     static Logger logger = LogManager.getLogger(AtractiveTermBaseClass.class);
 
     /**
-     * <p>Constructor for AtractiveTermBaseClass.</p>
+     * <p>
+     * Constructor for AtractiveTermBaseClass.
+     * </p>
      */
     public AtractiveTermBaseClass() {
 
     }
 
     /**
-     * Creates new AtractiveTermBaseClass
+     * <p>Constructor for AtractiveTermBaseClass.</p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */

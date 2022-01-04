@@ -5,7 +5,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod;
 
 /**
- * <p>Diffusivity class.</p>
+ * <p>
+ * Diffusivity class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -20,14 +22,18 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
     double[] effectiveDiffusionCoefficient;
 
     /**
-     * Creates new Conductivity
+     * <p>Constructor for Diffusivity.</p>
      */
     public Diffusivity() {}
 
     /**
-     * <p>Constructor for Diffusivity.</p>
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
      *
-     * @param phase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {

@@ -6,7 +6,9 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>SolidFlash class.</p>
+ * <p>
+ * SolidFlash class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -27,12 +29,14 @@ public class SolidFlash extends TPflash {
     boolean secondTime = false;
 
     /**
-     * Creates new TPflash
+     * <p>Constructor for SolidFlash.</p>
      */
     public SolidFlash() {}
 
     /**
-     * <p>Constructor for SolidFlash.</p>
+     * <p>
+     * Constructor for SolidFlash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -41,7 +45,9 @@ public class SolidFlash extends TPflash {
     }
 
     /**
-     * <p>Setter for the field <code>solidComponent</code>.</p>
+     * <p>
+     * Setter for the field <code>solidComponent</code>.
+     * </p>
      *
      * @param i a int
      */
@@ -50,7 +56,9 @@ public class SolidFlash extends TPflash {
     }
 
     /**
-     * <p>Constructor for SolidFlash.</p>
+     * <p>
+     * Constructor for SolidFlash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param check a boolean
@@ -60,12 +68,16 @@ public class SolidFlash extends TPflash {
     }
 
     /**
-     * <p>calcMultiPhaseBeta.</p>
+     * <p>
+     * calcMultiPhaseBeta.
+     * </p>
      */
     public void calcMultiPhaseBeta() {}
 
     /**
-     * <p>setXY.</p>
+     * <p>
+     * setXY.
+     * </p>
      */
     public void setXY() {
         for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
@@ -85,7 +97,9 @@ public class SolidFlash extends TPflash {
     }
 
     /**
-     * <p>checkX.</p>
+     * <p>
+     * checkX.
+     * </p>
      */
     public void checkX() {
         for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
@@ -110,7 +124,9 @@ public class SolidFlash extends TPflash {
     }
 
     /**
-     * <p>calcE.</p>
+     * <p>
+     * calcE.
+     * </p>
      */
     public void calcE() {
         E = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -135,7 +151,9 @@ public class SolidFlash extends TPflash {
     }
 
     /**
-     * <p>calcQ.</p>
+     * <p>
+     * calcQ.
+     * </p>
      *
      * @return a double
      */
@@ -185,7 +203,9 @@ public class SolidFlash extends TPflash {
     }
 
     /**
-     * <p>solveBeta.</p>
+     * <p>
+     * solveBeta.
+     * </p>
      *
      * @param ideal a boolean
      */
@@ -270,7 +290,9 @@ public class SolidFlash extends TPflash {
     }
 
     /**
-     * <p>checkGibbs.</p>
+     * <p>
+     * checkGibbs.
+     * </p>
      */
     public void checkGibbs() {
         double gibbs1 = 0, gibbs2 = 0;
@@ -291,7 +313,9 @@ public class SolidFlash extends TPflash {
     }
 
     /**
-     * <p>calcSolidBeta.</p>
+     * <p>
+     * calcSolidBeta.
+     * </p>
      */
     public void calcSolidBeta() {
         double tempVar = system.getPhase(0).getComponents()[solidComponent].getz();

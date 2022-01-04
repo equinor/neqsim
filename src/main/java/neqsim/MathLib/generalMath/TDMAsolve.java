@@ -9,7 +9,9 @@
 package neqsim.MathLib.generalMath;
 
 /**
- * <p>TDMAsolve class.</p>
+ * <p>
+ * TDMAsolve class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,12 +21,14 @@ public class TDMAsolve implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new TDMAsolve
+     * <p>Constructor for TDMAsolve.</p>
      */
     public TDMAsolve() {}
 
     /**
-     * <p>solve.</p>
+     * <p>
+     * solve.
+     * </p>
      *
      * @param a an array of {@link double} objects
      * @param b an array of {@link double} objects

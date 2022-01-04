@@ -1,8 +1,8 @@
 /*
-* System_SRK_EOS.java
-*
-* Created on 8. april 2000, 23:14
-*/
+ * System_SRK_EOS.java
+ *
+ * Created on 8. april 2000, 23:14
+ */
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseCPAInterface;
@@ -18,19 +18,22 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new System_SRK_EOS Ev liten fil ja.
+     *
      */
     int cpaon = 1;
     double[] xsite;
 
     /**
-     * <p>Constructor for ComponentPrCPA.</p>
+     * <p>
+     * Constructor for ComponentPrCPA.
+     * </p>
      */
-    public ComponentPrCPA() {
-    }
+    public ComponentPrCPA() {}
 
     /**
-     * <p>Constructor for ComponentPrCPA.</p>
+     * <p>
+     * Constructor for ComponentPrCPA.
+     * </p>
      *
      * @param moles a double
      */
@@ -39,14 +42,17 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
     }
 
     /**
-     * <p>Constructor for ComponentPrCPA.</p>
+     * <p>
+     * Constructor for ComponentPrCPA.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double
      * @param compnumber a int
      */
-    public ComponentPrCPA(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentPrCPA(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
         xsite = new double[numberOfAssociationSites];
         if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
@@ -63,7 +69,9 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
     }
 
     /**
-     * <p>Constructor for ComponentPrCPA.</p>
+     * <p>
+     * Constructor for ComponentPrCPA.
+     * </p>
      *
      * @param number a int
      * @param TC a double
@@ -85,9 +93,9 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         setAtractiveTerm(1);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getVolumeCorrection() {
+    public double getVolumeCorrection() {
         if ((aCPA > 1.0e-10) && cpaon == 1) {
             return 0.0;
         } else {
@@ -109,42 +117,44 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         return clonedComponent;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calca() {
+    public double calca() {
         if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
             return aCPA;
         }
         return a;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcb() {
+    public double calcb() {
         if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
             return bCPA;
         }
         return b;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setAtractiveTerm(int i) {
+    public void setAtractiveTerm(int i) {
         super.setAtractiveTerm(i);
         if ((getNumberOfAssociationSites() > 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
             getAtractiveTerm().setm(mCPA);
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
         double Fcpa = 0.0;
         // if(phase.getPhaseType()==1) cpaon=0;
@@ -153,26 +163,31 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         return Fsup + cpaon * Fcpa;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
     }
 
     /**
-     * <p>dFCPAdN.</p>
+     * <p>
+     * dFCPAdN.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponents a int
@@ -180,7 +195,8 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
      * @param pressure a double
      * @return a double
      */
-    public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         double xi = 0.0;
         for (int i = 0; i < numberOfAssociationSites; i++) {
             xi += Math.log(xsite[i]);
@@ -189,33 +205,39 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
     }
 
     /**
-     * <p>calc_lngi.</p>
+     * <p>
+     * calc_lngi.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
      */
     public double calc_lngi(PhaseInterface phase) {
-        return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi() / phase.getTotalVolume();
+        return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi()
+                / phase.getTotalVolume();
     }
 
     /**
-     * <p>calc_lngi2.</p>
+     * <p>
+     * calc_lngi2.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
      */
     public double calc_lngi2(PhaseInterface phase) {
         return 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-                / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
+                / ((8.0 * phase.getTotalVolume() - phase.getB())
+                        * (4.0 * phase.getTotalVolume() - phase.getB()));
     }
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * Getter for property xsite.
-	 */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property xsite.
+     */
     @Override
-	public double[] getXsite() {
+    public double[] getXsite() {
         return this.xsite;
     }
 
@@ -228,9 +250,9 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         this.xsite = xsite;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setXsite(int i, double xsite) {
+    public void setXsite(int i, double xsite) {
         this.xsite[i] = xsite;
     }
 }

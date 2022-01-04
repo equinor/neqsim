@@ -9,7 +9,9 @@ package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoeffici
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
- * <p>InterphaseAnnularFlow class.</p>
+ * <p>
+ * InterphaseAnnularFlow class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -19,14 +21,15 @@ public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new FrictionFactorBaseClass All frictionfactors are the fanning
+     *
      * frictionfactor.
      */
-    public InterphaseAnnularFlow() {
-    }
+    public InterphaseAnnularFlow() {}
 
     /**
-     * <p>Constructor for InterphaseAnnularFlow.</p>
+     * <p>
+     * Constructor for InterphaseAnnularFlow.
+     * </p>
      *
      * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
      */

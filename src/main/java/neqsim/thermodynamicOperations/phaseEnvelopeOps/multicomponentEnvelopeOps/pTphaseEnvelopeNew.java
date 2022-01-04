@@ -13,7 +13,9 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>pTphaseEnvelopeNew class.</p>
+ * <p>
+ * pTphaseEnvelopeNew class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -52,12 +54,14 @@ public class pTphaseEnvelopeNew extends BaseOperation {
     int speceq = 0;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>Constructor for pTphaseEnvelopeNew.</p>
      */
     public pTphaseEnvelopeNew() {}
 
     /**
-     * <p>Constructor for pTphaseEnvelopeNew.</p>
+     * <p>
+     * Constructor for pTphaseEnvelopeNew.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param name a {@link java.lang.String} object

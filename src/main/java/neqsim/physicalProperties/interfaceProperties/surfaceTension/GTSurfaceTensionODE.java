@@ -13,15 +13,18 @@ import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>GTSurfaceTensionODE class.</p>
+ * <p>
+ * GTSurfaceTensionODE class.
  *
- * @brief ODE-system for integrating the surface tension in cases where the a reference component
- *        number mole density can be used as integration variable.
+ * ODE-system for integrating the surface tension in cases where the a reference component number
+ * mole density can be used as integration variable.
  *
- *        This method can only be used when the reference component density varies monotonically
- *        over the interface, and where there are no binary interaction parameters for the
- *        attractive parameter in the EOS.
- * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
+ * This method can only be used when the reference component density varies monotonically over the
+ * interface, and where there are no binary interaction parameters for the attractive parameter in
+ * the EOS.
+ * </p>
+ *
+ * @author Olaf Trygve Berglihn olaf.trygve.berglihn@sintef.no
  * @version $Id: $Id
  */
 public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
@@ -51,7 +54,9 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     public int maxit = 40;
 
     /**
-     * <p>Constructor for GTSurfaceTensionODE.</p>
+     * <p>
+     * Constructor for GTSurfaceTensionODE.
+     * </p>
      *
      * @param flashedSystem a {@link neqsim.thermo.system.SystemInterface} object
      * @param phase1 a int
@@ -242,9 +247,9 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     }
 
     /**
-     * @brief Solve for the equilibrium density in the interface.
+     * SolveRho. Solve for the equilibrium density in the interface.
      *
-     *        Solves the equilibrium relations with the Newton-Raphson method.
+     * Solves the equilibrium relations with the Newton-Raphson method.
      * 
      * @param[in,out] rho Number density [mol/m3]
      * @param[out] mu Chemical potential [J/mol]

@@ -8,7 +8,9 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>AtractiveTermTwuCoonParam class.</p>
+ * <p>
+ * AtractiveTermTwuCoonParam class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,7 +22,7 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
     private double a = 0.0, b = 0.0, c = 0.0;
 
     /**
-     * Creates new AtractiveTermSrk
+     * <p>Constructor for AtractiveTermTwuCoonParam.</p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -32,7 +34,7 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
     }
 
     /**
-     * Creates new AtractiveTermSrk
+     * <p>Constructor for AtractiveTermTwuCoonParam.</p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
@@ -57,16 +59,16 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         // m = (0.48508 + 1.55191 * component.getAcentricFactor() - 0.15613 *
         // component.getAcentricFactor() * component.getAcentricFactor());
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double alpha(double temperature) {
+    public double alpha(double temperature) {
         a = this.parameters[0];
         b = this.parameters[1];
         c = this.parameters[2];
@@ -80,36 +82,38 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
 
     }
 
-//    private double alphaCrit(double temperature){
-//        c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
-//        d = 1.0-1.0/d;
-//        return Math.pow(Math.exp(c*(1.0-Math.pow(temperature/component.getTC(),1.0*d))),2.0);
-//    }
-//    
-//    private double diffalphaCritT(double temperature){
-//        c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
-//        d = 1.0-1.0/d;
-//        return -2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/component.getTC(),1.0*d))),2.0)*c*Math.pow(temperature/component.getTC(),1.0*d)*d/temperature;
-//    }
-//    
-//    private double diffdiffalphaCritT(double temperature){
-//        c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
-//        d = 1-1.0/d;
-//        double TC = component.getTC();
-//        return 4.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*c*Math.pow(Math.pow(temperature/TC,1.0*d),2.0)*d*d/(temperature*temperature)-2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(temperature/TC,1.0*d)*d*d/(temperature*
-//        temperature)+2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(
-//        temperature/TC,1.0*d)*d/(temperature*temperature);
+    // private double alphaCrit(double temperature){
+    // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
+    // d = 1.0-1.0/d;
+    // return Math.pow(Math.exp(c*(1.0-Math.pow(temperature/component.getTC(),1.0*d))),2.0);
     // }
-	/** {@inheritDoc} */
+    //
+    // private double diffalphaCritT(double temperature){
+    // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
+    // d = 1.0-1.0/d;
+    // return
+    // -2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/component.getTC(),1.0*d))),2.0)*c*Math.pow(temperature/component.getTC(),1.0*d)*d/temperature;
+    // }
+    //
+    // private double diffdiffalphaCritT(double temperature){
+    // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
+    // d = 1-1.0/d;
+    // double TC = component.getTC();
+    // return
+    // 4.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*c*Math.pow(Math.pow(temperature/TC,1.0*d),2.0)*d*d/(temperature*temperature)-2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(temperature/TC,1.0*d)*d*d/(temperature*
+    // temperature)+2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(
+    // temperature/TC,1.0*d)*d/(temperature*temperature);
+    // }
+    /** {@inheritDoc} */
     @Override
-	public double aT(double temperature) {
+    public double aT(double temperature) {
 
         return getComponent().geta() * alpha(temperature);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double diffalphaT(double temperature) {
+    public double diffalphaT(double temperature) {
         a = this.parameters[0];
         b = this.parameters[1];
         c = this.parameters[2];
@@ -118,15 +122,16 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
         double TC = getComponent().getTC();
         double Tr = (t / TC);
 
-        return Math.pow((Tr), (c * (b - 1))) * c * (b - 1) / t * Math.exp(a * (1 - Math.pow((Tr), (b * c))))
+        return Math.pow((Tr), (c * (b - 1))) * c * (b - 1) / t
+                * Math.exp(a * (1 - Math.pow((Tr), (b * c))))
                 - Math.pow((Tr), (c * (b - 1))) * a * Math.pow((Tr), (b * c)) * b * c / t
                         * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
 
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double diffdiffalphaT(double temperature) {
+    public double diffdiffalphaT(double temperature) {
         a = this.parameters[0];
         b = this.parameters[1];
         c = this.parameters[2];
@@ -135,28 +140,29 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
         double Tr = (t / TC);
         return Math.pow(Tr, (c * (b - 1))) * (c * c) * (b - 1) * (b - 1) / (t * t)
                 * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
-                - Math.pow(Tr, (c * (b - 1))) * c * (b - 1) / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
-                - 2 * Math.pow(Tr, (c * (b - 1))) * (c * c) * (b - 1) / (t * t) * a * Math.pow(Tr, (b * c)) * b
+                - Math.pow(Tr, (c * (b - 1))) * c * (b - 1) / (t * t)
                         * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
-                - Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * (b * b) * (c * c) / (t * t)
-                        * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+                - 2 * Math.pow(Tr, (c * (b - 1))) * (c * c) * (b - 1) / (t * t) * a
+                        * Math.pow(Tr, (b * c)) * b * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+                - Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * (b * b) * (c * c)
+                        / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
                 + Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * b * c / (t * t)
                         * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
-                + Math.pow(Tr, (c * (b - 1))) * (a * a) * (Math.pow(Tr, (2 * b * c))) * (b * b) * (c * c) / (t * t)
-                        * Math.exp(a * (1 - Math.pow(Tr, (b * c))));
+                + Math.pow(Tr, (c * (b - 1))) * (a * a) * (Math.pow(Tr, (2 * b * c))) * (b * b)
+                        * (c * c) / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c))));
 
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double diffaT(double temperature) {
+    public double diffaT(double temperature) {
 
         return getComponent().geta() * diffalphaT(temperature);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double diffdiffaT(double temperature) {
+    public double diffdiffaT(double temperature) {
 
         return getComponent().geta() * diffdiffalphaT(temperature);
     }

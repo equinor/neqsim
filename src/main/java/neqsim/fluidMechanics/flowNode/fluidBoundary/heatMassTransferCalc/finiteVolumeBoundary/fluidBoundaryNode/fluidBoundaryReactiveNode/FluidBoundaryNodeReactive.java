@@ -10,7 +10,9 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>FluidBoundaryNodeReactive class.</p>
+ * <p>
+ * FluidBoundaryNodeReactive class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,12 +22,14 @@ public class FluidBoundaryNodeReactive extends FluidBoundaryNode {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new FluidBoundaryNodeReactive
+     * <p>Constructor for FluidBoundaryNodeReactive.</p>
      */
     public FluidBoundaryNodeReactive() {}
 
     /**
-     * <p>Constructor for FluidBoundaryNodeReactive.</p>
+     * <p>
+     * Constructor for FluidBoundaryNodeReactive.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */

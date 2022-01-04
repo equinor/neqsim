@@ -21,7 +21,9 @@ public class StaticPhaseMixer extends StaticMixer {
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for StaticPhaseMixer.</p>
+     * <p>
+     * Constructor for StaticPhaseMixer.
+     * </p>
      */
     public StaticPhaseMixer() {}
 
@@ -138,5 +140,4 @@ public class StaticPhaseMixer extends StaticMixer {
     public String getName() {
         return name;
     }
-
 }

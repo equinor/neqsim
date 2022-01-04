@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 /**
- * <p>DataReader class.</p>
+ * <p>
+ * DataReader class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -21,12 +23,14 @@ public class DataReader implements DataReaderInterface {
     protected ArrayList sampleObjectList = new ArrayList();
 
     /**
-     * Creates new DataReader
+     * <p>Constructor for DataReader.</p>
      */
     public DataReader() {}
 
     /**
-     * <p>Constructor for DataReader.</p>
+     * <p>
+     * Constructor for DataReader.
+     * </p>
      *
      * @param fileName a {@link java.lang.String} object
      */
@@ -68,7 +72,9 @@ public class DataReader implements DataReaderInterface {
     }
 
     /**
-     * <p>Getter for the field <code>sampleObjectList</code>.</p>
+     * <p>
+     * Getter for the field <code>sampleObjectList</code>.
+     * </p>
      *
      * @return a {@link java.util.ArrayList} object
      */
@@ -77,7 +83,9 @@ public class DataReader implements DataReaderInterface {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

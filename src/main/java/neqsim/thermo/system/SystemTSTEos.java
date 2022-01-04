@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhaseTSTEos;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -23,12 +23,15 @@ public class SystemTSTEos extends SystemEos {
 
     private static final long serialVersionUID = 1000;
     /** Creates a thermodynamic system using the SRK equation of state. */
-    double[][] TBPfractionCoefs = { { 73.404, 97.356, 0.61874, -2059.3, 0.0 },
-            { 0.072846, 2.1881, 163.91, -4043.4, 1.0 / 3.0 }, { 0.37377, 0.005493, 0.011793, -4.9e-6, 0.0 } };
+    double[][] TBPfractionCoefs = {{73.404, 97.356, 0.61874, -2059.3, 0.0},
+            {0.072846, 2.1881, 163.91, -4043.4, 1.0 / 3.0},
+            {0.37377, 0.005493, 0.011793, -4.9e-6, 0.0}};
 
     // SystemPrEos clonedSystem;
     /**
-     * <p>Constructor for SystemTSTEos.</p>
+     * <p>
+     * Constructor for SystemTSTEos.
+     * </p>
      */
     public SystemTSTEos() {
         super();
@@ -42,7 +45,9 @@ public class SystemTSTEos extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemTSTEos.</p>
+     * <p>
+     * Constructor for SystemTSTEos.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -59,7 +64,9 @@ public class SystemTSTEos extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemTSTEos.</p>
+     * <p>
+     * Constructor for SystemTSTEos.
+     * </p>
      *
      * @param T a double
      * @param P a double

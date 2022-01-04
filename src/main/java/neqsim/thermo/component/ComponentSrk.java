@@ -1,15 +1,17 @@
 /*
-* System_SRK_EOS.java
-*
-* Created on 8. april 2000, 23:14
-*/
+ * System_SRK_EOS.java
+ *
+ * Created on 8. april 2000, 23:14
+ */
 package neqsim.thermo.component;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
 
 /**
- * <p>ComponentSrk class.</p>
+ * <p>
+ * ComponentSrk class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,19 +21,22 @@ public class ComponentSrk extends ComponentEos {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new System_SRK_EOS
+     *
      * 
      */
     private double factTemp = Math.pow(2.0, 1.0 / 3.0);
 
     /**
-     * <p>Constructor for ComponentSrk.</p>
+     * <p>
+     * Constructor for ComponentSrk.
+     * </p>
      */
-    public ComponentSrk() {
-    }
+    public ComponentSrk() {}
 
     /**
-     * <p>Constructor for ComponentSrk.</p>
+     * <p>
+     * Constructor for ComponentSrk.
+     * </p>
      *
      * @param moles a double
      */
@@ -40,7 +45,9 @@ public class ComponentSrk extends ComponentEos {
     }
 
     /**
-     * <p>Constructor for ComponentSrk.</p>
+     * <p>
+     * Constructor for ComponentSrk.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -50,8 +57,8 @@ public class ComponentSrk extends ComponentEos {
     public ComponentSrk(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
-        a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
-                / criticalPressure;
+        a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature
+                * criticalTemperature / criticalPressure;
         b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
         delta1 = 1.0;
         delta2 = 0.0;
@@ -59,14 +66,16 @@ public class ComponentSrk extends ComponentEos {
         // atractiveParameter = new AtractiveTermSchwartzentruber(this);
         setAtractiveParameter(new AtractiveTermSrk(this));
 
-        double[] surfTensInfluenceParamtemp = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630,
-                -0.1611763157 };
+        double[] surfTensInfluenceParamtemp =
+                {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};
         this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
 
     }
 
     /**
-     * <p>Constructor for ComponentSrk.</p>
+     * <p>
+     * Constructor for ComponentSrk.
+     * </p>
      *
      * @param number a int
      * @param TC a double
@@ -92,20 +101,21 @@ public class ComponentSrk extends ComponentEos {
         return clonedComponent;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getVolumeCorrection() {
+    public double getVolumeCorrection() {
         if (ionicCharge != 0) {
             return 0.0;
         }
-        if(Math.abs(getVolumeCorrectionConst())>1.0e-10) {
-        	return getVolumeCorrectionConst()*b;
+        if (Math.abs(getVolumeCorrectionConst()) > 1.0e-10) {
+            return getVolumeCorrectionConst() * b;
         }
         if (Math.abs(this.getRacketZ()) < 1e-10) {
             racketZ = 0.29056 - 0.08775 * getAcentricFactor();
@@ -115,20 +125,23 @@ public class ComponentSrk extends ComponentEos {
         return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calca() {
-        return 1.0 / (9.0 * (factTemp - 1.0)) * R * R * criticalTemperature * criticalTemperature / criticalPressure;
+    public double calca() {
+        return 1.0 / (9.0 * (factTemp - 1.0)) * R * R * criticalTemperature * criticalTemperature
+                / criticalPressure;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcb() {
+    public double calcb() {
         return (factTemp - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     }
 
     /**
-     * <p>getQpure.</p>
+     * <p>
+     * getQpure.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -138,7 +151,9 @@ public class ComponentSrk extends ComponentEos {
     }
 
     /**
-     * <p>getdQpuredT.</p>
+     * <p>
+     * getdQpuredT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -148,7 +163,9 @@ public class ComponentSrk extends ComponentEos {
     }
 
     /**
-     * <p>getdQpuredTdT.</p>
+     * <p>
+     * getdQpuredTdT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -157,9 +174,9 @@ public class ComponentSrk extends ComponentEos {
         return dqPuredTdT;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getSurfaceTenisionInfluenceParameter(double temperature) {
+    public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double TR = 1.0 - temperature / getTC();
         if (TR < 0) {
             if (componentName.equals("CO2")) {

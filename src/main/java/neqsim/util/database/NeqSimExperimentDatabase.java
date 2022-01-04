@@ -47,6 +47,10 @@ public class NeqSimExperimentDatabase
     /** Constant <code>username=""</code> */
     /** Constant <code>password=""</code> */
     /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
     public static String username = "", password = "";
     static Logger logger = LogManager.getLogger(NeqSimExperimentDatabase.class);
     private static boolean createTemporaryTables = false;
@@ -60,7 +64,7 @@ public class NeqSimExperimentDatabase
     protected Connection databaseConnection = null;
 
     /**
-     * Creates new testPointbase
+     * <p>Constructor for NeqSimExperimentDatabase.</p>
      */
     public NeqSimExperimentDatabase() {
 
@@ -77,7 +81,7 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * Creates new NeqSimDataBase
+     * <p>openConnection.</p>
      *
      * @return a Connection object
      * @throws java.sql.SQLException if any.

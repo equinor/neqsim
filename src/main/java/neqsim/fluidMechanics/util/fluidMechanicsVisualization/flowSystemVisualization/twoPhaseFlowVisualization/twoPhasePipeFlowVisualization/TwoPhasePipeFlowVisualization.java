@@ -11,7 +11,9 @@ import neqsim.fluidMechanics.flowSystem.FlowSystem;
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.twoPhaseFlowNodeVisualization.TwoPhaseFlowNodeVisualization;
 
 /**
- * <p>TwoPhasePipeFlowVisualization class.</p>
+ * <p>
+ * TwoPhasePipeFlowVisualization class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -28,8 +30,10 @@ public class TwoPhasePipeFlowVisualization extends
     double[][][] temperaturePoint = new double[2][10][10];
     double[][][] interphaseContactLength = new double[2][10][10];
     double[][][] interfaceTemperaturePoint = new double[2][10][10];
-    public double[][][][] bulkComposition, interfaceComposition, effectiveMassTransferCoefficient; // phase, time,
-                                                                                                   // component, node
+    public double[][][][] bulkComposition, interfaceComposition, effectiveMassTransferCoefficient; // phase,
+                                                                                                   // time,
+                                                                                                   // component,
+                                                                                                   // node
     public double[][][][] molarFlux, schmidtNumber;
     public double[][][][] totalMolarMassTransferRate;
     public double[][][][] totalVolumetricMassTransferRate;
@@ -38,13 +42,14 @@ public class TwoPhasePipeFlowVisualization extends
     visAdInterface plot;
 
     /**
-     * Creates new PipeFlowVisualization
+     * <p>Constructor for TwoPhasePipeFlowVisualization.</p>
      */
-    public TwoPhasePipeFlowVisualization() {
-    }
+    public TwoPhasePipeFlowVisualization() {}
 
     /**
-     * <p>Constructor for TwoPhasePipeFlowVisualization.</p>
+     * <p>
+     * Constructor for TwoPhasePipeFlowVisualization.
+     * </p>
      *
      * @param nodes a int
      * @param timeSteps a int
@@ -62,9 +67,9 @@ public class TwoPhasePipeFlowVisualization extends
         System.out.println("times " + time);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setPoints() {
+    public void setPoints() {
         pressurePoint = new double[2][time][flowNodes[0].length];
         temperaturePoint = new double[2][time][flowNodes[0].length];
         interphaseContactLength = new double[2][time][flowNodes[0].length];
@@ -72,15 +77,20 @@ public class TwoPhasePipeFlowVisualization extends
         reynoldsNumber = new double[2][time][flowNodes[0].length];
         phaseFraction = new double[2][time][flowNodes[0].length];
         interfaceTemperaturePoint = new double[2][time][flowNodes[0].length];
-        bulkComposition = new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
-        effectiveMassTransferCoefficient = new double[2][flowNodes[0][0]
-                .getNumberOfComponents()][time][flowNodes[0].length];
-        interfaceComposition = new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
-        molarFlux = new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
-        schmidtNumber = new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
-        totalMolarMassTransferRate = new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
-        totalVolumetricMassTransferRate = new double[2][flowNodes[0][0]
-                .getNumberOfComponents()][time][flowNodes[0].length];
+        bulkComposition =
+                new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
+        effectiveMassTransferCoefficient =
+                new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
+        interfaceComposition =
+                new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
+        molarFlux =
+                new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
+        schmidtNumber =
+                new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
+        totalMolarMassTransferRate =
+                new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
+        totalVolumetricMassTransferRate =
+                new double[2][flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
         xPlace = new double[flowNodes[0].length];
         timeArray = new double[time];
 
@@ -97,24 +107,27 @@ public class TwoPhasePipeFlowVisualization extends
                     phaseFraction[k][j][i] = flowNodes[j][i].getPhaseFraction(k);
                     interfaceTemperaturePoint[k][j][i] = flowNodes[j][i].getInterfaceTemperature(k);
                     for (int p = 0; p < flowNodes[0][0].getNumberOfComponents(); p++) {
-                        effectiveMassTransferCoefficient[k][p][j][i] = flowNodes[j][i]
-                                .getEffectiveMassTransferCoefficient(p, k);
+                        effectiveMassTransferCoefficient[k][p][j][i] =
+                                flowNodes[j][i].getEffectiveMassTransferCoefficient(p, k);
                         bulkComposition[k][p][j][i] = flowNodes[j][i].getBulkComposition(p, k);
-                        interfaceComposition[k][p][j][i] = flowNodes[j][i].getInterfaceComposition(p, k);
+                        interfaceComposition[k][p][j][i] =
+                                flowNodes[j][i].getInterfaceComposition(p, k);
                         molarFlux[k][p][j][i] = flowNodes[j][i].getEffectiveSchmidtNumber(p, k);
                         schmidtNumber[k][p][j][i] = flowNodes[j][i].getEffectiveSchmidtNumber(p, k);
-                        totalMolarMassTransferRate[k][p][j][i] = flowSystem[j].getTotalMolarMassTransferRate(p, i);
-                        totalVolumetricMassTransferRate[k][p][j][i] = totalMolarMassTransferRate[k][p][j][i] * 60.0
-                                / 40.87631889 * 1000.0;
+                        totalMolarMassTransferRate[k][p][j][i] =
+                                flowSystem[j].getTotalMolarMassTransferRate(p, i);
+                        totalVolumetricMassTransferRate[k][p][j][i] =
+                                totalMolarMassTransferRate[k][p][j][i] * 60.0 / 40.87631889
+                                        * 1000.0;
                     }
                 }
             }
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void displayResult(String name) {
+    public void displayResult(String name) {
         // double[][] points = new double[1][1];
         setPoints();
         //
@@ -156,11 +169,12 @@ public class TwoPhasePipeFlowVisualization extends
     // file.createFile();
     // }
     //
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         setPoints();
-        neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
+        neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file =
+                new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
         file.setOutputFileName(name);
         file.setXvalues(xPlace, "length", "meter");
         file.setYvalues(pressurePoint[0][0], "gas pressure", "sec");
@@ -189,10 +203,10 @@ public class TwoPhasePipeFlowVisualization extends
                     ("total gas Volumetric Mass Transfer " + comp + p), "sec");
             file.setYvalues(totalVolumetricMassTransferRate[1][p][0],
                     ("total liq Volumetric Mass Transfer " + comp + p), "sec");
-            file.setYvalues(effectiveMassTransferCoefficient[0][p][0], ("eff. masstransfer coef gas " + comp + p),
-                    "sec");
-            file.setYvalues(effectiveMassTransferCoefficient[1][p][0], ("eff. masstransfer coef liq " + comp + p),
-                    "sec");
+            file.setYvalues(effectiveMassTransferCoefficient[0][p][0],
+                    ("eff. masstransfer coef gas " + comp + p), "sec");
+            file.setYvalues(effectiveMassTransferCoefficient[1][p][0],
+                    ("eff. masstransfer coef liq " + comp + p), "sec");
             file.setYvalues(schmidtNumber[0][p][0], ("gas scmidtnumber " + comp + p), "-");
             file.setYvalues(schmidtNumber[1][p][0], ("liquid scmidtnumber " + comp + p), "-");
         }

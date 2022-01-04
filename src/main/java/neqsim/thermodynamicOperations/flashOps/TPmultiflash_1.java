@@ -13,7 +13,9 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>TPmultiflash_1 class.</p>
+ * <p>
+ * TPmultiflash_1 class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -31,12 +33,14 @@ public class TPmultiflash_1 extends TPflash {
     double Q = 0;
 
     /**
-     * Creates new TPmultiflash_1
+     * <p>Constructor for TPmultiflash_1.</p>
      */
     public TPmultiflash_1() {}
 
     /**
-     * <p>Constructor for TPmultiflash_1.</p>
+     * <p>
+     * Constructor for TPmultiflash_1.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -45,7 +49,9 @@ public class TPmultiflash_1 extends TPflash {
     }
 
     /**
-     * <p>Constructor for TPmultiflash_1.</p>
+     * <p>
+     * Constructor for TPmultiflash_1.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param check a boolean
@@ -55,12 +61,16 @@ public class TPmultiflash_1 extends TPflash {
     }
 
     /**
-     * <p>calcMultiPhaseBeta.</p>
+     * <p>
+     * calcMultiPhaseBeta.
+     * </p>
      */
     public void calcMultiPhaseBeta() {}
 
     /**
-     * <p>setXY.</p>
+     * <p>
+     * setXY.
+     * </p>
      */
     public void setXY() {
         for (int k = 0; k < system.getNumberOfPhases(); k++) {
@@ -74,7 +84,9 @@ public class TPmultiflash_1 extends TPflash {
     }
 
     /**
-     * <p>calcE.</p>
+     * <p>
+     * calcE.
+     * </p>
      */
     public void calcE() {
         E = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -88,7 +100,9 @@ public class TPmultiflash_1 extends TPflash {
     }
 
     /**
-     * <p>calcQ.</p>
+     * <p>
+     * calcQ.
+     * </p>
      *
      * @return a double
      */
@@ -131,7 +145,9 @@ public class TPmultiflash_1 extends TPflash {
     }
 
     /**
-     * <p>solveBeta.</p>
+     * <p>
+     * solveBeta.
+     * </p>
      */
     public void solveBeta() {
         double oldBeta[] = new double[system.getNumberOfPhases()];

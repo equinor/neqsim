@@ -12,9 +12,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Heater class.</p>
+ * <p>
+ * Heater class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface {
@@ -34,15 +36,17 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     double coolingMediumTemperature = 278.15;
 
     /**
-     * Creates new Heater
+     * <p>Constructor for Heater.</p>
      */
-    public Heater() {
-    }
+    public Heater() {}
 
     /**
-     * <p>Constructor for Heater.</p>
+     * <p>
+     * Constructor for Heater.
+     * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Heater(StreamInterface inStream) {
         this.inStream = inStream;
@@ -51,10 +55,13 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>Constructor for Heater.</p>
+     * <p>
+     * Constructor for Heater.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Heater(String name, StreamInterface inStream) {
         super(name);
@@ -64,7 +71,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>Getter for the field <code>inStream</code>.</p>
+     * <p>
+     * Getter for the field <code>inStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -79,7 +88,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>Getter for the field <code>outStream</code>.</p>
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -88,7 +99,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>setOutPressure.</p>
+     * <p>
+     * setOutPressure.
+     * </p>
      *
      * @param pressure a double
      */
@@ -106,7 +119,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>setOutTemperature.</p>
+     * <p>
+     * setOutTemperature.
+     * </p>
      *
      * @param temperature a double
      */
@@ -193,14 +208,18 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
     public void runTransient() {
         run();
     }
 
     /**
-     * <p>Getter for the field <code>energyInput</code>.</p>
+     * <p>
+     * Getter for the field <code>energyInput</code>.
+     * </p>
      *
      * @return a double
      */
@@ -209,7 +228,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>getDuty.</p>
+     * <p>
+     * getDuty.
+     * </p>
      *
      * @return a double
      */
@@ -218,7 +239,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>Setter for the field <code>energyInput</code>.</p>
+     * <p>
+     * Setter for the field <code>energyInput</code>.
+     * </p>
      *
      * @param energyInput a double
      */
@@ -229,7 +252,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>setDuty.</p>
+     * <p>
+     * setDuty.
+     * </p>
      *
      * @param energyInput a double
      */
@@ -238,7 +263,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>isSetEnergyInput.</p>
+     * <p>
+     * isSetEnergyInput.
+     * </p>
      *
      * @return a boolean
      */
@@ -247,7 +274,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>Setter for the field <code>setEnergyInput</code>.</p>
+     * <p>
+     * Setter for the field <code>setEnergyInput</code>.
+     * </p>
      *
      * @param setEnergyInput a boolean
      */
@@ -256,7 +285,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>Getter for the field <code>pressureDrop</code>.</p>
+     * <p>
+     * Getter for the field <code>pressureDrop</code>.
+     * </p>
      *
      * @return the pressureDrop
      */
@@ -265,7 +296,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>Setter for the field <code>pressureDrop</code>.</p>
+     * <p>
+     * Setter for the field <code>pressureDrop</code>.
+     * </p>
      *
      * @param pressureDrop the pressureDrop to set
      */
@@ -274,7 +307,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
-     * <p>Setter for the field <code>outStream</code>.</p>
+     * <p>
+     * Setter for the field <code>outStream</code>.
+     * </p>
      *
      * @param outStream the outStream to set
      */
@@ -293,7 +328,8 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         outStream.run();
         outStream.getFluid().init(3);
 
-        entrop += outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
+        entrop += outStream.getThermoSystem().getEntropy(unit)
+                - inStream.getThermoSystem().getEntropy(unit);
 
         return entrop;
     }

@@ -15,7 +15,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Pump class.</p>
+ * <p>
+ * Pump class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -41,24 +43,30 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     private PumpChart pumpChart = new PumpChart();
 
     /**
-     * Creates new Pump
+     * <p>Constructor for Pump.</p>
      */
     public Pump() {}
 
     /**
-     * <p>Constructor for Pump.</p>
+     * <p>
+     * Constructor for Pump.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Pump(StreamInterface inletStream) {
         setInletStream(inletStream);
     }
 
     /**
-     * <p>Constructor for Pump.</p>
+     * <p>
+     * Constructor for Pump.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Pump(String name, StreamInterface inletStream) {
         super(name);
@@ -92,7 +100,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>getPower.</p>
+     * <p>
+     * getPower.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -109,7 +119,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>getDuty.</p>
+     * <p>
+     * getDuty.
+     * </p>
      *
      * @return a double
      */
@@ -124,7 +136,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>calculateAsCompressor.</p>
+     * <p>
+     * calculateAsCompressor.
+     * </p>
      *
      * @param setPumpCalcType a boolean
      */
@@ -309,7 +323,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     public void runTransient() {}
 
     /**
-     * <p>Getter for the field <code>molarFlow</code>.</p>
+     * <p>
+     * Getter for the field <code>molarFlow</code>.
+     * </p>
      *
      * @return a double
      */
@@ -318,7 +334,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>Setter for the field <code>molarFlow</code>.</p>
+     * <p>
+     * Setter for the field <code>molarFlow</code>.
+     * </p>
      *
      * @param molarFlow a double
      */
@@ -333,7 +351,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>Getter for the field <code>isentropicEfficiency</code>.</p>
+     * <p>
+     * Getter for the field <code>isentropicEfficiency</code>.
+     * </p>
      *
      * @return the isentropicEfficientcy
      */
@@ -342,7 +362,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>Setter for the field <code>isentropicEfficiency</code>.</p>
+     * <p>
+     * Setter for the field <code>isentropicEfficiency</code>.
+     * </p>
      *
      * @param isentropicEfficientcy the isentropicEfficientcy to set
      */
@@ -351,7 +373,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>Getter for the field <code>outTemperature</code>.</p>
+     * <p>
+     * Getter for the field <code>outTemperature</code>.
+     * </p>
      *
      * @return a double
      */
@@ -363,7 +387,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>Setter for the field <code>outTemperature</code>.</p>
+     * <p>
+     * Setter for the field <code>outTemperature</code>.
+     * </p>
      *
      * @param outTemperature a double
      */
@@ -386,7 +412,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>Setter for the field <code>pressure</code>.</p>
+     * <p>
+     * Setter for the field <code>pressure</code>.
+     * </p>
      *
      * @param pressure a double
      * @param unit a {@link java.lang.String} object
@@ -397,7 +425,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>Setter for the field <code>speed</code>.</p>
+     * <p>
+     * Setter for the field <code>speed</code>.
+     * </p>
      *
      * @param speed a double
      */
@@ -406,7 +436,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>Getter for the field <code>speed</code>.</p>
+     * <p>
+     * Getter for the field <code>speed</code>.
+     * </p>
      *
      * @return a double
      */
@@ -415,7 +447,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>Getter for the field <code>pumpChart</code>.</p>
+     * <p>
+     * Getter for the field <code>pumpChart</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.pump.PumpChart} object
      */
@@ -424,7 +458,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
-     * <p>Getter for the field <code>inStream</code>.</p>
+     * <p>
+     * Getter for the field <code>inStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */

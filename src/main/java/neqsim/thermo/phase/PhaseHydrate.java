@@ -10,7 +10,9 @@ import neqsim.thermo.component.ComponentHydrateGF;
 import neqsim.thermo.component.ComponentHydratePVTsim;
 
 /**
- * <p>PhaseHydrate class.</p>
+ * <p>
+ * PhaseHydrate class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,14 +23,16 @@ public class PhaseHydrate extends Phase {
     String hydrateModel = "PVTsimHydrateModel";
 
     /**
-     * Creates new PhaseHydrate
+     * <p>Constructor for PhaseHydrate.</p>
      */
     public PhaseHydrate() {
         phaseTypeName = "hydrate";
     }
 
     /**
-     * <p>Constructor for PhaseHydrate.</p>
+     * <p>
+     * Constructor for PhaseHydrate.
+     * </p>
      *
      * @param fluidModel a {@link java.lang.String} object
      */
@@ -56,10 +60,11 @@ public class PhaseHydrate extends Phase {
         return clonedPhase;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
-            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+            throws neqsim.util.exception.IsNaNException,
+            neqsim.util.exception.TooManyIterationsException {
         double sum = 1.0;
         int hydrateStructure = ((ComponentHydrate) getComponent(0)).getHydrateStructure();
         for (int j = 0; j < 2; j++) {
@@ -68,21 +73,25 @@ public class PhaseHydrate extends Phase {
                         * ((ComponentHydrate) getComponent(i)).calcYKI(hydrateStructure, j, this);
             }
         }
-        return sum / (((ComponentHydrate) getComponent(0)).getMolarVolumeHydrate(hydrateStructure, temperature));
+        return sum / (((ComponentHydrate) getComponent(0)).getMolarVolumeHydrate(hydrateStructure,
+                temperature));
         // return 1.0;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
+    public void addcomponent(String componentName, double molesInPhase, double moles,
+            int compNumber) {
         super.addcomponent(molesInPhase);
         // componentArray[compNumber] = new ComponentHydrateStatoil(componentName,
         // moles, molesInPhase, compNumber);
         if (hydrateModel.equals("CPAHydrateModel")) {
-            componentArray[compNumber] = new ComponentHydrateGF(componentName, moles, molesInPhase, compNumber);
+            componentArray[compNumber] =
+                    new ComponentHydrateGF(componentName, moles, molesInPhase, compNumber);
             // System.out.println("hydrate model: CPA-EoS hydrate model selected");
         } else {
-            componentArray[compNumber] = new ComponentHydratePVTsim(componentName, moles, molesInPhase, compNumber);
+            componentArray[compNumber] =
+                    new ComponentHydratePVTsim(componentName, moles, molesInPhase, compNumber);
             // System.out.println("hydrate model: standard PVTsim hydrate model selected");
         }
         // componentArray[compNumber] = new ComponentHydrateBallard(componentName,
@@ -91,23 +100,25 @@ public class PhaseHydrate extends Phase {
         // molesInPhase, compNumber);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
-                                                                                                            // start
-                                                                                                            // init type
-                                                                                                            // =1 gi nye
-                                                                                                            // betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+            double beta) { // type = 0
+                           // start
+                           // init type
+                           // =1 gi nye
+                           // betingelser
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void resetMixingRule(int type) {
-    }
+    public void resetMixingRule(int type) {}
 
     /**
-     * <p>setSolidRefFluidPhase.</p>
+     * <p>
+     * setSolidRefFluidPhase.
+     * </p>
      *
      * @param refPhase a {@link neqsim.thermo.phase.PhaseInterface} object
      */

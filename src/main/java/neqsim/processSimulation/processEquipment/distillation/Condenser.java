@@ -4,7 +4,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Condenser class.</p>
+ * <p>
+ * Condenser class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -18,13 +20,16 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
     double duty = 0.0;
 
     /**
-     * <p>Constructor for Condenser.</p>
+     * <p>
+     * Constructor for Condenser.
+     * </p>
      */
-    public Condenser() {
-    }
+    public Condenser() {}
 
     /**
-     * <p>Getter for the field <code>refluxRatio</code>.</p>
+     * <p>
+     * Getter for the field <code>refluxRatio</code>.
+     * </p>
      *
      * @return the refluxRatio
      */
@@ -33,7 +38,9 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
     }
 
     /**
-     * <p>Setter for the field <code>refluxRatio</code>.</p>
+     * <p>
+     * Setter for the field <code>refluxRatio</code>.
+     * </p>
      *
      * @param refluxRatio the refluxRatio to set
      */
@@ -43,7 +50,9 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
     }
 
     /**
-     * <p>Getter for the field <code>duty</code>.</p>
+     * <p>
+     * Getter for the field <code>duty</code>.
+     * </p>
      *
      * @return a double
      */
@@ -55,12 +64,12 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
     /** {@inheritDoc} */
     @Override
     public void run() {
-        double oldTemp = getTemperature();
         // System.out.println("guess temperature " + getTemperature());
         if (!refluxIsSet) {
             super.run();
         } else {
-            SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
+            SystemInterface thermoSystem2 =
+                    (SystemInterface) streams.get(0).getThermoSystem().clone();
             // System.out.println("total number of moles " +
             // thermoSystem2.getTotalNumberOfMoles());
             mixedStream.setThermoSystem(thermoSystem2);

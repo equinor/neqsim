@@ -47,6 +47,10 @@ public class NeqSimTechnicalDesignDatabase
     /** Constant <code>username=""</code> */
     /** Constant <code>password=""</code> */
     /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
     public static String username = "", password = "";
     static Logger logger = LogManager.getLogger(NeqSimTechnicalDesignDatabase.class);
     private static boolean createTemporaryTables = false;
@@ -60,7 +64,7 @@ public class NeqSimTechnicalDesignDatabase
     protected Connection databaseConnection = null;
 
     /**
-     * Creates new testPointbase
+     * <p>Constructor for NeqSimTechnicalDesignDatabase.</p>
      */
     public NeqSimTechnicalDesignDatabase() {
 
@@ -77,7 +81,7 @@ public class NeqSimTechnicalDesignDatabase
     }
 
     /**
-     * Creates new NeqSimDataBase
+     * <p>openConnection.</p>
      *
      * @return a Connection object
      * @throws java.sql.SQLException if any.

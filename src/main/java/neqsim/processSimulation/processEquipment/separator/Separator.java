@@ -20,7 +20,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Separator class.</p>
+ * <p>
+ * Separator class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -48,7 +50,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
     /**
-     * Creates new Separator
+     * <p>Constructor for Separator.</p>
      */
     public Separator() {
         super();
@@ -56,9 +58,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Constructor for Separator.</p>
+     * <p>
+     * Constructor for Separator.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Separator(StreamInterface inletStream) {
         this();
@@ -66,10 +71,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Constructor for Separator.</p>
+     * <p>
+     * Constructor for Separator.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Separator(String name, StreamInterface inletStream) {
         this(inletStream);
@@ -77,9 +85,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>setInletStream.</p>
+     * <p>
+     * setInletStream.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void setInletStream(StreamInterface inletStream) {
         inletStreamMixer.addStream(inletStream);
@@ -94,9 +105,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>addStream.</p>
+     * <p>
+     * addStream.
+     * </p>
      *
-     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void addStream(StreamInterface newStream) {
         if (numberOfInputStreams == 0) {
@@ -108,7 +122,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>liquidOutStream</code>.</p>
+     * <p>
+     * Getter for the field <code>liquidOutStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -117,7 +133,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>gasOutStream</code>.</p>
+     * <p>
+     * Getter for the field <code>gasOutStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -126,7 +144,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>getGas.</p>
+     * <p>
+     * getGas.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -135,7 +155,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>getLiquid.</p>
+     * <p>
+     * getLiquid.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -277,7 +299,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>setTempPres.</p>
+     * <p>
+     * setTempPres.
+     * </p>
      *
      * @param temp a double
      * @param pres a double
@@ -296,7 +320,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>efficiency</code>.</p>
+     * <p>
+     * Getter for the field <code>efficiency</code>.
+     * </p>
      *
      * @return a double
      */
@@ -305,7 +331,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Setter for the field <code>efficiency</code>.</p>
+     * <p>
+     * Setter for the field <code>efficiency</code>.
+     * </p>
      *
      * @param efficiency a double
      */
@@ -314,7 +342,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>liquidCarryoverFraction</code>.</p>
+     * <p>
+     * Getter for the field <code>liquidCarryoverFraction</code>.
+     * </p>
      *
      * @return a double
      */
@@ -323,7 +353,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Setter for the field <code>liquidCarryoverFraction</code>.</p>
+     * <p>
+     * Setter for the field <code>liquidCarryoverFraction</code>.
+     * </p>
      *
      * @param liquidCarryoverFraction a double
      */
@@ -332,7 +364,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>gasCarryunderFraction</code>.</p>
+     * <p>
+     * Getter for the field <code>gasCarryunderFraction</code>.
+     * </p>
      *
      * @return a double
      */
@@ -341,7 +375,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Setter for the field <code>gasCarryunderFraction</code>.</p>
+     * <p>
+     * Setter for the field <code>gasCarryunderFraction</code>.
+     * </p>
      *
      * @param gasCarryunderFraction a double
      */
@@ -350,7 +386,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>liquidLevel</code>.</p>
+     * <p>
+     * Getter for the field <code>liquidLevel</code>.
+     * </p>
      *
      * @return a double
      */
@@ -359,7 +397,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>pressureDrop</code>.</p>
+     * <p>
+     * Getter for the field <code>pressureDrop</code>.
+     * </p>
      *
      * @return the pressureDrop
      */
@@ -368,7 +408,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Setter for the field <code>pressureDrop</code>.</p>
+     * <p>
+     * Setter for the field <code>pressureDrop</code>.
+     * </p>
      *
      * @param pressureDrop the pressureDrop to set
      */
@@ -377,7 +419,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>internalDiameter</code>.</p>
+     * <p>
+     * Getter for the field <code>internalDiameter</code>.
+     * </p>
      *
      * @return the diameter
      */
@@ -392,7 +436,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>getGasSuperficialVelocity.</p>
+     * <p>
+     * getGasSuperficialVelocity.
+     * </p>
      *
      * @return a double
      */
@@ -403,7 +449,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>getGasLoadFactor.</p>
+     * <p>
+     * getGasLoadFactor.
+     * </p>
      *
      * @return a double
      */
@@ -416,7 +464,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>getGasLoadFactor.</p>
+     * <p>
+     * getGasLoadFactor.
+     * </p>
      *
      * @param phaseNumber a int
      * @return a double
@@ -436,7 +486,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>getDeRatedGasLoadFactor.</p>
+     * <p>
+     * getDeRatedGasLoadFactor.
+     * </p>
      *
      * @return a double
      */
@@ -455,7 +507,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>getDeRatedGasLoadFactor.</p>
+     * <p>
+     * getDeRatedGasLoadFactor.
+     * </p>
      *
      * @param phase a int
      * @return a double
@@ -476,7 +530,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>orientation</code>.</p>
+     * <p>
+     * Getter for the field <code>orientation</code>.
+     * </p>
      *
      * @return the orientation
      */
@@ -485,7 +541,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Setter for the field <code>orientation</code>.</p>
+     * <p>
+     * Setter for the field <code>orientation</code>.
+     * </p>
      *
      * @param orientation the orientation to set
      */
@@ -494,7 +552,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>separatorLength</code>.</p>
+     * <p>
+     * Getter for the field <code>separatorLength</code>.
+     * </p>
      *
      * @return the separatorLength
      */
@@ -503,7 +563,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Setter for the field <code>separatorLength</code>.</p>
+     * <p>
+     * Setter for the field <code>separatorLength</code>.
+     * </p>
      *
      * @param separatorLength the separatorLength to set
      */
@@ -512,20 +574,28 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>separatorSection</code>.</p>
+     * <p>
+     * Getter for the field <code>separatorSection</code>.
+     * </p>
      *
      * @param i a int
-     * @return a {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection} object
+     * @return a
+     *         {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection}
+     *         object
      */
     public SeparatorSection getSeparatorSection(int i) {
         return separatorSection.get(i);
     }
 
     /**
-     * <p>Getter for the field <code>separatorSection</code>.</p>
+     * <p>
+     * Getter for the field <code>separatorSection</code>.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @return a {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection} object
+     * @return a
+     *         {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection}
+     *         object
      */
     public SeparatorSection getSeparatorSection(String name) {
         for (SeparatorSection sec : separatorSection) {
@@ -538,7 +608,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>getSeparatorSections.</p>
+     * <p>
+     * getSeparatorSections.
+     * </p>
      *
      * @return a {@link java.util.ArrayList} object
      */
@@ -547,7 +619,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>addSeparatorSection.</p>
+     * <p>
+     * addSeparatorSection.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param type a {@link java.lang.String} object
@@ -569,7 +643,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Getter for the field <code>designLiquidLevelFraction</code>.</p>
+     * <p>
+     * Getter for the field <code>designLiquidLevelFraction</code>.
+     * </p>
      *
      * @return the designGasLevelFraction
      */
@@ -578,7 +654,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>Setter for the field <code>designLiquidLevelFraction</code>.</p>
+     * <p>
+     * Setter for the field <code>designLiquidLevelFraction</code>.
+     * </p>
      *
      * @param designLiquidLevelFraction a double
      */

@@ -19,14 +19,18 @@ abstract class Conductivity extends
     double conductivity = 0;
 
     /**
-     * Creates new Conductivity
+     * <p>Constructor for Conductivity.</p>
      */
     public Conductivity() {}
 
     /**
-     * <p>Constructor for Conductivity.</p>
+     * <p>
+     * Constructor for Conductivity.
+     * </p>
      *
-     * @param phase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public Conductivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {

@@ -26,7 +26,9 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>LinearProgrammingChemicalEquilibrium class.</p>
+ * <p>
+ * LinearProgrammingChemicalEquilibrium class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -46,21 +48,23 @@ public class LinearProgrammingChemicalEquilibrium
     ChemicalReactionOperations operations;
 
     /**
-     * Creates new LinearProgrammingChemicalEquilibrium
+     * <p>Constructor for LinearProgrammingChemicalEquilibrium.</p>
      */
     public LinearProgrammingChemicalEquilibrium() {}
 
     @SuppressWarnings("unchecked")
-	/**
-	 * <p>Constructor for LinearProgrammingChemicalEquilibrium.</p>
-	 *
-	 * @param chemRefPot an array of {@link double} objects
-	 * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-	 * @param elements an array of {@link java.lang.String} objects
-	 * @param operations a {@link neqsim.chemicalReactions.ChemicalReactionOperations} object
-	 * @param phase a int
-	 */
-	public LinearProgrammingChemicalEquilibrium(double[] chemRefPot,
+    /**
+     * <p>
+     * Constructor for LinearProgrammingChemicalEquilibrium.
+     * </p>
+     *
+     * @param chemRefPot an array of {@link double} objects
+     * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
+     * @param elements an array of {@link java.lang.String} objects
+     * @param operations a {@link neqsim.chemicalReactions.ChemicalReactionOperations} object
+     * @param phase a int
+     */
+    public LinearProgrammingChemicalEquilibrium(double[] chemRefPot,
             ComponentInterface[] components, String[] elements,
             ChemicalReactionOperations operations, int phase) {
         this.operations = operations;
@@ -107,7 +111,9 @@ public class LinearProgrammingChemicalEquilibrium
 
     // Modified method by Procede
     /**
-     * <p>calcA.</p>
+     * <p>
+     * calcA.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -146,7 +152,9 @@ public class LinearProgrammingChemicalEquilibrium
     }
 
     /**
-     * <p>getA.</p>
+     * <p>
+     * getA.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -155,7 +163,9 @@ public class LinearProgrammingChemicalEquilibrium
     }
 
     /**
-     * <p>getRefPot.</p>
+     * <p>
+     * getRefPot.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -164,7 +174,9 @@ public class LinearProgrammingChemicalEquilibrium
     }
 
     /**
-     * <p>changePrimaryComponents.</p>
+     * <p>
+     * changePrimaryComponents.
+     * </p>
      */
     public void changePrimaryComponents() {
         if (changes == maxChanges && minChanges >= 0) {
@@ -293,7 +305,9 @@ public class LinearProgrammingChemicalEquilibrium
      * return nEts; }
      */
     /**
-     * <p>calcx.</p>
+     * <p>
+     * calcx.
+     * </p>
      *
      * @param atemp a {@link Jama.Matrix} object
      * @param lagrangeTemp a {@link Jama.Matrix} object
@@ -330,7 +344,9 @@ public class LinearProgrammingChemicalEquilibrium
 
     // Method updated to use Apache Commons Math 3 by Marlene 07.12.18
     /**
-     * <p>generateInitialEstimates.</p>
+     * <p>
+     * generateInitialEstimates.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param bVector an array of {@link double} objects

@@ -10,7 +10,9 @@ import neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFl
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>OnePhasePipeLine class.</p>
+ * <p>
+ * OnePhasePipeLine class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,13 +22,14 @@ public class OnePhasePipeLine extends Pipeline {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new OnePhasePipeLine
+     * <p>Constructor for OnePhasePipeLine.</p>
      */
-    public OnePhasePipeLine() {
-    }
+    public OnePhasePipeLine() {}
 
     /**
-     * <p>Constructor for OnePhasePipeLine.</p>
+     * <p>
+     * Constructor for OnePhasePipeLine.
+     * </p>
      *
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -36,25 +39,27 @@ public class OnePhasePipeLine extends Pipeline {
     }
 
     /**
-     * <p>createSystem.</p>
+     * <p>
+     * createSystem.
+     * </p>
      */
     public void createSystem() {
 
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         super.run();
         pipe.solveSteadyState(10);
-        //pipe.print();
+        // pipe.print();
         // pipe.getDisplay().createNetCdfFile(fileName);
         outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem());
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void runTransient() {
+    public void runTransient() {
         super.runTransient();
     }
 }

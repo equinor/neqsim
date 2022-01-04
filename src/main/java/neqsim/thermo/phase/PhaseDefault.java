@@ -9,9 +9,11 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentInterface;
 
 /**
- * <p>PhaseDefault class.</p>
+ * <p>
+ * PhaseDefault class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class PhaseDefault extends Phase {
@@ -21,14 +23,16 @@ public class PhaseDefault extends Phase {
     protected ComponentInterface defComponent = null;
 
     /**
-     * Creates new PhaseEos
+     * <p>Constructor for PhaseDefault.</p>
      */
     public PhaseDefault() {
 
     }
 
     /**
-     * <p>Constructor for PhaseDefault.</p>
+     * <p>
+     * Constructor for PhaseDefault.
+     * </p>
      *
      * @param comp a {@link neqsim.thermo.component.ComponentInterface} object
      */
@@ -38,7 +42,9 @@ public class PhaseDefault extends Phase {
     }
 
     /**
-     * <p>setComponentType.</p>
+     * <p>
+     * setComponentType.
+     * </p>
      *
      * @param comp a {@link neqsim.thermo.component.ComponentInterface} object
      */
@@ -48,10 +54,12 @@ public class PhaseDefault extends Phase {
 
     /** {@inheritDoc} */
     @Override
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(moles);
         try {
-            componentArray[compNumber] = defComponent.getClass().getDeclaredConstructor().newInstance();
+            componentArray[compNumber] =
+                    defComponent.getClass().getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             logger.error("err " + e.toString());
         }
@@ -60,25 +68,26 @@ public class PhaseDefault extends Phase {
 
     /** {@inheritDoc} */
     @Override
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
-                                                                                                            // start
-                                                                                                            // init type
-                                                                                                            // =1 gi nye
-                                                                                                            // betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+            double beta) { // type = 0
+                           // start
+                           // init type
+                           // =1 gi nye
+                           // betingelser
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
     /** {@inheritDoc} */
     @Override
     public double molarVolume(double pressure, double temperature, double A, double B, int phase)
-            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+            throws neqsim.util.exception.IsNaNException,
+            neqsim.util.exception.TooManyIterationsException {
         return 1.0;
     }
 
     /** {@inheritDoc} */
     @Override
-    public void resetMixingRule(int type) {
-    }
+    public void resetMixingRule(int type) {}
 
     /** {@inheritDoc} */
     @Override
@@ -91,7 +100,8 @@ public class PhaseDefault extends Phase {
     public double getGibbsEnergy() {
         double val = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
-            val += getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugasityCoeffisient());// +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
+            val += getComponent(i).getNumberOfMolesInPhase()
+                    * (getComponent(i).getLogFugasityCoeffisient());// +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
         }
         return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
     }

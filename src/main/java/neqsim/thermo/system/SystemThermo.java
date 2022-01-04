@@ -881,7 +881,7 @@ abstract class SystemThermo implements SystemInterface {
             // // refSystem.init(1);
             // //refSystem.initPhysicalProperties();
             // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
-            // //må sammenligne med API-standard for tetthet - og sette Penloux dt
+            // sammenligne med API-standard for tetthet - og sette Penloux dt
             //
             //
         } catch (Exception e) {
@@ -1022,7 +1022,7 @@ abstract class SystemThermo implements SystemInterface {
             // // refSystem.init(1);
             // //refSystem.initPhysicalProperties();
             // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
-            // //må sammenligne med API-standard for tetthet - og sette Penloux dt
+            // // sammenligne med API-standard for tetthet - og sette Penloux dt
             //
             //
         } catch (Exception e) {

@@ -1,7 +1,9 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity;
 
 /**
- * <p>CorrespondingStatesDiffusivity class.</p>
+ * <p>
+ * CorrespondingStatesDiffusivity class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -13,14 +15,18 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
     double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
 
     /**
-     * Creates new Conductivity
+     * <p>Constructor for CorrespondingStatesDiffusivity.</p>
      */
     public CorrespondingStatesDiffusivity() {}
 
     /**
-     * <p>Constructor for CorrespondingStatesDiffusivity.</p>
+     * <p>
+     * Constructor for CorrespondingStatesDiffusivity.
+     * </p>
      *
-     * @param phase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public CorrespondingStatesDiffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {

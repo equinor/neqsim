@@ -18,29 +18,32 @@ abstract class ComponentGEUniquacmodifiedHV extends ComponentGEUniquac {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new ComponentGEUniquacmodifiedHV
+     * <p>Constructor for ComponentGEUniquacmodifiedHV.</p>
      */
-    public ComponentGEUniquacmodifiedHV() {
-    }
+    public ComponentGEUniquacmodifiedHV() {}
 
     /**
-     * <p>Constructor for ComponentGEUniquacmodifiedHV.</p>
+     * <p>
+     * Constructor for ComponentGEUniquacmodifiedHV.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double
      * @param compnumber a int
      */
-    public ComponentGEUniquacmodifiedHV(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentGEUniquacmodifiedHV(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
+    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure, int phasetype) {
 
-        double V = 0, F = 0, a, gammaC = 0, gammaR = 0, temp1 = 0, temp2 = 0, temp3 = 0, temp4 = 0, temp5 = 0, gamma;
+        double V = 0, F = 0, a, gammaC = 0, gammaR = 0, temp1 = 0, temp2 = 0, temp3 = 0, temp4 = 0,
+                temp5 = 0, gamma;
         int j, k;
 
         // PhaseGEInterface phaseny = (PhaseGEInterface) phase.getPhase();

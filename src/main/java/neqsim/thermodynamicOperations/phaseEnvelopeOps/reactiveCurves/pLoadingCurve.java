@@ -6,19 +6,24 @@
 
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.OperationInterface;
-import org.apache.logging.log4j.*;
 
 /**
- * <p>pLoadingCurve class.</p>
+ * <p>
+ * pLoadingCurve class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class pLoadingCurve implements OperationInterface {
@@ -33,7 +38,7 @@ public class pLoadingCurve implements OperationInterface {
     double lnOldOldK[], lnK[];
     double lnOldK[];
     double oldDeltalnK[], deltalnK[];
-    double tm[] = { 1, 1 };
+    double tm[] = {1, 1};
     double beta = 1e-5;
     int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
     JProgressBar monitor;
@@ -44,18 +49,18 @@ public class pLoadingCurve implements OperationInterface {
     double[][] points = new double[35][];
 
     boolean moreLines = false;
-    int np = 0;
     // points[2] = new double[1000];
     int speceq = 0;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>Constructor for pLoadingCurve.</p>
      */
-    public pLoadingCurve() {
-    }
+    public pLoadingCurve() {}
 
     /**
-     * <p>Constructor for pLoadingCurve.</p>
+     * <p>
+     * Constructor for pLoadingCurve.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -106,8 +111,8 @@ public class pLoadingCurve implements OperationInterface {
 
             for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
                 points[k + 2][i] = system.getPhases()[1].getComponents()[k].getx();
-                points[k + 2 + system.getPhases()[1].getNumberOfComponents()][i] = system.getPhases()[1]
-                        .getActivityCoefficient(k, 1);
+                points[k + 2 + system.getPhases()[1].getNumberOfComponents()][i] =
+                        system.getPhases()[1].getActivityCoefficient(k, 1);
             }
             logger.info("point: " + points[0][i] + "  " + points[1][i]);
             system.setPressure(points[1][i]);
@@ -127,7 +132,7 @@ public class pLoadingCurve implements OperationInterface {
         double TC = system.getTC();
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
-        String[] navn = { "CO2 fugacity", "", "", "" };
+        String[] navn = {"CO2 fugacity", "", "", ""};
         String title2 = "";
         String title = "CO2 vapour pressure";
 
@@ -138,7 +143,8 @@ public class pLoadingCurve implements OperationInterface {
     /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {
-        neqsim.dataPresentation.dataHandeling printDat = new neqsim.dataPresentation.dataHandeling();
+        neqsim.dataPresentation.dataHandeling printDat =
+                new neqsim.dataPresentation.dataHandeling();
         printDat.printToFile(points, name);
     }
 
@@ -156,10 +162,11 @@ public class pLoadingCurve implements OperationInterface {
         file.setXvalues(points[0], "loading", "");
         file.setYvalues(points[1], "pressure", "");
         for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
-            file.setYvalues(points[k + 2], "mol frac " + system.getPhases()[1].getComponents()[k].getComponentName(),
-                    "");
+            file.setYvalues(points[k + 2],
+                    "mol frac " + system.getPhases()[1].getComponents()[k].getComponentName(), "");
             file.setYvalues(points[k + 2 + system.getPhases()[1].getNumberOfComponents()],
-                    ("activity " + system.getPhases()[1].getComponents()[k].getComponentName()), "");
+                    ("activity " + system.getPhases()[1].getComponents()[k].getComponentName()),
+                    "");
         }
         file.createFile();
     }

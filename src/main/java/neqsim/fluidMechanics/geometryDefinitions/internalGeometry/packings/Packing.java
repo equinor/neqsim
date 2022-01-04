@@ -7,9 +7,11 @@
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
 /**
- * <p>Packing class.</p>
+ * <p>
+ * Packing class.
+ * </p>
  *
- * @author  esol
+ * @author esol
  * @version $Id: $Id
  */
 public class Packing implements PackingInterface {
@@ -20,13 +22,14 @@ public class Packing implements PackingInterface {
     String name = null;
 
     /**
-     * Creates new Packing
+     * <p>Constructor for Packing.</p>
      */
-    public Packing() {
-    }
+    public Packing() {}
 
     /**
-     * <p>Constructor for Packing.</p>
+     * <p>
+     * Constructor for Packing.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -34,8 +37,10 @@ public class Packing implements PackingInterface {
         this.name = name;
         try {
             System.out.println("init packing");
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-            java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
+            neqsim.util.database.NeqSimDataBase database =
+                    new neqsim.util.database.NeqSimDataBase();
+            java.sql.ResultSet dataSet =
+                    database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
             dataSet.next();
             size = 1e-3 * Double.parseDouble(dataSet.getString("size")); // C
             surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));
@@ -50,7 +55,9 @@ public class Packing implements PackingInterface {
     }
 
     /**
-     * <p>Constructor for Packing.</p>
+     * <p>
+     * Constructor for Packing.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param material a {@link java.lang.String} object
@@ -60,9 +67,10 @@ public class Packing implements PackingInterface {
         this.name = name;
         try {
             System.out.println("init packing");
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-            java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='" + name
-                    + "' AND size=" + size + " AND material='" + material + "'"));
+            neqsim.util.database.NeqSimDataBase database =
+                    new neqsim.util.database.NeqSimDataBase();
+            java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='"
+                    + name + "' AND size=" + size + " AND material='" + material + "'"));
             dataSet.next();
             this.size = 1e-3 * Double.parseDouble(dataSet.getString("size")); // C
             surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));

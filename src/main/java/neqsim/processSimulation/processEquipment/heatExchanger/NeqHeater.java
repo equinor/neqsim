@@ -11,9 +11,11 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>NeqHeater class.</p>
+ * <p>
+ * NeqHeater class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class NeqHeater extends Heater {
@@ -26,13 +28,14 @@ public class NeqHeater extends Heater {
     double dH = 0.0;
 
     /**
-     * Creates new Heater
+     * <p>Constructor for NeqHeater.</p>
      */
-    public NeqHeater() {
-    }
+    public NeqHeater() {}
 
     /**
-     * <p>Constructor for NeqHeater.</p>
+     * <p>
+     * Constructor for NeqHeater.
+     * </p>
      *
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */

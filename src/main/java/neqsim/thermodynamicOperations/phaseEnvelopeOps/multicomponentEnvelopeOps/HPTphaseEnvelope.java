@@ -18,7 +18,9 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>HPTphaseEnvelope class.</p>
+ * <p>
+ * HPTphaseEnvelope class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -37,12 +39,14 @@ public class HPTphaseEnvelope extends BaseOperation {
     static Logger logger = LogManager.getLogger(HPTphaseEnvelope.class);
 
     /**
-     * Creates new HPTphaseEnvelope
+     * <p>Constructor for HPTphaseEnvelope.</p>
      */
     public HPTphaseEnvelope() {}
 
     /**
-     * <p>Constructor for HPTphaseEnvelope.</p>
+     * <p>
+     * Constructor for HPTphaseEnvelope.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */

@@ -57,7 +57,9 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     static Logger logger = LogManager.getLogger(UNIFACgroup.class);
 
     /**
-     * Creates new Element
+     * <p>
+     * Constructor for UNIFACgroup.
+     * </p>
      */
     public UNIFACgroup() {}
 
@@ -214,38 +216,31 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritDoc} Compares this object with the specified object for order. Returns a negative
+     * integer, zero, or a positive integer as this object is less than, equal to, or greater than
+     * the specified object. In the foregoing description, the notation
+     * <code>sgn(</code><i>expression</i><code>)</code> designates the mathematical <i>signum</i>
+     * function, which is defined to return one of <code>-1</code>, <code>0</code>, or
+     * <code>1</code> according to whether the value of <i>expression</i> is negative, zero or
+     * positive.
      *
-     * Compares this object with the specified object for order. Returns a negative integer, zero,
-     * or a positive integer as this object is less than, equal to, or greater than the specified
-     * object.
-     * <p>
-     *
-     * In the foregoing description, the notation <tt>sgn(</tt><i>expression</i><tt>)</tt>
-     * designates the mathematical <i>signum</i> function, which is defined to return one of
-     * <tt>-1</tt>, <tt>0</tt>, or <tt>1</tt> according to whether the value of <i>expression</i> is
-     * negative, zero or positive.
-     *
-     * The implementor must ensure <tt>sgn(x.compareTo(y)) ==
-     * -sgn(y.compareTo(x))</tt> for all <tt>x</tt> and <tt>y</tt>. (This implies that
-     * <tt>x.compareTo(y)</tt> must throw an exception iff <tt>y.compareTo(x)</tt> throws an
+     * The implementor must ensure <code>sgn(x.compareTo(y)) ==
+     * -sgn(y.compareTo(x))</code> for all <code>x</code> and <code>y</code>. (This implies that
+     * <code>x.compareTo(y)</code> must throw an exception iff <code>y.compareTo(x)</code> throws an
      * exception.)
-     * <p>
      *
      * The implementor must also ensure that the relation is transitive:
-     * <tt>(x.compareTo(y)&gt;0 &amp;&amp; y.compareTo(z)&gt;0)</tt> implies
-     * <tt>x.compareTo(z)&gt;0</tt>.
-     * <p>
+     * <code>(x.compareTo(y)&gt;0 &amp;&amp; y.compareTo(z)&gt;0)</code> implies
+     * <code>x.compareTo(z)&gt;0</code>.
      *
-     * Finally, the implementer must ensure that <tt>x.compareTo(y)==0</tt> implies that
-     * <tt>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</tt>, for all <tt>z</tt>.
-     * <p>
+     * Finally, the implementer must ensure that <code>x.compareTo(y)==0</code> implies that
+     * <code>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</code>, for all <code>z</code>.
      *
      * It is strongly recommended, but <i>not</i> strictly required that
-     * <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>. Generally speaking, any class that implements
-     * the <tt>Comparable</tt> interface and violates this condition should clearly indicate this
-     * fact. The recommended language is "Note: this class has a natural ordering that is
-     * inconsistent with equals."
+     * <code>(x.compareTo(y)==0) == (x.equals(y))</code>. Generally speaking, any class that
+     * implements the <code>Comparable</code> interface and violates this condition should clearly
+     * indicate this fact. The recommended language is "Note: this class has a natural ordering that
+     * is inconsistent with equals."
      */
     @Override
     public boolean equals(Object o) {

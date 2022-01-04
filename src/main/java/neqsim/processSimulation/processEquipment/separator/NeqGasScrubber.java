@@ -13,9 +13,11 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>NeqGasScrubber class.</p>
+ * <p>
+ * NeqGasScrubber class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class NeqGasScrubber extends Separator {
@@ -30,7 +32,7 @@ public class NeqGasScrubber extends Separator {
     String name = new String();
 
     /**
-     * Creates new Separator
+     * <p>Constructor for NeqGasScrubber.</p>
      */
     public NeqGasScrubber() {
         super();
@@ -39,7 +41,9 @@ public class NeqGasScrubber extends Separator {
     }
 
     /**
-     * <p>Constructor for NeqGasScrubber.</p>
+     * <p>
+     * Constructor for NeqGasScrubber.
+     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -49,7 +53,9 @@ public class NeqGasScrubber extends Separator {
     }
 
     /**
-     * <p>Constructor for NeqGasScrubber.</p>
+     * <p>
+     * Constructor for NeqGasScrubber.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
@@ -67,7 +73,9 @@ public class NeqGasScrubber extends Separator {
     }
 
     /**
-     * <p>Setter for the field <code>inletStream</code>.</p>
+     * <p>
+     * Setter for the field <code>inletStream</code>.
+     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -84,7 +92,9 @@ public class NeqGasScrubber extends Separator {
     }
 
     /**
-     * <p>addScrubberSection.</p>
+     * <p>
+     * addScrubberSection.
+     * </p>
      *
      * @param type a {@link java.lang.String} object
      */
@@ -132,8 +142,7 @@ public class NeqGasScrubber extends Separator {
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-    }
+    public void displayResult() {}
 
     /** {@inheritDoc} */
     @Override
@@ -142,8 +151,9 @@ public class NeqGasScrubber extends Separator {
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
-    public void runTransient() {
-    }
+    public void runTransient() {}
 }

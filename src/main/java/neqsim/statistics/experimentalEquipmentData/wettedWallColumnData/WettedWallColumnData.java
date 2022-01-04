@@ -9,22 +9,25 @@ package neqsim.statistics.experimentalEquipmentData.wettedWallColumnData;
 import neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData;
 
 /**
- * <p>WettedWallColumnData class.</p>
+ * <p>
+ * WettedWallColumnData class.
+ * </p>
  *
- * @author  even solbraa
+ * @author even solbraa
  * @version $Id: $Id
  */
 public class WettedWallColumnData extends ExperimentalEquipmentData {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new WettedWallColumnData
+     * <p>Constructor for WettedWallColumnData.</p>
      */
-    public WettedWallColumnData() {
-    }
+    public WettedWallColumnData() {}
 
     /**
-     * <p>Constructor for WettedWallColumnData.</p>
+     * <p>
+     * Constructor for WettedWallColumnData.
+     * </p>
      *
      * @param diameter a double
      * @param length a double
@@ -37,7 +40,9 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
     }
 
     /**
-     * <p>setDiameter.</p>
+     * <p>
+     * setDiameter.
+     * </p>
      *
      * @param diameter a double
      */
@@ -46,7 +51,9 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
     }
 
     /**
-     * <p>getDiameter.</p>
+     * <p>
+     * getDiameter.
+     * </p>
      *
      * @return a double
      */
@@ -55,7 +62,9 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
     }
 
     /**
-     * <p>setLength.</p>
+     * <p>
+     * setLength.
+     * </p>
      *
      * @param length a double
      */
@@ -64,7 +73,9 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
     }
 
     /**
-     * <p>getLength.</p>
+     * <p>
+     * getLength.
+     * </p>
      *
      * @return a double
      */
@@ -73,7 +84,9 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
     }
 
     /**
-     * <p>setVolume.</p>
+     * <p>
+     * setVolume.
+     * </p>
      *
      * @param volume a double
      */
@@ -82,7 +95,9 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
     }
 
     /**
-     * <p>getVolume.</p>
+     * <p>
+     * getVolume.
+     * </p>
      *
      * @return a double
      */

@@ -16,7 +16,7 @@ abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new System_EOS
+     * <p>Constructor for SystemEos.</p>
      *
      * @param T a double
      * @param P a double
@@ -26,7 +26,9 @@ abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
     }
 
     /**
-     * <p>Constructor for SystemEos.</p>
+     * <p>
+     * Constructor for SystemEos.
+     * </p>
      */
     public SystemEos() {
         super();

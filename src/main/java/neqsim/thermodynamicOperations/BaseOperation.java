@@ -9,7 +9,9 @@ package neqsim.thermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>Abstract BaseOperation class.</p>
+ * <p>
+ * Abstract BaseOperation class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,7 +23,7 @@ public abstract class BaseOperation implements OperationInterface {
     SystemInterface systemThermo = null;;
 
     /**
-     * Creates new BaseOperation
+     * <p>Constructor for BaseOperation.</p>
      */
     public BaseOperation() {}
 

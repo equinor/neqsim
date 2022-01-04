@@ -10,9 +10,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>PhysicalPropertyMethod class.</p>
+ * <p>
+ * PhysicalPropertyMethod class.
+ * </p>
  *
- * @author  esol
+ * @author esol
  * @version $Id: $Id
  */
 public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
@@ -21,10 +23,9 @@ public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
     static Logger logger = LogManager.getLogger(PhysicalPropertyMethod.class);
 
     /**
-     * Creates new PhysicalPropertyMethod
+     * <p>Constructor for PhysicalPropertyMethod.</p>
      */
-    public PhysicalPropertyMethod() {
-    }
+    public PhysicalPropertyMethod() {}
 
     /** {@inheritDoc} */
     @Override
@@ -42,8 +43,8 @@ public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
-    }
+    public void setPhase(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {}
 
     /** {@inheritDoc} */
     @Override

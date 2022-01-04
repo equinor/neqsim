@@ -157,8 +157,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
                     double tempy = 1.0;
 
-                    double tempfugcoef = -1.0e50;
-
                     for (int cavType = 0; cavType < 2; cavType++) {
                         tempy = 0.0;
 

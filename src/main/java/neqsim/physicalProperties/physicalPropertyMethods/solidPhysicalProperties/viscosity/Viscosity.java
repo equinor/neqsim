@@ -10,14 +10,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>Viscosity class.</p>
+ * <p>
+ * Viscosity class.
+ * </p>
  *
  * @author Even Solbraa
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
-public class Viscosity
-        extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
+public class Viscosity extends
+        neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Viscosity.class);
@@ -25,17 +28,21 @@ public class Viscosity
     public double[] pureComponentViscosity;
 
     /**
-     * Creates new Viscosity class
+     * <p>Constructor for Viscosity.</p>
      */
-    public Viscosity() {
-    }
+    public Viscosity() {}
 
     /**
-     * <p>Constructor for Viscosity.</p>
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
      *
-     * @param solidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param solidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
-    public Viscosity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
+    public Viscosity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
     }
 
@@ -53,29 +60,33 @@ public class Viscosity
         return properties;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcViscosity() {
+    public double calcViscosity() {
 
         double viscosity = NaN;
         return viscosity;
     }
 
     /**
-     * <p>calcPureComponentViscosity.</p>
+     * <p>
+     * calcPureComponentViscosity.
+     * </p>
      */
     public void calcPureComponentViscosity() {
 
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getPureComponentViscosity(int i) {
+    public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 
     /**
-     * <p>getViscosityPressureCorrection.</p>
+     * <p>
+     * getViscosityPressureCorrection.
+     * </p>
      *
      * @param i a int
      * @return a double

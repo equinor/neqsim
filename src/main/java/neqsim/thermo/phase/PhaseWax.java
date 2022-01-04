@@ -8,7 +8,9 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentWax;
 
 /**
- * <p>PhaseWax class.</p>
+ * <p>
+ * PhaseWax class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -18,7 +20,7 @@ public class PhaseWax extends PhaseSolid {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new PhasePureComponentSolid
+     * <p>Constructor for PhaseWax.</p>
      */
     public PhaseWax() {
         super();
@@ -38,23 +40,26 @@ public class PhaseWax extends PhaseSolid {
         return clonedPhase;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
-                                                                                                            // start
-                                                                                                            // init type
-                                                                                                            // =1 gi nye
-                                                                                                            // betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+            double beta) { // type = 0
+                           // start
+                           // init type
+                           // =1 gi nye
+                           // betingelser
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         phaseTypeName = "wax";
 
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
+    public void addcomponent(String componentName, double molesInPhase, double moles,
+            int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentWax(componentName, moles, molesInPhase, compNumber);
+        componentArray[compNumber] =
+                new ComponentWax(componentName, moles, molesInPhase, compNumber);
         // componentArray[compNumber] = new ComponentWaxWilson(componentName, moles,
         // molesInPhase, compNumber);
         //// componentArray[compNumber] = new ComponentWonWax(componentName, moles,

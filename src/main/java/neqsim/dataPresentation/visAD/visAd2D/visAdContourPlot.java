@@ -23,9 +23,11 @@ import visad.VisADException;
 import visad.java2d.DisplayImplJ2D;
 
 /**
- * <p>visAdContourPlot class.</p>
+ * <p>
+ * visAdContourPlot class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class visAdContourPlot {
@@ -47,7 +49,7 @@ public class visAdContourPlot {
     double[][] z_samples;
 
     /**
-     * Creates new visAdContourPlot
+     * <p>Constructor for visAdContourPlot.</p>
      *
      * @param firstax a {@link java.lang.String} object
      * @param secax a {@link java.lang.String} object
@@ -66,7 +68,9 @@ public class visAdContourPlot {
     }
 
     /**
-     * <p>setXYvals.</p>
+     * <p>
+     * setXYvals.
+     * </p>
      *
      * @param xMin a double
      * @param xMax a double
@@ -88,7 +92,9 @@ public class visAdContourPlot {
     }
 
     /**
-     * <p>setZvals.</p>
+     * <p>
+     * setZvals.
+     * </p>
      *
      * @param vals an array of {@link double} objects
      * @throws java.rmi.RemoteException if any.
@@ -99,7 +105,9 @@ public class visAdContourPlot {
     }
 
     /**
-     * <p>init.</p>
+     * <p>
+     * init.
+     * </p>
      *
      * @throws java.rmi.RemoteException if any.
      * @throws visad.VisADException if any.
@@ -156,7 +164,9 @@ public class visAdContourPlot {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      * @throws java.rmi.RemoteException if any.

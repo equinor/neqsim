@@ -19,7 +19,9 @@ import visad.java3d.DisplayImplJ3D;
 import visad.util.ContourWidget;
 
 /**
- * <p>visAd3DPlot class.</p>
+ * <p>
+ * visAd3DPlot class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -45,7 +47,7 @@ public class visAd3DPlot extends visAdBaseClass {
     private ContourWidget contourWid;
 
     /**
-     * Creates new visAdContourPlot
+     * <p>Constructor for visAd3DPlot.</p>
      *
      * @param firstax a {@link java.lang.String} object
      * @param secax a {@link java.lang.String} object
@@ -65,7 +67,9 @@ public class visAd3DPlot extends visAdBaseClass {
     }
 
     /**
-     * <p>setXYvals.</p>
+     * <p>
+     * setXYvals.
+     * </p>
      *
      * @param xMin a double
      * @param xMax a double
@@ -85,7 +89,9 @@ public class visAd3DPlot extends visAdBaseClass {
     }
 
     /**
-     * <p>setXYvals.</p>
+     * <p>
+     * setXYvals.
+     * </p>
      *
      * @param xvals an array of {@link double} objects
      * @param yvals an array of {@link double} objects
@@ -107,7 +113,9 @@ public class visAd3DPlot extends visAdBaseClass {
     }
 
     /**
-     * <p>setZvals.</p>
+     * <p>
+     * setZvals.
+     * </p>
      *
      * @param vals an array of {@link double} objects
      * @throws java.rmi.RemoteException if any.
@@ -204,7 +212,9 @@ public class visAd3DPlot extends visAdBaseClass {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      * @throws java.rmi.RemoteException if any.

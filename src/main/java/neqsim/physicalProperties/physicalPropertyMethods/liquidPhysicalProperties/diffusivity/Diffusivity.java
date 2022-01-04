@@ -19,14 +19,18 @@ abstract class Diffusivity extends
     double[] effectiveDiffusionCoefficient;
 
     /**
-     * Creates new Conductivity
+     * <p>Constructor for Diffusivity.</p>
      */
     public Diffusivity() {}
 
     /**
-     * <p>Constructor for Diffusivity.</p>
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
      *
-     * @param liquidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param liquidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
@@ -61,7 +65,6 @@ abstract class Diffusivity extends
     @Override
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
-        double tempVar = 0, tempVar2 = 0;
 
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
             for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {

@@ -12,9 +12,11 @@ import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironm
 import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironmentBaseClass;
 
 /**
- * <p>Abstract GeometryDefinition class.</p>
+ * <p>
+ * Abstract GeometryDefinition class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public abstract class GeometryDefinition
@@ -35,7 +37,9 @@ public abstract class GeometryDefinition
     }
 
     /**
-     * <p>Getter for the field <code>wall</code>.</p>
+     * <p>
+     * Getter for the field <code>wall</code>.
+     * </p>
      *
      * @return the wall
      */
@@ -44,7 +48,9 @@ public abstract class GeometryDefinition
     }
 
     /**
-     * <p>Setter for the field <code>wall</code>.</p>
+     * <p>
+     * Setter for the field <code>wall</code>.
+     * </p>
      *
      * @param wall the wall to set
      */
@@ -55,10 +61,9 @@ public abstract class GeometryDefinition
     double wallHeatTransferCoefficient = 20.0;
     private double innerWallTemperature = 276.5;
     protected PackingInterface packing = null;
-    /** Creates new GeometryDefinition */
 
-    public double diameter = 0, radius = 0, innerSurfaceRoughness = 0.000005, nodeLength = 0, area = 0,
-            relativeRoughnes = 0;
+    public double diameter = 0, radius = 0, innerSurfaceRoughness = 0.000005, nodeLength = 0,
+            area = 0, relativeRoughnes = 0;
     public double[] layerConductivity, layerThickness;
 
     public Wall wall = new Wall();
@@ -66,13 +71,17 @@ public abstract class GeometryDefinition
     private SurroundingEnvironment surroundingEnvironment = new SurroundingEnvironmentBaseClass();
 
     /**
-     * <p>Constructor for GeometryDefinition.</p>
+     * *
+     * <p>
+     * Constructor for GeometryDefinition.
+     * </p>
      */
-    public GeometryDefinition() {
-    }
+    public GeometryDefinition() {}
 
     /**
-     * <p>Constructor for GeometryDefinition.</p>
+     * <p>
+     * Constructor for GeometryDefinition.
+     * </p>
      *
      * @param diameter a double
      */
@@ -83,7 +92,9 @@ public abstract class GeometryDefinition
     }
 
     /**
-     * <p>Constructor for GeometryDefinition.</p>
+     * <p>
+     * Constructor for GeometryDefinition.
+     * </p>
      *
      * @param diameter a double
      * @param roughness a double
@@ -197,8 +208,7 @@ public abstract class GeometryDefinition
 
     /** {@inheritDoc} */
     @Override
-    public void setPackingType(int i) {
-    }
+    public void setPackingType(int i) {}
 
     /** {@inheritDoc} */
     @Override

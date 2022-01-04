@@ -9,7 +9,9 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>TVflash class.</p>
+ * <p>
+ * TVflash class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -22,12 +24,14 @@ public class TVflash extends Flash {
     Flash tpFlash;
 
     /**
-     * Creates new TVflash
+     * <p>Constructor for TVflash.</p>
      */
     public TVflash() {}
 
     /**
-     * <p>Constructor for TVflash.</p>
+     * <p>
+     * Constructor for TVflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Vspec a double
@@ -39,7 +43,9 @@ public class TVflash extends Flash {
     }
 
     /**
-     * <p>calcdQdVV.</p>
+     * <p>
+     * calcdQdVV.
+     * </p>
      *
      * @return a double
      */
@@ -53,7 +59,9 @@ public class TVflash extends Flash {
     }
 
     /**
-     * <p>calcdQdV.</p>
+     * <p>
+     * calcdQdV.
+     * </p>
      *
      * @return a double
      */
@@ -63,7 +71,9 @@ public class TVflash extends Flash {
     }
 
     /**
-     * <p>solveQ.</p>
+     * <p>
+     * solveQ.
+     * </p>
      *
      * @return a double
      */

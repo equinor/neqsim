@@ -10,7 +10,9 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>ComponentGEWilson class.</p>
+ * <p>
+ * ComponentGEWilson class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -20,25 +22,29 @@ public class ComponentGEWilson extends ComponentGE {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new ComponentGEWilson
+     * <p>Constructor for ComponentGEWilson.</p>
      */
-    public ComponentGEWilson() {
-    }
+    public ComponentGEWilson() {}
 
     /**
-     * <p>Constructor for ComponentGEWilson.</p>
+     * <p>
+     * Constructor for ComponentGEWilson.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double
      * @param compnumber a int
      */
-    public ComponentGEWilson(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentGEWilson(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
     /**
-     * <p>fugcoef.</p>
+     * <p>
+     * fugcoef.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponents a int
@@ -47,15 +53,18 @@ public class ComponentGEWilson extends ComponentGE {
      * @param phasetype a int
      * @return a double
      */
-    public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
-        fugasityCoeffisient = (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
-                * this.getAntoineVaporPressure(temperature) / pressure);
+    public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure, int phasetype) {
+        fugasityCoeffisient =
+                (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
+                        * this.getAntoineVaporPressure(temperature) / pressure);
         return fugasityCoeffisient;
     }
 
     /**
-     * <p>getGamma.</p>
+     * <p>
+     * getGamma.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponents a int
@@ -64,21 +73,24 @@ public class ComponentGEWilson extends ComponentGE {
      * @param phasetype a int
      * @return a double
      */
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
+    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure, int phasetype) {
         return getWilsonActivityCoeffisient(phase);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
+    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure, int phasetype, double[][] HValpha, double[][] HVgij,
+            double[][] intparam, String[][] mixRule) {
 
         return 0.0;
     }
 
     /**
-     * <p>getWilsonActivityCoeffisient.</p>
+     * <p>
+     * getWilsonActivityCoeffisient.
+     * </p>
      *
      * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
@@ -92,8 +104,9 @@ public class ComponentGEWilson extends ComponentGE {
                     .getCharEnergyParamter(phase1, this.getComponentNumber(), i);
             tempSum = 0.0;
             for (int j = 0; j < phase1.getNumberOfComponents(); j++) {
-                tempSum += phase1.getComponent(j).getx()
-                        * ((ComponentGEWilson) phase1.getComponent(j)).getCharEnergyParamter(phase1, i, j);
+                tempSum +=
+                        phase1.getComponent(j).getx() * ((ComponentGEWilson) phase1.getComponent(j))
+                                .getCharEnergyParamter(phase1, i, j);
             }
             sum2 += phase1.getComponent(i).getx() * ((ComponentGEWilson) phase1.getComponent(i))
                     .getCharEnergyParamter(phase1, i, this.getComponentNumber()) / tempSum;
@@ -102,7 +115,9 @@ public class ComponentGEWilson extends ComponentGE {
     }
 
     /**
-     * <p>getCharEnergyParamter.</p>
+     * <p>
+     * getCharEnergyParamter.
+     * </p>
      *
      * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param comp1 a int
@@ -121,8 +136,10 @@ public class ComponentGEWilson extends ComponentGE {
         // this need to be corrected accordint to how to select energy of shortest
         // carbon molecule .....
         if (phase1.getComponent(comp1).getMolarMass() > phase1.getComponent(comp2).getMolarMass()) {
-            param1 = ((ComponentGEWilson) phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
-            param2 = ((ComponentGEWilson) phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
+            param1 = ((ComponentGEWilson) phase1.getComponent(comp2))
+                    .getWilsonInteractionEnergy(phase1);
+            param2 = ((ComponentGEWilson) phase1.getComponent(comp2))
+                    .getWilsonInteractionEnergy(phase1);
             // } else if (comp1 < comp2) {
             // param1 = -2.0 / 6.0 * (154.9 * 1e3 - R * phase1.getTemperature());
             // param2 = -2.0 / 6.0 * (107.6 * 1e3 - R * phase1.getTemperature());
@@ -131,17 +148,21 @@ public class ComponentGEWilson extends ComponentGE {
             // param2 = ((ComponentWaxWilson)
             // phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
         } else {
-            param1 = ((ComponentGEWilson) phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
-            param2 = ((ComponentGEWilson) phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
+            param1 = ((ComponentGEWilson) phase1.getComponent(comp1))
+                    .getWilsonInteractionEnergy(phase1);
+            param2 = ((ComponentGEWilson) phase1.getComponent(comp2))
+                    .getWilsonInteractionEnergy(phase1);
         }
-        double energyParameter = Math
-                .exp(-(param2 - param1) / (ThermodynamicConstantsInterface.R * phase1.getTemperature()));
+        double energyParameter = Math.exp(
+                -(param2 - param1) / (ThermodynamicConstantsInterface.R * phase1.getTemperature()));
         // System.out.println("energyy parameter " +energyParameter);
         return energyParameter;
     }
 
     /**
-     * <p>getWilsonInteractionEnergy.</p>
+     * <p>
+     * getWilsonInteractionEnergy.
+     * </p>
      *
      * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
@@ -152,21 +173,27 @@ public class ComponentGEWilson extends ComponentGE {
         double carbonnumber = getMolarMass() / 0.014;
         // calculating vaporization enthalpy
         double x = 1.0 - phase1.getTemperature() / getTC();
-        double deltaHvap0 = 5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333) + 1.171 * Math.pow(x, 1.2083)
-                - 13.166 * x + 0.4858 * Math.pow(x, 2.0) - 1.088 * Math.pow(x, 3.0);
-        double deltaHvap1 = 0.80022 * Math.pow(x, 0.3333) + 273.23 * Math.pow(x, 0.8333) + 465.08 * Math.pow(x, 1.2083)
-                - 638.51 * x - 145.12 * Math.pow(x, 2.0) - 74.049 * Math.pow(x, 3.0);
-        double deltaHvap2 = 7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333) - 610.48 * Math.pow(x, 1.2083)
-                + 839.89 * x + 160.05 * Math.pow(x, 2.0) - 50.711 * Math.pow(x, 3.0);
+        double deltaHvap0 = 5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333)
+                + 1.171 * Math.pow(x, 1.2083) - 13.166 * x + 0.4858 * Math.pow(x, 2.0)
+                - 1.088 * Math.pow(x, 3.0);
+        double deltaHvap1 = 0.80022 * Math.pow(x, 0.3333) + 273.23 * Math.pow(x, 0.8333)
+                + 465.08 * Math.pow(x, 1.2083) - 638.51 * x - 145.12 * Math.pow(x, 2.0)
+                - 74.049 * Math.pow(x, 3.0);
+        double deltaHvap2 = 7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333)
+                - 610.48 * Math.pow(x, 1.2083) + 839.89 * x + 160.05 * Math.pow(x, 2.0)
+                - 50.711 * Math.pow(x, 3.0);
 
-        double omega = 0.0520750 + 0.0448946 * carbonnumber - 0.000185397 * carbonnumber * carbonnumber;
+        double omega =
+                0.0520750 + 0.0448946 * carbonnumber - 0.000185397 * carbonnumber * carbonnumber;
 
-        double deltaHvap = R * getTC() * (deltaHvap0 + omega * deltaHvap1 + omega * omega * deltaHvap2) * 4.1868;
+        double deltaHvap = R * getTC()
+                * (deltaHvap0 + omega * deltaHvap1 + omega * omega * deltaHvap2) * 4.1868;
 
         // calculating transition enthalpy
 
         double deltaHtot = (3.7791 * carbonnumber - 12.654) * 1000;
-        double Ttrans = 420.42 - 134.784 * Math.exp(-4.344 * Math.pow(carbonnumber + 6.592, 0.14627));
+        double Ttrans =
+                420.42 - 134.784 * Math.exp(-4.344 * Math.pow(carbonnumber + 6.592, 0.14627));
         double Tf = 374.5 + 0.2617 * getMolarMass() - 20.172 / getMolarMass();
         double deltaHf = (0.1426 * getMolarMass() * Tf) * 4.1868;
         double deltaHtrans = (deltaHtot - deltaHf);

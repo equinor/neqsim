@@ -11,7 +11,9 @@ import neqsim.statistics.parameterFitting.StatisticsBaseClass;
 import neqsim.statistics.parameterFitting.StatisticsInterface;
 
 /**
- * <p>MonteCarloSimulation class.</p>
+ * <p>
+ * MonteCarloSimulation class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -25,12 +27,14 @@ public class MonteCarloSimulation {
     int numberOfRuns = 50;
 
     /**
-     * Creates new MonteCarloSimultion
+     * <p>Constructor for MonteCarloSimulation.</p>
      */
     public MonteCarloSimulation() {}
 
     /**
-     * <p>Constructor for MonteCarloSimulation.</p>
+     * <p>
+     * Constructor for MonteCarloSimulation.
+     * </p>
      *
      * @param baseStatClass a {@link neqsim.statistics.parameterFitting.StatisticsInterface} object
      */
@@ -39,7 +43,9 @@ public class MonteCarloSimulation {
     }
 
     /**
-     * <p>Constructor for MonteCarloSimulation.</p>
+     * <p>
+     * Constructor for MonteCarloSimulation.
+     * </p>
      *
      * @param baseStatClass a {@link neqsim.statistics.parameterFitting.StatisticsBaseClass} object
      * @param numberOfRuns a int
@@ -50,7 +56,9 @@ public class MonteCarloSimulation {
     }
 
     /**
-     * <p>Setter for the field <code>numberOfRuns</code>.</p>
+     * <p>
+     * Setter for the field <code>numberOfRuns</code>.
+     * </p>
      *
      * @param numberOfRuns a int
      */
@@ -59,7 +67,9 @@ public class MonteCarloSimulation {
     }
 
     /**
-     * <p>runSimulation.</p>
+     * <p>
+     * runSimulation.
+     * </p>
      */
     public void runSimulation() {
         baseStatClass.init();
@@ -72,7 +82,9 @@ public class MonteCarloSimulation {
     }
 
     /**
-     * <p>createReportMatrix.</p>
+     * <p>
+     * createReportMatrix.
+     * </p>
      */
     public void createReportMatrix() {
         reportMatrix = new double[10][numberOfRuns];

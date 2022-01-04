@@ -37,12 +37,16 @@ abstract class Flash extends BaseOperation {
     boolean findLowesGibsPhaseIsChecked = false;
 
     /**
-     * Creates new Flash
+     * <p>
+     * Constructor for Flash.
+     * </p>
      */
     public Flash() {}
 
     /**
-     * <p>findLowestGibbsEnergyPhase.</p>
+     * <p>
+     * findLowestGibbsEnergyPhase.
+     * </p>
      *
      * @return a int
      */
@@ -64,7 +68,9 @@ abstract class Flash extends BaseOperation {
     }
 
     /**
-     * <p>stabilityAnalysis.</p>
+     * <p>
+     * stabilityAnalysis.
+     * </p>
      *
      * @throws neqsim.util.exception.IsNaNException if any.
      * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -305,7 +311,9 @@ abstract class Flash extends BaseOperation {
     }
 
     /**
-     * <p>stabilityCheck.</p>
+     * <p>
+     * stabilityCheck.
+     * </p>
      *
      * @return a boolean
      */
@@ -358,7 +366,9 @@ abstract class Flash extends BaseOperation {
     }
 
     /**
-     * <p>solidPhaseFlash.</p>
+     * <p>
+     * solidPhaseFlash.
+     * </p>
      */
     public void solidPhaseFlash() {
         boolean solidPhase = false;

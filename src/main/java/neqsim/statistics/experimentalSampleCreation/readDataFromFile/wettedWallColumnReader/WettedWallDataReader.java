@@ -12,7 +12,9 @@ import java.util.StringTokenizer;
 import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
 
 /**
- * <p>WettedWallDataReader class.</p>
+ * <p>
+ * WettedWallDataReader class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -20,12 +22,14 @@ import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
 public class WettedWallDataReader extends DataReader {
 
     /**
-     * Creates new WettedWallDataReader
+     * <p>Constructor for WettedWallDataReader.</p>
      */
     public WettedWallDataReader() {}
 
     /**
-     * <p>Constructor for WettedWallDataReader.</p>
+     * <p>
+     * Constructor for WettedWallDataReader.
+     * </p>
      *
      * @param fileName a {@link java.lang.String} object
      */
@@ -88,7 +92,9 @@ public class WettedWallDataReader extends DataReader {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

@@ -6,7 +6,9 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseGEUnifac;
 
 /**
- * <p>UMRPRUFunction class.</p>
+ * <p>
+ * UMRPRUFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -16,7 +18,7 @@ public class UMRPRUFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new Test
+     * <p>Constructor for UMRPRUFunction.</p>
      */
     public UMRPRUFunction() {
 

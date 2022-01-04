@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileWriter;
 
 /**
- * <p>TextFile class.</p>
+ * <p>
+ * TextFile class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -18,12 +20,14 @@ public class TextFile implements java.io.Serializable {
     // NetcdfFileWriteable ncfile;
 
     /**
-     * Creates new NetCdf
+     * <p>Constructor for TextFile.</p>
      */
     public TextFile() {}
 
     /**
-     * <p>setOutputFileName.</p>
+     * <p>
+     * setOutputFileName.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -32,7 +36,9 @@ public class TextFile implements java.io.Serializable {
     }
 
     /**
-     * <p>newFile.</p>
+     * <p>
+     * newFile.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -45,7 +51,9 @@ public class TextFile implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>values</code>.</p>
+     * <p>
+     * Setter for the field <code>values</code>.
+     * </p>
      *
      * @param values an array of {@link java.lang.String} objects
      */
@@ -55,7 +63,9 @@ public class TextFile implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>values</code>.</p>
+     * <p>
+     * Setter for the field <code>values</code>.
+     * </p>
      *
      * @param valuesloca an array of {@link double} objects
      */
@@ -70,7 +80,9 @@ public class TextFile implements java.io.Serializable {
     }
 
     /**
-     * <p>createFile.</p>
+     * <p>
+     * createFile.
+     * </p>
      */
     public void createFile() {
         System.out.println("writing " + values[0][0] + "  data");

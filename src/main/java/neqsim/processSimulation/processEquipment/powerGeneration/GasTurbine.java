@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.powerGeneration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -15,7 +14,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>GasTurbine class.</p>
+ * <p>
+ * GasTurbine class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -39,7 +40,9 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     public double power = 0.0;
 
     /**
-     * <p>Constructor for GasTurbine.</p>
+     * <p>
+     * Constructor for GasTurbine.
+     * </p>
      */
     public GasTurbine() {
         // needs to be changed to gas tubing mechanical design
@@ -56,9 +59,12 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Constructor for GasTurbine.</p>
+     * <p>
+     * Constructor for GasTurbine.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public GasTurbine(StreamInterface inletStream) {
         this();
@@ -66,10 +72,13 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Constructor for GasTurbine.</p>
+     * <p>
+     * Constructor for GasTurbine.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public GasTurbine(String name, StreamInterface inletStream) {
         this();
@@ -78,7 +87,9 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>power</code>.</p>
+     * <p>
+     * Getter for the field <code>power</code>.
+     * </p>
      *
      * @return a double
      */
@@ -87,9 +98,12 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>inletStream</code>.</p>
+     * <p>
+     * Setter for the field <code>inletStream</code>.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
@@ -100,9 +114,9 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         // System.out.println("compressor running..");
         double heatOfCombustion = inletStream.LCV() * inletStream.getFlowRate("mole/sec");
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -146,17 +160,19 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
 
         power = expanderPower - compressorPower;
         setHeat(cooler1.getDuty());
-
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
-    public void runTransient() {
-    }
+    public void runTransient() {}
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -182,7 +198,9 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>heat</code>.</p>
+     * <p>
+     * Getter for the field <code>heat</code>.
+     * </p>
      *
      * @return a double
      */
@@ -191,7 +209,9 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>heat</code>.</p>
+     * <p>
+     * Setter for the field <code>heat</code>.
+     * </p>
      *
      * @param heat a double
      */

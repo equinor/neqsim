@@ -10,7 +10,9 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.onePhaseFlowNodeVisualization.OnePhaseFlowNodeVisualization;
 
 /**
- * <p>OnePhasePipeFlowNodeVisualization class.</p>
+ * <p>
+ * OnePhasePipeFlowNodeVisualization class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,16 +22,16 @@ public class OnePhasePipeFlowNodeVisualization extends OnePhaseFlowNodeVisualiza
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new OnePhasePipeFlowNodeVisualization
+     * <p>Constructor for OnePhasePipeFlowNodeVisualization.</p>
      */
-    public OnePhasePipeFlowNodeVisualization() {
-    }
+    public OnePhasePipeFlowNodeVisualization() {}
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setData(FlowNodeInterface node) {
+    public void setData(FlowNodeInterface node) {
         super.setData(node);
-        bulkComposition = new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];
+        bulkComposition =
+                new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];
 
         for (int i = 0; i < node.getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
             bulkComposition[0][i] = node.getBulkSystem().getPhases()[0].getComponents()[i].getx();

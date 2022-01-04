@@ -8,7 +8,9 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>sysNewtonRhapsonPHflash class.</p>
+ * <p>
+ * sysNewtonRhapsonPHflash class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -43,12 +45,14 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     double dPdT = 0;
 
     /**
-     * <p>Constructor for sysNewtonRhapsonPHflash.</p>
+     * <p>
+     * Constructor for sysNewtonRhapsonPHflash.
+     * </p>
      */
     public sysNewtonRhapsonPHflash() {}
 
     /**
-     * Creates new nonlin
+     * <p>Constructor for sysNewtonRhapsonPHflash.</p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param numberOfPhases a int
@@ -73,7 +77,9 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     }
 
     /**
-     * <p>Constructor for sysNewtonRhapsonPHflash.</p>
+     * <p>
+     * Constructor for sysNewtonRhapsonPHflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param numberOfPhases a int
@@ -87,7 +93,9 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     }
 
     /**
-     * <p>setSpec.</p>
+     * <p>
+     * setSpec.
+     * </p>
      *
      * @param spec a double
      */
@@ -96,7 +104,9 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     }
 
     /**
-     * <p>Setter for the field <code>fvec</code>.</p>
+     * <p>
+     * Setter for the field <code>fvec</code>.
+     * </p>
      */
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -122,7 +132,9 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     }
 
     /**
-     * <p>setJac.</p>
+     * <p>
+     * setJac.
+     * </p>
      */
     public void setJac() {
         Jac.timesEquals(0.0);
@@ -171,7 +183,9 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     }
 
     /**
-     * <p>Setter for the field <code>u</code>.</p>
+     * <p>
+     * Setter for the field <code>u</code>.
+     * </p>
      */
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -182,7 +196,9 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     }
 
     /**
-     * <p>init.</p>
+     * <p>
+     * init.
+     * </p>
      */
     public void init() {
 
@@ -223,7 +239,9 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     }
 
     /**
-     * <p>solve.</p>
+     * <p>
+     * solve.
+     * </p>
      *
      * @param np a int
      * @return a int

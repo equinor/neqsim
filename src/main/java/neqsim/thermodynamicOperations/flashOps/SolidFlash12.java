@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>SolidFlash12 class.</p>
+ * <p>
+ * SolidFlash12 class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -32,12 +34,14 @@ public class SolidFlash12 extends TPflash {
     int solidIndex = 0;
 
     /**
-     * Creates new SolidFlash12
+     * <p>Constructor for SolidFlash12.</p>
      */
     public SolidFlash12() {}
 
     /**
-     * <p>Constructor for SolidFlash12.</p>
+     * <p>
+     * Constructor for SolidFlash12.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -46,12 +50,16 @@ public class SolidFlash12 extends TPflash {
     }
 
     /**
-     * <p>calcMultiPhaseBeta.</p>
+     * <p>
+     * calcMultiPhaseBeta.
+     * </p>
      */
     public void calcMultiPhaseBeta() {}
 
     /**
-     * <p>setXY.</p>
+     * <p>
+     * setXY.
+     * </p>
      */
     public void setXY() {
         for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
@@ -70,7 +78,9 @@ public class SolidFlash12 extends TPflash {
     }
 
     /**
-     * <p>checkX.</p>
+     * <p>
+     * checkX.
+     * </p>
      */
     public void checkX() {
         for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
@@ -95,7 +105,9 @@ public class SolidFlash12 extends TPflash {
     }
 
     /**
-     * <p>calcE.</p>
+     * <p>
+     * calcE.
+     * </p>
      */
     public void calcE() {
         E = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -110,7 +122,9 @@ public class SolidFlash12 extends TPflash {
     }
 
     /**
-     * <p>calcQ.</p>
+     * <p>
+     * calcQ.
+     * </p>
      *
      * @return a double
      */
@@ -173,7 +187,9 @@ public class SolidFlash12 extends TPflash {
     }
 
     /**
-     * <p>solveBeta.</p>
+     * <p>
+     * solveBeta.
+     * </p>
      */
     public void solveBeta() {
         double oldBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
@@ -247,7 +263,9 @@ public class SolidFlash12 extends TPflash {
     }
 
     /**
-     * <p>checkGibbs.</p>
+     * <p>
+     * checkGibbs.
+     * </p>
      */
     public void checkGibbs() {
         double gibbs1 = 0, gibbs2 = 0;
@@ -268,7 +286,9 @@ public class SolidFlash12 extends TPflash {
     }
 
     /**
-     * <p>calcSolidBeta.</p>
+     * <p>
+     * calcSolidBeta.
+     * </p>
      */
     public void calcSolidBeta() {
         double tempVar = system.getPhase(0).getComponents()[solidIndex].getz();
@@ -311,7 +331,9 @@ public class SolidFlash12 extends TPflash {
     }
 
     /**
-     * <p>checkAndAddSolidPhase.</p>
+     * <p>
+     * checkAndAddSolidPhase.
+     * </p>
      *
      * @return a int
      */
@@ -358,7 +380,9 @@ public class SolidFlash12 extends TPflash {
     }
 
     /**
-     * <p>solvebeta1.</p>
+     * <p>
+     * solvebeta1.
+     * </p>
      *
      * @return a double
      */

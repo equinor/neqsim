@@ -11,7 +11,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TPflash class.</p>
+ * <p>
+ * TPflash class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -26,12 +28,14 @@ public class TPflash extends Flash {
     double presdiff = 1.0;
 
     /**
-     * Creates new TPflash
+     * <p>Constructor for TPflash.</p>
      */
     public TPflash() {}
 
     /**
-     * <p>Constructor for TPflash.</p>
+     * <p>
+     * Constructor for TPflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -47,7 +51,9 @@ public class TPflash extends Flash {
     }
 
     /**
-     * <p>Constructor for TPflash.</p>
+     * <p>
+     * Constructor for TPflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param solCheck a boolean
@@ -58,7 +64,9 @@ public class TPflash extends Flash {
     }
 
     /**
-     * <p>sucsSubs.</p>
+     * <p>
+     * sucsSubs.
+     * </p>
      */
     public void sucsSubs() {
         deviation = 0;
@@ -103,7 +111,9 @@ public class TPflash extends Flash {
     }
 
     /**
-     * <p>accselerateSucsSubs.</p>
+     * <p>
+     * accselerateSucsSubs.
+     * </p>
      */
     public void accselerateSucsSubs() {
         double prod1 = 0.0, prod2 = 0.0;
@@ -140,7 +150,9 @@ public class TPflash extends Flash {
     }
 
     /**
-     * <p>setNewK.</p>
+     * <p>
+     * setNewK.
+     * </p>
      */
     public void setNewK() {
         for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -157,7 +169,9 @@ public class TPflash extends Flash {
     }
 
     /**
-     * <p>resetK.</p>
+     * <p>
+     * resetK.
+     * </p>
      */
     public void resetK() {
         for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {

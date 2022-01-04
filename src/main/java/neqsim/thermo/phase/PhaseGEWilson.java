@@ -8,7 +8,9 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentGEWilson;
 
 /**
- * <p>PhaseGEWilson class.</p>
+ * <p>
+ * PhaseGEWilson class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -20,7 +22,7 @@ public class PhaseGEWilson extends PhaseGE {
     double GE = 0;
 
     /**
-     * Creates new PhaseGEUniquac
+     * <p>Constructor for PhaseGEWilson.</p>
      */
     public PhaseGEWilson() {
         super();
@@ -28,7 +30,9 @@ public class PhaseGEWilson extends PhaseGE {
     }
 
     /**
-     * <p>Constructor for PhaseGEWilson.</p>
+     * <p>
+     * Constructor for PhaseGEWilson.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param alpha an array of {@link double} objects
@@ -43,52 +47,56 @@ public class PhaseGEWilson extends PhaseGE {
         for (int i = 0; i < alpha[0].length; i++) {
             numberOfComponents++;
             componentArray[i] = new ComponentGEWilson(phase.getComponents()[i].getName(),
-                    phase.getComponents()[i].getNumberOfmoles(), phase.getComponents()[i].getNumberOfMolesInPhase(),
+                    phase.getComponents()[i].getNumberOfmoles(),
+                    phase.getComponents()[i].getNumberOfMolesInPhase(),
                     phase.getComponents()[i].getComponentNumber());
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentGEWilson(componentName, moles, molesInPhase, compNumber);
+        componentArray[compNumber] =
+                new ComponentGEWilson(componentName, moles, molesInPhase, compNumber);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setMixingRule(int type) {
+    public void setMixingRule(int type) {
         super.setMixingRule(type);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) {
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+            double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
+    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure, int phasetype) {
         GE = 0;
         for (int i = 0; i < numberOfComponents; i++) {
-            GE += phase.getComponents()[i].getx()
-                    * Math.log(((ComponentGEWilson) componentArray[i]).getWilsonActivityCoeffisient(phase));
+            GE += phase.getComponents()[i].getx() * Math.log(
+                    ((ComponentGEWilson) componentArray[i]).getWilsonActivityCoeffisient(phase));
         }
 
         return R * temperature * numberOfMolesInPhase * GE;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getGibbsEnergy() {
+    public double getGibbsEnergy() {
         return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getExessGibbsEnergy() {
+    public double getExessGibbsEnergy() {
         // GE = getExessGibbsEnergy(this, numberOfComponents, temperature, pressure,
         // phaseType);
         return GE;

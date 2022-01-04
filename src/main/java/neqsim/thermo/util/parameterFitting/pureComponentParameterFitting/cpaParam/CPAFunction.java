@@ -6,7 +6,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>CPAFunction class.</p>
+ * <p>
+ * CPAFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -17,7 +19,7 @@ public class CPAFunction extends LevenbergMarquardtFunction {
     static Logger logger = LogManager.getLogger(CPAFunction.class);
 
     /**
-     * Creates new Test
+     * <p>Constructor for CPAFunction.</p>
      */
     public CPAFunction() {}
 

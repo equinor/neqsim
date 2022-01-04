@@ -18,9 +18,11 @@ import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensi
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>InterfaceProperties class.</p>
+ * <p>
+ * InterfaceProperties class.
+ * </p>
  *
- * @author  esol
+ * @author esol
  * @version $Id: $Id
  */
 public class InterfaceProperties implements InterphasePropertiesInterface, java.io.Serializable {
@@ -38,13 +40,14 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     static Logger logger = LogManager.getLogger(InterfaceProperties.class);
 
     /**
-     * Creates new InterfaceProperties
+     * <p>Constructor for InterfaceProperties.</p>
      */
-    public InterfaceProperties() {
-    }
+    public InterfaceProperties() {}
 
     /**
-     * <p>Constructor for InterfaceProperties.</p>
+     * <p>
+     * Constructor for InterfaceProperties.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -120,8 +123,8 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     /*
-     * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) {
-     * return 0.0; } else { return surfaceTension[numb]; } }
+     * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) { return 0.0; }
+     * else { return surfaceTension[numb]; } }
      */
     /** {@inheritDoc} */
     @Override

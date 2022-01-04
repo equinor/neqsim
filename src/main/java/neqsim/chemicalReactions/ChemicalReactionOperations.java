@@ -18,7 +18,9 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>ChemicalReactionOperations class.</p>
+ * <p>
+ * ChemicalReactionOperations class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -49,12 +51,16 @@ public class ChemicalReactionOperations
     LinearProgrammingChemicalEquilibrium initCalc;
 
     /**
-     * Creates new ChemicalReactionOperations
+     * <p>
+     * Constructor for ChemicalReactionOperations.
+     * </p>
      */
     public ChemicalReactionOperations() {}
 
     /**
-     * <p>Constructor for ChemicalReactionOperations.</p>
+     * <p>
+     * Constructor for ChemicalReactionOperations.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -104,7 +110,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>Setter for the field <code>system</code>.</p>
+     * <p>
+     * Setter for the field <code>system</code>.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -125,7 +133,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>Setter for the field <code>components</code>.</p>
+     * <p>
+     * Setter for the field <code>components</code>.
+     * </p>
      */
     public void setComponents() {
         for (int j = 0; j < components.length; j++) {
@@ -135,7 +145,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>Setter for the field <code>components</code>.</p>
+     * <p>
+     * Setter for the field <code>components</code>.
+     * </p>
      *
      * @param phase a int
      */
@@ -147,7 +159,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>setReactiveComponents.</p>
+     * <p>
+     * setReactiveComponents.
+     * </p>
      *
      * @param phase a int
      */
@@ -159,7 +173,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>setReactiveComponents.</p>
+     * <p>
+     * setReactiveComponents.
+     * </p>
      */
     public void setReactiveComponents() {
         int k = 0;
@@ -177,7 +193,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>calcInertMoles.</p>
+     * <p>
+     * calcInertMoles.
+     * </p>
      *
      * @param phase a int
      * @return a double
@@ -196,7 +214,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>sortReactiveComponents.</p>
+     * <p>
+     * sortReactiveComponents.
+     * </p>
      */
     public void sortReactiveComponents() {
         ComponentInterface tempComp;
@@ -214,11 +234,12 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>addNewComponents.</p>
+     * <p>
+     * addNewComponents.
+     * </p>
      */
     public void addNewComponents() {
         boolean newComp;
-        int p = 0;
 
         for (int i = 0; i < allComponentNames.length; i++) {
             String name = allComponentNames[i];
@@ -238,7 +259,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>getAllElements.</p>
+     * <p>
+     * getAllElements.
+     * </p>
      *
      * @return an array of {@link java.lang.String} objects
      */
@@ -266,7 +289,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>hasRections.</p>
+     * <p>
+     * hasRections.
+     * </p>
      *
      * @return a boolean
      */
@@ -275,7 +300,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>calcNVector.</p>
+     * <p>
+     * calcNVector.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -289,7 +316,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>calcBVector.</p>
+     * <p>
+     * calcBVector.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -305,7 +334,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>calcChemRefPot.</p>
+     * <p>
+     * calcChemRefPot.
+     * </p>
      *
      * @param phase a int
      * @return an array of {@link double} objects
@@ -327,7 +358,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>updateMoles.</p>
+     * <p>
+     * updateMoles.
+     * </p>
      *
      * @param phase a int
      */
@@ -355,7 +388,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>solveChemEq.</p>
+     * <p>
+     * solveChemEq.
+     * </p>
      *
      * @param type a int
      * @return a boolean
@@ -365,14 +400,15 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>solveChemEq.</p>
+     * <p>
+     * solveChemEq.
+     * </p>
      *
      * @param phase a int
      * @param type a int
      * @return a boolean
      */
     public boolean solveChemEq(int phase, int type) {
-        int i;
         if (this.phase != phase) {
             setReactiveComponents(phase);
             chemRefPot = calcChemRefPot(phase);
@@ -419,7 +455,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>solveKinetics.</p>
+     * <p>
+     * solveKinetics.
+     * </p>
      *
      * @param phase a int
      * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -431,7 +469,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>getKinetics.</p>
+     * <p>
+     * getKinetics.
+     * </p>
      *
      * @return a {@link neqsim.chemicalReactions.kinetics.Kinetics} object
      */
@@ -440,7 +480,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>Getter for the field <code>reactionList</code>.</p>
+     * <p>
+     * Getter for the field <code>reactionList</code>.
+     * </p>
      *
      * @return a {@link neqsim.chemicalReactions.chemicalReaction.ChemicalReactionList} object
      */
@@ -449,7 +491,9 @@ public class ChemicalReactionOperations
     }
 
     /**
-     * <p>reacHeat.</p>
+     * <p>
+     * reacHeat.
+     * </p>
      *
      * @param phase a int
      * @param component a {@link java.lang.String} object

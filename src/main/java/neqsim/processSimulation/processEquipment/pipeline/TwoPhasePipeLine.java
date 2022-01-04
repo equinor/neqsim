@@ -10,7 +10,9 @@ import neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhasePipeFlowSyste
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>TwoPhasePipeLine class.</p>
+ * <p>
+ * TwoPhasePipeLine class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,13 +22,14 @@ public class TwoPhasePipeLine extends Pipeline {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new TwoPhasePipeLine
+     * <p>Constructor for TwoPhasePipeLine.</p>
      */
-    public TwoPhasePipeLine() {
-    }
+    public TwoPhasePipeLine() {}
 
     /**
-     * <p>Constructor for TwoPhasePipeLine.</p>
+     * <p>
+     * Constructor for TwoPhasePipeLine.
+     * </p>
      *
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -36,7 +39,9 @@ public class TwoPhasePipeLine extends Pipeline {
     }
 
     /**
-     * <p>Constructor for TwoPhasePipeLine.</p>
+     * <p>
+     * Constructor for TwoPhasePipeLine.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
@@ -47,14 +52,15 @@ public class TwoPhasePipeLine extends Pipeline {
     }
 
     /**
-     * <p>createSystem.</p>
+     * <p>
+     * createSystem.
+     * </p>
      */
-    public void createSystem() {
-    }
+    public void createSystem() {}
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         super.run();
         pipe.solveSteadyState(2);
         pipe.print();

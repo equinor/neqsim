@@ -10,7 +10,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 /**
- * <p>checkScalePotential class.</p>
+ * <p>
+ * checkScalePotential class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -25,13 +27,14 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
     String[][] resultTable = null;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>Constructor for checkScalePotential.</p>
      */
-    public checkScalePotential() {
-    }
+    public checkScalePotential() {}
 
     /**
-     * <p>Constructor for checkScalePotential.</p>
+     * <p>
+     * Constructor for checkScalePotential.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param phaseNumber a int
@@ -42,9 +45,9 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
         logger.info("ok ");
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
 
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         double ksp = 0.0;
@@ -71,7 +74,8 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
 
         try {
             if (system.getPhase(phaseNumber).hasComponent("MEG")) {
-                numberOfMolesMEG = system.getPhase(phaseNumber).getComponent("MEG").getNumberOfMolesInPhase();
+                numberOfMolesMEG =
+                        system.getPhase(phaseNumber).getComponent("MEG").getNumberOfMolesInPhase();
                 system.addComponent("MEG", -numberOfMolesMEG * 0.9999, phaseNumber);
                 system.addComponent("water", numberOfMolesMEG, phaseNumber);
                 system.init(1);
@@ -87,20 +91,25 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                 double temperatureC = system.getPhase(phaseNumber).getTemperature();
                 double lnKsp = Double.parseDouble(dataSet.getString("Kspwater")) / temperatureC
                         + Double.parseDouble(dataSet.getString("Kspwater2"))
-                        + Math.log(temperatureC) * Double.parseDouble(dataSet.getString("Kspwater3"))
+                        + Math.log(temperatureC)
+                                * Double.parseDouble(dataSet.getString("Kspwater3"))
                         + temperatureC * Double.parseDouble(dataSet.getString("Kspwater4"))
-                        + Double.parseDouble(dataSet.getString("Kspwater5")) / (temperatureC * temperatureC);
+                        + Double.parseDouble(dataSet.getString("Kspwater5"))
+                                / (temperatureC * temperatureC);
                 ksp = Math.exp(lnKsp);
 
                 if (saltName.equals("NaCl")) {
                     ksp = -814.18 + 7.4685 * temperatureC - 2.3262e-2 * temperatureC * temperatureC
-                            + 3.0536e-5 * Math.pow(temperatureC, 3.0) - 1.4573e-8 * Math.pow(temperatureC, 4.0);
+                            + 3.0536e-5 * Math.pow(temperatureC, 3.0)
+                            - 1.4573e-8 * Math.pow(temperatureC, 4.0);
                 }
                 if (saltName.equals("FeS")) {
-                    int waterompNumb = system.getPhase(phaseNumber).getComponent("water").getComponentNumber();
+                    int waterompNumb =
+                            system.getPhase(phaseNumber).getComponent("water").getComponentNumber();
                     double h3ox = system.getPhase(phaseNumber).getComponent("H3O+").getx()
                             / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                                    * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
+                                    * system.getPhase(phaseNumber).getComponent(waterompNumb)
+                                            .getMolarMass());
 
                     ksp *= h3ox;
                 }
@@ -111,20 +120,27 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                     logger.info("reaction added: " + name1 + " " + name2);
                     logger.info("theoretic Ksp = " + ksp);
                     logger.info("theoretic lnKsp = " + Math.log(ksp));
-                    int compNumb1 = system.getPhase(phaseNumber).getComponent(name1).getComponentNumber();
-                    int compNumb2 = system.getPhase(phaseNumber).getComponent(name2).getComponentNumber();
-                    int waterompNumb = system.getPhase(phaseNumber).getComponent("water").getComponentNumber();
+                    int compNumb1 =
+                            system.getPhase(phaseNumber).getComponent(name1).getComponentNumber();
+                    int compNumb2 =
+                            system.getPhase(phaseNumber).getComponent(name2).getComponentNumber();
+                    int waterompNumb =
+                            system.getPhase(phaseNumber).getComponent("water").getComponentNumber();
 
                     double x1 = system.getPhase(phaseNumber).getComponent(name1).getx()
                             / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                                    * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
+                                    * system.getPhase(phaseNumber).getComponent(waterompNumb)
+                                            .getMolarMass());
                     double x2 = system.getPhase(phaseNumber).getComponent(name2).getx()
                             / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                                    * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
-                    double kspReac = Math.pow(
-                            system.getPhase(phaseNumber).getActivityCoefficient(compNumb1, waterompNumb) * x1, stoc1)
+                                    * system.getPhase(phaseNumber).getComponent(waterompNumb)
+                                            .getMolarMass());
+                    double kspReac = Math
+                            .pow(system.getPhase(phaseNumber).getActivityCoefficient(compNumb1,
+                                    waterompNumb) * x1, stoc1)
                             * Math.pow(
-                                    x2 * system.getPhase(phaseNumber).getActivityCoefficient(compNumb2, waterompNumb),
+                                    x2 * system.getPhase(phaseNumber)
+                                            .getActivityCoefficient(compNumb2, waterompNumb),
                                     stoc2);
                     // double kspReac =
                     // Math.pow(system.getPhase(phaseNumber).getActivityCoefficient(compNumb1) * x1,
@@ -136,28 +152,38 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                     if (saltName.contains("hydromagnesite (3MgCO3-Mg(OH)2-3H2O)")) {
                         x1 = system.getPhase(phaseNumber).getComponent(name1).getx()
                                 / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                                        * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
+                                        * system.getPhase(phaseNumber).getComponent(waterompNumb)
+                                                .getMolarMass());
                         x2 = system.getPhase(phaseNumber).getComponent(name2).getx()
                                 / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                                        * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
+                                        * system.getPhase(phaseNumber).getComponent(waterompNumb)
+                                                .getMolarMass());
                         double x3 = system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
                                 / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                                        * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
+                                        * system.getPhase(phaseNumber).getComponent(waterompNumb)
+                                                .getMolarMass());
                         double x4 = system.getPhase(phaseNumber).getComponent("OH-").getx()
                                 / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                                        * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
-                        kspReac = Math.pow(
-                                system.getPhase(phaseNumber).getActivityCoefficient(compNumb1, waterompNumb) * x1,
-                                stoc1)
-                                * Math.pow(x2
-                                        * system.getPhase(phaseNumber).getActivityCoefficient(compNumb2, waterompNumb),
+                                        * system.getPhase(phaseNumber).getComponent(waterompNumb)
+                                                .getMolarMass());
+                        kspReac = Math
+                                .pow(system.getPhase(phaseNumber).getActivityCoefficient(compNumb1,
+                                        waterompNumb) * x1, stoc1)
+                                * Math.pow(
+                                        x2 * system.getPhase(phaseNumber)
+                                                .getActivityCoefficient(compNumb2, waterompNumb),
                                         stoc2)
-                                * Math.pow(x3 * system.getPhase(phaseNumber).getActivityCoefficient(waterompNumb,
-                                        waterompNumb), 3.0)
-                                * Math.pow(x4 * system.getPhase(phaseNumber).getActivityCoefficient(
-                                        system.getPhase(phaseNumber).getComponent("OH-").getComponentNumber(),
-                                        waterompNumb), 2.0);
-                        stocKsp = Math.pow(x1, stoc1) * Math.pow(x2, stoc2) * Math.pow(x3, 3) * Math.pow(x4, 2);
+                                * Math.pow(
+                                        x3 * system.getPhase(phaseNumber)
+                                                .getActivityCoefficient(waterompNumb, waterompNumb),
+                                        3.0)
+                                * Math.pow(x4 * system.getPhase(phaseNumber)
+                                        .getActivityCoefficient(system.getPhase(phaseNumber)
+                                                .getComponent("OH-").getComponentNumber(),
+                                                waterompNumb),
+                                        2.0);
+                        stocKsp = Math.pow(x1, stoc1) * Math.pow(x2, stoc2) * Math.pow(x3, 3)
+                                * Math.pow(x4, 2);
                     }
 
                     logger.info("calc Ksp " + kspReac);
@@ -171,10 +197,10 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                     resultTable[numb][0] = saltName;// name1+ " " +name2;
                     resultTable[numb][1] = Double.toString(scalePotentialFactor);
                     resultTable[numb][2] = "";
-//                    double maxn = scalePotentialFactor/(stoc1*stoc2);
-//
-//                    double x1max =system.getPhase(phaseNumber).getComponent(name1).getx()/maxn;
-//                    double x2max =system.getPhase(phaseNumber).getComponent(name2).getx()/maxn;
+                    // double maxn = scalePotentialFactor/(stoc1*stoc2);
+                    //
+                    // double x1max =system.getPhase(phaseNumber).getComponent(name1).getx()/maxn;
+                    // double x2max =system.getPhase(phaseNumber).getComponent(name2).getx()/maxn;
 
                 }
             }
@@ -191,14 +217,13 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
 
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         logger.info("checking table...scale " + resultTable[0][0]);
         logger.info("checking table...scale " + resultTable[0][1]);
         logger.info("checking table...scale " + resultTable[0][2]);

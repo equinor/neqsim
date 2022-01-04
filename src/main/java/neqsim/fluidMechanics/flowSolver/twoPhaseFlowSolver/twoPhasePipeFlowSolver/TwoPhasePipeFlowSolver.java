@@ -10,12 +10,15 @@ import Jama.Matrix;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 
 /**
- * <p>TwoPhasePipeFlowSolver class.</p>
+ * <p>
+ * TwoPhasePipeFlowSolver class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class TwoPhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.OnePhaseFlowSolver {
+public class TwoPhasePipeFlowSolver
+        extends neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.OnePhaseFlowSolver {
 
     private static final long serialVersionUID = 1000;
 
@@ -36,13 +39,14 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
     protected int numberOfNodes;
 
     /**
-     * Creates new OnePhasePipeFlowSolver
+     * <p>Constructor for TwoPhasePipeFlowSolver.</p>
      */
-    public TwoPhasePipeFlowSolver() {
-    }
+    public TwoPhasePipeFlowSolver() {}
 
     /**
-     * <p>Constructor for TwoPhasePipeFlowSolver.</p>
+     * <p>
+     * Constructor for TwoPhasePipeFlowSolver.
+     * </p>
      *
      * @param pipe a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
      * @param length a double
@@ -56,11 +60,13 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
         solMatrix = new Matrix[2];
         sol3Matrix = new Matrix[2];
         solPhaseConsMatrix = new Matrix[2];
-        solMolFracMatrix = new Matrix[2][pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+        solMolFracMatrix = new Matrix[2][pipe.getNode(0).getBulkSystem().getPhases()[0]
+                .getNumberOfComponents()];
         solMatrix[0] = new Matrix(PbArray, 1).transpose();
         solMatrix[1] = new Matrix(PbArray, 1).transpose();
         for (int phase = 0; phase < 2; phase++) {
-            for (int i = 0; i < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
+            for (int i = 0; i < pipe.getNode(0).getBulkSystem().getPhases()[0]
+                    .getNumberOfComponents(); i++) {
                 solMolFracMatrix[phase][i] = new Matrix(PbArray, 1).transpose();
             }
         }

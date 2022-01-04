@@ -13,9 +13,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Tank class.</p>
+ * <p>
+ * Tank class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class Tank extends ProcessEquipmentBaseClass {
@@ -38,13 +40,14 @@ public class Tank extends ProcessEquipmentBaseClass {
     private double liquidLevel = liquidVolume / (liquidVolume + gasVolume);
 
     /**
-     * Creates new Separator
+     * <p>Constructor for Tank.</p>
      */
-    public Tank() {
-    }
+    public Tank() {}
 
     /**
-     * <p>Constructor for Tank.</p>
+     * <p>
+     * Constructor for Tank.
+     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -53,7 +56,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Constructor for Tank.</p>
+     * <p>
+     * Constructor for Tank.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
@@ -64,7 +69,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>setInletStream.</p>
+     * <p>
+     * setInletStream.
+     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -81,9 +88,12 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>addStream.</p>
+     * <p>
+     * addStream.
+     * </p>
      *
-     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void addStream(StreamInterface newStream) {
         if (numberOfInputStreams == 0) {
@@ -95,7 +105,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>liquidOutStream</code>.</p>
+     * <p>
+     * Getter for the field <code>liquidOutStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -104,7 +116,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>gasOutStream</code>.</p>
+     * <p>
+     * Getter for the field <code>gasOutStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -113,7 +127,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getGas.</p>
+     * <p>
+     * getGas.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -122,7 +138,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getLiquid.</p>
+     * <p>
+     * getLiquid.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -134,11 +152,12 @@ public class Tank extends ProcessEquipmentBaseClass {
     @Override
     public void run() {
         inletStreamMixer.run();
-        SystemInterface thermoSystem2 = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
+        SystemInterface thermoSystem2 =
+                (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
         ops.VUflash(thermoSystem2.getVolume(), thermoSystem2.getInternalEnergy());
-        System.out.println(
-                "Volume " + thermoSystem2.getVolume() + " internalEnergy " + thermoSystem2.getInternalEnergy());
+        System.out.println("Volume " + thermoSystem2.getVolume() + " internalEnergy "
+                + thermoSystem2.getInternalEnergy());
         steelWallTemperature = thermoSystem2.getTemperature();
         if (thermoSystem2.hasPhaseType("gas")) {
             gasOutStream.setThermoSystemFromPhase(thermoSystem2, "gas");
@@ -161,8 +180,11 @@ public class Tank extends ProcessEquipmentBaseClass {
                 relFact = liquidVolume / (thermoSystem.getPhase(j).getVolume() * 1.0e-5);
             }
             for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
-                thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentName(),
-                        relFact * thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
+                thermoSystem.addComponent(
+                        thermoSystem.getPhase(j).getComponent(i).getComponentName(),
+                        relFact * thermoSystem.getPhase(j).getComponent(i)
+                                .getNumberOfMolesInPhase(),
+                        j);
             }
         }
         if (thermoSystem2.getNumberOfPhases() == 2) {
@@ -183,8 +205,10 @@ public class Tank extends ProcessEquipmentBaseClass {
         } else {
             liquidLevel = 1e-10;
         }
-        liquidVolume = getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
-        gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
+        liquidVolume = getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter
+                * separatorLength;
+        gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
+                * separatorLength;
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
 
     }
@@ -211,7 +235,8 @@ public class Tank extends ProcessEquipmentBaseClass {
         double volume1 = thermoSystem.getVolume();
         System.out.println("volume1 " + volume1);
         double deltaEnergy = inletStreamMixer.getOutStream().getThermoSystem().getEnthalpy()
-                - gasOutStream.getThermoSystem().getEnthalpy() - liquidOutStream.getThermoSystem().getEnthalpy();
+                - gasOutStream.getThermoSystem().getEnthalpy()
+                - liquidOutStream.getThermoSystem().getEnthalpy();
         System.out.println("enthalph delta " + deltaEnergy);
         double wallHeatTransfer = heatTransferNumber * steelWallArea
                 * (steelWallTemperature - thermoSystem.getTemperature()) * dt;
@@ -226,16 +251,18 @@ public class Tank extends ProcessEquipmentBaseClass {
 
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
             double dn = 0.0;
-            for (int k = 0; k < inletStreamMixer.getOutStream().getThermoSystem().getNumberOfPhases(); k++) {
+            for (int k = 0; k < inletStreamMixer.getOutStream().getThermoSystem()
+                    .getNumberOfPhases(); k++) {
                 dn += inletStreamMixer.getOutStream().getThermoSystem().getPhase(k).getComponent(i)
                         .getNumberOfMolesInPhase();
             }
-            dn = dn - gasOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase()
-                    - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase();
+            dn = dn - gasOutStream.getThermoSystem().getPhase(0).getComponent(i)
+                    .getNumberOfMolesInPhase()
+                    - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i)
+                            .getNumberOfMolesInPhase();
             System.out.println("dn " + dn);
-            thermoSystem.addComponent(
-                    inletStreamMixer.getOutStream().getThermoSystem().getPhase(0).getComponent(i).getComponentName(),
-                    dn * dt);
+            thermoSystem.addComponent(inletStreamMixer.getOutStream().getThermoSystem().getPhase(0)
+                    .getComponent(i).getComponentName(), dn * dt);
         }
 
         System.out.println("total moles " + thermoSystem.getTotalNumberOfMoles());
@@ -251,13 +278,17 @@ public class Tank extends ProcessEquipmentBaseClass {
             liquidLevel = 1e-10;
         }
         System.out.println("liquid level " + liquidLevel);
-        liquidVolume = getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
-        gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
+        liquidVolume = getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter
+                * separatorLength;
+        gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
+                * separatorLength;
 
     }
 
     /**
-     * <p>setOutComposition.</p>
+     * <p>
+     * setOutComposition.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -265,17 +296,21 @@ public class Tank extends ProcessEquipmentBaseClass {
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
             if (thermoSystem.hasPhaseType("gas")) {
                 getGasOutStream().getThermoSystem().getPhase(0).getComponent(i)
-                        .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("gas")).getComponent(i).getx());
+                        .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("gas"))
+                                .getComponent(i).getx());
             }
             if (thermoSystem.hasPhaseType("oil")) {
                 getLiquidOutStream().getThermoSystem().getPhase(0).getComponent(i)
-                        .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("oil")).getComponent(i).getx());
+                        .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("oil"))
+                                .getComponent(i).getx());
             }
         }
     }
 
     /**
-     * <p>setTempPres.</p>
+     * <p>
+     * setTempPres.
+     * </p>
      *
      * @param temp a double
      * @param pres a double
@@ -294,7 +329,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>efficiency</code>.</p>
+     * <p>
+     * Getter for the field <code>efficiency</code>.
+     * </p>
      *
      * @return a double
      */
@@ -303,7 +340,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>efficiency</code>.</p>
+     * <p>
+     * Setter for the field <code>efficiency</code>.
+     * </p>
      *
      * @param efficiency a double
      */
@@ -312,7 +351,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>liquidCarryoverFraction</code>.</p>
+     * <p>
+     * Getter for the field <code>liquidCarryoverFraction</code>.
+     * </p>
      *
      * @return a double
      */
@@ -321,7 +362,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>liquidCarryoverFraction</code>.</p>
+     * <p>
+     * Setter for the field <code>liquidCarryoverFraction</code>.
+     * </p>
      *
      * @param liquidCarryoverFraction a double
      */
@@ -330,7 +373,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>gasCarryunderFraction</code>.</p>
+     * <p>
+     * Getter for the field <code>gasCarryunderFraction</code>.
+     * </p>
      *
      * @return a double
      */
@@ -339,7 +384,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>gasCarryunderFraction</code>.</p>
+     * <p>
+     * Setter for the field <code>gasCarryunderFraction</code>.
+     * </p>
      *
      * @param gasCarryunderFraction a double
      */
@@ -348,7 +395,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>liquidLevel</code>.</p>
+     * <p>
+     * Getter for the field <code>liquidLevel</code>.
+     * </p>
      *
      * @return a double
      */
@@ -357,7 +406,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>volume</code>.</p>
+     * <p>
+     * Getter for the field <code>volume</code>.
+     * </p>
      *
      * @return a double
      */
@@ -366,7 +417,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>volume</code>.</p>
+     * <p>
+     * Setter for the field <code>volume</code>.
+     * </p>
      *
      * @param volume a double
      */

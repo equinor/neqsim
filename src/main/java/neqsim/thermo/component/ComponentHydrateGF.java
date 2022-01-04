@@ -51,6 +51,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
                     dataSet = database.getResultSet(
                             ("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
+                    dataSet.close();
                 } catch (Exception e) {
                     logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
                     dataSet = database.getResultSet(
@@ -66,6 +67,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
                 Bk[1][0] = Double.parseDouble(dataSet.getString("B2_SmallGF"));
                 Ak[1][1] = Double.parseDouble(dataSet.getString("A2_LargeGF"));
                 Bk[1][1] = Double.parseDouble(dataSet.getString("B2_LargeGF"));
+                dataSet.close();
             } catch (Exception e) {
                 logger.error("error in ComponentHydrateGF", e);
             } finally {

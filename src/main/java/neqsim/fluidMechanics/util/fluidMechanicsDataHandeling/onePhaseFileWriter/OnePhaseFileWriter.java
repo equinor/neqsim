@@ -9,7 +9,9 @@ package neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.onePhaseFileWrite
 import neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterBaseClass;
 
 /**
- * <p>OnePhaseFileWriter class.</p>
+ * <p>
+ * OnePhaseFileWriter class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -19,9 +21,8 @@ public class OnePhaseFileWriter extends FileWriterBaseClass {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new OnePhaseFileWriter
+     * <p>Constructor for OnePhaseFileWriter.</p>
      */
-    public OnePhaseFileWriter() {
-    }
+    public OnePhaseFileWriter() {}
 
 }

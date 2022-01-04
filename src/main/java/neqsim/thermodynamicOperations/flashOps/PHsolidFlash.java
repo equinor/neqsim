@@ -11,7 +11,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>PHsolidFlash class.</p>
+ * <p>
+ * PHsolidFlash class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -26,12 +28,14 @@ public class PHsolidFlash extends Flash {
     double enthalpyspec = 0.5;
 
     /**
-     * Creates new PHsolidFlash
+     * <p>Constructor for PHsolidFlash.</p>
      */
     public PHsolidFlash() {}
 
     /**
-     * <p>Constructor for PHsolidFlash.</p>
+     * <p>
+     * Constructor for PHsolidFlash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param ent a double

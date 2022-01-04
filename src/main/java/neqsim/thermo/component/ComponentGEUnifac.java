@@ -13,7 +13,9 @@ import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>ComponentGEUnifac class.</p>
+ * <p>
+ * ComponentGEUnifac class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -32,12 +34,14 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     static Logger logger = LogManager.getLogger(ComponentGEUnifac.class);
 
     /**
-     * Creates new ComponentGEUniquac
+     * <p>Constructor for ComponentGEUnifac.</p>
      */
     public ComponentGEUnifac() {}
 
     /**
-     * <p>Constructor for ComponentGEUnifac.</p>
+     * <p>
+     * Constructor for ComponentGEUnifac.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -91,7 +95,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     }
 
     /**
-     * <p>addUNIFACgroup.</p>
+     * <p>
+     * addUNIFACgroup.
+     * </p>
      *
      * @param p a int
      * @param n a int
@@ -102,7 +108,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     }
 
     /**
-     * <p>getQ.</p>
+     * <p>
+     * getQ.
+     * </p>
      *
      * @return a double
      */
@@ -142,7 +150,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     }
 
     /**
-     * <p>calclnGammak.</p>
+     * <p>
+     * calclnGammak.
+     * </p>
      *
      * @param k a int
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -285,7 +295,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     }
 
     /**
-     * <p>Getter for the field <code>unifacGroups</code>.</p>
+     * <p>
+     * Getter for the field <code>unifacGroups</code>.
+     * </p>
      *
      * @return an array of {@link neqsim.thermo.atomElement.UNIFACgroup} objects
      */
@@ -294,7 +306,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     }
 
     /**
-     * <p>getUnifacGroup2.</p>
+     * <p>
+     * getUnifacGroup2.
+     * </p>
      *
      * @param i a int
      * @return a {@link neqsim.thermo.atomElement.UNIFACgroup} object
@@ -304,7 +318,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     }
 
     /**
-     * <p>getUnifacGroup.</p>
+     * <p>
+     * getUnifacGroup.
+     * </p>
      *
      * @param i a int
      * @return a {@link neqsim.thermo.atomElement.UNIFACgroup} object
@@ -324,7 +340,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     }
 
     /**
-     * <p>getNumberOfUNIFACgroups.</p>
+     * <p>
+     * getNumberOfUNIFACgroups.
+     * </p>
      *
      * @return a int
      */

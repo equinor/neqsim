@@ -11,21 +11,24 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentModifiedFurstElectrolyteEos;
 
 /**
- * <p>PhaseModifiedFurstElectrolyteEosMod2004 class.</p>
+ * <p>
+ * PhaseModifiedFurstElectrolyteEosMod2004 class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
 
     private static final long serialVersionUID = 1000;
     double gammaold = 0, alphaLRdTdV = 0;
-    double W = 0, WT = 0, WTT = 0, eps = 0, epsdV = 0, epsdVdV = 0, epsIonic = 0, bornX = 0, epsIonicdV = 0,
-            epsIonicdVdV = 0, alphaLR2 = 0, alphaLRdT = 0.0, alphaLRdTdT = 0.0, alphaLRdV = 0.0, XLR = 0,
-            solventDiElectricConstant = 0, solventDiElectricConstantdT = 0.0, solventDiElectricConstantdTdT = 0,
+    double W = 0, WT = 0, WTT = 0, eps = 0, epsdV = 0, epsdVdV = 0, epsIonic = 0, bornX = 0,
+            epsIonicdV = 0, epsIonicdVdV = 0, alphaLR2 = 0, alphaLRdT = 0.0, alphaLRdTdT = 0.0,
+            alphaLRdV = 0.0, XLR = 0, solventDiElectricConstant = 0,
+            solventDiElectricConstantdT = 0.0, solventDiElectricConstantdTdT = 0,
             shieldingParameter = 0;
-    double gamma = 0, diElectricConstantdV = 0, diElectricConstantdVdV = 0, alphaLRdVdV = 0, diElectricConstantdT = 0,
-            diElectricConstantdTdT = 0.0, diElectricConstantdTdV = 0;
+    double gamma = 0, diElectricConstantdV = 0, diElectricConstantdVdV = 0, alphaLRdVdV = 0,
+            diElectricConstantdT = 0, diElectricConstantdTdT = 0.0, diElectricConstantdTdV = 0;
     neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface electrolyteMixingRule;
     double sr2On = 1.0, lrOn = 1.0, bornOn = 1.0;
     static Logger logger = LogManager.getLogger(PhaseModifiedFurstElectrolyteEosMod2004.class);
@@ -33,7 +36,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     // PhaseInterface[] refPhase;// = new PhaseInterface[10];
 
     /**
-     * Creates new PhaseModifiedFurstElectrolyteEosMod2004
+     * <p>Constructor for PhaseModifiedFurstElectrolyteEosMod2004.</p>
      */
     public PhaseModifiedFurstElectrolyteEosMod2004() {
         super();
@@ -41,7 +44,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>electrolyteMixingRule</code>.</p>
+     * <p>
+     * Getter for the field <code>electrolyteMixingRule</code>.
+     * </p>
      *
      * @return a {@link neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface} object
      */
@@ -50,7 +55,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>reInitFurstParam.</p>
+     * <p>
+     * reInitFurstParam.
+     * </p>
      */
     public void reInitFurstParam() {
         for (int k = 0; k < numberOfComponents; k++) {
@@ -77,11 +84,12 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
 
     /** {@inheritDoc} */
     @Override
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
-                                                                                                            // start
-                                                                                                            // init type
-                                                                                                            // =1 gi nye
-                                                                                                            // betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+            double beta) { // type = 0
+                           // start
+                           // init type
+                           // =1 gi nye
+                           // betingelser
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         if (type == 0) {
             electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
@@ -89,7 +97,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>volInit.</p>
+     * <p>
+     * volInit.
+     * </p>
      */
     public void volInit() {
         W = electrolyteMixingRule.calcW(this, temperature, pressure, numberOfComponents);
@@ -112,38 +122,46 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
         diElectricConstantdTdV = calcDiElectricConstantdTdV(temperature);
         alphaLR2 = electronCharge * electronCharge * avagadroNumber
                 / (vacumPermittivity * diElectricConstant * R * temperature);
-        alphaLRdT = -electronCharge * electronCharge * avagadroNumber
-                / (vacumPermittivity * diElectricConstant * R * temperature * temperature)
-                - electronCharge * electronCharge * avagadroNumber
-                        / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
-                        * diElectricConstantdT;
+        alphaLRdT =
+                -electronCharge * electronCharge * avagadroNumber
+                        / (vacumPermittivity * diElectricConstant * R * temperature * temperature)
+                        - electronCharge
+                                * electronCharge * avagadroNumber / (vacumPermittivity
+                                        * diElectricConstant * diElectricConstant * R * temperature)
+                                * diElectricConstantdT;
         alphaLRdV = -electronCharge * electronCharge * avagadroNumber
                 / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
                 * diElectricConstantdV;
         alphaLRdTdT = 2.0 * electronCharge * electronCharge * avagadroNumber
                 / (vacumPermittivity * diElectricConstant * R * Math.pow(temperature, 3.0))
                 + electronCharge * electronCharge * avagadroNumber
-                        / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature * temperature)
+                        / (vacumPermittivity * diElectricConstant * diElectricConstant * R
+                                * temperature * temperature)
                         * diElectricConstantdT
                 - electronCharge * electronCharge * avagadroNumber
-                        / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
+                        / (vacumPermittivity * diElectricConstant * diElectricConstant * R
+                                * temperature)
                         * diElectricConstantdTdT
                 + electronCharge * electronCharge * avagadroNumber
-                        / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature * temperature)
+                        / (vacumPermittivity * diElectricConstant * diElectricConstant * R
+                                * temperature * temperature)
                         * diElectricConstantdT
                 + 2.0 * electronCharge * electronCharge * avagadroNumber
                         / (vacumPermittivity * Math.pow(diElectricConstant, 3.0) * R * temperature)
                         * Math.pow(diElectricConstantdT, 2.0);
-        alphaLRdTdV = electronCharge * electronCharge * avagadroNumber
-                / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature * temperature)
-                * diElectricConstantdV
-                + 2.0 * electronCharge * electronCharge * avagadroNumber
-                        / (vacumPermittivity * diElectricConstant * diElectricConstant * diElectricConstant * R
-                                * temperature)
-                        * diElectricConstantdT * diElectricConstantdV
-                - electronCharge * electronCharge * avagadroNumber
-                        / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
-                        * diElectricConstantdTdV;
+        alphaLRdTdV =
+                electronCharge * electronCharge * avagadroNumber
+                        / (vacumPermittivity * diElectricConstant * diElectricConstant * R
+                                * temperature * temperature)
+                        * diElectricConstantdV
+                        + 2.0 * electronCharge * electronCharge * avagadroNumber
+                                / (vacumPermittivity * diElectricConstant * diElectricConstant
+                                        * diElectricConstant * R * temperature)
+                                * diElectricConstantdT * diElectricConstantdV
+                        - electronCharge
+                                * electronCharge * avagadroNumber / (vacumPermittivity
+                                        * diElectricConstant * diElectricConstant * R * temperature)
+                                * diElectricConstantdTdV;
         alphaLRdVdV = -electronCharge * electronCharge * avagadroNumber
                 / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
                 * diElectricConstantdVdV
@@ -158,14 +176,18 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
 
     /** {@inheritDoc} */
     @Override
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new neqsim.thermo.component.ComponentModifiedFurstElectrolyteEosMod2004(
-                componentName, moles, molesInPhase, compNumber);
+        componentArray[compNumber] =
+                new neqsim.thermo.component.ComponentModifiedFurstElectrolyteEosMod2004(
+                        componentName, moles, molesInPhase, compNumber);
     }
 
     /**
-     * <p>calcSolventDiElectricConstant.</p>
+     * <p>
+     * calcSolventDiElectricConstant.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -183,7 +205,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcSolventDiElectricConstantdT.</p>
+     * <p>
+     * calcSolventDiElectricConstantdT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -201,7 +225,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcSolventDiElectricConstantdTdT.</p>
+     * <p>
+     * calcSolventDiElectricConstantdTdT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -219,7 +245,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcEps.</p>
+     * <p>
+     * calcEps.
+     * </p>
      *
      * @return a double
      */
@@ -227,14 +255,16 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
         double eps = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             eps += avagadroNumber * pi / 6.0 * componentArray[i].getNumberOfMolesInPhase()
-                    * Math.pow(componentArray[i].getLennardJonesMolecularDiameter() * 1e-10, 3.0) * 1.0
-                    / (numberOfMolesInPhase * getMolarVolume() * 1e-5);
+                    * Math.pow(componentArray[i].getLennardJonesMolecularDiameter() * 1e-10, 3.0)
+                    * 1.0 / (numberOfMolesInPhase * getMolarVolume() * 1e-5);
         }
         return eps;
     }
 
     /**
-     * <p>calcEpsV.</p>
+     * <p>
+     * calcEpsV.
+     * </p>
      *
      * @return a double
      */
@@ -243,7 +273,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcEpsVV.</p>
+     * <p>
+     * calcEpsVV.
+     * </p>
      *
      * @return a double
      */
@@ -252,7 +284,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcEpsIonic.</p>
+     * <p>
+     * calcEpsIonic.
+     * </p>
      *
      * @return a double
      */
@@ -260,16 +294,20 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
         double epsIonicLoc = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getIonicCharge() != 0) {
-                epsIonicLoc += avagadroNumber * pi / 6.0 * componentArray[i].getNumberOfMolesInPhase()
-                        * Math.pow(componentArray[i].getLennardJonesMolecularDiameter() * 1e-10, 3.0)
-                        / (numberOfMolesInPhase * getMolarVolume() * 1e-5);
+                epsIonicLoc +=
+                        avagadroNumber * pi / 6.0 * componentArray[i].getNumberOfMolesInPhase()
+                                * Math.pow(componentArray[i].getLennardJonesMolecularDiameter()
+                                        * 1e-10, 3.0)
+                                / (numberOfMolesInPhase * getMolarVolume() * 1e-5);
             }
         }
         return epsIonicLoc;
     }
 
     /**
-     * <p>calcEpsIonicdV.</p>
+     * <p>
+     * calcEpsIonicdV.
+     * </p>
      *
      * @return a double
      */
@@ -278,7 +316,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcEpsIonicdVdV.</p>
+     * <p>
+     * calcEpsIonicdVdV.
+     * </p>
      *
      * @return a double
      */
@@ -329,7 +369,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcXLR.</p>
+     * <p>
+     * calcXLR.
+     * </p>
      *
      * @return a double
      */
@@ -337,7 +379,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
         double ans = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getIonicCharge() != 0) {
-                ans += componentArray[i].getNumberOfMolesInPhase() * Math.pow(componentArray[i].getIonicCharge(), 2.0)
+                ans += componentArray[i].getNumberOfMolesInPhase()
+                        * Math.pow(componentArray[i].getIonicCharge(), 2.0)
                         * getShieldingParameter() / (1.0 + getShieldingParameter()
                                 * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
             }
@@ -346,7 +389,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcGammaLRdV.</p>
+     * <p>
+     * calcGammaLRdV.
+     * </p>
      *
      * @return a double
      */
@@ -356,8 +401,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
         }
         // return 0.0; // problem ved ren komponent
         return 1.0 / (8.0 * getShieldingParameter())
-                * (4.0 * Math.pow(getShieldingParameter(), 2.0) / getAlphaLR2() * alphaLRdV + 4.0
-                        * Math.pow(getShieldingParameter(), 2.0) / (numberOfMolesInPhase * getMolarVolume() * 1e-5));
+                * (4.0 * Math.pow(getShieldingParameter(), 2.0) / getAlphaLR2() * alphaLRdV
+                        + 4.0 * Math.pow(getShieldingParameter(), 2.0)
+                                / (numberOfMolesInPhase * getMolarVolume() * 1e-5));
         // // Math.pow(getIonicCharge()/(1.0+((PhaseModifiedFurstElectrolyteEosMod2004)
         // phase).getShieldingParameter()*getLennardJonesMolecularDiameter()*1e-10),2.0)
         // + alphai*temp) /(8.0*((PhaseModifiedFurstElectrolyteEosMod2004)
@@ -365,7 +411,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcShieldingParameter.</p>
+     * <p>
+     * calcShieldingParameter.
+     * </p>
      *
      * @return a double
      */
@@ -386,14 +434,15 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
                     ions++;
                     f += -getAlphaLR2() * componentArray[i].getNumberOfMolesInPhase()
                             / (getMolarVolume() * numberOfMolesInPhase * 1e-5)
-                            * Math.pow(componentArray[i].getIonicCharge()
-                                    / (1.0 + gamma * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10),
+                            * Math.pow(componentArray[i].getIonicCharge() / (1.0 + gamma
+                                    * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10),
                                     2.0);
                     df += 2.0 * getAlphaLR2() * componentArray[i].getNumberOfMolesInPhase()
                             / (getMolarVolume() * numberOfMolesInPhase * 1e-5)
                             * Math.pow(componentArray[i].getIonicCharge(), 2.0)
                             * (componentArray[i].getLennardJonesMolecularDiameter() * 1e-10)
-                            / (Math.pow(1.0 + gamma * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10,
+                            / (Math.pow(1.0 + gamma
+                                    * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10,
                                     3.0));
                 }
             }
@@ -436,7 +485,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     /** {@inheritDoc} */
     @Override
     public double molarVolume(double pressure, double temperature, double A, double B, int phase)
-            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+            throws neqsim.util.exception.IsNaNException,
+            neqsim.util.exception.TooManyIterationsException {
 
         // double BonV = phase== 0 ?
         // 2.0/(2.0+temperature/getPseudoCriticalTemperature()):0.1*pressure*getB()/(numberOfMolesInPhase*temperature*R);
@@ -467,7 +517,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
                     - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
             dh = 1.0 + Btemp / Math.pow(BonV, 2.0) * (Btemp / numberOfMolesInPhase * dFdVdV());
             dhh = -2.0 * Btemp / Math.pow(BonV, 3.0) * (Btemp / numberOfMolesInPhase * dFdVdV())
-                    - Math.pow(Btemp, 2.0) / Math.pow(BonV, 4.0) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
+                    - Math.pow(Btemp, 2.0) / Math.pow(BonV, 4.0)
+                            * (Btemp / numberOfMolesInPhase * dFdVdVdV());
 
             d1 = -h / dh;
             d2 = -dh / dhh;
@@ -515,7 +566,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcW.</p>
+     * <p>
+     * calcW.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param temperature a double
@@ -529,7 +582,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcWi.</p>
+     * <p>
+     * calcWi.
+     * </p>
      *
      * @param compNumb a int
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -538,12 +593,15 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
      * @param numbcomp a int
      * @return a double
      */
-    public double calcWi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    public double calcWi(int compNumb, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp) {
         return electrolyteMixingRule.calcWi(compNumb, phase, temperature, pressure, numbcomp);
     }
 
     /**
-     * <p>calcWiT.</p>
+     * <p>
+     * calcWiT.
+     * </p>
      *
      * @param compNumb a int
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -552,12 +610,15 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
      * @param numbcomp a int
      * @return a double
      */
-    public double calcWiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    public double calcWiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp) {
         return electrolyteMixingRule.calcWiT(compNumb, phase, temperature, pressure, numbcomp);
     }
 
     /**
-     * <p>calcWij.</p>
+     * <p>
+     * calcWij.
+     * </p>
      *
      * @param compNumb a int
      * @param compNumbj a int
@@ -567,19 +628,23 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
      * @param numbcomp a int
      * @return a double
      */
-    public double calcWij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
-            int numbcomp) {
-        return electrolyteMixingRule.calcWij(compNumb, compNumbj, phase, temperature, pressure, numbcomp);
+    public double calcWij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
+            double pressure, int numbcomp) {
+        return electrolyteMixingRule.calcWij(compNumb, compNumbj, phase, temperature, pressure,
+                numbcomp);
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcDiElectricConstant(double temperature) {
-        return 1.0 + (getSolventDiElectricConstant() - 1.0) * (1.0 - getEpsIonic()) / (1.0 + getEpsIonic() / 2.0);
+        return 1.0 + (getSolventDiElectricConstant() - 1.0) * (1.0 - getEpsIonic())
+                / (1.0 + getEpsIonic() / 2.0);
     }
 
     /**
-     * <p>calcDiElectricConstantdV.</p>
+     * <p>
+     * calcDiElectricConstantdV.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -594,7 +659,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcDiElectricConstantdVdV.</p>
+     * <p>
+     * calcDiElectricConstantdVdV.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -602,7 +669,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     public double calcDiElectricConstantdVdV(double temperature) {
         double Y = getSolventDiElectricConstant() - 1.0;
         double dXdf = getEpsIonicdVdV() * -3.0 / 2.0 / Math.pow(getEpsIonic() / 2.0 + 1.0, 2.0)
-                + getEpsIonicdV() * getEpsIonicdV() * 3.0 / 2.0 / Math.pow(getEpsIonic() / 2.0 + 1.0, 3.0);
+                + getEpsIonicdV() * getEpsIonicdV() * 3.0 / 2.0
+                        / Math.pow(getEpsIonic() / 2.0 + 1.0, 3.0);
         return Y * dXdf;// + Y*dXdf;
     }
 
@@ -623,7 +691,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcDiElectricConstantdTdV.</p>
+     * <p>
+     * calcDiElectricConstantdTdV.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -635,14 +705,17 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>calcBornX.</p>
+     * <p>
+     * calcBornX.
+     * </p>
      *
      * @return a double
      */
     public double calcBornX() {
         double ans = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
-            ans += componentArray[i].getNumberOfMolesInPhase() * Math.pow(componentArray[i].getIonicCharge(), 2.0)
+            ans += componentArray[i].getNumberOfMolesInPhase()
+                    * Math.pow(componentArray[i].getIonicCharge(), 2.0)
                     / (componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
         }
         return ans;
@@ -651,19 +724,23 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     // Long Range term equations and derivatives
 
     /**
-     * <p>FLR.</p>
+     * <p>
+     * FLR.
+     * </p>
      *
      * @return a double
      */
     public double FLR() {
         double ans = 0.0;
         ans -= (1.0 / (4.0 * pi) * getAlphaLR2() * getXLR());
-        return ans + (numberOfMolesInPhase * getMolarVolume() * 1e-5 * Math.pow(getShieldingParameter(), 3.0))
-                / (3.0 * pi * avagadroNumber);
+        return ans + (numberOfMolesInPhase * getMolarVolume() * 1e-5
+                * Math.pow(getShieldingParameter(), 3.0)) / (3.0 * pi * avagadroNumber);
     }
 
     /**
-     * <p>dFLRdT.</p>
+     * <p>
+     * dFLRdT.
+     * </p>
      *
      * @return a double
      */
@@ -672,7 +749,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFLRdTdV.</p>
+     * <p>
+     * dFLRdTdV.
+     * </p>
      *
      * @return a double
      */
@@ -681,7 +760,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFLRdTdT.</p>
+     * <p>
+     * dFLRdTdT.
+     * </p>
      *
      * @return a double
      */
@@ -690,7 +771,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFLRdV.</p>
+     * <p>
+     * dFLRdV.
+     * </p>
      *
      * @return a double
      */
@@ -700,7 +783,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFLRdVdV.</p>
+     * <p>
+     * dFLRdVdV.
+     * </p>
      *
      * @return a double
      */
@@ -709,7 +794,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFLRdVdVdV.</p>
+     * <p>
+     * dFLRdVdVdV.
+     * </p>
      *
      * @return a double
      */
@@ -720,7 +807,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     // first order derivatives
 
     /**
-     * <p>FLRXLR.</p>
+     * <p>
+     * FLRXLR.
+     * </p>
      *
      * @return a double
      */
@@ -729,17 +818,21 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FLRGammaLR.</p>
+     * <p>
+     * FLRGammaLR.
+     * </p>
      *
      * @return a double
      */
     public double FLRGammaLR() {
-        return 3.0 * numberOfMolesInPhase * getMolarVolume() * 1e-5 * Math.pow(getShieldingParameter(), 2.0)
-                / (3.0 * pi * avagadroNumber);
+        return 3.0 * numberOfMolesInPhase * getMolarVolume() * 1e-5
+                * Math.pow(getShieldingParameter(), 2.0) / (3.0 * pi * avagadroNumber);
     }
 
     /**
-     * <p>dFdAlphaLR.</p>
+     * <p>
+     * dFdAlphaLR.
+     * </p>
      *
      * @return a double
      */
@@ -748,7 +841,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFdAlphaLRdV.</p>
+     * <p>
+     * dFdAlphaLRdV.
+     * </p>
      *
      * @return a double
      */
@@ -757,7 +852,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFdAlphaLRdX.</p>
+     * <p>
+     * dFdAlphaLRdX.
+     * </p>
      *
      * @return a double
      */
@@ -766,7 +863,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFdAlphaLRdGamma.</p>
+     * <p>
+     * dFdAlphaLRdGamma.
+     * </p>
      *
      * @return a double
      */
@@ -775,7 +874,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FLRV.</p>
+     * <p>
+     * FLRV.
+     * </p>
      *
      * @return a double
      */
@@ -784,7 +885,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FLRVV.</p>
+     * <p>
+     * FLRVV.
+     * </p>
      *
      * @return a double
      */
@@ -795,7 +898,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     // second order derivatives
 
     /**
-     * <p>dFdAlphaLRdAlphaLR.</p>
+     * <p>
+     * dFdAlphaLRdAlphaLR.
+     * </p>
      *
      * @return a double
      */
@@ -804,7 +909,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>XLRdndn.</p>
+     * <p>
+     * XLRdndn.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -815,7 +922,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>XLRdGammaLR.</p>
+     * <p>
+     * XLRdGammaLR.
+     * </p>
      *
      * @return a double
      */
@@ -825,20 +934,25 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
         double ans2 = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             ans -= componentArray[i].getLennardJonesMolecularDiameter() * 1e-10
-                    * componentArray[i].getNumberOfMolesInPhase() * Math.pow(componentArray[i].getIonicCharge(), 2.0)
-                    * getShieldingParameter()
-                    / Math.pow(1.0
-                            + getShieldingParameter() * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10,
+                    * componentArray[i].getNumberOfMolesInPhase()
+                    * Math.pow(componentArray[i].getIonicCharge(), 2.0) * getShieldingParameter()
+                    / Math.pow(
+                            1.0 + getShieldingParameter()
+                                    * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10,
                             2.0);
-            ans2 += componentArray[i].getNumberOfMolesInPhase() * Math.pow(componentArray[i].getIonicCharge(), 2.0)
-                    / (1.0 + getShieldingParameter() * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
+            ans2 += componentArray[i].getNumberOfMolesInPhase()
+                    * Math.pow(componentArray[i].getIonicCharge(), 2.0)
+                    / (1.0 + getShieldingParameter()
+                            * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
 
         }
         return ans2 + ans;
     }
 
     /**
-     * <p>XBorndndn.</p>
+     * <p>
+     * XBorndndn.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -850,7 +964,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
 
     // Short Range term equations and derivatives
     /**
-     * <p>FSR2.</p>
+     * <p>
+     * FSR2.
+     * </p>
      *
      * @return a double
      */
@@ -859,7 +975,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFSR2dT.</p>
+     * <p>
+     * dFSR2dT.
+     * </p>
      *
      * @return a double
      */
@@ -868,7 +986,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFSR2dTdT.</p>
+     * <p>
+     * dFSR2dTdT.
+     * </p>
      *
      * @return a double
      */
@@ -877,7 +997,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFSR2dV.</p>
+     * <p>
+     * dFSR2dV.
+     * </p>
      *
      * @return a double
      */
@@ -886,7 +1008,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFSR2dTdV.</p>
+     * <p>
+     * dFSR2dTdV.
+     * </p>
      *
      * @return a double
      */
@@ -895,7 +1019,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFSR2dVdV.</p>
+     * <p>
+     * dFSR2dVdV.
+     * </p>
      *
      * @return a double
      */
@@ -905,18 +1031,23 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFSR2dVdVdV.</p>
+     * <p>
+     * dFSR2dVdVdV.
+     * </p>
      *
      * @return a double
      */
     public double dFSR2dVdVdV() {
-        return (FSR2VVV() + 3 * FSR2epsepsV() * Math.pow(getEpsdV(), 2.0) + 3 * FSR2VVeps() * getEpsdV()
-                + FSR2epsepseps() * Math.pow(getEpsdV(), 3.0)) * 1e-15;
+        return (FSR2VVV() + 3 * FSR2epsepsV() * Math.pow(getEpsdV(), 2.0)
+                + 3 * FSR2VVeps() * getEpsdV() + FSR2epsepseps() * Math.pow(getEpsdV(), 3.0))
+                * 1e-15;
     }
 
     // first order derivatives
     /**
-     * <p>FSR2W.</p>
+     * <p>
+     * FSR2W.
+     * </p>
      *
      * @return a double
      */
@@ -925,7 +1056,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2V.</p>
+     * <p>
+     * FSR2V.
+     * </p>
      *
      * @return a double
      */
@@ -934,7 +1067,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2T.</p>
+     * <p>
+     * FSR2T.
+     * </p>
      *
      * @return a double
      */
@@ -943,7 +1078,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2n.</p>
+     * <p>
+     * FSR2n.
+     * </p>
      *
      * @return a double
      */
@@ -952,7 +1089,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2eps.</p>
+     * <p>
+     * FSR2eps.
+     * </p>
      *
      * @return a double
      */
@@ -963,7 +1102,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     // second order derivatives
 
     /**
-     * <p>FSR2nn.</p>
+     * <p>
+     * FSR2nn.
+     * </p>
      *
      * @return a double
      */
@@ -972,7 +1113,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2nT.</p>
+     * <p>
+     * FSR2nT.
+     * </p>
      *
      * @return a double
      */
@@ -981,7 +1124,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2nV.</p>
+     * <p>
+     * FSR2nV.
+     * </p>
      *
      * @return a double
      */
@@ -990,7 +1135,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2neps.</p>
+     * <p>
+     * FSR2neps.
+     * </p>
      *
      * @return a double
      */
@@ -999,7 +1146,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2nW.</p>
+     * <p>
+     * FSR2nW.
+     * </p>
      *
      * @return a double
      */
@@ -1008,7 +1157,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2Tn.</p>
+     * <p>
+     * FSR2Tn.
+     * </p>
      *
      * @return a double
      */
@@ -1017,7 +1168,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2TT.</p>
+     * <p>
+     * FSR2TT.
+     * </p>
      *
      * @return a double
      */
@@ -1026,7 +1179,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2TV.</p>
+     * <p>
+     * FSR2TV.
+     * </p>
      *
      * @return a double
      */
@@ -1035,7 +1190,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2Teps.</p>
+     * <p>
+     * FSR2Teps.
+     * </p>
      *
      * @return a double
      */
@@ -1044,7 +1201,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2TW.</p>
+     * <p>
+     * FSR2TW.
+     * </p>
      *
      * @return a double
      */
@@ -1053,25 +1212,33 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2VV.</p>
+     * <p>
+     * FSR2VV.
+     * </p>
      *
      * @return a double
      */
     public double FSR2VV() {
-        return 2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 3.0) * (1.0 - eps));
+        return 2.0 * W
+                / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 3.0) * (1.0 - eps));
     }
 
     /**
-     * <p>FSR2epsV.</p>
+     * <p>
+     * FSR2epsV.
+     * </p>
      *
      * @return a double
      */
     public double FSR2epsV() {
-        return -W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0) * Math.pow((1.0 - eps), 2.0));
+        return -W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0)
+                * Math.pow((1.0 - eps), 2.0));
     }
 
     /**
-     * <p>FSR2epsW.</p>
+     * <p>
+     * FSR2epsW.
+     * </p>
      *
      * @return a double
      */
@@ -1080,7 +1247,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2WW.</p>
+     * <p>
+     * FSR2WW.
+     * </p>
      *
      * @return a double
      */
@@ -1089,7 +1258,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2VW.</p>
+     * <p>
+     * FSR2VW.
+     * </p>
      *
      * @return a double
      */
@@ -1098,64 +1269,84 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FSR2epseps.</p>
+     * <p>
+     * FSR2epseps.
+     * </p>
      *
      * @return a double
      */
     public double FSR2epseps() {
-        return 2.0 * W / ((getMolarVolume() * 1e-5 * numberOfMolesInPhase) * Math.pow(1.0 - eps, 3.0));
+        return 2.0 * W
+                / ((getMolarVolume() * 1e-5 * numberOfMolesInPhase) * Math.pow(1.0 - eps, 3.0));
     }
 
     /**
-     * <p>FSR2VVV.</p>
+     * <p>
+     * FSR2VVV.
+     * </p>
      *
      * @return a double
      */
     public double FSR2VVV() {
-        return -6.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 4.0) * (1.0 - eps));
+        return -6.0 * W
+                / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 4.0) * (1.0 - eps));
     }
 
     // third order derivatives
     /**
-     * <p>FSR2epsepsV.</p>
+     * <p>
+     * FSR2epsepsV.
+     * </p>
      *
      * @return a double
      */
     public double FSR2epsepsV() {
-        return -2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0) * Math.pow((1 - eps), 3.0));
+        return -2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0)
+                * Math.pow((1 - eps), 3.0));
     }
 
     /**
-     * <p>FSR2VVeps.</p>
+     * <p>
+     * FSR2VVeps.
+     * </p>
      *
      * @return a double
      */
     public double FSR2VVeps() {
-        return 2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 3.0) * Math.pow((1 - eps), 2.0));
+        return 2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 3.0)
+                * Math.pow((1 - eps), 2.0));
     }
 
     /**
-     * <p>FSR2epsepseps.</p>
+     * <p>
+     * FSR2epsepseps.
+     * </p>
      *
      * @return a double
      */
     public double FSR2epsepseps() {
-        return 6.0 * W / ((getMolarVolume() * 1e-5 * numberOfMolesInPhase) * Math.pow(1.0 - eps, 4.0));
+        return 6.0 * W
+                / ((getMolarVolume() * 1e-5 * numberOfMolesInPhase) * Math.pow(1.0 - eps, 4.0));
     }
 
     // Born term equations and derivatives
     /**
-     * <p>FBorn.</p>
+     * <p>
+     * FBorn.
+     * </p>
      *
      * @return a double
      */
     public double FBorn() {
-        return (avagadroNumber * electronCharge * electronCharge / (4.0 * pi * vacumPermittivity * R * temperature))
+        return (avagadroNumber * electronCharge * electronCharge
+                / (4.0 * pi * vacumPermittivity * R * temperature))
                 * (1.0 / getSolventDiElectricConstant() - 1.0) * bornX;
     }
 
     /**
-     * <p>dFBorndT.</p>
+     * <p>
+     * dFBorndT.
+     * </p>
      *
      * @return a double
      */
@@ -1164,7 +1355,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>dFBorndTdT.</p>
+     * <p>
+     * dFBorndTdT.
+     * </p>
      *
      * @return a double
      */
@@ -1174,7 +1367,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
 
     // first order derivatives
     /**
-     * <p>FBornT.</p>
+     * <p>
+     * FBornT.
+     * </p>
      *
      * @return a double
      */
@@ -1185,41 +1380,52 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FBornX.</p>
+     * <p>
+     * FBornX.
+     * </p>
      *
      * @return a double
      */
     public double FBornX() {
-        return (avagadroNumber * electronCharge * electronCharge / (4.0 * pi * vacumPermittivity * R * temperature))
+        return (avagadroNumber * electronCharge * electronCharge
+                / (4.0 * pi * vacumPermittivity * R * temperature))
                 * (1.0 / getSolventDiElectricConstant() - 1.0);
     }
 
     /**
-     * <p>FBornD.</p>
+     * <p>
+     * FBornD.
+     * </p>
      *
      * @return a double
      */
     public double FBornD() {
-        return -(avagadroNumber * electronCharge * electronCharge / (4.0 * pi * vacumPermittivity * R * temperature))
-                * 1.0 / Math.pow(getSolventDiElectricConstant(), 2.0) * bornX;
+        return -(avagadroNumber * electronCharge * electronCharge
+                / (4.0 * pi * vacumPermittivity * R * temperature)) * 1.0
+                / Math.pow(getSolventDiElectricConstant(), 2.0) * bornX;
     }
 
     // second order derivatives
 
     /**
-     * <p>FBornTT.</p>
+     * <p>
+     * FBornTT.
+     * </p>
      *
      * @return a double
      */
     public double FBornTT() {
         return 2.0
                 * (avagadroNumber * electronCharge * electronCharge
-                        / (4.0 * pi * vacumPermittivity * R * temperature * temperature * temperature))
+                        / (4.0 * pi * vacumPermittivity * R * temperature * temperature
+                                * temperature))
                 * (1.0 / getSolventDiElectricConstant() - 1.0) * bornX;
     }
 
     /**
-     * <p>FBornTD.</p>
+     * <p>
+     * FBornTD.
+     * </p>
      *
      * @return a double
      */
@@ -1230,7 +1436,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FBornTX.</p>
+     * <p>
+     * FBornTX.
+     * </p>
      *
      * @return a double
      */
@@ -1241,28 +1449,36 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>FBornDD.</p>
+     * <p>
+     * FBornDD.
+     * </p>
      *
      * @return a double
      */
     public double FBornDD() {
         return 2.0
-                * (avagadroNumber * electronCharge * electronCharge / (4.0 * pi * vacumPermittivity * R * temperature))
+                * (avagadroNumber * electronCharge * electronCharge
+                        / (4.0 * pi * vacumPermittivity * R * temperature))
                 * 1.0 / Math.pow(getSolventDiElectricConstant(), 3.0) * bornX;
     }
 
     /**
-     * <p>FBornDX.</p>
+     * <p>
+     * FBornDX.
+     * </p>
      *
      * @return a double
      */
     public double FBornDX() {
-        return -(avagadroNumber * electronCharge * electronCharge / (4.0 * pi * vacumPermittivity * R * temperature))
-                * 1.0 / Math.pow(getSolventDiElectricConstant(), 2.0);
+        return -(avagadroNumber * electronCharge * electronCharge
+                / (4.0 * pi * vacumPermittivity * R * temperature)) * 1.0
+                / Math.pow(getSolventDiElectricConstant(), 2.0);
     }
 
     /**
-     * <p>FBornXX.</p>
+     * <p>
+     * FBornXX.
+     * </p>
      *
      * @return a double
      */
@@ -1271,7 +1487,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>eps</code>.</p>
+     * <p>
+     * Getter for the field <code>eps</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1280,7 +1498,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>epsIonic</code>.</p>
+     * <p>
+     * Getter for the field <code>epsIonic</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1289,7 +1509,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>epsIonicdV</code>.</p>
+     * <p>
+     * Getter for the field <code>epsIonicdV</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1298,7 +1520,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>epsdV</code>.</p>
+     * <p>
+     * Getter for the field <code>epsdV</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1307,7 +1531,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>epsdVdV</code>.</p>
+     * <p>
+     * Getter for the field <code>epsdVdV</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1316,7 +1542,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>solventDiElectricConstant</code>.</p>
+     * <p>
+     * Getter for the field <code>solventDiElectricConstant</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1325,7 +1553,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>solventDiElectricConstantdT</code>.</p>
+     * <p>
+     * Getter for the field <code>solventDiElectricConstantdT</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1334,7 +1564,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>solventDiElectricConstantdTdT</code>.</p>
+     * <p>
+     * Getter for the field <code>solventDiElectricConstantdTdT</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1343,7 +1575,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>alphaLR2</code>.</p>
+     * <p>
+     * Getter for the field <code>alphaLR2</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1352,7 +1586,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>getW.</p>
+     * <p>
+     * getW.
+     * </p>
      *
      * @return a double
      */
@@ -1361,7 +1597,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>getWT.</p>
+     * <p>
+     * getWT.
+     * </p>
      *
      * @return a double
      */
@@ -1370,7 +1608,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>diElectricConstantdT</code>.</p>
+     * <p>
+     * Getter for the field <code>diElectricConstantdT</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1379,7 +1619,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>diElectricConstantdV</code>.</p>
+     * <p>
+     * Getter for the field <code>diElectricConstantdV</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1388,7 +1630,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>getXLR.</p>
+     * <p>
+     * getXLR.
+     * </p>
      *
      * @return a double
      */
@@ -1397,7 +1641,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>Getter for the field <code>shieldingParameter</code>.</p>
+     * <p>
+     * Getter for the field <code>shieldingParameter</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1406,7 +1652,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>getAlphaLRT.</p>
+     * <p>
+     * getAlphaLRT.
+     * </p>
      *
      * @return a double
      */
@@ -1415,7 +1663,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>getAlphaLRV.</p>
+     * <p>
+     * getAlphaLRV.
+     * </p>
      *
      * @return a double
      */
@@ -1424,7 +1674,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>getDielectricT.</p>
+     * <p>
+     * getDielectricT.
+     * </p>
      *
      * @return a double
      */
@@ -1433,7 +1685,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>getDielectricV.</p>
+     * <p>
+     * getDielectricV.
+     * </p>
      *
      * @return a double
      */
@@ -1442,7 +1696,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>getDielectricConstant.</p>
+     * <p>
+     * getDielectricConstant.
+     * </p>
      *
      * @return a double
      */
@@ -1451,15 +1707,18 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     }
 
     /**
-     * <p>setFurstIonicCoefficient.</p>
+     * <p>
+     * setFurstIonicCoefficient.
+     * </p>
      *
      * @param params an array of {@link double} objects
      */
-    public void setFurstIonicCoefficient(double[] params) {
-    }
+    public void setFurstIonicCoefficient(double[] params) {}
 
     /**
-     * <p>Getter for the field <code>epsIonicdVdV</code>.</p>
+     * <p>
+     * Getter for the field <code>epsIonicdVdV</code>.
+     * </p>
      *
      * @return a double
      */

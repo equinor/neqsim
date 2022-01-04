@@ -36,7 +36,8 @@ abstract class Component implements ComponentInterface {
     protected double dqPuredT = 0, dqPuredTdT = 0;
     private double racketZCPA = 0;
     private double criticalCompressibilityFactor = 0.0;
-    private double volumeCorrectionConst=0.0, volumeCorrectionT = 0.0, volumeCorrectionT_CPA = 0.0;
+    private double volumeCorrectionConst = 0.0, volumeCorrectionT = 0.0,
+            volumeCorrectionT_CPA = 0.0;
     protected double criticalPressure, criticalTemperature, molarMass, acentricFactor,
             numberOfMoles = 0.0, numberOfMolesInPhase = 0.0, normalLiquidDensity = 0;
     protected double reducedPressure, reducedTemperature, fugasityCoeffisient,
@@ -89,13 +90,15 @@ abstract class Component implements ComponentInterface {
     static Logger logger = LogManager.getLogger(Component.class);
 
     /**
-     * Creates new Component
+     * <p>Constructor for Component.</p>
      */
     // Class methods
     public Component() {}
 
     /**
-     * <p>Constructor for Component.</p>
+     * <p>
+     * Constructor for Component.
+     * </p>
      *
      * @param number a int
      * @param moles a double
@@ -107,7 +110,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>Constructor for Component.</p>
+     * <p>
+     * Constructor for Component.
+     * </p>
      *
      * @param moles a double
      */
@@ -116,7 +121,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>Constructor for Component.</p>
+     * <p>
+     * Constructor for Component.
+     * </p>
      *
      * @param number a int
      * @param TC a double
@@ -134,7 +141,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>Constructor for Component.</p>
+     * <p>
+     * Constructor for Component.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -1111,7 +1120,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>getFugacitydN.</p>
+     * <p>
+     * getFugacitydN.
+     * </p>
      *
      * @param i a int
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -1157,7 +1168,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>getChemicalPotentialdP.</p>
+     * <p>
+     * getChemicalPotentialdP.
+     * </p>
      *
      * @param i a int
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -1422,7 +1435,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>getIonicDiameter.</p>
+     * <p>
+     * getIonicDiameter.
+     * </p>
      *
      * @return a double
      */
@@ -1502,7 +1517,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>Setter for the field <code>voli</code>.</p>
+     * <p>
+     * Setter for the field <code>voli</code>.
+     * </p>
      *
      * @param molarVol a double
      */
@@ -1531,7 +1548,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>Getter for the field <code>matiascopemanParamsPR</code>.</p>
+     * <p>
+     * Getter for the field <code>matiascopemanParamsPR</code>.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -1540,7 +1559,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>Setter for the field <code>matiascopemanParamsPR</code>.</p>
+     * <p>
+     * Setter for the field <code>matiascopemanParamsPR</code>.
+     * </p>
      *
      * @param index a int
      * @param matiascopemanParams a double
@@ -1855,7 +1876,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>setIsAllTypesFalse.</p>
+     * <p>
+     * setIsAllTypesFalse.
+     * </p>
      */
     protected void setIsAllTypesFalse() {
         this.isTBPfraction = false;
@@ -2273,7 +2296,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>isIsHydrateFormer.</p>
+     * <p>
+     * isIsHydrateFormer.
+     * </p>
      *
      * @return the isHydrateFormer
      */
@@ -2282,7 +2307,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>Getter for the field <code>referenceEnthalpy</code>.</p>
+     * <p>
+     * Getter for the field <code>referenceEnthalpy</code>.
+     * </p>
      *
      * @return the referenceEnthalpy
      */
@@ -2291,7 +2318,9 @@ abstract class Component implements ComponentInterface {
     }
 
     /**
-     * <p>Setter for the field <code>referenceEnthalpy</code>.</p>
+     * <p>
+     * Setter for the field <code>referenceEnthalpy</code>.
+     * </p>
      *
      * @param referenceEnthalpy the referenceEnthalpy to set
      */
@@ -2412,19 +2441,22 @@ abstract class Component implements ComponentInterface {
     public double getVolumeCorrectionT() {
         return volumeCorrectionT;
     }
-    
+
     /**
-     * <p>getVolumeCorrection.</p>
+     * <p>
+     * getVolumeCorrection.
+     * </p>
      *
      * @return a double
      */
     public double getVolumeCorrection() {
-    	return 0.0;
+        return 0.0;
     }
+
     /** {@inheritDoc} */
     @Override
     public void setVolumeCorrectionConst(double getVolumeCorrectionConst) {
-    	this.volumeCorrectionConst = getVolumeCorrectionConst;
+        this.volumeCorrectionConst = getVolumeCorrectionConst;
     }
 
     /** {@inheritDoc} */
@@ -2480,7 +2512,7 @@ abstract class Component implements ComponentInterface {
             throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
         }
     }
-    
+
     /**
      * {@inheritDoc}
      *
