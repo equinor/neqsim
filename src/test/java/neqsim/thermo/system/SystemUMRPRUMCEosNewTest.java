@@ -16,7 +16,7 @@ class SystemUMRPRUMCEosNewTest {
      */
     @BeforeAll
     public static void setUp() {
-        testSystem = new SystemUMRPRUMCEosNew(298.0, 10.0);
+        testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
         testSystem.addComponent("nitrogen", 0.01);
         testSystem.addComponent("CO2", 0.01);
         testSystem.addComponent("methane", 0.68);
