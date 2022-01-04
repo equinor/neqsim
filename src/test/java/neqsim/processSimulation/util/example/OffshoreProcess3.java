@@ -352,15 +352,6 @@ public class OffshoreProcess3 {
         // System.out.println("mass balance production heat exchanger "
         // +heatEx.getMassBalance("kg/sec"));
 
-        /*
-         * System.out.println("Cooler Duty " +operations.getCoolerDuty("J/sec")/1.0e6 +" MW");
-         * System.out.println("Heater Duty " +operations.getHeaterDuty("J/sec")/1.0e6+" MW");
-         * System.out.println("Power " +operations.getPower("W")/1.0e6+" MW");
-         * 
-         * System.out.println("exergy change " + operations.getExergyChange("J"));
-         * System.out.println("total weight " + operations.getMechanicalWeight("kg") +" kg");
-         */
-
         System.out.println("Cooler Duty " + operations.getCoolerDuty("J/sec") / 1.0e6 + " MW");
         System.out.println("Heater Duty " + operations.getHeaterDuty("J/sec") / 1.0e6 + " MW");
         System.out.println("Power " + operations.getPower("W") / 1.0e6 + " MW");
