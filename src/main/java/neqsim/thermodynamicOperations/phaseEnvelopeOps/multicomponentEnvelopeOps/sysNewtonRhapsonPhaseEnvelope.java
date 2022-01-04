@@ -305,7 +305,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
                                                     * system.getPhase(0).getComponents()[i].getK(),
                                     2.0)
                             * system.getBeta() * system.getPhase(0).getComponents()[i].getK();
-
         }
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
@@ -387,7 +386,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
             Xgij.setMatrix(0, numberOfComponents + 1, np - 1, np - 1, u.copy());
             u.plusEquals(dxds.times(ds));
             specVal = u.get(speceq, 0);
-
         } else {
             // for the rest of the points use as spec eq the most sensitive variable
             int speceqOld = speceq;
@@ -485,7 +483,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
 
             // calculate next u
             calcInc2(np);
-
         }
         // since you are calculating the next point the previous iterations should be
         // zero
@@ -562,7 +559,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
                 }
                 u.set(j, 0, xcoef.get(0, 0) + sny
                         * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
-
             }
         } catch (Exception e) {
             logger.error("error", e);

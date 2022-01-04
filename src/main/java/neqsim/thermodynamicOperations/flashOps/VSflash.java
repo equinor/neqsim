@@ -147,7 +147,6 @@ public class VSflash extends Flash {
     public void run() {
         tpFlash.run();
         solveQ();
-
     }
 
     /** {@inheritDoc} */

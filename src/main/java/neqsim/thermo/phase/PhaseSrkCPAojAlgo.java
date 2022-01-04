@@ -834,7 +834,6 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
             }
             // System.out.println("corrmatrix error " );
             // System.out.println("error " + corrMatrix.norm1());
-
         } while ((corr4Matrix2.norm() > 1e-12 || !solved) && iter < 100);
 
         // System.out.println("iter " + iter + " error " + NormOps.normF(corr4Matrix));
@@ -983,7 +982,6 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
         // file.createFile();
         if (phase == 1) {
             return solvedBonVlow;
-
         } else {
             return solvedBonVHigh;
         }

@@ -76,7 +76,6 @@ public class NeqSimExperimentDatabase
         } catch (Exception ex) {
             logger.error("SQLException " + ex.getMessage());
             throw new RuntimeException(ex);
-
         }
     }
 
@@ -251,7 +250,6 @@ public class NeqSimExperimentDatabase
      */
     public Statement getStatement() {
         return statement;
-
     }
 
     /**
@@ -263,7 +261,6 @@ public class NeqSimExperimentDatabase
      */
     public void setStatement(Statement statement) {
         this.statement = statement;
-
     }
 
     /**

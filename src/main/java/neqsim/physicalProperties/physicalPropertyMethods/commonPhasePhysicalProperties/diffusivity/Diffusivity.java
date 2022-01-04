@@ -44,7 +44,6 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
         binaryLennardJonesOmega = new double[phase.getPhase().getNumberOfComponents()][phase
                 .getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[phase.getPhase().getNumberOfComponents()];
-
     }
 
     /** {@inheritDoc} */

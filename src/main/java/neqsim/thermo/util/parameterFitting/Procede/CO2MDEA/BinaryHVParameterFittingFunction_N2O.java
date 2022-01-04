@@ -50,7 +50,6 @@ public class BinaryHVParameterFittingFunction_N2O extends LevenbergMarquardtFunc
         }
         return (system.getPressure() * system.getPhases()[0].getComponent(0).getx()
                 * system.getPhase(0).getComponent(0).getFugasityCoeffisient());
-
     }
 
     /** {@inheritDoc} */
@@ -103,6 +102,5 @@ public class BinaryHVParameterFittingFunction_N2O extends LevenbergMarquardtFunc
          * ((PhaseEosInterface)system.getPhases()[1]).getMixingRule().
          * setBinaryInteractionParameter(0,2, value);
          */
-
     }
 }

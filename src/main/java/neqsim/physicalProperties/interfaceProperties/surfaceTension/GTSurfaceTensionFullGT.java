@@ -252,7 +252,6 @@ public class GTSurfaceTensionFullGT {
                 debugPlot(xgrid, rhomat);
             }
             // End Remesh
-
         }
         return sigma;
     }

@@ -164,7 +164,6 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                     maxTemperature = oldTemperature;
                 }
             } // end if
-
         } // end for lokke
 
         if (SolidForms) {

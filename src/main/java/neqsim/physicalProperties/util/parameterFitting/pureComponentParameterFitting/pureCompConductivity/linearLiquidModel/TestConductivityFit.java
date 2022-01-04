@@ -85,6 +85,5 @@ public class TestConductivityFit {
         // optim.runMonteCarloSimulation();
         optim.displayResult();
         optim.displayCurveFit();
-
     }
 }

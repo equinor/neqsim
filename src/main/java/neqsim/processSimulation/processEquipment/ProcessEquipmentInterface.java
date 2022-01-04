@@ -215,5 +215,4 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      * @return an array of {@link java.lang.String} objects
      */
     public String[][] getResultTable();
-
 }

@@ -41,7 +41,6 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
     public OLGApropertyTableGenerator(SystemInterface system) {
         this.thermoSystem = system;
         thermoOps = new ThermodynamicOperations(thermoSystem);
-
     }
 
     /**

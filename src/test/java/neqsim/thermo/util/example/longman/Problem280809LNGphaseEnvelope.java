@@ -38,7 +38,6 @@ public class Problem280809LNGphaseEnvelope {
         try {
             testOps.calcPTphaseEnvelope(true);// 0.05, 0.000005);
             testOps.displayResult();
-
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -47,6 +46,5 @@ public class Problem280809LNGphaseEnvelope {
         // testOps.displayResult();
         // System.out.println("Cricondenbar " + testOps.get("cricondenbar")[0] + " " +
         // testOps.get("cricondenbar")[1]);
-
     }
 }

@@ -106,7 +106,6 @@ abstract class Component implements ComponentInterface {
      */
     public Component(int number, double moles) {
         numberOfMoles = moles;
-
     }
 
     /**
@@ -936,7 +935,6 @@ abstract class Component implements ComponentInterface {
     @Override
     public final void setNumberOfMolesInPhase(double totmoles) {
         numberOfMolesInPhase = totmoles * x;
-
     }
 
     /** {@inheritDoc} */
@@ -1114,7 +1112,6 @@ abstract class Component implements ComponentInterface {
     public double getChemicalPotential(PhaseInterface phase) {
         return getGibbsEnergy(phase.getTemperature(), phase.getPressure()) / numberOfMolesInPhase;
         // return getGresTV;
-
     }
 
     /**
@@ -2113,7 +2110,6 @@ abstract class Component implements ComponentInterface {
                         + CpLiquid[2] * Math.pow(temperature, 2.0)
                         + CpLiquid[3] * Math.pow(temperature, 3.0)
                         + CpLiquid[4] * Math.pow(temperature, 4.0));
-
     }
 
     /**

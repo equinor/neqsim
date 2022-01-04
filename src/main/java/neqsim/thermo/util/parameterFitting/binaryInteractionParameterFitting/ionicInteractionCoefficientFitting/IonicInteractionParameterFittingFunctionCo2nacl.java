@@ -76,5 +76,4 @@ public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMa
                     .setWijT1Parameter(Naplusnumb, CO2Numb, value);
         }
     }
-
 }

@@ -59,7 +59,6 @@ public class TestUNIFAC {
             // testOps.bubblePointTemperatureFlash();
         } catch (Exception e) {
             logger.error(e.toString(), e);
-
         }
         testSystem.display();
         logger.info(testSystem.getPhase(1).getActivityCoefficient(0));

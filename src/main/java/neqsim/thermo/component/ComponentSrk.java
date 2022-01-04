@@ -68,7 +68,6 @@ public class ComponentSrk extends ComponentEos {
         double[] surfTensInfluenceParamtemp =
                 {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};
         this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
-
     }
 
     /**
@@ -203,6 +202,5 @@ public class ComponentSrk extends ComponentEos {
         // Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0));
         return (aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB))
                 / Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0);
-
     }
 }

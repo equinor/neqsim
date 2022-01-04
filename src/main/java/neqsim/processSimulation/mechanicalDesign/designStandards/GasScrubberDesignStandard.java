@@ -59,7 +59,6 @@ public class GasScrubberDesignStandard extends DesignStandard {
             }
 
             // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

@@ -63,7 +63,6 @@ public class ComponentPCSAFT extends ComponentSrk {
     public ComponentPCSAFT(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
-
     }
 
     /**
@@ -304,7 +303,6 @@ public class ComponentPCSAFT extends ComponentSrk {
             // System.out.println("kij "+
             // ((PhaseEosInterface)phase).getMixingRule().getBinaryInteractionParameter(componentNumber,
             // i));
-
         }
         return -2.0 / Math.pow(phase.getNumberOfMolesInPhase(), 1.0)
                 * ((PhasePCSAFT) phase).getF2dispSumTerm()

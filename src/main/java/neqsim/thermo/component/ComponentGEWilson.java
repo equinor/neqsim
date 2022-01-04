@@ -200,6 +200,5 @@ public class ComponentGEWilson extends ComponentGE {
         double deltaHsub = (deltaHvap + deltaHf + deltaHtrans);
 
         return -2.0 / coordinationNumber * (deltaHsub - R * phase1.getTemperature());
-
     }
 }

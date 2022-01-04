@@ -168,5 +168,4 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
                 .setWijParameter(MDEAplusNumb, OHnumb, 1e-10);
         // }
     }
-
 }

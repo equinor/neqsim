@@ -217,7 +217,6 @@ public class DifferentialLiberation extends BasePVTsimulation {
 
         DifferentialLiberation CVDsim = new DifferentialLiberation(tempSystem);
         CVDsim.runCalc();
-
     }
 
     /**

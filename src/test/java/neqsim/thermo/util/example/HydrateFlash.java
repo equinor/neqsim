@@ -128,7 +128,6 @@ public class HydrateFlash {
             // testOps.bubblePointPressureFlash(false);
             // testOps.hydrateFormationTemperature(1);
             // testOps.waterPrecipitationTemperature();
-
         } catch (Exception e) {
             logger.error(e.toString(), e);
         }

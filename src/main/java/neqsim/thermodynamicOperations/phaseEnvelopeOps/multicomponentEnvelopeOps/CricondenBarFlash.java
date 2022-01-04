@@ -80,7 +80,6 @@ public class CricondenBarFlash extends pTphaseEnvelope {
         this.cricondenBarX = cricondenBarX;
         this.cricondenBarY = cricondenBarY;
         this.beta = phaseFraction;
-
     }
 
     /** {@inheritDoc} */
@@ -155,7 +154,6 @@ public class CricondenBarFlash extends pTphaseEnvelope {
                 }
 
                 T = T - dfdt / DDQ;
-
             }
 
             // iter P,X
@@ -286,7 +284,6 @@ public class CricondenBarFlash extends pTphaseEnvelope {
 
             xx[j] = system.getPhase(0).getComponents()[j].getx();
             yy[j] = system.getPhase(1).getComponents()[j].getx();
-
         }
     }
 
@@ -298,7 +295,6 @@ public class CricondenBarFlash extends pTphaseEnvelope {
     public void init() {
         // setNewX();
         system.init(3);
-
     }
 
     /**
@@ -328,7 +324,6 @@ public class CricondenBarFlash extends pTphaseEnvelope {
 
             funcT = funcT + xxf + xxf * (Math.log(yyf) - Math.log(xxf) + fugv - fugl);
             dfuncdT = dfuncdT + xxf * (fugTv - fugTl);
-
         }
     }
 
@@ -353,7 +348,6 @@ public class CricondenBarFlash extends pTphaseEnvelope {
 
             funcP = funcP + xx + xx * (Math.log(yy) - Math.log(xx) + fugv - fugl);
             dfuncdP = dfuncdP + xx * (fugPv - fugPl);
-
         }
     }
 }

@@ -70,7 +70,6 @@ public class ChemicalReactionFactory {
 
             // System.out.println("reaction added ok...");
             dataSet.close();
-
         } catch (Exception e) {
             e.printStackTrace();
             String err = e.toString();

@@ -102,7 +102,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         liquidOutStream = new Stream(liquidSystem);
-
     }
 
     /**
@@ -296,7 +295,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                 * getSeparatorLength();
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
                 * getInternalDiameter() * getSeparatorLength();
-
     }
 
     /**
@@ -483,7 +481,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                         - thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
                 / thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
         return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
-
     }
 
     /**

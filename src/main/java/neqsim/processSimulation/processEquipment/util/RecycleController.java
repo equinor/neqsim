@@ -35,11 +35,9 @@ public class RecycleController implements java.io.Serializable {
                 minimumPriorityLevel = recyc.getPriority();
             if (recyc.getPriority() > maximumPriorityLevel)
                 maximumPriorityLevel = recyc.getPriority();
-
         }
 
         currentPriorityLevel = minimumPriorityLevel;
-
     }
 
     /**

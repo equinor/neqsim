@@ -216,7 +216,6 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
                             thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getTemperature());
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "[K]";
             Double.toString(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getTemperature());
-
         }
 
         resultTable = table;

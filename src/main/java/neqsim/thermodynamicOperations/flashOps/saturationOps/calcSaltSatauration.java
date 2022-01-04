@@ -133,11 +133,9 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
             // system.init(1);
             system.init(0);
             system.initPhysicalProperties();
-
         } while (Math.abs(err / ksp) > 1e-5 && iter < 1000);
 
         logger.info("solution found after " + iter + " iterations in calcSaltSatauration()");
-
     }
 
     /** {@inheritDoc} */

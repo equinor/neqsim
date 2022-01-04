@@ -120,5 +120,4 @@ public interface PumpChartInterface extends Cloneable {
      * </p>
      */
     public void plot();
-
 }

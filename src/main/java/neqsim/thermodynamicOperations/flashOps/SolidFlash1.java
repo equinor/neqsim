@@ -442,7 +442,6 @@ public class SolidFlash1 extends TPflash {
             }
         }
         system.init(1);
-
     }
 
     /**

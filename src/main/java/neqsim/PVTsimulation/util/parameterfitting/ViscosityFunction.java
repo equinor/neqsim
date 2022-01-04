@@ -60,6 +60,5 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
 
         ((FrictionTheoryViscosityMethod) system.getPhase(0).getPhysicalProperties()
                 .getViscosityModel()).setTBPviscosityCorrection(value);
-
     }
 }

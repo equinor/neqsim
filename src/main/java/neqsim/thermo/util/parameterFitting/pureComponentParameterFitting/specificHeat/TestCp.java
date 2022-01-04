@@ -75,6 +75,5 @@ public class TestCp {
         optim.setSampleSet(sampleSet);
 
         optim.solve();
-
     }
 }

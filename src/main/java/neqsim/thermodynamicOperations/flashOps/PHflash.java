@@ -142,7 +142,6 @@ public class PHflash extends Flash {
             // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
             // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
             // " error "+ error + " correction " + newCorr + " factor "+ factor);
-
         } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3)
                 && iterations < 200);
         // System.out.println("temp " + system.getTemperature() + " iter " + iterations
@@ -198,7 +197,6 @@ public class PHflash extends Flash {
             // if(iterations>100) System.out.println("temp " + system.getTemperature() + "
             // iter "+ iterations + " error "+ error + " correction " + newCorr + " factor
             // "+ factor);
-
         } while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
         // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
         // " error "+ error );
@@ -217,7 +215,6 @@ public class PHflash extends Flash {
                     system.getPhases()[0].getNumberOfComponents(), 0);
             secondOrderSolver.setSpec(Hspec);
             secondOrderSolver.solve(1);
-
         }
         // System.out.println("enthalpy: " + system.getEnthalpy());
         // System.out.println("Temperature: " + system.getTemperature());

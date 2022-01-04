@@ -47,6 +47,5 @@ public class TestSurfaceTenison {
         testSystem.display();
         testSystem.display();
         testSystem.display();
-
     }
 }

@@ -111,7 +111,6 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
             Told = system.getTemperature();
             system.setTemperature((Told - funk / deriv * 0.9));
             logger.info("Temp: " + system.getTemperature());
-
         } while (Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7);
     }
 

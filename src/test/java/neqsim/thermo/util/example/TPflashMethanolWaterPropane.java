@@ -8,7 +8,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 /**
@@ -31,9 +32,8 @@ public class TPflashMethanolWaterPropane {
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         /*
-         * testSystem.addComponent("methane", 150.0e-2);
-         * testSystem.addComponent("propane", 150.0e-3);
-         * testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water",
+         * testSystem.addComponent("methane", 150.0e-2); testSystem.addComponent("propane",
+         * 150.0e-3); testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water",
          * 0.5);
          * 
          * testSystem.createDatabase(true); testSystem.setMixingRule(10);

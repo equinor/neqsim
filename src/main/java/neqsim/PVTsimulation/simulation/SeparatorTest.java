@@ -43,7 +43,6 @@ public class SeparatorTest extends BasePVTsimulation {
     public void setSeparatorConditions(double[] temperature, double[] pressure) {
         this.pressure = pressure;
         this.temperature = temperature;
-
     }
 
     /**
@@ -131,7 +130,6 @@ public class SeparatorTest extends BasePVTsimulation {
         double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
         sepSim.setSeparatorConditions(temps, pres);
         sepSim.runCalc();
-
     }
 
     /**

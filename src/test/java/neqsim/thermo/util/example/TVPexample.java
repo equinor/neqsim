@@ -47,6 +47,5 @@ public class TVPexample {
             logger.error("Exception thrown in bubble point flash");
         }
         testSystem.display();
-
     }
 }

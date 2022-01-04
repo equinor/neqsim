@@ -125,7 +125,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                 for (int i = 0; i < numberOfComponents; i++) {
                     if (componentArray[i].getNumberOfmoles() < 1e-50) {
                         componentArray[i].setNumberOfAssociationSites(0);
-
                     } else {
                         componentArray[i].setNumberOfAssociationSites(
                                 componentArray[i].getOrginalNumberOfAssociationSites());
@@ -720,7 +719,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             // + " d1 / d2 " + (d1 / d2));
             if (Math.abs(d1 / d2) <= 1.0) {
                 BonV += d1 * (1.0 + 0.5 * d1 / d2);
-
             } else if (d1 / d2 < -1) {
                 BonV += 0.5 * d1;
             } else if (d1 > d2) {
@@ -752,7 +750,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                     BonV = (BonVold + BonV) / 2.0;
                 } else {
                     return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
-
                 }
             }
             /*
@@ -1033,7 +1030,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             }
             // System.out.println("corrmatrix error " );
             // System.out.println("error " + NormOps_DDRM.normF(corr4Matrix));
-
         } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
 
         // System.out.println("iter " + iter + " error " +
@@ -1182,7 +1178,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         // file.createFile();
         if (phase == 1) {
             return solvedBonVlow;
-
         } else {
             return solvedBonVHigh;
         }
@@ -1402,7 +1397,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             }
         }
         return result;
-
     }
 
     /** {@inheritDoc} */
@@ -1926,7 +1920,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             }
             // System.out.println("corrmatrix error " );
             // System.out.println("error " + corrMatrix.norm1());
-
         } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
 
         // System.out.println("iter " + iter + " error " + NormOps.normF(corr4Matrix));

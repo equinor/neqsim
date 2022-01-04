@@ -72,7 +72,6 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
                             * system.getPhase(0).getComponents()[i].getx() * system.getPressure())
                     - Math.log(system.getPhase(1).getComponents()[i].getFugasityCoeffisient()
                             * system.getPhase(1).getComponents()[i].getx() * system.getPressure()));
-
         }
     }
 
@@ -135,7 +134,6 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
                     / system.getPhase(1).getComponents()[i].getx());
             system.getPhase(1).getComponents()[i]
                     .setK(system.getPhase(0).getComponents()[i].getK());
-
         }
 
         system.init(3);

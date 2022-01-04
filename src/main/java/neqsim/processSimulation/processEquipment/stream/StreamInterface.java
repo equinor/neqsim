@@ -224,5 +224,4 @@ public interface StreamInterface extends ProcessEquipmentInterface {
      * @return a double
      */
     public double LCV();
-
 }

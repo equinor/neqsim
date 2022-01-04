@@ -73,7 +73,6 @@ public class ChungViscosityMethod extends Viscosity {
                                         / gasPhase.getPhase().getComponents()[j].getMolarMass()),
                                 0.5);
                 tempVar += gasPhase.getPhase().getComponents()[j].getx() * tempVar2;
-
             }
 
             viscosity += gasPhase.getPhase().getComponents()[i].getx() * pureComponentViscosity[i]

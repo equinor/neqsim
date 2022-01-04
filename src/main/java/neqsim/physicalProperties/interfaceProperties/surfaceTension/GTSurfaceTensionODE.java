@@ -120,7 +120,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         this.sys.init_x_y();
         this.sys.setBeta(1.0);
         this.sys.init(3);
-
     }
 
     /**
@@ -321,7 +320,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
                 delta = x.get(i, 0);
                 rho[this.algidx[i]] += s * delta;
                 x0.set(i, 0, rho[this.algidx[i]]);
-
             }
             GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, rho, mu, dmu_drho, p);
 

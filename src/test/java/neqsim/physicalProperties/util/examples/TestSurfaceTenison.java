@@ -67,10 +67,12 @@ public class TestSurfaceTenison {
             testOps.TPflash();
             testSystem.display();
             // testSystem = (SystemInterface)testSystem.clone();
-            testSystem.getInterphaseProperties().setInterfacialTensionModel("gas", "oil", "Linear Gradient Theory");
-            System.out.println("tension gas-oil " + testSystem.getInterphaseProperties().getSurfaceTension(0, 1));
+            testSystem.getInterphaseProperties().setInterfacialTensionModel("gas", "oil",
+                    "Linear Gradient Theory");
+            System.out.println("tension gas-oil "
+                    + testSystem.getInterphaseProperties().getSurfaceTension(0, 1));
 
-//           
+            //
             // testOps.TPflash();
             // testSystem.display();
             // testOps.dewPointMach("n-pentane", "dewPointTemperature",
@@ -102,6 +104,5 @@ public class TestSurfaceTenison {
         testSystem.display();
         // System.out.println("tension gas-water " +
         // testSystem.getInterphaseProperties().getSurfaceTension(0, 1));
-
     }
 }

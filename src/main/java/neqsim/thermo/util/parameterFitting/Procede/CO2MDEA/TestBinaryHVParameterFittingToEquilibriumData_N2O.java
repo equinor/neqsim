@@ -95,7 +95,6 @@ public class TestBinaryHVParameterFittingToEquilibriumData_N2O {
                 sample.setThermodynamicSystem(testSystem);
                 sample.setReference(Double.toString(ID));
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             logger.error("database error" + e);

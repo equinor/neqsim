@@ -156,7 +156,6 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                         molDiff[i - 1][0][componentNumber]);
                 pipe.getNode(i + 1).getBulkSystem().getPhases()[1].addMoles(componentNumber,
                         molDiff[i - 1][1][componentNumber]);
-
             }
         }
         pipe.getNode(numberOfNodes - 1).init();

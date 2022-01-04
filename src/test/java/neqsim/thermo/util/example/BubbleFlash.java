@@ -57,6 +57,5 @@ public class BubbleFlash {
         // 100*testSystem.getPhase(1).getComponent("MEG").getx()*testSystem.getPhase(1).getComponent("MEG").getMolarMass()/testSystem.getPhase(1).getMolarMass());
 
         // testSystem.display();
-
     }
 }

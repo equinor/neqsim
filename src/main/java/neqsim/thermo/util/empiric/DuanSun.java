@@ -367,7 +367,6 @@ public class DuanSun {
             else
                 P = P - 0.1 * (error - errorOld) / (Pold - Poldold);
             System.out.println("P = " + P + " bar " + " error " + error);
-
         } while (Math.abs(error) > 1e-6);
         return P;
     }

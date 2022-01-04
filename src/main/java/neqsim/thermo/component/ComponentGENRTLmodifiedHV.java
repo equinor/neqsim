@@ -381,7 +381,6 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
                                 * (dgiidt * gjj + dgjjdt * gii) * 0.5;
                 dtau2dt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature)
                         + dgijdt / (R * temperature) - gij / (R * temperature * temperature);
-
             }
 
             F += E / C * (tau2 - D / C);

@@ -231,7 +231,6 @@ public class SlimTubeSim extends BasePVTsimulation {
         sepSim.setPressure(380.0);
         sepSim.setNumberOfSlimTubeNodes(40);
         sepSim.run();
-
     }
 
     /**

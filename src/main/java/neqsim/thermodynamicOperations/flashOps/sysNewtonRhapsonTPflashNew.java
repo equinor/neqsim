@@ -75,7 +75,6 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
             fvec.set(i, 0, u.get(i, 0)
                     + Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
                             / system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()));
-
         }
 
         double fsum = 0.0;

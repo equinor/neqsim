@@ -57,7 +57,6 @@ public class TestWaxTuning {
                 function.setInitialGuess(guess);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -71,6 +70,5 @@ public class TestWaxTuning {
         optim.setSampleSet(sampleSet);
         // optim.solve();
         optim.displayCurveFit();
-
     }
 }

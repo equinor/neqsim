@@ -47,7 +47,6 @@ public class GOR extends BasePVTsimulation {
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
         this.pressure = pressure;
         this.temperature = temperature;
-
     }
 
     /**
@@ -135,7 +134,6 @@ public class GOR extends BasePVTsimulation {
         double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
         sepSim.setTemperaturesAndPressures(temps, pres);
         sepSim.runCalc();
-
     }
 
     /**

@@ -119,28 +119,22 @@ public class NetCdf implements java.io.Serializable {
 
         try {
             ncfile.create();
-
         } catch (IOException e) {
             System.err.println("ERROR creating file");
-
         }
 
         try {
             ncfile.write("T", Array.factory(zvalues));
             ncfile.write(latD.getName(), Array.factory(xvalues));
             ncfile.write(lonD.getName(), Array.factory(yvalues));
-
         } catch (Exception e) {
             System.err.println("ERROR writing file");
-
         }
 
         try {
             ncfile.close();
-
         } catch (IOException e) {
         }
         System.out.println("created " + fileName + " successfully");
-
     }
 }

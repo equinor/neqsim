@@ -10,5 +10,4 @@ package neqsim.fluidMechanics;
  */
 public class fluidMech {
     private static final long serialVersionUID = 1000;
-
 }

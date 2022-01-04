@@ -121,7 +121,6 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         gasPhysicalProperties.setMixingRule(mixingRule);
         oilPhysicalProperties.setMixingRule(mixingRule);
         aqueousPhysicalProperties.setMixingRule(mixingRule);
-
     }
 
     /**

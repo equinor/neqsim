@@ -186,7 +186,6 @@ public class TPmultiflash_1 extends TPflash {
             calcE();
             setXY();
             system.init(1);
-
         } while (ans.norm2() > 1e-6);
     }
 

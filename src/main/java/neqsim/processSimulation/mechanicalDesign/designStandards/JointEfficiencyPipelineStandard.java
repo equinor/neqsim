@@ -63,6 +63,5 @@ public class JointEfficiencyPipelineStandard extends DesignStandard {
     public void readJointEfficiencyStandard(String typeName, String radiagraphType) {
         // ... to be implemented
         JEFactor = 1.0;
-
     }
 }

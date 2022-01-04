@@ -77,6 +77,5 @@ public class TestParachorFit {
         optim.displayCurveFit();
 
         // optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

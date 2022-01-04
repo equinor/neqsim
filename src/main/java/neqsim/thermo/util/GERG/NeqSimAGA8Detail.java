@@ -383,6 +383,5 @@ public class NeqSimAGA8Detail {
         System.out.println("Gibbs energy [J/mol]:            " + properties[12]);
         System.out.println("Joule-Thomson coefficient [K/kPa]:            " + properties[13]);
         System.out.println("Isentropic exponent:           " + properties[14]);
-
     }
 }

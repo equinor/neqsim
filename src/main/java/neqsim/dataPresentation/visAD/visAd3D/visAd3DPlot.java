@@ -225,6 +225,5 @@ public class visAd3DPlot extends visAdBaseClass {
 
         test.setZvals(z);
         test.init();
-
     }
 }

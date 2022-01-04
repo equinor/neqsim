@@ -72,7 +72,8 @@ public class threePhaseSeparation {
         // werRemoval.setRelativeMoleFractionReduction("water", -0.99);
         // waterRemoval.getOutStream();
 
-        MoleFractionControllerUtil TEGsaturator = new MoleFractionControllerUtil(waterRemoval.getOutStream());
+        MoleFractionControllerUtil TEGsaturator =
+                new MoleFractionControllerUtil(waterRemoval.getOutStream());
         TEGsaturator.setMoleFraction("water", 5.0e-6);
         // TEGsaturator.getOutStream();
 
@@ -82,7 +83,8 @@ public class threePhaseSeparation {
         // ThreePhaseSeparator separator2 = new ThreePhaseSeparator("Separator LP",
         // LP_valve.getOutStream());
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         // operations.add(stream_2);

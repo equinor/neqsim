@@ -291,7 +291,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
                     testOps = new ThermodynamicOperations(system);
                     testOps.TPflash();
                 } while (Math.abs(system.getPressure() - oldPressure) > 1e-2 && iter < 25);
-
             }
         }
         testOps = new ThermodynamicOperations(system);
@@ -299,7 +298,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         System.out.println("flow rate " + system.getFlowRate(maxflowunit));
         // system.setMultiPhaseCheck(false);
         outStream.setThermoSystem(system);
-
     }
 
     /** {@inheritDoc} */

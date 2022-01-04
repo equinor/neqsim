@@ -256,7 +256,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         }
         system.initBeta(); // this was added for mass trans calc
         system.init_x_y();
-
     }
 
     /**
@@ -449,7 +448,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
         // return step;
         return 1.0;
-
     }
 
     /**

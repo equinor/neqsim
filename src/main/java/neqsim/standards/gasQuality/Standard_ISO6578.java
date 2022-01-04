@@ -238,7 +238,6 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
                     thermoSystem.getTemperature());
             KMcorrectionFactor2 = pcs2.value(thermoSystem.getPhase(0).getMolarMass() * 1000.0,
                     thermoSystem.getTemperature());
-
         } catch (Exception e) {
             /// e.printStackTrace();
             KMcorrectionFactor1 = 0.0;

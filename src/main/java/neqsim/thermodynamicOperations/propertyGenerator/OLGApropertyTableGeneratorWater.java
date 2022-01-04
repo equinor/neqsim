@@ -85,7 +85,6 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
         // oilSystem.createDatabase(true);
         oilSystem.init(0);
         oilSystem.setNumberOfPhases(1);
-
     }
 
     /**
@@ -244,7 +243,6 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
             components[i] = thermoSystem.getPhase(0).getComponent(i).getComponentName();
             MW[i] = thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000;
             dens[i] = thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity();
-
         }
 
         thermoSystem.setTemperature(stdTemp);
@@ -254,7 +252,6 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
 
         GOR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
         GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
-
     }
 
     /**
@@ -423,7 +420,6 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
                                 // props[k][i][j] = vall;
                                 // if(i>0 && props[k][i-1][j]>1e-10) props[k][i][j] =
                                 // props[k][i-1][j]*pressures[i]/pressures[i-1];
-
                             }
                             if (names[k].equals("GAS MASS FRACTION") && props[k][i][j] < 0) {
                                 props[k][i][j] = 0;

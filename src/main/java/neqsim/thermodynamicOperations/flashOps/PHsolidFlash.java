@@ -87,7 +87,6 @@ public class PHsolidFlash extends Flash {
 
             logger.info("temp " + system.getTemperature() + " err " + err);
         } while (Math.abs(dt) > 1e-8 && iter < 200);
-
     }
 
     /** {@inheritDoc} */

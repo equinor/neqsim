@@ -39,7 +39,6 @@ abstract class Diffusivity extends
         binaryDiffusionCoeffisients = new double[liquidPhase.getPhase()
                 .getNumberOfComponents()][liquidPhase.getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[liquidPhase.getPhase().getNumberOfComponents()];
-
     }
 
     /** {@inheritDoc} */

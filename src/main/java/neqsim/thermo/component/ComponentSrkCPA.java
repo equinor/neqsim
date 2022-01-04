@@ -87,7 +87,6 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
         // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
         // -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
         // this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
-
     }
 
     /**
@@ -126,7 +125,6 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
         // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
         // -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
         // this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
-
     }
 
     /** {@inheritDoc} */

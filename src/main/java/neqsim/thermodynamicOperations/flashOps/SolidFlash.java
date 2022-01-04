@@ -91,7 +91,6 @@ public class SolidFlash extends TPflash {
                  * (system.getPhase(k).getComponent(i).getx() < 0.0) {
                  * system.getPhase(k).getComponent(i).setx(1.0e-30); }
                  */
-
             }
             system.getPhase(k).normalize();
         }

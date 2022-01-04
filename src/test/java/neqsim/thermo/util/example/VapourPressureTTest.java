@@ -48,7 +48,6 @@ public class VapourPressureTTest {
             thermoSystem.setTemperature(startTemp);
             testOps.dewPointTemperatureFlash(false);
             dewPointT = thermoSystem.getTemperature();
-
         } catch (Exception e) {
         }
 

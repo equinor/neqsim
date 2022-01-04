@@ -8,7 +8,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 /**
@@ -50,7 +51,7 @@ public class TPflashMembrane {
         testSystem.allowPhaseShift(false);
 
         try {
-            String[] comps = { "CO2" };
+            String[] comps = {"CO2"};
             testOps.dTPflash(comps);
             // testOps.TPflash();
             testSystem.display();

@@ -103,5 +103,4 @@ public class NeqSimUnitSet {
     private String pressureUnit = "bara";
     private String flowRateUnit = "mol/sec";
     private String componentConcentrationUnit = "molefraction";
-
 }

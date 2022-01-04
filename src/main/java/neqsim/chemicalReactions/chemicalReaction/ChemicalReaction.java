@@ -319,7 +319,6 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         // tempNReacmatrix.print(10,2);
         // tempAProdmatrix.print(10,2);
         // tempAReacmatrix.print(10,2);
-
     }
 
     /**
@@ -417,7 +416,6 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         }
 
         return test;
-
     }
 
     /**

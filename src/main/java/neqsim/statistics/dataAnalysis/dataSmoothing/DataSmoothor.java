@@ -129,7 +129,6 @@ public class DataSmoothor {
             cCoef[kk] = sum;
         }
         // new Matrix(cCoef,1).print(10,2);
-
     }
 
     /**

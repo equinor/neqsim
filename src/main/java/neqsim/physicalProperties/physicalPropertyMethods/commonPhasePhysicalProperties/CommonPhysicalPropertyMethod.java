@@ -42,7 +42,6 @@ public class CommonPhysicalPropertyMethod
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super();
         this.phase = phase;
-
     }
 
     /** {@inheritDoc} */

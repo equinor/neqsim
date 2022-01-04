@@ -152,5 +152,4 @@ public interface FlowLegInterface {
      * @param flowPattern a {@link java.lang.String} object
      */
     public void setFlowPattern(String flowPattern);
-
 }

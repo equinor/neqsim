@@ -59,14 +59,16 @@ public class simpleTopSideProcess {
 
         mixerHP.addStream(stream_3);
 
-        Mixer mixer = new neqsim.processSimulation.processEquipment.mixer.StaticMixer("Mixer export");
+        Mixer mixer =
+                new neqsim.processSimulation.processEquipment.mixer.StaticMixer("Mixer export");
         mixer.addStream(separator.getGasOutStream());
         mixer.addStream(gasScrubber.getGasOutStream());
 
         Compressor HPcompressor = new Compressor(mixer.getOutStream());
         HPcompressor.setOutletPressure(200.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(mixerHP);
         operations.add(separator);

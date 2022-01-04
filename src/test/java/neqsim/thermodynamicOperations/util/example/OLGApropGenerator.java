@@ -64,7 +64,6 @@ public class OLGApropGenerator {
             String fileName = "c:/temp//OLGAneqsim.tab";
             testOps.OLGApropTable(273.15, 273.15 + 50.0, 40, 1.0, 220.0, 40, fileName, 0);
             testOps.displayResult();
-
         } catch (Exception e) {
             testSystem.display();
             logger.error(e.toString());

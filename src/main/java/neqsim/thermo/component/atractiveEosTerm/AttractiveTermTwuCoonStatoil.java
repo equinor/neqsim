@@ -41,7 +41,6 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
         this(component);
         // this.parameters [0] for aa benytte gitte input parametre
         System.arraycopy(params, 0, this.parameters, 0, params.length);
-
     }
 
     /** {@inheritDoc} */
@@ -77,7 +76,6 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
         // System.out.println("alpha here " + Math.pow( 1.0 +
         // m*(1.0-Math.sqrt(temperature/component.getTC()))-parameters[0]*(1.0-temperature/component.getTC())*(1.0+parameters[1]*temperature/component.getTC()+parameters[2]*Math.pow(temperature/component.getTC(),2.0)),2.0));
         return Math.pow((Tr), (c * (b - 1))) * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
-
     }
 
     // private double alphaCrit(double temperature){
@@ -123,7 +121,6 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
                 * Math.exp(a * (1 - Math.pow((Tr), (b * c))))
                 - Math.pow((Tr), (c * (b - 1))) * a * Math.pow((Tr), (b * c)) * b * c / t
                         * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
-
     }
 
     /** {@inheritDoc} */

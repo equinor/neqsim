@@ -307,7 +307,6 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
                                 + Math.pow(phase.getB(), 2.0))
                         / Math.pow(((8.0 * phase.getTotalVolume() - phase.getB())
                                 * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
-
     }
 
     /** {@inheritDoc} */

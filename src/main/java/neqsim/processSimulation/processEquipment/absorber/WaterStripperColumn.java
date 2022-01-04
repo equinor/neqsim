@@ -196,7 +196,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
             gtemp += streams.get(k).getThermoSystem().getTemperature()
                     * streams.get(k).getThermoSystem().getNumberOfMoles()
                     / mixedStream.getThermoSystem().getNumberOfMoles();
-
         }
         return gtemp;
     }
@@ -399,7 +398,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
 
             // System.out.println("TEG from water stripper " +
             // solventOutStream.getFlowRate("kg/hr") + " kg/hr");
-
         } catch (Exception e) {
             e.printStackTrace();
         }

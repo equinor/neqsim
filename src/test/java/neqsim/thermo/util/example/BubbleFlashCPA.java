@@ -44,9 +44,8 @@ public class BubbleFlashCPA {
         /*
          * testSystem.addComponent("methane", 69.243);
          * 
-         * testSystem.addComponent("CO2", 4.113); testSystem.addComponent("ethane",
-         * 8.732); testSystem.addComponent("propane", 4.27);
-         * testSystem.addComponent("n-pentane", 1.641);
+         * testSystem.addComponent("CO2", 4.113); testSystem.addComponent("ethane", 8.732);
+         * testSystem.addComponent("propane", 4.27); testSystem.addComponent("n-pentane", 1.641);
          * testSystem.addComponent("i-pentane", 0.877);
          * 
          * testSystem.addComponent("benzene", 1.27);
@@ -58,7 +57,7 @@ public class BubbleFlashCPA {
          * testSystem.addTBPfraction("C10", 0.45, 134.0 / 1000.0, 0.792);
          */
         // testSystem.addPlusFraction("C11+", 3.44, 231.0/1000, 0.87);
-//
+        //
         // testSystem.getCharacterization().characterisePlusFraction();
 
         testSystem.setMultiPhaseCheck(true);
@@ -81,6 +80,5 @@ public class BubbleFlashCPA {
         // thermo.ThermodynamicModelTest testModel = new
         // thermo.ThermodynamicModelTest(testSystem);
         // testModel.runTest();
-
     }
 }

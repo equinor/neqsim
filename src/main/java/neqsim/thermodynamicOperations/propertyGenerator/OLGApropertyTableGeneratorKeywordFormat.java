@@ -203,7 +203,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
             components[i] = thermoSystem.getPhase(0).getComponent(i).getComponentName();
             MW[i] = thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000;
             dens[i] = thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity();
-
         }
 
         thermoSystem.setTemperature(stdTemp);
@@ -217,7 +216,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
 
         stdGasDens = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
         stdLiqDens = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
-
     }
 
     /** {@inheritDoc} */

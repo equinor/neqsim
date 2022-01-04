@@ -26,7 +26,7 @@ public class TestProcess4 {
         testSystem.addComponent("nitrogen", 0.727);
         // testSystem.addComponent("nC10", 2.502);
         testSystem.addComponent("water", 51.0);
-//        testSystem.addComponent("TEG", 5.98);
+        // testSystem.addComponent("TEG", 5.98);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);
 
@@ -45,7 +45,8 @@ public class TestProcess4 {
 
         Stream liquidStream = new Stream(separator.getLiquidOutStream());
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         // operations.add(valve_1);

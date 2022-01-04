@@ -51,7 +51,7 @@ public class CompressorResponse {
         dischargeTemperature = inputCompressor.getOutStream().getTemperature("C");
         dischargePressure = inputCompressor.getOutStream().getPressure("bara");
         polytropicHead = inputCompressor.getPolytropicFluidHead();
-        polytropicEfficiency =inputCompressor.getPolytropicEfficiency();
+        polytropicEfficiency = inputCompressor.getPolytropicEfficiency();
         power = inputCompressor.getPower("kW");
         speed = inputCompressor.getSpeed();
         if(inputCompressor.getAntiSurge().isActive()){

@@ -53,7 +53,6 @@ public class LNGFlash {
             // testSystem.display();
             // testOps.freezingPointTemperatureFlash();
             // testOps.calcWAT();
-
         } catch (Exception e) {
             logger.error("error", e);
         }

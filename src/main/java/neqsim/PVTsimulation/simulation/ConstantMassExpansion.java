@@ -206,7 +206,6 @@ public class ConstantMassExpansion extends BasePVTsimulation {
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -389,6 +388,5 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         this.pressures = pressure;
         this.temperatures = temperature;
         experimentalData = new double[temperature.length][1];
-
     }
 }

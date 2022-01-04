@@ -128,10 +128,8 @@ public class NetCdf3D {
 
         try {
             ncfile.create();
-
         } catch (IOException e) {
             System.err.println("ERROR creating file");
-
         }
 
         try {
@@ -140,18 +138,14 @@ public class NetCdf3D {
             }
             ncfile.write(latD.getName(), Array.factory(xvalues));
             ncfile.write(lonD.getName(), Array.factory(yvalues));
-
         } catch (Exception e) {
             System.err.println("ERROR writing file");
-
         }
 
         try {
             ncfile.close();
-
         } catch (IOException e) {
         }
         System.out.println("created " + fileName + " successfully");
-
     }
 }

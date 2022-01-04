@@ -91,7 +91,6 @@ public class StaticNeqMixer extends StaticMixer {
         mixedStream.getThermoSystem().init_x_y();
         mixedStream.getThermoSystem().initBeta();
         mixedStream.getThermoSystem().init(2);
-
     }
 
     /** {@inheritDoc} */

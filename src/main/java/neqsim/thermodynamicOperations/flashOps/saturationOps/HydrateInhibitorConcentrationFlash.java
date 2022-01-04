@@ -92,7 +92,6 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
                 error = system.getTemperature() - hydT;
 
                 logger.info("error " + error);
-
             } catch (Exception e) {
                 logger.error("error", e);
             }

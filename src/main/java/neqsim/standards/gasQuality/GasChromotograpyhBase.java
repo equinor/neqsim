@@ -47,7 +47,6 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
     public void calculate() {
         thermoSystem.init(0);
         thermoSystem.init(0);
-
     }
 
     /** {@inheritDoc} */

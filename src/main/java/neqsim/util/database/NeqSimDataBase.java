@@ -80,7 +80,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         } catch (Exception ex) {
             logger.error("SQLException " + ex.getMessage());
             throw new RuntimeException(ex);
-
         }
     }
 
@@ -114,7 +113,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
                 return DriverManager
                         .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ="
                                 + dir + "\\data\\NeqSimDatabase");
-
             } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
                 return DriverManager.getConnection(connectionString, "sa", "");
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
@@ -271,7 +269,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
      */
     public Statement getStatement() {
         return statement;
-
     }
 
     /**
@@ -283,7 +280,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
      */
     public void setStatement(Statement statement) {
         this.statement = statement;
-
     }
 
     /**
@@ -345,7 +341,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         try {
             dataSet.next();
             logger.info("dataset " + dataSet.getString("molarmass"));
-
         } catch (Exception e) {
             logger.error("failed " + e.toString());
             throw new RuntimeException(e);

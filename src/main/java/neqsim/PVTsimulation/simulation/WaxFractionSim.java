@@ -55,7 +55,6 @@ public class WaxFractionSim extends BasePVTsimulation {
         this.pressure = pressure;
         this.temperature = temperature;
         experimentalData = new double[temperature.length][1];
-
     }
 
     /**

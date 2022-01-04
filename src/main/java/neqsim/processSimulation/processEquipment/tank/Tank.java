@@ -85,7 +85,6 @@ public class Tank extends ProcessEquipmentBaseClass {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         liquidOutStream = new Stream(liquidSystem);
-
     }
 
     /**
@@ -211,7 +210,6 @@ public class Tank extends ProcessEquipmentBaseClass {
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
                 * separatorLength;
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-
     }
 
     /** {@inheritDoc} */

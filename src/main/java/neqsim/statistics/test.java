@@ -10,5 +10,4 @@ package neqsim.statistics;
  */
 public class test {
     private static final long serialVersionUID = 1000;
-
 }

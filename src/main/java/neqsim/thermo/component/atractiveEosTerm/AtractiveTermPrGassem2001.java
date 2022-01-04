@@ -98,7 +98,6 @@ public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
                         / Math.sqrt(temperature * temperature * temperature
                                 / (Math.pow(getComponent().getTC(), 3.0)))
                         / (getComponent().getTC() * getComponent().getTC()) / 2.0;
-
     }
 
     /** {@inheritDoc} */

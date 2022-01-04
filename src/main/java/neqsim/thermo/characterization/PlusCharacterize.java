@@ -51,7 +51,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
      */
     public PlusCharacterize(SystemInterface system) {
         this.system = system;
-
     }
 
     /** {@inheritDoc} */
@@ -103,7 +102,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         }
         coefs[2] = system.getPhase(0).getComponent(compNumber - 1).getNormalLiquidDensity() + 0.03;
         densLastTBP = system.getPhase(0).getComponent(compNumber - 1).getNormalLiquidDensity();
-
     }
 
     /** {@inheritDoc} */

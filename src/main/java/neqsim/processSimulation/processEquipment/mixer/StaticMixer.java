@@ -89,7 +89,6 @@ public class StaticMixer extends Mixer {
             gtemp += streams.get(k).getThermoSystem().getTemperature()
                     * streams.get(k).getThermoSystem().getNumberOfMoles()
                     / mixedStream.getThermoSystem().getNumberOfMoles();
-
         }
         return gtemp;
     }

@@ -128,7 +128,6 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
-
     }
 
     /** {@inheritDoc} */

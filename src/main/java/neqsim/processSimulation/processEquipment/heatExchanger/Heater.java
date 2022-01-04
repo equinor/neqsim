@@ -349,6 +349,5 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
                 - inStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
 
         return entrop;
-
     }
 }

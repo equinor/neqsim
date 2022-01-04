@@ -206,7 +206,6 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
             components[i] = thermoSystem.getPhase(0).getComponent(i).getComponentName();
             MW[i] = thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000;
             dens[i] = thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity();
-
         }
 
         thermoSystem.setTemperature(stdTemp);
@@ -221,7 +220,6 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         stdGasDens = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
         stdLiqDens = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
         stdWatDens = thermoSystem.getPhase(2).getPhysicalProperties().getDensity();
-
     }
 
     /**
@@ -236,7 +234,6 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         RSWTOB = thermoSystem.getPhase(0).getComponent("water").getNumberOfmoles()
                 * thermoSystem.getPhase(0).getComponent("water").getMolarMass()
                 / (thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarMass());
-
     }
 
     /** {@inheritDoc} */

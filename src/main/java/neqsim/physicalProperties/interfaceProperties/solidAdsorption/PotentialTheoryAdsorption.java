@@ -50,7 +50,6 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         epsField = new double[system.getPhase(0).getNumberOfComponents()][integrationSteps];
         fugacityField = new double[system.getPhase(0).getNumberOfComponents()][integrationSteps];
         deltaz = new double[system.getPhase(0).getNumberOfComponents()];
-
     }
 
     /** {@inheritDoc} */

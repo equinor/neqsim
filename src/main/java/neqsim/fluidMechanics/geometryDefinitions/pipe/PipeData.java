@@ -33,7 +33,6 @@ public class PipeData extends GeometryDefinition {
     public PipeData(double diameter) {
         super(diameter);
         wall = new PipeWall();
-
     }
 
     /**

@@ -185,7 +185,6 @@ public class FreezeOut extends constantDutyTemperatureFlash
                 }
 
                 logger.info("Iterations :" + iterations);
-
             } // end Iflokke
         } // end for
         maximum = FCompTemp[0]; // start with the first value
@@ -220,7 +219,6 @@ public class FreezeOut extends constantDutyTemperatureFlash
                 pr_writer.flush();
             }
             pr_writer.close();
-
         } catch (SecurityException e) {
             logger.error("writeFile: caught security exception");
         } catch (IOException ioe) {

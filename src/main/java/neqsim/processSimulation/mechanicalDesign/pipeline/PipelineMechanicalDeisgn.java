@@ -139,6 +139,5 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         operations.getSystemMechanicalDesign().runDesignCalculation();
         operations.getSystemMechanicalDesign().setDesign();
         operations.run();
-
     }
 }

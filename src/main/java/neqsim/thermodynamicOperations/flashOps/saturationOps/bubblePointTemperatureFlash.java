@@ -95,9 +95,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
             logger.info("temp: " + system.getTemperature());
             // system.setPressure(-Math.log(funk)/(deriv/funk)+system.getPressure());
             system.setTemperature(-(funk - 1) / deriv + system.getTemperature());
-
         } while ((Math.abs(ytotal - 1) > 1e-10) && (iterations < maxNumberOfIterations));
-
     }
 
     /** {@inheritDoc} */

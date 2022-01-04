@@ -74,7 +74,6 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             // HrefComplex = 4863.59239495220;
             HrefComplex = 6629.1366952637;
             TrefComplex = 244.19;
-
         }
 
         if (comp1.equals("methanol") && comp2.equals("water")) {
@@ -202,9 +201,7 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             oldError = error;
             // logger.info("temperature " + temperature);
             system.setTemperature(system.getTemperature() + deltaT);
-
         } while (Math.abs(deltaT) > 0.001 && iteration < 50);
-
     }
 
     /** {@inheritDoc} */

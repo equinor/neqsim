@@ -1201,7 +1201,6 @@ public class PhasePCSAFT extends PhaseSrkEos {
             BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-
         }
 
         if (iterations >= 2000) {

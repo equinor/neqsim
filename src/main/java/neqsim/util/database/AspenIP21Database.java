@@ -43,7 +43,6 @@ public class AspenIP21Database
             setStatement(databaseConnection.createStatement());
         } catch (Exception ex) {
             System.out.println("SQLException " + ex.getMessage());
-
         }
     }
 

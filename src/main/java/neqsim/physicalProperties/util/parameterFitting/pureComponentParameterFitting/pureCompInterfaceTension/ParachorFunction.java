@@ -48,6 +48,5 @@ public class ParachorFunction extends LevenbergMarquardtFunction {
         params[i] = value;
         system.getPhases()[0].getComponent(0).setParachorParameter(value);
         system.getPhases()[1].getComponent(0).setParachorParameter(value);
-
     }
 }

@@ -869,13 +869,11 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                 A4 += -compArray[i].getNumberOfMolesInPhase()
                         * Math.sqrt(compArray[compNumbj].getaT() * compArray[i].getaT())
                         * getkijdn(compNumb, phase, temperature, compNumbj, i);
-
             }
             for (int i = 0; i < numbcomp; i++) {
                 A4 += -compArray[i].getNumberOfMolesInPhase()
                         * Math.sqrt(compArray[compNumbj].getaT() * compArray[i].getaT())
                         * getkijdn(compNumb, phase, temperature, i, compNumbj);
-
             }
 
             return A1 + A2 + A4;
@@ -2002,7 +2000,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         public double calcWij(int compNumbi, int compNumj, PhaseInterface phase, double temperature,
                 double pressure, int numbcomp) {
             return -2.0 * getWij(compNumbi, compNumj, temperature);// iwij[0][compNumbi][compNumj];
-
         }
     }
 
@@ -2142,7 +2139,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                                 intparamji[tempk][templ] =
                                         Double.parseDouble(dataSet.getString("cpakjix_SRK"));
                                 intparamij[templ][tempk] = intparamji[tempk][templ];
-
                             }
                             if (phase.getClass().getName()
                                     .equals("neqsim.thermo.phase.PhasePCSAFTRahmat")
@@ -2212,7 +2208,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
                         NRTLDijT[tempk][templ] = Double.parseDouble(dataSet.getString("WSgijT"));
                         NRTLDijT[templ][tempk] = Double.parseDouble(dataSet.getString("WSgjiT"));
-
                     } catch (Exception e) {
                         // System.out.println("err in thermo mix.....");
                         // String err = e.toString();
@@ -2708,6 +2703,5 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         dialog.setSize(800, 600); // pack();
         // \\dialog.pack();
         dialog.setVisible(true);
-
     }
 }

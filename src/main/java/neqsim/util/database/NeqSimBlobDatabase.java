@@ -73,7 +73,6 @@ public class NeqSimBlobDatabase
         } catch (Exception ex) {
             logger.error("SQLException " + ex.getMessage());
             throw new RuntimeException(ex);
-
         }
     }
 
@@ -105,7 +104,6 @@ public class NeqSimBlobDatabase
                 return DriverManager
                         .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ="
                                 + dir + "\\data\\NeqSimDatabase");
-
             } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
                 return DriverManager.getConnection(connectionString, "sa", "");
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
@@ -242,7 +240,6 @@ public class NeqSimBlobDatabase
      */
     public Statement getStatement() {
         return statement;
-
     }
 
     /**
@@ -254,7 +251,6 @@ public class NeqSimBlobDatabase
      */
     public void setStatement(Statement statement) {
         this.statement = statement;
-
     }
 
     /**

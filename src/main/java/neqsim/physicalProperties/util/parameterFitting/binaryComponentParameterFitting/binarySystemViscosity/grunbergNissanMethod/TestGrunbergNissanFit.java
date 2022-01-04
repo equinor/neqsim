@@ -82,6 +82,5 @@ public class TestGrunbergNissanFit {
         optim.displayCurveFit();
         // optim.displayCurveFit();
         optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

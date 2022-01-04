@@ -53,7 +53,6 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         this.pressure = pressure;
         this.temperatures = temperature;
         experimentalData = new double[temperature.length][1];
-
     }
 
     /**
@@ -192,7 +191,6 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -277,7 +275,6 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
         CVDsim.setExperimentalData(expData);
         // CVDsim.runTuning();
-
     }
 
     /**

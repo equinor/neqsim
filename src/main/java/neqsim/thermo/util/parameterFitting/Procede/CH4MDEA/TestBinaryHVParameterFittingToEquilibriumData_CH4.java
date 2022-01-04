@@ -76,7 +76,6 @@ public class TestBinaryHVParameterFittingToEquilibriumData_CH4 {
                 sample.setThermodynamicSystem(testSystem);
                 sample.setReference(Double.toString(ID));
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             logger.error("database error" + e);

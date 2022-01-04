@@ -92,7 +92,6 @@ public class pTphaseEnvelopeNew extends BaseOperation {
         mainPanel.add(monitor);
         mainFrame.getContentPane().add(mainPanel);
         mainFrame.setVisible(true);
-
     }
 
     /** {@inheritDoc} */
@@ -161,7 +160,6 @@ public class pTphaseEnvelopeNew extends BaseOperation {
                 pointsS[np - 1] = system.getPhase(1).getEntropy()
                         / system.getPhase(1).getNumberOfMolesInPhase()
                         / system.getPhase(1).getMolarMass() / 1e3;
-
             }
 
             int ncr = nonLinSolver.getNpCrit();
@@ -208,7 +206,6 @@ public class pTphaseEnvelopeNew extends BaseOperation {
 
                 pointsV2[1][i] = points[1][i];
                 pointsV2[0][i] = pointsV[i];
-
             }
 
             system.setTemperature(system.getTC() + 0.001);
@@ -257,7 +254,6 @@ public class pTphaseEnvelopeNew extends BaseOperation {
 
                     pointsV2[3][i] = points[1][i + ncr - 1];
                     pointsV2[2][i] = pointsV[i + ncr - 1];
-
                 }
             }
             // monitor.close();
