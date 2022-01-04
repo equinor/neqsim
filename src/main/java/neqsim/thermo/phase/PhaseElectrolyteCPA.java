@@ -1,8 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
@@ -1037,7 +1032,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         // double calcRooBonVtVolFinder = calcRootVolFinder(phasetype);
         // BonV = calcRooBonVtVolFinder;
         // double BonVInit = BonV;
-        if (BonV < 0) {
+        if (BonV <= 0) {
             BonV = 1.0e-8;
         }
 

@@ -1,8 +1,3 @@
-/*
- * PhaseGEUniquac.java
- *
- * Created on 11. juli 2000, 21:01
- */
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;

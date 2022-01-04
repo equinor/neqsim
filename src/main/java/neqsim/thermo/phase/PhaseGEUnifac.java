@@ -1,8 +1,3 @@
-/*
- * PhaseGEUniquac.java
- *
- * Created on 11. juli 2000, 21:01
- */
 package neqsim.thermo.phase;
 
 import java.util.ArrayList;
@@ -89,11 +84,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         // if(type==0) calcaij();
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         if (type == 0) {

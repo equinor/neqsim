@@ -1697,7 +1697,7 @@ abstract class SystemThermo implements SystemInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void init(int type) { // type = 0 start init type =1 gi nye betingelser
+    public void init(int type) {
         isInitialized = true;
         if (numericDerivatives) {
             initNumeric(type);
@@ -1734,7 +1734,7 @@ abstract class SystemThermo implements SystemInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void init(int type, int phase) { // type = 0 start init type =1 gi nye betingelser
+    public void init(int type, int phase) {
         isInitialized = true;
         if (numericDerivatives) {
             initNumeric(type, phase);
@@ -2178,16 +2178,14 @@ abstract class SystemThermo implements SystemInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void chemicalReactionInit() { // type = 0 start init type =1 gi nye betingelser
+    public void chemicalReactionInit() {
         chemicalReactionOperations = new ChemicalReactionOperations(this);
         chemicalSystem = chemicalReactionOperations.hasRections();
     }
 
     /** {@inheritDoc} */
     @Override
-    public ChemicalReactionOperations getChemicalReactionOperations() { // type = 0 start init type
-                                                                        // =1 gi nye
-                                                                        // betingelser
+    public ChemicalReactionOperations getChemicalReactionOperations() {
         return chemicalReactionOperations;
     }
 
