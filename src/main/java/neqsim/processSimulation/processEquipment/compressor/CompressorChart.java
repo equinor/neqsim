@@ -408,7 +408,6 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         System.out.println("power " + comp1.getPower());
 
         comp1.getCompressorChart().plot();
-
     }
 
     /** {@inheritDoc} */

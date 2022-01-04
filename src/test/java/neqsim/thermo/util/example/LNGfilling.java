@@ -8,7 +8,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 /**
@@ -67,13 +68,13 @@ public class LNGfilling {
         // +testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getPressure()*testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
     }
 }
-//        testSystem = testSystem.setModel("GERG-water");
-//        testSystem.setMixingRule(8);
+// testSystem = testSystem.setModel("GERG-water");
+// testSystem.setMixingRule(8);
 //
-//        testSystem = testSystem.autoSelectModel();
-//        testSystem.autoSelectMixingRule();
-//          testSystem.setMultiPhaseCheck(true);
-//        testOps.setSystem(testSystem);
+// testSystem = testSystem.autoSelectModel();
+// testSystem.autoSelectMixingRule();
+// testSystem.setMultiPhaseCheck(true);
+// testOps.setSystem(testSystem);
 //
 //        System.out.println("new model name " + testSystem.getModelName());
 //        try{

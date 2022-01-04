@@ -49,7 +49,6 @@ public class ComponentGERG2004 extends ComponentEos {
     public ComponentGERG2004(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
-
     }
 
     /**

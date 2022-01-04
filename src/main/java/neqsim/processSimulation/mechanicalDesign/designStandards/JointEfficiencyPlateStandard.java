@@ -64,6 +64,5 @@ public class JointEfficiencyPlateStandard extends DesignStandard {
         // ... to be implemented
         // read from techncal requirements_mechanical table.....
         JEFactor = 1.0;
-
     }
 }

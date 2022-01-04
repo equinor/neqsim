@@ -47,7 +47,6 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         super(system);
         wtfrac = wtfr;
         this.inhibitor = inhibitor;
-
     }
 
     /**
@@ -116,7 +115,6 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
                 error = -(wtp - wtfrac);
 
                 logger.info("error " + error);
-
             } catch (Exception e) {
                 logger.error("error", e);
             }

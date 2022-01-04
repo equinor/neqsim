@@ -368,7 +368,6 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
 
         int initType = phase.getInitType();
-
     }
 
     // TODO impement dlngammadn

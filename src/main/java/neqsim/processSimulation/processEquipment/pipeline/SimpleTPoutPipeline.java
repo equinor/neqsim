@@ -102,7 +102,6 @@ public class SimpleTPoutPipeline extends Pipeline {
         System.out.println("Superficial velocity out gas : " + getSuperficialVelocity(0, 1));
         System.out.println("Superficial velocity out condensate : " + getSuperficialVelocity(1, 1));
         System.out.println("Superficial velocity out MEG/water : " + getSuperficialVelocity(2, 1));
-
     }
 
     /** {@inheritDoc} */

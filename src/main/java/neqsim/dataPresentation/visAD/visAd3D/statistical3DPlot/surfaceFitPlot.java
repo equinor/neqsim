@@ -87,7 +87,6 @@ public class surfaceFitPlot {
         domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS, yMin, yMax, NCOLS);
 
         set_samples = domain_set.getSamples(true);
-
     }
 
     /*

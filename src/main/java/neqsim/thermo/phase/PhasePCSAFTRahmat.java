@@ -519,7 +519,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
                                 2);
 
         return temp;
-
     }
 
     // added by rahmat
@@ -857,11 +856,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         for (int i = 0; i < numberOfComponents; i++) {
             temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
                     * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
-
         }
         // System.out.println("d saft calc " + temp/getNumberOfMolesInPhase());
         return temp1 / getNumberOfMolesInPhase();
-
     }
 
     /** {@inheritDoc} */
@@ -1486,7 +1483,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
          * Btemp + "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
          */
         return getMolarVolume();
-
     }
 
     /** {@inheritDoc} */

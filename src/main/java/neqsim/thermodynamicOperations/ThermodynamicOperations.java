@@ -967,7 +967,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             opsTemp.TPflash();
             systemTemp.display();
             systemTemp = systemTemp.phaseToSystem(0);
-
         }
 
         opsTemp = new ThermodynamicOperations(systemTemp);
@@ -1095,7 +1094,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
         // logger.info("Hydrate structure " + (((ComponentHydrate)
         // system.getPhase(4).getComponent("water")).getHydrateStructure() + 1));
-
     }
 
     /**
@@ -1862,7 +1860,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         operation = new calcIonicComposition(system, phaseNumber);
         getOperation().run();
         resultTable = getOperation().getResultTable();
-
     }
 
     /**

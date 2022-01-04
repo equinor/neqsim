@@ -904,7 +904,6 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             }
             // System.out.println("corrmatrix error " );
             // System.out.println("error " + corrMatrix.norm1());
-
         } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
 
         // System.out.println("iter " + iter + " error " + NormOps.normF(corr4Matrix));
@@ -1053,7 +1052,6 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         // file.createFile();
         if (phase == 1) {
             return solvedBonVlow;
-
         } else {
             return solvedBonVHigh;
         }
@@ -1454,7 +1452,6 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             }
         }
         return result;
-
     }
 
     /** {@inheritDoc} */

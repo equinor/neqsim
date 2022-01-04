@@ -211,7 +211,6 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
                 gtemp += streams.get(k).getThermoSystem().getTemperature()
                         * streams.get(k).getThermoSystem().getNumberOfMoles()
                         / mixedStream.getThermoSystem().getNumberOfMoles();
-
             }
             // System.out.println("guess temperature " + gtemp);
             return gtemp;

@@ -213,5 +213,4 @@ public interface FluidBoundaryInterface extends Cloneable {
      * @param phase a int
      */
     public void useFiniteFluxCorrection(boolean finiteFluxCorrection, int phase);
-
 }

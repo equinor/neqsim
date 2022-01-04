@@ -30,7 +30,6 @@ public class AtractiveTermPr extends AtractiveTermBaseClass {
         super(component);
         m = (0.37464 + 1.54226 * component.getAcentricFactor()
                 - 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
-
     }
 
     /** {@inheritDoc} */

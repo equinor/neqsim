@@ -111,7 +111,6 @@ public class ComponentHydrate extends Component {
             }
         } catch (Exception e) {
             logger.error("error in comp", e);
-
         } finally {
             try {
                 if (dataSet != null) {
@@ -125,7 +124,6 @@ public class ComponentHydrate extends Component {
                 }
             } catch (Exception e) {
                 logger.error("error closing database.....", e);
-
             }
         }
     }

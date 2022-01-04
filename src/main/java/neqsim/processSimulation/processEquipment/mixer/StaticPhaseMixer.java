@@ -108,7 +108,6 @@ public class StaticPhaseMixer extends StaticMixer {
         mixedStream.getThermoSystem().init_x_y();
         mixedStream.getThermoSystem().initBeta();
         mixedStream.getThermoSystem().init(2);
-
     }
 
     /** {@inheritDoc} */
@@ -129,7 +128,6 @@ public class StaticPhaseMixer extends StaticMixer {
         mixStream();
 
         mixedStream.getThermoSystem().init(3);
-
     }
 
     /** {@inheritDoc} */

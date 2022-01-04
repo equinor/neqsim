@@ -73,7 +73,6 @@ public class Viscosity extends
             tempVar += liquidPhase.getPhase().getWtFrac(i) * Math.log(pureComponentViscosity[i]);
             // tempVar += liquidPhase.getPhase().getComponents()[i].getx() *
             // Math.log(pureComponentViscosity[i]);
-
         }
         tempVar2 = 0;
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {

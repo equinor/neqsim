@@ -130,7 +130,6 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         }
 
         streamToWaterRemoval = flashSeparator.getGasOutStream();
-
     }
 
     /** {@inheritDoc} */
@@ -177,7 +176,6 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
         reclaimer.run();
         // reclaimer.displayResult();
-
     }
 
     /** {@inheritDoc} */

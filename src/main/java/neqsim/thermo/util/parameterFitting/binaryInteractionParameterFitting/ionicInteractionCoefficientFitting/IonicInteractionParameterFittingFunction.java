@@ -134,7 +134,6 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
                     .setWijParameter(H3OplusNumb, MDEANumb, value);
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
                     .setWijParameter(H3OplusNumb, MDEANumb, value);
-
         }
 
         if (i == 4) {

@@ -77,7 +77,6 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
 
             if (iter < 2) {
                 system.setTemperature((system.getTemperature() + 0.1));
-
             } else {
                 double dT = (Math.abs(diff / dDiffdT)) > 10 ? Math.signum(diff / dDiffdT) * 10
                         : diff / dDiffdT;

@@ -82,7 +82,5 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
             ((ComponentHydrate) system.getPhase(4).getComponent(0))
                     .setSphericalCoreRadiusHydrate(value);
         }
-        //
-
     }
 }

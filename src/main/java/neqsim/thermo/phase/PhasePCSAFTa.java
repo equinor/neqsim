@@ -98,7 +98,6 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         do {
             super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         } while (!solveX());
-
     }
 
     /** {@inheritDoc} */
@@ -456,7 +455,6 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
             BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-
         }
         if (iterations >= 10000) {
             throw new neqsim.util.exception.TooManyIterationsException();

@@ -111,7 +111,6 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
                             * interphaseSystem.getPhases()[1].getComponents()[i].getx())));
             sumx += interphaseSystem.getPhases()[0].getComponents()[i].getx();
             sumy += interphaseSystem.getPhases()[1].getComponents()[i].getx();
-
         }
         fvec.set(bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 1, 0, 1 - sumx);
         fvec.set(bulkSystem.getPhases()[0].getNumberOfMolecularComponents(), 0, 1 - sumy);
@@ -496,7 +495,6 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
             // System.out.println("gas temp " + bulkSystem.getPhases()[0].getTemperature());
             // System.out.println("liq temp " + bulkSystem.getPhases()[1].getTemperature());
         } while (Math.abs(f) > 1e-10);
-
     }
 
     /** {@inheritDoc} */
@@ -578,6 +576,5 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
 
         // System.out.println("iterOuter " +iterOuter);
         init();
-
     }
 }

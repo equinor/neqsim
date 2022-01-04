@@ -111,7 +111,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
                                     + "'"));
                     dataSet.next();
                     M[i] = Double.parseDouble(dataSet.getString("MolarMass"));
-
                 } catch (Exception e) {
                     try {
                         dataSet.close();
@@ -175,7 +174,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
             dataSet.close();
             database.getConnection().close();
-
         } catch (Exception e) {
             String err = e.toString();
             System.out.println(err);

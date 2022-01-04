@@ -190,7 +190,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
             gtemp += streams.get(k).getThermoSystem().getTemperature()
                     * streams.get(k).getThermoSystem().getNumberOfMoles()
                     / mixedStream.getThermoSystem().getNumberOfMoles();
-
         }
         return gtemp;
     }
@@ -425,7 +424,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
         }
         // System.out.println("rich TEG from absorber " +
         // getSolventOutStream().getFlowRate("kg/hr"));
-
     }
 
     /**

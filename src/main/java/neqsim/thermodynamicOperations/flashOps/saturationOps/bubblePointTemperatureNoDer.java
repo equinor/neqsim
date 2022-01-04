@@ -131,7 +131,6 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
                 } while (Math.abs(system.getPhases()[0].getComponents()[i].getx() - yold) > 1e-4);
 
                 ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
-
             }
             ytotal = 0.0;
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {

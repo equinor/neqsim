@@ -153,7 +153,6 @@ public class CricondenThermFlash extends pTphaseEnvelope {
                 }
 
                 P = P - dfdp / DDQ;
-
             }
 
             // iter T,X
@@ -284,7 +283,6 @@ public class CricondenThermFlash extends pTphaseEnvelope {
 
             xx[j] = system.getPhase(0).getComponents()[j].getx();
             yy[j] = system.getPhase(1).getComponents()[j].getx();
-
         }
     }
 
@@ -296,7 +294,6 @@ public class CricondenThermFlash extends pTphaseEnvelope {
     public void init() {
         // setNewX();
         system.init(3);
-
     }
 
     /**
@@ -326,7 +323,6 @@ public class CricondenThermFlash extends pTphaseEnvelope {
 
             funcT = funcT + xxf + xxf * (Math.log(yyf) - Math.log(xxf) + fugv - fugl);
             dfuncdT = dfuncdT + xxf * (fugTv - fugTl);
-
         }
     }
 
@@ -351,7 +347,6 @@ public class CricondenThermFlash extends pTphaseEnvelope {
 
             funcP = funcP + xx + xx * (Math.log(yy) - Math.log(xx) + fugv - fugl);
             dfuncdP = dfuncdP + xx * (fugPv - fugPl);
-
         }
     }
 }

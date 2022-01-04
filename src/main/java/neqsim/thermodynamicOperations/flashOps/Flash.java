@@ -242,7 +242,6 @@ abstract class Flash extends BaseOperation {
                 }
                 // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
                 // iterations + " phase " + j);
-
             } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0
                     || iterations < 3);
             // (error[j]<oldErr && oldErr<oldOldErr) &&

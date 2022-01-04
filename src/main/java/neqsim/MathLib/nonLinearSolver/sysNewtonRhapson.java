@@ -112,7 +112,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
         dTmax = avscp * 3;
         dPmax = avscp * 1.5;
         System.out.println("dTmax: " + dTmax + "  dPmax: " + dPmax);
-
     }
 
     /**
@@ -149,7 +148,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
                     + system.getPhases()[0].getComponents()[i].getK() * dxidlnk[i];
             // System.out.println("dxidlnk("+i+") "+dxidlnk[i]);
             // System.out.println("dyidlnk("+i+") "+dyidlnk[i]);
-
         }
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
@@ -271,7 +269,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
                 // System.out.println("ds2 : " + ds);
 
                 // Here we find the next point from the polynomial.
-
             }
         }
     }
@@ -356,7 +353,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
             system.setPhaseType(0, 1);
             system.setPhaseType(1, 0);
             return;
-
         }
 
         else if ((xlnkmax < avscp && testcrit != 1) && (np != ic03p && !etterCP)) {

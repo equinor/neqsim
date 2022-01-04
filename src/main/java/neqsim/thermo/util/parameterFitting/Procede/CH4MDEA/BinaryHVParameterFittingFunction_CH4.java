@@ -49,7 +49,6 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
             logger.error(e.toString());
         }
         return system.getPressure();
-
     }
 
     /** {@inheritDoc} */

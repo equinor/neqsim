@@ -588,7 +588,6 @@ abstract class SystemThermo implements SystemInterface {
                     + " ..... returning phase number 0");
         }
         return phaseToSystem(0);
-
     }
 
     /** {@inheritDoc} */
@@ -764,7 +763,6 @@ abstract class SystemThermo implements SystemInterface {
                 }
             } catch (Exception e) {
                 logger.error("error", e);
-
             }
         }
         neqsim.util.unit.Unit unit =
@@ -808,7 +806,6 @@ abstract class SystemThermo implements SystemInterface {
             neqsim.util.exception.InvalidInputException e =
                     new neqsim.util.exception.InvalidInputException();
             throw new RuntimeException(e);
-
         }
 
         SystemInterface refSystem = null;
@@ -1119,7 +1116,6 @@ abstract class SystemThermo implements SystemInterface {
                 dataSet.close();
             } catch (Exception e) {
                 logger.error("error", e);
-
             }
         }
         neqsim.util.unit.Unit unit =
@@ -1476,7 +1472,6 @@ abstract class SystemThermo implements SystemInterface {
             }
             step = gbeta / deriv;
             // System.out.println("step : " + step);
-
         } while (((Math.abs(step)) >= 1.0e-10 && iterations < 300));// &&
                                                                     // (Math.abs(nybeta)-Math.abs(maxBeta))>0.1);
 
@@ -2015,7 +2010,6 @@ abstract class SystemThermo implements SystemInterface {
                                             * getPhase(phase).getNumberOfMolesInPhase());
                         }
                         // initBeta();
-
                     }
                 }
             }
@@ -3664,7 +3658,6 @@ abstract class SystemThermo implements SystemInterface {
 
             for (int k = 0; k < getPhase(0).getNumberOfComponents() - 1; k++) {
                 names += "'" + this.getComponentNames()[k] + "', ";
-
             }
             names += "'" + this.getComponentNames()[getPhase(0).getNumberOfComponents() - 1] + "'";
 
@@ -4001,7 +3994,6 @@ abstract class SystemThermo implements SystemInterface {
         try (ObjectInputStream objectinputstream =
                 new ObjectInputStream(new FileInputStream(filePath))) {
             tempSystem = (SystemThermo) objectinputstream.readObject();
-
         } catch (Exception e) {
             logger.error(e.toString());
         }
@@ -4745,7 +4737,6 @@ abstract class SystemThermo implements SystemInterface {
 
         if (specifiedStream.equals("feed")) {
             moleFraction = fraction;
-
         } else if (specifiedStream.equals("product")) {
             // double specFractionFrom = getPhaseFraction(specification, fromPhaseName);
             double specFractionTo = getPhaseFraction(specification, toPhaseName);

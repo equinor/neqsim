@@ -80,6 +80,5 @@ public class TestRacketFit {
         // optim.displayCurveFit();
 
         optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

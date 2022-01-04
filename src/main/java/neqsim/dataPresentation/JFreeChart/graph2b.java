@@ -236,7 +236,6 @@ public class graph2b extends javax.swing.JFrame {
         getContentPane().add(jTextPane1, java.awt.BorderLayout.NORTH);
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
-
     }// GEN-END:initComponents
 
     private void exit(java.awt.event.WindowEvent evt) {// GEN-FIRST:event_exit

@@ -72,6 +72,5 @@ public class TestChungFit {
         // optim.runMonteCarloSimulation();
         optim.displayResult();
         optim.displayCurveFit();
-
     }
 }

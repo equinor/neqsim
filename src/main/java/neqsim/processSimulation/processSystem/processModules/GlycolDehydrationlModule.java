@@ -124,7 +124,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
             calcDesign();
         }
         getOperations().run();
-
     }
 
     /** {@inheritDoc} */
@@ -510,7 +509,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).run();
         ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).displayResult();
         // TEGplant.getOutputStream("condenserStripper").displayResult();
-
     }
 
     /**

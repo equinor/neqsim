@@ -264,11 +264,9 @@ public class pTphaseEnvelope extends BaseOperation {
                         run();
                         /**/
                         break;
-
                     } else {
                         np = np - 1;
                         break;
-
                     }
                 }
 
@@ -346,7 +344,6 @@ public class pTphaseEnvelope extends BaseOperation {
                 pointsS[np - 1] = system.getPhase(1).getEntropy()
                         / system.getPhase(1).getNumberOfMolesInPhase()
                         / system.getPhase(1).getMolarMass() / 1e3;
-
             }
 
             try {
@@ -362,7 +359,6 @@ public class pTphaseEnvelope extends BaseOperation {
                     pointsH2 = new double[8][];
                     pointsS2 = new double[8][];
                     pointsV2 = new double[8][];
-
                 }
 
                 // points2 are plotted
@@ -405,7 +401,6 @@ public class pTphaseEnvelope extends BaseOperation {
                     pointsS2[0][i] = pointsS[i];
                     pointsV2[1][i] = points[1][i];
                     pointsV2[0][i] = pointsV[i];
-
                 }
                 if (ncr2 > 2) {
                     for (int i = 1; i < (ncr2 - 2); i++) {
@@ -470,7 +465,6 @@ public class pTphaseEnvelope extends BaseOperation {
                         pointsS2[4][i] = copiedPoints[3][i];
                         pointsV2[5][i] = copiedPoints[1][i];
                         pointsV2[4][i] = copiedPoints[4][i];
-
                     }
                     if (ncr2 > 2) {
                         for (int i = 1; i < (ncr2 - 2); i++) {
@@ -483,7 +477,6 @@ public class pTphaseEnvelope extends BaseOperation {
                             pointsS2[6][i] = copiedPoints[3][i + ncr - 1];
                             pointsV2[7][i] = copiedPoints[1][i + ncr - 1];
                             pointsV2[6][i] = copiedPoints[4][i + ncr - 1];
-
                         }
                     }
                 }
@@ -521,7 +514,6 @@ public class pTphaseEnvelope extends BaseOperation {
                     file2.setXvalues(points2[0], "temp", "sec");
                     file2.setYvalues(points2[1], "pres", "meter");
                     file2.createFile();
-
                 }
             } catch (Exception e3) {
                 double nef = 0.;
@@ -547,7 +539,6 @@ public class pTphaseEnvelope extends BaseOperation {
         }
 
         double[][] hydData = opsHyd.getData();
-
     }
 
     /** {@inheritDoc} */

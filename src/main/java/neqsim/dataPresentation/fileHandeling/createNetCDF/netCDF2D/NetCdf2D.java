@@ -106,14 +106,12 @@ public class NetCdf2D {
             Variable u =
                     ncfile.addVariable(null, lonD.get(i).getName(), ucar.ma2.DataType.DOUBLE, dim2);
             // u.addAttribute(new Attribute("units", "degrees_east"));
-
         }
 
         // ncfile.addGroupAttribute(null, new Attribute("title", "Example Data"));
 
         try {
             ncfile.create();
-
         } catch (IOException e) {
             System.err.println("ERROR creating file");
         }
@@ -131,11 +129,9 @@ public class NetCdf2D {
 
         try {
             ncfile.close();
-
         } catch (IOException e) {
         }
         System.out.println("created " + fileName + " successfully");
-
     }
 
     /**

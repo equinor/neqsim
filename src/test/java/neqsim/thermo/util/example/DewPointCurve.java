@@ -100,6 +100,5 @@ public class DewPointCurve {
          * " " + testSystem.getPhase(1).getActivityCoefficient(1, 0));
          *
          */
-
     }
 }

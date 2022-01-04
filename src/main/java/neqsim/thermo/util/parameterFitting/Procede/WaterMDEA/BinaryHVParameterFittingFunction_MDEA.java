@@ -145,5 +145,4 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
                     .setHVDijTParameter(1, 0, value);
         }
     }
-
 }

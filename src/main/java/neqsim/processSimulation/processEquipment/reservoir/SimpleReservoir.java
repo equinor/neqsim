@@ -285,7 +285,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
                 if (j == 1) {
                     relFact = oilVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
                     totalliquidVolume += oilVolume / thermoSystem2.getPhase(j).getMolarVolume();
-
                 } else if (j == 2) {
                     relFact = waterVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
                     totalliquidVolume += waterVolume / thermoSystem2.getPhase(j).getMolarVolume();
@@ -343,7 +342,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
         // gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));
         // gasOutStream.run();
-
     }
 
     /**
@@ -638,7 +636,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
         for (int i = 0; i < 300; i++) {
             // reservoirOps.runTransient(60 * 60 * 24 * 365);
-
         }
         System.out.println("oil flow " + producedOilStream.getFlowRate("kg/hr"));
 

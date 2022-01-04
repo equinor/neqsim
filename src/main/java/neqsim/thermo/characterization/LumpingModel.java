@@ -327,6 +327,5 @@ public class LumpingModel implements java.io.Serializable {
             return new PVTLumpingModel();
         } else
             return new StandardLumpingModel();
-
     }
 }

@@ -128,5 +128,4 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
     /** {@inheritDoc} */
     @Override
     public void setName(String name);
-
 }

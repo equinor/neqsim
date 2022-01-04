@@ -212,7 +212,6 @@ public class DPCUModule extends ProcessModuleBaseClass {
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
-
     }
 
     /** {@inheritDoc} */
@@ -300,6 +299,5 @@ public class DPCUModule extends ProcessModuleBaseClass {
 
         dpcuModule.displayResult();
         // dpcuModule.getOutputStream("gasmixer").displayResult();
-
     }
 }

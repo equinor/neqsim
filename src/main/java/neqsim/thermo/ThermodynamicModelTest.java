@@ -195,7 +195,6 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
                     * system.getPhases()[0].getComponents()[i].getdfugdp();
             temp2 += system.getPhases()[1].getComponents()[i].getNumberOfMolesInPhase()
                     * system.getPhases()[1].getComponents()[i].getdfugdp();
-
         }
         temp1 -= (system.getPhases()[0].getZ() - 1.0)
                 * system.getPhases()[0].getNumberOfMolesInPhase()
@@ -232,7 +231,6 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
                     * system.getPhases()[0].getComponents()[i].getdfugdt();
             temp2 += system.getPhases()[1].getComponents()[i].getNumberOfMolesInPhase()
                     * system.getPhases()[1].getComponents()[i].getdfugdt();
-
         }
         temp1 += system.getPhases()[0].getHresTP() / (R * Math.pow(system.getTemperature(), 2.0));
         temp2 += system.getPhases()[1].getHresTP() / (R * Math.pow(system.getTemperature(), 2.0));

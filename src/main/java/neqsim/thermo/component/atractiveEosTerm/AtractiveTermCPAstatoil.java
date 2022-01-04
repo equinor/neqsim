@@ -93,7 +93,6 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
     public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 1.0) {
             return super.aT(temperature);
-
         } else {
             return getComponent().geta() * alpha(temperature);
         }

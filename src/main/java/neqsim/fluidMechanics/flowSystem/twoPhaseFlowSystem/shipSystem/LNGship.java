@@ -79,7 +79,6 @@ public class LNGship
             setStandardISO6976(new Standard_ISO6976(thermoSystem, getStandardISO6976().getVolRefT(),
                     getStandardISO6976().getEnergyRefT(), "volume"));
             logger.info("using  ISO6976 version 2016");
-
         } else {
             setStandardISO6976(
                     new Standard_ISO6976_2016(thermoSystem, getStandardISO6976().getVolRefT(),
@@ -294,7 +293,6 @@ public class LNGship
             // logger.info("error " + error + " iteration " + iterations + " molarboiloff "
             // + molarBoilOffRate + " endVolume " + endVolume + " orginalMolarBoilOff " +
             // orginalMolarBoilOff);
-
         } while (Math.abs(error) > 1e-8 && iterations < 100);
         try {
             thermoOperations.bubblePointTemperatureFlash();

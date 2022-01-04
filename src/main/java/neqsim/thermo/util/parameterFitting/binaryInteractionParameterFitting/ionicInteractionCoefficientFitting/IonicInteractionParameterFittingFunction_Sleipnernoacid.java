@@ -128,6 +128,5 @@ public class IonicInteractionParameterFittingFunction_Sleipnernoacid
          * ((PhaseModifiedFurstElectrolyteEos)system.getPhases()[1]).
          * getElectrolyteMixingRule()).setWijParameter(MDEAplusNumb, AcidnegNumb, value); }
          */
-
     }
 }

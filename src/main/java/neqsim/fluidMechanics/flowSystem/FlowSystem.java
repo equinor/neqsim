@@ -382,7 +382,6 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
                 flowNode[i].setInterphaseModelType(0);
             }
             flowNode[i].getFluidBoundary().setMassTransferCalc(false);
-
         }
     }
 

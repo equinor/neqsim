@@ -56,7 +56,8 @@ public class propaneCoolingCycle {
         heater.setSpecification("out stream");
         heater.setOutStream(stream_1);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
 
         operations.add(JTvalve);
@@ -80,8 +81,8 @@ public class propaneCoolingCycle {
         JTvalve.getOutStream().displayResult();
         stream_2.displayResult();
 
-        System.out.println("compressor work" + compressor1.getEnergy() / 1.0e3 + " kW " + " compressor temperature "
-                + compressor1.getOutTemperature());
+        System.out.println("compressor work" + compressor1.getEnergy() / 1.0e3 + " kW "
+                + " compressor temperature " + compressor1.getOutTemperature());
         // System.out.println("compressor isentropic ef " +
         // compressor1.getIsentropicEfficiency());
         System.out.println("cooler duty " + cooler.getEnergyInput() / 1.0e3 + " kW");

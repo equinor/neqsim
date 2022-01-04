@@ -76,6 +76,5 @@ public class TestFitToOilFieldFluid {
         optim.setSampleSet(sampleSet);
         optim.solve();
         optim.displayCurveFit();
-
     }
 }

@@ -180,5 +180,4 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
                     .setBinaryInteractionParameter(CO2Numb, CH4Numb, value);
         }
     }
-
 }

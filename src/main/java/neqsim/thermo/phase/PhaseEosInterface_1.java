@@ -75,5 +75,4 @@ public interface PhaseEosInterface_1 extends PhaseInterface {
     // pressure, int numbcomp);
     // double calcB(ComponentEosInterface[] compArray, double temperature, double
     // pressure, int numbcomp);
-
 }

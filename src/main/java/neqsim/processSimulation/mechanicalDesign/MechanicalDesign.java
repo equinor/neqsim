@@ -274,7 +274,6 @@ public class MechanicalDesign implements java.io.Serializable {
             setCompanySpecificDesignStandards("default");
         }
         readDesignSpecifications();
-
     }
 
     /**
@@ -285,7 +284,6 @@ public class MechanicalDesign implements java.io.Serializable {
     public void setDesign() {
         System.out.println("reading design paramters for: " + processEquipment.getName());
         readDesignSpecifications();
-
     }
 
     /**
@@ -485,7 +483,6 @@ public class MechanicalDesign implements java.io.Serializable {
                     new JointEfficiencyPlateStandard("Statoil_TR1414", this));
             getDesignStandard().put("material pipe design codes",
                     new MaterialPipeDesignStandard("Statoil_TR1414", this));
-
         }
         hasSetCompanySpecificDesignStandards = true;
     }

@@ -46,7 +46,8 @@ public class compressorTest {
 
         mixer.addStream(stream_2);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(stream_2);
         operations.add(mixer);

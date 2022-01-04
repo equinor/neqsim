@@ -42,7 +42,6 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
     public ComponentGEUnifacPSRK(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
-
     }
 
     /**
@@ -195,7 +194,6 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
 
         for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
             calclnGammak(i, phase);
-
         }
 
         lngammaResidual = 0.0;

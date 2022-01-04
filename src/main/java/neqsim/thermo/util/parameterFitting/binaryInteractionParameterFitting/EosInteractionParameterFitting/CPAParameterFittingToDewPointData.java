@@ -34,7 +34,6 @@ public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunctio
             thermoOps.waterPrecipitationTemperature();
         } catch (Exception e) {
             logger.error("error", e);
-
         }
         // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
         return system.getTemperature(); // lucia data

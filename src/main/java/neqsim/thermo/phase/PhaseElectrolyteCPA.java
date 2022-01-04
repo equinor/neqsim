@@ -59,7 +59,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
      */
     public PhaseElectrolyteCPA() {
         super();
-
     }
 
     /** {@inheritDoc} */
@@ -82,7 +81,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     public void setMixingRule(int type) {
         super.setMixingRule(type);
         cpamix = cpaSelect.getMixingRule(1, this);
-
     }
 
     /** {@inheritDoc} */
@@ -744,7 +742,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             }
             // System.out.println("corrmatrix error " );
             // System.out.println("error " + corrMatrix.norm1());
-
         } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
 
         // System.out.println("iter " + iter + " error " + NormOps.normF(corr4Matrix));
@@ -894,7 +891,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         // file.createFile();
         if (phase == 1) {
             return solvedBonVlow;
-
         } else {
             return solvedBonVHigh;
         }
@@ -1380,7 +1376,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             }
         }
         return result;
-
     }
 
     /** {@inheritDoc} */

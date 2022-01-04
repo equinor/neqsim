@@ -79,7 +79,6 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
         fvecAB.set(0, 0, zSum - characterizeClass.getZPlus());
 
         fvecAB.set(1, 0, mSum / zSum - characterizeClass.getMPlus());
-
     }
 
     /**

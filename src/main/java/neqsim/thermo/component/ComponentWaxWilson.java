@@ -102,7 +102,6 @@ public class ComponentWaxWilson extends ComponentSolid {
         fugasityCoeffisient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
         logFugasityCoeffisient = Math.log(fugasityCoeffisient);
         return fugasityCoeffisient;
-
     }
 
     /**
@@ -213,6 +212,5 @@ public class ComponentWaxWilson extends ComponentSolid {
         double deltaHsub = (deltaHvap + deltaHf + deltaHtrans);
 
         return -2.0 / coordinationNumber * (deltaHsub - R * phase1.getTemperature());
-
     }
 }

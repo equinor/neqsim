@@ -69,7 +69,6 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
         } while ((i < 350 && Math.abs(dT) > 1e-5));
         logger.info("i " + i);
         // system.display();
-
     }
 
     /** {@inheritDoc} */

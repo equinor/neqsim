@@ -211,7 +211,6 @@ public class BaseContract implements ContractInterface {
                 getResultTable()[j][10] = Double.toString(spesifications[i].getReferencePressure());
                 getResultTable()[j][11] = spesifications[i].getComments();
                 j++;
-
             }
         }
     }

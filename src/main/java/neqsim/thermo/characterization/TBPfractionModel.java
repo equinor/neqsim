@@ -149,7 +149,6 @@ public class TBPfractionModel implements java.io.Serializable {
                 return TBPfractionCoefs[2][0] + TBPfractionCoefs[2][1] * molarMass
                         + TBPfractionCoefs[2][2] * density
                         + TBPfractionCoefs[2][3] * Math.pow(molarMass, 2.0);
-
             } else {
                 TBPfractionCoefs = TBPfractionCoefsHeavyOil;
                 return TBPfractionCoefs[2][0] + TBPfractionCoefs[2][1] * Math.log(molarMass)

@@ -77,7 +77,6 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         return Math.pow(1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
                 + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                 + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0), 2.0);
-
     }
 
     /** {@inheritDoc} */
@@ -85,7 +84,6 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
     public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 10000.0) {
             return super.aT(temperature);
-
         } else {
             return getComponent().geta() * alpha(temperature);
         }

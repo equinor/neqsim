@@ -71,7 +71,6 @@ public class BasePVTsimulation implements SimulationInterface {
     @Override
     public void run() {
         thermoOps = new ThermodynamicOperations(getThermoSystem());
-
     }
 
     /** {@inheritDoc} */

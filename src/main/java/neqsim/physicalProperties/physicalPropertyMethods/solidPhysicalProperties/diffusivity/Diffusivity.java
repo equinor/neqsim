@@ -48,7 +48,6 @@ public class Diffusivity extends
         binaryDiffusionCoeffisients = new double[solidPhase.getPhase()
                 .getNumberOfComponents()][solidPhase.getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[solidPhase.getPhase().getNumberOfComponents()];
-
     }
 
     /** {@inheritDoc} */

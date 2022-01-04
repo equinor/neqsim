@@ -102,5 +102,4 @@ public interface HVmixingRuleInterface extends EosMixingRulesInterface {
      * @return a double
      */
     public double getHValphaParameter(int i, int j);
-
 }

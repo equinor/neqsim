@@ -57,6 +57,5 @@ public class LNGfilling {
         System.out.println("Volume Nitrogen " + stream_2.getThermoSystem().getVolume());
         System.out.println(
                 "Mixer Cooled Nitrogen " + mixer.getOutStream().getThermoSystem().getVolume());
-
     }
 }

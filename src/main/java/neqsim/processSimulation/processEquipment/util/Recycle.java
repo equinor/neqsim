@@ -172,7 +172,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
             gtemp += streams.get(k).getThermoSystem().getTemperature()
                     * streams.get(k).getThermoSystem().getNumberOfMoles()
                     / mixedStream.getThermoSystem().getNumberOfMoles();
-
         }
         return gtemp;
     }

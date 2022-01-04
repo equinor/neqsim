@@ -75,7 +75,7 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
 
 	/** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         SystemInterface outThermoSystem = null;
         if (outletStream != null) {
             outThermoSystem = (SystemInterface) outletStream.getFluid().clone();
@@ -88,7 +88,8 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
         // SystemInterface fluid2 = inletStream.getFluid();
 
         for (int i = 0; i < inletStream.getFluid().getNumberOfComponents(); i++) {
-            if (outThermoSystem.getPhase(0).hasComponent(inletStream.getFluid().getComponent(i).getName())) {
+            if (outThermoSystem.getPhase(0)
+                    .hasComponent(inletStream.getFluid().getComponent(i).getName())) {
                 outThermoSystem.addComponent(inletStream.getFluid().getComponent(i).getName(),
                         inletStream.getFluid().getComponent(i).getNumberOfmoles());
             }
@@ -98,12 +99,11 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
         // fluid1.setPressure(fluid2.getPressure());
         outletStream.setThermoSystem(outThermoSystem);
         outletStream.run();
-
     }
 
 	/** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         outletStream.getFluid().display();
     }
 
@@ -115,18 +115,18 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
     public static void main(String[] args) {
         ProcessSystem offshoreProcessoperations = ProcessSystem.open("c:/temp/offshorePro.neqsim");
         ProcessSystem TEGprocess = ProcessSystem.open("c:/temp//TEGprocessHX.neqsim");
-        StreamTransition trans = new StreamTransition((StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
+        StreamTransition trans = new StreamTransition(
+                (StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
                 (StreamInterface) TEGprocess.getUnit("dry feed gas"));
 
         offshoreProcessoperations.run();
         trans.run();
         ((StreamInterface) offshoreProcessoperations.getUnit("rich gas")).displayResult();
-//	((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
+        // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
         trans.displayResult();
         TEGprocess.run();
         ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
 
         // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
-
     }
 }

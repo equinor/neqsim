@@ -189,7 +189,6 @@ public class newtonRhapson implements java.io.Serializable {
             x = xNew;
             xNew = x - funkValue(x) / derivValue(x);
             xNew2 = xNew;
-
         } while (Math.abs(funkValue(x)) > 1e-10 && iterations <= maxIterations);
 
         if (iterations == maxIterations) {

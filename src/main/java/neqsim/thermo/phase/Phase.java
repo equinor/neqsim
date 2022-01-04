@@ -444,7 +444,6 @@ abstract class Phase implements PhaseInterface {
             physicalPropertyHandler = new PhysicalPropertyHandler();
         }
         physicalPropertyHandler.setPhysicalProperties(this, type);
-
     }
 
     /** {@inheritDoc} */
@@ -1340,7 +1339,6 @@ abstract class Phase implements PhaseInterface {
                 refPhase[i].setPhaseType(this.getPhaseType());
                 refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getPhaseType(),
                         1.0);
-
             } else {
                 // System.out.println("ref " + name);
                 if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {

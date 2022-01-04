@@ -326,7 +326,6 @@ public class SolidFlash12 extends TPflash {
             this.solveBeta();
             // checkX();
         } while (iter < 1);
-
     }
 
     /**

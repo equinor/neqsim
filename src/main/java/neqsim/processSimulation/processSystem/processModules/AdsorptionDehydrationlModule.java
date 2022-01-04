@@ -185,7 +185,6 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
             adsorber[i].getMechanicalDesign().setTantanLength(adsorbentFillingHeight * 1.5);
         }
         // set design is done here //
-
     }
 
     /**
@@ -230,6 +229,5 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         adsorptionPlant.calcDesign();
 
         // TEGplant.getOutputStream("gasStreamFromAdsorber").displayResult();
-
     }
 }

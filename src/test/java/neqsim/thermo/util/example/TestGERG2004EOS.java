@@ -69,6 +69,5 @@ public class TestGERG2004EOS {
         // standards.gasQuality.Draft_GERG2004 temp2 = new
         // standards.gasQuality.Draft_GERG2004(testSystem);
         // temp2.calculate();
-
     }
 }

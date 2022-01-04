@@ -46,7 +46,6 @@ public class PipelineDesignStandard extends DesignStandard {
                         safetyFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
                     }
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }

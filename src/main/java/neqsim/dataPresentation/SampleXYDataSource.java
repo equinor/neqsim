@@ -66,7 +66,6 @@ public class SampleXYDataSource {
         System.out.println("series =" + numberOfSeries);
         seriesName = name;
         points = p;
-
     }
 
     /**
@@ -108,7 +107,6 @@ public class SampleXYDataSource {
      */
     public String getSeriesName(int series) {
         return seriesName[series];
-
     }
 
     /**

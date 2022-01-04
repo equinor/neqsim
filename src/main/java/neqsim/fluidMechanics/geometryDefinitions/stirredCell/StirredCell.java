@@ -29,7 +29,6 @@ public class StirredCell extends GeometryDefinition {
      */
     public StirredCell(double diameter) {
         super(diameter);
-
     }
 
     /**

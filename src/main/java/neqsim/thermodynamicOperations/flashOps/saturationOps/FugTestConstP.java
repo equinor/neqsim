@@ -143,7 +143,6 @@ public class FugTestConstP extends constantDutyTemperatureFlash
                     // lagre data i fil
 
                     // if(Math.abs(Fugrel[1][i]-1)<0.01)testSystem.display();
-
                 } // end iterasjons lokke
 
                 String[] title = new String[2];

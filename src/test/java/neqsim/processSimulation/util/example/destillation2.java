@@ -21,11 +21,11 @@ public class destillation2 {
         testSystem.addComponent("methane", 1.00);
         testSystem.addComponent("water", 100e-6);
         testSystem.addComponent("TEG", 0.0);
-      
+
         testSystem.setMixingRule(10);
-        testSystem.setMultiPhaseCheck(true); 
+        testSystem.setMultiPhaseCheck(true);
         testSystem.init(0);
-        
+
         Stream feedGas = new Stream("feedGas", testSystem);
         feedGas.setFlowRate(5.0, "MSm3/day");
         feedGas.setTemperature(30.0, "C");
@@ -41,14 +41,15 @@ public class destillation2 {
 
         DistillationColumn column = new DistillationColumn(3, false, false);
         column.addFeedStream(feedGas, 0);
-        column.getTray(2).addStream(TEGliq);        
-       
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        column.getTray(2).addStream(TEGliq);
+
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(feedGas);
         operations.add(TEGliq);
         operations.add(column);
         operations.run();
-        
+
         column.getGasOutStream().displayResult();
         column.getLiquidOutStream().displayResult();
     }

@@ -43,7 +43,6 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         Jac = new Matrix(system.getPhase(0).getNumberOfComponents() + 1,
                 system.getPhase(0).getNumberOfComponents() + 1);
         fvec = new Matrix(system.getPhase(0).getNumberOfComponents() + 1, 1);
-
     }
 
     /**
@@ -185,7 +184,6 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                         - damping * dx.get(system.getPhase(0).getNumberOfComponents(), 0));
             } while (Math.abs(fvec.norm2()) > 1.0e-12 && iterations < maxNumberOfIterations
                     && Math.abs(presOld - system.getPressure()) < 10.0);
-
         } while (Math.abs(oldIterTemp - system.getTemperature()) > 1e-3);
     }
 
@@ -244,6 +242,8 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                 logger.info("temp " + system.getTemperature() + "dewTemp " + dewTemp + " Q1 " + Q1
                         + " pressure " + system.getPressure());
 
+                logger.info("temp " + system.getTemperature() + "dewTemp " + dewTemp + " Q1 " + Q1
+                        + " pressure " + system.getPressure());
             } while (Math.abs(Q1) > 1e-10 && iterations < 15);// maxNumberOfIterations);
             logger.info("temp " + system.getTemperature() + " Q1 " + Q1);
             // if(ii<2) system.setTemperature(dewTemp-);

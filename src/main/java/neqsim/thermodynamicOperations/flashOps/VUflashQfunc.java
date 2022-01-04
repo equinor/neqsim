@@ -147,7 +147,6 @@ public class VUflashQfunc extends Flash {
         // logger.info("internaleng: " + system.getInternalEnergy());
         // logger.info("volume: " + system.getVolume());
         solveQ();
-
     }
 
     /** {@inheritDoc} */

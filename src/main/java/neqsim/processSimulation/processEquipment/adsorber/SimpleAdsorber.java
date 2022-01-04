@@ -185,7 +185,6 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         } while (Math.abs(error) > 1e-4 && iter < 30
                 && outStream[1].getThermoSystem().getPhase(1).getBeta() > 0
                 && outStream[0].getThermoSystem().getPhase(1).getBeta() > 0);
-
     }
 
     /** {@inheritDoc} */

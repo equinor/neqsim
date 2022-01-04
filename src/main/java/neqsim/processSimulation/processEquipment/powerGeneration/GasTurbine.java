@@ -193,7 +193,6 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
 
         System.out.println("power generated " + gasturb.getPower() / 1.0e6);
         System.out.println("heat generated " + gasturb.getHeat() / 1.0e6);
-
     }
 
     /**

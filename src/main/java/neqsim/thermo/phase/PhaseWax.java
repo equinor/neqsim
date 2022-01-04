@@ -51,7 +51,6 @@ public class PhaseWax extends PhaseSolid {
                            // betingelser
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         phaseTypeName = "wax";
-
     }
 
     /** {@inheritDoc} */

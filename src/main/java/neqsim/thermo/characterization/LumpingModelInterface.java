@@ -91,5 +91,4 @@ public interface LumpingModelInterface {
      * @return an array of {@link java.lang.String} objects
      */
     public String[] getLumpedComponentNames();
-
 }

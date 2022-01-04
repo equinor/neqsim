@@ -80,6 +80,5 @@ public class ModelTest {
         double numCp = (ent1 - ent2) / 0.002;
 
         logger.info("Cp " + cp + " numCp " + numCp);
-
     }
 }

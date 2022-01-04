@@ -281,6 +281,5 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
 
             System.out.println("maxDiff " + maxDiff);
         } while (Math.abs(maxDiff) > 1e-10 && iterTop < 10);// diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
-
     }
 }

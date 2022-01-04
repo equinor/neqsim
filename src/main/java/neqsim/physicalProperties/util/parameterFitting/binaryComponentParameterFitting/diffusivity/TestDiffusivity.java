@@ -80,6 +80,5 @@ public class TestDiffusivity {
         // optim.runMonteCarloSimulation();
         optim.displayGraph();
         // optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

@@ -472,7 +472,6 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
         }
         setTemperature(temperature - dt);
         solveX();
-
     }
 
     /**

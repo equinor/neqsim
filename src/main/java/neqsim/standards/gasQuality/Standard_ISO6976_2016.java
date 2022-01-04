@@ -132,7 +132,6 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
                             "this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
                     logger.info("added component not specified by ISO6976constants2016 "
                             + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
-
                 }
 
                 carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));
@@ -162,7 +161,6 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
             dataSet.close();
             database.getConnection().close();
-
         } catch (Exception e) {
             String err = e.toString();
             logger.error(err);
@@ -375,5 +373,4 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     /**
      * @return the energyRefT
      */
-
 }

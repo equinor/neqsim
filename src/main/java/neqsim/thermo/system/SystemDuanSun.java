@@ -131,11 +131,9 @@ public class SystemDuanSun extends SystemEos {
         try {
             ThermodynamicOperations testOps = new ThermodynamicOperations(fluid1);
             testOps.TPflash();
-
         } catch (Exception e) {
             logger.error(e.toString());
         }
         fluid1.display();
-
     }
 }

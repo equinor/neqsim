@@ -216,7 +216,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
             pipe.getNode(i).init();
             // if(dynamic) System.out.println("i " + i +" diff 0 " +(diffMatrix.get(i, 0) )
             // + " new pressure " + pipe.getNode(i).getBulkSystem().getPressure());
-
         }
     }
 
@@ -698,7 +697,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                 oldComposition[j][i] = sol4Matrix[j].get(i, 0); // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx()
                                                                 // *
                                                                 // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
-
             }
         }
     }

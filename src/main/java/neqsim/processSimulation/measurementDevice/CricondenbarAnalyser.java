@@ -71,7 +71,6 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
             thermoOps.setRunAsThread(true);
             thermoOps.calcPTphaseEnvelope(false, 1.);
             thermoOps.waitAndCheckForFinishedCalculation(15000);
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -98,7 +97,6 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
                 new neqsim.PVTsimulation.simulation.SaturationPressure(tempFluid);
         try {
             thermoOps.run();
-
         } catch (Exception e) {
             e.printStackTrace();
         }

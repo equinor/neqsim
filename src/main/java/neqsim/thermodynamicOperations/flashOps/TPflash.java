@@ -108,7 +108,6 @@ public class TPflash extends Flash {
         }
         system.calc_x_y();
         system.init(1);
-
     }
 
     /**

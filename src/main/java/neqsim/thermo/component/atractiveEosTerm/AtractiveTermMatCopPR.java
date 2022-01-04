@@ -129,7 +129,6 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
                 * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0
                         - parameters[1] * rootTR / Math.sqrt(Tr) / TC
                         - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC);
-
     }
 
     /** {@inheritDoc} */
