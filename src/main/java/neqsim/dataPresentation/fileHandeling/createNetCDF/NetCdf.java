@@ -119,7 +119,6 @@ public class NetCdf implements java.io.Serializable {
 
         try {
             ncfile.create();
-
         } catch (IOException e) {
             System.err.println("ERROR creating file");
         }

@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>SulfureDeposition class.</p>
+ * <p>
+ * SulfureDeposition class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -17,7 +19,9 @@ public class SulfureDeposition {
     static Logger logger = LogManager.getLogger(SulfureDeposition.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -47,22 +51,20 @@ public class SulfureDeposition {
          * testSystem.addTBPfraction("Vigdis_C30-C80", 0.076902, 525.0 / 1000.0, 0.94072);
          */
         // Vigdis 2 stage
-        testSystem.addComponent("nitrogen", 0.000301);
-        testSystem.addComponent("CO2", 0.000171);
-        testSystem.addComponent("methane", 0.023407);
-        testSystem.addComponent("ethane", 0.005422);
-        testSystem.addComponent("propane", 0.005413);
-        testSystem.addComponent("i-butane", 0.00095);
-        testSystem.addComponent("n-butane", 0.003003);
-        testSystem.addComponent("i-pentane", 0.001173);
-        testSystem.addComponent("n-pentane", 0.001785);
-        testSystem.addComponent("n-hexane", 0.002514);
-        testSystem.addTBPfraction("Vigdis_C7-C8", 0.0075, 99.07 / 1000.0, 0.75111);
-        testSystem.addTBPfraction("Vigdis_C9-C12", 0.010572, 138.64 / 1000.0, 0.80122);
-        testSystem.addTBPfraction("Vigdis_C13-C18", 0.011015, 213.76 / 1000.0, 0.85103);
-        testSystem.addTBPfraction("Vigdis_C19-C29", 0.00791, 333.84 / 1000.0, 0.89639);
-        testSystem.addTBPfraction("Vigdis_C30-C80", 0.003898, 525.0 / 1000.0, 0.94072);
-
+        /*
+         * testSystem.addComponent("nitrogen", 0.000301); testSystem.addComponent("CO2", 0.000171);
+         * testSystem.addComponent("methane", 0.023407); testSystem.addComponent("ethane",
+         * 0.005422); testSystem.addComponent("propane", 0.005413);
+         * testSystem.addComponent("i-butane", 0.00095); testSystem.addComponent("n-butane",
+         * 0.003003); testSystem.addComponent("i-pentane", 0.001173);
+         * testSystem.addComponent("n-pentane", 0.001785); testSystem.addComponent("n-hexane",
+         * 0.002514); testSystem.addTBPfraction("Vigdis_C7-C8", 0.0075, 99.07 / 1000.0, 0.75111);
+         * testSystem.addTBPfraction("Vigdis_C9-C12", 0.010572, 138.64 / 1000.0, 0.80122);
+         * testSystem.addTBPfraction("Vigdis_C13-C18", 0.011015, 213.76 / 1000.0, 0.85103);
+         * testSystem.addTBPfraction("Vigdis_C19-C29", 0.00791, 333.84 / 1000.0, 0.89639);
+         * testSystem.addTBPfraction("Vigdis_C30-C80", 0.003898, 525.0 / 1000.0, 0.94072); //
+         * testSystem.addComponent("water", 0.2514);
+         */
         // snorre
         /*
          * testSystem.addComponent("nitrogen", 0.000501); testSystem.addComponent("CO2", 0.000172);
@@ -103,16 +105,27 @@ public class SulfureDeposition {
         // testSystem.addPlusFraction(7,15);
         // }
         // testSystem.addComponent("water", 0.00301);
-        testSystem.addComponent("S8", 0.00000048028452962001990);
-        testSystem.createDatabase(true);
+        // testSystem.addComponent("S8", 0.00000048028452962001990);
+        // testSystem.createDatabase(true);
+        testSystem.addComponent("nitrogen", 5.84704017689321e-003);
+        testSystem.addComponent("CO2", 0.021);
+        testSystem.addComponent("methane", 0.63);
+        testSystem.addComponent("ethane", 0.134769062252199);
+        testSystem.addComponent("propane", 9.11979242318279e-002);
+        testSystem.addComponent("i-butane", 0.020654078469792);
+        testSystem.addComponent("n-butane", 3.74972131983075e-002);
+        testSystem.addComponent("i-pentane", 1.13683864588619e-002);
+        testSystem.addComponent("n-pentane", 1.03129901150887e-002);
+        testSystem.addComponent("n-hexane", 6.103129901150887e-002);
+        testSystem.addComponent("S8", 10.0077E-06);
         testSystem.setMixingRule(2);
 
         testSystem.setMultiPhaseCheck(true);
         // testSystem.setSolidPhaseCheck("S8");
 
         try {
-            testOps.TPflash();
-            // testOps.TPSolidflash();
+            // testOps.TPflash();
+            testOps.TPSolidflash();
             // testOps.bubblePointPressureFlash();
             // testOps.calcPTphaseEnvelope();
             // testOps.displayResult();

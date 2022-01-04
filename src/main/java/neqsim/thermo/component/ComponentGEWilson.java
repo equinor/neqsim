@@ -111,6 +111,8 @@ public class ComponentGEWilson extends ComponentGE {
             sum2 += phase1.getComponent(i).getx() * ((ComponentGEWilson) phase1.getComponent(i))
                     .getCharEnergyParamter(phase1, i, this.getComponentNumber()) / tempSum;
         }
+        return Math.exp(1.0 - Math.log(sum1) - sum2);
+    }
 
     /**
      * <p>
@@ -186,18 +188,7 @@ public class ComponentGEWilson extends ComponentGE {
         double deltaHvap = R * getTC()
                 * (deltaHvap0 + omega * deltaHvap1 + omega * omega * deltaHvap2) * 4.1868;
 
-                double carbonnumber = getMolarMass() / 0.014;
-                // calculating vaporization enthalpy
-                double x = 1.0 - phase1.getTemperature() / getTC();
-                double deltaHvap0 = 5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333)
-                                + 1.171 * Math.pow(x, 1.2083) - 13.166 * x
-                                + 0.4858 * Math.pow(x, 2.0) - 1.088 * Math.pow(x, 3.0);
-                double deltaHvap1 = 0.80022 * Math.pow(x, 0.3333) + 273.23 * Math.pow(x, 0.8333)
-                                + 465.08 * Math.pow(x, 1.2083) - 638.51 * x
-                                - 145.12 * Math.pow(x, 2.0) - 74.049 * Math.pow(x, 3.0);
-                double deltaHvap2 = 7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333)
-                                - 610.48 * Math.pow(x, 1.2083) + 839.89 * x
-                                + 160.05 * Math.pow(x, 2.0) - 50.711 * Math.pow(x, 3.0);
+        // calculating transition enthalpy
 
         double deltaHtot = (3.7791 * carbonnumber - 12.654) * 1000;
         double Ttrans =
@@ -206,11 +197,8 @@ public class ComponentGEWilson extends ComponentGE {
         double deltaHf = (0.1426 * getMolarMass() * Tf) * 4.1868;
         double deltaHtrans = (deltaHtot - deltaHf);
 
-                double deltaHvap = R * getTC()
-                                * (deltaHvap0 + omega * deltaHvap1 + omega * omega * deltaHvap2)
-                                * 4.1868;
+        double deltaHsub = (deltaHvap + deltaHf + deltaHtrans);
 
-                // calculating transition enthalpy
-
+        return -2.0 / coordinationNumber * (deltaHsub - R * phase1.getTemperature());
     }
 }

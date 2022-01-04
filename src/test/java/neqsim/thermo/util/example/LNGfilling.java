@@ -8,7 +8,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 /**

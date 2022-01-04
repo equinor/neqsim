@@ -22,16 +22,13 @@ import neqsim.thermo.phase.PhasePCSAFT;
 public class ComponentPCSAFT extends ComponentSrk {
     private static final long serialVersionUID = 1000;
 
-        private double F1dispVolTermdn = 1.0, F1dispSumTermdn = 1.0, F1dispI1dn = 1.0,
-                        F2dispI2dn = 1.0, F2dispZHCdn = 1.0, F2dispVolTermdn = 1.0,
-                        F2dispSumTermdn = 1;
+    private double dSAFTi = 1.0, dmSAFTdi = 1.0;
+    double dghsSAFTdi, dnSAFTdi = 1.0, dahsSAFTdi = 1.0, dlogghsSAFTdi = 1.0;
 
     private double F1dispVolTermdn = 1.0, F1dispSumTermdn = 1.0, F1dispI1dn = 1.0, F2dispI2dn = 1.0,
             F2dispZHCdn = 1.0, F2dispVolTermdn = 1.0, F2dispSumTermdn = 1;
 
-        /**
-         * Creates new System_SRK_EOS Ev liten fil ja.
-         */
+    int useHS = 1, useDISP1 = 1, useDISP2 = 1;
 
     /**
      * <p>
@@ -66,7 +63,6 @@ public class ComponentPCSAFT extends ComponentSrk {
     public ComponentPCSAFT(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
-
     }
 
     /**
@@ -307,10 +303,6 @@ public class ComponentPCSAFT extends ComponentSrk {
             // System.out.println("kij "+
             // ((PhaseEosInterface)phase).getMixingRule().getBinaryInteractionParameter(componentNumber,
             // i));
-
-        public ComponentPCSAFT(String component_name, double moles, double molesInPhase,
-                        int compnumber) {
-                super(component_name, moles, molesInPhase, compnumber);
         }
         return -2.0 / Math.pow(phase.getNumberOfMolesInPhase(), 1.0)
                 * ((PhasePCSAFT) phase).getF2dispSumTerm()

@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>BubbleFlashCPA class.</p>
+ * <p>
+ * BubbleFlashCPA class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -17,7 +19,9 @@ public class BubbleFlashCPA {
     static Logger logger = LogManager.getLogger(BubbleFlashCPA.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -57,7 +61,6 @@ public class BubbleFlashCPA {
          * testSystem.addTBPfraction("C10", 0.45, 134.0 / 1000.0, 0.792);
          */
         // testSystem.addPlusFraction("C11+", 3.44, 231.0/1000, 0.87);
-
         // testSystem.getCharacterization().characterisePlusFraction();
 
         testSystem.setMultiPhaseCheck(true);

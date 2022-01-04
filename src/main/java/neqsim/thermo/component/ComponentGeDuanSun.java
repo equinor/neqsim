@@ -523,7 +523,6 @@ public class ComponentGeDuanSun extends ComponentGE {
         // return gammaO2;
         // }else
         return gamma;
-
     }
     /////////////////////////////////////////////////////
     /*

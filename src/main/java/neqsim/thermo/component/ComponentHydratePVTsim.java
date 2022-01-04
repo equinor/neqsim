@@ -74,6 +74,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                 Ak[1][1] = Double.parseDouble(dataSet.getString("HydrateA2Large"));
                 Bk[1][1] = Double.parseDouble(dataSet.getString("HydrateB2Large"));
             } catch (Exception e) {
+                logger.error("error in ComponentHydratePVTsim", e);
             } finally {
                 try {
                     dataSet.close();
@@ -157,7 +158,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                                     .calcYKI(hydrateStructure, cavType, phase);
                             tempy += tee;
                         }
-
+                        val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
                     }
                     logger.info("val " + val + " structure " + hydrateStructure);
                     logger.info("emty "
@@ -178,9 +179,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                 }
             }
             fugasityCoeffisient = maxFug;
-
-            logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-            hydrateStructure = stableStructure;
         }
         return fugasityCoeffisient;
     }
@@ -241,7 +239,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
         double Cp = 0;
 
-        double molarvolume = 1.0 / (55493.0);// *0.9);
+        // double molarvolume = 1.0 / (55493.0);// *0.9);
 
         double deltaMolarVolume = 0.0;
 
@@ -249,13 +247,13 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
             dGf = 1264.0;
             dHf = -4858.0;
             Cp = -39.16;
-            molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
+            // molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 4.6e-6;
         } else {
             dGf = 883.0;
             dHf = -5201.0;
             Cp = -39.16;
-            molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
+            // molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 5.0e-6;
         }
         double T0 = 273.15;

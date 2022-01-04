@@ -158,6 +158,4 @@ public interface CompressorChartInterface extends Cloneable {
      * </p>
      */
     public void plot();
-
-        public void plot();
 }

@@ -5,9 +5,12 @@
  */
 package neqsim.processSimulation.processEquipment.expander;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.Container;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -24,11 +27,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderInterface {
     private static final long serialVersionUID = 1000;
-
-        /**
-         * Creates new ThrottelValve
-         */
-        public ExpanderOld() {}
 
     /**
      * <p>
@@ -198,10 +196,10 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
         }
 
-        public ExpanderOld(String name, StreamInterface inletStream) {
-                this.name = name;
-                setInletStream(inletStream);
-        }
+    public ExpanderOld(String name, StreamInterface inletStream) {
+        this.name = name;
+        setInletStream(inletStream);
+    }
 
     /** {@inheritDoc} */
     @Override

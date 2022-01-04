@@ -111,6 +111,4 @@ public interface InterphaseTransportCoefficientInterface {
      * @return a double
      */
     public double calcWallHeatTransferCoefficient(int phase, FlowNodeInterface node);
-
-        public double calcWallHeatTransferCoefficient(int phase, FlowNodeInterface node);
 }

@@ -3,7 +3,9 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>expander1 class.</p>
+ * <p>
+ * expander1 class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -16,8 +18,8 @@ public class expander1 {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0),
-                120.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 120.00);
         testSystem.addComponent("methane", 180.00);
         testSystem.addComponent("ethane", 10.00);
         testSystem.addComponent("propane", 1.00);
@@ -27,18 +29,30 @@ public class expander1 {
         testSystem.setMixingRule(2);
         testSystem.setMultiPhaseCheck(true);
 
-                neqsim.processSimulation.processSystem.ProcessSystem operations =
-                                new neqsim.processSimulation.processSystem.ProcessSystem();
-                operations.add(stream_1);
-                operations.add(expander);
+        Stream stream_1 = new Stream("Stream1", testSystem);
 
-                operations.run();
+        // neqsim.processSimulation.processEquipment.expander.Expander expander = new
+        // neqsim.processSimulation.processEquipment.expander.Expander(stream_1);
+        neqsim.processSimulation.processEquipment.compressor.Compressor expander =
+                new neqsim.processSimulation.processEquipment.compressor.Compressor(stream_1);
 
-                // expander.solveEfficiency(272.50);
-                operations.displayResult();
+        expander.setOutletPressure(80.0);
+        expander.setPolytropicEfficiency(0.9);
+        expander.setIsentropicEfficiency(0.9);
+        expander.setUsePolytropicCalc(true);
 
-                // compr.solvePolytropicEfficiency(compr.getOutStream().getTemperature() +
-                // 0.01);
-                // operations.displayResult();
-        }
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
+        operations.add(stream_1);
+        operations.add(expander);
+
+        operations.run();
+
+        // expander.solveEfficiency(272.50);
+        operations.displayResult();
+
+        // compr.solvePolytropicEfficiency(compr.getOutStream().getTemperature() +
+        // 0.01);
+        // operations.displayResult();
+    }
 }

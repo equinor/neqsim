@@ -1,9 +1,3 @@
-/*
- * AtractiveTermSrk.java
- *
- * Created on 13. mai 2001, 21:59
- */
-
 package neqsim.thermo.component.atractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
@@ -42,14 +36,8 @@ public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
             logger.error("Cloning failed.", e);
         }
 
-        @Override
-        public Object clone() {
-                AtractiveTermPrGassem2001 atractiveTerm = null;
-                try {
-                        atractiveTerm = (AtractiveTermPrGassem2001) super.clone();
-                } catch (Exception e) {
-                        logger.error("Cloning failed.", e);
-                }
+        return atractiveTerm;
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -104,10 +92,7 @@ public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
                         / Math.sqrt(temperature * temperature * temperature
                                 / (Math.pow(getComponent().getTC(), 3.0)))
                         / (getComponent().getTC() * getComponent().getTC()) / 2.0;
-
-        @Override
-        public double diffdiffalphaT(double temperature) {
-                // not implemented dubble derivative
+    }
 
     /** {@inheritDoc} */
     @Override
