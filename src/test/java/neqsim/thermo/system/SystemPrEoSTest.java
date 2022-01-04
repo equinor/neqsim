@@ -78,7 +78,7 @@ class SystemPrEoSTest {
     @Test
     @DisplayName("calculate properties when flow rate is 0")
     public void calcProperties() {
-    	testSystem.setTotalFlowRate(0.0, "mol/sec");
+    	testSystem.setTotalFlowRate(1.0, "mol/sec");
     	 ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     	 testOps.TPflash();
          testSystem.initProperties();
