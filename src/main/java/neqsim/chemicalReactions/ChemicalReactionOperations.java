@@ -3,7 +3,6 @@
  *
  * Created on 4. februar 2001, 20:06
  */
-
 package neqsim.chemicalReactions;
 
 import java.util.HashSet;

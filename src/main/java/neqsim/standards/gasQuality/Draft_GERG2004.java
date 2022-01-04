@@ -1,9 +1,3 @@
-/*
- * Standard_ISO1992.java
- *
- * Created on 13. juni 2004, 23:30
- */
-
 package neqsim.standards.gasQuality;
 
 import java.text.*;

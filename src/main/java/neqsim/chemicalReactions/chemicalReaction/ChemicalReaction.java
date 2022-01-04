@@ -3,7 +3,6 @@
  *
  * Created on 4. februar 2001, 15:32
  */
-
 package neqsim.chemicalReactions.chemicalReaction;
 
 import Jama.Matrix;

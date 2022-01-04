@@ -1,11 +1,8 @@
-
-
 /*
  * ChemicalReactionFactory.java
  *
  * Created on 20. september 2004, 22:40
  */
-
 package neqsim.chemicalReactions.chemicalReaction;
 
 import java.util.ArrayList;

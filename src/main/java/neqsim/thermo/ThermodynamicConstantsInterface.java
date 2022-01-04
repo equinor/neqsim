@@ -3,11 +3,12 @@
  *
  * Created on 3. juni 2000, 19:07
  */
-
 package neqsim.thermo;
 
 /**
- * <p>ThermodynamicConstantsInterface interface.</p>
+ * <p>
+ * ThermodynamicConstantsInterface interface.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id

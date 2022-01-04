@@ -5,7 +5,6 @@
  *
  * Created on 4. desember 2000, 22:34
  */
-
 package neqsim.MathLib.generalMath;
 
 /**

@@ -1,66 +1,75 @@
-/*
- * ValveInterface.java
- *
- * Created on 22. august 2001, 17:20
- */
-
 package neqsim.processSimulation.processEquipment.pump;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>PumpInterface interface.</p>
+ * <p>
+ * PumpInterface interface.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public interface PumpInterface extends ProcessEquipmentInterface {
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
     public void run();
 
     /**
-     * <p>setOutletPressure.</p>
+     * <p>
+     * setOutletPressure.
+     * </p>
      *
      * @param pressure a double
      */
     public void setOutletPressure(double pressure);
 
     /**
-     * <p>setInletStream.</p>
+     * <p>
+     * setInletStream.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void setInletStream(StreamInterface inletStream);
 
     /**
-     * <p>getEnergy.</p>
+     * <p>
+     * getEnergy.
+     * </p>
      *
      * @return a double
      */
     public double getEnergy();
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
     public String getName();
 
     /**
-     * <p>getOutStream.</p>
+     * <p>
+     * getOutStream.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public StreamInterface getOutStream();
 
     /**
-     * <p>getPower.</p>
+     * <p>
+     * getPower.
+     * </p>
      *
      * @return a double
      */
     public double getPower();
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
     public void runTransient();
 }

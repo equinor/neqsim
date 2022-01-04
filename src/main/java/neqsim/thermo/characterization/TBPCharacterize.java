@@ -8,7 +8,9 @@ package neqsim.thermo.characterization;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>TBPCharacterize class.</p>
+ * <p>
+ * TBPCharacterize class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -27,11 +29,12 @@ public class TBPCharacterize extends PlusCharacterize {
     /**
      * Creates a new instance of TBPCharacterize
      */
-    public TBPCharacterize() {
-    }
+    public TBPCharacterize() {}
 
     /**
-     * <p>Constructor for TBPCharacterize.</p>
+     * <p>
+     * Constructor for TBPCharacterize.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -120,12 +123,15 @@ public class TBPCharacterize extends PlusCharacterize {
     public void addTBPFractions() {
         for (int i = 0; i < TBPdens.length; i++) {
             // System.out.println("Mi " + TBP_M[i] + " dens " + TBPdens[i]);
-            system.addTBPfraction("C" + Integer.toString(carbonNumberVector[i]), TBPmoles[i], TBP_M[i], TBPdens[i]);
+            system.addTBPfraction("C" + Integer.toString(carbonNumberVector[i]), TBPmoles[i],
+                    TBP_M[i], TBPdens[i]);
         }
     }
 
     /**
-     * <p>saveCharacterizedFluid.</p>
+     * <p>
+     * saveCharacterizedFluid.
+     * </p>
      *
      * @return a boolean
      */
@@ -157,7 +163,9 @@ public class TBPCharacterize extends PlusCharacterize {
     }
 
     /**
-     * <p>getTBPfractions.</p>
+     * <p>
+     * getTBPfractions.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -183,7 +191,9 @@ public class TBPCharacterize extends PlusCharacterize {
     }
 
     /**
-     * <p>solveAB.</p>
+     * <p>
+     * solveAB.
+     * </p>
      */
     public void solveAB() {
         NewtonSolveAB solver = new NewtonSolveAB(system, this);
@@ -210,7 +220,9 @@ public class TBPCharacterize extends PlusCharacterize {
     }
 
     /**
-     * <p>getTBPdens.</p>
+     * <p>
+     * getTBPdens.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -347,10 +359,11 @@ public class TBPCharacterize extends PlusCharacterize {
     }
 
     /**
-     * <p>addPlusFraction.</p>
+     * <p>
+     * addPlusFraction.
+     * </p>
      */
-    public void addPlusFraction() {
-    }
+    public void addPlusFraction() {}
 
     /** {@inheritDoc} */
     @Override

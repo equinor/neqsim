@@ -1,9 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
-
 package neqsim.thermo.component;
 
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermRk;

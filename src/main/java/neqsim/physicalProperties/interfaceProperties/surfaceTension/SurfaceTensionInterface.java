@@ -3,18 +3,21 @@
  *
  * Created on 13. august 2001, 13:14
  */
-
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
 /**
- * <p>SurfaceTensionInterface interface.</p>
+ * <p>
+ * SurfaceTensionInterface interface.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public interface SurfaceTensionInterface {
     /**
-     * <p>calcSurfaceTension.</p>
+     * <p>
+     * calcSurfaceTension.
+     * </p>
      *
      * @param int1 a int
      * @param int2 a int

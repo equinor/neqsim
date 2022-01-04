@@ -1,8 +1,3 @@
-/*
- * This program calculated Water - MDEA HV interaction parameters. Two types of data is available.
- * VLE data and freezing point depression data
- */
-
 package neqsim.thermo.util.parameterFitting.Procede.WaterMDEA;
 
 import java.sql.ResultSet;
@@ -17,7 +12,10 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestBinaryHVParameterFitting_MDEA class.</p>
+ * <p>
+ * TestBinaryHVParameterFitting_MDEA class. This program calculated Water - MDEA HV interaction
+ * parameters. Two types of data is available. VLE data and freezing point depression data
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -26,7 +24,9 @@ public class TestBinaryHVParameterFitting_MDEA {
     static Logger logger = LogManager.getLogger(TestBinaryHVParameterFitting_MDEA.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

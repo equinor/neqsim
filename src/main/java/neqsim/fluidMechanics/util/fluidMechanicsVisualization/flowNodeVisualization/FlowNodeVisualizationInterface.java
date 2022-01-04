@@ -3,27 +3,32 @@
  *
  * Created on 5. august 2001, 16:28
  */
-
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization;
 
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
- * <p>FlowNodeVisualizationInterface interface.</p>
+ * <p>
+ * FlowNodeVisualizationInterface interface.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public interface FlowNodeVisualizationInterface {
     /**
-     * <p>setData.</p>
+     * <p>
+     * setData.
+     * </p>
      *
      * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
      */
     public void setData(FlowNodeInterface node);
 
     /**
-     * <p>getPressure.</p>
+     * <p>
+     * getPressure.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -31,7 +36,9 @@ public interface FlowNodeVisualizationInterface {
     public double getPressure(int i);
 
     /**
-     * <p>getTemperature.</p>
+     * <p>
+     * getTemperature.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -39,14 +46,18 @@ public interface FlowNodeVisualizationInterface {
     public double getTemperature(int i);
 
     /**
-     * <p>getDistanceToCenterOfNode.</p>
+     * <p>
+     * getDistanceToCenterOfNode.
+     * </p>
      *
      * @return a double
      */
     public double getDistanceToCenterOfNode();
 
     /**
-     * <p>getVelocity.</p>
+     * <p>
+     * getVelocity.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -54,7 +65,9 @@ public interface FlowNodeVisualizationInterface {
     public double getVelocity(int i);
 
     /**
-     * <p>getBulkComposition.</p>
+     * <p>
+     * getBulkComposition.
+     * </p>
      *
      * @param i a int
      * @param phase a int
@@ -63,7 +76,9 @@ public interface FlowNodeVisualizationInterface {
     public double getBulkComposition(int i, int phase);
 
     /**
-     * <p>getInterfaceComposition.</p>
+     * <p>
+     * getInterfaceComposition.
+     * </p>
      *
      * @param i a int
      * @param phase a int
@@ -72,14 +87,18 @@ public interface FlowNodeVisualizationInterface {
     public double getInterfaceComposition(int i, int phase);
 
     /**
-     * <p>getNumberOfComponents.</p>
+     * <p>
+     * getNumberOfComponents.
+     * </p>
      *
      * @return a int
      */
     public int getNumberOfComponents();
 
     /**
-     * <p>getPhaseFraction.</p>
+     * <p>
+     * getPhaseFraction.
+     * </p>
      *
      * @param phase a int
      * @return a double
@@ -87,7 +106,9 @@ public interface FlowNodeVisualizationInterface {
     public double getPhaseFraction(int phase);
 
     /**
-     * <p>getMolarFlux.</p>
+     * <p>
+     * getMolarFlux.
+     * </p>
      *
      * @param i a int
      * @param phase a int
@@ -96,7 +117,9 @@ public interface FlowNodeVisualizationInterface {
     public double getMolarFlux(int i, int phase);
 
     /**
-     * <p>getInterfaceTemperature.</p>
+     * <p>
+     * getInterfaceTemperature.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -104,14 +127,18 @@ public interface FlowNodeVisualizationInterface {
     public double getInterfaceTemperature(int i);
 
     /**
-     * <p>getInterphaseContactLength.</p>
+     * <p>
+     * getInterphaseContactLength.
+     * </p>
      *
      * @return a double
      */
     public double getInterphaseContactLength();
 
     /**
-     * <p>getWallContactLength.</p>
+     * <p>
+     * getWallContactLength.
+     * </p>
      *
      * @param phase a int
      * @return a double
@@ -119,7 +146,9 @@ public interface FlowNodeVisualizationInterface {
     public double getWallContactLength(int phase);
 
     /**
-     * <p>getReynoldsNumber.</p>
+     * <p>
+     * getReynoldsNumber.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -127,7 +156,9 @@ public interface FlowNodeVisualizationInterface {
     public double getReynoldsNumber(int i);
 
     /**
-     * <p>getEffectiveMassTransferCoefficient.</p>
+     * <p>
+     * getEffectiveMassTransferCoefficient.
+     * </p>
      *
      * @param i a int
      * @param phase a int
@@ -136,7 +167,9 @@ public interface FlowNodeVisualizationInterface {
     public double getEffectiveMassTransferCoefficient(int i, int phase);
 
     /**
-     * <p>getEffectiveSchmidtNumber.</p>
+     * <p>
+     * getEffectiveSchmidtNumber.
+     * </p>
      *
      * @param i a int
      * @param phase a int

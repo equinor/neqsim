@@ -1,5 +1,3 @@
-
-
 /*
  * chemicalReactionList.java
  *
@@ -37,7 +35,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     double[][] tempStocMatrix;
 
     /**
-     * <p>Constructor for ChemicalReactionList.</p>
+     * <p>
+     * Constructor for ChemicalReactionList.
+     * </p>
      */
     public ChemicalReactionList() {}
 

@@ -3,7 +3,6 @@
  *
  * Created on 12. juni 2001, 19:58
  */
-
 package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient;
 
 import neqsim.MathLib.generalMath.GeneralMath;

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package neqsim.thermo.util.GERG;
 
 import org.netlib.util.StringW;
@@ -8,7 +5,9 @@ import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 
 /**
- * <p>GERG2008 class.</p>
+ * <p>
+ * GERG2008 class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -61,7 +60,9 @@ public class GERG2008 {
     static double dPdDsave;
 
     /**
-     * <p>MolarMassGERG.</p>
+     * <p>
+     * MolarMassGERG.
+     * </p>
      *
      * @param x an array of {@link double} objects
      * @param Mm a {@link org.netlib.util.doubleW} object
@@ -89,7 +90,9 @@ public class GERG2008 {
     }
 
     /**
-     * <p>PressureGERG.</p>
+     * <p>
+     * PressureGERG.
+     * </p>
      *
      * @param T a double
      * @param D a double
@@ -134,7 +137,9 @@ public class GERG2008 {
     }
 
     /**
-     * <p>DensityGERG.</p>
+     * <p>
+     * DensityGERG.
+     * </p>
      *
      * @param iFlag a int
      * @param T a double
@@ -300,7 +305,9 @@ public class GERG2008 {
     }
 
     /**
-     * <p>PropertiesGERG.</p>
+     * <p>
+     * PropertiesGERG.
+     * </p>
      *
      * @param T a double
      * @param D a double
@@ -751,7 +758,9 @@ public class GERG2008 {
 
     // The following routine must be called once before any other routine.
     /**
-     * <p>SetupGERG.</p>
+     * <p>
+     * SetupGERG.
+     * </p>
      */
     public static void SetupGERG() {
         // Initialize all the constants and parameters in the GERG-2008 model.
@@ -3141,7 +3150,9 @@ public class GERG2008 {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

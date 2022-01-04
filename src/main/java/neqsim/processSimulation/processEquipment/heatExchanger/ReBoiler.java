@@ -3,7 +3,6 @@
  *
  * Created on 15. mars 2001, 14:17
  */
-
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;

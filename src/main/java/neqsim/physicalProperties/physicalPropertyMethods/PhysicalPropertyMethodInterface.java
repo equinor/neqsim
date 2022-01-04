@@ -3,32 +3,44 @@
  *
  * Created on 21. august 2001, 13:20
  */
-
 package neqsim.physicalProperties.physicalPropertyMethods;
 
 /**
- * <p>PhysicalPropertyMethodInterface interface.</p>
+ * <p>
+ * PhysicalPropertyMethodInterface interface.
+ * </p>
  *
- * @author  esol
+ * @author esol
  * @version $Id: $Id
  */
 public interface PhysicalPropertyMethodInterface extends Cloneable, java.io.Serializable {
     /**
-     * <p>clone.</p>
+     * <p>
+     * clone.
+     * </p>
      *
-     * @return a {@link neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface} object
+     * @return a
+     *         {@link neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface}
+     *         object
      */
     public PhysicalPropertyMethodInterface clone();
 
     /**
-     * <p>setPhase.</p>
+     * <p>
+     * setPhase.
+     * </p>
      *
-     * @param phase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
-    public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase);
+    public void setPhase(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase);
 
     /**
-     * <p>tuneModel.</p>
+     * <p>
+     * tuneModel.
+     * </p>
      *
      * @param val a double
      * @param temperature a double

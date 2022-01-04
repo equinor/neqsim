@@ -3,14 +3,15 @@
  *
  * Created on 6. september 2006, 14:46
  */
-
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>LNGfilling class.</p>
+ * <p>
+ * LNGfilling class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -18,7 +19,9 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  */
 public class LNGfilling {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

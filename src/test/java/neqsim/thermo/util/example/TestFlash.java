@@ -1,4 +1,3 @@
-
 package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,7 +7,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TestFlash class.</p>
+ * <p>
+ * TestFlash class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -18,7 +19,9 @@ public class TestFlash {
     static Logger logger = LogManager.getLogger(TestFlash.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

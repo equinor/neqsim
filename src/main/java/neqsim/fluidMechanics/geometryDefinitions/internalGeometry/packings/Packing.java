@@ -3,7 +3,6 @@
  *
  * Created on 25. august 2001, 23:34
  */
-
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
 /**
