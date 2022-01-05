@@ -64,7 +64,8 @@ public class TestEosInteractionParameterFitting {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 double sample1[] = {Double.parseDouble(dataSet.getString("x1")),
                         Double.parseDouble(dataSet.getString("y1"))}; // temperature
-                                 double standardDeviation1[] = {0.01, 0.01};
+                double standardDeviation1[] = {0.01, 0.01}; // std.dev temperature // presure
+                                                            // std.dev pressure
                 SampleValue sample = new SampleValue(0.0, 0.01, sample1, standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);
