@@ -149,9 +149,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
 
                 // System.out.println("structure " + (hydrateStructure+1));
             }
-        } else
-
-        {
+        } else {
             fugasityCoeffisient = 1e50;
         }
 

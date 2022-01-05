@@ -1,11 +1,8 @@
 package neqsim.processSimulation.processEquipment.expander;
 
-import java.awt.Container;
-import java.awt.FlowLayout;
-import java.text.DecimalFormat;
-import java.text.FieldPosition;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
+import java.awt.*;
+import java.text.*;
+import javax.swing.*;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -22,6 +19,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderInterface {
     private static final long serialVersionUID = 1000;
+
+    SystemInterface thermoSystem;
+    ThermodynamicOperations thermoOps;
+    StreamInterface inletStream;
+    StreamInterface outStream;
+    double dH = 0.0;
+    double pressure = 0.0;
 
     /**
      * <p>
@@ -191,9 +195,11 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
         }
 
-    public ExpanderOld(String name, StreamInterface inletStream) {
-        this.name = name;
-        setInletStream(inletStream);
+        JTable Jtab = new JTable(table, names);
+        JScrollPane scrollpane = new JScrollPane(Jtab);
+        dialogContentPane.add(scrollpane);
+        dialog.pack();
+        dialog.setVisible(true);
     }
 
     /** {@inheritDoc} */
