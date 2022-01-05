@@ -20,11 +20,9 @@ public class PhaseDesmukhMather extends PhaseGE {
     double[][] aij;
     double[][] bij;
 
+    static Logger logger = LogManager.getLogger(PhaseDesmukhMather.class);
+
     /**
-     * 
-     * static Logger logger = LogManager.getLogger(PhaseDesmukhMather.class);
-     * 
-     * /** *
      * <p>
      * Constructor for PhaseDesmukhMather.
      * </p>

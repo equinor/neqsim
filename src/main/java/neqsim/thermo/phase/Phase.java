@@ -1232,7 +1232,6 @@ abstract class Phase implements PhaseInterface {
      * {@inheritDoc}
      *
      * method to return conductivity of a phase
-     * 
      * @deprecated use {@link #getThermalConductivity()} instead.
      */
     @Override
@@ -1267,7 +1266,6 @@ abstract class Phase implements PhaseInterface {
      * {@inheritDoc}
      *
      * method to return conductivity in a given unit
-     * 
      * @deprecated use {@link #getThermalConductivity(String unit)} instead.
      */
     @Override

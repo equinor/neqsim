@@ -4,8 +4,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 
 /**
  * <p>
- * RackettZ class. To find the Rackett constant for Water and MDEA
- * 
+ * RackettZ class. To find the Rackett constant for Water and MDEA.
  * </p>
  *
  * @author Even Solbraa
