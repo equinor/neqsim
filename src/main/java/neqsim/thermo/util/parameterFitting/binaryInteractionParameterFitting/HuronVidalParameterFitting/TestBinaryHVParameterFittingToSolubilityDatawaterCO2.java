@@ -65,8 +65,9 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
 
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; 
-                                                                      double val = testSystem.getPressure();
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
+                double val = testSystem.getPressure();
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
                 sample.setFunction(function);
@@ -106,7 +107,8 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
 
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; 
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);

@@ -80,8 +80,9 @@ public class TestBinaryHVParameterFittingToSolubilityData {
                 logger.error("pressure " + testSystem.getPressure());
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; 
-                                                                      SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
+                SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),
                         Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
                         standardDeviation1);
                 sample.setFunction(function);
