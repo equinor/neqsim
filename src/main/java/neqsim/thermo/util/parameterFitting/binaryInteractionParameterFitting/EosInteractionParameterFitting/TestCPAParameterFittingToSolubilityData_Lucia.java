@@ -152,7 +152,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
 
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
                 double standardDeviation1[] = {0.01}; 
-                                                                      double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
+                double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
                 sample.setFunction(function);

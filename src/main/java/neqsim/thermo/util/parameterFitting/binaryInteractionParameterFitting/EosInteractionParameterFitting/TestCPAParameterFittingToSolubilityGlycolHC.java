@@ -112,7 +112,7 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
                 testSystem.setMixingRule(4);
                 double sample1[] = {testSystem.getTemperature()}; // temperature
                 double standardDeviation1[] = {0.01}; 
-                                                                      double val = Double.parseDouble(dataSet.getString("x-hcinglyc"));
+                double val = Double.parseDouble(dataSet.getString("x-hcinglyc"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
                 sample.setFunction(function);
