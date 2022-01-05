@@ -21,10 +21,6 @@
 			<url>https://repo1.maven.org/maven2/</url>
 		</repository>
 		<repository>
-			<id>boundless</id>
-			<url>https://repo.boundlessgeo.com/main/</url>
-		</repository>
-		<repository>
 			<id>unidata-all</id>
 			<name>Unidata All</name>
 			<url>https://artifacts.unidata.ucar.edu/repository/unidata-all/</url>
@@ -119,11 +115,6 @@
 			<groupId>org.ojalgo</groupId>
 			<artifactId>ojalgo</artifactId>
 			<version>48.4.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.xerial</groupId>
-			<artifactId>sqlite-jdbc</artifactId>
-			<version>3.36.3</version>
 		</dependency>
 		<dependency>
 			<groupId>net.sf.ucanaccess</groupId>
