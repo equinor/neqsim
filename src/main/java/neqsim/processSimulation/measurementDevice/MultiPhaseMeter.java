@@ -22,7 +22,7 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
     String unitT, unitP;
 
     public MultiPhaseMeter() {
-        name = "Mutli Phase Meter";
+        name = "Multi Phase Meter";
     }
 
     /**
@@ -35,7 +35,7 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
      */
     public MultiPhaseMeter(StreamInterface stream) {
         this();
-        name = "Mutli Phase Meter";
+        name = "Multi Phase Meter";
         this.stream = stream;
     }
 
@@ -80,13 +80,13 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
 
     /**
      * <p>
-     * getTemperautre.
+     * getTemperature.
      * </p>
      *
      * @return a double
      */
-    public double getTemperautre() {
-        return pressure;
+    public double getTemperature() {
+        return temperature;
     }
 
     /**
