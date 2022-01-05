@@ -1,5 +1,11 @@
 package neqsim.thermo.util.GERG;
 
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.system.*;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.netlib.util.StringW;
+import org.netlib.util.doubleW;
+import org.netlib.util.intW;
 
 /**
  * <p>
@@ -9,12 +15,6 @@ package neqsim.thermo.util.GERG;
  * @author esol
  * @version $Id: $Id
  */
-
-import neqsim.thermo.phase.PhaseInterface;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
-
 public class NeqSimGERG2008 {
     private static final long serialVersionUID = 1000;
     double[] normalizedGERGComposition = new double[21 + 1];
