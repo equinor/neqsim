@@ -59,8 +59,9 @@ public class TestClassicAcentricPlusDens {
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 // testSystem.createDatabase(true);
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; 
-                                                                     double val = Double.parseDouble(dataSet.getString("VapourPressure"));
+                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
+                                                     // pressure
+                double val = Double.parseDouble(dataSet.getString("VapourPressure"));
                 double stddev = val / 100.0;
                 double logVal = Math.log(val);
                 SampleValue sample = new SampleValue(logVal, stddev, sample1, standardDeviation1);
@@ -101,7 +102,8 @@ public class TestClassicAcentricPlusDens {
                 logger.info("adding2....");
                 double dens = Double.parseDouble(dataSet.getString("liquiddensity"));
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; 
+                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
+                                                     // pressure
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 function.setInitialGuess(guess);
@@ -138,8 +140,10 @@ public class TestClassicAcentricPlusDens {
                 testSystem.setMixingRule(1);
                 double dens = Double.parseDouble(dataSet.getString("gasdensity"));
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; 
-                SampleValue sample =                  new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
+                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
+                                                     // pressure
+                SampleValue sample =
+                        new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 function.setInitialGuess(guess);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);

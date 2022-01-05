@@ -48,8 +48,9 @@ public class TestCPAStatoil {
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 testSystem.createDatabase(true);
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; 
-                                                                     double val = Double.parseDouble(dataSet.getString("VapourPressure"));
+                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
+                                                     // pressure
+                double val = Double.parseDouble(dataSet.getString("VapourPressure"));
                 testSystem.setPressure(val);
                 double stddev = val / 10.0;
                 double logVal = Math.log(val);
