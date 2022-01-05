@@ -17,8 +17,7 @@ public class destillation2 {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 30.0), 50.00);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 30.0), 50.00);
         testSystem.addComponent("methane", 1.00);
         testSystem.addComponent("water", 100e-6);
         testSystem.addComponent("TEG", 0.0);
@@ -31,11 +30,10 @@ public class destillation2 {
         feedGas.setFlowRate(5.0, "MSm3/day");
         feedGas.setTemperature(30.0, "C");
         feedGas.setPressure(50.0, "bara");
-
-        neqsim.thermo.system.SystemInterface TEGliq2 =
-                (neqsim.thermo.system.SystemInterface) testSystem.clone();
-        TEGliq2.setMolarComposition(new double[] {0.0, 0.001, 1.0});
-
+        
+        neqsim.thermo.system.SystemInterface TEGliq2 = (neqsim.thermo.system.SystemInterface) testSystem.clone();
+        TEGliq2.setMolarComposition(new double[] { 0.0, 0.001, 1.0});
+        
         Stream TEGliq = new Stream("TEG liq", TEGliq2);
         TEGliq.setFlowRate(5000.0, "kg/hr");
         TEGliq.setTemperature(30.0, "C");

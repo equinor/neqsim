@@ -49,10 +49,8 @@ public class TestBinaryHVParameterFittingToDewPointData {
                 BinaryHVParameterFittingToDewPointData function =
                         new BinaryHVParameterFittingToDewPointData();
 
-                // SystemInterface testSystem = new SystemFurstElectrolyteEos(280,
-                // 1.0);
-                // SystemInterface testSystem = new
-                // SystemSrkSchwartzentruberEos(290, 1.0);
+                // SystemInterface testSystem = new SystemFurstElectrolyteEos(280, 1.0);
+                // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(290, 1.0);
                 SystemInterface testSystem = new SystemPrEos(290, 1.0);
                 testSystem.addComponent(dataSet.getString("comp1"),
                         Double.parseDouble(dataSet.getString("x1")));
@@ -80,8 +78,7 @@ public class TestBinaryHVParameterFittingToDewPointData {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("pressure")));
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature //
-                                                      // presure std.dev
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
                                                       // pressure
                 SampleValue sample = new SampleValue(testSystem.getTemperature(),
                         testSystem.getTemperature() / 100.0, sample1, standardDeviation1);
@@ -90,18 +87,13 @@ public class TestBinaryHVParameterFittingToDewPointData {
                 sample.setReference(Double.toString(testSystem.getTemperature()));
                 double parameterGuess[] = {0.01};
                 // double parameterGuess[] = {4799.35, -2772.29, 0.6381, -1.68096};
-                // double parameterGuess[] = {3932.0, -4127.0, -5.89, 8.9}; // HV
-                // CO2
-                // double parameterGuess[] = {5023.6600682957, -136.4306560594,
-                // -3.9812435921,
+                // double parameterGuess[] = {3932.0, -4127.0, -5.89, 8.9}; // HV CO2
+                // double parameterGuess[] = {5023.6600682957, -136.4306560594, -3.9812435921,
                 // 1.4579901393}; // HV methane
-                // double parameterGuess[] = {3204.3057406886, -2753.7379912645,
-                // -12.4728330162
+                // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162
                 // , 13.0150379323}; // HV
-                // double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0,
-                // -1.824E0}; // HV
-                // double parameterGuess[] = {-7.132E2, -3.933E2};//, 3.96E0,
-                // 9.602E-1}; //,
+                // double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0, -1.824E0}; // HV
+                // double parameterGuess[] = {-7.132E2, -3.933E2};//, 3.96E0, 9.602E-1}; //,
                 // 1.239}; //WS
                 sample.setReference(Double.toString(testSystem.getPressure()));
                 function.setInitialGuess(parameterGuess);
