@@ -74,9 +74,10 @@ public class TestFurstIonicParameterFunction {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.init(0);
                 double sample1[] = {x2 / 0.01802}; // temperature
-                double standardDeviation1[] = {0.01}; //
-                                                      
-                                                                      double osmcoef = Double.parseDouble(dataSet.getString("OsmoticCoefficient"));
+                double standardDeviation1[] = {0.01}; // std.dev temperature //
+                                                      // presure std.dev
+                                                      // pressure
+                double osmcoef = Double.parseDouble(dataSet.getString("OsmoticCoefficient"));
 
                 testSystem.init(1);
 
@@ -120,9 +121,10 @@ public class TestFurstIonicParameterFunction {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.init(0);
                 double sample1[] = {x2 / 0.01802}; // temperature
-                double standardDeviation1[] = {0.01}; //
-                                                      
-                                                                      // SampleValue sample = new
+                double standardDeviation1[] = {0.01}; // std.dev temperature //
+                                                      // presure std.dev
+                                                      // pressure
+                // SampleValue sample = new
                 // SampleValue(Double.parseDouble(dataSet.getString("OsmoticCoefficient")),
                 // Double.parseDouble(dataSet.getString("stddev1")), sample1,
                 // standardDeviation1);
@@ -156,10 +158,12 @@ public class TestFurstIonicParameterFunction {
                 testSystem.setMixingRule(7);
                 testSystem.init(0);
                 double sample1[] = {x2 / 0.01802}; // temperature
-                double standardDeviation1[] = {0.01}; //
-                                                      
-                                                                      // SampleValue sample = new
-                // SampleValue(Double.parseDouble(data                // Double.parseDouble(dataSet.getString("stddev1")), sample1,
+                double standardDeviation1[] = {0.01}; // std.dev temperature //
+                                                      // presure std.dev
+                                                      // pressure
+                // SampleValue sample = new
+                // SampleValue(Double.parseDouble(dataSet.getString("OsmoticCoefficient")),
+                // Double.parseDouble(dataSet.getString("stddev1")), sample1,
                 // standardDeviation1);
                 double density = Double.parseDouble(dataSet.getString("density")) * 1000.0;
                 SampleValue sample =
