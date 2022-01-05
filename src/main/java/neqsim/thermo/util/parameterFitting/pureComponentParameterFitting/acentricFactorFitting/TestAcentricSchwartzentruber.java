@@ -79,8 +79,7 @@ public class TestAcentricSchwartzentruber {
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 // testSystem.createDatabase(true);
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev temperature // presure
-                                                               // std.dev pressure
+                double standardDeviation1[] = {0.1, 0.1, 0.1};
                 double val = Math.log(Double.parseDouble(dataSet.getString("VapourPressure")));
                 SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);

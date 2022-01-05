@@ -16,8 +16,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-
-
 public class SystemElectrolyteCPATest {
     static SystemElectrolyteCPA thermoSystem;
 

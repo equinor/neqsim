@@ -30,13 +30,13 @@ public class TestLevenbergMarquardt {
         sampleList.add(sample_01);
 
         double sample2[] = {0.2}; // temperature
-        double standardDeviation2[] = {0.2}; // std.dev temperature // presure std.dev pressure
+        double standardDeviation2[] = {0.2};
         SampleValue sample_02 = new SampleValue(0.3, 0.03, sample2, standardDeviation2);
         sample_02.setFunction(function);
         sampleList.add(sample_02);
 
         double sample3[] = {0.3}; // temperature
-        double standardDeviation3[] = {0.3}; // std.dev temperature // presure std.dev pressure
+        double standardDeviation3[] = {0.3};
         SampleValue sample_03 = new SampleValue(0.1, 0.01, sample3, standardDeviation3);
         sample_03.setFunction(function);
         sampleList.add(sample_03);

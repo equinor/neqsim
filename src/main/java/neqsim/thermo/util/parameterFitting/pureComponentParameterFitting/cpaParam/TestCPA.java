@@ -47,8 +47,7 @@ public class TestCPA {
                 // testSystem.createDatabase(true);
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 testSystem.setTemperature(sample1[0]);
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double standardDeviation1[] = {0.1};
                 double val = Double.parseDouble(dataSet.getString("VapourPressure"));
                 testSystem.setPressure(val);
                 double stddev = val / 100.0;
@@ -92,8 +91,7 @@ public class TestCPA {
                 testSystem.setTemperature(sample1[0]);
                 testSystem.init(0);
                 testSystem.setMixingRule(1);
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double standardDeviation1[] = {0.1};
                 double val = Double.parseDouble(dataSet.getString("Density"));
                 SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
                 // double guess[] =
