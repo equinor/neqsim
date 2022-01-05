@@ -1,8 +1,3 @@
-/*
- * AtractiveTermSrk.java
- *
- * Created on 13. mai 2001, 21:59
- */
 package neqsim.thermo.component.atractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
@@ -18,9 +13,6 @@ public class AtractiveTermMatCopPRUMRNew extends AtractiveTermMatCopPRUMR {
     double orgpar = 0.0;
     boolean useStandardAlphaForSupercritical = false;
 
-    /**
-     * Creates new AtractiveTermSrk
-     */
     public AtractiveTermMatCopPRUMRNew(ComponentEosInterface component) {
         super(component);
         m = (0.384401 + 1.52276 * component.getAcentricFactor()
@@ -41,9 +33,6 @@ public class AtractiveTermMatCopPRUMRNew extends AtractiveTermMatCopPRUMR {
 
     }
 
-    /**
-     * Creates new AtractiveTermSrk
-     */
     public AtractiveTermMatCopPRUMRNew(ComponentEosInterface component, double[] params) {
         this(component);
         System.arraycopy(params, 0, this.parameters, 0, params.length);
