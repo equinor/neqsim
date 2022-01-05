@@ -3,7 +3,6 @@
  *
  * Created on 13. august 2001, 10:34
  */
-
 package neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties;
 
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.conductivity.Conductivity;

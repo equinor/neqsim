@@ -1,4 +1,3 @@
-
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
 import neqsim.thermo.component.ComponentInterface;

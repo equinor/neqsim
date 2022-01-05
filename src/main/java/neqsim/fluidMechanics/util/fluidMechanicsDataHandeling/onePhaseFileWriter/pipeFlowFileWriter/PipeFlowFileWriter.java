@@ -3,7 +3,6 @@
  *
  * Created on 27. oktober 2000, 22:29
  */
-
 package neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.onePhaseFileWriter.pipeFlowFileWriter;
 
 import neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.onePhaseFileWriter.OnePhaseFileWriter;

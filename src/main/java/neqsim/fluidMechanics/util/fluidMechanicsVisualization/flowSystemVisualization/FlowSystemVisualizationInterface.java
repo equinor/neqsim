@@ -3,39 +3,48 @@
  *
  * Created on 26. oktober 2000, 20:06
  */
-
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 
 /**
- * <p>FlowSystemVisualizationInterface interface.</p>
+ * <p>
+ * FlowSystemVisualizationInterface interface.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public interface FlowSystemVisualizationInterface {
     /**
-     * <p>setPoints.</p>
+     * <p>
+     * setPoints.
+     * </p>
      */
     public void setPoints();
 
     /**
-     * <p>displayResult.</p>
+     * <p>
+     * displayResult.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
     public void displayResult(String name);
 
     /**
-     * <p>setNextData.</p>
+     * <p>
+     * setNextData.
+     * </p>
      *
      * @param system a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
      */
     public void setNextData(FlowSystemInterface system);
 
     /**
-     * <p>setNextData.</p>
+     * <p>
+     * setNextData.
+     * </p>
      *
      * @param system a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
      * @param abstime a double
@@ -43,7 +52,9 @@ public interface FlowSystemVisualizationInterface {
     public void setNextData(FlowSystemInterface system, double abstime);
 
     /**
-     * <p>createNetCdfFile.</p>
+     * <p>
+     * createNetCdfFile.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */

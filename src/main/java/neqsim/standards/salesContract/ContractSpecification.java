@@ -3,7 +3,6 @@
  *
  * Created on 15. juni 2004, 22:59
  */
-
 package neqsim.standards.salesContract;
 
 import neqsim.standards.StandardInterface;

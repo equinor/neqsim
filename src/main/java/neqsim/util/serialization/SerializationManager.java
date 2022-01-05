@@ -3,7 +3,6 @@
  *
  * Created on 27. desember 2002, 00:10
  */
-
 package neqsim.util.serialization;
 
 import java.io.FileInputStream;

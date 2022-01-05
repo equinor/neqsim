@@ -3,7 +3,6 @@
  *
  * Created on 1. februar 2001, 13:05
  */
-
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile.wettedWallColumnReader;
 
 import java.io.RandomAccessFile;

@@ -3,7 +3,6 @@
  *
  * Created on 1. mai 2001, 12:47
  */
-
 package neqsim.util.exception;
 
 /**

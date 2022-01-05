@@ -1,14 +1,9 @@
-/*
- * PhaseGENRTL.java
- *
- * Created on 17. juli 2000, 20:51
- */
-
 package neqsim.thermo.phase;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentDesmukhMather;
 import neqsim.thermo.component.ComponentGEInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>

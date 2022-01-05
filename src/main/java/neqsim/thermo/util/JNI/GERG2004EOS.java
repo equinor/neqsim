@@ -6,7 +6,9 @@
 package neqsim.thermo.util.JNI;
 
 /**
- * <p>GERG2004EOS class.</p>
+ * <p>
+ * GERG2004EOS class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -15,7 +17,9 @@ public class GERG2004EOS {
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>POTDX.</p>
+     * <p>
+     * POTDX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -45,7 +49,9 @@ public class GERG2004EOS {
             double c20);
 
     /**
-     * <p>ZOTPX.</p>
+     * <p>
+     * ZOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -76,7 +82,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>HOTPX.</p>
+     * <p>
+     * HOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -107,7 +115,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>SOTPX.</p>
+     * <p>
+     * SOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -138,7 +148,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>CPOTPX.</p>
+     * <p>
+     * CPOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -169,7 +181,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>WOTPX.</p>
+     * <p>
+     * WOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -200,7 +214,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>RJTOTPX.</p>
+     * <p>
+     * RJTOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -231,7 +247,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>GOTPX.</p>
+     * <p>
+     * GOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -262,7 +280,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>UOTPX.</p>
+     * <p>
+     * UOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -293,7 +313,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>AOTPX.</p>
+     * <p>
+     * AOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -324,7 +346,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>SFUGOTPX.</p>
+     * <p>
+     * SFUGOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -355,7 +379,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>SPHIOTPX.</p>
+     * <p>
+     * SPHIOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -386,7 +412,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>CVOTPX.</p>
+     * <p>
+     * CVOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -417,7 +445,9 @@ public class GERG2004EOS {
             double c20, int IPHASE);
 
     /**
-     * <p>SALLOTPX.</p>
+     * <p>
+     * SALLOTPX.
+     * </p>
      *
      * @param c1 a double
      * @param c2 a double
@@ -454,14 +484,18 @@ public class GERG2004EOS {
             "oxygen", "CO", "water", "helium", "argon"};
 
     /**
-     * <p>Constructor for GERG2004EOS.</p>
+     * <p>
+     * Constructor for GERG2004EOS.
+     * </p>
      */
     public GERG2004EOS() {
         System.loadLibrary("test2");
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -484,7 +518,9 @@ public class GERG2004EOS {
     }
 
     /**
-     * <p>Getter for the field <code>nameList</code>.</p>
+     * <p>
+     * Getter for the field <code>nameList</code>.
+     * </p>
      *
      * @return an array of {@link java.lang.String} objects
      */

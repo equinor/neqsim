@@ -3,7 +3,6 @@
  *
  * Created on 30. januar 2001, 13:06
  */
-
 package neqsim.statistics.monteCarloSimulation;
 
 import Jama.Matrix;

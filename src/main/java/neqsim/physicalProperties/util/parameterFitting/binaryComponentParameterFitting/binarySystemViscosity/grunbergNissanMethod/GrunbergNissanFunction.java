@@ -3,7 +3,6 @@
  *
  * Created on 24. januar 2001, 21:15
  */
-
 package neqsim.physicalProperties.util.parameterFitting.binaryComponentParameterFitting.binarySystemViscosity.grunbergNissanMethod;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;

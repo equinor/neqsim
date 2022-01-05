@@ -1,9 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
-
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;

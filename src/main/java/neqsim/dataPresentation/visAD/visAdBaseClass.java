@@ -3,7 +3,6 @@
  *
  * Created on 24. mai 2001, 19:46
  */
-
 package neqsim.dataPresentation.visAD;
 
 import java.rmi.RemoteException;

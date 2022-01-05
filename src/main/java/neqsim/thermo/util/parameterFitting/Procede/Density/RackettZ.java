@@ -1,11 +1,11 @@
-// To find the Rackett constant for Water and MDEA
 package neqsim.thermo.util.parameterFitting.Procede.Density;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
  * <p>
- * RackettZ class.
+ * RackettZ class. To find the Rackett constant for Water and MDEA
+ * 
  * </p>
  *
  * @author Even Solbraa

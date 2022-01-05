@@ -3,7 +3,6 @@
  *
  * Created on 11. april 2001, 20:21
  */
-
 package neqsim.chemicalReactions.chemicalEquilibriaum;
 
 import java.util.Comparator;

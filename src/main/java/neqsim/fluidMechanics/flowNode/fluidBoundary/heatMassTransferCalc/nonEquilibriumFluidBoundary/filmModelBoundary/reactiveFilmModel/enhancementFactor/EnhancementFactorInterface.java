@@ -3,25 +3,30 @@
  *
  * Created on 3. august 2001, 11:58
  */
-
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.enhancementFactor;
 
 /**
- * <p>EnhancementFactorInterface interface.</p>
+ * <p>
+ * EnhancementFactorInterface interface.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public interface EnhancementFactorInterface {
     /**
-     * <p>calcEnhancementVec.</p>
+     * <p>
+     * calcEnhancementVec.
+     * </p>
      *
      * @param phase a int
      */
     public void calcEnhancementVec(int phase);
 
     /**
-     * <p>getEnhancementVec.</p>
+     * <p>
+     * getEnhancementVec.
+     * </p>
      *
      * @param index a int
      * @return a double
@@ -29,7 +34,9 @@ public interface EnhancementFactorInterface {
     public double getEnhancementVec(int index);
 
     /**
-     * <p>getHattaNumber.</p>
+     * <p>
+     * getHattaNumber.
+     * </p>
      *
      * @param i a int
      * @return a double

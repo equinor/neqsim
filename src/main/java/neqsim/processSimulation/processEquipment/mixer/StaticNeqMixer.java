@@ -3,7 +3,6 @@
  *
  * Created on 11. mars 2001, 01:49
  */
-
 package neqsim.processSimulation.processEquipment.mixer;
 
 import neqsim.thermo.system.SystemInterface;

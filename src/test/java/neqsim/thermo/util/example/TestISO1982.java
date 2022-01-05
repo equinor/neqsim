@@ -3,7 +3,6 @@
  *
  * Created on 13. juni 2004, 23:49
  */
-
 package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,7 +12,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TestISO1982 class.</p>
+ * <p>
+ * TestISO1982 class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -23,7 +24,9 @@ public class TestISO1982 {
     static Logger logger = LogManager.getLogger(TestISO1982.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

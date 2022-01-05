@@ -1,9 +1,3 @@
-/*
- * PhaseEosInterface.java
- *
- * Created on 5. juni 2000, 19:20
- */
-
 package neqsim.thermo.phase;
 
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;

@@ -3,7 +3,6 @@
  *
  * Created on 26. oktober 2000, 20:09
  */
-
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.twoPhasePipeFlowVisualization;
 
 import neqsim.dataPresentation.visAD.visAdInterface;
