@@ -52,8 +52,7 @@ public class TestFitToAntoineVapPres {
                                 testSystemAntoine);
 
                 double sample1[] = {i * 5 + 273.15}; // temperature
-                double standardDeviation1[] = {0.1, 0.1, 0.1}; // presure
-                                                               // std.dev pressure
+                double standardDeviation1[] = {0.1, 0.1, 0.1};
                 double val = Math.log(testSystemAntoine.getPhase(0).getComponent(0)
                         .getAntoineVaporPressure(273.15 + i * 5));
                 // opsAntione.bubblePointPressureFlash(false);

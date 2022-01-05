@@ -54,8 +54,7 @@ public class TestDiffusivity {
                 testSystem.setPhysicalPropertyModel(4);
                 testSystem.initPhysicalProperties();
                 double sample1[] = {testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double standardDeviation1[] = {0.1}; 
                 SampleValue sample = new SampleValue(
                         Double.parseDouble(dataSet.getString("DiffusionCoefficient")), 0.01,
                         sample1, standardDeviation1);

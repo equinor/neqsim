@@ -105,8 +105,7 @@ public class TestTwuCoon {
                 double pressure = System2.getPressure();
 
                 double sample1[] = {temperature}; // temperature
-                double standardDeviation1[] = {0.1, 0.1, 0.1}; // presure
-                                                               // std.dev pressure
+                double standardDeviation1[] = {0.1, 0.1, 0.1};
                 double val = Math.log(pressure);
                 SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
