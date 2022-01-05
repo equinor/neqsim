@@ -4,14 +4,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author esol @version
- */
 /**
- * <p>TestUniSimsFlash class.</p>
+ * <p>
+ * TestUniSimsFlash class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

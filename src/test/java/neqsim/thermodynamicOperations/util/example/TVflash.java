@@ -6,20 +6,16 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
+/**
+ * <p>
+ * TVflash class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>TVflash class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class TVflash {
+public class TVflash{
     static Logger logger = LogManager.getLogger(TVflash.class);
 
     /**

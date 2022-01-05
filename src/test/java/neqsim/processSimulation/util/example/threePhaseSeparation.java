@@ -19,7 +19,8 @@ public class threePhaseSeparation {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface system1 = new neqsim.thermo.system.SystemSrkCPAs((273.15 + 15.0), 80.00);
+        neqsim.thermo.system.SystemInterface system1 =
+                new neqsim.thermo.system.SystemSrkCPAs((273.15 + 15.0), 80.00);
         system1.addComponent("CO2", 0.309);
         system1.addComponent("nitrogen", 1.854);
         system1.addComponent("methane", 94.90446);

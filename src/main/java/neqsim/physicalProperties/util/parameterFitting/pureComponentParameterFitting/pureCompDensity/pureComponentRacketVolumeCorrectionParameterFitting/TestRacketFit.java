@@ -48,10 +48,7 @@ public class TestRacketFit {
                 function.setInitialGuess(guess);
 
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til
-                                                                                    // komponenter
-                                                                                    // til
-                                                                                    // systemet
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.init(0);
                 testSystem.setMixingRule(2);

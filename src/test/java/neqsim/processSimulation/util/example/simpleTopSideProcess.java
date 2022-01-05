@@ -22,7 +22,8 @@ public class simpleTopSideProcess {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 50.0), 50.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 50.0), 50.00);
         testSystem.addComponent("methane", 900.00);
         testSystem.addComponent("ethane", 200.00);
         testSystem.addComponent("n-hexane", 200.0);

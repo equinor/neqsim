@@ -2,7 +2,6 @@ package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.stirredCellSystem;
 
 import neqsim.thermo.system.SystemInterface;
 
-// import guiAuto.*;
 /**
  * <p>
  * StirredCellSystem class.

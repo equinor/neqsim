@@ -6,11 +6,6 @@ import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
-/*
- * Component_Interface.java
- *
- * Created on 8. april 2000, 21:35
- */
 /**
  * <p>
  * SystemInterface interface.

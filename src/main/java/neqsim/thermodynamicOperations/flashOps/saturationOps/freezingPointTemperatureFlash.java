@@ -1,8 +1,3 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import java.io.FileWriter;

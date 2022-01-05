@@ -6,16 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPsrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
+/**
+ * <p>
+ * TestPSRK class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>TestPSRK class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

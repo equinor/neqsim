@@ -6,16 +6,10 @@ import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author esol
- * 
- * @version
- */
 /**
  * <p>TestGEHenry class.</p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

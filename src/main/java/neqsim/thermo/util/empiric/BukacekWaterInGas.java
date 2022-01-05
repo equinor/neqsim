@@ -62,9 +62,9 @@ public class BukacekWaterInGas {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-		System.out.println("water in gas " + BukacekWaterInGas.getWaterInGas(273.15-18.0, 70.0));
-		
-        System.out.println(
-                "water dew point temperature " + (BukacekWaterInGas.waterDewPointTemperature(20.0e-6, 70.0) - 273.15));
+        System.out.println("water in gas " + BukacekWaterInGas.getWaterInGas(273.15 - 18.0, 70.0));
+
+        System.out.println("water dew point temperature "
+                + (BukacekWaterInGas.waterDewPointTemperature(20.0e-6, 70.0) - 273.15));
     }
 }

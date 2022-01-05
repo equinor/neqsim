@@ -45,7 +45,7 @@ public class TestChungFit {
                 function.setInitialGuess(guess);
 
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-                testSystem.addComponent("MDEA", 100.0); // legger til komponenter til systemet
+                testSystem.addComponent("MDEA", 100.0);
                 // testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.createDatabase(true);
                 testSystem.init(0);

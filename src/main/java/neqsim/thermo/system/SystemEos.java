@@ -1,8 +1,3 @@
-/*
- * System_EOS.java
- *
- * Created on 8. april 2000, 22:55
- */
 package neqsim.thermo.system;
 
 /**

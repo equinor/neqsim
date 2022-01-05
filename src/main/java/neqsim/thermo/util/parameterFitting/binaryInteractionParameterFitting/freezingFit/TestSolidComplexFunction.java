@@ -50,9 +50,7 @@ public class TestSolidComplexFunction {
 
                 SystemInterface testSystem = new SystemSrkCPAstatoil(val,
                         Double.parseDouble(dataSet.getString("pressure")));
-                testSystem.addComponent(dataSet.getString("Component1"), x1); // legger til
-                                                                              // komponenter til
-                                                                              // systemet
+                testSystem.addComponent(dataSet.getString("Component1"), x1);
                 testSystem.addComponent(dataSet.getString("Component2"), x2);
                 // testSystem.createDatabase(true);
                 testSystem.setMixingRule(10);

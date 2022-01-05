@@ -47,9 +47,7 @@ public class TestBinaryCPAfitToActivityCoefficientDB implements Cloneable {
                 SystemInterface testSystem = new SystemSrkCPAstatoil(
                         Double.parseDouble(dataSet.getString("Temperature")),
                         Double.parseDouble(dataSet.getString("Pressure")));
-                testSystem.addComponent(dataSet.getString("Component1"), x1); // legger til
-                                                                              // komponenter til
-                                                                              // systemet
+                testSystem.addComponent(dataSet.getString("Component1"), x1);
                 testSystem.addComponent(dataSet.getString("Component2"), x2);
                 // testSystem.chemicalReactionInit();
                 testSystem.createDatabase(true);

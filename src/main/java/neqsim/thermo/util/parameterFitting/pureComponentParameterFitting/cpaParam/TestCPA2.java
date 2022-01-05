@@ -153,10 +153,7 @@ public class TestCPA2 {
                 SystemInterface testSystem = new SystemSrkCPA(280, 5.001);
                 double temp = Double.parseDouble(dataSet.getString("Temperature"));
                 // SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til
-                                                                                    // komponenter
-                                                                                    // til
-                                                                                    // systemet
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 testSystem
                         .setPressure(Double.parseDouble(dataSet.getString("VapourPressure")) + 0.5);
                 testSystem.setTemperature(temp);

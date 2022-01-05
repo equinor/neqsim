@@ -7,16 +7,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
+/**
+ * <p>
+ * TestPCSAFT class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>TestPCSAFT class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
