@@ -3,25 +3,36 @@
  *
  * Created on 24. mai 2001, 19:47
  */
-
 package neqsim.dataPresentation.visAD.visAd2D;
 
 import java.rmi.RemoteException;
-import javax.swing.*;
+import javax.swing.JFrame;
 import neqsim.dataPresentation.visAD.visAdBaseClass;
-import visad.*;
+import visad.ConstantMap;
+import visad.DataReferenceImpl;
+import visad.Display;
+import visad.FlatField;
+import visad.FunctionType;
+import visad.GraphicsModeControl;
+import visad.Gridded1DSet;
+import visad.Integer1DSet;
+import visad.RealTupleType;
+import visad.RealType;
+import visad.ScalarMap;
+import visad.VisADException;
 import visad.java2d.DisplayImplJ2D;
+import visad.*;
 
 /**
+ * <p>
+ * visAd2dBaseClass class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class visAd2dBaseClass extends visAdBaseClass {
-
     private static final long serialVersionUID = 1000;
-
-    /** Creates new visAd2dBaseClass */
 
     private RealType x, y, index;
 
@@ -45,23 +56,40 @@ public class visAd2dBaseClass extends visAdBaseClass {
     float[][] x_line_samples, y_line_samples;
     float[][] xy_disc_samples;
 
-    /** Creates new visAdContourPlot */
+    /**
+     * <p>
+     * Constructor for visAd2dBaseClass.
+     * </p>
+     *
+     * @param firstax a {@link java.lang.String} object
+     * @param yax a {@link java.lang.String} object
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public visAd2dBaseClass(String firstax, String yax) throws RemoteException, VisADException {
-
-        x = new RealType("test1");
-        y = new RealType("test");
+        x = RealType.getRealType("test1");
+        y = RealType.getRealType("test");
 
         x_y_tuple = new RealTupleType(x, y);
-        index = new RealType("index");
+        index = RealType.getRealType("index");
 
         func_i_tuple = new FunctionType(index, x_y_tuple);
-
     }
 
     // public void setXYals(double[][] vals)throws RemoteException, VisADException{
     // xy_samples = vals;
     // }
 
+    /**
+     * <p>
+     * setXYVals.
+     * </p>
+     *
+     * @param xvals an array of {@link double} objects
+     * @param yvals an array of {@link double} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setXYVals(double[] xvals, double[] yvals) throws RemoteException, VisADException {
         xy_samples = new float[2][xvals.length];
         minX = (float) xvals[0];
@@ -80,7 +108,18 @@ public class visAd2dBaseClass extends visAdBaseClass {
         }
     }
 
-    public void setLineXYVals(double[] xvals, double[] yvals) throws RemoteException, VisADException {
+    /**
+     * <p>
+     * setLineXYVals.
+     * </p>
+     *
+     * @param xvals an array of {@link double} objects
+     * @param yvals an array of {@link double} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
+    public void setLineXYVals(double[] xvals, double[] yvals)
+            throws RemoteException, VisADException {
         y_line_samples = new float[1][yvals.length];
         x_line_samples = new float[1][xvals.length];
 
@@ -96,16 +135,16 @@ public class visAd2dBaseClass extends visAdBaseClass {
     }
 
     /*
-     * public void setContinousXVals(double[] vals)throws RemoteException,
-     * VisADException{ System.arraycopy(vals,0,xy_samples[0],0,vals.length); }
+     * public void setContinousXVals(double[] vals)throws RemoteException, VisADException{
+     * System.arraycopy(vals,0,xy_samples[0],0,vals.length); }
      * 
-     * public void setContinousYVals(double[] vals)throws RemoteException,
-     * VisADException{ System.arraycopy(vals,0,xy_samples[1],0,vals.length); }
+     * public void setContinousYVals(double[] vals)throws RemoteException, VisADException{
+     * System.arraycopy(vals,0,xy_samples[1],0,vals.length); }
      */
 
+    /** {@inheritDoc} */
     @Override
-	public void init() throws RemoteException, VisADException {
-
+    public void init() throws RemoteException, VisADException {
         index_set = new Integer1DSet(index, xy_samples[0].length);
 
         points_ff = new FlatField(func_i_tuple, index_set);
@@ -143,11 +182,13 @@ public class visAd2dBaseClass extends visAdBaseClass {
         points_ref.setData(points_ff);
         line_ref.setData(line_ff);
 
-        ConstantMap[] pointsMap = { new ConstantMap(1.0f, Display.Red), new ConstantMap(0.0f, Display.Green),
-                new ConstantMap(0.0f, Display.Blue), new ConstantMap(4.5f, Display.PointSize) };
+        ConstantMap[] pointsMap = {new ConstantMap(1.0f, Display.Red),
+                new ConstantMap(0.0f, Display.Green), new ConstantMap(0.0f, Display.Blue),
+                new ConstantMap(4.5f, Display.PointSize)};
 
-        ConstantMap[] lineMap = { new ConstantMap(0.0f, Display.Red), new ConstantMap(0.0f, Display.Green),
-                new ConstantMap(1.0f, Display.Blue), new ConstantMap(1.5f, Display.LineWidth) };
+        ConstantMap[] lineMap = {new ConstantMap(0.0f, Display.Red),
+                new ConstantMap(0.0f, Display.Green), new ConstantMap(1.0f, Display.Blue),
+                new ConstantMap(1.5f, Display.LineWidth)};
 
         // display.addReference(points_ref, pointsMap);
         display.addReference(line_ref, lineMap);
@@ -156,17 +197,23 @@ public class visAd2dBaseClass extends visAdBaseClass {
         jframe.getContentPane().add(display.getComponent());
 
         // Set window size and make it visible
-
         jframe.setSize(700, 700);
         jframe.setVisible(true);
-
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public static void main(String[] args) throws RemoteException, VisADException {
-
         visAd2dBaseClass plot = new visAd2dBaseClass("long", "alt");
 
-        double[][] z = { { 0, 0.5, 1, 3, }, { 2, 6, 4, 1, }, { 1, 3, 2, 1, }, { 3, 2, 1, 3, } };
+        double[][] z = {{0, 0.5, 1, 3,}, {2, 6, 4, 1,}, {1, 3, 2, 1,}, {3, 2, 1, 3,}};
 
         plot.setXYVals(z[0], z[1]);
         plot.setLineXYVals(z[0], z[3]);

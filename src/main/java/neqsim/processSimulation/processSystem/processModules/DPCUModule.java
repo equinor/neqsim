@@ -1,24 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.processSystem.processModules;
 
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -39,21 +18,25 @@ import neqsim.processSimulation.processEquipment.valve.ValveInterface;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>
+ * DPCUModule class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class DPCUModule extends ProcessModuleBaseClass {
-
     private static final long serialVersionUID = 1000;
 
-    StreamInterface ethaneOvhComp, gasDistColumnExit, liquidDistColumnExit, feedStream, gasExitStream, oilExitStream,
-            glycolFeedStream, glycolExitStream;
+    StreamInterface ethaneOvhComp, gasDistColumnExit, liquidDistColumnExit, feedStream,
+            gasExitStream, oilExitStream, glycolFeedStream, glycolExitStream;
     Separator glycolScrubber;
     Separator inletSeparator;
     double inletSepTemperature = 50.00, pressureAfterRedValve = 55.0; // bar'
-    double gasScrubberTemperature = 30.00, firstStageOutPressure = 110.0, glycolScrubberTemperature = 20.0,
-            secondStageOutPressure = 200.0; // bar
-    double glycolInjectionRate = 10.0, exportGasTemperature = 273.15 + 30.0, liquidPumpPressure = 150.0; // m^3/hr
+    double gasScrubberTemperature = 30.00, firstStageOutPressure = 110.0,
+            glycolScrubberTemperature = 20.0, secondStageOutPressure = 200.0; // bar
+    double glycolInjectionRate = 10.0, exportGasTemperature = 273.15 + 30.0,
+            liquidPumpPressure = 150.0; // m^3/hr
     Separator LTseparator;
     HeatExchanger heatExchanger1;
     ThrottlingValve valve1;
@@ -62,8 +45,9 @@ public class DPCUModule extends ProcessModuleBaseClass {
     Mixer mixer;
     DistillationColumn distColumn;
 
+    /** {@inheritDoc} */
     @Override
-	public void addInputStream(String streamName, StreamInterface stream) {
+    public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
             this.feedStream = stream;
         }
@@ -72,8 +56,9 @@ public class DPCUModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public StreamInterface getOutputStream(String streamName) {
+    public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -90,8 +75,9 @@ public class DPCUModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void initializeModule() {
+    public void initializeModule() {
         isInitializedModule = true;
         double inletPressure = feedStream.getPressure();
 
@@ -116,7 +102,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         LTseparator = new Separator("LTseparator", expander.getOutStream());
 
         Splitter splitter = new Splitter("LTsplitter", LTseparator.getGasOutStream(), 2);
-        splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+        splitter.setSplitFactors(new double[] {0.9, 0.1});
 
         heatExchanger1.addInStream(splitter.getSplitStream(0));
 
@@ -157,11 +143,9 @@ public class DPCUModule extends ProcessModuleBaseClass {
          * Cooler inletCooler = new Cooler("inlet well stream cooler", feedStream);
          * inletCooler.setOutTemperature(inletSepTemperature + 273.15);
          * 
-         * inletSeparator = new Separator("Inlet separator",
-         * inletCooler.getOutStream());
+         * inletSeparator = new Separator("Inlet separator", inletCooler.getOutStream());
          * 
-         * Cooler gasCooler = new Cooler("separator gas cooler",
-         * inletSeparator.getGasOutStream());
+         * Cooler gasCooler = new Cooler("separator gas cooler", inletSeparator.getGasOutStream());
          * gasCooler.setOutTemperature(gasScrubberTemperature + 273.15);
          * 
          * oilPump = new Pump("liquid pump", inletSeparator.getLiquidOutStream());
@@ -186,8 +170,8 @@ public class DPCUModule extends ProcessModuleBaseClass {
          * glycolMixer.addStream(glycolFeedStream);
          * 
          * Cooler mixerAfterCooler = new Cooler("glycol mixer after cooler",
-         * glycolMixer.getOutStream());
-         * mixerAfterCooler.setOutTemperature(glycolScrubberTemperature + 273.15);
+         * glycolMixer.getOutStream()); mixerAfterCooler.setOutTemperature(glycolScrubberTemperature
+         * + 273.15);
          * 
          * glycolScrubber = new Separator("Water dew point control scrubber",
          * mixerAfterCooler.getOutStream());
@@ -205,14 +189,14 @@ public class DPCUModule extends ProcessModuleBaseClass {
          * getOperations().add(gasScrubber); getOperations().add(HPliquidRecycle);
          * getOperations().add(firstStageCompressor); getOperations().add(glycolMixer);
          * getOperations().add(mixerAfterCooler); getOperations().add(glycolScrubber);
-         * getOperations().add(secondStageCompressor);
-         * getOperations().add(secondStageAfterCooler);
+         * getOperations().add(secondStageCompressor); getOperations().add(secondStageAfterCooler);
          * 
          */
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
@@ -224,47 +208,58 @@ public class DPCUModule extends ProcessModuleBaseClass {
         liquidDistColumnExit = distColumn.getLiquidOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void initializeStreams() {
+    public void initializeStreams() {
         isInitializedStreams = true;
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void calcDesign() {
-        // design is done here //
+    public void calcDesign() {
+        // design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setDesign() {
-        // set design is done here //
+    public void setDesign() {
+        // set design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setSpecification(String specificationName, double value) {
+    public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("pressure after reduction valve")) {
             pressureAfterRedValve = value;
         } else if (specificationName.equals("gas scrubber temperature")) {
             gasScrubberTemperature = value;
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         System.out.println("compressor power " + compressor1.getEnergy());
         System.out.println("expander power " + expander.getEnergy());
         valve1.displayResult();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 7.5, 110.0);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos(273.15 + 7.5, 110.0);
 
         testSystem.addComponent("CO2", 0.0218295567233988);
         testSystem.addComponent("nitrogen", 0.00739237702184805);
@@ -291,7 +286,8 @@ public class DPCUModule extends ProcessModuleBaseClass {
         dpcuModule.addInputStream("feed stream", feedStream);
         dpcuModule.setSpecification("pressure after reduction valve", 108.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(feedStream);
         operations.add(dpcuModule);
         operations.run();
@@ -303,6 +299,5 @@ public class DPCUModule extends ProcessModuleBaseClass {
 
         dpcuModule.displayResult();
         // dpcuModule.getOutputStream("gasmixer").displayResult();
-
     }
 }

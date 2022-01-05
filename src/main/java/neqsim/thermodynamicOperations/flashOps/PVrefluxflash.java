@@ -1,20 +1,4 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
  * PHflash.java
  *
  * Created on 8. mars 2001, 10:56
@@ -24,22 +8,36 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * PVrefluxflash class.
+ * </p>
  *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
-public class PVrefluxflash extends Flash implements java.io.Serializable {
-
+public class PVrefluxflash extends Flash {
     private static final long serialVersionUID = 1000;
 
     Flash tpFlash;
     int refluxPhase = 0;
     double refluxSpec = 0.5;
 
-    /** Creates new PHflash */
-    public PVrefluxflash() {
-    }
+    /**
+     * <p>
+     * Constructor for PVrefluxflash.
+     * </p>
+     */
+    public PVrefluxflash() {}
 
+    /**
+     * <p>
+     * Constructor for PVrefluxflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param refluxSpec a double
+     * @param refluxPhase a int
+     */
     public PVrefluxflash(SystemInterface system, double refluxSpec, int refluxPhase) {
         this.system = system;
         this.tpFlash = new TPflash(system);
@@ -47,8 +45,9 @@ public class PVrefluxflash extends Flash implements java.io.Serializable {
         this.refluxPhase = refluxPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         // System.out.println("enthalpy: " + system.getEnthalpy());
         double err = 0;
         int iter = 0;
@@ -87,11 +86,11 @@ public class PVrefluxflash extends Flash implements java.io.Serializable {
             // System.out.println("temp " + system.getTemperature() + " err " + err + "
             // volfor " + system.getPhase(refluxPhase).getVolume() / system.getVolume());
         } while (Math.abs(dt) > 1e-8 && Math.abs(f_func) > 1e-6 && iter < 1000);
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

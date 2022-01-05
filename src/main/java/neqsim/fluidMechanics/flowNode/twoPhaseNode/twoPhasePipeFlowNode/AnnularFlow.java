@@ -12,34 +12,59 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
-
+/**
+ * <p>AnnularFlow class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class AnnularFlow extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
     // ThermodynamicOperations interphaseOps = new ThermodynamicOperations();
     // double liquidFilmThickness=0;
 
+    /**
+     * <p>Constructor for AnnularFlow.</p>
+     */
     public AnnularFlow() {
         this.flowNodeType = "annular";
     }
 
+    /**
+     * <p>Constructor for AnnularFlow.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public AnnularFlow(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "annular";
         this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
-    public AnnularFlow(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
+    /**
+     * <p>Constructor for AnnularFlow.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
+    public AnnularFlow(SystemInterface system, SystemInterface interphaseSystem,
+            GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "annular";
         this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public AnnularFlow clone() {
         AnnularFlow clonedSystem = null;
         try {
             clonedSystem = (AnnularFlow) super.clone();
@@ -49,15 +74,17 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         inclination = 1.0;
         this.calcContactLength();
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcContactLength() {
+    public double calcContactLength() {
         wallContactLength[1] = pi * pipe.getDiameter();
         wallContactLength[0] = 0.0;
 
@@ -66,8 +93,9 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         AnnularFlow newNode = (AnnularFlow) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -77,6 +105,12 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
         return newNode;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         System.out.println("Starter.....");
         String fileName = "c:/labsim/exp-heat.txt";
@@ -137,7 +171,8 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
         test.initFlowCalc();
         // test.display("testnode 0");
         // test.write("node 0", fileName, true);
-        System.out.println("rate " + test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min"));
+        System.out.println(
+                "rate " + test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min"));
         double oldRate = test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min");
         for (int i = 0; i < 1; i++) {
             test.initFlowCalc();
@@ -154,9 +189,11 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
         }
         // test.display("testnode last");
 
-        System.out.println("rate " + test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min"));
-        System.out
-                .println("diff " + (test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min") - oldRate));
+        System.out.println(
+                "rate " + test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min"));
+        System.out.println(
+                "diff " + (test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min")
+                        - oldRate));
         for (int i = 0; i < 1000; i++) {
             test.calcFluxes();
             test.update();
@@ -164,7 +201,8 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
                 test.display("testnode " + i);
                 test.getBulkSystem().display("test " + i);
             }
-            System.out.println("aqueous phase " + test.getBulkSystem().getPhaseFraction("oil", "wt"));
+            System.out
+                    .println("aqueous phase " + test.getBulkSystem().getPhaseFraction("oil", "wt"));
         }
 
         // test.getFluidBoundary().display("test");

@@ -1,26 +1,7 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
  * ModuleInterface.java
  *
  * Created on 1. november 2006, 21:48
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 package neqsim.processSimulation.processSystem;
 
@@ -28,40 +9,123 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
+ * <p>
+ * ModuleInterface interface.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public interface ModuleInterface extends ProcessEquipmentInterface {
-
+    /**
+     * <p>
+     * getOperations.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+     */
     public neqsim.processSimulation.processSystem.ProcessSystem getOperations();
 
+    /**
+     * <p>
+     * addInputStream.
+     * </p>
+     *
+     * @param streamName a {@link java.lang.String} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public void addInputStream(String streamName, StreamInterface stream);
 
+    /**
+     * <p>
+     * getOutputStream.
+     * </p>
+     *
+     * @param streamName a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getOutputStream(String streamName);
 
+    /**
+     * <p>
+     * getPreferedThermodynamicModel.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String getPreferedThermodynamicModel();
 
+    /**
+     * <p>
+     * setPreferedThermodynamicModel.
+     * </p>
+     *
+     * @param preferedThermodynamicModel a {@link java.lang.String} object
+     */
     public void setPreferedThermodynamicModel(String preferedThermodynamicModel);
 
+    /** {@inheritDoc} */
     @Override
-	public void run();
+    public void run();
 
+    /**
+     * <p>
+     * initializeStreams.
+     * </p>
+     */
     public void initializeStreams();
 
+    /**
+     * <p>
+     * initializeModule.
+     * </p>
+     */
     public void initializeModule();
 
+    /**
+     * <p>
+     * setIsCalcDesign.
+     * </p>
+     *
+     * @param isCalcDesign a boolean
+     */
     public void setIsCalcDesign(boolean isCalcDesign);
 
+    /**
+     * <p>
+     * isCalcDesign.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean isCalcDesign();
 
+    /**
+     * <p>
+     * getUnit.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link java.lang.Object} object
+     */
     public Object getUnit(String name);
 
+    /**
+     * <p>
+     * setProperty.
+     * </p>
+     *
+     * @param propertyName a {@link java.lang.String} object
+     * @param value a double
+     */
     public void setProperty(String propertyName, double value);
 
+    /** {@inheritDoc} */
     @Override
-	public String getName();
+    public String getName();
 
+    /** {@inheritDoc} */
     @Override
-	public void setName(String name);
-
+    public void setName(String name);
 }

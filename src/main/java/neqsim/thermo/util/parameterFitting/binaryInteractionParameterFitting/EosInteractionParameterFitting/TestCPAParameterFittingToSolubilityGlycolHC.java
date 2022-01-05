@@ -1,39 +1,37 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>
+ * TestCPAParameterFittingToSolubilityGlycolHC class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Object {
-
-    private static final long serialVersionUID = 1000;
+public class TestCPAParameterFittingToSolubilityGlycolHC {
     static Logger logger = LogManager.getLogger(TestCPAParameterFittingToSolubilityGlycolHC.class);
 
-    /** Creates new TestAcentric */
-    public TestCPAParameterFittingToSolubilityGlycolHC() {
-    }
-
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();// AND reference<>'Lindboe2002'
@@ -51,7 +49,7 @@ public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Objec
         // double parameterGuess[] = {0.0471326591, 5.14, 10.819, 0.6744, 0.0141};
         // double parameterGuess[] = {0.0602997387, 5.2137117933, 10.3039876875,
         // 0.6714377099, 0.0178639622}; // fitted to all data
-        double parameterGuess[] = { 1924, 4938 };// , -1.11, 1.24};
+        double parameterGuess[] = {1924, 4938};// , -1.11, 1.24};
         // double parameterGuess[] = {0.0471326591};
 
         try {
@@ -59,7 +57,8 @@ public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Objec
             logger.info("adding....");
             while (!dataSet.next() && p < 50) {
                 p++;
-                CPAParameterFittingToSolubilityData function = new CPAParameterFittingToSolubilityData();
+                CPAParameterFittingToSolubilityData function =
+                        new CPAParameterFittingToSolubilityData();
 
                 // SystemInterface testSystem = new
                 // SystemSrkCPAs(Double.parseDouble(dataSet.getString("temperature"))+273.15,
@@ -74,8 +73,8 @@ public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Objec
                 // testSystem.setMixingRule(7);
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
-                double sample1[] = { testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.01};
                 double val = Double.parseDouble(dataSet.getString("x-glyinhc"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -97,7 +96,8 @@ public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Objec
             logger.info("adding....");
             while (!dataSet.next() && p < 50) {
                 p++;
-                CPAParameterFittingToSolubilityData_Vap function = new CPAParameterFittingToSolubilityData_Vap();
+                CPAParameterFittingToSolubilityData_Vap function =
+                        new CPAParameterFittingToSolubilityData_Vap();
 
                 // SystemInterface testSystem = new
                 // SystemSrkCPAs(Double.parseDouble(dataSet.getString("temperature"))+273.15,
@@ -110,8 +110,8 @@ public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Objec
                 testSystem.addComponent("MEG", 10.0);
                 testSystem.init(0);
                 testSystem.setMixingRule(4);
-                double sample1[] = { testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.01}; 
                 double val = Double.parseDouble(dataSet.getString("x-hcinglyc"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);

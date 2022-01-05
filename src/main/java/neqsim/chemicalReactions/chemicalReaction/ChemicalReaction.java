@@ -1,40 +1,24 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
  * chemicalReaction.java
  *
  * Created on 4. februar 2001, 15:32
  */
-
 package neqsim.chemicalReactions.chemicalReaction;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * ChemicalReaction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class ChemicalReaction extends Object
-        implements neqsim.thermo.ThermodynamicConstantsInterface, java.io.Serializable {
-
+public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
 
     String[] names, reactantNames, productNames;
@@ -47,13 +31,28 @@ public class ChemicalReaction extends Object
     double G = 0, lnK = 0;
     int numberOfReactants = 0;
 
-    /** Creates new chemicalReaction */
-    public ChemicalReaction() {
-    }
+    /**
+     * <p>
+     * Constructor for ChemicalReaction.
+     * </p>
+     */
+    public ChemicalReaction() {}
 
+    /**
+     * <p>
+     * Constructor for ChemicalReaction.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param names an array of {@link java.lang.String} objects
+     * @param stocCoefs an array of {@link double} objects
+     * @param K an array of {@link double} objects
+     * @param r a double
+     * @param activationEnergy a double
+     * @param refT a double
+     */
     public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
             double activationEnergy, double refT) {
-
         /*
          * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
          * 
@@ -95,23 +94,48 @@ public class ChemicalReaction extends Object
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>reactantNames</code>.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[] getReactantNames() {
         return reactantNames;
     }
 
     /**
      * reaction constant at reference temperature
+     *
+     * @return a double
      */
     public double getRateFactor() {
         return rateFactor;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>rateFactor</code>.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getRateFactor(PhaseInterface phase) {
         // return rateFactor * Math.exp(-activationEnergy/R*(1.0/phase.getTemperature()
         // - 1.0/refT));
         return 2.576e9 * Math.exp(-6024.0 / phase.getTemperature()) / 1000.0;
     }
 
+    /**
+     * <p>
+     * getK.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getK(PhaseInterface phase) {
         double temperature = phase.getTemperature();
         lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
@@ -122,18 +146,48 @@ public class ChemicalReaction extends Object
         return Math.exp(lnK);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>stocCoefs</code>.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getStocCoefs() {
         return this.stocCoefs;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>productNames</code>.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[] getProductNames() {
         return productNames;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>names</code>.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[] getNames() {
         return names;
     }
 
+    /**
+     * <p>
+     * calcKx.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phaseNumb a int
+     * @return a double
+     */
     public double calcKx(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
         double kx = 1.0;
         for (int i = 0; i < names.length; i++) {
@@ -143,6 +197,15 @@ public class ChemicalReaction extends Object
         return kx;
     }
 
+    /**
+     * <p>
+     * calcKgamma.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phaseNumb a int
+     * @return a double
+     */
     public double calcKgamma(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
         double kgamma = 1.0;
         for (int i = 0; i < names.length; i++) {
@@ -150,33 +213,58 @@ public class ChemicalReaction extends Object
             if (system.getPhase(phaseNumb).getComponent(names[i]).calcActivity()) {
                 kgamma *= Math.pow(system.getPhase(phaseNumb).getActivityCoefficient(
                         system.getPhase(phaseNumb).getComponent(names[i]).getComponentNumber(),
-                        system.getPhase(phaseNumb).getComponent("water").getComponentNumber()), stocCoefs[i]);
+                        system.getPhase(phaseNumb).getComponent("water").getComponentNumber()),
+                        stocCoefs[i]);
             }
         }
         return kgamma;
     }
 
+    /**
+     * <p>
+     * getSaturationRatio.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phaseNumb a int
+     * @return a double
+     */
     public double getSaturationRatio(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
         double ksp = 1.0;
         for (int i = 0; i < names.length; i++) {
             // System.out.println("name " + names[i] + " stcoc " + stocCoefs[i]);
             if (stocCoefs[i] < 0) {
-                ksp *= Math.pow(system.getPhase(phaseNumb).getComponent(names[i]).getx(), -stocCoefs[i]);
+                ksp *= Math.pow(system.getPhase(phaseNumb).getComponent(names[i]).getx(),
+                        -stocCoefs[i]);
             }
         }
         ksp /= (getK(system.getPhase(phaseNumb)));
         return ksp;
     }
 
+    /**
+     * <p>
+     * calcK.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phaseNumb a int
+     * @return a double
+     */
     public double calcK(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
         return calcKx(system, phaseNumb) * calcKgamma(system, phaseNumb);
     }
 
     /**
      * Generaters initial estimates for the molenumbers
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
+     * @param Amatrix an array of {@link double} objects
+     * @param chemRefPot an array of {@link double} objects
      */
-    public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components, double[][] Amatrix,
-            double[] chemRefPot) {
+    public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components,
+            double[][] Amatrix, double[] chemRefPot) {
         Matrix tempAmatrix = new Matrix(Amatrix.length, names.length);
         Matrix tempNmatrix = new Matrix(names.length, 1);
         Matrix tempRefPotmatrix = new Matrix(names.length, 1);
@@ -230,9 +318,15 @@ public class ChemicalReaction extends Object
         // tempNReacmatrix.print(10,2);
         // tempAProdmatrix.print(10,2);
         // tempAReacmatrix.print(10,2);
-
     }
 
+    /**
+     * <p>
+     * init.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void init(PhaseInterface phase) {
         double temperature = phase.getTemperature();
         lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
@@ -259,6 +353,13 @@ public class ChemicalReaction extends Object
         }
     }
 
+    /**
+     * <p>
+     * checkK.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public void checkK(SystemInterface system) {
         // double cK=Math.log(getK(system.getTemperature()));
         // for(int i=0;i<names.length;i++){
@@ -268,11 +369,19 @@ public class ChemicalReaction extends Object
         // System.out.println("ck: " +cK);
     }
 
+    /**
+     * <p>
+     * reactantsContains.
+     * </p>
+     *
+     * @param names an array of {@link java.lang.String} objects
+     * @return a boolean
+     */
     public boolean reactantsContains(String[] names) {
         boolean test = false;
         /*
-         * if(reactantNames.length>names.length || productNames.length>names.length ){
-         * return false; }
+         * if(reactantNames.length>names.length || productNames.length>names.length ){ return false;
+         * }
          */
 
         for (int j = 0; j < reactantNames.length; j++) {
@@ -306,12 +415,11 @@ public class ChemicalReaction extends Object
         }
 
         return test;
-
     }
 
     /**
      * Setter for property rateFactor.
-     * 
+     *
      * @param rateFactor New value of property rateFactor.
      */
     public void setRateFactor(double rateFactor) {
@@ -320,7 +428,7 @@ public class ChemicalReaction extends Object
 
     /**
      * Getter for property activationEnergy.
-     * 
+     *
      * @return Value of property activationEnergy.
      */
     public double getActivationEnergy() {
@@ -329,7 +437,7 @@ public class ChemicalReaction extends Object
 
     /**
      * Setter for property activationEnergy.
-     * 
+     *
      * @param activationEnergy New value of property activationEnergy.
      */
     public void setActivationEnergy(double activationEnergy) {
@@ -337,20 +445,21 @@ public class ChemicalReaction extends Object
     }
 
     /**
-     * Getter for property reactionHeat. Van't HOffs equation dh = d lnK/dT * R *
-     * T^2
-     * 
+     * Getter for property reactionHeat. Van't HOffs equation dh = d lnK/dT * R * T^2
+     *
      * @return Value of property reactionHeat.
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      */
     public double getReactionHeat(PhaseInterface phase) {
-        double diffKt = -K[1] / Math.pow(phase.getTemperature(), 2.0) + K[2] / phase.getTemperature() + K[3];
+        double diffKt = -K[1] / Math.pow(phase.getTemperature(), 2.0)
+                + K[2] / phase.getTemperature() + K[3];
         double sign = (shiftSignK = true) ? -1.0 : 1.0;
         return sign * diffKt * Math.pow(phase.getTemperature(), 2.0) * R;
     }
 
     /**
      * Getter for property k.
-     * 
+     *
      * @return Value of property k.
      */
     public double[] getK() {
@@ -359,22 +468,29 @@ public class ChemicalReaction extends Object
 
     /**
      * Setter for property k.
-     * 
+     *
      * @param k New value of property k.
      */
     public void setK(double[] k) {
         this.K = k;
     }
 
+    /**
+     * <p>
+     * setK.
+     * </p>
+     *
+     * @param i a int
+     * @param Kd a double
+     */
     public void setK(int i, double Kd) {
         this.K[i] = Kd;
     }
 
     /**
      * Getter for property name.
-     * 
-     * @return Value of property name.
      *
+     * @return Value of property name.
      */
     public java.lang.String getName() {
         return name;
@@ -382,12 +498,10 @@ public class ChemicalReaction extends Object
 
     /**
      * Setter for property name.
-     * 
-     * @param name New value of property name.
      *
+     * @param name New value of property name.
      */
     public void setName(java.lang.String name) {
         this.name = name;
     }
-
 }

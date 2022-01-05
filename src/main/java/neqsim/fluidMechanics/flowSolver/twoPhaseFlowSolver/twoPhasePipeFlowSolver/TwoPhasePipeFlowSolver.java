@@ -3,19 +3,21 @@
  *
  * Created on 17. januar 2001, 21:05
  */
-
 package neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 
 /**
+ * <p>
+ * TwoPhasePipeFlowSolver class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TwoPhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.OnePhaseFlowSolver {
-
+public class TwoPhasePipeFlowSolver
+        extends neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.OnePhaseFlowSolver {
     private static final long serialVersionUID = 1000;
 
     protected double[] PbArray; // = new double[100];
@@ -34,10 +36,22 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
     protected FlowSystemInterface pipe;
     protected int numberOfNodes;
 
-    /** Creates new OnePhasePipeFlowSolver */
-    public TwoPhasePipeFlowSolver() {
-    }
+    /**
+     * <p>
+     * Constructor for TwoPhasePipeFlowSolver.
+     * </p>
+     */
+    public TwoPhasePipeFlowSolver() {}
 
+    /**
+     * <p>
+     * Constructor for TwoPhasePipeFlowSolver.
+     * </p>
+     *
+     * @param pipe a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
+     * @param length a double
+     * @param nodes a int
+     */
     public TwoPhasePipeFlowSolver(FlowSystemInterface pipe, double length, int nodes) {
         this.pipe = pipe;
         this.length = length;
@@ -46,11 +60,13 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
         solMatrix = new Matrix[2];
         sol3Matrix = new Matrix[2];
         solPhaseConsMatrix = new Matrix[2];
-        solMolFracMatrix = new Matrix[2][pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+        solMolFracMatrix = new Matrix[2][pipe.getNode(0).getBulkSystem().getPhases()[0]
+                .getNumberOfComponents()];
         solMatrix[0] = new Matrix(PbArray, 1).transpose();
         solMatrix[1] = new Matrix(PbArray, 1).transpose();
         for (int phase = 0; phase < 2; phase++) {
-            for (int i = 0; i < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
+            for (int i = 0; i < pipe.getNode(0).getBulkSystem().getPhases()[0]
+                    .getNumberOfComponents(); i++) {
                 solMolFracMatrix[phase][i] = new Matrix(PbArray, 1).transpose();
             }
         }
@@ -65,8 +81,9 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
         r = new double[nodes];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public TwoPhasePipeFlowSolver clone() {
         TwoPhasePipeFlowSolver clonedSystem = null;
         try {
             clonedSystem = (TwoPhasePipeFlowSolver) super.clone();
@@ -76,5 +93,4 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
 
         return clonedSystem;
     }
-
 }

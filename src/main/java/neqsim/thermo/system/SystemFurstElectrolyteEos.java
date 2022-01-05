@@ -1,23 +1,23 @@
-/*
- * SystemModifiedFurstElectrolyteEos.java
- *
- * Created on 26. februar 2001, 17:38
- */
-
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
+ * <p>
+ * SystemFurstElectrolyteEos class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class SystemFurstElectrolyteEos extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
-    /** Creates new SystemModifiedFurstElectrolyteEos */
+    /**
+     * <p>
+     * Constructor for SystemFurstElectrolyteEos.
+     * </p>
+     */
     public SystemFurstElectrolyteEos() {
         super();
         modelName = "Electrolyte-ScRK-EOS";
@@ -27,6 +27,14 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemFurstElectrolyteEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemFurstElectrolyteEos(double T, double P) {
         super(T, P);
         attractiveTermNumber = 2;
@@ -38,8 +46,9 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemFurstElectrolyteEos clone() {
         SystemFurstElectrolyteEos clonedSystem = null;
         try {
             clonedSystem = (SystemFurstElectrolyteEos) super.clone();
@@ -55,5 +64,4 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

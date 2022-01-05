@@ -1,38 +1,48 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.costEstimation;
-
-import java.io.Serializable;
 
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
+ * <p>
+ * UnitCostEstimateBaseClass class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
-public class UnitCostEstimateBaseClass implements Serializable {
-
+public class UnitCostEstimateBaseClass implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     private double costPerWeightUnit = 1000.0;
     public MechanicalDesign mechanicalEquipment = null;
 
-    public UnitCostEstimateBaseClass() {
+    /**
+     * <p>
+     * Constructor for UnitCostEstimateBaseClass.
+     * </p>
+     */
+    public UnitCostEstimateBaseClass() {}
 
-    }
-
+    /**
+     * <p>
+     * Constructor for UnitCostEstimateBaseClass.
+     * </p>
+     *
+     * @param mechanicalEquipment a
+     *        {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+     */
     public UnitCostEstimateBaseClass(MechanicalDesign mechanicalEquipment) {
         this.mechanicalEquipment = mechanicalEquipment;
     }
 
     /**
+     * <p>
+     * getTotaltCost.
+     * </p>
+     *
      * @return the totaltCost
      */
     public double getTotaltCost() {
         return this.mechanicalEquipment.getWeightTotal() * costPerWeightUnit;
     }
-
 }

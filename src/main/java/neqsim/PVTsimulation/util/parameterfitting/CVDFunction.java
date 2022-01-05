@@ -1,20 +1,17 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * CVDFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class CVDFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
@@ -22,14 +19,22 @@ public class CVDFunction extends LevenbergMarquardtFunction {
     double Zsaturation = 0;
 
     /**
-     * Creates new Test
+     * <p>
+     * Constructor for CVDFunction.
+     * </p>
      */
     public CVDFunction() {
         params = new double[3];
     }
 
+    /**
+     * <p>
+     * calcSaturationConditions.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public void calcSaturationConditions(SystemInterface system) {
-
         do {
             system.setPressure(system.getPressure() + 10.0);
             thermoOps.TPflash();
@@ -46,16 +51,16 @@ public class CVDFunction extends LevenbergMarquardtFunction {
             }
         } while (Math.abs(maxPres - minPres) > 1e-5);
         /*
-         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
-         * e.printStackTrace(); }
+         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) { e.printStackTrace(); }
          */
         saturationVolume = system.getVolume();
         saturationPressure = system.getPressure();
         Zsaturation = system.getZ();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         int plusNumber = 0;
         molarMass = params[0];
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -89,8 +94,9 @@ public class CVDFunction extends LevenbergMarquardtFunction {
         return totalVolume / saturationVolume; // %wax
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         // system.get
     }

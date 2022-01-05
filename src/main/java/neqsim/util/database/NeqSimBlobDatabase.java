@@ -1,18 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package neqsim.util.database;
 
 /*
@@ -20,17 +5,29 @@ package neqsim.util.database;
  *
  * Created on 1. november 2001, 08:56
  */
-import java.sql.*;
-import org.apache.logging.log4j.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * NeqSimBlobDatabase class.
+ * </p>
  *
  * @author Even Solbraa
  * @version Dec 2018
  */
-public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
+public class NeqSimBlobDatabase
+        implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
     /**
+     * <p>
+     * createTemporaryTables.
+     * </p>
+     *
      * @return the createTemporaryTables
      */
     public boolean createTemporaryTables() {
@@ -38,6 +35,10 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
     }
 
     /**
+     * <p>
+     * Setter for the field <code>createTemporaryTables</code>.
+     * </p>
+     *
      * @param createTemporaryTables the createTemporaryTables to set
      */
     public void setCreateTemporaryTables(boolean createTemporaryTables) {
@@ -45,6 +46,7 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
     }
 
     private static final long serialVersionUID = 1000;
+    /** Constant <code>dataBasePath=""</code> */
     public static String dataBasePath = "";
     static Logger logger = LogManager.getLogger(NeqSimBlobDatabase.class);
     private static boolean createTemporaryTables = true;
@@ -58,10 +60,11 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
     protected Connection databaseConnection = null;
 
     /**
-     * Creates new testPointbase
+     * <p>
+     * Constructor for NeqSimBlobDatabase.
+     * </p>
      */
     public NeqSimBlobDatabase() {
-
         setDataBaseType(dataBaseType);
 
         try {
@@ -70,12 +73,17 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
         } catch (Exception ex) {
             logger.error("SQLException " + ex.getMessage());
             throw new RuntimeException(ex);
-
         }
     }
 
     /**
-     * Creates new NeqSimDataBase
+     * <p>
+     * openConnection.
+     * </p>
+     *
+     * @return a Connection object
+     * @throws java.sql.SQLException if any.
+     * @throws java.lang.ClassNotFoundException if any.
      */
     public Connection openConnection() throws SQLException, ClassNotFoundException {
         javax.naming.InitialContext ctx = null;
@@ -83,18 +91,19 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
 
         try {
             if (System.getenv("NEQSIMBLOBDB_CS") != null) {
-                return DriverManager.getConnection(System.getenv("NEQSIMBLOBDB_CS"), System.getenv("MYSQL_USER"),
-                        System.getenv("MYSQL_PASSWORD"));
+                return DriverManager.getConnection(System.getenv("NEQSIMBLOBDB_CS"),
+                        System.getenv("MYSQL_USER"), System.getenv("MYSQL_PASSWORD"));
             } else if (dataBaseType.equals("MSAccess")) {
                 String dir = "";
                 if (System.getProperty("NeqSim.home") == null) {
-                    dir = neqsim.util.util.FileSystemSettings.root + "\\programming\\NeqSimSourceCode\\java\\neqsim";
+                    dir = neqsim.util.util.FileSystemSettings.root
+                            + "\\programming\\NeqSimSourceCode\\java\\neqsim";
                 } else {
                     dir = System.getProperty("NeqSim.home");
                 }
-                return DriverManager.getConnection(
-                        "jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
-
+                return DriverManager
+                        .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ="
+                                + dir + "\\data\\NeqSimDatabase");
             } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
                 return DriverManager.getConnection(connectionString, "sa", "");
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
@@ -121,13 +130,27 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
                 logger.error("error", e);
             }
         }
-
     }
 
+    /**
+     * <p>
+     * getConnection.
+     * </p>
+     *
+     * @return a Connection object
+     */
     public Connection getConnection() {
         return databaseConnection;
     }
 
+    /**
+     * <p>
+     * getResultSet.
+     * </p>
+     *
+     * @param sqlString a {@link java.lang.String} object
+     * @return a ResultSet object
+     */
     public ResultSet getResultSet(String sqlString) {
         try {
             ResultSet result = getStatement().executeQuery(sqlString);
@@ -138,6 +161,13 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
         }
     }
 
+    /**
+     * <p>
+     * execute.
+     * </p>
+     *
+     * @param sqlString a {@link java.lang.String} object
+     */
     public void execute(String sqlString) {
         try {
             if (databaseConnection == null) {
@@ -152,14 +182,36 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public static String getDataBaseType() {
         return dataBaseType;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @param aDataBaseType a {@link java.lang.String} object
+     */
     public static void setDataBaseType(String aDataBaseType) {
         setDataBaseType(aDataBaseType, null);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @param aDataBaseType a {@link java.lang.String} object
+     * @param connectionString a {@link java.lang.String} object
+     */
     public static void setDataBaseType(String aDataBaseType, String connectionString) {
         dataBaseType = aDataBaseType;
 
@@ -169,7 +221,7 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
 
         try {
             if (dataBaseType.equals("mySQL")) {
-                Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+                Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
             } else {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
             }
@@ -179,17 +231,33 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>statement</code>.
+     * </p>
+     *
+     * @return a Statement object
+     */
     public Statement getStatement() {
         return statement;
-
-    }
-
-    public void setStatement(Statement statement) {
-        this.statement = statement;
-
     }
 
     /**
+     * <p>
+     * Setter for the field <code>statement</code>.
+     * </p>
+     *
+     * @param statement a Statement object
+     */
+    public void setStatement(Statement statement) {
+        this.statement = statement;
+    }
+
+    /**
+     * <p>
+     * Setter for the field <code>username</code>.
+     * </p>
+     *
      * @param aUsername the username to set
      */
     public static void setUsername(String aUsername) {
@@ -197,6 +265,10 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
     }
 
     /**
+     * <p>
+     * Setter for the field <code>password</code>.
+     * </p>
+     *
      * @param aPassword the password to set
      */
     public static void setPassword(String aPassword) {
@@ -204,6 +276,10 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
     }
 
     /**
+     * <p>
+     * Getter for the field <code>connectionString</code>.
+     * </p>
+     *
      * @return the connectionString
      */
     public static String getConnectionString() {
@@ -211,13 +287,13 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
     }
 
     /**
+     * <p>
+     * Setter for the field <code>connectionString</code>.
+     * </p>
+     *
      * @param aConnectionString the connectionString to set
      */
     public static void setConnectionString(String aConnectionString) {
         connectionString = aConnectionString;
-    }
-
-    public static void main(String[] args) {
-
     }
 }

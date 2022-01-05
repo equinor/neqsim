@@ -1,9 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
-
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
@@ -12,19 +6,19 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the Peng RObinson v. 1978
- * equation of state
+ * This class defines a thermodynamic system using the Peng RObinson v. 1978 equation of state
  */
 public class SystemPrEos1978 extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
-    /** Creates a thermodynamic system using the SRK equation of state. */
+    /**
+     * Creates a thermodynamic system using the SRK equation of state.
+     */
 
     // SystemPrEos clonedSystem;
     public SystemPrEos1978() {
@@ -39,6 +33,14 @@ public class SystemPrEos1978 extends SystemEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemPrEos1978.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemPrEos1978(double T, double P) {
         super(T, P);
         modelName = "PR1978-EOS";
@@ -51,6 +53,15 @@ public class SystemPrEos1978 extends SystemEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemPrEos1978.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemPrEos1978(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 13;
@@ -82,8 +93,9 @@ public class SystemPrEos1978 extends SystemEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemPrEos1978 clone() {
         SystemPrEos1978 clonedSystem = null;
         try {
             clonedSystem = (SystemPrEos1978) super.clone();
@@ -98,5 +110,4 @@ public class SystemPrEos1978 extends SystemEos {
 
         return clonedSystem;
     }
-
 }

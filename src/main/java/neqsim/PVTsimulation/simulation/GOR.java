@@ -1,18 +1,17 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.PVTsimulation.simulation;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * GOR class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class GOR extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double[] temperature = null;
@@ -22,6 +21,13 @@ public class GOR extends BasePVTsimulation {
     private double[] GOR = null;
     double oilVolumeStdCond = 0;
 
+    /**
+     * <p>
+     * Constructor for GOR.
+     * </p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public GOR(SystemInterface tempSystem) {
         super(tempSystem);
         temperature = new double[1];
@@ -30,13 +36,24 @@ public class GOR extends BasePVTsimulation {
         pressure[0] = tempSystem.getPressure();
     }
 
+    /**
+     * <p>
+     * setTemperaturesAndPressures.
+     * </p>
+     *
+     * @param temperature an array of {@link double} objects
+     * @param pressure an array of {@link double} objects
+     */
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
-
         this.pressure = pressure;
         this.temperature = temperature;
-
     }
 
+    /**
+     * <p>
+     * runCalc.
+     * </p>
+     */
     public void runCalc() {
         Sm3gas = new double[pressure.length];
         m3oil = new double[pressure.length];
@@ -75,6 +92,13 @@ public class GOR extends BasePVTsimulation {
         }
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface tempSystem = new SystemSrkEos(298.0, 1.0);
         tempSystem.addComponent("nitrogen", 0.64);
@@ -106,14 +130,17 @@ public class GOR extends BasePVTsimulation {
         tempSystem.setMixingRule(2);
 
         GOR sepSim = new GOR(tempSystem);
-        double[] temps = { 313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15 };
-        double[] pres = { 500, 400, 200, 100, 50.0, 5.0, 1.01325 };
+        double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
+        double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
         sepSim.setTemperaturesAndPressures(temps, pres);
         sepSim.runCalc();
-
     }
 
     /**
+     * <p>
+     * getGOR.
+     * </p>
+     *
      * @return the GOR
      */
     public double[] getGOR() {
@@ -121,6 +148,10 @@ public class GOR extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * getBofactor.
+     * </p>
+     *
      * @return the Bofactor
      */
     public double[] getBofactor() {

@@ -1,31 +1,31 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * CPAFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class CPAFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunction.class);
 
     /**
-     * Creates new Test
+     * <p>
+     * Constructor for CPAFunction.
+     * </p>
      */
-    public CPAFunction() {
-    }
+    public CPAFunction() {}
 
+    /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         // system.setTemperature(dependentValues[0]);
         system.init(0);
         // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
@@ -39,13 +39,15 @@ public class CPAFunction extends LevenbergMarquardtFunction {
         return system.getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
 
         // i += 5;
@@ -90,6 +92,5 @@ public class CPAFunction extends LevenbergMarquardtFunction {
             system.getPhases()[0].getComponents()[0].setVolumeCorrectionT_CPA(value);
             system.getPhases()[1].getComponents()[0].setVolumeCorrectionT_CPA(value);
         }
-
     }
 }

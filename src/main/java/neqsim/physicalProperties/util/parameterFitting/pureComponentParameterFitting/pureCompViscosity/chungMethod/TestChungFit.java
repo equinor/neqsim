@@ -1,38 +1,37 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompViscosity.chungMethod;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>
+ * TestChungFit class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TestChungFit extends java.lang.Object {
-
-    private static final long serialVersionUID = 1000;
+public class TestChungFit {
     static Logger logger = LogManager.getLogger(TestChungFit.class);
 
-    /** Creates new TestAcentric */
-    public TestChungFit() {
-    }
-
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -40,22 +39,22 @@ public class TestChungFit extends java.lang.Object {
                                                                                           // ComponentName='MDEA*'");
 
         try {
-
             while (dataSet.next()) {
                 ChungFunction function = new ChungFunction();
-                double guess[] = { 0.3211 };
+                double guess[] = {0.3211};
                 function.setInitialGuess(guess);
 
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-                testSystem.addComponent("MDEA", 100.0); // legger til komponenter til systemet
+                testSystem.addComponent("MDEA", 100.0);
                 // testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.createDatabase(true);
                 testSystem.init(0);
                 testSystem.setMixingRule(2);
-                double sample1[] = { Double.parseDouble(dataSet.getString("Temperature")) }; // temperature
-                double standardDeviation1[] = { 0.1 }; // std.dev temperature // presure std.dev pressure
-                SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("Viscosity")), 0.001, sample1,
-                        standardDeviation1);
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
+                double standardDeviation1[] = {0.1};
+                SampleValue sample =
+                        new SampleValue(Double.parseDouble(dataSet.getString("Viscosity")), 0.001,
+                                sample1, standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);
                 sampleList.add(sample);
@@ -72,6 +71,5 @@ public class TestChungFit extends java.lang.Object {
         // optim.runMonteCarloSimulation();
         optim.displayResult();
         optim.displayCurveFit();
-
     }
 }

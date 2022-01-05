@@ -2,29 +2,56 @@ package neqsim.fluidMechanics.geometryDefinitions.stirredCell;
 
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
 
-public class StirredCell extends GeometryDefinition implements neqsim.thermo.ThermodynamicConstantsInterface {
-
+/**
+ * <p>
+ * StirredCell class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class StirredCell extends GeometryDefinition {
     private static final long serialVersionUID = 1000;
 
-    public StirredCell() {
-    }
+    /**
+     * <p>
+     * Constructor for StirredCell.
+     * </p>
+     */
+    public StirredCell() {}
 
+    /**
+     * <p>
+     * Constructor for StirredCell.
+     * </p>
+     *
+     * @param diameter a double
+     */
     public StirredCell(double diameter) {
         super(diameter);
-
     }
 
+    /**
+     * <p>
+     * Constructor for StirredCell.
+     * </p>
+     *
+     * @param diameter a double
+     * @param roughness a double
+     */
     public StirredCell(double diameter, double roughness) {
         super(diameter, roughness);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public StirredCell clone() {
         StirredCell clonedPipe = null;
         try {
             clonedPipe = (StirredCell) super.clone();

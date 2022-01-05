@@ -9,40 +9,66 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
-
+/**
+ * <p>StirredCellNode class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class StirredCellNode extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
 
-    private double[] stirrerRate = { 1.0, 1.0 }, stirrerDiameter = { 1.0, 1.0 };
+    private double[] stirrerRate = {1.0, 1.0}, stirrerDiameter = {1.0, 1.0};
     private double dt = 1.0;
 
+    /**
+     * <p>Constructor for StirredCellNode.</p>
+     */
     public StirredCellNode() {
         this.flowNodeType = "stirred cell";
     }
 
+    /**
+     * <p>Constructor for StirredCellNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public StirredCellNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stirred cell";
         this.interphaseTransportCoefficient = new InterphaseStirredCellFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
-    public StirredCellNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
+    /**
+     * <p>Constructor for StirredCellNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
+    public StirredCellNode(SystemInterface system, SystemInterface interphaseSystem,
+            GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stirred cell";
         this.interphaseTransportCoefficient = new InterphaseStirredCellFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcHydraulicDiameter() {
+    public double calcHydraulicDiameter() {
         return getGeometry().getDiameter();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcReynoldNumber() {
+    public double calcReynoldNumber() {
         reynoldsNumber[1] = Math.pow(stirrerDiameter[1], 2.0) * stirrerRate[1]
                 * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
                 / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
@@ -54,8 +80,9 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
         return reynoldsNumber[1];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public StirredCellNode clone() {
         StirredCellNode clonedSystem = null;
         try {
             clonedSystem = (StirredCellNode) super.clone();
@@ -66,19 +93,22 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         this.calcContactLength();
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void initFlowCalc() {
+    public void initFlowCalc() {
         this.init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcContactLength() {
+    public double calcContactLength() {
         wallContactLength[1] = 1.0;
         wallContactLength[0] = 1.0;
 
@@ -88,13 +118,15 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcGasLiquidContactArea() {
+    public double calcGasLiquidContactArea() {
         return pi * Math.pow(pipe.getDiameter(), 2.0) / 4.0;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void update() {
+    public void update() {
         for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
                 .getNumberOfComponents(); componentNumber++) {
             double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber)
@@ -115,8 +147,9 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
         getBulkSystem().init(1);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         StirredCellNode newNode = (StirredCellNode) this.clone();
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
             // newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);
@@ -127,8 +160,9 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
 
     /**
      * Getter for property stirrerRate.
-     * 
+     *
      * @return Value of property stirrerRate.
+     * @param i a int
      */
     public double getStirrerRate(int i) {
         return stirrerRate[i];
@@ -136,13 +170,19 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
 
     /**
      * Setter for property stirrerRate.
-     * 
+     *
      * @param stirrerRate New value of property stirrerRate.
+     * @param i a int
      */
     public void setStirrerSpeed(int i, double stirrerRate) {
         this.stirrerRate[i] = stirrerRate;
     }
 
+    /**
+     * <p>setStirrerSpeed.</p>
+     *
+     * @param stirrerRate a double
+     */
     public void setStirrerSpeed(double stirrerRate) {
         this.stirrerRate[0] = stirrerRate;
         this.stirrerRate[1] = stirrerRate;
@@ -150,7 +190,7 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
 
     /**
      * Getter for property dt.
-     * 
+     *
      * @return Value of property dt.
      */
     public double getDt() {
@@ -159,13 +199,19 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
 
     /**
      * Setter for property dt.
-     * 
+     *
      * @param dt New value of property dt.
      */
     public void setDt(double dt) {
         this.dt = dt;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         // SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
         // SystemInterface testSystem = new SystemSrkEos(313.3, 70.01325);
@@ -204,13 +250,18 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
 
     /**
      * Getter for property stirrerDiameter.
-     * 
+     *
      * @return Value of property stirrerDiameter.
      */
     public double[] getStirrerDiameter() {
         return this.stirrerDiameter;
     }
 
+    /**
+     * <p>Setter for the field <code>stirrerDiameter</code>.</p>
+     *
+     * @param stirrerDiameter a double
+     */
     public void setStirrerDiameter(double stirrerDiameter) {
         this.stirrerDiameter[0] = stirrerDiameter;
         this.stirrerDiameter[1] = stirrerDiameter;
@@ -218,11 +269,10 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
 
     /**
      * Setter for property stirrerDiameter.
-     * 
+     *
      * @param stirrerDiameter New value of property stirrerDiameter.
      */
     public void setStirrerDiameter(double[] stirrerDiameter) {
         this.stirrerDiameter = stirrerDiameter;
     }
-
 }

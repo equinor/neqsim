@@ -1,49 +1,31 @@
 /*
- * Copyright 2018 ESOL.
+ * Component.java
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Created on 8. april 2000, 23:28
  */
-
-/*
-* Component.java
-*
-* Created on 8. april 2000, 23:28
-*/
 package neqsim.thermo.component;
 
-//import thermo.component.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
-import org.apache.logging.log4j.*;
-
-abstract class Component extends Object
-        implements ComponentInterface{
-
+abstract class Component implements ComponentInterface {
     private static final long serialVersionUID = 1000;
 
-    double[] surfTensInfluenceParam = { 0.28367, -0.05164, -0.81594, 1.06810, -1.1147 };
+    double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
     protected int index, componentNumber, atractiveTermNumber = 0, numberOfAssociationSites = 0;
-    protected double logFugasityCoeffisient = 0.0, associationVolume = 0.0, associationEnergy = 0.0, aCPA = 0.0,
-            bCPA = 0.0, mCPA = 0.0, srkacentricFactor = 0.0;
-    protected String componentName = "default", referenceStateType = "solvent", associationScheme = "0",
-            antoineLiqVapPresType = null;
+    protected double logFugasityCoeffisient = 0.0, associationVolume = 0.0, associationEnergy = 0.0,
+            aCPA = 0.0, bCPA = 0.0, mCPA = 0.0, srkacentricFactor = 0.0;
+    protected String componentName = "default", referenceStateType = "solvent",
+            associationScheme = "0", antoineLiqVapPresType = null;
     private String formulae = "", CASnumber = "";
     protected Element elements = null;
-    protected boolean isTBPfraction = false, isPlusFraction = false, isNormalComponent = true, isIon = false;
+    protected boolean isTBPfraction = false, isPlusFraction = false, isNormalComponent = true,
+            isIon = false;
     private boolean isHydrateFormer = false;
     private boolean waxFormer = false;
     private String componentType = "Component";
@@ -53,18 +35,19 @@ abstract class Component extends Object
     protected double dqPuredT = 0, dqPuredTdT = 0;
     private double racketZCPA = 0;
     private double criticalCompressibilityFactor = 0.0;
-    private double volumeCorrectionT = 0.0, volumeCorrectionT_CPA = 0.0;
-    protected double criticalPressure, criticalTemperature, molarMass, acentricFactor, numberOfMoles = 0.0,
-            numberOfMolesInPhase = 0.0, normalLiquidDensity = 0;
-    protected double reducedPressure, reducedTemperature, fugasityCoeffisient, debyeDipoleMoment = 0,
-            viscosityCorrectionFactor = 0, criticalVolume = 0, racketZ = 0;
+    private double volumeCorrectionConst = 0.0, volumeCorrectionT = 0.0,
+            volumeCorrectionT_CPA = 0.0;
+    protected double criticalPressure, criticalTemperature, molarMass, acentricFactor,
+            numberOfMoles = 0.0, numberOfMolesInPhase = 0.0, normalLiquidDensity = 0;
+    protected double reducedPressure, reducedTemperature, fugasityCoeffisient,
+            debyeDipoleMoment = 0, viscosityCorrectionFactor = 0, criticalVolume = 0, racketZ = 0;
     protected double gibbsEnergyOfFormation = 0, criticalViscosity = 0.0;
     protected double referencePotential = 0, viscosityFrictionK = 1.0;
     protected int liquidViscosityModel = 0;
     protected int ionicCharge = 0;
     private double referenceEnthalpy = 0.0;
-    protected double parachorParameter = 0.0, normalBoilingPoint = 0, sphericalCoreRadius = 0.384, standardDensity = 0,
-            AntoineASolid = 0.0, AntoineBSolid = 0.0, AntoineCSolid = 0.0;
+    protected double parachorParameter = 0.0, normalBoilingPoint = 0, sphericalCoreRadius = 0.384,
+            standardDensity = 0, AntoineASolid = 0.0, AntoineBSolid = 0.0, AntoineCSolid = 0.0;
     protected double[] liquidViscosityParameter = new double[4];
     protected double[] liquidConductivityParameter = new double[3];
     protected double[] henryCoefParameter = new double[4];
@@ -72,8 +55,8 @@ abstract class Component extends Object
     protected double[] schwartzentruberParams = new double[3], matiascopemanParams = new double[3],
             matiascopemanParamsPR = new double[3], TwuCoonParams = new double[3],
             matiascopemanSolidParams = new double[3];
-    protected double lennardJonesMolecularDiameter = 0, lennardJonesEnergyParameter = 0, stokesCationicDiameter = 0,
-            paulingAnionicDiameter = 0;
+    protected double lennardJonesMolecularDiameter = 0, lennardJonesEnergyParameter = 0,
+            stokesCationicDiameter = 0, paulingAnionicDiameter = 0;
     protected double K, z;
     protected double x = 0;
     private int orginalNumberOfAssociationSites = 0;
@@ -106,22 +89,48 @@ abstract class Component extends Object
     static Logger logger = LogManager.getLogger(Component.class);
 
     /**
-     * Creates new Component
+     * <p>
+     * Constructor for Component.
+     * </p>
      */
     // Class methods
-    public Component() {
-    }
+    public Component() {}
 
+    /**
+     * <p>
+     * Constructor for Component.
+     * </p>
+     *
+     * @param number a int
+     * @param moles a double
+     */
     public Component(int number, double moles) {
-
         numberOfMoles = moles;
-
     }
 
+    /**
+     * <p>
+     * Constructor for Component.
+     * </p>
+     *
+     * @param moles a double
+     */
     public Component(double moles) {
         numberOfMoles = moles;
     }
 
+    /**
+     * <p>
+     * Constructor for Component.
+     * </p>
+     *
+     * @param number a int
+     * @param TC a double
+     * @param PC a double
+     * @param M a double
+     * @param a a double
+     * @param moles a double
+     */
     public Component(int number, double TC, double PC, double M, double a, double moles) {
         criticalPressure = PC;
         criticalTemperature = TC;
@@ -130,12 +139,23 @@ abstract class Component extends Object
         numberOfMoles = moles;
     }
 
+    /**
+     * <p>
+     * Constructor for Component.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public Component(String component_name, double moles, double molesInPhase, int compnumber) {
         createComponent(component_name, moles, molesInPhase, compnumber);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void insertComponentIntoDatabase(String databaseName) {
+    public void insertComponentIntoDatabase(String databaseName) {
         databaseName = "comptemp";
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         try {
@@ -144,18 +164,20 @@ abstract class Component extends Object
                 isW = 1;
             }
             if (NeqSimDataBase.createTemporaryTables()) {
-                database.execute("insert into comptemp VALUES (" + (1000 + componentNumber) + ", '" + componentName
-                        + "', '00-00-0','" + getComponentType() + "', " + (1000 + componentNumber) + ", 'HC', "
-                        + (molarMass * 1000.0) + ", " + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC()
-                        + ", " + getAcentricFactor() + "," + (getNormalBoilingPoint() - 273.15)
-                        + ", 39.948, 74.9, 'Classic', 0, " + getCpA() + ", " + getCpB() + ", " + getCpC() + ", "
-                        + getCpD() + ", " + getCpE()
+                database.execute("insert into comptemp VALUES (" + (1000 + componentNumber) + ", '"
+                        + componentName + "', '00-00-0','" + getComponentType() + "', "
+                        + (1000 + componentNumber) + ", 'HC', " + (molarMass * 1000.0) + ", "
+                        + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", "
+                        + getAcentricFactor() + "," + (getNormalBoilingPoint() - 273.15)
+                        + ", 39.948, 74.9, 'Classic', 0, " + getCpA() + ", " + getCpB() + ", "
+                        + getCpC() + ", " + getCpD() + ", " + getCpE()
                         + ", 'log', 5.2012, 1936.281, -20.143, -1.23303, 1000, 1.8, 0.076, 0.0, 0.0, 2.52, 809.1, 0, 3, -24.71, 4210, 0.0453, -3.38e-005, -229000, -19.2905, 29814.5, -0.019678, 0.000132, -3.11e-007, 0, 'solvent', 0, 0, 0, 0, 0.0789, -1.16, 0, -0.384, 0.00525, -6.37e-006, 207, "
-                        + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature() + ", "
-                        + getMeltingPointTemperature()
+                        + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature()
+                        + ", " + getMeltingPointTemperature()
                         + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
-                        + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT() + ", 0, 0,0,0,0,0,"
-                        + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
+                        + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
+                        + ", 0, 0,0,0,0,0," + isW
+                        + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
             }
             index = 1000 + componentNumber;
             CASnumber = "00-00-0";
@@ -175,8 +197,10 @@ abstract class Component extends Object
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void createComponent(String component_name, double moles, double molesInPhase, int compnumber) {
+    public void createComponent(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         componentName = component_name;
         numberOfMoles = moles;
         numberOfMolesInPhase = molesInPhase;
@@ -186,9 +210,11 @@ abstract class Component extends Object
             if (!component_name.equals("default")) {
                 try {
                     if (NeqSimDataBase.createTemporaryTables()) {
-                        dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
+                        dataSet = database.getResultSet(
+                                ("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
                     } else {
-                        dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+                        dataSet = database.getResultSet(
+                                ("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     }
                     dataSet.next();
                     dataSet.getString("ID");
@@ -196,8 +222,10 @@ abstract class Component extends Object
                 } catch (Exception e) {
                     try {
                         dataSet.close();
-                        // logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-                        dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+                        // logger.info("no parameters in tempcomp -- trying comp.. " +
+                        // component_name);
+                        dataSet = database.getResultSet(
+                                ("SELECT * FROM comp WHERE name='" + component_name + "'"));
                         dataSet.next();
                     } catch (Exception e2) {
                         throw new RuntimeException(e2);
@@ -214,8 +242,8 @@ abstract class Component extends Object
                 criticalPressure = Double.parseDouble(dataSet.getString("PC")); // G
                 acentricFactor = Double.parseDouble(dataSet.getString("acsfact")); // J
                 criticalVolume = Double.parseDouble(dataSet.getString("critvol"));
-                criticalCompressibilityFactor = criticalPressure * criticalVolume / ThermodynamicConstantsInterface.R
-                        / criticalTemperature / 10.0;
+                criticalCompressibilityFactor = criticalPressure * criticalVolume
+                        / ThermodynamicConstantsInterface.R / criticalTemperature / 10.0;
                 referenceEnthalpy = Double.parseDouble(dataSet.getString("Href"));
                 setCpA(dataSet.getDouble("CPA")); // R //S
                 setCpB(dataSet.getDouble("CPB")); // S
@@ -265,12 +293,18 @@ abstract class Component extends Object
                 liquidViscosityParameter[2] = Double.parseDouble(dataSet.getString("liqvisc3"));
                 liquidViscosityParameter[3] = Double.parseDouble(dataSet.getString("liqvisc4"));
 
-                gibbsEnergyOfFormation = Double.parseDouble(dataSet.getString("gibbsEnergyOfFormation"));
-                dielectricParameter[0] = Double.parseDouble(dataSet.getString("dielectricParameter1"));
-                dielectricParameter[1] = Double.parseDouble(dataSet.getString("dielectricParameter2"));
-                dielectricParameter[2] = Double.parseDouble(dataSet.getString("dielectricParameter3"));
-                dielectricParameter[3] = Double.parseDouble(dataSet.getString("dielectricParameter4"));
-                dielectricParameter[4] = Double.parseDouble(dataSet.getString("dielectricParameter5"));
+                gibbsEnergyOfFormation =
+                        Double.parseDouble(dataSet.getString("gibbsEnergyOfFormation"));
+                dielectricParameter[0] =
+                        Double.parseDouble(dataSet.getString("dielectricParameter1"));
+                dielectricParameter[1] =
+                        Double.parseDouble(dataSet.getString("dielectricParameter2"));
+                dielectricParameter[2] =
+                        Double.parseDouble(dataSet.getString("dielectricParameter3"));
+                dielectricParameter[3] =
+                        Double.parseDouble(dataSet.getString("dielectricParameter4"));
+                dielectricParameter[4] =
+                        Double.parseDouble(dataSet.getString("dielectricParameter5"));
 
                 ionicCharge = Integer.parseInt(dataSet.getString("ionicCharge"));
 
@@ -280,9 +314,12 @@ abstract class Component extends Object
                 henryCoefParameter[2] = Double.parseDouble(dataSet.getString("HenryCoef3"));
                 henryCoefParameter[3] = Double.parseDouble(dataSet.getString("HenryCoef4"));
 
-                schwartzentruberParams[0] = Double.parseDouble(dataSet.getString("schwartzentruber1"));
-                schwartzentruberParams[1] = Double.parseDouble(dataSet.getString("schwartzentruber2"));
-                schwartzentruberParams[2] = Double.parseDouble(dataSet.getString("schwartzentruber3"));
+                schwartzentruberParams[0] =
+                        Double.parseDouble(dataSet.getString("schwartzentruber1"));
+                schwartzentruberParams[1] =
+                        Double.parseDouble(dataSet.getString("schwartzentruber2"));
+                schwartzentruberParams[2] =
+                        Double.parseDouble(dataSet.getString("schwartzentruber3"));
 
                 matiascopemanParams[0] = Double.parseDouble(dataSet.getString("MC1"));
                 matiascopemanParams[1] = Double.parseDouble(dataSet.getString("MC2"));
@@ -300,12 +337,16 @@ abstract class Component extends Object
                 TwuCoonParams[1] = Double.parseDouble(dataSet.getString("TwuCoon2"));
                 TwuCoonParams[2] = Double.parseDouble(dataSet.getString("TwuCoon3"));
 
-                liquidConductivityParameter[0] = Double.parseDouble(dataSet.getString("liquidConductivity1"));
-                liquidConductivityParameter[1] = Double.parseDouble(dataSet.getString("liquidConductivity2"));
-                liquidConductivityParameter[2] = Double.parseDouble(dataSet.getString("liquidConductivity3"));
+                liquidConductivityParameter[0] =
+                        Double.parseDouble(dataSet.getString("liquidConductivity1"));
+                liquidConductivityParameter[1] =
+                        Double.parseDouble(dataSet.getString("liquidConductivity2"));
+                liquidConductivityParameter[2] =
+                        Double.parseDouble(dataSet.getString("liquidConductivity3"));
 
                 if (this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPA")
-                        || this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPAs")) {
+                        || this.getClass().getName()
+                                .equals("neqsim.thermo.component.ComponentSrkCPAs")) {
                     parachorParameter = Double.parseDouble(dataSet.getString("PARACHOR_CPA"));
                 } else {
                     parachorParameter = Double.parseDouble(dataSet.getString("parachor"));
@@ -315,20 +356,25 @@ abstract class Component extends Object
 
                 triplePointDensity = Double.parseDouble(dataSet.getString("triplePointDensity"));
                 triplePointPressure = Double.parseDouble(dataSet.getString("triplePointPressure"));
-                setTriplePointTemperature(Double.parseDouble(dataSet.getString("triplePointTemperature")));
-                meltingPointTemperature = Double.parseDouble(dataSet.getString("meltingPointTemperature"));
+                setTriplePointTemperature(
+                        Double.parseDouble(dataSet.getString("triplePointTemperature")));
+                meltingPointTemperature =
+                        Double.parseDouble(dataSet.getString("meltingPointTemperature"));
 
                 Hsub = Double.parseDouble(dataSet.getString("Hsub"));
 
-                setIdealGasEnthalpyOfFormation(Double.parseDouble(dataSet.getString("EnthalpyOfFormation")));
+                setIdealGasEnthalpyOfFormation(
+                        Double.parseDouble(dataSet.getString("EnthalpyOfFormation")));
                 idealGasGibsEnergyOfFormation = gibbsEnergyOfFormation;
                 idealGasAbsoluteEntropy = Double.parseDouble(dataSet.getString("AbsoluteEntropy"));
 
                 for (int i = 0; i < 5; i++) {
-                    solidDensityCoefs[i] = Double.parseDouble((dataSet.getString("solidDensityCoefs" + (i + 1))));
+                    solidDensityCoefs[i] =
+                            Double.parseDouble((dataSet.getString("solidDensityCoefs" + (i + 1))));
                 }
                 for (int i = 0; i < 5; i++) {
-                    liquidDensityCoefs[i] = Double.parseDouble((dataSet.getString("liquidDensityCoefs" + (i + 1))));
+                    liquidDensityCoefs[i] =
+                            Double.parseDouble((dataSet.getString("liquidDensityCoefs" + (i + 1))));
                 }
                 for (int i = 0; i < 5; i++) {
                     heatOfVaporizationCoefs[i] = Double
@@ -348,13 +394,15 @@ abstract class Component extends Object
 
                 if (this.getClass().getName().equals("neqsim.thermo.component.ComponentPrCPA")) {
                     // System.out.println("pr-cpa");
-                    associationVolume = Double.parseDouble(dataSet.getString("associationboundingvolume_PR"));
+                    associationVolume =
+                            Double.parseDouble(dataSet.getString("associationboundingvolume_PR"));
                     aCPA = Double.parseDouble(dataSet.getString("aCPA_PR"));
                     bCPA = Double.parseDouble(dataSet.getString("bCPA_PR"));
                     mCPA = Double.parseDouble(dataSet.getString("mCPA_PR"));
                 } else {
                     // System.out.println("srk-cpa");
-                    associationVolume = Double.parseDouble(dataSet.getString("associationboundingvolume_SRK"));
+                    associationVolume =
+                            Double.parseDouble(dataSet.getString("associationboundingvolume_SRK"));
                     aCPA = Double.parseDouble(dataSet.getString("aCPA_SRK"));
                     bCPA = Double.parseDouble(dataSet.getString("bCPA_SRK"));
                     mCPA = Double.parseDouble(dataSet.getString("mCPA_SRK"));
@@ -362,21 +410,26 @@ abstract class Component extends Object
 
                 criticalViscosity = Double.parseDouble(dataSet.getString("criticalViscosity"));
                 if (criticalViscosity < 1e-20) {
-                    criticalViscosity = 7.94830 * Math.sqrt(1e3 * molarMass) * Math.pow(criticalPressure, 2.0 / 3.0)
+                    criticalViscosity = 7.94830 * Math.sqrt(1e3 * molarMass)
+                            * Math.pow(criticalPressure, 2.0 / 3.0)
                             / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
                 }
                 mSAFTi = Double.parseDouble(dataSet.getString("mSAFT"));
                 sigmaSAFTi = Double.parseDouble(dataSet.getString("sigmaSAFT")) / 1.0e10;
                 epsikSAFT = Double.parseDouble(dataSet.getString("epsikSAFT"));
-                setAssociationVolumeSAFT(Double.parseDouble(dataSet.getString("associationboundingvolume_PCSAFT")));
-                setAssociationEnergySAFT(Double.parseDouble(dataSet.getString("associationenergy_PCSAFT")));
+                setAssociationVolumeSAFT(
+                        Double.parseDouble(dataSet.getString("associationboundingvolume_PCSAFT")));
+                setAssociationEnergySAFT(
+                        Double.parseDouble(dataSet.getString("associationenergy_PCSAFT")));
                 if (Math.abs(criticalViscosity) < 1e-12) {
-                    criticalViscosity = 7.94830 * Math.sqrt(molarMass * 1e3) * Math.pow(criticalPressure, 2.0 / 3.0)
+                    criticalViscosity = 7.94830 * Math.sqrt(molarMass * 1e3)
+                            * Math.pow(criticalPressure, 2.0 / 3.0)
                             / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
                 }
                 // System.out.println("crit visc " + criticalViscosity);
                 if (normalLiquidDensity == 0) {
-                    normalLiquidDensity = molarMass / (0.285 * Math.pow(criticalVolume, 1.048)) * 1000.0;
+                    normalLiquidDensity =
+                            molarMass / (0.285 * Math.pow(criticalVolume, 1.048)) * 1000.0;
                 }
                 if (dataSet.getString("HydrateFormer").equals("yes")) {
                     setIsHydrateFormer(true);
@@ -411,9 +464,9 @@ abstract class Component extends Object
         paulingAnionicDiameter = lennardJonesMolecularDiameter;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
-
+    public Component clone() {
         Component clonedComponent = null;
         try {
             clonedComponent = (Component) super.clone();
@@ -424,8 +477,9 @@ abstract class Component extends Object
         return clonedComponent;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void addMolesChemReac(double dn) {
+    public void addMolesChemReac(double dn) {
         numberOfMoles += dn;
         numberOfMolesInPhase += dn;
         if (numberOfMoles < 0) {
@@ -436,8 +490,9 @@ abstract class Component extends Object
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void addMolesChemReac(double dn, double totdn) {
+    public void addMolesChemReac(double dn, double totdn) {
         numberOfMoles += totdn;
         numberOfMolesInPhase += dn;
 
@@ -449,16 +504,18 @@ abstract class Component extends Object
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void addMoles(double dn) {
+    public void addMoles(double dn) {
         numberOfMolesInPhase += dn;
         if (numberOfMolesInPhase < 0) {
             numberOfMolesInPhase = 0;
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setProperties(ComponentInterface component) {
+    public void setProperties(ComponentInterface component) {
         x = component.getx();
         z = component.getz();
         numberOfMolesInPhase = component.getNumberOfMolesInPhase();
@@ -466,13 +523,14 @@ abstract class Component extends Object
         K = component.getK();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
-
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         if (type == 0) {
             z = numberOfMoles / totalNumberOfMoles;
-            K = Math.exp(Math.log(criticalPressure / pressure)
-                    + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
+            K = Math.exp(Math.log(criticalPressure / pressure) + 5.373 * (1.0 + srkacentricFactor)
+                    * (1.0 - criticalTemperature / temperature));
             x = z;
             // System.out.println("K " + K);
         }
@@ -481,288 +539,351 @@ abstract class Component extends Object
         z = numberOfMoles / totalNumberOfMoles;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Element getElements() {
+    public Element getElements() {
         if (elements == null) {
             elements = new Element(componentName);
         }
         return elements;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-            int numberOfComponents, int type) {
-    }
+    public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
+            int numberOfComponents, int type) {}
 
+    /** {@inheritDoc} */
     @Override
-	public final double getx() {
+    public final double getx() {
         return x;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getz() {
+    public final double getz() {
         return z;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setz(double z) {
+    public final void setz(double z) {
         this.z = z;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getReferencePotential() {
+    public final double getReferencePotential() {
         return referencePotential;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setReferencePotential(double ref) {
+    public final void setReferencePotential(double ref) {
         this.referencePotential = ref;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getK() {
+    public final double getK() {
         return K;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getHeatOfFusion() {
+    public final double getHeatOfFusion() {
         return heatOfFusion;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getHeatOfVapourization(double temp) {
-        return heatOfVaporizationCoefs[0] + heatOfVaporizationCoefs[1] * temp + heatOfVaporizationCoefs[2] * temp * temp
-                + heatOfVaporizationCoefs[3] * temp * temp * temp * heatOfVaporizationCoefs[4] * temp * temp * temp
-                        * temp; // maa settes paa rett form
+    public double getHeatOfVapourization(double temp) {
+        return heatOfVaporizationCoefs[0] + heatOfVaporizationCoefs[1] * temp
+                + heatOfVaporizationCoefs[2] * temp * temp + heatOfVaporizationCoefs[3] * temp
+                        * temp * temp * heatOfVaporizationCoefs[4] * temp * temp * temp * temp; // maa
+                                                                                                // settes
+                                                                                                // paa
+                                                                                                // rett
+                                                                                                // form
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getTripplePointDensity() {
+    public final double getTripplePointDensity() {
         return triplePointDensity;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getTriplePointPressure() {
+    public final double getTriplePointPressure() {
         return triplePointPressure;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getTriplePointTemperature() {
+    public final double getTriplePointTemperature() {
         return triplePointTemperature;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getMeltingPointTemperature() {
+    public final double getMeltingPointTemperature() {
         return meltingPointTemperature;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getIdealGasEnthalpyOfFormation() {
+    public final double getIdealGasEnthalpyOfFormation() {
         return idealGasEnthalpyOfFormation;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getIdealGasGibsEnergyOfFormation() {
+    public final double getIdealGasGibsEnergyOfFormation() {
         return idealGasGibsEnergyOfFormation;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getIdealGasAbsoluteEntropy() {
+    public final double getIdealGasAbsoluteEntropy() {
         return idealGasAbsoluteEntropy;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getTC() {
+    public final double getTC() {
         return criticalTemperature;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setTC(double val) {
+    public final void setTC(double val) {
         criticalTemperature = val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setPC(double val) {
+    public final void setPC(double val) {
         criticalPressure = val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final String getComponentName() {
+    public final String getComponentName() {
         return componentName;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final String getReferenceStateType() {
+    public final String getReferenceStateType() {
         return referenceStateType;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getPC() {
+    public final double getPC() {
         return criticalPressure;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getGibbsEnergyOfFormation() {
+    public double getGibbsEnergyOfFormation() {
         return gibbsEnergyOfFormation;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getDiElectricConstant(double temperature) {
-        return dielectricParameter[0] + dielectricParameter[1] / temperature + dielectricParameter[2] * temperature
+    public double getDiElectricConstant(double temperature) {
+        return dielectricParameter[0] + dielectricParameter[1] / temperature
+                + dielectricParameter[2] * temperature
                 + dielectricParameter[3] * temperature * temperature
                 + dielectricParameter[4] * Math.pow(temperature, 3.0);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getDiElectricConstantdT(double temperature) {
+    public double getDiElectricConstantdT(double temperature) {
         return -dielectricParameter[1] / Math.pow(temperature, 2.0) + dielectricParameter[2]
                 + 2.0 * dielectricParameter[3] * temperature
                 + 3.0 * dielectricParameter[4] * Math.pow(temperature, 2.0);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getDiElectricConstantdTdT(double temperature) {
-        return 2.0 * dielectricParameter[1] / Math.pow(temperature, 3.0) + 2.0 * dielectricParameter[3]
+    public double getDiElectricConstantdTdT(double temperature) {
+        return 2.0 * dielectricParameter[1] / Math.pow(temperature, 3.0)
+                + 2.0 * dielectricParameter[3]
                 + 6.0 * dielectricParameter[4] * Math.pow(temperature, 1.0);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getDebyeDipoleMoment() {
+    public double getDebyeDipoleMoment() {
         return debyeDipoleMoment;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getIonicCharge() {
+    public final double getIonicCharge() {
         return ionicCharge;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setViscosityAssociationFactor(double val) {
+    public final void setViscosityAssociationFactor(double val) {
         viscosityCorrectionFactor = val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getRacketZ() {
+    public final double getRacketZ() {
         return racketZ;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getVolumeCorrection() {
-        return 0;
+    public double getVolumeCorrectionConst() {
+        return volumeCorrectionConst;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getNormalLiquidDensity() {
+    public double getNormalLiquidDensity() {
         return normalLiquidDensity;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getViscosityCorrectionFactor() {
+    public double getViscosityCorrectionFactor() {
         return viscosityCorrectionFactor;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getCriticalVolume() {
+    public double getCriticalVolume() {
         return criticalVolume;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final int getLiquidViscosityModel() {
+    public final int getLiquidViscosityModel() {
         return liquidViscosityModel;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getParachorParameter() {
+    public final double getParachorParameter() {
         return parachorParameter;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setParachorParameter(double parachorParameter) {
+    public final void setParachorParameter(double parachorParameter) {
         this.parachorParameter = parachorParameter;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setLiquidViscosityModel(int modelNumber) {
+    public final void setLiquidViscosityModel(int modelNumber) {
         liquidViscosityModel = modelNumber;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setLiquidViscosityParameter(double number, int i) {
+    public final void setLiquidViscosityParameter(double number, int i) {
         liquidViscosityParameter[i] = number;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getLiquidViscosityParameter(int i) {
+    public final double getLiquidViscosityParameter(int i) {
         return liquidViscosityParameter[i];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setLiquidConductivityParameter(double number, int i) {
+    public void setLiquidConductivityParameter(double number, int i) {
         liquidConductivityParameter[i] = number;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getLiquidConductivityParameter(int i) {
+    public double getLiquidConductivityParameter(int i) {
         return liquidConductivityParameter[i];
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Units in m*e10
      */
     @Override
-	public double getLennardJonesMolecularDiameter() {
+    public double getLennardJonesMolecularDiameter() {
         return lennardJonesMolecularDiameter;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getLennardJonesEnergyParameter() {
+    public double getLennardJonesEnergyParameter() {
         return lennardJonesEnergyParameter;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getHsub() {
+    public double getHsub() {
         return Hsub;
     }
 
     /**
-     * Calculates the pure comonent solid vapor pressure (bar) with the C-C
-     * equation, based on Hsub Should only be used in the valid temperature range
-     * below the triple point (specified in component database).
+     * {@inheritDoc}
+     *
+     * Calculates the pure comonent solid vapor pressure (bar) with the C-C equation, based on Hsub
+     * Should only be used in the valid temperature range below the triple point (specified in
+     * component database).
      */
     @Override
-	public double getCCsolidVaporPressure(double temperature) {
-        return triplePointPressure * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
+    public double getCCsolidVaporPressure(double temperature) {
+        return triplePointPressure
+                * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
     }
 
     /**
-     * Calculates the DT of pure comonent solid vapor pressure (bar) with the C-C
-     * equation, based on Hsub Should only be used in the valid temperature range
-     * below the triple point (specified in component database).
+     * {@inheritDoc}
+     *
+     * Calculates the DT of pure comonent solid vapor pressure (bar) with the C-C equation, based on
+     * Hsub Should only be used in the valid temperature range below the triple point (specified in
+     * component database).
      */
     @Override
-	public double getCCsolidVaporPressuredT(double temperature) {
+    public double getCCsolidVaporPressuredT(double temperature) {
         return triplePointPressure * Hsub / R * (1.0 / (temperature * temperature))
                 * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
     }
 
     /**
-     * Calculates the pure component solid density in kg/liter Should only be used
-     * in the valid temperature range (specified in component database).
+     * {@inheritDoc}
+     *
+     * Calculates the pure component solid density in kg/liter Should only be used in the valid
+     * temperature range (specified in component database).
      */
     @Override
-	public double getPureComponentSolidDensity(double temperature) {
-        return molarMass * 1000.0 * (solidDensityCoefs[0] + solidDensityCoefs[1] * Math.pow(temperature, 1.0)
-                + solidDensityCoefs[2] * Math.pow(temperature, 2.0) + solidDensityCoefs[3] * Math.pow(temperature, 3.0)
-                + solidDensityCoefs[4] * Math.pow(temperature, 4.0));
+    public double getPureComponentSolidDensity(double temperature) {
+        return molarMass * 1000.0
+                * (solidDensityCoefs[0] + solidDensityCoefs[1] * Math.pow(temperature, 1.0)
+                        + solidDensityCoefs[2] * Math.pow(temperature, 2.0)
+                        + solidDensityCoefs[3] * Math.pow(temperature, 3.0)
+                        + solidDensityCoefs[4] * Math.pow(temperature, 4.0));
     }
 
     /**
-     * Calculates the pure component liquid density in kg/liter Should only be used
-     * in the valid temperature range (specified in component database). This method
-     * seems to give bad results at the moment
+     * {@inheritDoc}
+     *
+     * Calculates the pure component liquid density in kg/liter Should only be used in the valid
+     * temperature range (specified in component database). This method seems to give bad results at
+     * the moment
      */
     @Override
-	public double getPureComponentLiquidDensity(double temperature) {
+    public double getPureComponentLiquidDensity(double temperature) {
         return molarMass * 1000.0
                 * (liquidDensityCoefs[0] + liquidDensityCoefs[1] * Math.pow(temperature, 1.0)
                         + liquidDensityCoefs[2] * Math.pow(temperature, 2.0)
@@ -773,18 +894,23 @@ abstract class Component extends Object
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Calculates the pure comonent heat of vaporization in J/mol
      */
     @Override
-	public double getPureComponentHeatOfVaporization(double temperature) {
+    public double getPureComponentHeatOfVaporization(double temperature) {
         return 1.0e-3 * heatOfVaporizationCoefs[0]
                 * Math.pow((1.0 - temperature / criticalTemperature),
-                        heatOfVaporizationCoefs[1] + heatOfVaporizationCoefs[2] * temperature / criticalTemperature
-                                + heatOfVaporizationCoefs[3] * Math.pow(temperature / criticalTemperature, 2.0));
+                        heatOfVaporizationCoefs[1]
+                                + heatOfVaporizationCoefs[2] * temperature / criticalTemperature
+                                + heatOfVaporizationCoefs[3]
+                                        * Math.pow(temperature / criticalTemperature, 2.0));
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setx(double newx) {
+    public final void setx(double newx) {
         if (Double.isNaN(newx) || Double.isInfinite(newx)) {
             return;
         }
@@ -799,166 +925,204 @@ abstract class Component extends Object
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setNumberOfmoles(double newmoles) {
+    public final void setNumberOfmoles(double newmoles) {
         numberOfMoles = newmoles;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setNumberOfMolesInPhase(double totmoles) {
+    public final void setNumberOfMolesInPhase(double totmoles) {
         numberOfMolesInPhase = totmoles * x;
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getNumberOfmoles() {
+    public final double getNumberOfmoles() {
         return this.numberOfMoles;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getMolarMass() {
+    public final double getMolarMass() {
         return this.molarMass;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getNumberOfMolesInPhase() {
+    public final double getNumberOfMolesInPhase() {
         return this.numberOfMolesInPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getRate(String unitName) {
-        neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(numberOfMolesInPhase, "mol/sec", molarMass,
-                normalLiquidDensity, normalBoilingPoint);
+    public double getRate(String unitName) {
+        neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(numberOfMolesInPhase, "mol/sec",
+                molarMass, normalLiquidDensity, normalBoilingPoint);
         double val = unit.getValue(unitName);
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setK(double newK) {
+    public final void setK(double newK) {
         K = newK;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getFugasityCoeffisient() {
+    public final double getFugasityCoeffisient() {
         return fugasityCoeffisient;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getFugasityCoefficient() {
+    public final double getFugasityCoefficient() {
         return getFugasityCoeffisient();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double fugcoef(PhaseInterface phase) {
-        fugasityCoeffisient = 1.0;// this.fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    public double fugcoef(PhaseInterface phase) {
+        fugasityCoeffisient = 1.0;// this.fugcoef(phase, phase.getNumberOfComponents(),
+                                  // phase.getTemperature(),
                                   // phase.getPressure());
         logFugasityCoeffisient = Math.log(fugasityCoeffisient);
         return fugasityCoeffisient;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double logfugcoefdT(PhaseInterface phase) {
+    public double logfugcoefdT(PhaseInterface phase) {
         dfugdt = 0.0;// this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(),
                      // phase.getTemperature(), phase.getPressure());
         return dfugdt;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double logfugcoefdP(PhaseInterface phase) {
+    public double logfugcoefdP(PhaseInterface phase) {
         dfugdp = 0.0;// this.fugcoefDiffPres(phase, phase.getNumberOfComponents(),
                      // phase.getTemperature(), phase.getPressure());
         return dfugdp;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double[] logfugcoefdN(PhaseInterface phase) {
+    public double[] logfugcoefdN(PhaseInterface phase) {
         // dfugdn = this.fugcoefDiffN(phase, phase.getNumberOfComponents(),
         // phase.getTemperature(), phase.getPressure());
         return new double[2];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double logfugcoefdNi(PhaseInterface phase, int k) {
+    public double logfugcoefdNi(PhaseInterface phase, int k) {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getdfugdt() {
+    public double getdfugdt() {
         return dfugdt;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getdfugdp() {
+    public double getdfugdp() {
         return dfugdp;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setdfugdt(double val) {
+    public void setdfugdt(double val) {
         dfugdt = val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setdfugdp(double val) {
+    public void setdfugdp(double val) {
         dfugdp = val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setdfugdn(int i, double val) {
+    public void setdfugdn(int i, double val) {
         dfugdn[i] = val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setdfugdx(int i, double val) {
+    public void setdfugdx(int i, double val) {
         dfugdx[i] = val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getAcentricFactor() {
+    public double getAcentricFactor() {
         return acentricFactor;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getdfugdx(int i) {
+    public double getdfugdx(int i) {
         return dfugdx[i];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getdfugdn(int i) {
+    public double getdfugdn(int i) {
         return dfugdn[i];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public int getIndex() {
+    public int getIndex() {
         return index;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public int getComponentNumber() {
+    public int getComponentNumber() {
         return componentNumber;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getGibbsEnergy(double temperature, double pressure) {
+    public final double getGibbsEnergy(double temperature, double pressure) {
         return getEnthalpy(temperature) - temperature * getEntropy(temperature, pressure);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getChemicalPotentialIdealReference(PhaseInterface phase) {
-        return (getHID(phase.getTemperature()) - phase.getTemperature() * getIdEntropy(phase.getTemperature()));
+    public final double getChemicalPotentialIdealReference(PhaseInterface phase) {
+        return (getHID(phase.getTemperature())
+                - phase.getTemperature() * getIdEntropy(phase.getTemperature()));
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getChemicalPotential(double temperature, double pressure) {
+    public final double getChemicalPotential(double temperature, double pressure) {
         return getGibbsEnergy(temperature, pressure) / numberOfMolesInPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getChemicalPotential(PhaseInterface phase) {
+    public double getChemicalPotential(PhaseInterface phase) {
         return getGibbsEnergy(phase.getTemperature(), phase.getPressure()) / numberOfMolesInPhase;
         // return getGresTV;
-
     }
 
+    /**
+     * <p>
+     * getFugacitydN.
+     * </p>
+     *
+     * @param i a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public final double getFugacitydN(int i, PhaseInterface phase) {
         double tempFug = 0.0;
         if (i == componentNumber) {
@@ -967,67 +1131,94 @@ abstract class Component extends Object
         return getdfugdn(i) + tempFug - 1.0 / phase.getNumberOfMolesInPhase();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getChemicalPotentialdNTV(int i, PhaseInterface phase) {
-        return getChemicalPotentialdN(i, phase) - getVoli() * phase.getComponent(i).getVoli() * phase.getdPdVTn();
+    public final double getChemicalPotentialdNTV(int i, PhaseInterface phase) {
+        return getChemicalPotentialdN(i, phase)
+                - getVoli() * phase.getComponent(i).getVoli() * phase.getdPdVTn();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getChemicalPotentialdN(int i, PhaseInterface phase) {
+    public final double getChemicalPotentialdN(int i, PhaseInterface phase) {
         return R * phase.getTemperature() * getFugacitydN(i, phase);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getChemicalPotentialdP() {
+    public final double getChemicalPotentialdP() {
         return voli;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getChemicalPotentialdT(PhaseInterface phase) {
+    public final double getChemicalPotentialdT(PhaseInterface phase) {
         return -getEntropy(phase.getTemperature(), phase.getPressure()) / numberOfMolesInPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getChemicalPotentialdV(PhaseInterface phase) {
+    public final double getChemicalPotentialdV(PhaseInterface phase) {
         return getChemicalPotentialdP() * phase.getdPdVTn();
     }
 
+    /**
+     * <p>
+     * getChemicalPotentialdP.
+     * </p>
+     *
+     * @param i a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public final double getChemicalPotentialdP(int i, PhaseInterface phase) {
         return R * phase.getTemperature() * getFugacitydN(i, phase);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setComponentNumber(int numb) {
+    public void setComponentNumber(int numb) {
         componentNumber = numb;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getAntoineVaporPressure(double temp) {
-
+    public double getAntoineVaporPressure(double temp) {
         if (antoineLiqVapPresType.equals("pow10")) {
-            return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15))); // equation and parameter from
-                                                                                       // properties o liquids and
-                                                                                       // gases (poling 5th ed)
+            return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15))); // equation
+                                                                                       // and
+                                                                                       // parameter
+                                                                                       // from
+                                                                                       // properties
+                                                                                       // o liquids
+                                                                                       // and
+                                                                                       // gases
+                                                                                       // (poling
+                                                                                       // 5th ed)
         } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
-            return Math.exp(AntoineA - (AntoineB / (temp + AntoineC))); // equation and parameter from properties o
-                                                                        // liquids and gases (poling 5th ed)
+            return Math.exp(AntoineA - (AntoineB / (temp + AntoineC))); // equation and parameter
+                                                                        // from properties o
+                                                                        // liquids and gases (poling
+                                                                        // 5th ed)
         } else if (Math.abs(AntoineE) > 1e-12) {
-            return Math
-                    .exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp) + AntoineD * Math.pow(temp, AntoineE))
-                    / 100000;
+            return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp)
+                    + AntoineD * Math.pow(temp, AntoineE)) / 100000;
         } else {
             double x = 1 - (temp / criticalTemperature);
-            return (Math.exp(Math.pow((1 - x), -1) * (AntoineA * x + AntoineB * Math.pow(x, 1.5)
-                    + AntoineC * Math.pow(x, 3) + AntoineD * Math.pow(x, 6))) * criticalPressure);
+            return (Math
+                    .exp(Math.pow((1 - x), -1) * (AntoineA * x + AntoineB * Math.pow(x, 1.5)
+                            + AntoineC * Math.pow(x, 3) + AntoineD * Math.pow(x, 6)))
+                    * criticalPressure);
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getAntoineVaporPressuredT(double temp) {
+    public double getAntoineVaporPressuredT(double temp) {
         if (antoineLiqVapPresType.equals("pow10")) {
             // (10^ (A - B/(C + x - 5463/20)) *B*log(10))/(C + x - 5463/20)^2
-            double ans = (Math.pow(AntoineA - AntoineB / (AntoineC + temp - 273.15), 10.0) * AntoineB * Math.log(10.0))
-                    / Math.pow((AntoineC + temp - 273.15), 2.0);
+            double ans = (Math.pow(AntoineA - AntoineB / (AntoineC + temp - 273.15), 10.0)
+                    * AntoineB * Math.log(10.0)) / Math.pow((AntoineC + temp - 273.15), 2.0);
             return ans;
         } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
             // (B*exp(A - B/(C + x)))/(C + x)^2
@@ -1039,13 +1230,14 @@ abstract class Component extends Object
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getAntoineVaporTemperature(double pres) {
+    public double getAntoineVaporTemperature(double pres) {
         double nyPres = 0, nyTemp = criticalTemperature * 0.7;
         int iter = 0;
         do {
             iter++;
-            //
+
             nyPres = getAntoineVaporPressure(nyTemp);
             nyTemp -= (nyPres - pres);
             // nyTemp = nyTemp-(nyPres - pres)/getAntoineVaporPressuredT(nyTemp);
@@ -1055,159 +1247,175 @@ abstract class Component extends Object
         return nyTemp;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getHresTP(double temperature) {
+    public final double getHresTP(double temperature) {
         return R * temperature * (-temperature * getdfugdt());
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getGresTP(double temperature) {
+    public final double getGresTP(double temperature) {
         return R * temperature * (Math.log(getFugasityCoeffisient()));
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getSresTP(double temperature) {
+    public final double getSresTP(double temperature) {
         return (getHresTP(temperature) - getGresTP(temperature)) / temperature;
     }
 
-    /**
-     * @param temperature
-     * @return ideal gas Cp for the component in the specific phase [J/molK]
-     */
+    /** {@inheritDoc} */
     @Override
-	public final double getCp0(double temperature) {
+    public final double getCp0(double temperature) {
         return getCpA() + getCpB() * temperature + getCpC() * Math.pow(temperature, 2)
                 + getCpD() * Math.pow(temperature, 3) + getCpE() * Math.pow(temperature, 4);
     }
 
-    /**
-     * @param temperature
-     * @return ideal gas Cv for the component in the specific phase [J/molK]
-     */
+    /** {@inheritDoc} */
     @Override
-	public final double getCv0(double temperature) {
+    public final double getCv0(double temperature) {
         return getCpA() + getCpB() * temperature + getCpC() * Math.pow(temperature, 2)
                 + getCpD() * Math.pow(temperature, 3) + getCpE() * Math.pow(temperature, 4) - R;
     }
 
     // integralet av Cp0 mhp T
+    /** {@inheritDoc} */
     @Override
-	public final double getHID(double T) {
+    public final double getHID(double T) {
         return 0 * getIdealGasEnthalpyOfFormation()
                 + (getCpA() * T + 1.0 / 2.0 * getCpB() * T * T + 1.0 / 3.0 * getCpC() * T * T * T
                         + 1.0 / 4.0 * getCpD() * T * T * T * T)
                 + 1.0 / 5.0 * getCpE() * T * T * T * T * T
-                - (getCpA() * referenceTemperature + 1.0 / 2.0 * getCpB() * referenceTemperature * referenceTemperature
-                        + 1.0 / 3.0 * getCpC() * referenceTemperature * referenceTemperature * referenceTemperature
-                        + 1.0 / 4.0 * getCpD() * referenceTemperature * referenceTemperature * referenceTemperature
+                - (getCpA() * referenceTemperature
+                        + 1.0 / 2.0 * getCpB() * referenceTemperature * referenceTemperature
+                        + 1.0 / 3.0 * getCpC() * referenceTemperature * referenceTemperature
                                 * referenceTemperature
-                        + 1.0 / 5.0 * getCpE() * referenceTemperature * referenceTemperature * referenceTemperature
-                                * referenceTemperature * referenceTemperature);
+                        + 1.0 / 4.0 * getCpD() * referenceTemperature * referenceTemperature
+                                * referenceTemperature * referenceTemperature
+                        + 1.0 / 5.0 * getCpE() * referenceTemperature * referenceTemperature
+                                * referenceTemperature * referenceTemperature
+                                * referenceTemperature);
     }
 
-    /**
-     * @param temperature
-     * @return enthalpy The function gives the total enthalpy for the component in
-     *         the specific phase [J]
-     */
+    /** {@inheritDoc} */
     @Override
-	public final double getEnthalpy(double temperature) {
-        return getHID(temperature) * numberOfMolesInPhase + getHresTP(temperature) * numberOfMolesInPhase;
+    public final double getEnthalpy(double temperature) {
+        return getHID(temperature) * numberOfMolesInPhase
+                + getHresTP(temperature) * numberOfMolesInPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getIdEntropy(double temperature) {
+    public double getIdEntropy(double temperature) {
         return (getCpE() * temperature * temperature * temperature * temperature / 4.0
-                + getCpD() * temperature * temperature * temperature / 3.0 + getCpC() * temperature * temperature / 2.0
-                + getCpB() * temperature + getCpA() * Math.log(temperature)
-                - getCpE() * referenceTemperature * referenceTemperature * referenceTemperature * referenceTemperature
-                        / 4.0
-                - getCpD() * referenceTemperature * referenceTemperature * referenceTemperature / 3.0
-                - getCpC() * referenceTemperature * referenceTemperature / 2.0 - getCpB() * referenceTemperature
-                - getCpA() * Math.log(referenceTemperature));
+                + getCpD() * temperature * temperature * temperature / 3.0
+                + getCpC() * temperature * temperature / 2.0 + getCpB() * temperature
+                + getCpA() * Math.log(temperature)
+                - getCpE() * referenceTemperature * referenceTemperature * referenceTemperature
+                        * referenceTemperature / 4.0
+                - getCpD() * referenceTemperature * referenceTemperature * referenceTemperature
+                        / 3.0
+                - getCpC() * referenceTemperature * referenceTemperature / 2.0
+                - getCpB() * referenceTemperature - getCpA() * Math.log(referenceTemperature));
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getEntropy(double temperature, double pressure) {
+    public double getEntropy(double temperature, double pressure) {
         if (x < 1e-100) {
             return 0.0;
         }
-        return numberOfMolesInPhase
-                * (getIdEntropy(temperature) - (R * Math.log(pressure / referencePressure)) - R * Math.log(x))
+        return numberOfMolesInPhase * (getIdEntropy(temperature)
+                - (R * Math.log(pressure / referencePressure)) - R * Math.log(x))
                 + getSresTP(temperature) * numberOfMolesInPhase; // 1 bor vaere Z
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final String getName() {
+    public final String getName() {
         return componentName;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setAcentricFactor(double val) {
+    public void setAcentricFactor(double val) {
         acentricFactor = val;
         getAtractiveTerm().init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setRacketZ(double val) {
+    public void setRacketZ(double val) {
         racketZ = val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setAtractiveTerm(int i) {
+    public void setAtractiveTerm(int i) {
         atractiveTermNumber = i;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public AtractiveTermInterface getAtractiveTerm() {
+    public AtractiveTermInterface getAtractiveTerm() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double[] getSchwartzentruberParams() {
+    public final double[] getSchwartzentruberParams() {
         return schwartzentruberParams;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setSchwartzentruberParams(int i, double param) {
+    public final void setSchwartzentruberParams(int i, double param) {
         schwartzentruberParams[i] = param;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double[] getTwuCoonParams() {
+    public final double[] getTwuCoonParams() {
         return TwuCoonParams;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final void setTwuCoonParams(int i, double param) {
+    public final void setTwuCoonParams(int i, double param) {
         TwuCoonParams[i] = param;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure) {
+    public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure) {
         double temp1 = 0.0, temp2 = 0.0;
         double dp = phase.getPressure() / 1.0e5;
         temp1 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
         phase.setPressure(phase.getPressure() - dp);
-        phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+        phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(),
+                phase.getBeta());
         phase.getComponents()[componentNumber].fugcoef(phase);
         temp2 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
         phase.setPressure(phase.getPressure() + dp);
-        phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+        phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(),
+                phase.getBeta());
         phase.getComponents()[componentNumber].fugcoef(phase);
         dfugdp = (Math.log(temp1) - Math.log(temp2)) / dp;
         return dfugdp;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure) {
+    public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure) {
         double temp1 = 0.0, temp2 = 0.0;
         double dt = phase.getTemperature() / 1.0e6;
         temp1 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
         phase.setTemperature(phase.getTemperature() - dt);
-        phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+        phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(),
+                phase.getBeta());
         phase.getComponents()[componentNumber].fugcoef(phase);
         temp2 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
         // phase.setTemperature(phase.getTemperature()+dt);
@@ -1220,6 +1428,13 @@ abstract class Component extends Object
         return dfugdt;
     }
 
+    /**
+     * <p>
+     * getIonicDiameter.
+     * </p>
+     *
+     * @return a double
+     */
     public final double getIonicDiameter() {
         if (ionicCharge < 0) {
             return paulingAnionicDiameter;
@@ -1231,32 +1446,32 @@ abstract class Component extends Object
     }
 
     /**
-     * Getter for property stokesCationicDiameter.
+     * {@inheritDoc}
      *
-     * @return Value of property stokesCationicDiameter.
+     * Getter for property stokesCationicDiameter.
      */
     @Override
-	public double getStokesCationicDiameter() {
+    public double getStokesCationicDiameter() {
         return stokesCationicDiameter;
     }
 
     /**
-     * Setter for property stokesCationicDiameter.
+     * {@inheritDoc}
      *
-     * @param stokesCationicDiameter New value of property stokesCationicDiameter.
+     * Setter for property stokesCationicDiameter.
      */
     @Override
-	public void setStokesCationicDiameter(double stokesCationicDiameter) {
+    public void setStokesCationicDiameter(double stokesCationicDiameter) {
         this.stokesCationicDiameter = stokesCationicDiameter;
     }
 
     /**
-     * Getter for property paulingAnionicDiameter.
+     * {@inheritDoc}
      *
-     * @return Value of property paulingAnionicDiameter.
+     * Getter for property paulingAnionicDiameter.
      */
     @Override
-	public final double getPaulingAnionicDiameter() {
+    public final double getPaulingAnionicDiameter() {
         return paulingAnionicDiameter;
     }
 
@@ -1270,30 +1485,38 @@ abstract class Component extends Object
     }
 
     /**
-     * Getter for property logFugasityCoeffisient.
+     * {@inheritDoc}
      *
-     * @return Value of property logFugasityCoeffisient.
+     * Getter for property logFugasityCoeffisient.
      */
     @Override
-	public final double getLogFugasityCoeffisient() {
+    public final double getLogFugasityCoeffisient() {
         return logFugasityCoeffisient;
     }
 
     /**
-     * Getter for property atractiveTermNumber.
+     * {@inheritDoc}
      *
-     * @return Value of property atractiveTermNumber.
+     * Getter for property atractiveTermNumber.
      */
     @Override
-	public final int getAtractiveTermNumber() {
+    public final int getAtractiveTermNumber() {
         return atractiveTermNumber;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getVoli() {
+    public double getVoli() {
         return voli;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>voli</code>.
+     * </p>
+     *
+     * @param molarVol a double
+     */
     public void setVoli(double molarVol) {
         voli = molarVol;
     }
@@ -1309,138 +1532,154 @@ abstract class Component extends Object
     }
 
     /**
-     * Getter for property matiascopemanParams.
+     * {@inheritDoc}
      *
-     * @return Value of property matiascopemanParams.
+     * Getter for property matiascopemanParams.
      */
     @Override
-	public final double[] getMatiascopemanParams() {
+    public final double[] getMatiascopemanParams() {
         return matiascopemanParams;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>matiascopemanParamsPR</code>.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public final double[] getMatiascopemanParamsPR() {
         return matiascopemanParamsPR;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>matiascopemanParamsPR</code>.
+     * </p>
+     *
+     * @param index a int
+     * @param matiascopemanParams a double
+     */
     public void setMatiascopemanParamsPR(int index, double matiascopemanParams) {
         this.matiascopemanParamsPR[index] = matiascopemanParams;
     }
 
     /**
-     * Indexed setter for property matiascopemanParams.
+     * {@inheritDoc}
      *
-     * @param index               Index of the property.
-     * @param matiascopemanParams New value of the property at <CODE>index</CODE>.
+     * Indexed setter for property matiascopemanParams.
      */
     @Override
-	public void setMatiascopemanParams(int index, double matiascopemanParams) {
+    public void setMatiascopemanParams(int index, double matiascopemanParams) {
         this.matiascopemanParams[index] = matiascopemanParams;
     }
 
     /**
-     * Setter for property matiascopemanParams.
+     * {@inheritDoc}
      *
-     * @param matiascopemanParams New value of property matiascopemanParams.
+     * Setter for property matiascopemanParams.
      */
     @Override
-	public void setMatiascopemanParams(double[] matiascopemanParams) {
+    public void setMatiascopemanParams(double[] matiascopemanParams) {
         this.matiascopemanParams = matiascopemanParams;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setFugacityCoefficient(double val) {
+    public void setFugacityCoefficient(double val) {
         fugasityCoeffisient = val;
         logFugasityCoeffisient = Math.log(fugasityCoeffisient);
     }
 
     /**
-     * Getter for property numberOfAssociationSites.
+     * {@inheritDoc}
      *
-     * @return Value of property numberOfAssociationSites.
+     * Getter for property numberOfAssociationSites.
      */
     @Override
-	public final int getNumberOfAssociationSites() {
+    public final int getNumberOfAssociationSites() {
         return numberOfAssociationSites;
     }
 
     /**
-     * Setter for property numberOfAssociationSites.
+     * {@inheritDoc}
      *
-     * @param numberOfAssociationSites New value of property
-     *                                 numberOfAssociationSites.
+     * Setter for property numberOfAssociationSites.
      */
     @Override
-	public void setNumberOfAssociationSites(int numberOfAssociationSites) {
+    public void setNumberOfAssociationSites(int numberOfAssociationSites) {
         this.numberOfAssociationSites = numberOfAssociationSites;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void seta(double a) {
+    public void seta(double a) {
         logger.error("no method set a");
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setb(double b) {
+    public void setb(double b) {
         logger.error("no method set b");
     }
 
     /**
-     * Getter for property associationVolume.
+     * {@inheritDoc}
      *
-     * @return Value of property associationVolume.
+     * Getter for property associationVolume.
      */
     @Override
-	public final double getAssociationVolume() {
+    public final double getAssociationVolume() {
         return associationVolume;
     }
 
     /**
-     * Setter for property associationVolume.
+     * {@inheritDoc}
      *
-     * @param associationVolume New value of property associationVolume.
+     * Setter for property associationVolume.
      */
     @Override
-	public void setAssociationVolume(double associationVolume) {
+    public void setAssociationVolume(double associationVolume) {
         this.associationVolume = associationVolume;
     }
 
     /**
-     * Getter for property associationEnergy.
+     * {@inheritDoc}
      *
-     * @return Value of property associationEnergy.
+     * Getter for property associationEnergy.
      */
     @Override
-	public final double getAssociationEnergy() {
+    public final double getAssociationEnergy() {
         return associationEnergy;
     }
 
     /**
-     * Setter for property associationEnergy.
+     * {@inheritDoc}
      *
-     * @param associationEnergy New value of property associationEnergy.
+     * Setter for property associationEnergy.
      */
     @Override
-	public void setAssociationEnergy(double associationEnergy) {
+    public void setAssociationEnergy(double associationEnergy) {
         this.associationEnergy = associationEnergy;
     }
 
     /**
-     * Getter for property normalBoilingPoint.
+     * {@inheritDoc}
      *
-     * @return Value of property normalBoilingPoint.
+     * Getter for property normalBoilingPoint.
      */
     @Override
-	public double getNormalBoilingPoint() {
+    public double getNormalBoilingPoint() {
         return normalBoilingPoint;
     }
 
     /**
-     * Setter for property normalBoilingPoint.
+     * {@inheritDoc}
      *
-     * @param normalBoilingPoint New value of property normalBoilingPoint.
+     * Setter for property normalBoilingPoint.
      */
     @Override
-	public void setNormalBoilingPoint(double normalBoilingPoint) {
+    public void setNormalBoilingPoint(double normalBoilingPoint) {
         this.normalBoilingPoint = normalBoilingPoint;
     }
 
@@ -1463,67 +1702,68 @@ abstract class Component extends Object
     }
 
     /**
-     * Getter for property AntoineASolid.
+     * {@inheritDoc}
      *
-     * @return Value of property AntoineASolid.
+     * Getter for property AntoineASolid.
      */
     @Override
-	public double getAntoineASolid() {
+    public double getAntoineASolid() {
         return AntoineASolid;
     }
 
     /**
-     * Setter for property AntoineASolid.
+     * {@inheritDoc}
      *
-     * @param AntoineASolid New value of property AntoineASolid.
+     * Setter for property AntoineASolid.
      */
     @Override
-	public void setAntoineASolid(double AntoineASolid) {
+    public void setAntoineASolid(double AntoineASolid) {
         this.AntoineASolid = AntoineASolid;
     }
 
     /**
-     * Getter for property AntoineBSolid.
+     * {@inheritDoc}
      *
-     * @return Value of property AntoineBSolid.
+     * Getter for property AntoineBSolid.
      */
     @Override
-	public double getAntoineBSolid() {
+    public double getAntoineBSolid() {
         return AntoineBSolid;
     }
 
     /**
-     * Setter for property AntoineBSolid.
+     * {@inheritDoc}
      *
-     * @param AntoineBSolid New value of property AntoineBSolid.
+     * Setter for property AntoineBSolid.
      */
     @Override
-	public void setAntoineBSolid(double AntoineBSolid) {
+    public void setAntoineBSolid(double AntoineBSolid) {
         this.AntoineBSolid = AntoineBSolid;
     }
 
     /**
-     * Getter for property AntoineBSolid.
+     * {@inheritDoc}
      *
-     * @return Value of property AntoineBSolid.
+     * Getter for property AntoineBSolid.
      */
     @Override
-	public double getAntoineCSolid() {
+    public double getAntoineCSolid() {
         return AntoineBSolid;
     }
 
     /**
-     * Setter for property AntoineBSolid.
+     * {@inheritDoc}
      *
-     * @param AntoineBSolid New value of property AntoineBSolid.
+     * Setter for property AntoineBSolid.
      */
     @Override
-	public void setAntoineCSolid(double AntoineCSolid) {
+    public void setAntoineCSolid(double AntoineCSolid) {
         this.AntoineCSolid = AntoineCSolid;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getSolidVaporPressure(double temperature) {
+    public final double getSolidVaporPressure(double temperature) {
         if (Math.abs(AntoineCSolid) < 1e-10) {
             return Math.exp(AntoineASolid + AntoineBSolid / temperature);
         } else {
@@ -1531,107 +1771,108 @@ abstract class Component extends Object
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getSolidVaporPressuredT(double temperature) {
+    public final double getSolidVaporPressuredT(double temperature) {
         if (Math.abs(AntoineCSolid) < 1e-10) {
-            return -AntoineBSolid / (temperature * temperature) * Math.exp(AntoineASolid + AntoineBSolid / temperature);
+            return -AntoineBSolid / (temperature * temperature)
+                    * Math.exp(AntoineASolid + AntoineBSolid / temperature);
         } else {
             return AntoineBSolid * Math.log(10)
-                    * Math.pow((1 / 10), (AntoineASolid - AntoineBSolid / (temperature + AntoineCSolid)))
+                    * Math.pow((1 / 10),
+                            (AntoineASolid - AntoineBSolid / (temperature + AntoineCSolid)))
                     * Math.pow(10, AntoineASolid) / Math.pow((temperature + AntoineCSolid), 2);
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public final double getSphericalCoreRadius() {
+    public final double getSphericalCoreRadius() {
         return sphericalCoreRadius;
     }
 
     /**
-     * Setter for property componentName.
+     * {@inheritDoc}
      *
-     * @param componentName New value of property componentName.
+     * Setter for property componentName.
      */
     @Override
-	public void setComponentName(java.lang.String componentName) {
+    public void setComponentName(java.lang.String componentName) {
         this.componentName = componentName;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property lennardJonesEnergyParameter.
-     *
-     * @param lennardJonesEnergyParameter New value of property
-     *                                    lennardJonesEnergyParameter.
-     *
      */
     @Override
-	public void setLennardJonesEnergyParameter(double lennardJonesEnergyParameter) {
+    public void setLennardJonesEnergyParameter(double lennardJonesEnergyParameter) {
         this.lennardJonesEnergyParameter = lennardJonesEnergyParameter;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property lennardJonesMolecularDiameter.
-     *
-     * @param lennardJonesMolecularDiameter New value of property
-     *                                      lennardJonesMolecularDiameter.
-     *
      */
     @Override
-	public void setLennardJonesMolecularDiameter(double lennardJonesMolecularDiameter) {
+    public void setLennardJonesMolecularDiameter(double lennardJonesMolecularDiameter) {
         this.lennardJonesMolecularDiameter = lennardJonesMolecularDiameter;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property sphericalCoreRadius.
-     *
-     * @param sphericalCoreRadius New value of property sphericalCoreRadius.
-     *
      */
     @Override
-	public void setSphericalCoreRadius(double sphericalCoreRadius) {
+    public void setSphericalCoreRadius(double sphericalCoreRadius) {
         this.sphericalCoreRadius = sphericalCoreRadius;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property calcActivity.
-     *
-     * @return Value of property calcActivity.
-     *
      */
     @Override
-	public boolean calcActivity() {
+    public boolean calcActivity() {
         return calcActivity != 0;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property isTBPfraction.
-     *
-     * @return Value of property isTBPfraction.
-     *
      */
     @Override
-	public boolean isIsTBPfraction() {
+    public boolean isIsTBPfraction() {
         return isTBPfraction;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public boolean isHydrocarbon() {
+    public boolean isHydrocarbon() {
         return isIsTBPfraction() || isPlusFraction || componentType.equals("HC");
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property isTBPfraction.
-     *
-     * @param isTBPfraction New value of property isTBPfraction.
-     *
      */
     @Override
-	public void setIsTBPfraction(boolean isTBPfraction) {
+    public void setIsTBPfraction(boolean isTBPfraction) {
         setIsAllTypesFalse();
         this.isTBPfraction = isTBPfraction;
     }
 
+    /**
+     * <p>
+     * setIsAllTypesFalse.
+     * </p>
+     */
     protected void setIsAllTypesFalse() {
         this.isTBPfraction = false;
         this.isPlusFraction = false;
@@ -1640,155 +1881,143 @@ abstract class Component extends Object
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property isPlusFraction.
-     *
-     * @return Value of property isPlusFraction.
-     *
      */
     @Override
-	public boolean isIsPlusFraction() {
+    public boolean isIsPlusFraction() {
         return isPlusFraction;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property isPlusFraction.
-     *
-     * @param isPlusFraction New value of property isPlusFraction.
-     *
      */
     @Override
-	public void setIsPlusFraction(boolean isPlusFraction) {
+    public void setIsPlusFraction(boolean isPlusFraction) {
         setIsAllTypesFalse();
         this.isPlusFraction = isPlusFraction;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property isNormalComponent.
-     *
-     * @return Value of property isNormalComponent.
-     *
      */
     @Override
-	public boolean isIsNormalComponent() {
+    public boolean isIsNormalComponent() {
         return isNormalComponent;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public boolean isInert() {
+    public boolean isInert() {
         return componentType.equals("inert");
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property isNormalComponent.
-     *
-     * @param isNormalComponent New value of property isNormalComponent.
-     *
      */
     @Override
-	public void setIsNormalComponent(boolean isNormalComponent) {
+    public void setIsNormalComponent(boolean isNormalComponent) {
         setIsAllTypesFalse();
         this.isNormalComponent = isNormalComponent;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property isIon.
-     *
-     * @return Value of property isIon.
-     *
      */
     @Override
-	public boolean isIsIon() {
+    public boolean isIsIon() {
         if (componentType.equals("ion"))
             setIsIon(true);
         return isIon;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property isIon.
-     *
-     * @param isIon New value of property isIon.
-     *
      */
     @Override
-	public void setIsIon(boolean isIon) {
+    public void setIsIon(boolean isIon) {
         setIsAllTypesFalse();
         this.isIon = isIon;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property normalLiquidDensity.
-     *
-     * @param normalLiquidDensity New value of property normalLiquidDensity.
-     *
      */
     @Override
-	public void setNormalLiquidDensity(double normalLiquidDensity) {
+    public void setNormalLiquidDensity(double normalLiquidDensity) {
         this.normalLiquidDensity = normalLiquidDensity;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property molarMass.
-     *
-     * @param molarMass New value of property molarMass.
-     *
      */
     @Override
-	public void setMolarMass(double molarMass) {
+    public void setMolarMass(double molarMass) {
         this.molarMass = molarMass;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property solidCheck.
-     *
-     * @return Value of property solidCheck.
-     *
      */
     @Override
-	public final boolean doSolidCheck() {
+    public final boolean doSolidCheck() {
         return solidCheck;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property solidCheck.
-     *
-     * @param solidCheck New value of property solidCheck.
-     *
      */
     @Override
-	public void setSolidCheck(boolean solidCheck) {
+    public void setSolidCheck(boolean solidCheck) {
         this.solidCheck = solidCheck;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property associationScheme.
-     *
-     * @return Value of property associationScheme.
-     *
      */
     @Override
-	public java.lang.String getAssociationScheme() {
+    public java.lang.String getAssociationScheme() {
         return associationScheme;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property associationScheme.
-     *
-     * @param associationScheme New value of property associationScheme.
-     *
      */
     @Override
-	public void setAssociationScheme(java.lang.String associationScheme) {
+    public void setAssociationScheme(java.lang.String associationScheme) {
         this.associationScheme = associationScheme;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property componentType.
-     *
-     * @return Value of property componentType.
-     *
      */
     @Override
-	public java.lang.String getComponentType() {
+    public java.lang.String getComponentType() {
         if (isTBPfraction) {
             componentType = "TBP";
         } else if (isPlusFraction) {
@@ -1802,249 +2031,256 @@ abstract class Component extends Object
     }
 
     /**
-     * Getter for property Henrys Coeffisient. Unit is bar. ln H = C1 + C2/T + C3lnT
-     * + C4*T
+     * {@inheritDoc}
      *
-     * @return Value of property componentType.
-     *
+     * Getter for property Henrys Coeffisient. Unit is bar. ln H = C1 + C2/T + C3lnT + C4*T
      */
     @Override
-	public double getHenryCoef(double temperature) {
+    public double getHenryCoef(double temperature) {
         // System.out.println("henry " +
         // Math.exp(henryCoefParameter[0]+henryCoefParameter[1]/temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
-        return Math
-                .exp(henryCoefParameter[0] + henryCoefParameter[1] / temperature
-                        + henryCoefParameter[2] * Math.log(temperature) + henryCoefParameter[3] * temperature)
-                * 0.01802 * 100;
+        return Math.exp(henryCoefParameter[0] + henryCoefParameter[1] / temperature
+                + henryCoefParameter[2] * Math.log(temperature)
+                + henryCoefParameter[3] * temperature) * 0.01802 * 100;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getHenryCoefdT(double temperature) {
+    public double getHenryCoefdT(double temperature) {
         return getHenryCoef(temperature) * (-henryCoefParameter[1] / (temperature * temperature)
                 + henryCoefParameter[2] / temperature + henryCoefParameter[3]);
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property henryCoefParameter.
-     *
-     * @return Value of property henryCoefParameter.
-     *
      */
     @Override
-	public double[] getHenryCoefParameter() {
+    public double[] getHenryCoefParameter() {
         return this.henryCoefParameter;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property henryCoefParameter.
-     *
-     * @param henryCoefParameter New value of property henryCoefParameter.
-     *
      */
     @Override
-	public void setHenryCoefParameter(double[] henryCoefParameter) {
+    public void setHenryCoefParameter(double[] henryCoefParameter) {
         this.henryCoefParameter = henryCoefParameter;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property matiascopemanSolidParams.
-     *
-     * @return Value of property matiascopemanSolidParams.
-     *
      */
     @Override
-	public double[] getMatiascopemanSolidParams() {
+    public double[] getMatiascopemanSolidParams() {
         return this.matiascopemanSolidParams;
     }
 
     /**
      * Setter for property matiascopemanSolidParams.
      *
-     * @param matiascopemanSolidParams New value of property
-     *                                 matiascopemanSolidParams.
-     *
+     * @param matiascopemanSolidParams New value of property matiascopemanSolidParams.
      */
     public void setMatiascopemanSolidParams(double[] matiascopemanSolidParams) {
         this.matiascopemanSolidParams = matiascopemanSolidParams;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getPureComponentCpSolid(double temperature) {
+    public double getPureComponentCpSolid(double temperature) {
         // unit J/mol*K DIPPR function
-        return 1. / 1000.0 * (CpSolid[0] + CpSolid[1] * temperature + CpSolid[2] * Math.pow(temperature, 2.0)
-                + CpSolid[3] * Math.pow(temperature, 3.0) + CpSolid[4] * Math.pow(temperature, 4.0));
+        return 1. / 1000.0
+                * (CpSolid[0] + CpSolid[1] * temperature + CpSolid[2] * Math.pow(temperature, 2.0)
+                        + CpSolid[3] * Math.pow(temperature, 3.0)
+                        + CpSolid[4] * Math.pow(temperature, 4.0));
     }
 
     // A^2/(1-Tr)+B-2*A*C*(1-Tr)-A*D*(1-Tr)^2-C^2*(1-Tr)^3/3-C*D*(1-Tr)^4/2-D^2*(1-Tr)^5/5
+    /** {@inheritDoc} */
     @Override
-	public double getPureComponentCpLiquid(double temperature) {
+    public double getPureComponentCpLiquid(double temperature) {
         // unit J/mol*K DIPPR function
-        return 1. / 1000.0 * (CpLiquid[0] + CpLiquid[1] * temperature + CpLiquid[2] * Math.pow(temperature, 2.0)
-                + CpLiquid[3] * Math.pow(temperature, 3.0) + CpLiquid[4] * Math.pow(temperature, 4.0));
-
+        return 1. / 1000.0
+                * (CpLiquid[0] + CpLiquid[1] * temperature
+                        + CpLiquid[2] * Math.pow(temperature, 2.0)
+                        + CpLiquid[3] * Math.pow(temperature, 3.0)
+                        + CpLiquid[4] * Math.pow(temperature, 4.0));
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property criticalVolume.
-     *
-     * @param criticalVolume New value of property criticalVolume.
-     *
      */
     @Override
-	public void setCriticalVolume(double criticalVolume) {
+    public void setCriticalVolume(double criticalVolume) {
         this.criticalVolume = criticalVolume;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getCriticalViscosity() {
+    public double getCriticalViscosity() {
         return criticalViscosity;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property criticalViscosity.
-     *
-     * @param criticalViscosity New value of property criticalViscosity.
-     *
      */
     @Override
-	public void setCriticalViscosity(double criticalViscosity) {
+    public void setCriticalViscosity(double criticalViscosity) {
         this.criticalViscosity = criticalViscosity;
     }
 
     // return mol/litre
+    /** {@inheritDoc} */
     @Override
-	public double getMolarity(PhaseInterface phase) {
+    public double getMolarity(PhaseInterface phase) {
         return x * 1.0 / (phase.getMolarVolume() * 1e-5) / 1e3;
     }
 
     // return mol/kg
+    /** {@inheritDoc} */
     @Override
-	public double getMolality(PhaseInterface phase) {
+    public double getMolality(PhaseInterface phase) {
         return getMolarity(phase) / (phase.getDensity() / 1.0e3);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public boolean isHydrateFormer() {
+    public boolean isHydrateFormer() {
         return isIsHydrateFormer();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setIsHydrateFormer(boolean isHydrateFormer) {
+    public void setIsHydrateFormer(boolean isHydrateFormer) {
         this.isHydrateFormer = isHydrateFormer;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getmSAFTi() {
+    public double getmSAFTi() {
         return mSAFTi;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setmSAFTi(double mSAFTi) {
+    public void setmSAFTi(double mSAFTi) {
         this.mSAFTi = mSAFTi;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getSigmaSAFTi() {
+    public double getSigmaSAFTi() {
         return sigmaSAFTi;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setSigmaSAFTi(double sigmaSAFTi) {
+    public void setSigmaSAFTi(double sigmaSAFTi) {
         this.sigmaSAFTi = sigmaSAFTi;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getEpsikSAFT() {
+    public double getEpsikSAFT() {
         return epsikSAFT;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setEpsikSAFT(double epsikSAFT) {
+    public void setEpsikSAFT(double epsikSAFT) {
         this.epsikSAFT = epsikSAFT;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getAssociationVolumeSAFT() {
+    public double getAssociationVolumeSAFT() {
         return associationVolumeSAFT;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setAssociationVolumeSAFT(double associationVolumeSAFT) {
+    public void setAssociationVolumeSAFT(double associationVolumeSAFT) {
         this.associationVolumeSAFT = associationVolumeSAFT;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getAssociationEnergySAFT() {
+    public double getAssociationEnergySAFT() {
         return associationEnergySAFT;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setAssociationEnergySAFT(double associationEnergySAFT) {
+    public void setAssociationEnergySAFT(double associationEnergySAFT) {
         this.associationEnergySAFT = associationEnergySAFT;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getCriticalCompressibilityFactor() {
+    public double getCriticalCompressibilityFactor() {
         return criticalCompressibilityFactor;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setCriticalCompressibilityFactor(double criticalCompressibilityFactor) {
+    public void setCriticalCompressibilityFactor(double criticalCompressibilityFactor) {
         this.criticalCompressibilityFactor = criticalCompressibilityFactor;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getSurfaceTenisionInfluenceParameter(double temperature) {
+    public double getSurfaceTenisionInfluenceParameter(double temperature) {
         return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setSurfTensInfluenceParam(int factNum, double val) {
+    public void setSurfTensInfluenceParam(int factNum, double val) {
         surfTensInfluenceParam[factNum] = val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getSurfTensInfluenceParam(int factNum) {
+    public double getSurfTensInfluenceParam(int factNum) {
         return surfTensInfluenceParam[factNum];
     }
 
-    /**
-     * @return the waxFormer
-     */
+    /** {@inheritDoc} */
     @Override
-	public boolean isWaxFormer() {
+    public boolean isWaxFormer() {
         return waxFormer;
     }
 
-    /**
-     * @param waxFormer the waxFormer to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setWaxFormer(boolean waxFormer) {
+    public void setWaxFormer(boolean waxFormer) {
         this.waxFormer = waxFormer;
     }
 
-    /**
-     * @param heatOfFusion the heatOfFusion to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setHeatOfFusion(double heatOfFusion) {
+    public void setHeatOfFusion(double heatOfFusion) {
         this.heatOfFusion = heatOfFusion;
     }
 
-    /**
-     * @param triplePointTemperature the triplePointTemperature to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setTriplePointTemperature(double triplePointTemperature) {
+    public void setTriplePointTemperature(double triplePointTemperature) {
         this.triplePointTemperature = triplePointTemperature;
     }
 
-    /**
-     * @param componentType the componentType to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setComponentType(String componentType) {
+    public void setComponentType(String componentType) {
         this.componentType = componentType;
         if (componentType.equals("TBP")) {
             setIsTBPfraction(true);
@@ -2052,6 +2288,10 @@ abstract class Component extends Object
     }
 
     /**
+     * <p>
+     * isIsHydrateFormer.
+     * </p>
+     *
      * @return the isHydrateFormer
      */
     public boolean isIsHydrateFormer() {
@@ -2059,6 +2299,10 @@ abstract class Component extends Object
     }
 
     /**
+     * <p>
+     * Getter for the field <code>referenceEnthalpy</code>.
+     * </p>
+     *
      * @return the referenceEnthalpy
      */
     public double getReferenceEnthalpy() {
@@ -2066,203 +2310,178 @@ abstract class Component extends Object
     }
 
     /**
+     * <p>
+     * Setter for the field <code>referenceEnthalpy</code>.
+     * </p>
+     *
      * @param referenceEnthalpy the referenceEnthalpy to set
      */
     public void setReferenceEnthalpy(double referenceEnthalpy) {
         this.referenceEnthalpy = referenceEnthalpy;
     }
 
-    /**
-     * @return the CpA
-     */
+    /** {@inheritDoc} */
     @Override
-	public double getCpA() {
+    public double getCpA() {
         return CpA;
     }
 
-    /**
-     * @param CpA the CpA to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setCpA(double CpA) {
+    public void setCpA(double CpA) {
         this.CpA = CpA;
     }
 
-    /**
-     * @return the CpB
-     */
+    /** {@inheritDoc} */
     @Override
-	public double getCpB() {
+    public double getCpB() {
         return CpB;
     }
 
-    /**
-     * @param CpB the CpB to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setCpB(double CpB) {
+    public void setCpB(double CpB) {
         this.CpB = CpB;
     }
 
-    /**
-     * @return the CpC
-     */
+    /** {@inheritDoc} */
     @Override
-	public double getCpC() {
+    public double getCpC() {
         return CpC;
     }
 
-    /**
-     * @param CpC the CpC to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setCpC(double CpC) {
+    public void setCpC(double CpC) {
         this.CpC = CpC;
     }
 
-    /**
-     * @return the CpD
-     */
+    /** {@inheritDoc} */
     @Override
-	public double getCpD() {
+    public double getCpD() {
         return CpD + 1e-10;
     }
 
-    /**
-     * @param CpD the CpD to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setCpD(double CpD) {
+    public void setCpD(double CpD) {
         this.CpD = CpD;
     }
 
-    /**
-     * @return the formulae
-     */
+    /** {@inheritDoc} */
     @Override
-	public String getFormulae() {
+    public String getFormulae() {
         return formulae;
     }
 
-    /**
-     * @param formulae the formulae to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setFormulae(String formulae) {
+    public void setFormulae(String formulae) {
         this.formulae = formulae;
     }
 
-    /**
-     * @return the CASnumber
-     */
+    /** {@inheritDoc} */
     @Override
-	public String getCASnumber() {
+    public String getCASnumber() {
         return CASnumber;
     }
 
-    /**
-     * @param CASnumber the CASnumber to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setCASnumber(String CASnumber) {
+    public void setCASnumber(String CASnumber) {
         this.CASnumber = CASnumber;
     }
 
-    /**
-     * @return the orginalNumberOfAssociationSites
-     */
+    /** {@inheritDoc} */
     @Override
-	public int getOrginalNumberOfAssociationSites() {
+    public int getOrginalNumberOfAssociationSites() {
         return orginalNumberOfAssociationSites;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getdrhodN() {
+    public double getdrhodN() {
         return molarMass;
     }
 
-    /**
-     * @return the CpE
-     */
+    /** {@inheritDoc} */
     @Override
-	public double getCpE() {
+    public double getCpE() {
         return CpE;
     }
 
-    /**
-     * @param CpE the CpE to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setCpE(double CpE) {
+    public void setCpE(double CpE) {
         this.CpE = CpE;
     }
 
-    /**
-     * @return the racketZCPA
-     */
+    /** {@inheritDoc} */
     @Override
-	public double getRacketZCPA() {
+    public double getRacketZCPA() {
         return racketZCPA;
     }
 
-    /**
-     * @param racketZCPA the racketZCPA to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setRacketZCPA(double racketZCPA) {
+    public void setRacketZCPA(double racketZCPA) {
         this.racketZCPA = racketZCPA;
     }
 
-    /**
-     * @return the volumeCorrectionT
-     */
+    /** {@inheritDoc} */
     @Override
-	public double getVolumeCorrectionT() {
+    public double getVolumeCorrectionT() {
         return volumeCorrectionT;
     }
 
     /**
-     * @param volumeCorrectionT the volumeCorrectionT to set
+     * <p>
+     * getVolumeCorrection.
+     * </p>
+     *
+     * @return a double
      */
+    public double getVolumeCorrection() {
+        return 0.0;
+    }
+
+    /** {@inheritDoc} */
     @Override
-	public void setVolumeCorrectionT(double volumeCorrectionT) {
+    public void setVolumeCorrectionConst(double getVolumeCorrectionConst) {
+        this.volumeCorrectionConst = getVolumeCorrectionConst;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setVolumeCorrectionT(double volumeCorrectionT) {
         this.volumeCorrectionT = volumeCorrectionT;
     }
 
-    /**
-     * @return the volumeCorrectionT_CPA
-     */
+    /** {@inheritDoc} */
     @Override
-	public double getVolumeCorrectionT_CPA() {
+    public double getVolumeCorrectionT_CPA() {
         return volumeCorrectionT_CPA;
     }
 
-    /**
-     * @param volumeCorrectionT_CPA the volumeCorrectionT_CPA to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setVolumeCorrectionT_CPA(double volumeCorrectionT_CPA) {
+    public void setVolumeCorrectionT_CPA(double volumeCorrectionT_CPA) {
         this.volumeCorrectionT_CPA = volumeCorrectionT_CPA;
     }
 
-    /**
-     * @param idealGasEnthalpyOfFormation the idealGasEnthalpyOfFormation to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setIdealGasEnthalpyOfFormation(double idealGasEnthalpyOfFormation) {
+    public void setIdealGasEnthalpyOfFormation(double idealGasEnthalpyOfFormation) {
         this.idealGasEnthalpyOfFormation = idealGasEnthalpyOfFormation;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * method to return flow rate of component
-     *
-     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
-     *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
-     *
-     * @return flow rate in specified unit
      */
     @Override
-	public double getFlowRate(String flowunit) {
+    public double getFlowRate(String flowunit) {
         if (flowunit.equals("kg/sec")) {
             return numberOfMolesInPhase * getMolarMass();
         } else if (flowunit.equals("kg/min")) {
@@ -2281,6 +2500,30 @@ abstract class Component extends Object
             return numberOfMolesInPhase * 60.0;
         } else if (flowunit.equals("mole/hr")) {
             return numberOfMolesInPhase * 3600.0;
+        } else {
+            throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * method to return total flow rate of component
+     */
+    @Override
+    public double getTotalFlowRate(String flowunit) {
+        if (flowunit.equals("kg/sec")) {
+            return numberOfMoles * getMolarMass();
+        } else if (flowunit.equals("kg/min")) {
+            return numberOfMoles * getMolarMass() * 60.0;
+        } else if (flowunit.equals("kg/hr")) {
+            return numberOfMoles * getMolarMass() * 3600.0;
+        } else if (flowunit.equals("mole/sec")) {
+            return numberOfMoles;
+        } else if (flowunit.equals("mole/min")) {
+            return numberOfMoles * 60.0;
+        } else if (flowunit.equals("mole/hr")) {
+            return numberOfMoles * 3600.0;
         } else {
             throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
         }

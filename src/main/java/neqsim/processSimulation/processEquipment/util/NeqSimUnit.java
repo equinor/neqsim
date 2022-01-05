@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.processEquipment.util;
 
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
@@ -14,11 +10,14 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * NeqSimUnit class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class NeqSimUnit extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     Stream inletStream;
@@ -32,12 +31,28 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
     private double outerTemperature = 283.15;
     public double interfacialArea = 0.0;
 
+    /**
+     * <p>
+     * Constructor for NeqSimUnit.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param equipment a {@link java.lang.String} object
+     * @param flowPattern a {@link java.lang.String} object
+     */
     public NeqSimUnit(Stream inletStream, String equipment, String flowPattern) {
         this.flowPattern = flowPattern;
         this.setEquipment(equipment);
         setInletStream(inletStream);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>inletStream</code>.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public void setInletStream(Stream inletStream) {
         this.inletStream = inletStream;
 
@@ -45,12 +60,20 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
         outStream = new Stream(thermoSystem);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Stream getOutStream() {
         return outStream;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         if (equipment.equals("pipeline") && flowPattern.equals("stratified")) {
             runStratified();
@@ -64,6 +87,11 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
         // outStream.setThermoSystem(thermoSystem);
     }
 
+    /**
+     * <p>
+     * runDroplet.
+     * </p>
+     */
     public void runDroplet() {
         PipeData pipe1 = new PipeData(getID(), 0.00025);
         FlowNodeInterface test = new DropletFlowNode(thermoSystem, pipe1);
@@ -111,6 +139,11 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
         outStream.setThermoSystem(test.getBulkSystem());
     }
 
+    /**
+     * <p>
+     * runStratified.
+     * </p>
+     */
     public void runStratified() {
         PipeData pipe1 = new PipeData(getID(), 0.00025);
         FlowNodeInterface test = new StratifiedFlowNode(thermoSystem, pipe1);
@@ -158,6 +191,11 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
         outStream.setThermoSystem(test.getBulkSystem());
     }
 
+    /**
+     * <p>
+     * runAnnular.
+     * </p>
+     */
     public void runAnnular() {
         PipeData pipe1 = new PipeData(getID(), 0.00025);
         FlowNodeInterface test = new AnnularFlow(thermoSystem, pipe1);
@@ -205,46 +243,123 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
         outStream.setThermoSystem(test.getBulkSystem());
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>length</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getLength() {
         return length;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>length</code>.
+     * </p>
+     *
+     * @param length a double
+     */
     public void setLength(double length) {
         this.length = length;
     }
 
+    /**
+     * <p>
+     * getID.
+     * </p>
+     *
+     * @return a double
+     */
     public double getID() {
         return ID;
     }
 
+    /**
+     * <p>
+     * setID.
+     * </p>
+     *
+     * @param iD a double
+     */
     public void setID(double iD) {
         ID = iD;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>outerTemperature</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getOuterTemperature() {
         return outerTemperature;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>outerTemperature</code>.
+     * </p>
+     *
+     * @param outerTemperature a double
+     */
     public void setOuterTemperature(double outerTemperature) {
         this.outerTemperature = outerTemperature;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>equipment</code>.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String getEquipment() {
         return equipment;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>equipment</code>.
+     * </p>
+     *
+     * @param equipment a {@link java.lang.String} object
+     */
     public void setEquipment(String equipment) {
         this.equipment = equipment;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>interfacialArea</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getInterfacialArea() {
         return interfacialArea;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>numberOfNodes</code>.
+     * </p>
+     *
+     * @return a int
+     */
     public int getNumberOfNodes() {
         return numberOfNodes;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>numberOfNodes</code>.
+     * </p>
+     *
+     * @param numberOfNodes a int
+     */
     public void setNumberOfNodes(int numberOfNodes) {
         this.numberOfNodes = numberOfNodes;
     }

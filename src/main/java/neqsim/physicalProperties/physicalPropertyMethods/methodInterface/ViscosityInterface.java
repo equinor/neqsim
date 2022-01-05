@@ -1,22 +1,29 @@
-/*
- * PhysicalPropertiesInterface.java
- *
- * Created on 29. oktober 2000, 16:14
- */
-
 package neqsim.physicalProperties.physicalPropertyMethods.methodInterface;
 
 /**
+ * <p>ViscosityInterface interface.</p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public interface ViscosityInterface
         extends neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface {
+    /**
+     * <p>calcViscosity.</p>
+     *
+     * @return a double
+     */
     public double calcViscosity();
 
+    /**
+     * <p>getPureComponentViscosity.</p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getPureComponentViscosity(int i);
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone();
+    public ViscosityInterface clone();
 }

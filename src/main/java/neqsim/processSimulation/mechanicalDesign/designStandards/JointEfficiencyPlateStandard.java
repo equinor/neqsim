@@ -1,25 +1,36 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
+ * <p>
+ * JointEfficiencyPlateStandard class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class JointEfficiencyPlateStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for JointEfficiencyPlateStandard.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
+     */
     public JointEfficiencyPlateStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
     }
 
     /**
+     * <p>
+     * getJEFactor.
+     * </p>
+     *
      * @return the JEFactor
      */
     public double getJEFactor() {
@@ -27,6 +38,10 @@ public class JointEfficiencyPlateStandard extends DesignStandard {
     }
 
     /**
+     * <p>
+     * setJEFactor.
+     * </p>
+     *
      * @param JEFactor the JEFactor to set
      */
     public void setJEFactor(double JEFactor) {
@@ -37,11 +52,17 @@ public class JointEfficiencyPlateStandard extends DesignStandard {
     String radiagraphType = "Fully rediographed";
     private double JEFactor = 1.0;
 
+    /**
+     * <p>
+     * readJointEfficiencyStandard.
+     * </p>
+     *
+     * @param typeName a {@link java.lang.String} object
+     * @param radiagraphType a {@link java.lang.String} object
+     */
     public void readJointEfficiencyStandard(String typeName, String radiagraphType) {
-
-//... to be implemented  
-// read from techncal requirements_mechanical table.....
+        // ... to be implemented
+        // read from techncal requirements_mechanical table.....
         JEFactor = 1.0;
-
     }
 }

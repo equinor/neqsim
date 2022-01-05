@@ -1,34 +1,39 @@
 /*
- * Test.java
+ * IonicInteractionParameterFittingFunction.java
  *
  * Created on 22. januar 2001, 22:59
  */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * IonicInteractionParameterFittingFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction.class);
 
-    /** Creates new Test */
-    public IonicInteractionParameterFittingFunction() {
-    }
+    /**
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunction.
+     * </p>
+     */
+    public IonicInteractionParameterFittingFunction() {}
 
+    /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
             // logger.info("pres " +
@@ -39,21 +44,24 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
         return system.getPressure() * system.getPhases()[0].getComponent(0).getx();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
-        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, H3OplusNumb = 0;
+        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0,
+                H3OplusNumb = 0;
         int j = 0;
-//        do{
-//            H3OplusNumb = j;
-//            j++;
-//        }
-//        while(!system.getPhases()[0].getComponents()[j-1].getComponentName().equals("H3O+"));
+        // do{
+        // H3OplusNumb = j;
+        // j++;
+        // }
+        // while(!system.getPhases()[0].getComponents()[j-1].getComponentName().equals("H3O+"));
 
         j = 0;
         do {
@@ -106,8 +114,8 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
                     .setWijParameter(MDEAplusNumb, Waternumb, value);
 
-            if (((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]
-                    .getRefPhase(MDEAplusNumb)).getElectrolyteMixingRule() != null) {
+            if (((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1].getRefPhase(MDEAplusNumb))
+                    .getElectrolyteMixingRule() != null) {
                 // ((ElectrolyteMixingRulesInterface)((PhaseModifiedFurstElectrolyteEos)((PhaseModifiedFurstElectrolyteEos)system.getPhases()[0]).getRefPhase(MDEAplusNumb)).getElectrolyteMixingRule()).setWijParameter(0,
                 // 1, value);
                 ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1].getRefPhase(MDEAplusNumb))
@@ -125,14 +133,13 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
                     .setWijParameter(H3OplusNumb, MDEANumb, value);
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
                     .setWijParameter(H3OplusNumb, MDEANumb, value);
-
         }
 
         if (i == 4) {
-            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(CO2Numb, MDEANumb,
-                    value * 1e3);
-            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(CO2Numb, MDEANumb,
-                    value * 1e3);
+            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()
+                    .setBinaryInteractionParameter(CO2Numb, MDEANumb, value * 1e3);
+            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
+                    .setBinaryInteractionParameter(CO2Numb, MDEANumb, value * 1e3);
         }
 
         if (i == 20) {
@@ -229,6 +236,14 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
         }
     }
 
+    /**
+     * <p>
+     * setFittingParams5.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams5(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
@@ -236,7 +251,8 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
         do {
             MDEAplusNumb = j;
             j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("MDEAplus"));
+        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
+                .equals("MDEAplus"));
         j = 0;
 
         do {
@@ -253,7 +269,8 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
         do {
             HCO3numb = j;
             j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("HCO3minus"));
+        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
+                .equals("HCO3minus"));
         j = 0;
         do {
             Waternumb = j;
@@ -313,6 +330,14 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
         }
     }
 
+    /**
+     * <p>
+     * setFittingParams3.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams3(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
@@ -320,7 +345,8 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
         do {
             MDEAplusNumb = j;
             j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("MDEAplus"));
+        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
+                .equals("MDEAplus"));
         j = 0;
 
         do {
@@ -337,7 +363,8 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
         do {
             HCO3numb = j;
             j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("HCO3minus"));
+        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
+                .equals("HCO3minus"));
         j = 0;
         do {
             Waternumb = j;
@@ -351,5 +378,4 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
                     .setWijParameter(MDEAplusNumb, CO2Numb, value);
         }
     }
-
 }

@@ -1,57 +1,47 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
-* PHflash.java
-*
-* Created on 8. mars 2001, 10:56
-*/
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * SaturateWithWater class.
+ * </p>
  *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
-public class SaturateWithWater extends QfuncFlash implements java.io.Serializable {
-
+public class SaturateWithWater extends QfuncFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SaturateWithWater.class);
 
     Flash tpFlash;
 
     /**
-     * Creates new PHflash
+     * <p>
+     * Constructor for SaturateWithWater.
+     * </p>
      */
-    public SaturateWithWater() {
-    }
+    public SaturateWithWater() {}
 
+    /**
+     * <p>
+     * Constructor for SaturateWithWater.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SaturateWithWater(SystemInterface system) {
         this.system = system;
         this.tpFlash = new TPflash(system);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
-
+    public void run() {
         if (!system.getPhase(0).hasComponent("water")) {
             system.addComponent("water", system.getTotalNumberOfMoles());
             system.createDatabase(true);
@@ -72,7 +62,8 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         }
         double lastdn = 0.0;
         if (system.hasPhaseType("aqueous")) {
-            lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
+            lastdn = system.getPhaseOfType("aqueous").getComponent("water")
+                    .getNumberOfMolesInPhase();
         } else {
             lastdn = system.getPhase(0).getNumberOfMolesInPhase() / 100.0;
         }
@@ -84,7 +75,8 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
                 system.addComponent("water", lastdn * 0.5);
                 lastdn *= 0.8;
             } else {
-            	lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
+                lastdn = system.getPhaseOfType("aqueous").getComponent("water")
+                        .getNumberOfMolesInPhase();
                 dn = lastdn / system.getNumberOfMoles();
                 system.addComponent("water", -lastdn);
             }
@@ -95,12 +87,19 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         if (i == 50) {
             logger.error("could not find solution - in water sturate : dn  " + dn);
         }
-         //logger.info("i " + i + " dn " + dn);
-         //System.out.println("i " + i + " dn " + dn) ;       // system.display();
+        // logger.info("i " + i + " dn " + dn);
+        // System.out.println("i " + i + " dn " + dn) ; // system.display();
         system.removePhase(system.getNumberOfPhases() - 1);
         tpFlash.run();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 70.0, 150.0);
 

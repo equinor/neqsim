@@ -1,24 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.mechanicalDesign;
 
 import java.util.ArrayList;
@@ -26,74 +5,127 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
 /**
+ * <p>
+ * SystemMechanicalDesign class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class SystemMechanicalDesign implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     ProcessSystem processSystem = null;
     double totalPlotSpace = 0.0, totalVolume = 0.0, totalWeight = 0.0;
     int numberOfModules = 0;
 
+    /**
+     * <p>
+     * Constructor for SystemMechanicalDesign.
+     * </p>
+     *
+     * @param processSystem a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+     */
     public SystemMechanicalDesign(ProcessSystem processSystem) {
         this.processSystem = processSystem;
     }
 
+    /**
+     * <p>
+     * setCompanySpecificDesignStandards.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setCompanySpecificDesignStandards(String name) {
         for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
             processSystem.getUnitOperations().get(i).getMechanicalDesign()
                     .setCompanySpecificDesignStandards(name);
         }
-
     }
 
+    /**
+     * <p>
+     * runDesignCalculation.
+     * </p>
+     */
     public void runDesignCalculation() {
-        ArrayList names = processSystem.getAllUnitNames();
+        ArrayList<String> names = processSystem.getAllUnitNames();
         for (int i = 0; i < names.size(); i++) {
             try {
-                if (!((ProcessEquipmentInterface) processSystem.getUnit((String) names.get(i)) == null)) {
-                    ((ProcessEquipmentInterface) processSystem.getUnit((String) names.get(i))).getMechanicalDesign()
-                            .calcDesign();
-                    totalPlotSpace += ((ProcessEquipmentInterface) processSystem.getUnit((String) names.get(i)))
-                            .getMechanicalDesign().getModuleHeight()
-                            * ((ProcessEquipmentInterface) processSystem.getUnit((String) names.get(i)))
-                                    .getMechanicalDesign().getModuleLength();
-                    totalVolume += ((ProcessEquipmentInterface) processSystem.getUnit((String) names.get(i)))
-                            .getMechanicalDesign().getVolumeTotal();
-                    totalWeight += ((ProcessEquipmentInterface) processSystem.getUnit((String) names.get(i)))
-                            .getMechanicalDesign().getWeightTotal();
+                if (!((ProcessEquipmentInterface) processSystem
+                        .getUnit((String) names.get(i)) == null)) {
+                    ((ProcessEquipmentInterface) processSystem.getUnit((String) names.get(i)))
+                            .getMechanicalDesign().calcDesign();
+                    totalPlotSpace += ((ProcessEquipmentInterface) processSystem
+                            .getUnit((String) names.get(i))).getMechanicalDesign().getModuleHeight()
+                            * ((ProcessEquipmentInterface) processSystem
+                                    .getUnit((String) names.get(i))).getMechanicalDesign()
+                                            .getModuleLength();
+                    totalVolume += ((ProcessEquipmentInterface) processSystem
+                            .getUnit((String) names.get(i))).getMechanicalDesign().getVolumeTotal();
+                    totalWeight += ((ProcessEquipmentInterface) processSystem
+                            .getUnit((String) names.get(i))).getMechanicalDesign().getWeightTotal();
                     numberOfModules++;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
     }
 
+    /**
+     * <p>
+     * setDesign.
+     * </p>
+     */
     public void setDesign() {
         for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
             processSystem.getUnitOperations().get(i).getMechanicalDesign().setDesign();
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>totalPlotSpace</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTotalPlotSpace() {
         return totalPlotSpace;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>totalVolume</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTotalVolume() {
-
         return totalVolume;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>totalWeight</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTotalWeight() {
         return totalWeight;
     }
 
+    /**
+     * <p>
+     * getTotalNumberOfModules.
+     * </p>
+     *
+     * @return a int
+     */
     public int getTotalNumberOfModules() {
-
         return numberOfModules;
     }
 }

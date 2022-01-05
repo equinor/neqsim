@@ -8,15 +8,23 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>
+ * AtractiveTermUMRPRU class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class AtractiveTermUMRPRU extends AtractiveTermPr {
-
     private static final long serialVersionUID = 1000;
 
-    /** Creates new AtractiveTermSrk */
+    /**
+     * <p>
+     * Constructor for AtractiveTermUMRPRU.
+     * </p>
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     */
     public AtractiveTermUMRPRU(ComponentEosInterface component) {
         super(component);
         m = (0.384401 + 1.52276 * component.getAcentricFactor()
@@ -25,8 +33,9 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
                 - 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public AtractiveTermUMRPRU clone() {
         AtractiveTermUMRPRU atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermUMRPRU) super.clone();
@@ -37,8 +46,9 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         m = (0.384401 + 1.52276 * getComponent().getAcentricFactor()
                 - 0.213808 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor()
                 + 0.034616 * Math.pow(getComponent().getAcentricFactor(), 3.0)

@@ -1,51 +1,50 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>TestIonicInteractionParameterFittingPiperazine class.</p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TestIonicInteractionParameterFittingPiperazine extends java.lang.Object {
+public class TestIonicInteractionParameterFittingPiperazine {
+    static Logger logger =
+            LogManager.getLogger(TestIonicInteractionParameterFittingPiperazine.class);
 
-    private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFittingPiperazine.class);
-
-    /** Creates new TestAcentric */
-    public TestIonicInteractionParameterFittingPiperazine() {
-    }
-
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
 
-        double guess[] = { -0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005 };
-        ResultSet dataSet = database.getResultSet("SELECT * FROM CO2waterMDEAPiperazine");// WHERE Temperature<393.15
-                                                                                          // AND PressureCO2<4");
+        double guess[] = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
+        ResultSet dataSet = database.getResultSet("SELECT * FROM CO2waterMDEAPiperazine");// WHERE
+                                                                                          // Temperature<393.15
+                                                                                          // AND
+                                                                                          // PressureCO2<4");
 
         try {
             int i = 0;
             while (dataSet.next() && i < 16) {
                 i++;
-                IonicInteractionParameterFittingFunction function = new IonicInteractionParameterFittingFunction();
+                IonicInteractionParameterFittingFunction function =
+                        new IonicInteractionParameterFittingFunction();
                 SystemInterface testSystem = new SystemFurstElectrolyteEos((273.15 + 25.0), 1.0);
                 testSystem.addComponent("CO2", Double.parseDouble(dataSet.getString("x1")));
                 testSystem.addComponent("MDEA", Double.parseDouble(dataSet.getString("x3")));
@@ -59,9 +58,10 @@ public class TestIonicInteractionParameterFittingPiperazine extends java.lang.Ob
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
-                double sample1[] = { testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
-                        / testSystem.getPhase(0).getComponent(1).getNumberOfmoles() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
+                        / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()}; // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 double stddev = pressure;// Double.parseDouble(dataSet.getString("StandardDeviation"))
                 SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
                 function.setInitialGuess(guess);
@@ -79,8 +79,7 @@ public class TestIonicInteractionParameterFittingPiperazine extends java.lang.Ob
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        //
-        //
+
         // optim.solve();
         // optim.runMonteCarloSimulation();
         // optim.displayCurveFit();

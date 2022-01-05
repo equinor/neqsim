@@ -1,23 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.mechanicalDesign.separator;
 
 import neqsim.processSimulation.mechanicalDesign.designStandards.GasScrubberDesignStandard;
@@ -27,37 +7,48 @@ import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 
 /**
+ * <p>
+ * GasScrubberMechanicalDesign class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for GasScrubberMechanicalDesign.
+     * </p>
+     *
+     * @param equipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     */
     public GasScrubberMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void readDesignSpecifications() {
-
+    public void readDesignSpecifications() {
         super.readDesignSpecifications();
 
         if (getDesignStandard().containsKey("gas scrubber process design")) {
             System.out.println("gas scrubber process design: "
                     + getDesignStandard().get("gas scrubber process design").getStandardName());
-            gasLoadFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-                    .getGasLoadFactor();
-            volumeSafetyFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-                    .getVolumetricDesignFactor();
+            gasLoadFactor = ((GasScrubberDesignStandard) getDesignStandard()
+                    .get("gas scrubber process design")).getGasLoadFactor();
+            volumeSafetyFactor = ((GasScrubberDesignStandard) getDesignStandard()
+                    .get("gas scrubber process design")).getVolumetricDesignFactor();
         } else {
             System.out.println("no separator process design specified......");
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void calcDesign() {
+    public void calcDesign() {
         super.calcDesign();
         Separator separator = (Separator) getProcessEquipment();
         double Fg = 1.0;
@@ -71,13 +62,13 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
 
         // double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
         double materialsCost = 0.0;
-        double gasDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0)
-                .getPhysicalProperties().getDensity();
-        double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
-                .getPhysicalProperties().getDensity();
+        double gasDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem()
+                .getPhase(0).getPhysicalProperties().getDensity();
+        double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem()
+                .getPhase(1).getPhysicalProperties().getDensity();
 
-        maxDesignVolumeFlow = volumeSafetyFactor
-                * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5;
+        maxDesignVolumeFlow = volumeSafetyFactor * ((SeparatorInterface) getProcessEquipment())
+                .getThermoSystem().getPhase(0).getVolume() / 1e5;
 
         double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
         innerDiameter = Math.sqrt(4.0 * getMaxDesignVolumeFlow()
@@ -110,11 +101,12 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
 
         setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
 
-        System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() + " m");
+        System.out.println(
+                "wall thickness: " + separator.getName() + " " + getWallThickness() + " m");
         System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
         System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-        System.out.println(
-                "foot print: width:" + moduleWidth + " length " + moduleLength + " height " + moduleHeight + " meter.");
+        System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength
+                + " height " + moduleHeight + " meter.");
         System.out.println("mechanical price: " + materialsCost + " kNOK");
 
         setWeigthVesselShell(emptyVesselWeight);
@@ -143,11 +135,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
         setModuleLength(moduleLength);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setDesign() {
+    public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
         ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
         // this method will be implemented to set calculated design...
     }
-
 }

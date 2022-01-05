@@ -1,33 +1,28 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package neqsim.thermo.util.benchmark;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * TPflash_benchmark class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class TPflash_benchmark {
-
     static Logger logger = LogManager.getLogger(TPflash_benchmark.class);
-    private static final long serialVersionUID = 1000;
 
     /**
      * This method is just meant to test the thermo package.
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
         double[][] points;
 
@@ -71,7 +66,8 @@ public class TPflash_benchmark {
             // testSystem.init(1);
         }
 
-        System.out.println("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
+        System.out
+                .println("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
         // testSystem.display();
         // SystemInterface testSystem2 =
         // testSystem.readObjectFromFile("c:/temp/test2.neqsim", "test2.neqsim");

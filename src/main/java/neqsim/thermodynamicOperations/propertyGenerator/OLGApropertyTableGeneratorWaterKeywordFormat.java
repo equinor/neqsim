@@ -1,23 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.thermodynamicOperations.propertyGenerator;
 
 import java.io.BufferedWriter;
@@ -25,16 +5,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * OLGApropertyTableGeneratorWaterKeywordFormat class.
+ * </p>
  *
  * @author Kjetil Raul
+ * @version $Id: $Id
  */
-public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermodynamicOperations.BaseOperation {
-
+public class OLGApropertyTableGeneratorWaterKeywordFormat
+        extends neqsim.thermodynamicOperations.BaseOperation {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorWaterKeywordFormat.class);
 
@@ -56,11 +43,27 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
     String[] units;
     String[] namesKeyword;
 
+    /**
+     * <p>
+     * Constructor for OLGApropertyTableGeneratorWaterKeywordFormat.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public OLGApropertyTableGeneratorWaterKeywordFormat(SystemInterface system) {
         this.thermoSystem = system;
         thermoOps = new ThermodynamicOperations(thermoSystem);
     }
 
+    /**
+     * <p>
+     * setPressureRange.
+     * </p>
+     *
+     * @param minPressure a double
+     * @param maxPressure a double
+     * @param numberOfSteps a int
+     */
     public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
         pressures = new double[numberOfSteps];
         pressureLOG = new double[numberOfSteps];
@@ -71,7 +74,17 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         }
     }
 
-    public void setTemperatureRange(double minTemperature, double maxTemperature, int numberOfSteps) {
+    /**
+     * <p>
+     * setTemperatureRange.
+     * </p>
+     *
+     * @param minTemperature a double
+     * @param maxTemperature a double
+     * @param numberOfSteps a int
+     */
+    public void setTemperatureRange(double minTemperature, double maxTemperature,
+            int numberOfSteps) {
         temperatures = new double[numberOfSteps];
         temperatureLOG = new double[numberOfSteps];
         double step = (maxTemperature - minTemperature) / (numberOfSteps * 1.0 - 1.0);
@@ -81,6 +94,11 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         }
     }
 
+    /**
+     * <p>
+     * calcPhaseEnvelope.
+     * </p>
+     */
     public void calcPhaseEnvelope() {
         try {
             thermoOps.calcPTphaseEnvelope();
@@ -92,14 +110,21 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
             logger.error("error", e);
         }
 
-//thermoOps.ge
+        // thermoOps.ge
     }
 
+    /**
+     * <p>
+     * calcBubP.
+     * </p>
+     *
+     * @param temperatures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcBubP(double[] temperatures) {
         double[] bubP = new double[temperatures.length];
         bubPLOG = new double[temperatures.length];
         for (int i = 0; i < temperatures.length; i++) {
-
             thermoSystem.setTemperature(temperatures[i]);
             try {
                 thermoOps.bubblePointPressureFlash(false);
@@ -113,11 +138,18 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         return bubP;
     }
 
+    /**
+     * <p>
+     * calcDewP.
+     * </p>
+     *
+     * @param temperatures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcDewP(double[] temperatures) {
         double[] dewP = new double[temperatures.length];
         dewPLOG = new double[temperatures.length];
         for (int i = 0; i < temperatures.length; i++) {
-
             thermoSystem.setTemperature(temperatures[i]);
             try {
                 thermoOps.dewPointPressureFlash();
@@ -131,11 +163,18 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         return dewP;
     }
 
+    /**
+     * <p>
+     * calcBubT.
+     * </p>
+     *
+     * @param pressures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcBubT(double[] pressures) {
         double[] bubT = new double[pressures.length];
         bubTLOG = new double[pressures.length];
         for (int i = 0; i < pressures.length; i++) {
-
             thermoSystem.setPressure(pressures[i]);
             try {
                 thermoOps.bubblePointTemperatureFlash();
@@ -149,8 +188,12 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         return bubT;
     }
 
+    /**
+     * <p>
+     * initCalc.
+     * </p>
+     */
     public void initCalc() {
-
         double standgasdens, standliqdens, TC, PC;
 
         molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -159,12 +202,10 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         components = new String[thermoSystem.getPhase(0).getNumberOfComponents()];
 
         for (int i = 0; i < molfracs.length; i++) {
-
             molfracs[i] = thermoSystem.getPhase(0).getComponent(i).getz();
             components[i] = thermoSystem.getPhase(0).getComponent(i).getComponentName();
             MW[i] = thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000;
             dens[i] = thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity();
-
         }
 
         thermoSystem.setTemperature(stdTemp);
@@ -179,9 +220,13 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         stdGasDens = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
         stdLiqDens = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
         stdWatDens = thermoSystem.getPhase(2).getPhysicalProperties().getDensity();
-
     }
 
+    /**
+     * <p>
+     * calcRSWTOB.
+     * </p>
+     */
     public void calcRSWTOB() {
         thermoSystem.init(0);
         thermoSystem.init(1);
@@ -189,12 +234,11 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         RSWTOB = thermoSystem.getPhase(0).getComponent("water").getNumberOfmoles()
                 * thermoSystem.getPhase(0).getComponent("water").getMolarMass()
                 / (thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarMass());
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
-
+    public void run() {
         logger.info("Start creating arrays");
         calcRSWTOB();
         nProps = 29;
@@ -237,23 +281,20 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 thermoSystem.initPhysicalProperties();
                 /*
                  * ROG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
-                 * ROL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getDensity(); //
+                 * ROL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
                  * DROGDP[i][j] = thermoSystem.getPhase(0).getdrhodP(); // DROHLDP[i][j] =
                  * thermoSystem.getPhase(1).getdrhodP(); // DROGDT[i][j] =
                  * thermoSystem.getPhase(0).getdrhodT(); // DROHLDT[i][j] =
                  * thermoSystem.getPhase(1).getdrhodT(); CPG[i][j] =
-                 * thermoSystem.getPhase(0).getCp(); CPHL[i][j] =
-                 * thermoSystem.getPhase(1).getCp(); HG[i][j] =
-                 * thermoSystem.getPhase(0).getEnthalpy(); HHL[i][j] =
+                 * thermoSystem.getPhase(0).getCp(); CPHL[i][j] = thermoSystem.getPhase(1).getCp();
+                 * HG[i][j] = thermoSystem.getPhase(0).getEnthalpy(); HHL[i][j] =
                  * thermoSystem.getPhase(1).getEnthalpy(); TCG[i][j] =
-                 * thermoSystem.getPhase(0).getPhysicalProperties().getConductivity();
-                 * TCHL[i][j] =
-                 * thermoSystem.getPhase(1).getPhysicalProperties().getConductivity();
-                 * VISG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getViscosity();
-                 * VISHL[i][j] =
-                 * thermoSystem.getPhase(1).getPhysicalProperties().getViscosity(); //
-                 * SIGGHL[i][j] = thermoSystem.getInterphaseProperties().getSurfaceTension(0,
-                 * 1); SEG[i][j] = thermoSystem.getPhase(0).getEntropy(); SEHL[i][j] =
+                 * thermoSystem.getPhase(0).getPhysicalProperties().getConductivity(); TCHL[i][j] =
+                 * thermoSystem.getPhase(1).getPhysicalProperties().getConductivity(); VISG[i][j] =
+                 * thermoSystem.getPhase(0).getPhysicalProperties().getViscosity(); VISHL[i][j] =
+                 * thermoSystem.getPhase(1).getPhysicalProperties().getViscosity(); // SIGGHL[i][j]
+                 * = thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1); SEG[i][j] =
+                 * thermoSystem.getPhase(0).getEntropy(); SEHL[i][j] =
                  * thermoSystem.getPhase(1).getEntropy(); RS[i][j] =
                  * thermoSystem.getPhase(0).getBeta();
                  */
@@ -304,8 +345,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 units[k] = "KG/M3-K";
                 namesKeyword[k] = "DROWTDT";
                 k++;
-                props[k][i][j] = thermoSystem.getPhase(0).getBeta() * thermoSystem.getPhase(0).getMolarMass()
-                        / thermoSystem.getMolarMass();
+                props[k][i][j] = thermoSystem.getPhase(0).getBeta()
+                        * thermoSystem.getPhase(0).getMolarMass() / thermoSystem.getMolarMass();
                 names[k] = "GAS MASS FRACTION";
                 units[k] = "-";
                 namesKeyword[k] = "RS";
@@ -332,38 +373,44 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 units[k] = "NS/M2";
                 namesKeyword[k] = "VISWT";
                 k++;
-                props[k][i][j] = thermoSystem.getPhase(0).getCp() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
+                props[k][i][j] = thermoSystem.getPhase(0).getCp()
+                        / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
                         / thermoSystem.getPhase(0).getMolarMass();
                 names[k] = "GAS HEAT CAPACITY";
                 units[k] = "J/KG-K";
                 namesKeyword[k] = "CPG";
                 k++;
-                props[k][i][j] = thermoSystem.getPhase(1).getCp() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
+                props[k][i][j] = thermoSystem.getPhase(1).getCp()
+                        / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
                         / thermoSystem.getPhase(1).getMolarMass();
                 names[k] = "LIQUID HEAT CAPACITY";
                 units[k] = "J/KG-K";
                 namesKeyword[k] = "CPHL";
                 k++;
-                props[k][i][j] = thermoSystem.getPhase(2).getCp() / thermoSystem.getPhase(2).getNumberOfMolesInPhase()
+                props[k][i][j] = thermoSystem.getPhase(2).getCp()
+                        / thermoSystem.getPhase(2).getNumberOfMolesInPhase()
                         / thermoSystem.getPhase(2).getMolarMass();
                 names[k] = "WATER HEAT CAPACITY";
                 units[k] = "J/KG-K";
                 namesKeyword[k] = "CPWT";
                 k++;
                 props[k][i][j] = thermoSystem.getPhase(0).getEnthalpy()
-                        / thermoSystem.getPhase(0).getNumberOfMolesInPhase() / thermoSystem.getPhase(0).getMolarMass();
+                        / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
+                        / thermoSystem.getPhase(0).getMolarMass();
                 names[k] = "GAS ENTHALPY";
                 units[k] = "J/KG";
                 namesKeyword[k] = "HG";
                 k++;
                 props[k][i][j] = thermoSystem.getPhase(1).getEnthalpy()
-                        / thermoSystem.getPhase(1).getNumberOfMolesInPhase() / thermoSystem.getPhase(1).getMolarMass();
+                        / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
+                        / thermoSystem.getPhase(1).getMolarMass();
                 names[k] = "LIQUID ENTHALPY";
                 units[k] = "J/KG";
                 namesKeyword[k] = "HHL";
                 k++;
                 props[k][i][j] = thermoSystem.getPhase(2).getEnthalpy()
-                        / thermoSystem.getPhase(2).getNumberOfMolesInPhase() / thermoSystem.getPhase(2).getMolarMass();
+                        / thermoSystem.getPhase(2).getNumberOfMolesInPhase()
+                        / thermoSystem.getPhase(2).getMolarMass();
                 names[k] = "WATER ENTHALPY";
                 units[k] = "J/KG";
                 namesKeyword[k] = "HWT";
@@ -399,19 +446,22 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 namesKeyword[k] = "SIGHLWT";
                 k++;
                 props[k][i][j] = thermoSystem.getPhase(0).getEntropy()
-                        / thermoSystem.getPhase(0).getNumberOfMolesInPhase() / thermoSystem.getPhase(0).getMolarMass();
+                        / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
+                        / thermoSystem.getPhase(0).getMolarMass();
                 names[k] = "GAS ENTROPY";
                 units[k] = "J/KG/K";
                 namesKeyword[k] = "SEG";
                 k++;
                 props[k][i][j] = thermoSystem.getPhase(1).getEntropy()
-                        / thermoSystem.getPhase(1).getNumberOfMolesInPhase() / thermoSystem.getPhase(1).getMolarMass();
+                        / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
+                        / thermoSystem.getPhase(1).getMolarMass();
                 names[k] = "LIQUID ENTROPY";
                 units[k] = "J/KG/K";
                 namesKeyword[k] = "SEHL";
                 k++;
                 props[k][i][j] = thermoSystem.getPhase(2).getEntropy()
-                        / thermoSystem.getPhase(2).getNumberOfMolesInPhase() / thermoSystem.getPhase(2).getMolarMass();
+                        / thermoSystem.getPhase(2).getNumberOfMolesInPhase()
+                        / thermoSystem.getPhase(2).getMolarMass();
                 names[k] = "WATER ENTROPY";
                 units[k] = "J/KG/K";
                 namesKeyword[k] = "SEWT";
@@ -425,30 +475,43 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         initCalc();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         logger.info("TC " + TC + " PC " + PC);
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);
             for (int j = 0; j < temperatures.length; j++) {
-                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // + " ROG " +
-                                                                                                 // ROG[i][j] + " ROL
-                                                                                                 // " + ROL[i][j]);
+                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // +
+                                                                                                 // "
+                                                                                                 // ROG
+                                                                                                 // "
+                                                                                                 // +
+                                                                                                 // ROG[i][j]
+                                                                                                 // +
+                                                                                                 // "
+                                                                                                 // ROL
+                                                                                                 // "
+                                                                                                 // +
+                                                                                                 // ROL[i][j]);
             }
         }
         writeOLGAinpFile("");
     }
 
+    /**
+     * <p>
+     * writeOLGAinpFile.
+     * </p>
+     *
+     * @param filename a {@link java.lang.String} object
+     */
     public void writeOLGAinpFile(String filename) {
-        Writer writer = null;
-
-        try {
-            writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(
-                            "C:/Users/Kjetil Raul/Documents/Master KRB/3phaseTables/testCrazyFluidKeyWaterCPA.tab"),
-                    "utf-8"));
-
-            writer.write("PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = THREE" + ",\\" + "\n");
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+                "C:/Users/Kjetil Raul/Documents/Master KRB/3phaseTables/testCrazyFluidKeyWaterCPA.tab"),
+                "utf-8"))) {
+            writer.write("PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = THREE"
+                    + ",\\" + "\n");
             writer.write("EOS = " + "\"" + "Equation" + "\"" + ",\\" + "\n");
 
             writer.write("COMPONENTS = (");
@@ -497,7 +560,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
             writer.write("CRITICALPRESSURE = " + PCLOG + " ATM,\\" + "\n");
             writer.write("CRITICALTEMPERATURE = " + TCLOG + " K,\\" + "\n");
 
-            writer.write("MESHTYPE = STANDARD" + "," + "TOTWATERFRACTION = (" + RSWTOB + "),\\" + "\n");
+            writer.write(
+                    "MESHTYPE = STANDARD" + "," + "TOTWATERFRACTION = (" + RSWTOB + "),\\" + "\n");
 
             writer.write("PRESSURE = (");
             for (int i = 0; i < pressures.length; i++) {
@@ -562,12 +626,6 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
             }
         } catch (IOException ex) {
             // report
-        } finally {
-            try {
-                writer.close();
-            } catch (Exception ex) {
-            }
         }
-
     }
 }

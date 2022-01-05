@@ -1,39 +1,37 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.AntoineParameter;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>
+ * TestSolidAntoine_S8 class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TestSolidAntoine_S8 extends java.lang.Object {
-
-    private static final long serialVersionUID = 1000;
+public class TestSolidAntoine_S8 {
     static Logger logger = LogManager.getLogger(TestSolidAntoine_S8.class);
 
-    /** Creates new TestAcentric */
-    public TestSolidAntoine_S8() {
-    }
-
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -45,17 +43,19 @@ public class TestSolidAntoine_S8 extends java.lang.Object {
             while (dataSet.next()) {
                 AntoineSolidFunctionS8 function = new AntoineSolidFunctionS8();
                 // double guess[] = {8.046, -4600.0, -144.0}; // S8
-                double guess[] = { 1.181E1, -8.356E3 }; // S8
+                double guess[] = {1.181E1, -8.356E3}; // S8
                 function.setInitialGuess(guess);
 
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til komponenter til
-                                                                                    // systemet
-                double sample1[] = { Double.parseDouble(dataSet.getString("Temperature")) }; // temperature
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
+
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 double vappres = Double.parseDouble(dataSet.getString("VapourPressure"));
-                double standardDeviation1[] = { 0.15 }; // std.dev temperature // presure std.dev pressure
+                double standardDeviation1[] = {0.15}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 SampleValue sample = new SampleValue(vappres,
-                        Double.parseDouble(dataSet.getString("StandardDeviation")), sample1, standardDeviation1);
+                        Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
+                        standardDeviation1);
                 sample.setFunction(function);
 
                 function.setInitialGuess(guess);

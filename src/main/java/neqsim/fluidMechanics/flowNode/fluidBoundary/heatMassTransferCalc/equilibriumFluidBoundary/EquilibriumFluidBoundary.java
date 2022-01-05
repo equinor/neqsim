@@ -1,19 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.equilibriumFluidBoundary;
 
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
@@ -23,45 +7,71 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>EquilibriumFluidBoundary class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class EquilibriumFluidBoundary
         extends neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundary {
-
     private static final long serialVersionUID = 1000;
 
-    public EquilibriumFluidBoundary() {
-    }
+    /**
+     * <p>Constructor for EquilibriumFluidBoundary.</p>
+     */
+    public EquilibriumFluidBoundary() {}
 
+    /**
+     * <p>Constructor for EquilibriumFluidBoundary.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public EquilibriumFluidBoundary(SystemInterface system) {
         super(system);
         interphaseOps = new ThermodynamicOperations(interphaseSystem);
         // interphaseOps.TPflash();
     }
 
+    /**
+     * <p>Constructor for EquilibriumFluidBoundary.</p>
+     *
+     * @param flowNode a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
+     */
     public EquilibriumFluidBoundary(FlowNodeInterface flowNode) {
         super(flowNode);
         interphaseOps = new ThermodynamicOperations(interphaseSystem);
         // interphaseOps.TPflash();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void solve() {
+    public void solve() {
         getInterphaseOpertions().TPflash();
         getBulkSystemOpertions().TPflash();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double[] calcFluxes() {
+    public double[] calcFluxes() {
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
             nFlux.set(i, 0, 0);
         }
         return nFlux.getArray()[0];
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         System.out.println("Starter.....");
         SystemSrkEos testSystem = new SystemSrkEos(295.3, 11.0);
@@ -77,7 +87,5 @@ public class EquilibriumFluidBoundary
 
         EquilibriumFluidBoundary test2 = new EquilibriumFluidBoundary(test);
         test2.solve();
-
     }
-
 }

@@ -1,66 +1,75 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * NetCdf.java
- *
- * Created on 5. august 2001, 21:52
- */
-
 package neqsim.dataPresentation.fileHandeling.createTextFile;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
 
-//import ucar.nc2.*;
 /**
+ * <p>
+ * TextFile class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class TextFile implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     String fileName = "c:/example.txt";
     String[][] values;
     // NetcdfFileWriteable ncfile;
 
-    /** Creates new NetCdf */
-    public TextFile() {
-    }
+    /**
+     * <p>
+     * Constructor for TextFile.
+     * </p>
+     */
+    public TextFile() {}
 
+    /**
+     * <p>
+     * setOutputFileName.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setOutputFileName(String name) {
         this.fileName = name;
     }
 
+    /**
+     * <p>
+     * newFile.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void newFile(String name) {
-        try {
-            File outputFile = new File(name);
-            FileWriter out = new FileWriter(outputFile);
+        try (FileWriter out = new FileWriter(new File(name))) {
             out.write("");
         } catch (Exception e) {
             System.out.println(e.toString());
         }
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>values</code>.
+     * </p>
+     *
+     * @param values an array of {@link java.lang.String} objects
+     */
     public void setValues(String[][] values) {
         System.out.println("writing " + values[0][0] + "  data");
         this.values = values;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>values</code>.
+     * </p>
+     *
+     * @param valuesloca an array of {@link double} objects
+     */
     public void setValues(double[][] valuesloca) {
         values = new String[valuesloca[0].length][valuesloca.length];
         // System.out.println("writing " + values[0][0] + " data");
@@ -71,15 +80,17 @@ public class TextFile implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * createFile.
+     * </p>
+     */
     public void createFile() {
         System.out.println("writing " + values[0][0] + "  data");
         System.out.println("length " + values.length);
         System.out.println("length2 " + values[0].length);
 
-        try {
-            File outputFile = new File(fileName);
-            FileWriter out = new FileWriter(outputFile, true);
-
+        try (FileWriter out = new FileWriter(new File(fileName), true)) {
             for (int i = 0; i < values.length; i++) {
                 for (int j = 0; j < values[0].length; j++) {
                     if (values[i][j] != null) {
@@ -90,11 +101,9 @@ public class TextFile implements java.io.Serializable {
                 out.write("\n");
             }
             out.flush();
-            out.close();
         } catch (Exception e) {
             System.err.println("error writing file: " + e.toString());
         }
         System.out.println("writing data to file: " + fileName + " ... ok");
     }
-
 }

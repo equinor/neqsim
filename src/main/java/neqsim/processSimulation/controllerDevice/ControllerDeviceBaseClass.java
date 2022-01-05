@@ -2,21 +2,20 @@
  * ControllerDeviceBaseClass.java
  *
  * Created on 10. oktober 2006, 19:59
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
-
 package neqsim.processSimulation.controllerDevice;
 
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 
 /**
+ * <p>
+ * ControllerDeviceBaseClass class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
-
     private static final long serialVersionUID = 1000;
 
     private String name = "controller", unit = "[?]";
@@ -31,107 +30,162 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     private double Tint = 300.0, TintValue = 0.0;
     private double Tderiv = 300.0;
 
-    /** Creates a new instance of ControllerDeviceBaseClass */
-    public ControllerDeviceBaseClass() {
-    }
+    /**
+     * Creates a new instance of ControllerDeviceBaseClass
+     */
+    public ControllerDeviceBaseClass() {}
 
+    /** {@inheritDoc} */
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setTransmitter(MeasurementDeviceInterface device) {
+    public void setTransmitter(MeasurementDeviceInterface device) {
         this.transmitter = device;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getMeasuredValue() {
+    public double getMeasuredValue() {
         return this.transmitter.getMeasuredValue();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run(double percentSignal, double dt) {
+    public void run(double percentSignal, double dt) {
         if (reverseActing) {
             propConstant = -1;
         }
         oldoldError = error;
         oldError = error;
-        error = transmitter.getMeasuredPercentValue() - (controllerSetPoint - transmitter.getMinimumValue())
-                / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100;
+        error = transmitter.getMeasuredPercentValue()
+                - (controllerSetPoint - transmitter.getMinimumValue())
+                        / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100;
 
         TintValue += Ksp / Tint * error * dt;
         double TderivValue = Ksp * Tderiv * (error - oldError) / dt;
         response = percentSignal + propConstant * (Ksp * error + TintValue + TderivValue);
         System.out.println("error " + error + " %");
-//        error = device.getMeasuredPercentValue()-controlValue;
-//        double regulatorSignal = error*1.0;
+        // error = device.getMeasuredPercentValue()-controlValue;
+        // double regulatorSignal = error*1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setControllerSetPoint(double signal) {
+    public void setControllerSetPoint(double signal) {
         this.controllerSetPoint = signal;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String getUnit() {
+    public String getUnit() {
         return unit;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setUnit(String unit) {
+    public void setUnit(String unit) {
         this.unit = unit;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getResponse() {
+    public double getResponse() {
         return response;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public boolean isReverseActing() {
+    public boolean isReverseActing() {
         return reverseActing;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setReverseActing(boolean reverseActing) {
+    public void setReverseActing(boolean reverseActing) {
         this.reverseActing = reverseActing;
     }
 
+    /**
+     * <p>
+     * getKsp.
+     * </p>
+     *
+     * @return a double
+     */
     public double getKsp() {
         return Ksp;
     }
 
+    /**
+     * <p>
+     * setKsp.
+     * </p>
+     *
+     * @param Ksp a double
+     */
     public void setKsp(double Ksp) {
         this.Ksp = Ksp;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setControllerParameters(double Ksp, double Ti, double Td) {
+    public void setControllerParameters(double Ksp, double Ti, double Td) {
         this.setKsp(Ksp);
         this.setTint(Ti);
         this.setTderiv(Td);
     }
 
+    /**
+     * <p>
+     * getTint.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTint() {
         return Tint;
     }
 
+    /**
+     * <p>
+     * setTint.
+     * </p>
+     *
+     * @param Tint a double
+     */
     public void setTint(double Tint) {
         this.Tint = Tint;
     }
 
+    /**
+     * <p>
+     * getTderiv.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTderiv() {
         return Tderiv;
     }
 
+    /**
+     * <p>
+     * setTderiv.
+     * </p>
+     *
+     * @param Tderiv a double
+     */
     public void setTderiv(double Tderiv) {
         this.Tderiv = Tderiv;
     }
-
 }

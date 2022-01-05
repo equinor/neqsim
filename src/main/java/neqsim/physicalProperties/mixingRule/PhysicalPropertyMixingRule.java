@@ -5,31 +5,36 @@
  */
 package neqsim.physicalProperties.mixingRule;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * PhysicalPropertyMixingRule class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
-public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMixingRuleInterface,
-        ThermodynamicConstantsInterface, java.io.Serializable {
-
+public class PhysicalPropertyMixingRule
+        implements PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhysicalPropertyMixingRule.class);
 
     public double[][] Gij;
 
     /**
-     * Creates new PhysicalPropertyMixingRule
+     * <p>
+     * Constructor for PhysicalPropertyMixingRule.
+     * </p>
      */
-    public PhysicalPropertyMixingRule() {
-    }
+    public PhysicalPropertyMixingRule() {}
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public PhysicalPropertyMixingRule clone() {
         PhysicalPropertyMixingRule mixRule = null;
 
         try {
@@ -46,22 +51,33 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
         return mixRule;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getViscosityGij(int i, int j) {
+    public double getViscosityGij(int i, int j) {
         return Gij[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setViscosityGij(double val, int i, int j) {
+    public void setViscosityGij(double val, int i, int j) {
         Gij[i][j] = val;
     }
 
+    /**
+     * <p>
+     * getPhysicalPropertyMixingRule.
+     * </p>
+     *
+     * @return a {@link neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface}
+     *         object
+     */
     public PhysicalPropertyMixingRuleInterface getPhysicalPropertyMixingRule() {
         return this;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void initMixingRules(PhaseInterface phase) {
+    public void initMixingRules(PhaseInterface phase) {
         // logger.info("reading mix Gij viscosity..");
         Gij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
         neqsim.util.database.NeqSimDataBase database = null;
@@ -69,19 +85,22 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
 
         database = new neqsim.util.database.NeqSimDataBase();
         for (int l = 0; l < phase.getNumberOfComponents(); l++) {
-            if (phase.getComponent(l).isIsTBPfraction() || phase.getComponent(l).getIonicCharge() != 0) {
+            if (phase.getComponent(l).isIsTBPfraction()
+                    || phase.getComponent(l).getIonicCharge() != 0) {
                 break;
             }
             String component_name = phase.getComponents()[l].getComponentName();
             for (int k = l; k < phase.getNumberOfComponents(); k++) {
-                if (k == l || phase.getComponent(k).getIonicCharge() != 0 || phase.getComponent(k).isIsTBPfraction()) {
+                if (k == l || phase.getComponent(k).getIonicCharge() != 0
+                        || phase.getComponent(k).isIsTBPfraction()) {
                     break;
                 } else {
                     try {
-                        dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='" + component_name
-                                + "' AND COMP2='" + phase.getComponents()[k].getComponentName() + "') OR (COMP1='"
-                                + phase.getComponents()[k].getComponentName() + "' AND COMP2='" + component_name
-                                + "')");
+                        dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='"
+                                + component_name + "' AND COMP2='"
+                                + phase.getComponents()[k].getComponentName() + "') OR (COMP1='"
+                                + phase.getComponents()[k].getComponentName() + "' AND COMP2='"
+                                + component_name + "')");
                         if (dataSet.next()) {
                             Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
                         } else {
@@ -98,7 +117,8 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
                                 dataSet.close();
                             }
                         } catch (Exception e) {
-                            logger.error("err closing dataSet in physical property mixing rule...", e);
+                            logger.error("err closing dataSet in physical property mixing rule...",
+                                    e);
                         }
                     }
                 }

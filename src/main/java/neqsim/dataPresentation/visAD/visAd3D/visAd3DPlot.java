@@ -1,25 +1,32 @@
-/*
- * visAdContourPlot.java
- *
- * Created on 7. november 2000, 17:51
- */
-
 package neqsim.dataPresentation.visAD.visAd3D;
 
 import java.rmi.RemoteException;
-import javax.swing.*;
+import javax.swing.JFrame;
 import neqsim.dataPresentation.visAD.visAdBaseClass;
-import visad.*;
+import visad.DataReferenceImpl;
+import visad.Display;
+import visad.DisplayImpl;
+import visad.FlatField;
+import visad.FunctionType;
+import visad.GraphicsModeControl;
+import visad.Linear2DSet;
+import visad.RealTupleType;
+import visad.RealType;
+import visad.ScalarMap;
+import visad.Set;
+import visad.VisADException;
 import visad.java3d.DisplayImplJ3D;
-import visad.util.*;
+import visad.util.ContourWidget;
 
 /**
+ * <p>
+ * visAd3DPlot class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class visAd3DPlot extends visAdBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     private RealType longitude, latitude, temperature, isotemperature;
@@ -38,17 +45,42 @@ public class visAd3DPlot extends visAdBaseClass {
     double[][] z_samples;
     private ContourWidget contourWid;
 
-    /** Creates new visAdContourPlot */
-    public visAd3DPlot(String firstax, String secax, String zax) throws RemoteException, VisADException {
-        latitude = new RealType(firstax);
-        longitude = new RealType(secax);
+    /**
+     * <p>
+     * Constructor for visAd3DPlot.
+     * </p>
+     *
+     * @param firstax a {@link java.lang.String} object
+     * @param secax a {@link java.lang.String} object
+     * @param zax a {@link java.lang.String} object
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
+    public visAd3DPlot(String firstax, String secax, String zax)
+            throws RemoteException, VisADException {
+        latitude = RealType.getRealType(firstax);
+        longitude = RealType.getRealType(secax);
         domain_tuple = new RealTupleType(latitude, longitude);
-        temperature = new RealType(zax);
-        isotemperature = new RealType("isoTemperature");
+        temperature = RealType.getRealType(zax);
+        isotemperature = RealType.getRealType("isoTemperature");
         func_domain_range = new FunctionType(domain_tuple, temperature);
         func_domain_iso_range = new FunctionType(domain_tuple, isotemperature);
     }
 
+    /**
+     * <p>
+     * setXYvals.
+     * </p>
+     *
+     * @param xMin a double
+     * @param xMax a double
+     * @param Nrows a int
+     * @param yMin a double
+     * @param yMax a double
+     * @param NCols a int
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setXYvals(double xMin, double xMax, int Nrows, double yMin, double yMax, int NCols)
             throws RemoteException, VisADException {
         NCOLS = NCols;
@@ -57,6 +89,16 @@ public class visAd3DPlot extends visAdBaseClass {
         set_samples = domain_set.getSamples(true);
     }
 
+    /**
+     * <p>
+     * setXYvals.
+     * </p>
+     *
+     * @param xvals an array of {@link double} objects
+     * @param yvals an array of {@link double} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setXYvals(double[] xvals, double[] yvals) throws RemoteException, VisADException {
         /*
          * NCOLS = xvals.length; NROWS = yvals.length;
@@ -65,27 +107,32 @@ public class visAd3DPlot extends visAdBaseClass {
          * 
          * for(int i=0;i<NCOLS){ for(int j=0;j<NROWS;j++){ numbs[j][i] = yvals[j] } }
          * 
-         * domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS, yMin, yMax,
-         * NCOLS);
+         * domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS, yMin, yMax, NCOLS);
          * 
          * set_samples = domain_set.getSamples( true );
          */
     }
 
+    /**
+     * <p>
+     * setZvals.
+     * </p>
+     *
+     * @param vals an array of {@link double} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setZvals(double[][] vals) throws RemoteException, VisADException {
-
         z_samples = vals;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() throws RemoteException, VisADException {
-
+    public void init() throws RemoteException, VisADException {
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 
         for (int c = 0; c < NCOLS; c++) {
-
             for (int r = 0; r < NROWS; r++) {
-
                 flat_samples[0][c * NROWS + r] = (float) z_samples[c][r];
             }
         }
@@ -161,16 +208,22 @@ public class visAd3DPlot extends visAdBaseClass {
         jframe.setVisible(true);
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public static void main(String[] args) throws RemoteException, VisADException {
-
         visAd3DPlot test = new visAd3DPlot("long", "alt", "height");
         test.setXYvals(0, 10, 4, 0, 10, 4);
 
-        double[][] z = { { 3, 2, 1, 3, }, { 2, 6, 4, 1, }, { 1, 3, 2, 1, }, { 3, 2, 1, 3, } };
+        double[][] z = {{3, 2, 1, 3,}, {2, 6, 4, 1,}, {1, 3, 2, 1,}, {3, 2, 1, 3,}};
 
         test.setZvals(z);
         test.init();
-
     }
-
 }

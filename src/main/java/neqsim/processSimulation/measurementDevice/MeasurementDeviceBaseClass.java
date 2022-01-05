@@ -1,49 +1,49 @@
-/*
- * ProcessEquipmentBaseClass.java
- *
- * Created on 6. juni 2006, 15:12
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.measurementDevice.online.OnlineSignal;
 
 /**
+ * <p>
+ * Abstract MeasurementDeviceBaseClass class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInterface {
-
     private static final long serialVersionUID = 1000;
 
-    /**
-     * 
-     * @return the onlineSignal
-     */
+    /** {@inheritDoc} */
     @Override
-	public OnlineSignal getOnlineSignal() {
+    public OnlineSignal getOnlineSignal() {
         return onlineSignal;
     }
 
     /**
+     * <p>
+     * Setter for the field <code>onlineSignal</code>.
+     * </p>
+     *
      * @param onlineSignal the onlineSignal to set
      */
     public void setOnlineSignal(OnlineSignal onlineSignal) {
         this.onlineSignal = onlineSignal;
     }
 
-    /**
-     * @return the isOnlineSignal
-     */
+    /** {@inheritDoc} */
     @Override
-	public boolean isOnlineSignal() {
+    public boolean isOnlineSignal() {
         return isOnlineSignal;
     }
 
     /**
+     * <p>
+     * Setter for the field <code>isOnlineSignal</code>.
+     * </p>
+     *
      * @param isOnlineSignal the isOnlineSignal to set
+     * @param plantName a {@link java.lang.String} object
+     * @param transmitterame a {@link java.lang.String} object
      */
     public void setIsOnlineSignal(boolean isOnlineSignal, String plantName, String transmitterame) {
         this.isOnlineSignal = isOnlineSignal;
@@ -66,102 +66,149 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     /**
      * Creates a new instance of ProcessEquipmentBaseClass
      */
-    public MeasurementDeviceBaseClass() {
-    }
+    public MeasurementDeviceBaseClass() {}
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
-    }
+    public void displayResult() {}
 
     ;
 
+    /** {@inheritDoc} */
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String getUnit() {
+    public String getUnit() {
         return unit;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setName(String nameset) {
+    public void setName(String nameset) {
         name = nameset;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getMeasuredValue() {
+    public double getMeasuredValue() {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setUnit(String unit) {
+    public void setUnit(String unit) {
         this.unit = unit;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getMaximumValue() {
+    public double getMaximumValue() {
         return maximumValue;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setMaximumValue(double maximumValue) {
+    public void setMaximumValue(double maximumValue) {
         this.maximumValue = maximumValue;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getMinimumValue() {
+    public double getMinimumValue() {
         return minimumValue;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setMinimumValue(double minimumValue) {
+    public void setMinimumValue(double minimumValue) {
         this.minimumValue = minimumValue;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getMeasuredPercentValue() {
+    public double getMeasuredPercentValue() {
         return (getMeasuredValue() - minimumValue) / (maximumValue - minimumValue) * 100;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public boolean isLogging() {
+    public boolean isLogging() {
         return logging;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setLogging(boolean logging) {
+    public void setLogging(boolean logging) {
         this.logging = logging;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getOnlineValue() {
+    public double getOnlineValue() {
         return getOnlineSignal().getValue();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getMeasuredValue(String unit) {
+    public double getMeasuredValue(String unit) {
         return 0.0;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>onlineMeasurementValue</code>.
+     * </p>
+     *
+     * @param value a double
+     * @param unit a {@link java.lang.String} object
+     */
     public void setOnlineMeasurementValue(double value, String unit) {
         onlineMeasurementValue = value;
         onlineMeasurementValueUnit = unit;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>onlineMeasurementValue</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getOnlineMeasurementValue() {
         return onlineMeasurementValue;
     }
 
+    /**
+     * <p>
+     * doConditionAnalysis.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean doConditionAnalysis() {
         return conditionAnalysis;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>conditionAnalysis</code>.
+     * </p>
+     *
+     * @param conditionMonitor a boolean
+     */
     public void setConditionAnalysis(boolean conditionMonitor) {
         this.conditionAnalysis = conditionMonitor;
     }
 
+    /**
+     * <p>
+     * runConditionAnalysis.
+     * </p>
+     */
     public void runConditionAnalysis() {
         if (Math.abs(getMeasuredValue(onlineMeasurementValueUnit)
                 - onlineMeasurementValue) < getConditionAnalysisMaxDeviation()) {
@@ -171,18 +218,46 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>conditionAnalysisMessage</code>.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String getConditionAnalysisMessage() {
         return conditionAnalysisMessage;
     }
 
+    /**
+     * <p>
+     * setQualityCheckMessage.
+     * </p>
+     *
+     * @param conditionAnalysisMessage a {@link java.lang.String} object
+     */
     public void setQualityCheckMessage(String conditionAnalysisMessage) {
         this.conditionAnalysisMessage = conditionAnalysisMessage;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>conditionAnalysisMaxDeviation</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getConditionAnalysisMaxDeviation() {
         return conditionAnalysisMaxDeviation;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>conditionAnalysisMaxDeviation</code>.
+     * </p>
+     *
+     * @param conditionAnalysisMaxDeviation a double
+     */
     public void setConditionAnalysisMaxDeviation(double conditionAnalysisMaxDeviation) {
         this.conditionAnalysisMaxDeviation = conditionAnalysisMaxDeviation;
     }

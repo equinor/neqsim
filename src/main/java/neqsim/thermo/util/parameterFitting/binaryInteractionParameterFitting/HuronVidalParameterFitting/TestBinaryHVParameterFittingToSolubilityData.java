@@ -1,40 +1,37 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import neqsim.util.database.NeqSimExperimentDatabase;
-
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimExperimentDatabase;
 
 /**
+ * <p>
+ * TestBinaryHVParameterFittingToSolubilityData class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Object {
-
-    private static final long serialVersionUID = 1000;
+public class TestBinaryHVParameterFittingToSolubilityData {
     static Logger logger = LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityData.class);
 
-    /** Creates new TestAcentric */
-    public TestBinaryHVParameterFittingToSolubilityData() {
-    }
-
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
@@ -55,7 +52,8 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
             logger.info("adding....");
             while (dataSet.next() && p < 22) {
                 p++;
-                BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData();
+                BinaryHVParameterFittingToSolubilityData function =
+                        new BinaryHVParameterFittingToSolubilityData();
                 // SystemInterface testSystem = new SystemSrkEos(280,1);
                 // SystemInterface testSystem = new SystemFurstElectrolyteEos(280, 1.0);
                 SystemInterface testSystem = new SystemSrkSchwartzentruberEos(290, 1.0);
@@ -81,10 +79,12 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 logger.error("pressure " + testSystem.getPressure());
                 testSystem.init(0);
-                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),
-                        Double.parseDouble(dataSet.getString("StandardDeviation")), sample1, standardDeviation1);
+                        Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
+                        standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);
                 sample.setReference(Double.toString(testSystem.getTemperature()));
@@ -94,8 +94,9 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
                 // 1.2714576276};//CO2-SRK-MC
                 // double parameterGuess[] = {5251.7374371982, -3121.2788585048, -0.8420253536,
                 // -0.5123316046}; // HV CO2 -PVT-sim
-                double parameterGuess[] = { 2423.6600682957, -2136.4306560594, 1.9812435921, 1.4579901393 }; // HV
-                                                                                                             // methane
+                double parameterGuess[] =
+                        {2423.6600682957, -2136.4306560594, 1.9812435921, 1.4579901393}; // HV
+                                                                                         // methane
                 // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162
                 // , 13.0150379323}; // HV
                 // double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0, -1.824E0}; // HV

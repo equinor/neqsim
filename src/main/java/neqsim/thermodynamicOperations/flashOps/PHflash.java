@@ -1,35 +1,21 @@
 /*
- * Copyright 2018 ESOL.
+ * PHflash.java
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Created on 8. mars 2001, 10:56
  */
-
-/*
-* PHflash.java
-*
-* Created on 8. mars 2001, 10:56
-*/
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * PHflash class.
+ * </p>
  *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
-public class PHflash extends Flash implements java.io.Serializable {
-
+public class PHflash extends Flash {
     private static final long serialVersionUID = 1000;
 
     double Hspec = 0;
@@ -37,11 +23,21 @@ public class PHflash extends Flash implements java.io.Serializable {
     int type = 0;
 
     /**
-     * Creates new PHflash
+     * <p>
+     * Constructor for PHflash.
+     * </p>
      */
-    public PHflash() {
-    }
+    public PHflash() {}
 
+    /**
+     * <p>
+     * Constructor for PHflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Hspec a double
+     * @param type a int
+     */
     public PHflash(SystemInterface system, double Hspec, int type) {
         this.system = system;
         this.tpFlash = new TPflash(system);
@@ -49,16 +45,37 @@ public class PHflash extends Flash implements java.io.Serializable {
         this.type = type;
     }
 
+    /**
+     * <p>
+     * calcdQdTT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdTT() {
         double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCp();
         return dQdTT / Math.abs(Hspec);
     }
 
+    /**
+     * <p>
+     * calcdQdT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdT() {
         double dQ = (system.getEnthalpy() - Hspec) / Math.abs(Hspec);
         return dQ;
     }
 
+    /**
+     * <p>
+     * solveQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double solveQ() {
         double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
         double iterations = 1;
@@ -82,7 +99,8 @@ public class PHflash extends Flash implements java.io.Serializable {
             nyTemp = oldTemp - newCorr;
 
             if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-                nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+                nyTemp = 1.0 / (system.getTemperature()
+                        - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
                 correctFactor = false;
             } else if (nyTemp < 0) {
                 nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
@@ -111,25 +129,33 @@ public class PHflash extends Flash implements java.io.Serializable {
             }
 
             if (false && error * erorOld < 0) {
-                system.setTemperature((Math.abs(erorOld) * 1.0 / oldTemp + Math.abs(error) * 1.0 / nyTemp)
-                        / (Math.abs(erorOld) + Math.abs(error)));
+                system.setTemperature(
+                        (Math.abs(erorOld) * 1.0 / oldTemp + Math.abs(error) * 1.0 / nyTemp)
+                                / (Math.abs(erorOld) + Math.abs(error)));
                 tpFlash.run();
                 system.init(2);
                 erorOld = error;
                 error = calcdQdT();
-                System.out.println("reset temperature -- new temp " + system.getTemperature() + " error " + error
-                        + " iter " + iterations);
+                System.out.println("reset temperature -- new temp " + system.getTemperature()
+                        + " error " + error + " iter " + iterations);
             }
             // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
             // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
             // " error "+ error + " correction " + newCorr + " factor "+ factor);
-
-        } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3) && iterations < 200);
+        } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3)
+                && iterations < 200);
         // System.out.println("temp " + system.getTemperature() + " iter " + iterations
         // + " error " + error);
         return 1.0 / nyTemp;
     }
 
+    /**
+     * <p>
+     * solveQ2.
+     * </p>
+     *
+     * @return a double
+     */
     public double solveQ2() {
         double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
         double iterations = 1;
@@ -150,7 +176,8 @@ public class PHflash extends Flash implements java.io.Serializable {
             newCorr = factor * calcdQdT() / calcdQdTT();
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-                nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+                nyTemp = 1.0 / (system.getTemperature()
+                        - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
                 correctFactor = false;
             } else if (nyTemp < 0) {
                 nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
@@ -170,15 +197,15 @@ public class PHflash extends Flash implements java.io.Serializable {
             // if(iterations>100) System.out.println("temp " + system.getTemperature() + "
             // iter "+ iterations + " error "+ error + " correction " + newCorr + " factor
             // "+ factor);
-
         } while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
         // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
         // " error "+ error );
         return 1.0 / nyTemp;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
         // System.out.println("enthalpy start: " + system.getEnthalpy());
         if (type == 0) {
@@ -188,15 +215,14 @@ public class PHflash extends Flash implements java.io.Serializable {
                     system.getPhases()[0].getNumberOfComponents(), 0);
             secondOrderSolver.setSpec(Hspec);
             secondOrderSolver.solve(1);
-
         }
         // System.out.println("enthalpy: " + system.getEnthalpy());
-//        System.out.println("Temperature: " + system.getTemperature());
+        // System.out.println("Temperature: " + system.getTemperature());
     }
 
+    /** {@inheritDoc} */
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-
 }

@@ -1,11 +1,6 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
-import java.util.*;
+import java.util.ArrayList;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -13,30 +8,30 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * TestWaxTuning class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TestWaxTuning extends java.lang.Object {
-
-    private static final long serialVersionUID = 1000;
-
+public class TestWaxTuning {
     /**
-     * Creates new TestAcentric
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
-    public TestWaxTuning() {
-    }
-
     public static void main(String[] args) {
-
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         try {
             System.out.println("adding....");
             int i = 0;
             while (i < 1) {
                 WaxFunction function = new WaxFunction();
-                double guess[] = { 1.074, 6.584e-4, 0.1915 };
+                double guess[] = {1.074, 6.584e-4, 0.1915};
                 function.setInitialGuess(guess);
 
                 SystemInterface tempSystem = new SystemSrkEos(273.15 + 20, 10.0);
@@ -52,15 +47,15 @@ public class TestWaxTuning extends java.lang.Object {
                 tempSystem.init(0);
                 tempSystem.init(1);
 
-                double sample1[] = { 273.15 + 20.0 };
+                double sample1[] = {273.15 + 20.0};
                 double waxContent = 2.0;
-                double standardDeviation1[] = { 1.5 };
-                SampleValue sample = new SampleValue(waxContent, waxContent / 100.0, sample1, standardDeviation1);
+                double standardDeviation1[] = {1.5};
+                SampleValue sample = new SampleValue(waxContent, waxContent / 100.0, sample1,
+                        standardDeviation1);
                 sample.setFunction(function);
                 function.setInitialGuess(guess);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -74,6 +69,5 @@ public class TestWaxTuning extends java.lang.Object {
         optim.setSampleSet(sampleSet);
         // optim.solve();
         optim.displayCurveFit();
-
     }
 }

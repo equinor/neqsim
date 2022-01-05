@@ -3,26 +3,37 @@
  *
  * Created on 25. januar 2002, 20:22
  */
-
 package neqsim.util.unit;
 
-import org.apache.logging.log4j.*;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
+ * <p>
+ * RateUnit class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class RateUnit extends neqsim.util.unit.BaseUnit {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(RateUnit.class);
 
     double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
 
-    /** Creates new RateUnit */
+    /**
+     * <p>
+     * Constructor for RateUnit.
+     * </p>
+     *
+     * @param value a double
+     * @param name a {@link java.lang.String} object
+     * @param molarmass a double
+     * @param stddens a double
+     * @param boilp a double
+     */
     public RateUnit(double value, String name, double molarmass, double stddens, double boilp) {
         super(value, name);
         this.molarmass = molarmass;
@@ -30,16 +41,26 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
         this.boilp = boilp;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getSIvalue() {
+    public double getSIvalue() {
         return getConversionFactor(inunit) / getConversionFactor("SI") * invalue;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getValue(String tounit) {
+    public double getValue(String tounit) {
         return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
     }
 
+    /**
+     * <p>
+     * getConversionFactor.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a double
+     */
     public double getConversionFactor(String name) {
         double mol_m3 = 0.0;
         double mol_Sm3 = 101325.0 / (ThermodynamicConstantsInterface.R * standardStateTemperature);
@@ -49,7 +70,8 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
             mol_m3 = 1.0 / (molarmass) * stddens * 1000;
         }
 
-        if (name.equals("mole/sec") || name.equals("mol/sec") || name.equals("SI") || name.equals("mol")) {
+        if (name.equals("mole/sec") || name.equals("mol/sec") || name.equals("SI")
+                || name.equals("mol")) {
             factor = 1.0;
         } else if (name.equals("Nlitre/min")) {
             factor = 1.0 / 60.0 * mol_m3 / 1000.0;
@@ -89,5 +111,4 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
 
         return factor;
     }
-
 }

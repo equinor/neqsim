@@ -1,39 +1,20 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * VUflashQfunc.java
- *
- * Created on 8. mars 2001, 10:56
- */
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-import org.apache.logging.log4j.*;
-
 /**
+ * <p>
+ * VHflashQfunc class.
+ * </p>
  *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
-public class VHflashQfunc extends Flash implements java.io.Serializable {
-
+public class VHflashQfunc extends Flash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(VHflashQfunc.class);
 
@@ -41,11 +22,21 @@ public class VHflashQfunc extends Flash implements java.io.Serializable {
     Flash tpFlash;
 
     /**
-     * Creates new PHflash
+     * <p>
+     * Constructor for VHflashQfunc.
+     * </p>
      */
-    public VHflashQfunc() {
-    }
+    public VHflashQfunc() {}
 
+    /**
+     * <p>
+     * Constructor for VHflashQfunc.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Vspec a double
+     * @param Hspec a double
+     */
     public VHflashQfunc(SystemInterface system, double Vspec, double Hspec) {
         this.system = system;
         this.tpFlash = new TPflash(system);
@@ -53,36 +44,72 @@ public class VHflashQfunc extends Flash implements java.io.Serializable {
         this.Hspec = Hspec;
     }
 
+    /**
+     * <p>
+     * calcdQdPP.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdPP() {
         double dQdVV = (system.getVolume() - Vspec)
                 / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature())
                 + system.getPressure() * (system.getdVdPtn())
-                        / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
+                        / (neqsim.thermo.ThermodynamicConstantsInterface.R
+                                * system.getTemperature());
         return dQdVV;
     }
 
+    /**
+     * <p>
+     * calcdQdTT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdTT() {
-
-        double dQdTT = -system.getCp() / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
+        double dQdTT = -system.getCp()
+                / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
                 - calcdQdT() / system.getTemperature();
         return dQdTT;
     }
 
+    /**
+     * <p>
+     * calcdQdT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdT() {
         double dQdT = (Hspec - system.getEnthalpy())
                 / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R);
         return dQdT;
     }
 
+    /**
+     * <p>
+     * calcdQdP.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdP() {
         double dQdP = system.getPressure() * (system.getVolume() - Vspec)
                 / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
         return dQdP;
     }
 
+    /**
+     * <p>
+     * solveQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double solveQ() {
-        double oldPres = system.getPressure(), nyPres = system.getPressure(), nyTemp = system.getTemperature(),
-                oldTemp = system.getTemperature();
+        double oldPres = system.getPressure(), nyPres = system.getPressure(),
+                nyTemp = system.getTemperature(), oldTemp = system.getTemperature();
         double iterations = 1;
         // logger.info("Vspec: " + Vspec);
         // logger.info("Uspec: " + Uspec);
@@ -103,25 +130,33 @@ public class VHflashQfunc extends Flash implements java.io.Serializable {
             // logger.info("error1: " + Math.abs((nyPres - oldPres) / (nyPres)));
             // logger.info("error2: " + Math.abs((nyTemp - oldTemp) / (nyTemp)));
             // logger.info("inernaleng: " + system.getInternalEnergy());
-        } while (Math.abs((nyPres - oldPres) / (nyPres)) + Math.abs((nyTemp - oldTemp) / (nyTemp)) > 1e-9
-                && iterations < 1000);
+        } while (Math.abs((nyPres - oldPres) / (nyPres))
+                + Math.abs((nyTemp - oldTemp) / (nyTemp)) > 1e-9 && iterations < 1000);
         return nyPres;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
         // logger.info("internaleng: " + system.getInternalEnergy());
         // logger.info("volume: " + system.getVolume());
         solveQ();
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 55, 50.0);
 

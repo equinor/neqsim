@@ -1,39 +1,21 @@
 /*
- * Copyright 2018 ESOL.
+ * Flash.java
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Created on 2. oktober 2000, 22:22
  */
-
-/*
-* Flash.java
-*
-* Created on 2. oktober 2000, 22:22
-*/
 package neqsim.thermodynamicOperations.flashOps;
 
-import Jama.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
  * @author Even Solbraa
  * @version
  */
-abstract class Flash extends BaseOperation implements OperationInterface, java.io.Serializable {
-
+abstract class Flash extends BaseOperation {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Flash.class);
 
@@ -54,11 +36,19 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
     boolean findLowesGibsPhaseIsChecked = false;
 
     /**
-     * Creates new Flash
+     * <p>
+     * Constructor for Flash.
+     * </p>
      */
-    public Flash() {
-    }
+    public Flash() {}
 
+    /**
+     * <p>
+     * findLowestGibbsEnergyPhase.
+     * </p>
+     *
+     * @return a int
+     */
     public int findLowestGibbsEnergyPhase() {
         if (!findLowesGibsPhaseIsChecked) {
             minimumGibbsEnergySystem = (SystemInterface) system.clone();
@@ -76,8 +66,16 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
         return lowestGibbsEnergyPhase;
     }
 
-    public void stabilityAnalysis()
-            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+    /**
+     * <p>
+     * stabilityAnalysis.
+     * </p>
+     *
+     * @throws neqsim.util.exception.IsNaNException if any.
+     * @throws neqsim.util.exception.TooManyIterationsException if any.
+     */
+    public void stabilityAnalysis() throws neqsim.util.exception.IsNaNException,
+            neqsim.util.exception.TooManyIterationsException {
         double[] logWi = new double[system.getPhases()[0].getNumberOfComponents()];
         double[] deltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
         double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -127,10 +125,12 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
         }
 
         for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
-            clonedSystem.getPhase(1).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getz()
-                    / clonedSystem.getPhase(0).getComponent(i).getK() / sumw[1]);
-            clonedSystem.getPhase(0).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getK()
-                    * clonedSystem.getPhase(0).getComponent(i).getz() / sumw[0]);
+            clonedSystem.getPhase(1).getComponent(i)
+                    .setx(clonedSystem.getPhase(0).getComponent(i).getz()
+                            / clonedSystem.getPhase(0).getComponent(i).getK() / sumw[1]);
+            clonedSystem.getPhase(0).getComponent(i)
+                    .setx(clonedSystem.getPhase(0).getComponent(i).getK()
+                            * clonedSystem.getPhase(0).getComponent(i).getz() / sumw[0]);
         }
 
         // for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
@@ -155,13 +155,13 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                     oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
                 }
 
-                if ((iterations <= maxiterations - 10) || !system.isImplementedCompositionDeriativesofFugacity()) {
-
+                if ((iterations <= maxiterations - 10)
+                        || !system.isImplementedCompositionDeriativesofFugacity()) {
                     clonedSystem.init(1, j);
                     fNormOld = fNorm;
                     for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-                        f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
-                                + clonedSystem.getPhase(j).getComponent(i).getLogFugasityCoeffisient() - d[i]));
+                        f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i]) + clonedSystem
+                                .getPhase(j).getComponent(i).getLogFugasityCoeffisient() - d[i]));
                     }
                     fNorm = f.norm2();
                     if (fNorm > fNormOld && iterations > 3 || (iterations + 1) % 7 != 0) {
@@ -186,8 +186,10 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                         }
                     } else {
                         // succsessive substitution
-                        for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-                            logWi[i] = d[i] - clonedSystem.getPhase(j).getComponent(i).getLogFugasityCoeffisient();
+                        for (int i = 0; i < clonedSystem.getPhases()[0]
+                                .getNumberOfComponents(); i++) {
+                            logWi[i] = d[i] - clonedSystem.getPhase(j).getComponent(i)
+                                    .getLogFugasityCoeffisient();
                             error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
                             Wi[j][i] = Math.exp(logWi[i]);
                         }
@@ -206,9 +208,10 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                     }
 
                     for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-                        f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
-                                + clonedSystem.getPhase(j).getComponent(i).getLogFugasityCoeffisient() - d[i]));
-                        for (int k = 0; k < clonedSystem.getPhases()[0].getNumberOfComponents(); k++) {
+                        f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i]) + clonedSystem
+                                .getPhase(j).getComponent(i).getLogFugasityCoeffisient() - d[i]));
+                        for (int k = 0; k < clonedSystem.getPhases()[0]
+                                .getNumberOfComponents(); k++) {
                             double kronDelt = (i == k) ? 1.5 : 0.0; // adding 0.5 to diagonal
                             df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                                     * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k));// *
@@ -239,8 +242,8 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                 }
                 // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
                 // iterations + " phase " + j);
-
-            } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0 || iterations < 3);
+            } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0
+                    || iterations < 3);
             // (error[j]<oldErr && oldErr<oldOldErr) &&
             // logger.info("err " + error[j]);
             // logger.info("iterations " + iterations);
@@ -265,25 +268,30 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
         // check for trivial solution
         double diffx = 0.0;
         for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
-            diffx += Math.abs(
-                    clonedSystem.getPhase(0).getComponent(i).getx() - clonedSystem.getPhase(1).getComponent(i).getx());
+            diffx += Math.abs(clonedSystem.getPhase(0).getComponent(i).getx()
+                    - clonedSystem.getPhase(1).getComponent(i).getx());
         }
         if (diffx < 1e-10) {
             tm[0] = 0.0;
             tm[1] = 0.0;
         }
 
-        if (((tm[0] < -1e-4) || (tm[1] < -1e-4)) && !(Double.isNaN(tm[0]) || (Double.isNaN(tm[1])))) {
+        if (((tm[0] < -1e-4) || (tm[1] < -1e-4))
+                && !(Double.isNaN(tm[0]) || (Double.isNaN(tm[1])))) {
             for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
                 if (system.getPhases()[1].getComponents()[i].getx() < 1e-100) {
                     continue;
                 }
                 if (tm[0] < -1e-4) {
-                    system.getPhases()[1].getComponents()[i].setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-                    system.getPhases()[0].getComponents()[i].setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+                    system.getPhases()[1].getComponents()[i]
+                            .setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+                    system.getPhases()[0].getComponents()[i]
+                            .setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
                 } else if (tm[1] < -1e-4) {
-                    system.getPhases()[1].getComponents()[i].setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-                    system.getPhases()[0].getComponents()[i].setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+                    system.getPhases()[1].getComponents()[i]
+                            .setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+                    system.getPhases()[0].getComponents()[i]
+                            .setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
                 } else {
                     logger.info("error in stability anlysis");
                     system.init(0);
@@ -299,6 +307,13 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
         // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
     }
 
+    /**
+     * <p>
+     * stabilityCheck.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean stabilityCheck() {
         boolean stable = false;
         // logger.info("starting stability analysis....");
@@ -310,7 +325,8 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                 logger.error("error ", e);
             }
         }
-        if (!(tm[0] < -1e-4) && !(tm[1] < -1e-4) || system.getPhase(0).getNumberOfComponents() == 1) {
+        if (!(tm[0] < -1e-4) && !(tm[1] < -1e-4)
+                || system.getPhase(0).getNumberOfComponents() == 1) {
             stable = true;
             system.init(0);
             // logger.info("system is stable");
@@ -326,7 +342,6 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
             if (solidCheck && !system.doMultiPhaseCheck()) {
                 this.solidPhaseFlash();
             }
-
         } else {
             try {
                 system.calcBeta();
@@ -340,11 +355,17 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
         return stable;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         system.display();
     }
 
+    /**
+     * <p>
+     * solidPhaseFlash.
+     * </p>
+     */
     public void solidPhaseFlash() {
         boolean solidPhase = false;
         double frac = 0;
@@ -362,7 +383,8 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
             if (system.getPhase(0).getComponent(k).doSolidCheck()) {
                 tempVar[k] = system.getPhase(0).getComponents()[k].getz();
                 for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-                    tempVar[k] -= system.getBeta(i) * system.getPhases()[3].getComponent(k).getFugasityCoeffisient()
+                    tempVar[k] -= system.getBeta(i)
+                            * system.getPhases()[3].getComponent(k).getFugasityCoeffisient()
                             / system.getPhase(i).getComponent(k).getFugasityCoeffisient();
                 }
 
@@ -390,7 +412,8 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                 system.setBeta(system.getNumberOfPhases() - 1, frac);
                 system.initBeta();
                 system.setBeta(system.getNumberOfPhases() - 1,
-                        system.getPhases()[3].getComponent(solid).getNumberOfmoles() / system.getNumberOfMoles());
+                        system.getPhases()[3].getComponent(solid).getNumberOfmoles()
+                                / system.getNumberOfMoles());
                 // double phasetot=0.0;
                 // for(int ph=0;ph<system.getNumberOfPhases();ph++){
                 // phasetot += system.getPhase(ph).getBeta();
@@ -421,36 +444,35 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                 // solidPhaseFlash();
                 // solid-vapor flash
             }
-
         } else {
             // system.setPhaseIndex(system.getNumberOfPhases() - 1,
             // system.getNumberOfPhases() - 1);
             system.setNumberOfPhases(system.getNumberOfPhases() - 1);
             // logger.info("no solid phase will form..");
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
-	public void createNetCdfFile(String name) {
-    }
+    public void createNetCdfFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void addData(String name, double[][] data) {
-
-    }
+    public void addData(String name, double[][] data) {}
 }

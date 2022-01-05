@@ -1,35 +1,31 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
-
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseDuanSun;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
-
 import neqsim.thermo.phase.PhasePureComponentSolid;
-
 import neqsim.thermo.phase.PhaseSrkEos;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the SRK EoS and Pitzer for
- * liquids
+ * This class defines a thermodynamic system using the SRK EoS and Pitzer for liquids
  */
 public class SystemDuanSun extends SystemEos {
-
     private static final long serialVersionUID = 1000;
     /** Creates a thermodynamic system using the SRK equation of state. */
     // SystemSrkEos clonedSystem;
-    protected String[] CapeOpenProperties11 = { "molecularWeight", "fugacityCoefficient", "logFugacityCoefficient" };
+    protected String[] CapeOpenProperties11 =
+            {"molecularWeight", "fugacityCoefficient", "logFugacityCoefficient"};
 
+    /**
+     * <p>
+     * Constructor for SystemDuanSun.
+     * </p>
+     */
     public SystemDuanSun() {
         super();
         modelName = "Duan-Sun-model";
@@ -38,9 +34,16 @@ public class SystemDuanSun extends SystemEos {
         for (int i = 1; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseDuanSun();
         }
-
     }
 
+    /**
+     * <p>
+     * Constructor for SystemDuanSun.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemDuanSun(double T, double P) {
         super(T, P);
         attractiveTermNumber = 0;
@@ -55,6 +58,15 @@ public class SystemDuanSun extends SystemEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemDuanSun.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemDuanSun(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
@@ -81,8 +93,9 @@ public class SystemDuanSun extends SystemEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemDuanSun clone() {
         SystemDuanSun clonedSystem = null;
         try {
             clonedSystem = (SystemDuanSun) super.clone();
@@ -93,6 +106,13 @@ public class SystemDuanSun extends SystemEos {
         return clonedSystem;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface fluid1 = new SystemSrkCPA(298.15, 10.0);
 
@@ -105,12 +125,9 @@ public class SystemDuanSun extends SystemEos {
         try {
             ThermodynamicOperations testOps = new ThermodynamicOperations(fluid1);
             testOps.TPflash();
-
         } catch (Exception e) {
             logger.error(e.toString());
         }
         fluid1.display();
-
     }
-
 }

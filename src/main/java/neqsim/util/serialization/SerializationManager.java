@@ -3,43 +3,53 @@
  *
  * Created on 27. desember 2002, 00:10
  */
-
 package neqsim.util.serialization;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 /**
+ * <p>
+ * SerializationManager class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class SerializationManager {
+    /**
+     * Creates a new instance of SerializationManager
+     */
+    public SerializationManager() {}
 
-    private static final long serialVersionUID = 1000;
-
-    /** Creates a new instance of SerializationManager */
-    public SerializationManager() {
-    }
-
+    /**
+     * <p>
+     * save.
+     * </p>
+     *
+     * @param obj a {@link java.lang.Object} object
+     * @param name a {@link java.lang.String} object
+     */
     public static void save(Object obj, String name) {
-        FileOutputStream fout = null;
-        ObjectOutputStream out = null;
-        try {
-            fout = new FileOutputStream(name);
-            out = new ObjectOutputStream(fout);
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name))) {
             out.writeObject(obj);
-            out.close();
-
         } catch (Exception e) {
             System.out.println(e.toString());
         }
     }
 
+    /**
+     * <p>
+     * open.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link java.lang.Object} object
+     */
     public static Object open(String name) {
-        FileInputStream fin = null;
-        ObjectInputStream in = null;
-        try {
-            fin = new FileInputStream(name);
-            in = new ObjectInputStream(fin);
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(name))) {
             return in.readObject();
         } catch (Exception e) {
             System.out.println(e.toString());

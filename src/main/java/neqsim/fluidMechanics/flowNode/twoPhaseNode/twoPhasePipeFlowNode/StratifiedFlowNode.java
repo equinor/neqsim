@@ -8,33 +8,57 @@ import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
-
+/**
+ * <p>StratifiedFlowNode class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class StratifiedFlowNode extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for StratifiedFlowNode.</p>
+     */
     public StratifiedFlowNode() {
         this.flowNodeType = "stratified";
     }
 
+    /**
+     * <p>Constructor for StratifiedFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public StratifiedFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stratified";
         this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
+    /**
+     * <p>Constructor for StratifiedFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public StratifiedFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stratified";
         this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public StratifiedFlowNode clone() {
         StratifiedFlowNode clonedSystem = null;
         try {
             clonedSystem = (StratifiedFlowNode) super.clone();
@@ -45,18 +69,21 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         // System.out.println("len " + this.calcContactLength());
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcContactLength() {
-        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-                + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    public double calcContactLength() {
+        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
+                * (1.0 - 2.0 * phaseFraction[1] + Math.pow(phaseFraction[1], 1.0 / 3.0)
+                        - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
         wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
         interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -64,8 +91,9 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         StratifiedFlowNode newNode = (StratifiedFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -76,6 +104,12 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return newNode;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         // SystemInterface testSystem = new SystemSrkEos(273.15 + 11.0, 60.0);
         SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(325.3, 100.0);
@@ -98,7 +132,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
         testSystem.setMixingRule(10);
         // testSystem.getPhase(0).setTemperature(273.15 + 100.0);
         testSystem.initPhysicalProperties();
-        //
+
         // testSystem.addComponent("nitrogen", testSystem.getPhase(1).getMolarVolume() /
         // testSystem.getPhase(0).getMolarVolume() *
         // testSystem.getPhase(0).getComponent("CO2").getNumberOfmoles(), 0);

@@ -1,21 +1,17 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.statistics.parameterFitting;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * Abstract BaseFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public abstract class BaseFunction extends java.lang.Object implements Cloneable, FunctionInterface {
-
+public abstract class BaseFunction implements FunctionInterface {
     private static final long serialVersionUID = 1000;
 
     public double[] params = null;
@@ -24,11 +20,16 @@ public abstract class BaseFunction extends java.lang.Object implements Cloneable
     public SystemInterface system;
     public ThermodynamicOperations thermoOps;
 
-    public BaseFunction() {
-    }
+    /**
+     * <p>
+     * Constructor for BaseFunction.
+     * </p>
+     */
+    public BaseFunction() {}
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public BaseFunction clone() {
         BaseFunction clonedClass = null;
         try {
             clonedClass = (BaseFunction) super.clone();
@@ -42,82 +43,92 @@ public abstract class BaseFunction extends java.lang.Object implements Cloneable
         return clonedClass;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setThermodynamicSystem(SystemInterface system) {
+    public void setThermodynamicSystem(SystemInterface system) {
         this.system = system;
         thermoOps = new ThermodynamicOperations(system);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getFittingParams(int i) {
+    public double getFittingParams(int i) {
         return params[i];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getSystem() {
+    public SystemInterface getSystem() {
         return system;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double[] getFittingParams() {
+    public double[] getFittingParams() {
         return params;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public int getNumberOfFittingParams() {
+    public int getNumberOfFittingParams() {
         return params.length;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setInitialGuess(double[] guess) {
+    public void setInitialGuess(double[] guess) {
         System.out.println("start fitting " + guess.length + " parameter(s)...");
         params = new double[guess.length];
         System.arraycopy(guess, 0, params, 0, guess.length);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public abstract double calcValue(double[] dependentValues);
+    public abstract double calcValue(double[] dependentValues);
 
+    /** {@inheritDoc} */
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public abstract void setFittingParams(int i, double value);
+    public abstract void setFittingParams(int i, double value);
 
+    /** {@inheritDoc} */
     @Override
-	public void setDatabaseParameters() {
-    }
+    public void setDatabaseParameters() {}
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property bounds.
-     * 
-     * @return Value of property bounds.
      */
     @Override
-	public double getLowerBound(int i) {
+    public double getLowerBound(int i) {
         return this.bounds[i][0];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getUpperBound(int i) {
+    public double getUpperBound(int i) {
         return this.bounds[i][1];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double[][] getBounds() {
+    public double[][] getBounds() {
         return this.bounds;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property bounds.
-     * 
-     * @param bounds New value of property bounds.
      */
     @Override
-	public void setBounds(double[][] bounds) {
+    public void setBounds(double[][] bounds) {
         this.bounds = bounds;
     }
-
 }

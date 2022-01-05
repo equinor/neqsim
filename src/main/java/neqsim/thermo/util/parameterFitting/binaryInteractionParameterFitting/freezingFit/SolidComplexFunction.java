@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.freezingFit;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
@@ -9,19 +5,27 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * SolidComplexFunction class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class SolidComplexFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidComplexFunction.class);
 
-    public SolidComplexFunction() {
-    }
+    /**
+     * <p>
+     * Constructor for SolidComplexFunction.
+     * </p>
+     */
+    public SolidComplexFunction() {}
 
+    /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.calcSolidComlexTemperature("TEG", "water");
         } catch (Exception e) {
@@ -32,8 +36,9 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
         // return system.getPhases()[0].getComponents()[1].getx(); // for MEG
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 1) {
             SolidComplexTemperatureCalc.HrefComplex = value;

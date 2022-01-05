@@ -1,38 +1,44 @@
-/*
- * Conductivity.java
- *
- * Created on 1. november 2000, 19:00
- */
-
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.viscosity;
 
-//import physicalProperties.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import org.apache.logging.log4j.*;
-
-//import physicalProperties.gasPhysicalProperties.*;
 /**
  *
  * @author Even Solbraa
  * @version
  */
-abstract class Viscosity
-        extends neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
-
+abstract class Viscosity extends
+        neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Viscosity.class);
 
-    /** Creates new Conductivity */
-    public Viscosity() {
-    }
+    /**
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
+     */
+    public Viscosity() {}
 
-    public Viscosity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
+    /**
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
+     *
+     * @param gasPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
+    public Viscosity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         super(gasPhase);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public Viscosity clone() {
         Viscosity properties = null;
 
         try {

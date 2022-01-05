@@ -1,12 +1,6 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import java.util.*;
+import java.util.ArrayList;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -15,28 +9,31 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermo.system.SystemUNIFACpsrk;
 
 /**
+ * <p>
+ * TestBinaryHVfitToActivityUNIFAC class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TestBinaryHVfitToActivityUNIFAC extends java.lang.Object implements Cloneable {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new TestAcentric */
-    public TestBinaryHVfitToActivityUNIFAC() {
-    }
-
+public class TestBinaryHVfitToActivityUNIFAC implements Cloneable {
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         int numb = 0;
         for (int i = 0; i < 20; i++) {
             numb++;
-            BinaryHVparameterFitToActivityCoefficientFunction function = new BinaryHVparameterFitToActivityCoefficientFunction();
+            BinaryHVparameterFitToActivityCoefficientFunction function =
+                    new BinaryHVparameterFitToActivityCoefficientFunction();
             SystemInterface testSystem = new SystemSrkSchwartzentruberEos(273.0 + i * 5, 1.01);
             testSystem.addComponent("Piperazine", 1.0);
             testSystem.addComponent("AceticAcid", 1000.0);
@@ -58,11 +55,13 @@ public class TestBinaryHVfitToActivityUNIFAC extends java.lang.Object implements
 
             // double parameterGuess[] ={4600.679072303, -1200.64471708, -3.89,
             // 1.9};//Piperazine - water
-            double parameterGuess[] = { -460.679072303, 120.64471708, -3.89, 1.9 };// Piuperazine -AceticAcid
+            double parameterGuess[] = {-460.679072303, 120.64471708, -3.89, 1.9};// Piuperazine
+                                                                                 // -AceticAcid
             function.setInitialGuess(parameterGuess);
-            double sample1[] = { numb / 1000.0, testSystem.getTemperature() };
-            double standardDeviation1[] = { 1.0 };
-            SampleValue sample = new SampleValue(activ, activ / 1000.0, sample1, standardDeviation1);
+            double sample1[] = {numb / 1000.0, testSystem.getTemperature()};
+            double standardDeviation1[] = {1.0};
+            SampleValue sample =
+                    new SampleValue(activ, activ / 1000.0, sample1, standardDeviation1);
             sample.setFunction(function);
             sample.setThermodynamicSystem(testSystem);
             sampleList.add(sample);

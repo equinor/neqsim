@@ -1,30 +1,35 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.processEquipment.distillation;
 
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * Reboiler class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
-public class Reboiler extends neqsim.processSimulation.processEquipment.distillation.SimpleTray
-        implements TrayInterface {
-
+public class Reboiler extends neqsim.processSimulation.processEquipment.distillation.SimpleTray {
     private static final long serialVersionUID = 1000;
 
     private double refluxRatio = 0.1;
     boolean refluxIsSet = false;
     double duty = 0.0;
 
-    public Reboiler() {
-    }
+    /**
+     * <p>
+     * Constructor for Reboiler.
+     * </p>
+     */
+    public Reboiler() {}
 
     /**
+     * <p>
+     * Getter for the field <code>refluxRatio</code>.
+     * </p>
+     *
      * @return the refluxRatio
      */
     public double getRefluxRatio() {
@@ -32,6 +37,10 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
     }
 
     /**
+     * <p>
+     * Setter for the field <code>refluxRatio</code>.
+     * </p>
+     *
      * @param refluxRatio the refluxRatio to set
      */
     public void setRefluxRatio(double refluxRatio) {
@@ -39,18 +48,26 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
         refluxIsSet = true;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>duty</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDuty() {
         return duty;
-//		return calcMixStreamEnthalpy();
+        // return calcMixStreamEnthalpy();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         if (!refluxIsSet) {
             super.run();
         } else {
-            SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem()
-                    .clone();
+            SystemInterface thermoSystem2 =
+                    (SystemInterface) streams.get(0).getThermoSystem().clone();
             // System.out.println("total number of moles " +
             // thermoSystem2.getTotalNumberOfMoles());
             mixedStream.setThermoSystem(thermoSystem2);
@@ -66,5 +83,4 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
         // System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
         duty = mixedStream.getFluid().getEnthalpy() - calcMixStreamEnthalpy0();
     }
-
 }

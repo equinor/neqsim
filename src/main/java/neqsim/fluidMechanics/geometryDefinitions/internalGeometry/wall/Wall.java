@@ -1,21 +1,23 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.wall;
 
 import java.util.ArrayList;
 
 /**
+ * <p>
+ * Wall class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Wall implements WallInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
+     * <p>
+     * Getter for the field <code>heatTransferCoefficient</code>.
+     * </p>
+     *
      * @return the heatTransferCOefficient
      */
     public double getHeatTransferCoefficient() {
@@ -23,6 +25,10 @@ public class Wall implements WallInterface {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>heatTransferCoefficient</code>.
+     * </p>
+     *
      * @param heatTransferCOefficient the heatTransferCOefficient to set
      */
     public void setHeatTransferCoefficient(double heatTransferCOefficient) {
@@ -32,17 +38,26 @@ public class Wall implements WallInterface {
     private ArrayList<MaterialLayer> wallMaterialLayers = new ArrayList<MaterialLayer>();
     private double heatTransferCoefficient = 10.0;
 
+    /** {@inheritDoc} */
     @Override
-	public void addMaterialLayer(MaterialLayer layer) {
+    public void addMaterialLayer(MaterialLayer layer) {
         wallMaterialLayers.add(layer);
         heatTransferCoefficient = calcHeatTransferCoefficient();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public MaterialLayer getWallMaterialLayer(int i) {
+    public MaterialLayer getWallMaterialLayer(int i) {
         return wallMaterialLayers.get(i);
     }
 
+    /**
+     * <p>
+     * calcHeatTransferCoefficient.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcHeatTransferCoefficient() {
         double invheatTransCoef = 0.0;
         for (MaterialLayer mat : wallMaterialLayers) {
@@ -50,5 +65,4 @@ public class Wall implements WallInterface {
         }
         return 1.0 / invheatTransCoef;
     }
-
 }

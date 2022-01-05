@@ -1,61 +1,73 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
-
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * PUflash class.
+ * </p>
  *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
-public class PUflash extends Flash implements java.io.Serializable {
-
+public class PUflash extends Flash {
     private static final long serialVersionUID = 1000;
 
     double Uspec = 0;
     Flash tpFlash;
 
-    /** Creates new PHflash */
-    public PUflash() {
-    }
+    /**
+     * <p>
+     * Constructor for PUflash.
+     * </p>
+     */
+    public PUflash() {}
 
+    /**
+     * <p>
+     * Constructor for PUflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Uspec a double
+     */
     public PUflash(SystemInterface system, double Uspec) {
         this.system = system;
         this.tpFlash = new TPflash(system);
         this.Uspec = Uspec;
     }
 
+    /**
+     * <p>
+     * calcdQdTT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdTT() {
         double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCv();
         return dQdTT;
     }
 
+    /**
+     * <p>
+     * calcdQdT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdT() {
         double dQ = system.getInternalEnergy() - Uspec;
         return dQ;
     }
 
+    /**
+     * <p>
+     * solveQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double solveQ() {
         double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
         double iterations = 1;
@@ -80,6 +92,7 @@ public class PUflash extends Flash implements java.io.Serializable {
             tpFlash.run();
             erorOld = error;
             error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
+            // System.out.println("error " + error);
             // System.out.println("temperature " + system.getTemperature() + " " +
             // iterations);
         } while (error > 1e-8 && iterations < 500);
@@ -87,19 +100,20 @@ public class PUflash extends Flash implements java.io.Serializable {
         return 1.0 / nyTemp;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
-        // System.out.println("enthalpy start: " + system.getEnthalpy());
+        // System.out.println("internal energy start: " + system.getInternalEnergy());
         solveQ();
-
+        // System.out.println("internal energy end: " + system.getInternalEnergy());
         // System.out.println("enthalpy: " + system.getEnthalpy());
-//        System.out.println("Temperature: " + system.getTemperature());
+        // System.out.println("Temperature: " + system.getTemperature());
     }
 
+    /** {@inheritDoc} */
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-
 }

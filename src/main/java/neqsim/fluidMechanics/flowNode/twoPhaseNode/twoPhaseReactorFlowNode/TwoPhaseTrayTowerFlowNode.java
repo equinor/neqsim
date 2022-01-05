@@ -9,33 +9,57 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode implements Cloneable {
-
+/**
+ * <p>TwoPhaseTrayTowerFlowNode class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for TwoPhaseTrayTowerFlowNode.</p>
+     */
     public TwoPhaseTrayTowerFlowNode() {
         this.flowNodeType = "stratified";
     }
 
+    /**
+     * <p>Constructor for TwoPhaseTrayTowerFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public TwoPhaseTrayTowerFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stratified";
         this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
+    /**
+     * <p>Constructor for TwoPhaseTrayTowerFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public TwoPhaseTrayTowerFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stratified";
         this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public TwoPhaseTrayTowerFlowNode clone() {
         TwoPhaseTrayTowerFlowNode clonedSystem = null;
         try {
             clonedSystem = (TwoPhaseTrayTowerFlowNode) super.clone();
@@ -46,17 +70,20 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode implements Clone
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcContactLength() {
-        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-                + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    public double calcContactLength() {
+        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
+                * (1.0 - 2.0 * phaseFraction[1] + Math.pow(phaseFraction[1], 1.0 / 3.0)
+                        - Math.pow(phaseFraction[0], 1.0 / 3.0));
 
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
         wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
@@ -68,8 +95,9 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode implements Clone
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         TwoPhaseTrayTowerFlowNode newNode = (TwoPhaseTrayTowerFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -80,18 +108,22 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode implements Clone
         return newNode;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         /*
-         * System.out.println("Starter....."); SystemSrkEos testSystem = new
-         * SystemSrkEos(275.3, 1.01325); ThermodynamicOperations testOps = new
-         * ThermodynamicOperations(testSystem); PipeData pipe1 = new PipeData(10.0,
-         * 0.025);
+         * System.out.println("Starter....."); SystemSrkEos testSystem = new SystemSrkEos(275.3,
+         * 1.01325); ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+         * PipeData pipe1 = new PipeData(10.0, 0.025);
          * 
-         * testSystem.addComponent("methane", 0.011152181, 0);
-         * testSystem.addComponent("ethane", 0.00011152181, 0);
-         * testSystem.addComponent("water", 0.00462204876, 1);
-         * testSystem.addComponent("methane", 0.061152181, 0);
-         * testSystem.addComponent("water", 0.00862204876, 1);
+         * testSystem.addComponent("methane", 0.011152181, 0); testSystem.addComponent("ethane",
+         * 0.00011152181, 0); testSystem.addComponent("water", 0.00462204876, 1);
+         * testSystem.addComponent("methane", 0.061152181, 0); testSystem.addComponent("water",
+         * 0.00862204876, 1);
          */
         SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -117,5 +149,4 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode implements Clone
         test.initFlowCalc();
         test.calcFluxes();
     }
-
 }

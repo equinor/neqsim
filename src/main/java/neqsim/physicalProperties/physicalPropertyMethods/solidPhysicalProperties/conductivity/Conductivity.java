@@ -5,34 +5,50 @@
  */
 package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.conductivity;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * Conductivity class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class Conductivity
-        extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
-
+public class Conductivity extends
+        neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Conductivity.class);
 
     double conductivity = 0;
 
     /**
-     * Creates new Conductivity
+     * <p>
+     * Constructor for Conductivity.
+     * </p>
      */
-    public Conductivity() {
-    }
+    public Conductivity() {}
 
-    public Conductivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
+    /**
+     * <p>
+     * Constructor for Conductivity.
+     * </p>
+     *
+     * @param solidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
+    public Conductivity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public Conductivity clone() {
         Conductivity properties = null;
 
         try {
@@ -44,8 +60,9 @@ public class Conductivity
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcConductivity() {
+    public double calcConductivity() {
         // using default value of parafin wax
         if (solidPhase.getPhase().getPhaseTypeName().equals("wax")) {
             conductivity = 0.25;

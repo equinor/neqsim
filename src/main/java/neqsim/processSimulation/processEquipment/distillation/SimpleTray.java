@@ -1,28 +1,36 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.processEquipment.distillation;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * SimpleTray class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
-public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.Mixer implements TrayInterface {
-
+public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.Mixer
+        implements TrayInterface {
     private static final long serialVersionUID = 1000;
 
     double heatInput = 0.0;
     private double temperature = Double.NaN, trayPressure = -1.0;
 
-    public SimpleTray() {
-    }
+    /**
+     * <p>
+     * Constructor for SimpleTray.
+     * </p>
+     */
+    public SimpleTray() {}
 
+    /**
+     * <p>
+     * init.
+     * </p>
+     */
     public void init() {
         int pp = 0;
         if (streams.size() == 3) {
@@ -31,14 +39,21 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         for (int k = pp; k < streams.size(); k++) {
             (streams.get(k).getThermoSystem()).setTemperature(temperature);
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setHeatInput(double heatinp) {
+    public void setHeatInput(double heatinp) {
         this.heatInput = heatinp;
     }
 
+    /**
+     * <p>
+     * calcMixStreamEnthalpy0.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcMixStreamEnthalpy0() {
         double enthalpy = 0;
 
@@ -52,8 +67,9 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         return enthalpy;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcMixStreamEnthalpy() {
+    public double calcMixStreamEnthalpy() {
         double enthalpy = heatInput;
         if (isSetEnergyStream()) {
             enthalpy -= energyStream.getDuty();
@@ -69,15 +85,29 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         return enthalpy;
     }
 
+    /**
+     * <p>
+     * run2.
+     * </p>
+     */
     public void run2() {
         super.run();
         temperature = mixedStream.getTemperature();
     }
 
+    /**
+     * <p>
+     * TPflash.
+     * </p>
+     */
+    public void TPflash() {}
+
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         double enthalpy = 0.0;
-        double flowRate = ((Stream) streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
+        // double flowRate = ((Stream)
+        // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
         // ((Stream) streams.get(0)).getThermoSystem().display();
         SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
 
@@ -121,50 +151,66 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
             }
         }
         setTemperature(mixedStream.getTemperature());
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void runTransient() {
-    }
+    public void runTransient() {}
 
+    /**
+     * <p>
+     * getGasOutStream.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Stream getGasOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
     }
 
+    /**
+     * <p>
+     * getLiquidOutStream.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Stream getLiquidOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
     }
 
     /**
+     * <p>
+     * Getter for the field <code>temperature</code>.
+     * </p>
+     *
      * @return the temperature
      */
     public double getTemperature() {
         return temperature;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setPressure(double pres) {
+    public void setPressure(double pres) {
         trayPressure = pres;
     }
 
-    /**
-     * @param temperature the temperature to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setTemperature(double temperature) {
+    public void setTemperature(double temperature) {
         this.temperature = temperature;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double guessTemperature() {
+    public double guessTemperature() {
         if (Double.isNaN(temperature)) {
             double gtemp = 0;
             for (int k = 0; k < streams.size(); k++) {
                 gtemp += streams.get(k).getThermoSystem().getTemperature()
                         * streams.get(k).getThermoSystem().getNumberOfMoles()
                         / mixedStream.getThermoSystem().getNumberOfMoles();
-
             }
             // System.out.println("guess temperature " + gtemp);
             return gtemp;
@@ -173,5 +219,4 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
             return temperature;
         }
     }
-
 }

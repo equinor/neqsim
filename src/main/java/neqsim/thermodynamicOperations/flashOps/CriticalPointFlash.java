@@ -1,20 +1,19 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * CriticalPointFlash class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
-public class CriticalPointFlash extends Flash implements java.io.Serializable {
-
+public class CriticalPointFlash extends Flash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CriticalPointFlash.class);
 
@@ -26,6 +25,13 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
     double Vc0, Tc0;
     // SystemInterface clonedsystem;
 
+    /**
+     * <p>
+     * Constructor for CriticalPointFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public CriticalPointFlash(SystemInterface system) {
         this.system = system;
         // clonedsystem = (SystemInterface) system.clone();
@@ -36,9 +42,14 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         fmatrix = new SimpleMatrix(numberOfComponents, 1);
     }
 
+    /**
+     * <p>
+     * calcMmatrixHeidemann.
+     * </p>
+     */
     public void calcMmatrixHeidemann() {
         Tc0 = system.getPhase(0).getPseudoCriticalTemperature();
-        Vc0 = 4 * system.getPhase(0).getB()/system.getPhase(0).getNumberOfMolesInPhase();
+        Vc0 = 4 * system.getPhase(0).getB() / system.getPhase(0).getNumberOfMolesInPhase();
 
         system.setUseTVasIndependentVariables(true);
         system.setNumberOfPhases(1);
@@ -72,13 +83,17 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
                 }
             }
             HeidemannMmatrix.print();
-            logger.info("Q det " + HeidemannMmatrix.determinant() + " temperature " + system.getTemperature()
-                    + " pressure " + system.getPressure());
+            logger.info("Q det " + HeidemannMmatrix.determinant() + " temperature "
+                    + system.getTemperature() + " pressure " + system.getPressure());
         }
     }
 
+    /**
+     * <p>
+     * calcMmatrix.
+     * </p>
+     */
     public void calcMmatrix() {
-
         double dij = 0;
         double tempJ = 0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -89,20 +104,25 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
                         - 1.0 / system.getPhase(0).getNumberOfMolesInPhase()
                         + (system.getPhase(0).getComponent(i).getdfugdn(j)
                                 + system.getPhase(0).getComponent(i).getdfugdp()
-                                        * system.getPhase(0).getComponent(j).getVoli() * system.getPhase(0).getdPdVTn()
-                                        * -1.0));
+                                        * system.getPhase(0).getComponent(j).getVoli()
+                                        * system.getPhase(0).getdPdVTn() * -1.0));
 
-                Mmatrix.set(i, j,
-                        Math.sqrt(system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(j).getz())
-                                * tempJ);
+                Mmatrix.set(i, j, Math.sqrt(system.getPhase(0).getComponent(i).getz()
+                        * system.getPhase(0).getComponent(j).getz()) * tempJ);
                 // Math.sqrt(system.getPhase(0).getComponent(i).getz() *
                 // system.getPhase(0).getComponent(j).getz()) *
             }
         }
     }
 
+    /**
+     * <p>
+     * calcdpd.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdpd() {
-
         double[] oldz = system.getMolarRate();
         i = Mmatrix.eig().getNumberOfEigenvalues();
         SimpleMatrix eigenVector = Mmatrix.eig().getEigenVector(0);
@@ -111,10 +131,10 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         double[] newz2 = new double[numberOfComponents];
         double sperturb = 1e-3;
         for (int ii = 0; ii < numberOfComponents; ii++) {
-            newz1[ii] = system.getPhase(0).getComponent(ii).getz()
-                    + sperturb * eigenVector.get(ii) * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
-            newz2[ii] = system.getPhase(0).getComponent(ii).getz()
-                    - sperturb * eigenVector.get(ii) * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
+            newz1[ii] = system.getPhase(0).getComponent(ii).getz() + sperturb * eigenVector.get(ii)
+                    * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
+            newz2[ii] = system.getPhase(0).getComponent(ii).getz() - sperturb * eigenVector.get(ii)
+                    * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
         }
 
         system.setMolarComposition(newz1);
@@ -138,8 +158,9 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         return dtpddsss;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         system.init(0);
         system.setTotalNumberOfMoles(1.0);
         system.init(3);
@@ -148,7 +169,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         system.setNumberOfPhases(1);
 
         Tc0 = system.getPhase(0).getPseudoCriticalTemperature();
-        Vc0 = 4 * system.getPhase(0).getB()/system.getPhase(0).getNumberOfMolesInPhase();
+        Vc0 = 4 * system.getPhase(0).getB() / system.getPhase(0).getNumberOfMolesInPhase();
 
         system.setUseTVasIndependentVariables(true);
         system.setNumberOfPhases(1);
@@ -159,7 +180,6 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         // system.display();
 
         for (int k = 0; k < 13; k++) {
-
             double detM, olddetM, ddetdT;
             double dT = 0.1;
             calcMmatrix();
@@ -188,8 +208,10 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
                 }
                 double oldTemp = system.getTemperature();
                 system.setTemperature(oldTemp + dT);
-                logger.info("Temperature " + oldTemp + " dT " + dT + " evalMatrix " + evalMatrix.get(0, 0));
-            } while (Math.abs(dT) > 1e-8 && iter < 112);// && (Math.abs(dT) < Math.abs(dTOld) || iter < 3));
+                logger.info("Temperature " + oldTemp + " dT " + dT + " evalMatrix "
+                        + evalMatrix.get(0, 0));
+            } while (Math.abs(dT) > 1e-8 && iter < 112);// && (Math.abs(dT) < Math.abs(dTOld) ||
+                                                        // iter < 3));
 
             double dVc = Vc0 / 100.0;
             double ddetdV, oldVal;
@@ -207,9 +229,10 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
                 dVOld = dVc;
                 dVc = -valstart / ddetdV;
                 system.getPhase(0).setTotalVolume(system.getPhase(0).getVolume() + 0.5 * dVc);
-                logger.info("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp " + valstart
-                        + " pressure " + system.getPressure());
-            } while (Math.abs(dVc) > 1e-5 && iter < 112 && (Math.abs(dVc) < Math.abs(dVOld) || iter < 3));
+                logger.info("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp "
+                        + valstart + " pressure " + system.getPressure());
+            } while (Math.abs(dVc) > 1e-5 && iter < 112
+                    && (Math.abs(dVc) < Math.abs(dVOld) || iter < 3));
 
         }
         system.display();

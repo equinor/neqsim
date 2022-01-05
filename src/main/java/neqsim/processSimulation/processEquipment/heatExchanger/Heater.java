@@ -6,19 +6,20 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * Heater class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface, HeaterInterface {
-
+public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface {
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false, setOutPressure = false;
@@ -34,17 +35,35 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
     double coolingMediumTemperature = 278.15;
 
     /**
-     * Creates new Heater
+     * <p>
+     * Constructor for Heater.
+     * </p>
      */
-    public Heater() {
-    }
+    public Heater() {}
 
+    /**
+     * <p>
+     * Constructor for Heater.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Heater(StreamInterface inStream) {
         this.inStream = inStream;
         system = (SystemInterface) inStream.getThermoSystem().clone();
         outStream = new Stream(system);
     }
 
+    /**
+     * <p>
+     * Constructor for Heater.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Heater(String name, StreamInterface inStream) {
         super(name);
         this.inStream = inStream;
@@ -52,47 +71,79 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         outStream = new Stream(system);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>inStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getInStream() {
         return inStream;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setdT(double dT) {
+    public void setdT(double dT) {
         this.dT = dT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /**
+     * <p>
+     * setOutPressure.
+     * </p>
+     *
+     * @param pressure a double
+     */
     public void setOutPressure(double pressure) {
         setOutPressure = true;
         this.pressureOut = pressure;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setOutPressure(double pressure, String unit) {
+    public void setOutPressure(double pressure, String unit) {
         setOutPressure = true;
         this.pressureOut = pressure;
         this.pressureUnit = unit;
     }
 
+    /**
+     * <p>
+     * setOutTemperature.
+     * </p>
+     *
+     * @param temperature a double
+     */
     public void setOutTemperature(double temperature) {
         setTemperature = true;
         setEnergyInput = false;
         this.temperatureOut = temperature;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setOutTemperature(double temperature, String unit) {
+    public void setOutTemperature(double temperature, String unit) {
         setTemperature = true;
         setEnergyInput = false;
         this.temperatureUnit = unit;
         this.temperatureOut = temperature;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setOutTP(double temperature, double pressure) {
+    public void setOutTP(double temperature, double pressure) {
         setTemperature = true;
         setEnergyInput = false;
         this.temperatureOut = temperature;
@@ -100,8 +151,9 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         this.pressureOut = pressure;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         system.init(3);
         double oldH = system.getEnthalpy();
@@ -143,48 +195,101 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         getOutStream().setThermoSystem(system);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         // System.out.println("heater dH: " + energyInput);
         getOutStream().displayResult();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
+    /**
+     * <p>
+     * runTransient.
+     * </p>
+     */
     public void runTransient() {
         run();
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>energyInput</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getEnergyInput() {
         return energyInput;
     }
 
+    /**
+     * <p>
+     * getDuty.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDuty() {
         return energyInput;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>energyInput</code>.
+     * </p>
+     *
+     * @param energyInput a double
+     */
     public void setEnergyInput(double energyInput) {
         this.energyInput = energyInput;
         setTemperature = false;
         setEnergyInput = true;
     }
 
+    /**
+     * <p>
+     * setDuty.
+     * </p>
+     *
+     * @param energyInput a double
+     */
     public void setDuty(double energyInput) {
         setEnergyInput(energyInput);
     }
 
+    /**
+     * <p>
+     * isSetEnergyInput.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean isSetEnergyInput() {
         return setEnergyInput;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>setEnergyInput</code>.
+     * </p>
+     *
+     * @param setEnergyInput a boolean
+     */
     public void setSetEnergyInput(boolean setEnergyInput) {
         this.setEnergyInput = setEnergyInput;
     }
 
     /**
+     * <p>
+     * Getter for the field <code>pressureDrop</code>.
+     * </p>
+     *
      * @return the pressureDrop
      */
     public double getPressureDrop() {
@@ -192,6 +297,10 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
     }
 
     /**
+     * <p>
+     * Setter for the field <code>pressureDrop</code>.
+     * </p>
+     *
      * @param pressureDrop the pressureDrop to set
      */
     public void setPressureDrop(double pressureDrop) {
@@ -199,15 +308,19 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
     }
 
     /**
+     * <p>
+     * Setter for the field <code>outStream</code>.
+     * </p>
+     *
      * @param outStream the outStream to set
      */
     public void setOutStream(Stream outStream) {
         this.outStream = outStream;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getEntropyProduction(String unit) {
-        //
+    public double getEntropyProduction(String unit) {
         double entrop = 0.0;
 
         inStream.run();
@@ -215,13 +328,15 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         outStream.run();
         outStream.getFluid().init(3);
 
-        entrop += outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
+        entrop += outStream.getThermoSystem().getEntropy(unit)
+                - inStream.getThermoSystem().getEntropy(unit);
 
         return entrop;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double sourrondingTemperature) {
         double entrop = 0.0;
 
         inStream.run();
@@ -233,7 +348,5 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
                 - inStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
 
         return entrop;
-
     }
-
 }

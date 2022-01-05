@@ -1,27 +1,18 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package neqsim.chemicalReactions.chemicalEquilibriaum;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * ChemicalEquilibrium class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class ChemicalEquilibrium implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface system;
@@ -60,6 +51,17 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     Matrix chem_pot_Jama_Matrix;
     int phasenumb = 1;
 
+    /**
+     * <p>
+     * Constructor for ChemicalEquilibrium.
+     * </p>
+     *
+     * @param A_matrix an array of {@link double} objects
+     * @param b_element an array of {@link double} objects
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
+     * @param phase a int
+     */
     public ChemicalEquilibrium(double[][] A_matrix, double b_element[], SystemInterface system,
             ComponentInterface[] components, int phase) {
         this.system = system;
@@ -94,6 +96,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * calcRefPot.
+     * </p>
+     */
     public void calcRefPot() {
         for (int i = 0; i < components.length; i++) {
             // calculates the reduced chemical potential mu/RT
@@ -102,19 +109,26 @@ public class ChemicalEquilibrium implements java.io.Serializable {
             logactivityVec[i] = 0.0;
             if (components[i].calcActivity()) {
                 logactivityVec[i] = system.getPhase(phasenumb).getLogActivityCoefficient(
-                        components[i].getComponentNumber(), components[waterNumb].getComponentNumber());
+                        components[i].getComponentNumber(),
+                        components[waterNumb].getComponentNumber());
                 // System.out.println("activity " + Math.exp(logactivityVec[i]) + " " +
                 // components[i].getComponentName());
             }
         }
     }
 
+    /**
+     * <p>
+     * chemSolve.
+     * </p>
+     */
     public void chemSolve() {
         n_t = system.getPhase(phasenumb).getNumberOfMolesInPhase();
 
         for (int i = 0; i < NSPEC; i++) {
-            n_mol[i] = system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                    .getNumberOfMolesInPhase();
+            n_mol[i] =
+                    system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                            .getNumberOfMolesInPhase();
 
             for (int k = 0; k < NSPEC; k++) {
                 if (k == i) {
@@ -124,10 +138,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
                 }
                 // definition of M_matrix changed by Neeraj. Initially only 1st term was
                 // included
-                M_matrix[i][k] = kronDelt
-                        / system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                                .getNumberOfMolesInPhase();// +system.getPhase(phasenumb).getComponent(i).logfugcoefdNi(system.getPhase(phasenumb),
-                                                           // k);
+                M_matrix[i][k] = kronDelt / system.getPhase(phasenumb).getComponents()[components[i]
+                        .getComponentNumber()].getNumberOfMolesInPhase();// +system.getPhase(phasenumb).getComponent(i).logfugcoefdNi(system.getPhase(phasenumb),
+                                                                         // k);
                 // System.out.println("dfugdn "
                 // +system.getPhase(phasenumb).getComponent(i).logfugcoefdNi(this.system.getPhase(phasenumb),
                 // i));
@@ -155,8 +168,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
                                             // components[waterNumb].getComponentNumber());
             // calculates the reduced chemical potential mu/RT
             chem_pot[i] = chem_ref[i]
-                    + Math.log(system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                            .getNumberOfMolesInPhase())
+                    + Math.log(system.getPhase(phasenumb).getComponents()[components[i]
+                            .getComponentNumber()].getNumberOfMolesInPhase())
                     - Math.log(n_t) + logactivity;
             // System.out.println("chem ref pot " + chem_pot[i]);
         }
@@ -164,7 +177,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         chem_pot_Jama_Matrix = new Matrix(chem_pot, 1);
 
         AMA_matrix = A_Jama_matrix.times(M_Jama_matrix.inverse().times(A_Jama_matrix.transpose()));
-        AMU_matrix = A_Jama_matrix.times(M_Jama_matrix.inverse().times(chem_pot_Jama_Matrix.transpose()));
+        AMU_matrix = A_Jama_matrix
+                .times(M_Jama_matrix.inverse().times(chem_pot_Jama_Matrix.transpose()));
         Matrix nmol = new Matrix(n_mol, 1);
         nmu = nmol.times(chem_pot_Jama_Matrix.transpose());
         // AMA_matrix.pr
@@ -223,22 +237,34 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         d_n = dn_matrix.transpose().getArray()[0];
     }
 
+    /**
+     * <p>
+     * updateMoles.
+     * </p>
+     */
     public void updateMoles() {
         upMoles++;
         double changeMoles = 0.0;
         for (int i = 0; i < components.length; i++) {
-            system.addComponent(components[i].getComponentNumber(),
-                    (n_mol[i] - system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+            system.addComponent(components[i].getComponentNumber(), (n_mol[i]
+                    - system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
                             .getNumberOfMolesInPhase()),
                     phasenumb);
-            changeMoles += n_mol[i] - system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                    .getNumberOfMolesInPhase();
+            changeMoles += n_mol[i]
+                    - system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                            .getNumberOfMolesInPhase();
         }
         system.initBeta(); // this was added for mass trans calc
         system.init_x_y();
-
     }
 
+    /**
+     * <p>
+     * solve.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean solve() {
         double error = 1e10, errOld = 1e10, thisError = 0;
         double p = 1.0;
@@ -259,13 +285,15 @@ public class ChemicalEquilibrium implements java.io.Serializable {
                 // double step1 = 1.0; //leads to negative b error
                 for (int i = 0; i < NSPEC; i++) {
                     if (Math.abs(dn_matrix.get(i, 0))
-                            / system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                                    .getNumberOfMolesInPhase() > 1e-15) {
+                            / system.getPhase(phasenumb).getComponents()[components[i]
+                                    .getComponentNumber()].getNumberOfMolesInPhase() > 1e-15) {
                         thisError = Math.abs(dn_matrix.get(i, 0)) / system.getPhase(phasenumb)
-                                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
+                                .getComponent(components[i].getComponentNumber())
+                                .getNumberOfMolesInPhase();
                         error += Math.abs(thisError);
                         n_mol[i] = dn_matrix.get(i, 0) * step1 + system.getPhase(phasenumb)
-                                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
+                                .getComponent(components[i].getComponentNumber())
+                                .getNumberOfMolesInPhase();
                         // n_mol[i] = dn_matrix.get(i,0) +
                         // system.getPhase(phasenumb).getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
                     }
@@ -313,19 +341,38 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         return error < maxError;
     }
 
+    /**
+     * <p>
+     * printComp.
+     * </p>
+     */
     public void printComp() {
         for (int j = 0; j < NSPEC; j++) {
             System.out.println(" SVAR : " + n_mol[j]);
-            double activity = system.getPhase(phasenumb).getActivityCoefficient(components[j].getComponentNumber(),
-                    components[waterNumb].getComponentNumber());
+            double activity = system.getPhase(phasenumb).getActivityCoefficient(
+                    components[j].getComponentNumber(), components[waterNumb].getComponentNumber());
             System.out.println("act " + activity + " comp " + components[j].getComponentName());
         }
     }
 
+    /**
+     * <p>
+     * getMoles.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getMoles() {
         return n_mol;
     }
 
+    /**
+     * <p>
+     * step.
+     * </p>
+     *
+     * @return a double
+     */
     public double step() {
         double step = 1.0;
         int i, check = 0;
@@ -348,19 +395,19 @@ public class ChemicalEquilibrium implements java.io.Serializable {
                 // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_pure[i]));
                 // chem_pot[i] = R*T*(chem_ref[i] + Math.log(n_mol[i]/n_t)+
                 // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_pure[i]));
-                //
+
                 if (system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
                         .getReferenceStateType().equals("solvent")) {
                     chem_pot[i] = R * system.getPhase(phasenumb).getTemperature() * (chem_ref[i]
-                            + Math.log(system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                                    .getNumberOfMolesInPhase())
+                            + Math.log(system.getPhase(phasenumb).getComponents()[components[i]
+                                    .getComponentNumber()].getNumberOfMolesInPhase())
                             - Math.log(n_t) + logactivityVec[i]);// system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
                     // System.out.println("solvent activ: "+ i + " " +
                     // system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_pure[i]);
                 } else {
                     chem_pot[i] = R * system.getPhase(phasenumb).getTemperature() * (chem_ref[i]
-                            + Math.log(system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                                    .getNumberOfMolesInPhase())
+                            + Math.log(system.getPhase(phasenumb).getComponents()[components[i]
+                                    .getComponentNumber()].getNumberOfMolesInPhase())
                             - Math.log(n_t) + logactivityVec[i]);// system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
                     // System.out.println("solute activ : " + i + " " +
                     // system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_dilute[i]);
@@ -376,7 +423,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         for (i = 0; i < NSPEC; i++) {
             // G_1 += chem_pot_omega[i] * d_n[i];
             // Added by Neeraj
-            G_1 += (chem_pot_omega[i] - Alambda_matrix.get(i, 0)) * d_n[i] * (1 / n_omega[i] - 1 / n_t);
+            G_1 += (chem_pot_omega[i] - Alambda_matrix.get(i, 0)) * d_n[i]
+                    * (1 / n_omega[i] - 1 / n_t);
         }
         // System.out.println("G1 " +G_1);
 
@@ -386,8 +434,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
                 // G_0 += chem_pot[i]*d_n[i];
                 // Added by Neeraj
                 G_0 += (chem_pot[i] - Alambda_matrix.get(i, 0)) * d_n[i]
-                        * (1 / system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                                .getNumberOfMolesInPhase() - 1 / n_t);
+                        * (1 / system.getPhase(phasenumb).getComponents()[components[i]
+                                .getComponentNumber()].getNumberOfMolesInPhase() - 1 / n_t);
                 // G_0 +=
                 // (chem_pot[i]-Alambda_matrix.get(i,0))*d_n[i]*(M_Jama_matrix.get(i,i)-1/n_t);
             }
@@ -400,12 +448,22 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
         // return step;
         return 1.0;
-
     }
 
+    /**
+     * <p>
+     * innerStep.
+     * </p>
+     *
+     * @param i a int
+     * @param n_omega an array of {@link double} objects
+     * @param check a int
+     * @param step a double
+     * @param test a boolean
+     * @return a double
+     */
     public double innerStep(int i, double[] n_omega, int check, double step, boolean test) {
         if (test) {
-
             agemo = (-n_mol[i] / d_n[i]) * (1.0 - 0.03);
 
             for (i = check; i < NSPEC; i++) {
@@ -430,54 +488,44 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
     // Method added by Neeraj
     /*
-     * public double step(){ double step=1.0; int i, check=0; double[] F = new
-     * double[NSPEC]; double[] F_omega = new double[NSPEC]; double[] chem_pot = new
-     * double[NSPEC]; double[] n_omega = new double[NSPEC];
+     * public double step(){ double step=1.0; int i, check=0; double[] F = new double[NSPEC];
+     * double[] F_omega = new double[NSPEC]; double[] chem_pot = new double[NSPEC]; double[] n_omega
+     * = new double[NSPEC];
      * 
-     * Matrix F_matrix, F_omega_matrix, fs_matrix, f_matrix, f_omega_matrix; double
-     * fs,f,f_omega;
+     * Matrix F_matrix, F_omega_matrix, fs_matrix, f_matrix, f_omega_matrix; double fs,f,f_omega;
      * 
-     * for(i = 0;i<NSPEC;i++){ n_omega[i] = n_mol[i]+d_n[i]; if (n_omega[i]<0){
-     * check = i; return step; } else {
-     * if(system.getPhase(phasenumb).getComponents()[components[i].
+     * for(i = 0;i<NSPEC;i++){ n_omega[i] = n_mol[i]+d_n[i]; if (n_omega[i]<0){ check = i; return
+     * step; } else { if(system.getPhase(phasenumb).getComponents()[components[i].
      * getComponentNumber()].getReferenceStateType().equals("solvent")){ F[i] =
      * (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) +
      * Math.log(system.getPhase(phasenumb).getComponents()[components[i].
-     * getComponentNumber()].getNumberOfMolesInPhase()) - Math.log(n_t) +
-     * Math.log(activityVec[i])); } else{ F[i] =
-     * (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) +
+     * getComponentNumber()].getNumberOfMolesInPhase()) - Math.log(n_t) + Math.log(activityVec[i]));
+     * } else{ F[i] = (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) +
      * Math.log(system.getPhase(phasenumb).getComponents()[components[i].
-     * getComponentNumber()].getNumberOfMolesInPhase()) - Math.log(n_t) +
-     * Math.log(activityVec[i])); } double temp =
-     * (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) +
+     * getComponentNumber()].getNumberOfMolesInPhase()) - Math.log(n_t) + Math.log(activityVec[i]));
+     * } double temp = (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) +
      * Math.log(n_omega[i]) - Math.log(n_t) + Math.log(activityVec[i]));
      * System.out.println("temp "+activityVec[i]);
-     * system.addComponent(components[i].getComponentNumber(), d_n[i], phasenumb);
-     * calcRefPot(); F_omega[i] =
-     * (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) +
+     * system.addComponent(components[i].getComponentNumber(), d_n[i], phasenumb); calcRefPot();
+     * F_omega[i] = (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) +
      * Math.log(n_omega[i]) - Math.log(n_t) + Math.log(activityVec[i]));
      * System.out.println("F "+activityVec[i]);
-     * system.addComponent(components[i].getComponentNumber(), -d_n[i], phasenumb);
-     * calcRefPot(); } }
+     * system.addComponent(components[i].getComponentNumber(), -d_n[i], phasenumb); calcRefPot(); }
+     * }
      * 
-     * F_matrix = new Matrix(F,1); //F_matrix.print(5,5); F_omega_matrix = new
-     * Matrix(F_omega,1);
+     * F_matrix = new Matrix(F,1); //F_matrix.print(5,5); F_omega_matrix = new Matrix(F_omega,1);
      * 
-     * //F_matrix =
-     * F_matrix.minus((A_Jama_matrix.transpose().times(x_solve.getMatrix(0,NELE-1,0,
+     * //F_matrix = F_matrix.minus((A_Jama_matrix.transpose().times(x_solve.getMatrix(0,NELE-1,0,
      * 0))).transpose()); //F_omega_matrix =
      * F_omega_matrix.minus((A_Jama_matrix.transpose().times(x_solve.getMatrix(0,
      * NELE-1,0,0))).transpose());
      * 
-     * fs_matrix = F_matrix.transpose().times(F_matrix); fs =
-     * (-1)*fs_matrix.get(0,0); f_matrix = F_matrix.times(F_matrix.transpose()); f =
-     * 0.5*f_matrix.get(0,0); f_omega_matrix =
-     * F_omega_matrix.times(F_omega_matrix.transpose()); f_omega =
-     * 0.5*f_omega_matrix.get(0,0);
+     * fs_matrix = F_matrix.transpose().times(F_matrix); fs = (-1)*fs_matrix.get(0,0); f_matrix =
+     * F_matrix.times(F_matrix.transpose()); f = 0.5*f_matrix.get(0,0); f_omega_matrix =
+     * F_omega_matrix.times(F_omega_matrix.transpose()); f_omega = 0.5*f_omega_matrix.get(0,0);
      * 
      * step = (-1)*fs/(2*(f_omega-f-fs)); //System.out.println("f "+f);
      * //System.out.println("f_omega "+f_omega); //System.out.println("fs "+fs);
-     * //System.out.println("step " + step); //if (step > 0.5) step = 0.5; return
-     * step; }
+     * //System.out.println("step " + step); //if (step > 0.5) step = 0.5; return step; }
      */
 }

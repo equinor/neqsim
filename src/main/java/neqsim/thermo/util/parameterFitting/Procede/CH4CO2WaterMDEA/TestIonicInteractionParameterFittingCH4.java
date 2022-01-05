@@ -1,38 +1,34 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.Procede.CH4CO2WaterMDEA;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>TestIonicInteractionParameterFittingCH4 class.</p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TestIonicInteractionParameterFittingCH4 extends java.lang.Object {
-
-    private static final long serialVersionUID = 1000;
+public class TestIonicInteractionParameterFittingCH4 {
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFittingCH4.class);
 
-    /** Creates new TestAcentric */
-    public TestIonicInteractionParameterFittingCH4() {
-    }
-
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -42,16 +38,17 @@ public class TestIonicInteractionParameterFittingCH4 extends java.lang.Object {
 
         // double guess[] = {0.0005447481}; //Case I
         // double guess[] = {0.0004929757}; //Case II
-        double guess[] = { 0.0004929757, 1e-10 }; // Case II and CO2-CH4 parameter also regressed
+        double guess[] = {0.0004929757, 1e-10}; // Case II and CO2-CH4 parameter also regressed
 
         try {
             int i = 0;
             logger.info("adding....");
             while (dataSet.next()) {
                 i++;
-                IonicInteractionParameterFittingFunctionCH4 function = new IonicInteractionParameterFittingFunctionCH4();
-                IonicInteractionParameterFittingFunctionCH4 function1 = new IonicInteractionParameterFittingFunctionCH4(
-                        1, 1);
+                IonicInteractionParameterFittingFunctionCH4 function =
+                        new IonicInteractionParameterFittingFunctionCH4();
+                IonicInteractionParameterFittingFunctionCH4 function1 =
+                        new IonicInteractionParameterFittingFunctionCH4(1, 1);
 
                 ID = Integer.parseInt(dataSet.getString("ID"));
                 pressure = Double.parseDouble(dataSet.getString("Pressure"));
@@ -78,9 +75,10 @@ public class TestIonicInteractionParameterFittingCH4 extends java.lang.Object {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
 
-                double sample1[] = { loading };
-                double standardDeviation1[] = { 0.01 };
-                SampleValue sample = new SampleValue(pressure, pressure / 100.0, sample1, standardDeviation1);
+                double sample1[] = {loading};
+                double standardDeviation1[] = {0.01};
+                SampleValue sample =
+                        new SampleValue(pressure, pressure / 100.0, sample1, standardDeviation1);
                 function.setInitialGuess(guess);
                 sample.setFunction(function);
                 sample.setReference("addicks");
@@ -88,8 +86,8 @@ public class TestIonicInteractionParameterFittingCH4 extends java.lang.Object {
                 sample.setThermodynamicSystem(testSystem);
                 sampleList.add(sample);
 
-                double sample2[] = { loading };
-                double standardDeviation2[] = { 0.01 };
+                double sample2[] = {loading};
+                double standardDeviation2[] = {0.01};
                 SampleValue sample3 = new SampleValue(pressure * y2, y2 * pressure / 100.0, sample2,
                         standardDeviation2);
                 function1.setInitialGuess(guess);
@@ -107,7 +105,7 @@ public class TestIonicInteractionParameterFittingCH4 extends java.lang.Object {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        //
+
         optim.solve();
         optim.displayCurveFit();
         // optim.writeToCdfFile("c:/testFit.nc");

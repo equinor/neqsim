@@ -1,43 +1,30 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * pTphaseEnvelope.java
+ * HPTphaseEnvelope.java
  *
  * Created on 14. oktober 2000, 21:59
  */
-
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
-import java.awt.*;
-import javax.swing.*;
+import java.awt.FlowLayout;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * HPTphaseEnvelope class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class HPTphaseEnvelope extends BaseOperation implements OperationInterface, java.io.Serializable {
-
+public class HPTphaseEnvelope extends BaseOperation {
     private static final long serialVersionUID = 1000;
 
     double[][] points = new double[10][10];
@@ -49,10 +36,20 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
     double startPressure = 1, endPressure = 0, startTemperature = 160, endTemperature = 0;
     static Logger logger = LogManager.getLogger(HPTphaseEnvelope.class);
 
-    /** Creates new bubblePointFlash */
-    public HPTphaseEnvelope() {
-    }
+    /**
+     * <p>
+     * Constructor for HPTphaseEnvelope.
+     * </p>
+     */
+    public HPTphaseEnvelope() {}
 
+    /**
+     * <p>
+     * Constructor for HPTphaseEnvelope.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public HPTphaseEnvelope(SystemInterface system) {
         testOps = new ThermodynamicOperations(system);
         this.system = system;
@@ -70,9 +67,9 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
         mainFrame.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
-
+    public void run() {
         int np = 0;
 
         for (int i = 0; i < 10; i++) {
@@ -92,11 +89,13 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         try {
             mainFrame.setVisible(false);
-            visAd3DPlot plot = new visAd3DPlot("pressure[bar]", "temperature[K]", "enthalpy[J/mol]");
+            visAd3DPlot plot =
+                    new visAd3DPlot("pressure[bar]", "temperature[K]", "enthalpy[J/mol]");
             plot.setXYvals(150, 160, 10, 10, 20, 10);
             plot.setZvals(points);
             plot.init();
@@ -105,26 +104,29 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return points;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void createNetCdfFile(String name) {
-    }
+    public void createNetCdfFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 }

@@ -1,33 +1,34 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * IonicInteractionParameterFittingFunctionCH4 class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionCH4.class);
 
-    /** Creates new Test */
-    public IonicInteractionParameterFittingFunctionCH4() {
-    }
+    /**
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionCH4.
+     * </p>
+     */
+    public IonicInteractionParameterFittingFunctionCH4() {}
 
+    /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
             // logger.info("pres " +
@@ -38,15 +39,18 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
         return system.getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
-        int MDEAplusNumb = 0, MDEANumb = 0, methanenumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, methane = 0;
+        int MDEAplusNumb = 0, MDEANumb = 0, methanenumb = 0, CO2Numb = 0, HCO3numb = 0,
+                Waternumb = 0, methane = 0;
         int j = 0;
         do {
             MDEAplusNumb = j;
@@ -78,18 +82,19 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
         do {
             methanenumb = j;
             j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("methane"));
+        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
+                .equals("methane"));
         if (i == 10) {
-            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(methane, CO2Numb,
-                    value);
-            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(methane, CO2Numb,
-                    value);
+            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()
+                    .setBinaryInteractionParameter(methane, CO2Numb, value);
+            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
+                    .setBinaryInteractionParameter(methane, CO2Numb, value);
         }
         if (i == 1) {
-            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(methane, MDEANumb,
-                    value * 1e3);
-            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(methane, MDEANumb,
-                    value * 1e3);
+            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()
+                    .setBinaryInteractionParameter(methane, MDEANumb, value * 1e3);
+            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
+                    .setBinaryInteractionParameter(methane, MDEANumb, value * 1e3);
         }
         if (i == 2) {
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0]).getElectrolyteMixingRule()
@@ -135,5 +140,4 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
                     .setHVDijParameter(MDEANumb, CO2Numb, value);
         }
     }
-
 }

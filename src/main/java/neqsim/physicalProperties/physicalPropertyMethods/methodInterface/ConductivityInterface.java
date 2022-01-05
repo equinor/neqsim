@@ -1,22 +1,23 @@
-/*
- * PhysicalPropertiesInterface.java
- *
- * Created on 29. oktober 2000, 16:14
- */
-
 package neqsim.physicalProperties.physicalPropertyMethods.methodInterface;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
+ * <p>ConductivityInterface interface.</p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public interface ConductivityInterface extends ThermodynamicConstantsInterface,
         neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface {
+    /**
+     * <p>calcConductivity.</p>
+     *
+     * @return a double
+     */
     public double calcConductivity();
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone();
+    public ConductivityInterface clone();
 }

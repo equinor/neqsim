@@ -1,96 +1,119 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package neqsim.physicalProperties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.physicalPropertySystem.solidPhysicalProperties.SolidPhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * PhysicalPropertyHandler class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable {
-
-    private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhysicalProperties = null;
-    private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface oilPhysicalProperties = null;
-    private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface aqueousPhysicalProperties = null;
-    private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhysicalProperties = null;
+    private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhysicalProperties =
+            null;
+    private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface oilPhysicalProperties =
+            null;
+    private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface aqueousPhysicalProperties =
+            null;
+    private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhysicalProperties =
+            null;
     private neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule mixingRule = null;
     static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
     private static final long serialVersionUID = 1000;
 
-    public PhysicalPropertyHandler() {
+    /**
+     * <p>
+     * Constructor for PhysicalPropertyHandler.
+     * </p>
+     */
+    public PhysicalPropertyHandler() {}
 
-    }
-
+    /**
+     * <p>
+     * setPhysicalProperties.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param type a int
+     */
     public void setPhysicalProperties(PhaseInterface phase, int type) {
         switch (type) {
-        case 0:
-            gasPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
-                    phase, 0, 0);
-            oilPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
-                    phase, 0, 0);
-            aqueousPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.WaterPhysicalProperties(
-                    phase, 0, 0);
-            break;
-        case 1:
-            gasPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
-                    phase, 0, 0);
-            oilPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
-                    phase, 0, 0);
-            aqueousPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.WaterPhysicalProperties(
-                    phase, 0, 0);
-            break;
-        case 2:
-            gasPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
-                    phase, 0, 0);
-            oilPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
-                    phase, 0, 0);
-            aqueousPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.GlycolPhysicalProperties(
-                    phase, 0, 0);
-            break;
-        case 3:
-            gasPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
-                    phase, 0, 0);
-            oilPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
-                    phase, 0, 0);
-            aqueousPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.AminePhysicalProperties(
-                    phase, 0, 0);
-            break;
-        case 4:
-            gasPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
-                    phase, 0, 0);
-            oilPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
-                    phase, 0, 0);
-            aqueousPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.CO2waterPhysicalProperties(
-                    phase, 0, 0);
-            break;
-        case 6:
-            gasPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(
-                    phase, 0, 0);
-            oilPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(
-                    phase, 0, 0);
-            aqueousPhysicalProperties = new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(
-                    phase, 0, 0);
-            break;
-        default:
-            logger.error("error selecting physical properties model.\n Continue using default model...");
-            setPhysicalProperties(phase, 0);
-            break;
+            case 0:
+                gasPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
+                                phase, 0, 0);
+                oilPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
+                                phase, 0, 0);
+                aqueousPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.WaterPhysicalProperties(
+                                phase, 0, 0);
+                break;
+            case 1:
+                gasPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
+                                phase, 0, 0);
+                oilPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
+                                phase, 0, 0);
+                aqueousPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.WaterPhysicalProperties(
+                                phase, 0, 0);
+                break;
+            case 2:
+                gasPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
+                                phase, 0, 0);
+                oilPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
+                                phase, 0, 0);
+                aqueousPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.GlycolPhysicalProperties(
+                                phase, 0, 0);
+                break;
+            case 3:
+                gasPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
+                                phase, 0, 0);
+                oilPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
+                                phase, 0, 0);
+                aqueousPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.AminePhysicalProperties(
+                                phase, 0, 0);
+                break;
+            case 4:
+                gasPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
+                                phase, 0, 0);
+                oilPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
+                                phase, 0, 0);
+                aqueousPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.CO2waterPhysicalProperties(
+                                phase, 0, 0);
+                break;
+            case 6:
+                gasPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(
+                                phase, 0, 0);
+                oilPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(
+                                phase, 0, 0);
+                aqueousPhysicalProperties =
+                        new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(
+                                phase, 0, 0);
+                break;
+            default:
+                logger.error(
+                        "error selecting physical properties model.\n Continue using default model...");
+                setPhysicalProperties(phase, 0);
+                break;
         }
         solidPhysicalProperties = new SolidPhysicalProperties(phase);
         mixingRule = new neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule();
@@ -98,31 +121,41 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         gasPhysicalProperties.setMixingRule(mixingRule);
         oilPhysicalProperties.setMixingRule(mixingRule);
         aqueousPhysicalProperties.setMixingRule(mixingRule);
-
     }
 
+    /**
+     * <p>
+     * getPhysicalProperty.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a
+     *         {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *         object
+     */
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperty(
             PhaseInterface phase) {
         switch (phase.getPhaseTypeName()) {
-        case "gas":
-            return gasPhysicalProperties;
-        case "oil":
-            return oilPhysicalProperties;
-        case "aqueous":
-            return aqueousPhysicalProperties;
-        case "solid":
-            return solidPhysicalProperties;
-        case "wax":
-            return solidPhysicalProperties;
-        case "hydrate":
-            return solidPhysicalProperties;
-        default:
-            return gasPhysicalProperties;
+            case "gas":
+                return gasPhysicalProperties;
+            case "oil":
+                return oilPhysicalProperties;
+            case "aqueous":
+                return aqueousPhysicalProperties;
+            case "solid":
+                return solidPhysicalProperties;
+            case "wax":
+                return solidPhysicalProperties;
+            case "hydrate":
+                return solidPhysicalProperties;
+            default:
+                return gasPhysicalProperties;
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-    public Object clone() {
+    public PhysicalPropertyHandler clone() {
         PhysicalPropertyHandler clonedHandler = null;
 
         try {
@@ -133,24 +166,29 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         }
         try {
             if (gasPhysicalProperties != null) {
-                clonedHandler.gasPhysicalProperties = (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) gasPhysicalProperties
-                        .clone();
+                clonedHandler.gasPhysicalProperties =
+                        (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) gasPhysicalProperties
+                                .clone();
             }
             if (oilPhysicalProperties != null) {
-                clonedHandler.oilPhysicalProperties = (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) oilPhysicalProperties
-                        .clone();
+                clonedHandler.oilPhysicalProperties =
+                        (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) oilPhysicalProperties
+                                .clone();
             }
             if (aqueousPhysicalProperties != null) {
-                clonedHandler.aqueousPhysicalProperties = (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) aqueousPhysicalProperties
-                        .clone();
+                clonedHandler.aqueousPhysicalProperties =
+                        (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) aqueousPhysicalProperties
+                                .clone();
             }
             if (solidPhysicalProperties != null) {
-                clonedHandler.solidPhysicalProperties = (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) solidPhysicalProperties
-                        .clone();
+                clonedHandler.solidPhysicalProperties =
+                        (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) solidPhysicalProperties
+                                .clone();
             }
             if (mixingRule != null) {
-                clonedHandler.mixingRule = (neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule) mixingRule
-                        .clone();
+                clonedHandler.mixingRule =
+                        (neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule) mixingRule
+                                .clone();
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);

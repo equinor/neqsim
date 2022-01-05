@@ -1,23 +1,29 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.fluidMechanics.geometryDefinitions.surrounding;
 
 /**
+ * <p>
+ * PipeSurroundingEnvironment class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
-    public PipeSurroundingEnvironment() {
+    /**
+     * <p>
+     * Constructor for PipeSurroundingEnvironment.
+     * </p>
+     */
+    public PipeSurroundingEnvironment() {}
 
-    }
-
-    public PipeSurroundingEnvironment(String typeName) {
-
-    }
+    /**
+     * <p>
+     * Constructor for PipeSurroundingEnvironment.
+     * </p>
+     *
+     * @param typeName a {@link java.lang.String} object
+     */
+    public PipeSurroundingEnvironment(String typeName) {}
 }

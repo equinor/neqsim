@@ -3,31 +3,44 @@
  *
  * Created on 25. august 2001, 23:34
  */
-
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
 /**
+ * <p>
+ * Packing class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class Packing implements PackingInterface {
-
     private static final long serialVersionUID = 1000;
 
     double voidFractionPacking = 0.951, size = 0, surfaceAreaPrVolume = 112.6;
     String name = null;
 
-    /** Creates new Packing */
-    public Packing() {
-    }
+    /**
+     * <p>
+     * Constructor for Packing.
+     * </p>
+     */
+    public Packing() {}
 
+    /**
+     * <p>
+     * Constructor for Packing.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public Packing(String name) {
-        name = name;
+        this.name = name;
         try {
             System.out.println("init packing");
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-            java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
+            neqsim.util.database.NeqSimDataBase database =
+                    new neqsim.util.database.NeqSimDataBase();
+            java.sql.ResultSet dataSet =
+                    database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
             dataSet.next();
             size = 1e-3 * Double.parseDouble(dataSet.getString("size")); // C
             surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));
@@ -41,13 +54,23 @@ public class Packing implements PackingInterface {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for Packing.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param material a {@link java.lang.String} object
+     * @param size a int
+     */
     public Packing(String name, String material, int size) {
-        name = name;
+        this.name = name;
         try {
             System.out.println("init packing");
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-            java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='" + name
-                    + "' AND size=" + size + " AND material='" + material + "'"));
+            neqsim.util.database.NeqSimDataBase database =
+                    new neqsim.util.database.NeqSimDataBase();
+            java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='"
+                    + name + "' AND size=" + size + " AND material='" + material + "'"));
             dataSet.next();
             this.size = 1e-3 * Double.parseDouble(dataSet.getString("size")); // C
             surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));
@@ -61,34 +84,35 @@ public class Packing implements PackingInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getSurfaceAreaPrVolume() {
+    public double getSurfaceAreaPrVolume() {
         return surfaceAreaPrVolume;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property voidFractionPacking.
-     * 
-     * @return Value of property voidFractionPacking.
      */
     @Override
-	public double getVoidFractionPacking() {
+    public double getVoidFractionPacking() {
         return voidFractionPacking;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property voidFractionPacking.
-     * 
-     * @param voidFractionPacking New value of property voidFractionPacking.
      */
     @Override
-	public void setVoidFractionPacking(double voidFractionPacking) {
+    public void setVoidFractionPacking(double voidFractionPacking) {
         this.voidFractionPacking = voidFractionPacking;
     }
 
     /**
      * Setter for property size.
-     * 
+     *
      * @param size New value of property size.
      */
     public void setSize(double size) {
@@ -96,13 +120,12 @@ public class Packing implements PackingInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Get size in mm
-     * 
-     * @param size
      */
     @Override
-	public double getSize() {
+    public double getSize() {
         return size;
     }
-
 }

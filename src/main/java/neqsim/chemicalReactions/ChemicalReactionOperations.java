@@ -1,29 +1,13 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
  * ChemicalReactionOperations.java
  *
  * Created on 4. februar 2001, 20:06
  */
-
 package neqsim.chemicalReactions;
 
-import Jama.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import Jama.Matrix;
 import neqsim.chemicalReactions.chemicalEquilibriaum.ChemicalEquilibrium;
 import neqsim.chemicalReactions.chemicalEquilibriaum.LinearProgrammingChemicalEquilibrium;
 import neqsim.chemicalReactions.chemicalReaction.ChemicalReactionList;
@@ -33,13 +17,15 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * ChemicalReactionOperations class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class ChemicalReactionOperations extends Object
-        implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable, java.io.Serializable {
-
+public class ChemicalReactionOperations
+        implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
     private static final long serialVersionUID = 1000;
 
     SystemInterface system;
@@ -62,18 +48,27 @@ public class ChemicalReactionOperations extends Object
     Kinetics kineticsSolver;
     LinearProgrammingChemicalEquilibrium initCalc;
 
-    /** Creates new ChemicalReactionOperations */
-    public ChemicalReactionOperations() {
-    }
+    /**
+     * <p>
+     * Constructor for ChemicalReactionOperations.
+     * </p>
+     */
+    public ChemicalReactionOperations() {}
 
+    /**
+     * <p>
+     * Constructor for ChemicalReactionOperations.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ChemicalReactionOperations(SystemInterface system) {
         initCalc = new LinearProgrammingChemicalEquilibrium();
-        boolean newcomps = true, newcompsOld = true;
+        boolean newcomps = true;
         int old = system.getPhase(0).getNumberOfComponents();
         this.system = system;
 
         do {
-            newcompsOld = newcomps;
             // if statement added by Procede
             if (!newcomps) {
                 break;
@@ -97,7 +92,8 @@ public class ChemicalReactionOperations extends Object
             elements = getAllElements();
 
             try {
-                initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, 1);
+                initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components,
+                        elements, this, 1);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -111,12 +107,20 @@ public class ChemicalReactionOperations extends Object
         kineticsSolver = new Kinetics(this);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>system</code>.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public void setSystem(SystemInterface system) {
         this.system = system;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public ChemicalReactionOperations clone() {
         ChemicalReactionOperations clonedSystem = null;
         try {
             clonedSystem = (ChemicalReactionOperations) super.clone();
@@ -126,18 +130,39 @@ public class ChemicalReactionOperations extends Object
         return clonedSystem;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>components</code>.
+     * </p>
+     */
     public void setComponents() {
         for (int j = 0; j < components.length; j++) {
-            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] = components[j];
+            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] =
+                    components[j];
         }
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>components</code>.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void setComponents(int phase) {
         for (int j = 0; j < components.length; j++) {
-            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] = components[j];
+            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] =
+                    components[j];
         }
     }
 
+    /**
+     * <p>
+     * setReactiveComponents.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void setReactiveComponents(int phase) {
         for (int j = 0; j < components.length; j++) {
             // System.out.println("comp " + components[j].getComponentNumber());
@@ -145,6 +170,11 @@ public class ChemicalReactionOperations extends Object
         }
     }
 
+    /**
+     * <p>
+     * setReactiveComponents.
+     * </p>
+     */
     public void setReactiveComponents() {
         int k = 0;
         for (int j = 0; j < componentNames.length; j++) {
@@ -160,6 +190,14 @@ public class ChemicalReactionOperations extends Object
         }
     }
 
+    /**
+     * <p>
+     * calcInertMoles.
+     * </p>
+     *
+     * @param phase a int
+     * @return a double
+     */
     public double calcInertMoles(int phase) {
         double reactiveMoles = 0;
         for (int j = 0; j < components.length; j++) {
@@ -173,11 +211,17 @@ public class ChemicalReactionOperations extends Object
         return inertMoles;
     }
 
+    /**
+     * <p>
+     * sortReactiveComponents.
+     * </p>
+     */
     public void sortReactiveComponents() {
         ComponentInterface tempComp;
         for (int i = 0; i < components.length; i++) {
             for (int j = i + 1; j < components.length; j++) {
-                if (components[j].getGibbsEnergyOfFormation() < components[i].getGibbsEnergyOfFormation()) {
+                if (components[j].getGibbsEnergyOfFormation() < components[i]
+                        .getGibbsEnergyOfFormation()) {
                     tempComp = components[i];
                     components[i] = components[j];
                     components[j] = tempComp;
@@ -187,9 +231,13 @@ public class ChemicalReactionOperations extends Object
         }
     }
 
+    /**
+     * <p>
+     * addNewComponents.
+     * </p>
+     */
     public void addNewComponents() {
         boolean newComp;
-        int p = 0;
 
         for (int i = 0; i < allComponentNames.length; i++) {
             String name = allComponentNames[i];
@@ -208,8 +256,15 @@ public class ChemicalReactionOperations extends Object
         }
     }
 
+    /**
+     * <p>
+     * getAllElements.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[] getAllElements() {
-        HashSet elementsLocal = new HashSet();
+        HashSet<String> elementsLocal = new HashSet<String>();
         for (int j = 0; j < components.length; j++) {
             for (int i = 0; i < components[j].getElements().getElementNames().length; i++) {
                 // System.out.println("elements: " +
@@ -220,21 +275,35 @@ public class ChemicalReactionOperations extends Object
 
         String[] elementList = new String[elementsLocal.size()];
         int k = 0;
-        Iterator newe = elementsLocal.iterator();
+        Iterator<String> newe = elementsLocal.iterator();
         while (newe.hasNext()) {
             elementList[k++] = (String) newe.next();
         }
         /*
-         * for(int j=0;j<elementList.length;j++){ System.out.println("elements2: "
-         * +elementList[j]); }
+         * for(int j=0;j<elementList.length;j++){ System.out.println("elements2: " +elementList[j]);
+         * }
          */
         return elementList;
     }
 
+    /**
+     * <p>
+     * hasRections.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean hasRections() {
         return components.length > 0;
     }
 
+    /**
+     * <p>
+     * calcNVector.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] calcNVector() {
         double[] nvec = new double[components.length];
         for (int i = 0; i < components.length; i++) {
@@ -244,6 +313,13 @@ public class ChemicalReactionOperations extends Object
         return nvec;
     }
 
+    /**
+     * <p>
+     * calcBVector.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] calcBVector() {
         Matrix tempA = new Matrix(Amatrix);
         Matrix tempB = new Matrix(nVector, 1);
@@ -255,10 +331,19 @@ public class ChemicalReactionOperations extends Object
         return tempN.getArray()[0];
     }
 
+    /**
+     * <p>
+     * calcChemRefPot.
+     * </p>
+     *
+     * @param phase a int
+     * @return an array of {@link double} objects
+     */
     public double[] calcChemRefPot(int phase) {
         double[] referencePotentials = new double[components.length];
         reactionList.createReactionMatrix(system.getPhase(phase), components);
-        double[] newreferencePotentials = reactionList.updateReferencePotentials(system.getPhase(phase), components);
+        double[] newreferencePotentials =
+                reactionList.updateReferencePotentials(system.getPhase(phase), components);
         if (newreferencePotentials != null) {
             for (int i = 0; i < newreferencePotentials.length; i++) {
                 referencePotentials[i] = newreferencePotentials[i];
@@ -270,17 +355,25 @@ public class ChemicalReactionOperations extends Object
         }
     }
 
+    /**
+     * <p>
+     * updateMoles.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void updateMoles(int phase) {
         double changeMoles = 0.0;
         for (int i = 0; i < components.length; i++) {
             if (Math.abs(newMoles[i]) > 1e-45) {
-                changeMoles += (newMoles[i] - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
-                        .getNumberOfMolesInPhase());
+                changeMoles += (newMoles[i]
+                        - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
+                                .getNumberOfMolesInPhase());
                 // System.out.println("update moles first " + (components[i].getComponentName()
                 // + " moles " + components[i].getNumberOfMolesInPhase()));
                 system.getPhase(phase).addMolesChemReac(components[i].getComponentNumber(),
-                        (newMoles[i] - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
-                                .getNumberOfMolesInPhase()));
+                        (newMoles[i] - system.getPhase(phase).getComponents()[components[i]
+                                .getComponentNumber()].getNumberOfMolesInPhase()));
                 // System.out.println("update moles after " + (components[i].getComponentName()
                 // + " moles " + components[i].getNumberOfMolesInPhase()));
             }
@@ -292,12 +385,28 @@ public class ChemicalReactionOperations extends Object
         system.init(1);
     }
 
+    /**
+     * <p>
+     * solveChemEq.
+     * </p>
+     *
+     * @param type a int
+     * @return a boolean
+     */
     public boolean solveChemEq(int type) {
         return solveChemEq(1, type);
     }
 
+    /**
+     * <p>
+     * solveChemEq.
+     * </p>
+     *
+     * @param phase a int
+     * @param type a int
+     * @return a boolean
+     */
     public boolean solveChemEq(int phase, int type) {
-        int i;
         if (this.phase != phase) {
             setReactiveComponents(phase);
             chemRefPot = calcChemRefPot(phase);
@@ -343,25 +452,58 @@ public class ChemicalReactionOperations extends Object
         }
     }
 
+    /**
+     * <p>
+     * solveKinetics.
+     * </p>
+     *
+     * @param phase a int
+     * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param component a int
+     * @return a double
+     */
     public double solveKinetics(int phase, PhaseInterface interPhase, int component) {
         return kineticsSolver.calcReacMatrix(system.getPhase(phase), interPhase, component);
     }
 
+    /**
+     * <p>
+     * getKinetics.
+     * </p>
+     *
+     * @return a {@link neqsim.chemicalReactions.kinetics.Kinetics} object
+     */
     public Kinetics getKinetics() {
         return kineticsSolver;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>reactionList</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.chemicalReactions.chemicalReaction.ChemicalReactionList} object
+     */
     public ChemicalReactionList getReactionList() {
         return reactionList;
     }
 
+    /**
+     * <p>
+     * reacHeat.
+     * </p>
+     *
+     * @param phase a int
+     * @param component a {@link java.lang.String} object
+     * @return a double
+     */
     public double reacHeat(int phase, String component) {
         return reactionList.reacHeat(system.getPhase(phase), component);
     }
 
     /**
      * Getter for property deltaReactionHeat.
-     * 
+     *
      * @return Value of property deltaReactionHeat.
      */
     public double getDeltaReactionHeat() {
@@ -370,7 +512,7 @@ public class ChemicalReactionOperations extends Object
 
     /**
      * Setter for property deltaReactionHeat.
-     * 
+     *
      * @param deltaReactionHeat New value of property deltaReactionHeat.
      */
     public void setDeltaReactionHeat(double deltaReactionHeat) {
@@ -381,7 +523,7 @@ public class ChemicalReactionOperations extends Object
     // // System.out.println(" vol " + system.getPhases()[0].getMolarVolume());
     // return getReactionList().calcReacRates(system.getPhase(phase), components);
     // }
-    //
+
     // /** Setter for property reactionList.
     // * @param reactionList New value of property reactionList.
     // */
@@ -390,5 +532,4 @@ public class ChemicalReactionOperations extends Object
     // reactionList) {
     // this.reactionList = reactionList;
     // }
-
 }
