@@ -96,8 +96,6 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
         cpamix = cpaSelect.getMixingRule(1, this);
     }
 
-    // type = 0 start
-    // init type = 1 gi nye betingelser
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,

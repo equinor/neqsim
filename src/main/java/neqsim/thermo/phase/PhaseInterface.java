@@ -234,7 +234,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
      *
      * @param totalNumberOfMoles a double
      * @param numberOfComponents a int
-     * @param type a int
+     * @param type a int. Use 0 to init, and 1 to reset.
      * @param phase a int
      * @param beta a double
      */

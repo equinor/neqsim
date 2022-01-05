@@ -75,11 +75,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         if (type == 0) {
             selfAccociationScheme = new int[numberOfComponents][0][0];
             crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];

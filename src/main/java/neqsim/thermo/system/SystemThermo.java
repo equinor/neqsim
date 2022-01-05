@@ -1753,9 +1753,10 @@ abstract class SystemThermo implements SystemInterface {
      * initAnalytic.
      * </p>
      *
-     * @param type a int
+     * @param type a int. 0 to initialize and 1 to reset, 2 to calculate T and P derivatives, 3 to
+     *        calculate all derivatives and 4 to calculate all derivatives numerically
      */
-    public void initAnalytic(int type) { // type = 0 start init type =1O give new conditions
+    public void initAnalytic(int type) {
         if (type == 0) {
             numberOfPhases = getMaxNumberOfPhases();
             for (int i = 0; i < getMaxNumberOfPhases(); i++) {

@@ -76,11 +76,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         if (!mixingRuleDefined) {
             setMixingRule(1);
         }

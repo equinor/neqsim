@@ -88,11 +88,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         if (type > 0) {
             for (int i = 0; i < numberOfComponents; i++) {
                 componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,

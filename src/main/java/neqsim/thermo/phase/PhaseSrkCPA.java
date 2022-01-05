@@ -94,11 +94,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         boolean changedAssosiationStatus = false;
 
         if (type == 0) {
@@ -424,7 +420,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             return;
         }
 
-        // nt assSites = 0;
+        // int assSites = 0;
         // if(true) return;
         for (int p = 0; p < numberOfComponents; p++) {
             SimpleMatrix KiMatrix = new SimpleMatrix(Klkni[p]);
