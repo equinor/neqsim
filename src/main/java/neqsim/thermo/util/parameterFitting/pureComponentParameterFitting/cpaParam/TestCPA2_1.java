@@ -76,9 +76,7 @@ public class TestCPA2_1 {
                 double val = testSystem.getPressure();
 
                 double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
-
+                double standardDeviation1[] = {0.1};
                 double stddev = val / 100.0;
                 double logVal = Math.log(val);
                 SampleValue sample = new SampleValue(val, stddev, sample1, standardDeviation1);
@@ -120,8 +118,7 @@ public class TestCPA2_1 {
                 double dens = Double.parseDouble(dataSet.getString("liquiddensity"));
                 // double dens = Double.parseDouble(dataSet.getString("Density"));
                 double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 // double guess[] = {46939.4738048507, 1.5971863018, 0.7623134978,
@@ -158,8 +155,7 @@ public class TestCPA2_1 {
                 testSystem.init(0);
                 double dens = Double.parseDouble(dataSet.getString("gasdensity"));
                 double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 // double guess[] = {46939.4738048507, 1.5971863018, 0.7623134978,

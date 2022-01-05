@@ -39,6 +39,12 @@ public class Fluid {
         fluid.setMixingRule(getThermoMixingRule());
     }
 
+    /**
+     * <p>create2.</p>
+     *
+     * @param componentNames an array of {@link java.lang.String} objects
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public static neqsim.thermo.system.SystemInterface create2(String[] componentNames) {
         double[] comp = new double[componentNames.length];
         for (int i = 0; i < componentNames.length; i++) {

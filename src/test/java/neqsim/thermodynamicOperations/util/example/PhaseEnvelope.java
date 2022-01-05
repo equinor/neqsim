@@ -8,8 +8,11 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
- * PhaseEnvelope.java
+ * <p>
+ * PhaseEnvelope class.
  * Created on 27. september 2001, 10:21 Updated on May 2019 by Nefeli
+ * </p> 
+ * 
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
@@ -18,7 +21,9 @@ public class PhaseEnvelope {
     static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

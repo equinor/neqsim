@@ -54,8 +54,7 @@ public class TestConductivityFit {
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(2);
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double standardDeviation1[] = {0.1}; 
                 SampleValue sample =
                         new SampleValue(Double.parseDouble(dataSet.getString("Conductivity")),
                                 Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,

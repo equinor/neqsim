@@ -60,9 +60,8 @@ public class TestRackettZ {
                 testSystem.init(1);
 
                 double sample1[] = {T}; // temperature
-                double standardDeviation1[] = {T / 100}; // std.dev temperature // presure std.dev
-                                                         // pressure
-
+                double standardDeviation1[] = {T / 100}; 
+                                                         
                 SampleValue sample =
                         new SampleValue(density, density / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);

@@ -53,8 +53,7 @@ public class TestRacketFit {
                 testSystem.init(0);
                 testSystem.setMixingRule(2);
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double standardDeviation1[] = {0.1}; 
                 SampleValue sample =
                         new SampleValue(Double.parseDouble(dataSet.getString("Density")),
                                 Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
