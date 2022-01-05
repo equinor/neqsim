@@ -77,7 +77,9 @@ public class TestIonicInteractionParameterFittingCH4 {
                 double sample1[] = {testSystem.getPhases()[0].getComponents()[0]
                         .getNumberOfMolesInPhase()
                         / testSystem.getPhases()[0].getComponents()[2].getNumberOfMolesInPhase()}; // temperature
-                double standardDeviation1[] = {0.01}; 
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
+
                 SampleValue sample =
                         new SampleValue(pressure, pressure / 100.0, sample1, standardDeviation1);
                 function.setInitialGuess(guess);
@@ -129,8 +131,9 @@ public class TestIonicInteractionParameterFittingCH4 {
                 double sample1[] = {testSystem.getPhases()[0].getComponents()[1]
                         .getNumberOfMolesInPhase()
                         / testSystem.getPhases()[0].getComponents()[2].getNumberOfMolesInPhase()}; // temperature
-                double standardDeviation1[] = {0.01}; 
-                                                      double y1 = Double.parseDouble(dataSet.getString("y1"));
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
+                double y1 = Double.parseDouble(dataSet.getString("y1"));
                 SampleValue sample = new SampleValue(pressure * y1, y1 * pressure / 100.0, sample1,
                         standardDeviation1);
                 function.setInitialGuess(guess);
@@ -147,7 +150,7 @@ public class TestIonicInteractionParameterFittingCH4 {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-
+        //
         optim.solve();
         // optim.runMonteCarloSimulation();
         // optim.displayCurveFit();
