@@ -34,8 +34,7 @@ public class TestBinaryHVfitToActivity implements Cloneable {
             BinaryHVparameterFitToActivityCoefficientFunction function =
                     new BinaryHVparameterFitToActivityCoefficientFunction();
             SystemInterface testSystem = new SystemSrkEos(253.0 + numb * 50.0, 1.01);
-            // testSystem.addComponent("CO2", numb/100.0); // legger til komponenter til
-            // systemet
+            // testSystem.addComponent("CO2", numb/100.0); 
             testSystem.addComponent("MDEA", 1.0);
             testSystem.addComponent("water", 10.0);
             // testSystem.createDatabase(true);

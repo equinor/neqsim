@@ -58,7 +58,6 @@ public class TestClassicAcentricPlusDens_1 {
                 // testSystem.useVolumeCorrection(false);
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 // testSystem.createDatabase(true);
-                // legger til komponenter til systemet
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
                                                      // pressure

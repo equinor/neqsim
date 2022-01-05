@@ -48,10 +48,7 @@ public class TestConductivityFit {
                 function.setInitialGuess(guess);
 
                 SystemInterface testSystem = new SystemSrkEos(280, 1.1);
-                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til
-                                                                                    // komponenter
-                                                                                    // til
-                                                                                    // systemet
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.init(0);
                 testSystem.createDatabase(true);

@@ -46,10 +46,7 @@ public class TestViscosityFit {
                 function.setInitialGuess(guess);
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
                 // logger.info("component " + dataSet.getString("ComponentName"));
-                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til
-                                                                                    // komponenter
-                                                                                    // til
-                                                                                    // systemet
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(2);

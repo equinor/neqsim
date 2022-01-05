@@ -47,11 +47,7 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
                 SystemInterface testSystem = new SystemSrkSchwartzentruberEos(
                         Double.parseDouble(dataSet.getString("Temperature")),
                         Double.parseDouble(dataSet.getString("Pressure")));
-                testSystem.addComponent(dataSet.getString("Component1"), x1); // legger
-                                                                              // til
-                                                                              // komponenter
-                                                                              // til
-                                                                              // systemet
+                testSystem.addComponent(dataSet.getString("Component1"), x1);
                 testSystem.addComponent(dataSet.getString("Component2"),
                         Double.parseDouble(dataSet.getString("x2")) * 100);
                 // testSystem.chemicalReactionInit();

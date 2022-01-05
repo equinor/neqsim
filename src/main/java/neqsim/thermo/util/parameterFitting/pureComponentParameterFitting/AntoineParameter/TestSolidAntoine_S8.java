@@ -47,9 +47,7 @@ public class TestSolidAntoine_S8 {
                 function.setInitialGuess(guess);
 
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til
-                                                                                    // komponenter
-                                                                                    // til systemet
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
 
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 double vappres = Double.parseDouble(dataSet.getString("VapourPressure"));
