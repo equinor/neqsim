@@ -16,15 +16,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-/**
- * <p>
- * TPflashDehyd class.
- * </p>
- *
- * @author asmund
- * @version $Id: $Id
- * @since 2.2.3
- */
 public class TPflashDehyd {
     static Logger logger = LogManager.getLogger(TPflashDehyd.class);
 

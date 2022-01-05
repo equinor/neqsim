@@ -15,13 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-/**
- * <p>TestUNIFAC_1 class.</p>
- *
- * @author asmund
- * @version $Id: $Id
- * @since 2.2.3
- */
 public class TestUNIFAC_1 {
     static Logger logger = LogManager.getLogger(TestUNIFAC_1.class);
 

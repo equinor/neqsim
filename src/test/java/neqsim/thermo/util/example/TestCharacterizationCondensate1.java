@@ -8,18 +8,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * TestCharacterizationCondensate1 class.
- * </p>
- *
- * @author esol
- * 
- * @version
- */
-/**
  * <p>TestCharacterizationCondensate1 class.</p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

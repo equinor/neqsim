@@ -15,13 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-/**
- * <p>TestCSPsrk class.</p>
- *
- * @author asmund
- * @version $Id: $Id
- * @since 2.2.3
- */
 public class TestCSPsrk {
     static Logger logger = LogManager.getLogger(TestCSPsrk.class);
 

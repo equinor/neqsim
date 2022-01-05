@@ -12,15 +12,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>
- * TestVHflash class.
- * </p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

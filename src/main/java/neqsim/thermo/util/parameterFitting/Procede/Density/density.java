@@ -18,12 +18,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author agrawalnj
  * @version $Id: $Id
  */
-/**
- * <p>density class.</p>
- *
- * @author asmund
- * @version $Id: $Id
- */
 public class density {
     static Logger logger = LogManager.getLogger(density.class);
 

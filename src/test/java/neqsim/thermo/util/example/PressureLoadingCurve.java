@@ -29,12 +29,8 @@ public class PressureLoadingCurve {
         double loading = 0.65;
         double molProsMDEA = 11.21;
         testSystem.addComponent("CO2", loading * molProsMDEA);
-        testSystem.addComponent("water", 100.0 - molProsMDEA - loading * molProsMDEA); // legger
-                                                                                       // til
-                                                                                       // komponenter
-                                                                                       // til
-                                                                                       // systemet
-        testSystem.addComponent("MDEA", molProsMDEA); // legger til komponenter til systemet
+        testSystem.addComponent("water", 100.0 - molProsMDEA - loading * molProsMDEA);
+        testSystem.addComponent("MDEA", molProsMDEA);
         // testSystem.addComponent("Piperazine", loading*molProsMDEA*0.1);
         testSystem.chemicalReactionInit();
         testSystem.createDatabase(true);

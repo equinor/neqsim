@@ -7,18 +7,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * TestGEHenry class.
- * </p>
- *
- * @author esol
- * 
- * @version
- */
-/**
  * <p>TestGEHenry class.</p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

@@ -12,13 +12,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>TPflashMembrane class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

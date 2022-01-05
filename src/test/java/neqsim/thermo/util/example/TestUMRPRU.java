@@ -15,13 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-/**
- * <p>TestUMRPRU class.</p>
- *
- * @author asmund
- * @version $Id: $Id
- * @since 2.2.3
- */
 public class TestUMRPRU {
     static Logger logger = LogManager.getLogger(TestUMRPRU.class);
 

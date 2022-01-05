@@ -1,5 +1,4 @@
 package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem;
-// import guiAuto.*;
 
 import java.text.DecimalFormat;
 

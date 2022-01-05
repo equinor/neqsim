@@ -7,18 +7,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * TestPCSAFT1 class.
- * </p>
- *
- * @author esol
- * 
- * @version
- */
-/**
  * <p>TestPCSAFT1 class.</p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

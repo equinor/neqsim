@@ -1,8 +1,3 @@
-/*
- * Cricondenbar point
- *
- * Created on 14. may 2019 by Nefeli
- */
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import Jama.Matrix;
