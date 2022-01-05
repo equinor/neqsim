@@ -1,8 +1,3 @@
-/*
- * AtractiveTermSrk.java
- *
- * Created on 13. mai 2001, 21:59
- */
 package neqsim.thermo.component.atractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
@@ -100,7 +95,6 @@ public class AtractiveTermSrk extends AtractiveTermBaseClass {
         return m * m / temperature / getComponent().getTC() / 2.0
                 + (1.0 + m * (1.0 - Math.sqrt(tr))) * m / Math.sqrt(tr * tr * tr)
                         / (getComponent().getTC() * getComponent().getTC()) / 2.0;
-
     }
 
     /** {@inheritDoc} */

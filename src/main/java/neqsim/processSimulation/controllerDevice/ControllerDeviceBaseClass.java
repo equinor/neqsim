@@ -30,9 +30,6 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     private double Tint = 300.0, TintValue = 0.0;
     private double Tderiv = 300.0;
 
-    /**
-     * Creates a new instance of ControllerDeviceBaseClass
-     */
     public ControllerDeviceBaseClass() {}
 
     /** {@inheritDoc} */

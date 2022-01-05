@@ -1,5 +1,5 @@
 /*
- * chemicalReactionList.java
+ * ChemicalReactionList.java
  *
  * Created on 4. februar 2001, 15:32
  */
@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.StringTokenizer;
 import Jama.Matrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -50,8 +49,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
      */
     public void readReactions(SystemInterface system) {
         chemicalReactionList.clear();
-        StringTokenizer tokenizer;
-        String token;
         ArrayList<String> names = new ArrayList<String>();
         ArrayList<String> stocCoef = new ArrayList<String>();
         double r = 0, refT = 0, actH;
@@ -281,13 +278,11 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         } catch (Exception er) {
             er.printStackTrace();
         }
-        Matrix reacMatr;
-        if (reacGMatrix.length > 0) {
-            reacMatr = new Matrix(reacGMatrix);
-        }
-        // System.out.println("reac matrix: ");
-        // reacMatr.print(10,3);
 
+        /*
+         * Matrix reacMatr; if (reacGMatrix.length > 0) { reacMatr = new Matrix(reacGMatrix); }
+         * System.out.println("reac matrix: "); reacMatr.print(10,3);
+         */
         return reacMatrix;
     }
 
@@ -392,8 +387,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
                 }
             }
         }
-        Matrix temp = new Matrix(tempReacMatrix);
-        Matrix temp2 = new Matrix(tempStocMatrix);
+
+        // Matrix temp = new Matrix(tempReacMatrix);
+        // Matrix temp2 = new Matrix(tempStocMatrix);
         // temp.print(10,10);
         // temp2.print(10,10);
     }

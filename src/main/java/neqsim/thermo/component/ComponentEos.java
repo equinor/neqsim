@@ -36,9 +36,6 @@ import neqsim.thermo.phase.PhaseInterface;
 abstract class ComponentEos extends Component implements ComponentEosInterface {
     private static final long serialVersionUID = 1000;
 
-    /**
-     *
-     */
     public double a = 1, b = 1, m = 0, alpha = 0, aT = 1, aDiffT = 0, Bi = 0, Ai = 0, AiT = 0,
             aDiffDiffT = 0;
     public double[] Aij = new double[MAX_NUMBER_OF_COMPONENTS];
@@ -200,10 +197,18 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
         return this.getAtractiveParameter();
     }
 
+    /**
+     * @param temperature
+     * @return double
+     */
     double reducedTemperature(double temperature) {
         return temperature / criticalTemperature;
     }
 
+    /**
+     * @param pressure
+     * @return double
+     */
     double reducedPressure(double pressure) {
         return pressure / criticalPressure;
     }

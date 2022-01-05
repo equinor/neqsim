@@ -1,20 +1,14 @@
 package neqsim.thermo.system;
-/**
- *
- * @author Even Solbraa
- * @version
- */
 
 /**
  * This class defines a thermodynamic system using the SRK equation of state
+ * 
+ * @author Even Solbraa
+ * @version
  */
 public class SystemSrkTwuCoonEos extends SystemSrkEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
     public SystemSrkTwuCoonEos() {
         super();
         modelName = "TwuCoonRK-EOS";

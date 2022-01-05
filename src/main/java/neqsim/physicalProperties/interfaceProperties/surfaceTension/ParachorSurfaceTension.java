@@ -1,8 +1,3 @@
-/*
- * GasLiquidSurfaceTension.java
- *
- * Created on 13. august 2001, 13:14
- */
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
 import neqsim.thermo.system.SystemInterface;

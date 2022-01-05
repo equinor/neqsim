@@ -26,9 +26,6 @@ public class GORfitter extends ProcessEquipmentBaseClass {
     private double GOR = 120.0;
     String unitT = "C", unitP = "bara";
 
-    /**
-     * Creates a new instance of GORfitter
-     */
     public GORfitter() {
         this.name = "GOR fitter";
     }

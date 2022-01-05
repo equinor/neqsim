@@ -85,11 +85,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         if (type == 0) {
             electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
@@ -943,7 +939,6 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
                     * Math.pow(componentArray[i].getIonicCharge(), 2.0)
                     / (1.0 + getShieldingParameter()
                             * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
-
         }
         return ans2 + ans;
     }

@@ -121,7 +121,6 @@ public class SeparatorSection {
                 / (getSeparator().getThermoSystem().getPhase(1).getPhysicalProperties().getDensity()
                         - getSeparator().getThermoSystem().getPhase(0).getPhysicalProperties()
                                 .getDensity());
-
     }
 
     /**

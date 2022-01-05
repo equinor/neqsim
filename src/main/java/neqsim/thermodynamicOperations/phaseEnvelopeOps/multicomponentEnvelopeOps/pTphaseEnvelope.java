@@ -155,7 +155,7 @@ public class pTphaseEnvelope extends BaseOperation {
                 }
             }
 
-            // initiallized the first step of the phase envelope
+            // initialized the first step of the phase envelope
             // pressure is already defined
             // temperature is the antoine vapor pressure of the selected component
             // (least or most volatile.
@@ -170,7 +170,6 @@ public class pTphaseEnvelope extends BaseOperation {
             system.setTemperature(temp);
             system.setPressure(pres);
 
-            // creates object for class
             ThermodynamicOperations testOps = new ThermodynamicOperations(system);
 
             // this part converges the first phase envelope point.
@@ -215,8 +214,8 @@ public class pTphaseEnvelope extends BaseOperation {
                     nonLinSolver.solve(np);
 
                     // this catches the exceptions
-                    double TT = system.getPhase(0).getTemperature();
-                    double PP = system.getPhase(0).getPressure();
+                    // double TT = system.getPhase(0).getTemperature();
+                    // double PP = system.getPhase(0).getPressure();
                 } catch (Exception e0) {
                     // the envelope crushed.
                     // this part keeps the old values
@@ -274,8 +273,8 @@ public class pTphaseEnvelope extends BaseOperation {
                         / system.getPhase(1).getComponent(nonLinSolver.lc).getx();
                 double Kvalhc = system.getPhase(0).getComponent(nonLinSolver.hc).getx()
                         / system.getPhase(1).getComponent(nonLinSolver.hc).getx();
-                double densV = system.getPhase(0).getDensity();
-                double densL = system.getPhase(1).getDensity();
+                // double densV = system.getPhase(0).getDensity();
+                // double densL = system.getPhase(1).getDensity();
 
                 // System.out.println(np + " " + system.getTemperature() + " " +
                 // system.getPressure() + " " + densV + " " + densL );
@@ -491,7 +490,7 @@ public class pTphaseEnvelope extends BaseOperation {
                     points2[3][0] = system.getPC();
                 }
             } catch (Exception e2) {
-                double nef = 0.;
+                // double nef = 0.;
                 // logger.error("error", e2);
             }
 
@@ -515,11 +514,11 @@ public class pTphaseEnvelope extends BaseOperation {
                     file2.createFile();
                 }
             } catch (Exception e3) {
-                double nef = 0.;
+                // double nef = 0.;
                 logger.error("error", e3);
             }
         } catch (Exception e4) {
-            double nef = 0.;
+            // double nef = 0.;
             logger.error("error", e4);
         }
     }
@@ -537,7 +536,7 @@ public class pTphaseEnvelope extends BaseOperation {
             logger.error("error", e);
         }
 
-        double[][] hydData = opsHyd.getData();
+        // double[][] hydData = opsHyd.getData();
     }
 
     /** {@inheritDoc} */
@@ -563,7 +562,6 @@ public class pTphaseEnvelope extends BaseOperation {
         double TC = system.getTC();
         double PC = system.getPC();
 
-        String title2 = "";
         String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
                 + String.valueOf(nf.format(PC));
         String title3 = "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="

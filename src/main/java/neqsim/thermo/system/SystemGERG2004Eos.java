@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseGERG2004Eos;
@@ -10,17 +5,14 @@ import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- *
+ * This class defines a thermodynamic system using the SRK equation of state
+ * 
  * @author Even Solbraa
  * @version
- */
-/**
- * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemGERG2004Eos extends SystemEos {
     private static final long serialVersionUID = 1000;
 
-    // SystemSrkEos clonedSystem;
     /**
      * <p>
      * Constructor for SystemGERG2004Eos.

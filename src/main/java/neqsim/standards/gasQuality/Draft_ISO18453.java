@@ -21,9 +21,6 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
 
-    /**
-     * Creates a new instance of Standard_ISO1992
-     */
     public Draft_ISO18453() {
         name = "Draft_ISO18453";
         standardDescription = "water dew point calculation method";

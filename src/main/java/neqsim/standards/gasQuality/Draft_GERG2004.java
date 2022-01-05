@@ -1,6 +1,7 @@
 package neqsim.standards.gasQuality;
 
-import java.text.*;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -18,9 +19,6 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
     double specPressure = 70.0;
     double initTemperature = 273.15;
 
-    /**
-     * Creates a new instance of Standard_ISO1992
-     */
     public Draft_GERG2004() {
         name = "Draft_GERG2004";
         standardDescription = "reference properties of natural gas";

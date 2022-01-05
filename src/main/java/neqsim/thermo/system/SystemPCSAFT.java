@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
 package neqsim.thermo.system;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,18 +7,15 @@ import neqsim.thermo.phase.PhasePCSAFTRahmat;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- *
+ * This class defines a thermodynamic system using the PC-SAFT EoS equation of state
+ * 
  * @author Even Solbraa
  * @version
- */
-/**
- * This class defines a thermodynamic system using the PC-SAFT EoS equation of state
  */
 public class SystemPCSAFT extends SystemSrkEos {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SystemPCSAFT.class);
 
-    // SystemSrkEos clonedSystem;
     /**
      * <p>
      * Constructor for SystemPCSAFT.

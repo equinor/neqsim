@@ -27,9 +27,6 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     double adsorberInternalDiameter = 1.0;
     double adsorbentFillingHeight = 3.0;
 
-    /**
-     * Creates a new instance of SnohvitCO2RemovalModule
-     */
     public AdsorptionDehydrationlModule() {}
 
     /** {@inheritDoc} */

@@ -5,21 +5,14 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- *
+ * This class defines a thermodynamic system using the SRK equation of state
+ * 
  * @author Even Solbraa
  * @version
- */
-
-/**
- * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemUNIFACpsrk extends SystemEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
     public SystemUNIFACpsrk() {
         super();
         modelName = "UNIFAC-GE-model";

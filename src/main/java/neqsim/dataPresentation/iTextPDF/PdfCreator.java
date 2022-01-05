@@ -1,5 +1,5 @@
 /*
- * pdfCreator.java
+ * PdfCreator.java
  *
  * Created on 12. juli 2004, 15:16
  */
@@ -21,9 +21,6 @@ public class PdfCreator {
     com.lowagie.text.Document document = null;;
     String docName = "";
 
-    /**
-     * Creates a new instance of pdfCreator
-     */
     public PdfCreator() {
         try {
             document = new com.lowagie.text.Document(com.lowagie.text.PageSize.A4);

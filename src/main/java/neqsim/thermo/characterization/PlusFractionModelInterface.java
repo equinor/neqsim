@@ -162,6 +162,4 @@ public interface PlusFractionModelInterface extends java.io.Serializable {
      * @return a double
      */
     public double getCoef(int i);
-
-
 }

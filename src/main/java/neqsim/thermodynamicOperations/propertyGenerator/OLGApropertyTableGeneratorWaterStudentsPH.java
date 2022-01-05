@@ -5,10 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
@@ -16,7 +14,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>OLGApropertyTableGeneratorWaterStudentsPH class.</p>
+ * <p>
+ * OLGApropertyTableGeneratorWaterStudentsPH class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -61,7 +61,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     String fileName = "c:/Appl/OLGAneqsim.tab";
 
     /**
-     * <p>Constructor for OLGApropertyTableGeneratorWaterStudentsPH.</p>
+     * <p>
+     * Constructor for OLGApropertyTableGeneratorWaterStudentsPH.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -93,7 +95,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>Setter for the field <code>fileName</code>.</p>
+     * <p>
+     * Setter for the field <code>fileName</code>.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -102,7 +106,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>setPressureRange.</p>
+     * <p>
+     * setPressureRange.
+     * </p>
      *
      * @param minPressure a double
      * @param maxPressure a double
@@ -119,7 +125,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>setEnthalpyRange.</p>
+     * <p>
+     * setEnthalpyRange.
+     * </p>
      *
      * @param minEnthalpy a double
      * @param maxEnthalpy a double
@@ -136,7 +144,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>calcPhaseEnvelope.</p>
+     * <p>
+     * calcPhaseEnvelope.
+     * </p>
      */
     public void calcPhaseEnvelope() {
         try {
@@ -149,7 +159,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>calcBubP.</p>
+     * <p>
+     * calcBubP.
+     * </p>
      *
      * @param enthalpies an array of {@link double} objects
      * @return an array of {@link double} objects
@@ -173,7 +185,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>calcDewP.</p>
+     * <p>
+     * calcDewP.
+     * </p>
      *
      * @param enthalpies an array of {@link double} objects
      * @return an array of {@link double} objects
@@ -198,7 +212,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>calcBubT.</p>
+     * <p>
+     * calcBubT.
+     * </p>
      *
      * @param pressures an array of {@link double} objects
      * @return an array of {@link double} objects
@@ -219,7 +235,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>initCalc.</p>
+     * <p>
+     * initCalc.
+     * </p>
      */
     public void initCalc() {
         double stdTemp = 288.15, stdPres = 1.01325;
@@ -241,12 +259,16 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
 
         thermoOps.TPflash();
 
-        // GOR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
-        // GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
+        // GOR = thermoSystem.getPhase(0).getTotalVolume() /
+        // thermoSystem.getPhase(1).getTotalVolume();
+        // GLR = thermoSystem.getPhase(0).getTotalVolume() /
+        // thermoSystem.getPhase(1).getTotalVolume();
     }
 
     /**
-     * <p>calcRSWTOB.</p>
+     * <p>
+     * calcRSWTOB.
+     * </p>
      */
     public void calcRSWTOB() {
         thermoSystem.init(0);
@@ -409,6 +431,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
                          * (names[k].equals("GAS MASS FRACTION") && props[k][i][j] < 0) {
                          * props[k][i][j] = 0; } }
                          */
+
                         /*
                          * if (j > 1) { props[k][i][j] = props[k][i][j - 1] + (props[k][i][j - 1] -
                          * props[k][i][j - 2]) / (enthalpies[j - 1] - enthalpies[j - 2]) *
@@ -1202,6 +1225,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
                              * if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j]
                              * > 120.0e-3) { props[k][i][j] = 80.0e-3; LWS=1; } }
                              */
+
                             /*
                              * if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j]
                              * < 10.0e-3) { props[k][i][j] = 25.0e-3; LWS=1; } if
@@ -1237,12 +1261,14 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
                              * if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j]
                              * > 120.0e-3) { props[k][i][j] = 80.0e-3; LWS=1; } }
                              */
+
                             /*
                              * if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j]
                              * < 10.0e-3) { props[k][i][j] = 25.0e-3; LWS=1; } if
                              * (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] >
                              * 120.0e-3) { props[k][i][j] = 80.0e-3; LWS=1; }
                              */
+
                             /*
                              * if (props[k][i][j] < 5.0e-3) { props[k][i][j] = 5.0e-3; LWS = 1; } if
                              * (props[k][i][j] > 1.1* props[k][i - 1][j]) { props[k][i][j] =
@@ -1319,7 +1345,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>writeOLGAinpFile2.</p>
+     * <p>
+     * writeOLGAinpFile2.
+     * </p>
      *
      * @param filename a {@link java.lang.String} object
      */
@@ -1333,7 +1361,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
          * writer.write(")"); } catch (IOException ex) { // report } finally { try { }
          * writer.close(); } catch (Exception ex) { } }
          */
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), "utf-8"))) {
+        try (Writer writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(fileName), "utf-8"))) {
             writer.write("'WATER-OPTION ENTROPY NONEQ '" + "\n");
 
             writer.write(pressures.length + "   " + enthalpies.length + "    " + RSWTOB + "\n");
@@ -1408,7 +1437,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>writeOLGAinpFile.</p>
+     * <p>
+     * writeOLGAinpFile.
+     * </p>
      *
      * @param filename a {@link java.lang.String} object
      */
@@ -1422,7 +1453,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
          * writer.write(")"); } catch (IOException ex) { // report } finally { try { }
          * writer.close(); } catch (Exception ex) { } }
          */
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "utf-8"))) {
+        try (Writer writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(filename), "utf-8"))) {
             writer.write("'WATER-OPTION ENTROPY NONEQ '" + "\n");
 
             writer.write(pressures.length + "   " + enthalpies.length + "    " + RSWTOB + "\n");
@@ -1891,7 +1923,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     }
 
     /**
-     * <p>extrapolateTable.</p>
+     * <p>
+     * extrapolateTable.
+     * </p>
      */
     public void extrapolateTable() {
         for (int j = 0; j < enthalpies.length; j++) {

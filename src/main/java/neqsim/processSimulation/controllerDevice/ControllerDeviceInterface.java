@@ -1,8 +1,3 @@
-/*
- * OperationInterafce.java
- *
- * Created on 2. oktober 2000, 22:14
- */
 package neqsim.processSimulation.controllerDevice;
 
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;

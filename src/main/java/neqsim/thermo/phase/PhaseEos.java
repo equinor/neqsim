@@ -76,11 +76,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         if (!mixingRuleDefined) {
             setMixingRule(1);
         }
@@ -495,10 +491,16 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return calcB(phase, temperature, pressure, numbcomp) / numberOfMolesInPhase;
     }
 
+    /**
+     * @return double
+     */
     double geta() {
         return loc_A / numberOfMolesInPhase / numberOfMolesInPhase;
     }
 
+    /**
+     * @return double
+     */
     double getb() {
         return loc_B / numberOfMolesInPhase;
     }

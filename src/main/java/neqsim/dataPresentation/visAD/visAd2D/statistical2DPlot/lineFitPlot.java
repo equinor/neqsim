@@ -1,8 +1,3 @@
-/*
- * visAdContourPlot.java
- *
- * Created on 7. november 2000, 17:51
- */
 package neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot;
 
 import java.rmi.RemoteException;

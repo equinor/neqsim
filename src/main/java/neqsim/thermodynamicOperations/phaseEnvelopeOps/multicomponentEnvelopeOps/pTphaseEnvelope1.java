@@ -1,8 +1,3 @@
-/*
- * pTphaseEnvelope.java
- *
- * Created on 14. oktober 2000, 21:59
- */
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import java.awt.FlowLayout;
@@ -347,7 +342,6 @@ public class pTphaseEnvelope1 extends BaseOperation {
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
         String[] navn = {"bubble point", "dew point", "bubble point", "dew point"};
-        String title2 = "";
         String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
                 + String.valueOf(nf.format(PC));
         String title3 = "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
@@ -399,7 +393,6 @@ public class pTphaseEnvelope1 extends BaseOperation {
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
         String[] navn = {"bubble point", "dew point", "bubble point", "dew point"};
-        String title2 = "";
         String title = "PT-graph. TC=" + String.valueOf(nf.format(TC)) + "K, PC="
                 + String.valueOf(nf.format(PC) + " bara");
         graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");

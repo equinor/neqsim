@@ -1,15 +1,10 @@
-/*
- * Standard_ISO1992.java
- *
- * Created on 13. juni 2004, 23:30
- */
 package neqsim.standards.gasQuality;
 
-import neqsim.thermo.system.SystemInterface;
-import org.apache.commons.math3.analysis.interpolation.BicubicInterpolator;
 import org.apache.commons.math3.analysis.interpolation.BicubicInterpolatingFunction;
+import org.apache.commons.math3.analysis.interpolation.BicubicInterpolator;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
@@ -107,9 +102,6 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
     double[] Vinitrogen = {0.038408, 0.039949, 0.041788, 0.0440143, 0.047019, 0.051022, 0.055897,
             0.061767, 0.069064};
 
-    /**
-     * Creates a new instance of Standard_ISO1992
-     */
     public Standard_ISO6578() {
         name = "Standard_ISO6578";
         standardDescription = "LNG density calcuation method";

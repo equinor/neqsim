@@ -105,7 +105,6 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
                                     + system.getPhase("aqueous").getComponent("water").getx()
                                             * system.getPhase("aqueous").getComponent("water")
                                                     .getMolarMass());
-
                 }
                 error = -(wtp - wtfrac);
 

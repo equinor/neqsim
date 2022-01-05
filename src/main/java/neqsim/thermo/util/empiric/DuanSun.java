@@ -185,7 +185,7 @@ public class DuanSun {
             }
 
             double zv = 0.0;
-            double IERR = 0.0;
+            // double IERR = 0.0;
 
             if (NRR == 1.0) {
                 zv = ROOT[0];
@@ -194,7 +194,7 @@ public class DuanSun {
             }
 
             if (zv < Math.pow(10.0, -19.0)) {
-                IERR = 1;
+                // IERR = 1;
                 // System.out.println(IERR);
             }
 
@@ -385,9 +385,9 @@ public class DuanSun {
         double T = temperature;
         double P = pressure;
         double S = salinity;
-        double Tc1 = 304.2;
+        // double Tc1 = 304.2;
         double Tc2 = 647.29;
-        double Pc1 = 73.825;
+        // double Pc1 = 73.825;
         double Pc2 = 220.85;
         double c1 = 0;
         double c2 = 0;
@@ -682,6 +682,5 @@ public class DuanSun {
                 "CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getFugasityCoeffisient());
         System.out
                 .println("CO2 in liquid " + fluid1.getPhase("aqueous").getComponent("CO2").getx());
-
     }
 }

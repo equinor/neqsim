@@ -44,7 +44,6 @@ public class TestSlugcatcher {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(7);
 
-
         Stream stream_1 = new Stream("Stream1", testSystem);
         ThreePhaseSeparator separator = new ThreePhaseSeparator("Separator 1", stream_1);
 

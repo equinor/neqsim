@@ -1,8 +1,3 @@
-/*
- * TBPCharacterize.java
- *
- * Created on 3. januar 2003, 10:03
- */
 package neqsim.thermo.characterization;
 
 import java.util.ArrayList;
@@ -37,9 +32,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     SystemInterface system = null;
     static Logger logger = LogManager.getLogger(PlusCharacterize.class);
 
-    /**
-     * Creates a new instance of TBPCharacterize
-     */
     public PlusCharacterize() {}
 
     /**

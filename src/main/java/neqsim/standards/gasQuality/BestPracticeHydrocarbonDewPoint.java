@@ -21,9 +21,6 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
 
-    /**
-     * Creates a new instance of Standard_ISO1992
-     */
     public BestPracticeHydrocarbonDewPoint() {
         name = "StatoilBestPracticeHydrocarbonDewPoint";
         standardDescription = "hydrocarbon dew point calculation method";

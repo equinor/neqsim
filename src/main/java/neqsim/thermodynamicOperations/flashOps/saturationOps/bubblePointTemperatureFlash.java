@@ -1,12 +1,8 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -78,7 +74,6 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
                                             .getFugasityCoeffisient()
                                     / system.getPhases()[0].getComponents()[i]
                                             .getFugasityCoeffisient());
-
                 } while ((Math.abs(yold - system.getPhases()[1].getComponents()[i].getx()) > 1e-10)
                         && (iterations < maxNumberOfIterations));
 

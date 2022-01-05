@@ -27,9 +27,6 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     private neqsim.processSimulation.processSystem.ProcessSystem operations =
             new neqsim.processSimulation.processSystem.ProcessSystem();
 
-    /**
-     * Creates a new instance of ProcessModuleBaseClass
-     */
     public ProcessModuleBaseClass() {}
 
     /** {@inheritDoc} */
@@ -120,8 +117,7 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
         return operations;
     }
 
-    // this method needs to be updated...need to chec if all equipment are solved
-    // correctly
+    // TODO: Check if all the equipment is solved correctly
     /** {@inheritDoc} */
     @Override
     public boolean solved() {

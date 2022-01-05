@@ -1,10 +1,5 @@
 package neqsim.util.database;
 
-/*
- * testPointbase.java
- *
- * Created on 1. november 2001, 08:56
- */
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;

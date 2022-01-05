@@ -11,10 +11,10 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import neqsim.standards.StandardInterface;
+import neqsim.standards.gasQuality.BestPracticeHydrocarbonDewPoint;
 import neqsim.standards.gasQuality.Draft_ISO18453;
 import neqsim.standards.gasQuality.GasChromotograpyhBase;
 import neqsim.standards.gasQuality.Standard_ISO6976;
-import neqsim.standards.gasQuality.BestPracticeHydrocarbonDewPoint;
 import neqsim.standards.gasQuality.SulfurSpecificationMethod;
 import neqsim.standards.gasQuality.UKspecifications_ICF_SI;
 import neqsim.thermo.system.SystemInterface;
@@ -37,9 +37,6 @@ public class BaseContract implements ContractInterface {
     ContractSpecification[] spesifications = new ContractSpecification[50];
     private int specificationsNumber = 0;
 
-    /**
-     * Creates a new instance of BaseContract
-     */
     public BaseContract() {}
 
     /**
@@ -176,7 +173,6 @@ public class BaseContract implements ContractInterface {
         return new ContractSpecification(specificationName, specificationName2, country, terminal,
                 method, minValue, maxValue, unit, referenceTemperature, referenceTemperatureComb,
                 referencePressure, comments);
-
     }
 
     /** {@inheritDoc} */

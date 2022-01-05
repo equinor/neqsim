@@ -1,8 +1,3 @@
-/*
- * staticMixer.java
- *
- * Created on 11. mars 2001, 01:49
- */
 package neqsim.processSimulation.processEquipment.mixer;
 
 import java.awt.Container;
@@ -137,7 +132,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
                                 .getComponentNumber();
                         compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
                                 .getComponentName();
-
                     }
                 }
 

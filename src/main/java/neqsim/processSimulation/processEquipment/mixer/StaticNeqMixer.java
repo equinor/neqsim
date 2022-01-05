@@ -69,7 +69,6 @@ public class StaticNeqMixer extends StaticMixer {
                         compName =
                                 streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
                                         .getComponentName();
-
                     }
                 }
 
