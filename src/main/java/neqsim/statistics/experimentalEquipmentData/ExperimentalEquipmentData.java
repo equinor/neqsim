@@ -3,7 +3,6 @@
  *
  * Created on 9. februar 2001, 10:00
  */
-
 package neqsim.statistics.experimentalEquipmentData;
 
 /**

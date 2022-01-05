@@ -3,7 +3,6 @@
  *
  * Created on 13. august 2001, 10:31
  */
-
 package neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties;
 
 import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density.Density;

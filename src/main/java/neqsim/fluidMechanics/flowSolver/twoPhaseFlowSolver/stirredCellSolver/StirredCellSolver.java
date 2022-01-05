@@ -3,7 +3,6 @@
  *
  * Created on 17. januar 2001, 21:10
  */
-
 package neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.stirredCellSolver;
 
 import Jama.Matrix;

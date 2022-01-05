@@ -38,11 +38,11 @@ public class Fluid {
     private static void setMixingRule() {
         fluid.setMixingRule(getThermoMixingRule());
     }
-    
+
     public static neqsim.thermo.system.SystemInterface create2(String[] componentNames) {
         double[] comp = new double[componentNames.length];
-        for(int i=0; i<componentNames.length; i++) {
-        	comp[i]=1.0;
+        for (int i = 0; i < componentNames.length; i++) {
+            comp[i] = 1.0;
         }
         return create2(componentNames, comp, "mol/sec");
     }

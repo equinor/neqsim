@@ -1,6 +1,3 @@
-/**
- * 
- */
 package neqsim.thermo.util.GERG;
 
 import org.netlib.util.StringW;
@@ -8,7 +5,9 @@ import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 
 /**
- * <p>DETAIL class.</p>
+ * <p>
+ * DETAIL class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -81,7 +80,9 @@ public class DETAIL {
     static double dPdDsave;
 
     /**
-     * <p>sq.</p>
+     * <p>
+     * sq.
+     * </p>
      *
      * @param x a double
      * @return a double
@@ -91,7 +92,9 @@ public class DETAIL {
     }
 
     /**
-     * <p>MolarMassDetail.</p>
+     * <p>
+     * MolarMassDetail.
+     * </p>
      *
      * @param x an array of {@link double} objects
      * @param Mm a {@link org.netlib.util.doubleW} object
@@ -117,7 +120,9 @@ public class DETAIL {
     }
 
     /**
-     * <p>PressureDetail.</p>
+     * <p>
+     * PressureDetail.
+     * </p>
      *
      * @param T a double
      * @param D a double
@@ -164,7 +169,9 @@ public class DETAIL {
     }
 
     /**
-     * <p>DensityDetail.</p>
+     * <p>
+     * DensityDetail.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -250,7 +257,9 @@ public class DETAIL {
     }
 
     /**
-     * <p>PropertiesDetail.</p>
+     * <p>
+     * PropertiesDetail.
+     * </p>
      *
      * @param T a double
      * @param D a double
@@ -641,7 +650,9 @@ public class DETAIL {
 
     /// The following routine must be called once before any other routine.
     /**
-     * <p>SetupDetail.</p>
+     * <p>
+     * SetupDetail.
+     * </p>
      */
     public static void SetupDetail() {
         // Initialize all the constants and parameters in the DETAIL model.
@@ -1483,7 +1494,9 @@ public class DETAIL {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

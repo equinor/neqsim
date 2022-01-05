@@ -2,6 +2,7 @@ package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -14,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class CPAEosTest {
+public class SystemSrkCPAstatoilTest {
     static SystemInterface thermoSystem = null;
 
     /**
@@ -38,7 +39,7 @@ public class CPAEosTest {
      * testTPflash.
      * </p>
      */
-    @Ignore
+    @Disabled
     public void testTPflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
         testOps.TPflash();

@@ -3,7 +3,6 @@
  *
  * Created on 26. oktober 2000, 20:07
  */
-
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;

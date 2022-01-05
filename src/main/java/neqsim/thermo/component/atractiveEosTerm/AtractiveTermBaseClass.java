@@ -3,7 +3,6 @@
  *
  * Created on 13. mai 2001, 21:58
  */
-
 package neqsim.thermo.component.atractiveEosTerm;
 
 import org.apache.logging.log4j.LogManager;

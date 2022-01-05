@@ -3,7 +3,6 @@
  *
  * Created on 12. juli 2004, 15:16
  */
-
 package neqsim.dataPresentation.iTextPDF;
 
 /**

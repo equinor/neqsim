@@ -1,9 +1,3 @@
-/*
- * AtractiveTermInterface.java
- *
- * Created on 13. mai 2001, 21:54
- */
-
 package neqsim.thermo.component.repulsiveEosTerm;
 
 /**

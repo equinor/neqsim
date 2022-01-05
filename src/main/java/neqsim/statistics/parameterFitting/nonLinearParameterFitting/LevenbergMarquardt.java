@@ -3,7 +3,6 @@
  *
  * Created on 22. januar 2001, 23:00
  */
-
 package neqsim.statistics.parameterFitting.nonLinearParameterFitting;
 
 import Jama.Matrix;

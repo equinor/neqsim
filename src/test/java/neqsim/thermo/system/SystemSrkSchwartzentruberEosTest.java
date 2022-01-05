@@ -3,15 +3,19 @@ package neqsim.thermo.system;
 import org.junit.jupiter.api.BeforeAll;
 
 /**
- * <p>ScrkEosTest class.</p>
+ * <p>
+ * ScrkEosTest class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class ScrkEosTest extends ModelBaseTest {
+public class SystemSrkSchwartzentruberEosTest extends ModelBaseTest {
     /**
-     * <p>setUp.</p>
+     * <p>
+     * setUp.
+     * </p>
      */
     @BeforeAll
     public static void setUp() {

@@ -3,7 +3,6 @@
  *
  * Created on 18. juli 2000, 18:32
  */
-
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;

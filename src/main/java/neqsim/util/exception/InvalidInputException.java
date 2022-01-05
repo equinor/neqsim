@@ -1,9 +1,3 @@
-/*
- * VolumeIsNaNException.java
- *
- * Created on 1. mai 2001, 13:19
- */
-
 package neqsim.util.exception;
 
 /**

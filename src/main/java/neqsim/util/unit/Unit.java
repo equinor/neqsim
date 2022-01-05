@@ -3,25 +3,30 @@
  *
  * Created on 25. januar 2002, 20:20
  */
-
 package neqsim.util.unit;
 
 /**
- * <p>Unit interface.</p>
+ * <p>
+ * Unit interface.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public interface Unit {
     /**
-     * <p>getSIvalue.</p>
+     * <p>
+     * getSIvalue.
+     * </p>
      *
      * @return a double
      */
     double getSIvalue();
 
     /**
-     * <p>getValue.</p>
+     * <p>
+     * getValue.
+     * </p>
      *
      * @param tounit a {@link java.lang.String} object
      * @return a double
@@ -29,7 +34,9 @@ public interface Unit {
     double getValue(String tounit);
 
     /**
-     * <p>getValue.</p>
+     * <p>
+     * getValue.
+     * </p>
      *
      * @param val a double
      * @param fromunit a {@link java.lang.String} object

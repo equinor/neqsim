@@ -3,23 +3,28 @@
  *
  * Created on 13. mai 2001, 21:54
  */
-
 package neqsim.thermo.component.atractiveEosTerm;
 
 /**
- * <p>AtractiveTermInterface interface.</p>
+ * <p>
+ * AtractiveTermInterface interface.
+ * </p>
  *
- * @author  esol
+ * @author esol
  * @version $Id: $Id
  */
 public interface AtractiveTermInterface extends Cloneable, java.io.Serializable {
     /**
-     * <p>init.</p>
+     * <p>
+     * init.
+     * </p>
      */
     public void init();
 
     /**
-     * <p>alpha.</p>
+     * <p>
+     * alpha.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -27,7 +32,9 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
     public double alpha(double temperature);
 
     /**
-     * <p>aT.</p>
+     * <p>
+     * aT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -35,7 +42,9 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
     public double aT(double temperature);
 
     /**
-     * <p>diffalphaT.</p>
+     * <p>
+     * diffalphaT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -43,7 +52,9 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
     public double diffalphaT(double temperature);
 
     /**
-     * <p>diffdiffalphaT.</p>
+     * <p>
+     * diffdiffalphaT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -51,7 +62,9 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
     public double diffdiffalphaT(double temperature);
 
     /**
-     * <p>diffaT.</p>
+     * <p>
+     * diffaT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -59,7 +72,9 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
     public double diffaT(double temperature);
 
     /**
-     * <p>diffdiffaT.</p>
+     * <p>
+     * diffdiffaT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -67,7 +82,9 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
     public double diffdiffaT(double temperature);
 
     /**
-     * <p>getParameters.</p>
+     * <p>
+     * getParameters.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -75,14 +92,18 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
     public double getParameters(int i);
 
     /**
-     * <p>setm.</p>
+     * <p>
+     * setm.
+     * </p>
      *
      * @param val a double
      */
     public void setm(double val);
 
     /**
-     * <p>setParameters.</p>
+     * <p>
+     * setParameters.
+     * </p>
      *
      * @param i a int
      * @param val a double
@@ -90,7 +111,9 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
     public void setParameters(int i, double val);
 
     /**
-     * <p>clone.</p>
+     * <p>
+     * clone.
+     * </p>
      *
      * @return a {@link neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface} object
      */

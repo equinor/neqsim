@@ -3,7 +3,6 @@
  *
  * Created on 5. mai 2001, 17:48
  */
-
 package neqsim.thermo.mixingRule;
 
 /**

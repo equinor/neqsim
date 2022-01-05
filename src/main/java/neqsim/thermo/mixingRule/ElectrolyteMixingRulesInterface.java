@@ -3,7 +3,6 @@
  *
  * Created on 26. februar 2001, 19:38
  */
-
 package neqsim.thermo.mixingRule;
 
 import neqsim.thermo.phase.PhaseInterface;

@@ -1,9 +1,3 @@
-/*
- * pTphaseEnvelope.java
- *
- * Created on 14. oktober 2000, 21:59
- */
-
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves;
 
 import java.awt.FlowLayout;

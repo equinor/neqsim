@@ -1,5 +1,8 @@
-
-
+/*
+ * dTPflash.java
+ *
+ * Created on 2. oktober 2000, 22:26
+ */
 package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
@@ -18,8 +21,6 @@ public class dTPflash extends TPflash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(dTPflash.class);
     String[] flashComp = null;
-
-    // SystemInterface clonedSystem;
 
     /**
      * <p>

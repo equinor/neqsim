@@ -11,7 +11,9 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>TestSlugcatcher class.</p>
+ * <p>
+ * TestSlugcatcher class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -19,7 +21,9 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  */
 public class TestSlugcatcher {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

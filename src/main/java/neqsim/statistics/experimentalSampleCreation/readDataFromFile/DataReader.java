@@ -3,7 +3,6 @@
  *
  * Created on 1. februar 2001, 11:38
  */
-
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
 
 import java.io.RandomAccessFile;
@@ -23,7 +22,9 @@ public class DataReader implements DataReaderInterface {
     protected ArrayList sampleObjectList = new ArrayList();
 
     /**
-     * <p>Constructor for DataReader.</p>
+     * <p>
+     * Constructor for DataReader.
+     * </p>
      */
     public DataReader() {}
 

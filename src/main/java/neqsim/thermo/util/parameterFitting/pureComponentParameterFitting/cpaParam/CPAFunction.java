@@ -1,4 +1,3 @@
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
 import org.apache.logging.log4j.LogManager;
