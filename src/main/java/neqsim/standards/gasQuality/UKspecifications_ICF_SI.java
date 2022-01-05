@@ -1,12 +1,9 @@
-/*
- * Standard_ISO1992.java
- *
- * Created on 13. juni 2004, 23:30
- */
 package neqsim.standards.gasQuality;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.RealMatrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.commons.math3.linear.*;
 
 /**
  * <p>
@@ -23,9 +20,6 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     Standard_ISO6976 iso6976 = null;
     double propaneNumber = 0.0;
 
-    /**
-     * Creates a new instance of Standard_ISO1992
-     */
     public UKspecifications_ICF_SI() {
         name = "UKspecifications_ICF_SI";
         standardDescription = "UKspecifications_ICF_SI";

@@ -1,8 +1,3 @@
-/*
- * ValveInterface.java
- *
- * Created on 22. august 2001, 17:20
- */
 package neqsim.processSimulation.processEquipment.expander;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;

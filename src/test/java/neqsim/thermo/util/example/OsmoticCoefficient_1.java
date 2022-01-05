@@ -1,8 +1,3 @@
-/*
- * OsmoticCoefficient_HCl.java
- *
- * Created on 16. oktober 2001, 10:45
- */
 package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
@@ -10,7 +5,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>OsmoticCoefficient_1 class.</p>
+ * <p>
+ * OsmoticCoefficient_1 class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -18,7 +15,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class OsmoticCoefficient_1 {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

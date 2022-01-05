@@ -151,7 +151,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
             system.setTemperature(temp);
             system.setPressure(pres);
 
-            // creates object for class
             ThermodynamicOperations testOps = new ThermodynamicOperations(system);
 
             // this part converges the first phase envelope point.
@@ -195,8 +194,8 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                     nonLinSolver.calcInc(np);
                     nonLinSolver.solve(np);
 
-                    double TT = system.getPhase(0).getTemperature();
-                    double PP = system.getPhase(0).getPressure();
+                    // double TT = system.getPhase(0).getTemperature();
+                    // double PP = system.getPhase(0).getPressure();
                 } catch (Exception e0) {
                     // the envelope crushed.
                     // this part keeps the old values
@@ -243,8 +242,8 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                         / system.getPhase(1).getComponent(nonLinSolver.lc).getx();
                 double Kvalhc = system.getPhase(0).getComponent(nonLinSolver.hc).getx()
                         / system.getPhase(1).getComponent(nonLinSolver.hc).getx();
-                double densV = system.getPhase(0).getDensity();
-                double densL = system.getPhase(1).getDensity();
+                // double densV = system.getPhase(0).getDensity();
+                // double densL = system.getPhase(1).getDensity();
 
                 // System.out.println(np + " " + system.getTemperature() + " " +
                 // system.getPressure() + " " + densV + " " + densL );
@@ -455,7 +454,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                     points2[3][0] = system.getPC();
                 }
             } catch (Exception e2) {
-                double nef = 0.;
+                // double nef = 0.;
                 logger.error("error", e2);
             }
 
@@ -479,11 +478,11 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                     file2.createFile();
                 }
             } catch (Exception e3) {
-                double nef = 0.;
+                // double nef = 0.;
                 logger.error("error", e3);
             }
         } catch (Exception e4) {
-            double nef = 0.;
+            // double nef = 0.;
             logger.error("error", e4);
         }
     }
@@ -501,7 +500,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
             logger.error("error", e);
         }
 
-        double[][] hydData = opsHyd.getData();
+        // double[][] hydData = opsHyd.getData();
     }
 
     /** {@inheritDoc} */
@@ -527,7 +526,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         double TC = system.getTC();
         double PC = system.getPC();
 
-        String title2 = "";
         String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
                 + String.valueOf(nf.format(PC));
         String title3 = "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
@@ -790,7 +788,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
         String[] navn = {"bubble point", "dew point", "bubble point", "dew point"};
-        String title2 = "";
         String title = "PT-graph. TC=" + String.valueOf(nf.format(TC)) + "K, PC="
                 + String.valueOf(nf.format(PC) + " bara");
         graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");

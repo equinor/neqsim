@@ -1,8 +1,3 @@
-/*
- * Standard_ISO1992.java
- *
- * Created on 13. juni 2004, 23:30
- */
 package neqsim.standards.gasQuality;
 
 import neqsim.thermo.system.SystemInterface;
@@ -20,9 +15,6 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
 
     String componentName = "", unit = "mol%";
 
-    /**
-     * Creates a new instance of Standard_ISO1992
-     */
     public GasChromotograpyhBase() {
         standardDescription = "Gas composition";
         name = "gas cromotography";

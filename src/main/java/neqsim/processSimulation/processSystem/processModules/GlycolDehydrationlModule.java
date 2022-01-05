@@ -43,9 +43,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     String glycolTypeName = "TEG";
     double reboilerTemperature = 273.15 + 204.0, regenerationPressure = 1.4;
 
-    /**
-     * Creates a new instance of SnohvitCO2RemovalModule
-     */
     public GlycolDehydrationlModule() {}
 
     /** {@inheritDoc} */

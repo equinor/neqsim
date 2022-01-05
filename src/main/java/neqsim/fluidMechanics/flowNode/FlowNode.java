@@ -147,9 +147,6 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
         }
     }
 
-    // public void initFlowCalc(){
-    // }
-
     /** {@inheritDoc} */
     @Override
     public void setGeometryDefinitionInterface(GeometryDefinitionInterface pipe) {
@@ -411,14 +408,14 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
 
     /** {@inheritDoc} */
     @Override
-    public double getHydraulicDiameter(int i) {
-        return hydraulicDiameter[i];
+    public double getReynoldsNumber(int i) {
+        return reynoldsNumber[i];
     }
 
     /** {@inheritDoc} */
     @Override
-    public double getReynoldsNumber(int i) {
-        return reynoldsNumber[i];
+    public double getHydraulicDiameter(int i) {
+        return hydraulicDiameter[i];
     }
 
     /** {@inheritDoc} */

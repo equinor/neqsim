@@ -19,9 +19,6 @@ import neqsim.thermo.component.ComponentGEUniquac;
 public class PhaseGEUnifac extends PhaseGEUniquac {
     private static final long serialVersionUID = 1000;
 
-    /**
-     *
-     */
     double[][] aij = new double[1][1];
     double[][] bij = new double[1][1];
     double[][] cij = new double[1][1];

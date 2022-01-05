@@ -1,5 +1,5 @@
 /*
- * chemicalReaction.java
+ * ChemicalReaction.java
  *
  * Created on 4. februar 2001, 15:32
  */
@@ -269,7 +269,6 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         Matrix tempNmatrix = new Matrix(names.length, 1);
         Matrix tempRefPotmatrix = new Matrix(names.length, 1);
 
-        double temp = 0, min = 0;
         for (int i = 0; i < names.length; i++) {
             for (int j = 0; j < components.length; j++) {
                 // System.out.println("names: " + names[i] + " " +
@@ -284,7 +283,8 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
             }
         }
 
-        Matrix tempBmatrix = tempAmatrix.times(tempNmatrix);
+        // Matrix tempBmatrix = tempAmatrix.times(tempNmatrix);
+
         // System.out.println("atemp: ");
         // tempAmatrix.print(10,2);
         // tempNmatrix.print(10,2);
@@ -310,8 +310,8 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
             }
         }
 
-        Matrix tempNProdmatrix = tempAProdmatrix.solve(tempBmatrix);
-        Matrix tempNReacmatrix = tempAReacmatrix.solve(tempBmatrix);
+        // Matrix tempNProdmatrix = tempAProdmatrix.solve(tempBmatrix);
+        // Matrix tempNReacmatrix = tempAReacmatrix.solve(tempBmatrix);
 
         // System.out.println("btemp: ");
         // tempNProdmatrix.print(10,2);

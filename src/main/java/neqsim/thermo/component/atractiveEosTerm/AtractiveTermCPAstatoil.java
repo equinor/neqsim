@@ -1,8 +1,4 @@
-/*
- * AtractiveTermSrk.java
- *
- * Created on 13. mai 2001, 21:59
- */
+
 package neqsim.thermo.component.atractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;

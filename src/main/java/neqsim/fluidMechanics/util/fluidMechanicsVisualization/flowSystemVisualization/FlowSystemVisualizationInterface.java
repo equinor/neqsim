@@ -1,8 +1,3 @@
-/*
- * FlowVisualizationInterface.java
- *
- * Created on 26. oktober 2000, 20:06
- */
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;

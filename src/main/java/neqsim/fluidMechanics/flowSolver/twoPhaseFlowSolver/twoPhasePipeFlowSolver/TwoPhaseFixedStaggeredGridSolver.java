@@ -1,8 +1,3 @@
-/*
- * steadstateOnePhasePipeFlowSolver.java
- *
- * Created on 17. januar 2001, 21:10
- */
 package neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver;
 
 import Jama.Matrix;
@@ -100,7 +95,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
      * </p>
      */
     public void initProfiles() {
-        double err = 0, oldPres = 0, oldTemp = 0, dpdx = 0;
+        // double err = 0, oldPres = 0, oldTemp = 0, dpdx = 0;
 
         double[][][] molDiff =
                 new double[numberOfNodes][2][pipe.getNode(0).getBulkSystem().getPhases()[0]
@@ -385,10 +380,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                     .getDensity();
             r[0] = SU;
         } else {
-            double Ae = pipe.getNode(0).getArea(phase);
-            double Aw = pipe.getNode(0).getArea(phase);
-            double Fw = pipe.getNode(0).getVelocityIn(phase).doubleValue() * Aw;
-            double Fe = oldVelocity[phase][0] * Ae;
+            // double Ae = pipe.getNode(0).getArea(phase);
+            // double Aw = pipe.getNode(0).getArea(phase);
+            // double Fw = pipe.getNode(0).getVelocityIn(phase).doubleValue() * Aw;
+            // double Fe = oldVelocity[phase][0] * Ae;
             // System.out.println("new- old : " +
             // (pipe.getNode(0).getVelocityIn().doubleValue() - oldVelocity[0]));
             oldMass[phase][0] = 1.0 / timeStep * pipe.getNode(0).getGeometry().getArea()
@@ -428,11 +423,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         }
 
         int i = numberOfNodes - 1;
-        double Ae = pipe.getNode(i).getArea(phase);
-        double Aw = pipe.getNode(i - 1).getArea(phase);
+        // double Ae = pipe.getNode(i).getArea(phase);
+        // double Aw = pipe.getNode(i - 1).getArea(phase);
 
-        double Fe = pipe.getNode(i).getVelocity(phase) * Ae;
-        double Fw = pipe.getNode(i).getVelocityIn(phase).doubleValue() * Aw;
+        // double Fe = pipe.getNode(i).getVelocity(phase) * Ae;
+        // double Fw = pipe.getNode(i).getVelocityIn(phase).doubleValue() * Aw;
 
         if (dynamic) {
             oldMass[phase][i] = 1.0 / timeStep * pipe.getNode(i).getArea(phase)
@@ -466,10 +461,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             SU = pipe.getNode(0).getPhaseFraction(phase);
             r[0] = SU;
         } else {
-            double Ae = pipe.getNode(0).getGeometry().getArea();
-            double Aw = pipe.getNode(0).getGeometry().getArea();
-            double Fw = pipe.getNode(0).getVelocityIn(phase).doubleValue() * Aw;
-            double Fe = oldVelocity[phase][0] * Ae;
+            // double Ae = pipe.getNode(0).getGeometry().getArea();
+            // double Aw = pipe.getNode(0).getGeometry().getArea();
+            // double Fw = pipe.getNode(0).getVelocityIn(phase).doubleValue() * Aw;
+            // double Fe = oldVelocity[phase][0] * Ae;
             // System.out.println("new- old : " +
             // (pipe.getNode(0).getVelocityIn().doubleValue() - oldVelocity[0]));
             oldMass[phase][0] = 1.0 / timeStep * pipe.getNode(0).getGeometry().getArea()
@@ -629,7 +624,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         double Ae = pipe.getNode(i - 1).getArea(phase);
         double Aw = pipe.getNode(i - 1).getArea(phase);
         double Amean = pipe.getNode(i - 1).getArea(phase);
-        double meanDiameter = pipe.getNode(i - 1).getGeometry().getDiameter();
+        // double meanDiameter = pipe.getNode(i - 1).getGeometry().getDiameter();
         double meanFrik = pipe.getNode(i - 1).getWallFrictionFactor(phase);
         double meanDensity = pipe.getNode(i - 1).getBulkSystem().getPhases()[phase]
                 .getPhysicalProperties().getDensity();
@@ -938,13 +933,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         int i = numberOfNodes - 1;
         // double fw =
         // pipe.getNode(i-1).getGeometry().getNodeLength()/(pipe.getNode(i).getGeometry().getNodeLength()+pipe.getNode(i-1).getGeometry().getNodeLength());
-        double Ae = pipe.getNode(i).getArea(phase);
-        double Aw = pipe.getNode(i - 1).getArea(phase);
+        // double Ae = pipe.getNode(i).getArea(phase);
+        // double Aw = pipe.getNode(i - 1).getArea(phase);
 
-        double Fe = pipe.getNode(i).getVelocity(phase)
-                * pipe.getNode(i).getBulkSystem().getPhases()[phase].getDensity() * Ae;
-        double Fw = pipe.getNode(i).getVelocityIn(phase).doubleValue()
-                * pipe.getNode(i - 1).getBulkSystem().getPhases()[phase].getDensity() * Aw;
+        // double Fe = pipe.getNode(i).getVelocity(phase) *
+        // pipe.getNode(i).getBulkSystem().getPhases()[phase].getDensity() * Ae;
+        // double Fw = pipe.getNode(i).getVelocityIn(phase).doubleValue() * pipe.getNode(i -
+        // 1).getBulkSystem().getPhases()[phase].getDensity() * Aw;
 
         SU = +sign * pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
                 * pipe.getNode(i).getBulkSystem().getPhases()[phase]
@@ -1027,7 +1022,8 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     public void solveTDMA() {
         double d[];
         int iter = 0, iterTop = 0;
-        double maxDiff = 1e10, maxDiffOld = 1e10;
+        double maxDiff = 1e10;
+        // double maxDiffOld = 1e10;
         double diff = 0;
         System.out.println("starting...:");
         initProfiles();
@@ -1038,7 +1034,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         initMatrix();
 
         do {
-            maxDiffOld = maxDiff;
+            // maxDiffOld = maxDiff;
             maxDiff = 0;
             iterTop++;
 

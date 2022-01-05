@@ -33,9 +33,6 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public EnergyStream energyStream = new EnergyStream();
     private boolean isSetEnergyStream = false;
 
-    /**
-     * Creates a new instance of ProcessEquipmentBaseClass
-     */
     public ProcessEquipmentBaseClass() {
         mechanicalDesign = new MechanicalDesign(this);
     }

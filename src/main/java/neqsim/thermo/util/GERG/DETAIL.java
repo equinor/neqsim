@@ -373,6 +373,10 @@ public class DETAIL {
         d2PdTD.val = 0;
     }
 
+
+    /**
+     * @param x
+     */
     // The following routines are low-level routines that should not be called outside of this code.
     static void xTermsDetail(double[] x) {
         // Calculate terms dependent only on composition
@@ -459,6 +463,13 @@ public class DETAIL {
         }
     }
 
+
+    /**
+     * @param T
+     * @param D
+     * @param x
+     * @param a0
+     */
     static void Alpha0Detail(double T, double D, double[] x, doubleW[] a0) {
         // Private Sub Alpha0Detail(T, D, x, a0)
 
@@ -527,6 +538,14 @@ public class DETAIL {
         a0[2].val = a0[2].val * RDetail;
     }
 
+
+    /**
+     * @param itau
+     * @param idel
+     * @param T
+     * @param D
+     * @param ar
+     */
     static void AlpharDetail(int itau, int idel, double T, double D, doubleW[][] ar) {
         // Private Sub AlpharDetail(itau, idel, T, D, ar)
 

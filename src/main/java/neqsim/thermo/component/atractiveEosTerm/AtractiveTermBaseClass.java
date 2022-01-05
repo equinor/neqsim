@@ -121,10 +121,16 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
         return parameters[i];
     }
 
+    /**
+     * @return ComponentEosInterface
+     */
     ComponentEosInterface getComponent() {
         return component;
     }
 
+    /**
+     * @param component
+     */
     void setComponent(ComponentEosInterface component) {
         this.component = component;
     }

@@ -1,8 +1,3 @@
-/*
- * FrictionFactorBaseClass.java
- *
- * Created on 12. juni 2001, 19:58
- */
 package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient;
 
 import neqsim.MathLib.generalMath.GeneralMath;
@@ -20,10 +15,6 @@ public class InterphaseTransportCoefficientBaseClass
         implements InterphaseTransportCoefficientInterface {
     private static final long serialVersionUID = 1000;
 
-    /**
-     *
-     * frictionfactor.
-     */
     public InterphaseTransportCoefficientBaseClass() {}
 
     /**
@@ -40,14 +31,7 @@ public class InterphaseTransportCoefficientBaseClass
     /** {@inheritDoc} */
     @Override
     public double calcWallFrictionFactor(FlowNodeInterface node) {
-        if (Math.abs(node.getReynoldsNumber()) < 2000) {
-            return 64.0 / node.getReynoldsNumber();
-        } else {
-            return Math.pow(
-                    (1.0 / (-1.8 * GeneralMath.log10(6.9 / node.getReynoldsNumber()
-                            + Math.pow(node.getGeometry().getRelativeRoughnes() / 3.7, 1.11)))),
-                    2.0);
-        }
+        return calcWallFrictionFactor(0,node);
     }
 
     /** {@inheritDoc} */
@@ -66,6 +50,7 @@ public class InterphaseTransportCoefficientBaseClass
     /** {@inheritDoc} */
     @Override
     public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
+        // TODO: Should calcWallFrictionFactor(phase, node be called below?)
         return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(0, node);
     }
 

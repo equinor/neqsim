@@ -1,17 +1,10 @@
-/*
- * Standard_ISO1992.java
- *
- * Created on 13. juni 2004, 23:30
- */
 package neqsim.standards.gasQuality;
 
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -57,9 +50,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     double densIdeal = 0.0, densReal = 0.0;
     static Logger logger = LogManager.getLogger(Standard_ISO6976.class);
 
-    /**
-     * Creates a new instance of Standard_ISO1992
-     */
     public Standard_ISO6976() {
         name = "Standard_ISO6976";
         componentsNotDefinedByStandard = new ArrayList<String>();
@@ -67,11 +57,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
                 "Calculation of calorific values, density, relative density and Wobbe index from composition";
     }
 
-    /**
-     * Creates a new instance of Standard_ISO1992
-     *
-     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-     */
     public Standard_ISO6976(SystemInterface thermoSystem) {
         super(thermoSystem);
         componentsNotDefinedByStandard = new ArrayList<String>();

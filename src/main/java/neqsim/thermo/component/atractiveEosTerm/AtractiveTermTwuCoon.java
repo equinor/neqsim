@@ -66,6 +66,10 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
                         - Math.pow(Tr, a) * Math.exp(b * (1 - Math.pow(Tr, c))));
     }
 
+    /**
+     * @param temperature
+     * @return double
+     */
     private double alphaCrit(double temperature) {
         // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
         // d = 1.0-1.0/d;
@@ -73,6 +77,10 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
                 Math.exp(c * (1.0 - Math.pow(temperature / getComponent().getTC(), 1.0 * d))), 2.0);
     }
 
+    /**
+     * @param temperature
+     * @return double
+     */
     private double diffalphaCritT(double temperature) {
         c = 1 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
         d = 1.0 - 1.0 / d;
@@ -84,10 +92,14 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
                 * c * Math.pow(temperature / getComponent().getTC(), 1.0 * d) * d / temperature;
     }
 
+    /**
+     * @param temperature
+     * @return double
+     */
     private double diffdiffalphaCritT(double temperature) {
         double t = temperature;
         double TC = getComponent().getTC();
-        double Tr = (t / TC);
+        // double Tr = (t / TC);
         return 4.0 * Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / TC, 1.0 * d))), 2.0) * c
                 * c * Math.pow(Math.pow(temperature / TC, 1.0 * d), 2.0) * d * d
                 / (temperature * temperature)

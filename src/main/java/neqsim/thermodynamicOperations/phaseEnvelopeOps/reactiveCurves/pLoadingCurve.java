@@ -128,7 +128,6 @@ public class pLoadingCurve implements OperationInterface {
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
         String[] navn = {"CO2 fugacity", "", "", ""};
-        String title2 = "";
         String title = "CO2 vapour pressure";
 
         graph2b graph2 = new graph2b(points, navn, title, "loading [-]", "Fugacity CO2 [bar]");

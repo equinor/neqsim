@@ -224,6 +224,13 @@
 							<goal>report</goal>
 						</goals>
 					</execution>
+                    <execution>
+						<id>generate-report-after-test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>

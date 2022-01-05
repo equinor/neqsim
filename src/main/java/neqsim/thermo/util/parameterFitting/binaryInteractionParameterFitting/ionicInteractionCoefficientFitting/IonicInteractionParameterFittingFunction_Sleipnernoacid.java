@@ -49,46 +49,30 @@ public class IonicInteractionParameterFittingFunction_Sleipnernoacid
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
-        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3Numb = 0, WaterNumb = 0,
-                AcidnegNumb = 0;
-        int j = 0;
-        do {
-            MDEAplusNumb = j;
-            j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("MDEA+"));
-        j = 0;
-
-        do {
-            MDEANumb = j;
-            j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("MDEA"));
-        j = 0;
-        do {
-            CO2Numb = j;
-            j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("CO2"));
-
-        // System.out.println("CO2 " +CO2Numb );
-        j = 0;
-        do {
-            HCO3Numb = j;
-            j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("HCO3-"));
-
-        j = 0;
-        do {
-            WaterNumb = j;
-            j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("water"));
-
-        j = 0;
-        do {
-            AcidnegNumb = j;
-            j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("Ac-"));
-
+        /*
+         * int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3Numb = 0, WaterNumb = 0, AcidnegNumb
+         * = 0; int j = 0; do { MDEAplusNumb = j; j++; } while
+         * (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("MDEA+")); j =
+         * 0;
+         * 
+         * do { MDEANumb = j; j++; } while (!system.getPhases()[1].getComponents()[j -
+         * 1].getComponentName().equals("MDEA")); j = 0;
+         * 
+         * do { CO2Numb = j; j++; } while (!system.getPhases()[1].getComponents()[j -
+         * 1].getComponentName().equals("CO2"));
+         * 
+         * // System.out.println("CO2 " + CO2Numb ); j = 0; do { HCO3Numb = j; j++; } while
+         * (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("HCO3-"));
+         * 
+         * j = 0; do { WaterNumb = j; j++; } while (!system.getPhases()[1].getComponents()[j -
+         * 1].getComponentName().equals("water"));
+         * 
+         * j = 0; do { AcidnegNumb = j; j++; } while (!system.getPhases()[1].getComponents()[j -
+         * 1].getComponentName().equals("Ac-"));
+         */
         // System.out.println("HCO3- " +
         // system.getPhase(1).getComponent(HCO3Numb).getx());
+
         /*
          * System.out.println("Ac- " + system.getPhase(1).getComponent(AcidnegNumb).getx());
          * System.out.println("HAc " + system.getPhase(1).getComponent(AcidNumb).getx());
@@ -120,6 +104,7 @@ public class IonicInteractionParameterFittingFunction_Sleipnernoacid
          * ((PhaseModifiedFurstElectrolyteEos)system.getPhases()[1]).
          * getElectrolyteMixingRule()).setWijParameter(MDEAplusNumb,HCO3Numb, value); }
          */
+
         /*
          * if(i==0){ ((ElectrolyteMixingRulesInterface)
          * ((PhaseModifiedFurstElectrolyteEos)system.getPhases()[0]).

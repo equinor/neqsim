@@ -1,14 +1,12 @@
-/*
- * GTSurfaceTension.java
- *
- * Created on 13. august 2001, 13:14
- */
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
-import Jama.*;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.commons.math3.linear.*;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>

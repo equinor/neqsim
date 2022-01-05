@@ -517,10 +517,16 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         this.thermalEffectiveness = thermalEffectiveness;
     }
 
+    /**
+     * @return String
+     */
     String getFlowArrangement() {
         return flowArrangement;
     }
 
+    /**
+     * @param flowArrangement
+     */
     void setFlowArrangement(String flowArrangement) {
         this.flowArrangement = flowArrangement;
     }

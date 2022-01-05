@@ -424,7 +424,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             return;
         }
 
-        int assSites = 0;
+        // nt assSites = 0;
         // if(true) return;
         for (int p = 0; p < numberOfComponents; p++) {
             SimpleMatrix KiMatrix = new SimpleMatrix(Klkni[p]);
@@ -469,7 +469,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                 }
                 temp2 += getComponent(compp).getNumberOfAssociationSites();
             }
-            assSites += getComponent(p).getNumberOfAssociationSites();
+            // assSites += getComponent(p).getNumberOfAssociationSites();
         }
     }
 
@@ -799,8 +799,12 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         return getMolarVolume();
     }
 
+    /**
+     * @return double[]
+     */
     double[] calcdFdNtemp() {
-        double tot1 = 0.0, tot2 = 0.0, tot3 = 0.0, tot4 = 0.0, temp, temp2;
+        double tot1 = 0.0, tot2 = 0.0, tot3 = 0.0, tot4 = 0.0;
+        // double temp, temp2;
         for (int k = 0; k < getNumberOfComponents(); k++) {
             tot2 = 0.0;
             tot3 = 0.0;
@@ -1127,10 +1131,11 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             logger.error("error", e);
         }
         double BonVold = BonV;
-        double Btemp = 0, Dtemp = 0, h = 1, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
-        double d1 = 0, d2 = 0;
+        double Btemp = 0, h = 1;
+        // double Dtemp = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
+        // double d1 = 0, d2 = 0;
         Btemp = getB();
-        Dtemp = getA();
+        // Dtemp = getA();
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         for (int i = 0; i < 2000; i++) {
             BonVold = BonV;
@@ -1212,7 +1217,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             BonV = 0.9999;
         }
         double BonVold = BonV;
-        double Btemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
+        double Btemp = 0, h = 0, dh = 0, dhh = 0;
+        // double gvvv = 0, fvvv = 0;
         double d1 = 0, d2 = 0;
         Btemp = getB();
         if (Btemp < 0) {
@@ -1547,8 +1553,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             A = calcA(this, temperature, pressure, numberOfComponents);
             B = calcB(this, temperature, pressure, numberOfComponents);
 
-            double dFdV = dFdV(), dFdVdV = dFdVdV(), dFdVdVdV = dFdVdVdV();
-            double factor1 = 1.0e0, factor2 = 1.0e0;
+            double dFdV = dFdV(), dFdVdV = dFdVdV();
+            // double dFdVdVdV = dFdVdVdV();
+            // double factor1 = 1.0e0, factor2 = 1.0e0;
             err = -R * temperature * dFdV + R * temperature / getMolarVolume() - pressure;
 
             // System.out.println("pressure " + -R * temperature * dFdV + " " + R *
@@ -1637,7 +1644,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         double gdv1 = getGcpav() - 1.0 / totalVolume;
         double gdv2 = gdv1 * gdv1;
         double gdv3 = gdv2 * gdv1;
-        double Klk = 0.0;
+        // double Klk = 0.0;
         for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
             for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
                 KlkVMatrix.set(i, j, KlkMatrix.get(i, j) * gdv1);
@@ -1768,7 +1775,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             return;
         }
 
-        int assSites = 0;
+        // int assSites = 0;
         // if(true) return;
         for (int p = 0; p < numberOfComponents; p++) {
             SimpleMatrix KiMatrix = new SimpleMatrix(Klkni[p]);
@@ -1813,7 +1820,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                 }
                 temp2 += getComponent(compp).getNumberOfAssociationSites();
             }
-            assSites += getComponent(p).getNumberOfAssociationSites();
+            // assSites += getComponent(p).getNumberOfAssociationSites();
         }
     }
 

@@ -1,8 +1,3 @@
-/*
- * FrictionFactorBaseClass.java
- *
- * Created on 12. juni 2001, 19:58
- */
 package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow;
 
 import neqsim.MathLib.generalMath.GeneralMath;
@@ -20,10 +15,6 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
         implements neqsim.thermo.ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
 
-    /**
-     *
-     * frictionfactor.
-     */
     public InterphaseStratifiedFlow() {}
 
     /**
@@ -53,6 +44,7 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
     /** {@inheritDoc} */
     @Override
     public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
+        // TODO: Should call calcWallFrictionFactor(phase)? Input phase is unused
         return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(0, node);
     }
 

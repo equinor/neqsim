@@ -155,7 +155,7 @@ public class pTphaseEnvelope extends BaseOperation {
                 }
             }
 
-            // initiallized the first step of the phase envelope
+            // initialized the first step of the phase envelope
             // pressure is already defined
             // temperature is the antoine vapor pressure of the selected component
             // (least or most volatile.
@@ -170,7 +170,6 @@ public class pTphaseEnvelope extends BaseOperation {
             system.setTemperature(temp);
             system.setPressure(pres);
 
-            // creates object for class
             ThermodynamicOperations testOps = new ThermodynamicOperations(system);
 
             // this part converges the first phase envelope point.
@@ -563,7 +562,6 @@ public class pTphaseEnvelope extends BaseOperation {
         double TC = system.getTC();
         double PC = system.getPC();
 
-        String title2 = "";
         String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
                 + String.valueOf(nf.format(PC));
         String title3 = "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="

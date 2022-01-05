@@ -11,7 +11,9 @@ class process1Test {
     static neqsim.processSimulation.processSystem.ProcessSystem operations;
 
     /**
-     * <p>setUp.</p>
+     * <p>
+     * setUp.
+     * </p>
      */
     @BeforeAll
     public static void setUp() {
@@ -37,6 +39,9 @@ class process1Test {
         operations.add(compr);
     }
 
+    /**
+     * @throws Exception
+     */
     @AfterEach
     void tearDown() throws Exception {}
 

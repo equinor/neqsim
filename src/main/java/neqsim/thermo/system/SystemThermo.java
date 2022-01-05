@@ -2521,6 +2521,7 @@ abstract class SystemThermo implements SystemInterface {
      * {@inheritDoc}
      *
      * method to return conductivity of a fluid
+     * 
      * @deprecated use {@link #getThermalConductivity()} instead.
      */
     @Deprecated
@@ -2537,6 +2538,7 @@ abstract class SystemThermo implements SystemInterface {
      * {@inheritDoc}
      *
      * method to return conductivity in a given unit
+     * 
      * @deprecated use {@link #getThermalConductivity(String unit)} instead.
      */
     @Deprecated

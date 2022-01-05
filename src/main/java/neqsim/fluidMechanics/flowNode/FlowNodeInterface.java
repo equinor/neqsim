@@ -167,6 +167,15 @@ public interface FlowNodeInterface extends Cloneable {
      * getReynoldsNumber.
      * </p>
      *
+     * @return a double
+     */
+    public double getReynoldsNumber();
+
+    /**
+     * <p>
+     * getReynoldsNumber.
+     * </p>
+     *
      * @param i a int
      * @return a double
      */
@@ -516,15 +525,6 @@ public interface FlowNodeInterface extends Cloneable {
      * @return a double
      */
     public double getSuperficialVelocity(int i);
-
-    /**
-     * <p>
-     * getReynoldsNumber.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getReynoldsNumber();
 
     /**
      * <p>

@@ -5,8 +5,9 @@
  */
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -47,8 +48,8 @@ public class ComponentGEUniquac extends ComponentGE {
             return;
         }
         if (component_name.contains("_PC")) {
-            double number = getMolarMass() / 0.014;
-            int intNumb = (int) Math.round(number) - 2;
+            // double number = getMolarMass() / 0.014;
+            // int intNumb = (int) Math.round(number) - 2;
             r = 1.0;
             q = 1.0;
             return;

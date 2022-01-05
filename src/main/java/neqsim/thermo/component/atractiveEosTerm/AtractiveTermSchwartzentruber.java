@@ -77,6 +77,10 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                 2.0);
     }
 
+    /**
+     * @param temperature
+     * @return double
+     */
     private double alphaCrit(double temperature) {
         d = 1.0 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
         c = 1.0 - 1.0 / d;
@@ -84,6 +88,10 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                 Math.exp(c * (1.0 - Math.pow(temperature / getComponent().getTC(), 1.0 * d))), 2.0);
     }
 
+    /**
+     * @param temperature
+     * @return double
+     */
     private double diffalphaCritT(double temperature) {
         d = 1.0 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
         c = 1.0 - 1.0 / d;
@@ -95,6 +103,10 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                 * c * Math.pow(temperature / getComponent().getTC(), 1.0 * d) * d / temperature;
     }
 
+    /**
+     * @param temperature
+     * @return double
+     */
     private double diffdiffalphaCritT(double temperature) {
         d = 1.0 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
         c = 1.0 - 1.0 / d;

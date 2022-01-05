@@ -74,6 +74,9 @@ public class Fluid {
         volumeFlow = inputFluid.getFlowRate("m3/hr");
     }
 
+    /**
+     * @return SystemInterface
+     */
     SystemInterface getNeqSimFluid() {
         SystemInterface tempFluid = new neqsim.thermo.system.SystemSrkEos();
 

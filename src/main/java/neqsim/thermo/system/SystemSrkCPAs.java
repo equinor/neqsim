@@ -5,22 +5,15 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkCPAsOld;
 
 /**
- *
+ * This class defines a thermodynamic system using the sCPA-EOS equation of state
+ * 
  * @author Even Solbraa
  * @version
- */
-
-/**
- * This class defines a thermodynamic system using the sCPA-EOS equation of state
  */
 public class SystemSrkCPAs extends SystemSrkCPA {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
-    public SystemSrkCPAs() {
+public SystemSrkCPAs() {
         super();
         this.useVolumeCorrection(true);
         modelName = "CPAs-SRK-EOS";

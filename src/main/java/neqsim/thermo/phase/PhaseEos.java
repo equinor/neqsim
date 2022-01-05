@@ -495,10 +495,16 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return calcB(phase, temperature, pressure, numbcomp) / numberOfMolesInPhase;
     }
 
+    /**
+     * @return double
+     */
     double geta() {
         return loc_A / numberOfMolesInPhase / numberOfMolesInPhase;
     }
 
+    /**
+     * @return double
+     */
     double getb() {
         return loc_B / numberOfMolesInPhase;
     }

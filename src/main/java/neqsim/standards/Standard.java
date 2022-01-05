@@ -37,9 +37,6 @@ public abstract class Standard implements StandardInterface {
     protected ThermodynamicOperations thermoOps;
     private String referenceState = "real"; // "ideal"real
 
-    /**
-     * Creates a new instance of Standard
-     */
     public Standard() {}
 
     /**

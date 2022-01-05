@@ -1,8 +1,3 @@
-/*
- * SeparatorInterface.java
- *
- * Created on 22. august 2001, 17:22
- */
 package neqsim.processSimulation.processEquipment.absorber;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
