@@ -197,7 +197,6 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                     //
                     // double x1max =system.getPhase(phaseNumber).getComponent(name1).getx()/maxn;
                     // double x2max =system.getPhase(phaseNumber).getComponent(name2).getx()/maxn;
-
                 }
             }
         } catch (Exception e) {

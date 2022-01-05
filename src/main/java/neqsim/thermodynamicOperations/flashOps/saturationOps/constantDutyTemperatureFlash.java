@@ -85,7 +85,6 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
             Told = system.getTemperature();
             system.setTemperature((Told - funk / deriv * 0.7));
             // System.out.println("Temp: " + system.getTemperature() + " funk " + funk);
-
         } while ((Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7
                 && iterations < 300) || iterations < 3);
     }

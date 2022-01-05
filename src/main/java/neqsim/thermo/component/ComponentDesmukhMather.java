@@ -147,7 +147,6 @@ public class ComponentDesmukhMather extends ComponentGE {
             fugasityCoeffisient =
                     gamma * getHenryCoef(phase.getTemperature()) / phase.getPressure(); // sjekke
                                                                                         // denne
-
         } else {
             fugasityCoeffisient = 1e-15;
             // System.out.println("fug " + fugasityCoeffisient);

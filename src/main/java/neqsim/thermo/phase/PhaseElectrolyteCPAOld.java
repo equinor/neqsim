@@ -562,10 +562,11 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
             BonV = 1.0 - 1.0e-8;
         }
         double BonVold = BonV;
-        double Btemp = 0, Dtemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
+        double Btemp = 0, h = 0, dh = 0, dhh = 0;
+        // double Dtemp = 0, gvvv = 0, fvvv = 0;
         double d1 = 0, d2 = 0;
         Btemp = getB();
-        Dtemp = getA();
+        // Dtemp = getA();
         if (Btemp < 0) {
             logger.info("b negative in volume calc");
         }
@@ -651,10 +652,11 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
             BonV = 1.0 - 1.0e-8;
         }
         double BonVold = BonV;
-        double Btemp = 0, Dtemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
+        double Btemp = 0, h = 0, dh = 0, dhh = 0;
+        // double Dtemp = 0, fvvv = 0, gvvv = 0;
         double d1 = 0, d2 = 0;
         Btemp = getB();
-        Dtemp = getA();
+        // Dtemp = getA();
         if (Btemp < 0) {
             logger.info("b negative in volume calc");
         }
@@ -750,8 +752,9 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
         do {
             A = calcA(this, temperature, pressure, numberOfComponents);
             B = calcB(this, temperature, pressure, numberOfComponents);
-            double dFdV = dFdV(), dFdVdV = dFdVdV(), dFdVdVdV = dFdVdVdV();
-            double factor1 = 1.0e0, factor2 = 1.0e0;
+            double dFdV = dFdV(), dFdVdV = dFdVdV();
+            // double dFdVdVdV = dFdVdVdV();
+            // double factor1 = 1.0e0, factor2 = 1.0e0;
             err = -R * temperature * dFdV + R * temperature / getMolarVolume() - pressure;
 
             logger.info("pressure " + -R * temperature * dFdV + " "

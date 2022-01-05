@@ -39,6 +39,5 @@ public class HeaterResponse {
         dischargeTemperature = inputHeater.getOutStream().getTemperature("C");
 
         duty = inputHeater.getDuty();
-
     }
 }

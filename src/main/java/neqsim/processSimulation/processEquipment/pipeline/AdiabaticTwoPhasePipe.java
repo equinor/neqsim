@@ -253,7 +253,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
                     if (outP < 1e-10 || Double.isNaN(outP))
                         break;
-
                 } while (Math.abs(system.getNumberOfMoles() - oldPressure) / oldPressure > 1e-3
                         && iter < 3);
                 // calcFlow(pressureOutLimit);

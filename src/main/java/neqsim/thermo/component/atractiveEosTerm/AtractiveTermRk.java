@@ -64,7 +64,6 @@ public class AtractiveTermRk extends AtractiveTermBaseClass {
                         * Math.pow(temperature, 4.0))
                 + getComponent().getTC() / (Math.sqrt(getComponent().getTC() / temperature)
                         * Math.pow(temperature, 3.0));
-
     }
 
     /** {@inheritDoc} */

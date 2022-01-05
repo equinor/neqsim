@@ -946,7 +946,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
                     * Math.pow(componentArray[i].getIonicCharge(), 2.0)
                     / (1.0 + getShieldingParameter()
                             * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
-
         }
         return ans2 + ans;
     }

@@ -265,7 +265,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         double gdv2 = gdv1 * gdv1;
         double gdv3 = gdv2 * gdv1;
         double totVol = getTotalVolume();
-        double Klk = 0.0;
+        // double Klk = 0.0;
         for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
             for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
                 KlkVMatrix.set(i, j, KlkMatrix.get(i, j) * gdv1);
@@ -395,7 +395,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             return;
         }
 
-        int assSites = 0;
+        // int assSites = 0;
         // if(true) return;
         for (int p = 0; p < numberOfComponents; p++) {
             SimpleMatrix KiMatrix = new SimpleMatrix(Klkni[p]);
@@ -440,7 +440,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
                 }
                 temp2 += getComponent(compp).getNumberOfAssociationSites();
             }
-            assSites += getComponent(p).getNumberOfAssociationSites();
+            // assSites += getComponent(p).getNumberOfAssociationSites();
         }
     }
 
@@ -772,7 +772,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
                             getComponent(moleculeNumber[j]).getNumberOfMolesInPhase() * delta[i][j]
                                     * ((ComponentCPAInterface) getComponent(moleculeNumber[j]))
                                             .getXsite()[assSiteNumber[j]];
-
                 }
                 neeval = 1.0 / (1.0 + 1.0 / getTotalVolume() * neeval);
                 ((ComponentCPAInterface) getComponent(moleculeNumber[i])).setXsite(assSiteNumber[i],
@@ -835,10 +834,11 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             logger.error("error", e);
         }
         double BonVold = BonV;
-        double Btemp = 0, Dtemp = 0, h = 1, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
-        double d1 = 0, d2 = 0;
+        double Btemp = 0, h = 1;
+        // double Dtemp = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
+        // double d1 = 0, d2 = 0;
         Btemp = getB();
-        Dtemp = getA();
+        // Dtemp = getA();
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         for (int i = 0; i < 2000; i++) {
             BonVold = BonV;
@@ -899,7 +899,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         // double[][] calcRootVolFinder = calcRootVolFinder();
-        double BonVInit = BonV;
+        // double BonVInit = BonV;
         if (BonV < 0) {
             BonV = 1.0e-8;
         }
@@ -908,7 +908,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             BonV = 1.1;
         }
         double BonVold = BonV;
-        double Btemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
+        double Btemp = 0, h = 0, dh = 0, dhh = 0;
+        // double gvvv = 0, fvvv = 0;
         double d1 = 0, d2 = 0;
         Btemp = getB();
         if (Btemp < 0) {
@@ -928,7 +929,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
                 gcpa = calc_g();
             }
 
-            double lngcpa = Math.log(gcpa);
+            // double lngcpa = Math.log(gcpa);
             setGcpav(calc_lngV());
             gcpavv = calc_lngVV();
             gcpavvv = calc_lngVVV();
@@ -1125,7 +1126,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             }
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-
         } while ((Math.abs((BonV - BonVold) / BonV) > 1.0e-10 || Math.abs(h) > 1e-9)
                 && iterations < 100);
 
@@ -1185,7 +1185,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             BonV = 0.9999;
         }
         double BonVold = BonV;
-        double Btemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
+        double Btemp = 0, h = 0, dh = 0, dhh = 0;
+        // double gvvv = 0, fvvv = 0;
         double d1 = 0, d2 = 0;
         Btemp = getB();
         if (Btemp < 0) {

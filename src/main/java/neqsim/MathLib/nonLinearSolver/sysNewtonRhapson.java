@@ -74,7 +74,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
             fvec.set(i, 0, u.get(i, 0)
                     + Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
                             / system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()));
-
         }
         double fsum = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -293,7 +292,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
             double sny = ds + s.get(0, 3);
             u.set(j, 0, xcoef.get(0, 0)
                     + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
-
         }
         uold = u.copy();
         // s.print(0,10);

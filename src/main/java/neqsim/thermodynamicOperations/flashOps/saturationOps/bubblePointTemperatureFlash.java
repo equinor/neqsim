@@ -74,7 +74,6 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
                                             .getFugasityCoeffisient()
                                     / system.getPhases()[0].getComponents()[i]
                                             .getFugasityCoeffisient());
-
                 } while ((Math.abs(yold - system.getPhases()[1].getComponents()[i].getx()) > 1e-10)
                         && (iterations < maxNumberOfIterations));
 

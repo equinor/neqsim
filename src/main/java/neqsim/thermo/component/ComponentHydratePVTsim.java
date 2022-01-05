@@ -54,7 +54,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                     } else {
                         dataSet = database.getResultSet(
                                 ("SELECT * FROM comp WHERE name='" + component_name + "'"));
-
                     }
                     dataSet.next();
                 } catch (Exception e) {
@@ -92,7 +91,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
     public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
                 phase.getPressure());
-
     }
 
     /** {@inheritDoc} */
@@ -200,7 +198,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
             if (phase.getComponent(i).isHydrateFormer()) {
                 temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType,
                         phase) * reffug[i];
-
             }
             // System.out.println("reffug " + reffug[i]);
             // System.out.println("temp " + temp);
@@ -210,7 +207,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
         return yki / temp;
         // }
         // else return 0.0;
-
     }
 
     /** {@inheritDoc} */

@@ -173,7 +173,6 @@ public class BaseContract implements ContractInterface {
         return new ContractSpecification(specificationName, specificationName2, country, terminal,
                 method, minValue, maxValue, unit, referenceTemperature, referenceTemperatureComb,
                 referencePressure, comments);
-
     }
 
     /** {@inheritDoc} */

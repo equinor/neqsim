@@ -276,7 +276,6 @@ public class Tank extends ProcessEquipmentBaseClass {
                 * separatorLength;
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
                 * separatorLength;
-
     }
 
     /**

@@ -950,7 +950,6 @@ abstract class SystemThermo implements SystemInterface {
             neqsim.util.exception.InvalidInputException e =
                     new neqsim.util.exception.InvalidInputException();
             throw new RuntimeException(e);
-
         }
 
         SystemInterface refSystem = null;
