@@ -227,7 +227,7 @@ public class OLGApropertyTableGeneratorWaterStudents
      */
     public void initCalc() {
         double stdTemp = 288.15, stdPres = 1.01325;
-        double GOR, GLR, standgasdens, standliqdens, TC, PC;
+        // double GOR, GLR;
         double molfracs[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         double MW[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         double dens[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -245,8 +245,8 @@ public class OLGApropertyTableGeneratorWaterStudents
 
         thermoOps.TPflash();
 
-        GOR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
-        GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
+        // GOR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
+        // GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
     }
 
     /**
@@ -298,7 +298,7 @@ public class OLGApropertyTableGeneratorWaterStudents
             GL = 1;
         }
 
-        int startGasTemperatures = 0, startLiquid = 0, startWater = 0;
+        // int startGasTemperatures = 0, startLiquid = 0, startWater = 0;
         boolean acceptedFlash = true;
         for (int j = 0; j < temperatures.length; j++) {
             thermoSystem.setTemperature(temperatures[j]);
@@ -350,7 +350,6 @@ public class OLGApropertyTableGeneratorWaterStudents
                     units[k] = "KG/M3-K";
                     k++;
 
-                    double beta = 0.0;
                     if (thermoSystem.hasPhaseType("oil")) {
                         props[k][i][j] = thermoSystem.getPhase(phaseNumb).getBeta()
                                 * thermoSystem.getPhase(phaseNumb).getMolarMass()
@@ -485,7 +484,7 @@ public class OLGApropertyTableGeneratorWaterStudents
                     } while (k < 9);// names[k] = "GAS DENSITY";
                     // units[k] = "KG/M3";
                 } else if (false && !hasGasValues) {
-                    startGasTemperatures = j;
+                    // startGasTemperatures = j;
                 } else {
                     gasSystem.setTemperature(temperatures[j]);
                     gasSystem.setPressure(pressures[i]);

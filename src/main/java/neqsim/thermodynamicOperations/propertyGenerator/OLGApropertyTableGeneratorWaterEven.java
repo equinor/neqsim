@@ -201,7 +201,7 @@ public class OLGApropertyTableGeneratorWaterEven
      */
     public void initCalc() {
         double stdTemp = 288.15, stdPres = 1.01325;
-        double GOR, GLR, standgasdens, standliqdens, TC, PC;
+        // double GOR, GLR;
         double molfracs[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         double MW[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         double dens[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -219,8 +219,8 @@ public class OLGApropertyTableGeneratorWaterEven
 
         thermoOps.TPflash();
 
-        GOR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
-        GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
+        // GOR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
+        // GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
     }
 
     /**
@@ -250,7 +250,7 @@ public class OLGApropertyTableGeneratorWaterEven
         units = new String[nProps];
         names = new String[nProps];
 
-        int startGasTemperatures = 0, startLiquid = 0, startWater = 0;
+        int startGasTemperatures = 0;
         boolean acceptedFlash = true;
         for (int j = 0; j < temperatures.length; j++) {
             thermoSystem.setTemperature(temperatures[j]);
@@ -307,7 +307,6 @@ public class OLGApropertyTableGeneratorWaterEven
                     units[k] = "KG/M3-K";
                     k++;
 
-                    double beta = 0.0;
                     if (thermoSystem.hasPhaseType("oil")) {
                         props[k][i][j] = thermoSystem.getPhase(phaseNumb).getBeta()
                                 * thermoSystem.getPhase(phaseNumb).getMolarMass()
