@@ -59,165 +59,143 @@ public class TEGdehydrationProcess2 {
         feedTEG.setMolarComposition(
                 new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.98});
 
-                Stream dehydratedGas = new Stream(absorber.getGasOutStream());
-                dehydratedGas.setName("dry gas from absorber");
-                Stream richTEG = new Stream(absorber.getSolventOutStream());
+        Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
+        TEGFeed.setFlowRate(6.1 * 1100.0, "kg/hr");
+        TEGFeed.setTemperature(35.4, "C");
+        TEGFeed.setPressure(52.21, "bara");
 
-                ThrottlingValve glycol_flash_valve = new ThrottlingValve(richTEG);
-                glycol_flash_valve.setName("Rich TEG HP flash valve");
-                glycol_flash_valve.setOutletPressure(4.9);
+        SimpleTEGAbsorber absorber = new SimpleTEGAbsorber("SimpleTEGAbsorber");
+        absorber.addGasInStream(waterSaturatedFeedGas);
+        absorber.addSolventInStream(TEGFeed);
+        absorber.setNumberOfStages(10);
+        absorber.setStageEfficiency(0.35);
 
-                Heater richGLycolHeaterCondeser = new Heater(glycol_flash_valve.getOutStream());
-                richGLycolHeaterCondeser.setName("rich TEG preheater");
-                richGLycolHeaterCondeser.setOutTemperature(273.15 + 35.5);
+        Stream dehydratedGas = new Stream(absorber.getGasOutStream());
+        dehydratedGas.setName("dry gas from absorber");
+        Stream richTEG = new Stream(absorber.getSolventOutStream());
 
-                Heater richGLycolHeater = new Heater(richGLycolHeaterCondeser.getOutStream());
-                richGLycolHeater.setName("rich TEG heater HP");
-                richGLycolHeater.setOutTemperature(273.15 + 62.0);
+        ThrottlingValve glycol_flash_valve = new ThrottlingValve(richTEG);
+        glycol_flash_valve.setName("Rich TEG HP flash valve");
+        glycol_flash_valve.setOutletPressure(4.9);
 
-                Separator flashSep = new Separator(richGLycolHeater.getOutStream());
-                flashSep.setName("degasing separator");
-                Stream flashGas = new Stream(flashSep.getGasOutStream());
-                flashGas.setName("gas from degasing separator");
-                Stream flashLiquid = new Stream(flashSep.getLiquidOutStream());
-                flashLiquid.setName("liquid from degasing separator");
+        Heater richGLycolHeaterCondeser = new Heater(glycol_flash_valve.getOutStream());
+        richGLycolHeaterCondeser.setName("rich TEG preheater");
+        richGLycolHeaterCondeser.setOutTemperature(273.15 + 35.5);
 
-                Heater richGLycolHeater2 = new Heater(flashLiquid);
-                richGLycolHeater2.setName("LP rich glycol heater");
-                richGLycolHeater2.setOutTemperature(273.15 + 139.0);
-                richGLycolHeater2.setOutPressure(1.23);
+        Heater richGLycolHeater = new Heater(richGLycolHeaterCondeser.getOutStream());
+        richGLycolHeater.setName("rich TEG heater HP");
+        richGLycolHeater.setOutTemperature(273.15 + 62.0);
 
-                Mixer mixerTOreboiler = new Mixer("reboil mxer");
-                mixerTOreboiler.addStream(richGLycolHeater2.getOutStream());
+        Separator flashSep = new Separator(richGLycolHeater.getOutStream());
+        flashSep.setName("degasing separator");
+        Stream flashGas = new Stream(flashSep.getGasOutStream());
+        flashGas.setName("gas from degasing separator");
+        Stream flashLiquid = new Stream(flashSep.getLiquidOutStream());
+        flashLiquid.setName("liquid from degasing separator");
 
-                Heater heaterToReboiler = new Heater(mixerTOreboiler.getOutStream());
-                heaterToReboiler.setOutTemperature(273.15 + 206.6);
+        Heater richGLycolHeater2 = new Heater(flashLiquid);
+        richGLycolHeater2.setName("LP rich glycol heater");
+        richGLycolHeater2.setOutTemperature(273.15 + 139.0);
+        richGLycolHeater2.setOutPressure(1.23);
 
-                Separator regenerator2 = new Separator(heaterToReboiler.getOutStream());
+        Mixer mixerTOreboiler = new Mixer("reboil mxer");
+        mixerTOreboiler.addStream(richGLycolHeater2.getOutStream());
 
-                Stream gasFromRegenerator = new Stream(regenerator2.getGasOutStream());
+        Heater heaterToReboiler = new Heater(mixerTOreboiler.getOutStream());
+        heaterToReboiler.setOutTemperature(273.15 + 206.6);
 
-                Heater sepregenGasCooler = new Heater(gasFromRegenerator);
-                sepregenGasCooler.setOutTemperature(273.15 + 109.0);
-                sepregenGasCooler.setOutPressure(1.23);
-                // sepregenGasCooler.setEnergyStream(richGLycolHeaterCondeser.getEnergyStream());
+        Separator regenerator2 = new Separator(heaterToReboiler.getOutStream());
 
-                Separator sepRegen = new Separator(sepregenGasCooler.getOutStream());
+        Stream gasFromRegenerator = new Stream(regenerator2.getGasOutStream());
 
         Heater sepregenGasCooler = new Heater(gasFromRegenerator);
         sepregenGasCooler.setOutTemperature(273.15 + 109.0);
         sepregenGasCooler.setOutPressure(1.23);
         // sepregenGasCooler.setEnergyStream(richGLycolHeaterCondeser.getEnergyStream());
 
-                Recycle resycle2 = new Recycle("reflux resycle");
-                resycle2.addStream(liquidRegenReflux);
+        Separator sepRegen = new Separator(sepregenGasCooler.getOutStream());
 
-                Heater coolerRegenGas = new Heater(sepRegen.getGasOutStream());
-                coolerRegenGas.setOutTemperature(273.15 + 35.5);
+        Stream liquidRegenReflux = new Stream(sepRegen.getLiquidOutStream());
 
-                Separator sepregenGas = new Separator(coolerRegenGas.getOutStream());
+        Recycle resycle2 = new Recycle("reflux resycle");
+        resycle2.addStream(liquidRegenReflux);
 
-                Stream gasToFlare = new Stream(sepregenGas.getGasOutStream());
+        Heater coolerRegenGas = new Heater(sepRegen.getGasOutStream());
+        coolerRegenGas.setOutTemperature(273.15 + 35.5);
 
-                Stream liquidToTrreatment = new Stream(sepregenGas.getLiquidOutStream());
+        Separator sepregenGas = new Separator(coolerRegenGas.getOutStream());
 
-                Stream hotLeanTEG = new Stream(regenerator2.getLiquidOutStream());
+        Stream gasToFlare = new Stream(sepregenGas.getGasOutStream());
 
-                neqsim.thermo.system.SystemInterface stripGas =
-                                (neqsim.thermo.system.SystemInterface) feedGas.clone();
-                stripGas.setMolarComposition(new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0});
+        Stream liquidToTrreatment = new Stream(sepregenGas.getLiquidOutStream());
 
-                Stream strippingGas = new Stream("stripGas", stripGas);
-                strippingGas.setFlowRate(70.0, "kg/hr");
-                strippingGas.setTemperature(206.6, "C");
-                strippingGas.setPressure(1.23, "bara");
+        Stream hotLeanTEG = new Stream(regenerator2.getLiquidOutStream());
 
         neqsim.thermo.system.SystemInterface stripGas =
                 (neqsim.thermo.system.SystemInterface) feedGas.clone();
         stripGas.setMolarComposition(
                 new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
 
-                Recycle resycle3 = new Recycle("gas stripper resycle");
-                resycle3.addStream(stripper.getGasOutStream());
+        Stream strippingGas = new Stream("stripGas", stripGas);
+        strippingGas.setFlowRate(70.0, "kg/hr");
+        strippingGas.setTemperature(206.6, "C");
+        strippingGas.setPressure(1.23, "bara");
 
-                Pump hotLeanTEGPump = new Pump(stripper.getSolventOutStream());
-                hotLeanTEGPump.setName("hot lean TEG pump");
-                hotLeanTEGPump.setOutletPressure(20.0);
+        WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
+        stripper.addGasInStream(strippingGas);
+        stripper.addSolventInStream(hotLeanTEG);
+        stripper.setNumberOfStages(10);
+        stripper.setStageEfficiency(0.5);
 
-                Heater coolerhOTteg = new Heater(hotLeanTEGPump.getOutStream());
-                coolerhOTteg.setName("hot lean TEG cooler");
-                coolerhOTteg.setOutTemperature(273.15 + 116.8);
+        Recycle resycle3 = new Recycle("gas stripper resycle");
+        resycle3.addStream(stripper.getGasOutStream());
 
-                Heater coolerhOTteg2 = new Heater(coolerhOTteg.getOutStream());
-                coolerhOTteg2.setName("medium hot lean TEG cooler");
-                coolerhOTteg2.setOutTemperature(273.15 + 89.3);
+        Pump hotLeanTEGPump = new Pump(stripper.getSolventOutStream());
+        hotLeanTEGPump.setName("hot lean TEG pump");
+        hotLeanTEGPump.setOutletPressure(20.0);
 
-                Heater coolerhOTteg3 = new Heater(coolerhOTteg2.getOutStream());
-                coolerhOTteg3.setName("lean TEG cooler");
-                coolerhOTteg3.setOutTemperature(273.15 + 44.85);
+        Heater coolerhOTteg = new Heater(hotLeanTEGPump.getOutStream());
+        coolerhOTteg.setName("hot lean TEG cooler");
+        coolerhOTteg.setOutTemperature(273.15 + 116.8);
 
-                Pump hotLeanTEGPump2 = new Pump(coolerhOTteg3.getOutStream());
-                hotLeanTEGPump2.setName("lean TEG HP pump");
-                hotLeanTEGPump2.setOutletPressure(52.21);
+        Heater coolerhOTteg2 = new Heater(coolerhOTteg.getOutStream());
+        coolerhOTteg2.setName("medium hot lean TEG cooler");
+        coolerhOTteg2.setOutTemperature(273.15 + 89.3);
 
-                Stream leanTEGtoabs = new Stream(hotLeanTEGPump2.getOutStream());
-                leanTEGtoabs.setName("lean TEG to absorber");
+        Heater coolerhOTteg3 = new Heater(coolerhOTteg2.getOutStream());
+        coolerhOTteg3.setName("lean TEG cooler");
+        coolerhOTteg3.setOutTemperature(273.15 + 44.85);
 
-                neqsim.thermo.system.SystemInterface pureTEG =
-                                (neqsim.thermo.system.SystemInterface) feedGas.clone();
-                pureTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 1.0});
+        Pump hotLeanTEGPump2 = new Pump(coolerhOTteg3.getOutStream());
+        hotLeanTEGPump2.setName("lean TEG HP pump");
+        hotLeanTEGPump2.setOutletPressure(52.21);
 
-                Stream makeupTEG = new Stream("lean TEG to absorber", pureTEG);
-                makeupTEG.setFlowRate(1e-6, "kg/hr");
-                makeupTEG.setTemperature(35.4, "C");
-                makeupTEG.setPressure(52.21, "bara");
+        Stream leanTEGtoabs = new Stream(hotLeanTEGPump2.getOutStream());
+        leanTEGtoabs.setName("lean TEG to absorber");
 
         neqsim.thermo.system.SystemInterface pureTEG =
                 (neqsim.thermo.system.SystemInterface) feedGas.clone();
         pureTEG.setMolarComposition(
                 new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
-                StaticMixer makeupMixer = new StaticMixer("makeup mixer");
-                makeupMixer.addStream(leanTEGtoabs);
-                makeupMixer.addStream(makeupTEG);
+        Stream makeupTEG = new Stream("lean TEG to absorber", pureTEG);
+        makeupTEG.setFlowRate(1e-6, "kg/hr");
+        makeupTEG.setTemperature(35.4, "C");
+        makeupTEG.setPressure(52.21, "bara");
 
-                Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-                resycleLeanTEG.addStream(makeupMixer.getOutStream());
+        Calculator makeupCalculator = new Calculator("makeup calculator");
+        makeupCalculator.addInputVariable(dehydratedGas);
+        makeupCalculator.addInputVariable(flashGas);
+        makeupCalculator.addInputVariable(gasToFlare);
+        makeupCalculator.addInputVariable(liquidToTrreatment);
+        makeupCalculator.setOutputVariable(makeupTEG);
 
-                neqsim.processSimulation.processSystem.ProcessSystem operations =
-                                new neqsim.processSimulation.processSystem.ProcessSystem();
-                operations.add(dryFeedGas);
-                operations.add(saturatedFeedGas);
-                operations.add(waterSaturatedFeedGas);
-                operations.add(TEGFeed);
-                operations.add(absorber);
-                operations.add(dehydratedGas);
-                operations.add(richTEG);
-                operations.add(glycol_flash_valve);
-                operations.add(richGLycolHeaterCondeser);
-                operations.add(richGLycolHeater);
-                operations.add(flashSep);
-                operations.add(flashGas);
-                operations.add(flashLiquid);
-                operations.add(richGLycolHeater2);
-                operations.add(mixerTOreboiler);
-                operations.add(heaterToReboiler);
-                operations.add(regenerator2);
-                operations.add(gasFromRegenerator);
-                operations.add(sepregenGasCooler);
-                operations.add(sepRegen);
-                operations.add(liquidRegenReflux);
-                operations.add(resycle2);
+        StaticMixer makeupMixer = new StaticMixer("makeup mixer");
+        makeupMixer.addStream(leanTEGtoabs);
+        makeupMixer.addStream(makeupTEG);
 
-                operations.add(coolerRegenGas);
-                operations.add(sepregenGas);
-                operations.add(gasToFlare);
-                operations.add(liquidToTrreatment);
-                operations.add(hotLeanTEG);
-                operations.add(strippingGas);
-                operations.add(stripper);
+        Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
+        resycleLeanTEG.addStream(makeupMixer.getOutStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -244,18 +222,36 @@ public class TEGdehydrationProcess2 {
         operations.add(liquidRegenReflux);
         operations.add(resycle2);
 
-                operations.run();
-                richGLycolHeater2.getOutStream().getFluid().display();
-                System.out.println("Energy reboiler " + heaterToReboiler.getDuty());
-                mixerTOreboiler.addStream(liquidRegenReflux);
-                mixerTOreboiler.addStream(resycle3.getOutStream());
+        operations.add(coolerRegenGas);
+        operations.add(sepregenGas);
+        operations.add(gasToFlare);
+        operations.add(liquidToTrreatment);
+        operations.add(hotLeanTEG);
+        operations.add(strippingGas);
+        operations.add(stripper);
 
-                operations.run();
-                absorber.replaceSolventInStream(resycleLeanTEG.getOutStream());
-                operations.run();
-                // richGLycolHeater2.getOutStream().getFluid().display();
+        operations.add(resycle3);
+        operations.add(hotLeanTEGPump);
+        operations.add(coolerhOTteg);
+        operations.add(coolerhOTteg2);
+        operations.add(coolerhOTteg3);
+        operations.add(hotLeanTEGPump2);
+        operations.add(leanTEGtoabs);
+        operations.add(makeupCalculator);
+        operations.add(makeupTEG);
+        operations.add(makeupMixer);
+        operations.add(resycleLeanTEG);
 
-                System.out.println("Energy reboiler 2 " + heaterToReboiler.getDuty());
+        operations.run();
+        richGLycolHeater2.getOutStream().getFluid().display();
+        System.out.println("Energy reboiler " + heaterToReboiler.getDuty());
+        mixerTOreboiler.addStream(liquidRegenReflux);
+        mixerTOreboiler.addStream(resycle3.getOutStream());
+        //
+        operations.run();
+        absorber.replaceSolventInStream(resycleLeanTEG.getOutStream());
+        operations.run();
+        // richGLycolHeater2.getOutStream().getFluid().display();
 
         System.out.println("Energy reboiler 2 " + heaterToReboiler.getDuty());
 
