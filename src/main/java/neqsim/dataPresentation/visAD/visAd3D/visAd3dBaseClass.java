@@ -3,7 +3,6 @@
  *
  * Created on 24. mai 2001, 19:47
  */
-
 package neqsim.dataPresentation.visAD.visAd3D;
 
 import neqsim.dataPresentation.visAD.visAdBaseClass;

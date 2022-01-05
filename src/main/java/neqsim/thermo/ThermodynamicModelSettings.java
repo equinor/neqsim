@@ -1,13 +1,9 @@
-/*
- * ThermodynamicConstantsInterface.java
- *
- * Created on 3. juni 2000, 19:07
- */
-
 package neqsim.thermo;
 
 /**
- * <p>ThermodynamicModelSettings interface.</p>
+ * <p>
+ * ThermodynamicModelSettings interface.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id

@@ -3,7 +3,6 @@
  *
  * Created on 24. januar 2001, 19:49
  */
-
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density;
 
 import org.apache.logging.log4j.LogManager;

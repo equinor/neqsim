@@ -3,7 +3,6 @@
  *
  * Created on 3. juni 2000, 14:38
  */
-
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentSrk;

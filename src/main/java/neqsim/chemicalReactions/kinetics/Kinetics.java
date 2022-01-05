@@ -1,11 +1,8 @@
-
-
 /*
  * Kinetics.java
  *
  * Created on 3. august 2001, 23:05
  */
-
 package neqsim.chemicalReactions.kinetics;
 
 import java.util.Iterator;

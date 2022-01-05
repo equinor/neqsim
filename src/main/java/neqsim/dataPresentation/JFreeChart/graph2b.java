@@ -3,7 +3,6 @@
  *
  * Created on 17. juni 2000, 17:16
  */
-
 package neqsim.dataPresentation.JFreeChart;
 
 import java.awt.Color;

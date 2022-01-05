@@ -1,9 +1,3 @@
-/*
- * UnitBase.java
- *
- * Created on 25. januar 2002, 20:21
- */
-
 package neqsim.util.unit;
 
 /**

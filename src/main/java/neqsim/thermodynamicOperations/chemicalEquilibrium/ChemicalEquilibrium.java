@@ -3,12 +3,10 @@
  *
  * Created on 5. mai 2002, 20:53
  */
-
 package neqsim.thermodynamicOperations.chemicalEquilibrium;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 

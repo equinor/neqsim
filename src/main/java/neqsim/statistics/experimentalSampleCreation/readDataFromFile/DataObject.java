@@ -1,9 +1,3 @@
-/*
- * DataReaderObject.java
- *
- * Created on 1. februar 2001, 13:10
- */
-
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
 
 /**

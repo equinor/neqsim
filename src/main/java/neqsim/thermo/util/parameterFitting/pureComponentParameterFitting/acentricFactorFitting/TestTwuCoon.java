@@ -1,4 +1,3 @@
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import java.util.ArrayList;

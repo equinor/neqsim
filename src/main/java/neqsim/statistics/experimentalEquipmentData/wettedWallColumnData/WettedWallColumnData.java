@@ -3,7 +3,6 @@
  *
  * Created on 9. februar 2001, 10:01
  */
-
 package neqsim.statistics.experimentalEquipmentData.wettedWallColumnData;
 
 import neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData;
@@ -20,7 +19,9 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for WettedWallColumnData.</p>
+     * <p>
+     * Constructor for WettedWallColumnData.
+     * </p>
      */
     public WettedWallColumnData() {}
 

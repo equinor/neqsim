@@ -3,7 +3,6 @@
  *
  * Created on 5. august 2001, 16:29
  */
-
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.twoPhaseFlowNodeVisualization;
 
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;

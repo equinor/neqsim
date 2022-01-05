@@ -3,7 +3,6 @@
  *
  * Created on 18. juli 2000, 20:30
  */
-
 package neqsim.thermo.phase;
 
 /**

@@ -1,9 +1,3 @@
-/*
- * Stream.java
- *
- * Created on 12. mars 2001, 13:11
- */
-
 package neqsim.processSimulation.processEquipment.stream;
 
 import neqsim.thermo.system.SystemInterface;

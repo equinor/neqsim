@@ -1,4 +1,3 @@
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 import java.sql.ResultSet;

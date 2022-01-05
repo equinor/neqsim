@@ -3,7 +3,6 @@
  *
  * Created on 5. august 2001, 21:52
  */
-
 package neqsim.dataPresentation.fileHandeling.createNetCDF;
 
 import java.io.IOException;

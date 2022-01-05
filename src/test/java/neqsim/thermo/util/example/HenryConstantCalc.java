@@ -1,9 +1,3 @@
-/*
- * ActivityCalc.java
- *
- * Created on 5. mars 2002, 15:17
- */
-
 package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemElectrolyteCPA;
@@ -11,7 +5,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>HenryConstantCalc class.</p>
+ * <p>
+ * HenryConstantCalc class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -19,7 +15,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class HenryConstantCalc {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

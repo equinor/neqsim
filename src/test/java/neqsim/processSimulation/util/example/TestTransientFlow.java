@@ -3,7 +3,6 @@
  *
  * Created on 8. oktober 2006, 13:13
  */
-
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
@@ -15,7 +14,9 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>TestTransientFlow class.</p>
+ * <p>
+ * TestTransientFlow class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -23,7 +24,9 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  */
 public class TestTransientFlow {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

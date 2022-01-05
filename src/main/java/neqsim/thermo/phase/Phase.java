@@ -1,5 +1,3 @@
-
-
 /*
  * Phase.java
  *
@@ -44,7 +42,6 @@ abstract class Phase implements PhaseInterface {
     protected String phaseTypeName = "gas";
     static Logger logger = LogManager.getLogger(Phase.class);
 
-    // Class methods
     /**
      * <p>
      * Constructor for Phase.
@@ -404,11 +401,7 @@ abstract class Phase implements PhaseInterface {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
 
         this.beta = beta;
         numberOfMolesInPhase = beta * totalNumberOfMoles;

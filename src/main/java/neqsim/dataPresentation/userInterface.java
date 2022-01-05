@@ -3,7 +3,6 @@
  *
  * Created on 15. juni 2000, 18:28
  */
-
 package neqsim.dataPresentation;
 
 /**

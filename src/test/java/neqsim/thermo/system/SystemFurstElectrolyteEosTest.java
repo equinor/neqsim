@@ -1,8 +1,7 @@
-package neqsim.thermo.util.example;
+package neqsim.thermo.system;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import neqsim.thermo.system.SystemFurstElectrolyteEos;
 
 /**
  * <p>
@@ -13,7 +12,7 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class ElectrolyteScrkEosTest {
+public class SystemFurstElectrolyteEosTest {
     static SystemFurstElectrolyteEos thermoSystem;
 
     /**

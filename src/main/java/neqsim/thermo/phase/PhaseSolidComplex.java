@@ -1,8 +1,3 @@
-/*
- * PhasePureComponentSolid.java
- *
- * Created on 18. august 2001, 12:39
- */
 package neqsim.thermo.phase;
 
 /**

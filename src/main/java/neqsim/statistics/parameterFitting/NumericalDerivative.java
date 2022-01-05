@@ -3,7 +3,6 @@
  *
  * Created on 28. juli 2000, 15:39
  */
-
 package neqsim.statistics.parameterFitting;
 
 /**
