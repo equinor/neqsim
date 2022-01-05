@@ -15,21 +15,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class GORfitter extends ProcessEquipmentBaseClass {
-    private static final long serialVersionUID = 1000;
+	private static final long serialVersionUID = 1000;
 
-    public StreamInterface inletStream = null;
-    public StreamInterface outletStream = null;
-    double pressure = 1.01325, temperature = 15.0;
+	public StreamInterface inletStream = null;
+	public StreamInterface outletStream = null;
+	double pressure = 1.01325, temperature = 15.0;
 
-    private double GOR = 120.0;
-    String unitT = "C", unitP = "bara";
+	private double GOR = 120.0;
+	String unitT = "C", unitP = "bara";
 
 	/**
 	 * Creates a new instance of GORfitter
 	 */
 	public GORfitter() {
         this.name = "GOR fitter";
-    }
+	}
 
 	/**
 	 * <p>Constructor for GORfitter.</p>
@@ -138,28 +138,29 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		double currGOR = tempFluid.getPhase("gas").getCorrectedVolume()
 				/ tempFluid.getPhase("oil").getCorrectedVolume();
 
-        double dev = getGOR() / currGOR;
-        // System.out.println("dev "+dev);
+		double dev = getGOR() / currGOR;
+		//System.out.println("dev "+dev);
+		
+		double[] moleChange = new double[tempFluid.getNumberOfComponents()];
+		for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
+					moleChange[i] = (dev - 1.0) * tempFluid.getPhase("gas").getComponent(i).getNumberOfMolesInPhase();
+		}
+		tempFluid.init(0);
+		for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
+			tempFluid.addComponent(i,moleChange[i]);
+		}
+		tempFluid.setPressure(((SystemInterface) inletStream.getThermoSystem()).getPressure());
+		tempFluid.setTemperature(((SystemInterface) inletStream.getThermoSystem()).getTemperature());
+		tempFluid.setTotalFlowRate(flow, "kg/sec");	
+		try {
+			thermoOps.TPflash();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		outletStream.setThermoSystem(tempFluid);
 
-        double[] moleChange = new double[tempFluid.getNumberOfComponents()];
-        for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-            moleChange[i] = (dev - 1.0)
-                    * tempFluid.getPhase("gas").getComponent(i).getNumberOfMolesInPhase();
-        }
-        tempFluid.init(0);
-        for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-            tempFluid.addComponent(i, moleChange[i]);
-        }
-        tempFluid.setPressure(((SystemInterface) inletStream.getThermoSystem()).getPressure());
-        tempFluid
-                .setTemperature(((SystemInterface) inletStream.getThermoSystem()).getTemperature());
-        tempFluid.setTotalFlowRate(flow, "kg/sec");
-        try {
-            thermoOps.TPflash();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        outletStream.setThermoSystem(tempFluid);
+		return;
+	}
 
 	/**
 	 * <p>main.</p>
@@ -181,47 +182,39 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		testFluid.setMixingRule(2);
 		testFluid.setMultiPhaseCheck(true);
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        SystemInterface testFluid = new SystemSrkEos(338.15, 50.0);
-        testFluid.addComponent("nitrogen", 1.205);
-        testFluid.addComponent("CO2", 1.340);
-        testFluid.addComponent("methane", 87.974);
-        testFluid.addComponent("ethane", 5.258);
-        testFluid.addComponent("propane", 3.283);
-        testFluid.addComponent("i-butane", 0.082);
-        testFluid.addComponent("n-butane", 0.487);
-        testFluid.addComponent("i-pentane", 0.056);
-        testFluid.addComponent("n-pentane", 1.053);
-        testFluid.addComponent("nC10", 4.053);
-        testFluid.setMixingRule(2);
-        testFluid.setMultiPhaseCheck(true);
+		testFluid.setTemperature(24.0, "C");
+		testFluid.setPressure(48.0, "bara");
+		testFluid.setTotalFlowRate(1e6, "kg/hr");
 
-        testFluid.setTemperature(24.0, "C");
-        testFluid.setPressure(48.0, "bara");
-        testFluid.setTotalFlowRate(1e6, "kg/hr");
+		Stream stream_1 = new Stream("Stream1", testFluid);
 
-        Stream stream_1 = new Stream("Stream1", testFluid);
+		MultiPhaseMeter multiPhaseMeter = new MultiPhaseMeter("test", stream_1);
+		multiPhaseMeter.setTemperature(90.0, "C");
+		multiPhaseMeter.setPressure(60.0, "bara");
 
-        MultiPhaseMeter multiPhaseMeter = new MultiPhaseMeter("test", stream_1);
-        multiPhaseMeter.setTemperature(90.0, "C");
-        multiPhaseMeter.setPressure(60.0, "bara");
+		GORfitter gORFItter = new GORfitter("test", stream_1);
+		gORFItter.setTemperature(15.0, "C");
+		gORFItter.setPressure(1.01325, "bara");
 
-        GORfitter gORFItter = new GORfitter("test", stream_1);
-        gORFItter.setTemperature(15.0, "C");
-        gORFItter.setPressure(1.01325, "bara");
+		Stream stream_2 = new Stream(gORFItter.getOutStream());
 
-        Stream stream_2 = new Stream(gORFItter.getOutStream());
+		MultiPhaseMeter multiPhaseMeter2 = new MultiPhaseMeter("test", stream_2);
+		multiPhaseMeter2.setTemperature(90.0, "C");
+		multiPhaseMeter2.setPressure(60.0, "bara");
 
-        MultiPhaseMeter multiPhaseMeter2 = new MultiPhaseMeter("test", stream_2);
-        multiPhaseMeter2.setTemperature(90.0, "C");
-        multiPhaseMeter2.setPressure(60.0, "bara");
+		neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+		operations.add(stream_1);
+		operations.add(multiPhaseMeter);
+		operations.add(gORFItter);
+		operations.add(stream_2);
+		operations.add(multiPhaseMeter2);
+		operations.run();
+		System.out.println("GOR " + multiPhaseMeter.getMeasuredValue("GOR"));
+		System.out.println("GOR_std " + multiPhaseMeter.getMeasuredValue("GOR_std"));
+		System.out.println("GOR2 " + multiPhaseMeter2.getMeasuredValue("GOR"));
+		System.out.println("GOR2_std " + multiPhaseMeter2.getMeasuredValue("GOR_std"));
+		System.out.println("stream_2 flow " + stream_2.getFlowRate("kg/hr"));
+	}
 
 	/**
 	 * <p>getGOR.</p>
@@ -239,5 +232,5 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 */
 	public void setGOR(double gOR) {
         this.GOR = gOR;
-    }
+	}
 }
