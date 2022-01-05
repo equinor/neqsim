@@ -6,14 +6,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
-
 /**
- * <p>BubbleFlash class.</p>
+ * <p>
+ * BubbleFlash class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -23,7 +19,9 @@ public class BubbleFlash {
     static Logger logger = LogManager.getLogger(BubbleFlash.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

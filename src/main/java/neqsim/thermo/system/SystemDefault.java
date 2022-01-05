@@ -3,19 +3,14 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- *
+ * This class defines a thermodynamic system using the SRK equation of state
+ * 
  * @author Even Solbraa
  * @version
  */
-
-/**
- * This class defines a thermodynamic system using the SRK equation of state
- */
 public class SystemDefault extends SystemThermo {
     private static final long serialVersionUID = 1000;
-    /** Creates a thermodynamic system using the SRK equation of state. */
 
-    // SystemSrkEos clonedSystem;
     double T = 100, P = 100;
 
     /**

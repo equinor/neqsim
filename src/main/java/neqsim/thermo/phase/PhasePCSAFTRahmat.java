@@ -97,11 +97,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         for (int i = 0; i < numberOfComponents; i++) {
             componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,
                     numberOfComponents, type);
@@ -1022,7 +1018,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
                         * F1dispI1dVdV)
                 + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm()
                         * F1dispI1dVdVdV));
-
     }
 
     // added by Rahmat
@@ -1400,12 +1395,12 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         if (BonV > 1.0) {
             BonV = 1.0 - 1.0e-6;
         }
-        double BonVold = BonV;
-        double Btemp = 0, Dtemp = 0, h = 0, hOld = 0, dh = 0, dhOld = 0, gvvv = 0, fvvv = 0,
-                dhh = 1;
-        double d1 = 0, d2 = 0;
+        // double BonVold = BonV;
+        double Btemp = 0, dh = 0, h = 0;
+        // double Dtemp = 0, hOld = 0, dhOld = 0, gvvv = 0, fvvv = 0, d2 = 0, dhh = 1;
+        double d1 = 0;
         Btemp = getB();
-        Dtemp = getA();
+        // Dtemp = getA();
         if (Btemp <= 0) {
             logger.info("b negative in volume calc");
         }

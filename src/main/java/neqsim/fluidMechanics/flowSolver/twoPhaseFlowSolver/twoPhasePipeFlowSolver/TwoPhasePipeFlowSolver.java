@@ -1,8 +1,3 @@
-/*
- * OnePhasePipeFlowSolver.java
- *
- * Created on 17. januar 2001, 21:05
- */
 package neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver;
 
 import Jama.Matrix;

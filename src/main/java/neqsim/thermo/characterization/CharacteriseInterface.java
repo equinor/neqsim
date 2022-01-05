@@ -1,8 +1,3 @@
-/*
- * Characterize.java
- *
- * Created on 17. juli 2003, 12:04
- */
 package neqsim.thermo.characterization;
 
 /**

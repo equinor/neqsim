@@ -5,18 +5,13 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkCPAs;
 
 /**
- *
+ * This class defines a thermodynamic system using the CPA-EOS of Equinor equation of state
+ * 
  * @author Even Solbraa
  * @version
  */
-
-/**
- * This class defines a thermodynamic system using the CPA-EOS of Equinor equation of state
- */
 public class SystemSrkCPAstatoil extends SystemSrkCPAs {
     private static final long serialVersionUID = 1000;
-    /** Creates a thermodynamic system using the SRK equation of state. */
-    // SystemSrkEos clonedSystem;
 
     /**
      * Constructor of a fluid object using the CPA-EoS version of Equinor

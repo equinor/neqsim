@@ -64,21 +64,23 @@ public class ComponentGeDuanSun extends ComponentGE {
     public double getGammaNRTL(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij) {
         double type = phase.getInitType();
-        double A = 0, B = 0, C = 0, D = 0, E = 0, F = 0, ny = 0, tau = 0, tau2 = 0, G = 0, G2 = 0,
-                alpha = 0, Dij = 0, Djj = 0, Dji = 0, Dii = 0, gij = 0, gjj = 0, gji = 0, gii = 0,
-                F2T = 0, tot2 = 0;
-        int i, j, l, k, delta = 0;
-        double dAdT = 0, dBdT = 0, dEdT, dCdT = 0, dFdT = 0, dDdT = 0;
+        // double ny = 0, Djj = 0, Dii = 0, gij = 0, gjj = 0, gji = 0, gii = 0, F2T = 0, tot2 = 0;
+        double A = 0, B = 0, C = 0, D = 0, E = 0, F = 0, tau = 0, tau2 = 0, G = 0, G2 = 0,
+                alpha = 0, Dij = 0, Dji = 0;
+        // int i, k, delta = 0;
+        int j, l = 0;
+
+        double dAdT = 0, dBdT = 0, dCdT = 0, dDdT = 0;
+        // double dEdT, dFdT = 0;
         double dtaudt = 0, dtau2dt = 0, dGdt = 0, dG2dt = 0;
         double[][] Gmatrix = new double[numberOfComponents][numberOfComponents];
         double[][] tauMatrix = new double[numberOfComponents][numberOfComponents];
         dlngammadn = new double[numberOfComponents];
         ComponentInterface[] comp_Array = phase.getcomponentArray();
-        double lngammaold = 0, dlngammadtold = 0, dA2dTetter = 0, dA3dTetter = 0, dA4dTetter = 0,
-                dA5dTetter = 0, dA6dTetter = 0;
+        // double lngammaold = 0, dlngammadtold = 0;
+        double dA2dTetter = 0, dA3dTetter = 0, dA4dTetter = 0, dA5dTetter = 0, dA6dTetter = 0;
         // for(int w=0;w<3;w++){
         F = 0;
-        dFdT = 0;
         dBdT = 0;
         dAdT = 0;
         dDdT = 0;
@@ -128,7 +130,7 @@ public class ComponentGeDuanSun extends ComponentGE {
             B += G * comp_Array[j].getx();
             dBdT += dGdt * comp_Array[j].getx();
             E = G2 * comp_Array[j].getx();
-            dEdT = dG2dt * comp_Array[j].getx();
+            // dEdT = dG2dt * comp_Array[j].getx();
 
             C = 0;
             D = 0;
@@ -164,8 +166,8 @@ public class ComponentGeDuanSun extends ComponentGE {
             dtau2dt = -tau2 / temperature;
 
             F += E / C * (tau2 - D / C);
-            dFdT += (dEdT / C - E / (C * C) * dCdT) * (tau2 - D / C)
-                    + E / C * (dtau2dt - (dDdT / C - D / (C * C) * dCdT));
+            // dFdT += (dEdT / C - E / (C * C) * dCdT) * (tau2 - D / C) + E / C * (dtau2dt - (dDdT /
+            // C - D / (C * C) * dCdT));
             // F2T = F2T - 2*2*A/Math.pow(C,2) + 2*2*E*D/Math.pow(C,3); // A til A2;
         }
 
@@ -280,6 +282,7 @@ public class ComponentGeDuanSun extends ComponentGE {
      * 
      * }
      */
+
     /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase) {

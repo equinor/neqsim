@@ -191,8 +191,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
      * </p>
      */
     public void initCalc() {
-        double standgasdens, standliqdens, TC, PC;
-
         molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         MW = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         dens = new double[thermoSystem.getPhase(0).getNumberOfComponents()];

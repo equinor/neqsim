@@ -29,9 +29,6 @@ public class ContractSpecification {
     private double referencePressure = 0;
     private String unit = "", comments = "";
 
-    /**
-     * Creates a new instance of ContractSpecification
-     */
     public ContractSpecification() {}
 
     /**

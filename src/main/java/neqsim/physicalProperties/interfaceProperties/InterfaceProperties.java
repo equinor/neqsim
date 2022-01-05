@@ -127,6 +127,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
      * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) { return 0.0; }
      * else { return surfaceTension[numb]; } }
      */
+
     /** {@inheritDoc} */
     @Override
     public double getSurfaceTension(int numb1, int numb2) {

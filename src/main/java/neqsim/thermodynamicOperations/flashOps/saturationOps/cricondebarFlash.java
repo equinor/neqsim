@@ -261,7 +261,6 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                     - Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
                             * system.getPhases()[1].getComponents()[i].getx()
                             * system.getPressure()));
-
         }
         fvec.set(system.getPhase(0).getNumberOfComponents(), 0, 1.0 - sumxx);
         // logger.info("sumx" + sumxx);

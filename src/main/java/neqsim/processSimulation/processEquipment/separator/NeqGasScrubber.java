@@ -1,12 +1,6 @@
-/*
- * Separator.java
- *
- * Created on 12. mars 2001, 19:48
- */
 package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
-
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 import neqsim.processSimulation.processEquipment.stream.Stream;

@@ -1,8 +1,3 @@
-/*
- * AtractiveTermSrk.java
- *
- * Created on 13. mai 2001, 21:59
- */
 package neqsim.thermo.component.atractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
@@ -111,7 +106,6 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
                         - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
                         - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                                 / Math.sqrt(Tr) / TC);
-
     }
 
     /** {@inheritDoc} */

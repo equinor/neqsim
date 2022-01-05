@@ -54,8 +54,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
      * @param phase a int
      */
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-            int numberOfComponents, int type, int phase) { // type = 0 start init type =1 gi nye
-                                                           // betingelser
+            int numberOfComponents, int type, int phase) {
         for (int i = 0; i < numberOfComponents; i++) {
             componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type);
         }

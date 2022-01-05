@@ -68,11 +68,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         double oldtemp = temperature;
         if (type == 0) {
             refBWRSPhase.init(1.0, 1, 0, phase, 1.0);

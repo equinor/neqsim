@@ -21,9 +21,6 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
 
     protected Separator inletSeparator = null;
 
-    /**
-     * Creates a new instance of SnohvitCO2RemovalModule
-     */
     public CO2RemovalModule() {}
 
     /** {@inheritDoc} */

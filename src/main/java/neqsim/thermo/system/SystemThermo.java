@@ -950,7 +950,6 @@ abstract class SystemThermo implements SystemInterface {
             neqsim.util.exception.InvalidInputException e =
                     new neqsim.util.exception.InvalidInputException();
             throw new RuntimeException(e);
-
         }
 
         SystemInterface refSystem = null;
@@ -1754,9 +1753,10 @@ abstract class SystemThermo implements SystemInterface {
      * initAnalytic.
      * </p>
      *
-     * @param type a int
+     * @param type a int. 0 to initialize and 1 to reset, 2 to calculate T and P derivatives, 3 to
+     *        calculate all derivatives and 4 to calculate all derivatives numerically
      */
-    public void initAnalytic(int type) { // type = 0 start init type =1O give new conditions
+    public void initAnalytic(int type) {
         if (type == 0) {
             numberOfPhases = getMaxNumberOfPhases();
             for (int i = 0; i < getMaxNumberOfPhases(); i++) {
@@ -2521,6 +2521,7 @@ abstract class SystemThermo implements SystemInterface {
      * {@inheritDoc}
      *
      * method to return conductivity of a fluid
+     * 
      * @deprecated use {@link #getThermalConductivity()} instead.
      */
     @Deprecated
@@ -2537,6 +2538,7 @@ abstract class SystemThermo implements SystemInterface {
      * {@inheritDoc}
      *
      * method to return conductivity in a given unit
+     * 
      * @deprecated use {@link #getThermalConductivity(String unit)} instead.
      */
     @Deprecated

@@ -5,18 +5,14 @@ import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- *
+ * This class defines a thermodynamic system using the SRK equation of state
+ * 
  * @author Even Solbraa
  * @version
- */
-
-/**
- * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemPrGassemEos extends SystemPrEos {
     private static final long serialVersionUID = 1000;
 
-    // SystemPrEos clonedSystem;
     /**
      * <p>
      * Constructor for SystemPrGassemEos.

@@ -33,9 +33,6 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
     double reclaimerPressure = 0.17;
 
-    /**
-     * Creates a new instance of SnohvitCO2RemovalModule
-     */
     public MEGReclaimerModule() {}
 
     /** {@inheritDoc} */

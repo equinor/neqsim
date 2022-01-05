@@ -1,12 +1,8 @@
-/*
- * RacketFunction.java
- *
- * Created on 24. januar 2001, 21:15
- */
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompInterfaceTension;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>

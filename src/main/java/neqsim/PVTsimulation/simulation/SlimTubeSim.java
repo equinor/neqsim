@@ -165,7 +165,6 @@ public class SlimTubeSim extends BasePVTsimulation {
                     + " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
             System.out.println("oil recovery ratio" + totalAccumulatedVolumeAtStadardConditions
                     / totalReferenceNodeVolumeAtStadardConditions);
-
         }
 
         slimTubeNodeSystem[numberOfSlimTubeNodes].setTemperature(288.15);

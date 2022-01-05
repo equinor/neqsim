@@ -302,6 +302,7 @@ public class LinearProgrammingChemicalEquilibrium
      * 
      * return nEts; }
      */
+
     /**
      * <p>
      * calcx.

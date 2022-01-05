@@ -11,11 +11,7 @@ package neqsim.thermo.system;
 public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
-    public SystemSrkTwuCoonStatoilEos() {
+public SystemSrkTwuCoonStatoilEos() {
         super();
         modelName = "TwuCoonStatoil-EOS";
         attractiveTermNumber = 18;

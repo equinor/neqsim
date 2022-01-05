@@ -1,8 +1,3 @@
-/*
- * staticMixer.java
- *
- * Created on 11. mars 2001, 01:49
- */
 package neqsim.processSimulation.processEquipment.util;
 
 import org.apache.logging.log4j.LogManager;

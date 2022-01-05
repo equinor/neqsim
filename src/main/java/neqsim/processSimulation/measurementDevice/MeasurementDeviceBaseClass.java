@@ -63,9 +63,6 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     private String conditionAnalysisMessage = "";
     private double conditionAnalysisMaxDeviation = 0.0;
 
-    /**
-     * Creates a new instance of ProcessEquipmentBaseClass
-     */
     public MeasurementDeviceBaseClass() {}
 
     /** {@inheritDoc} */

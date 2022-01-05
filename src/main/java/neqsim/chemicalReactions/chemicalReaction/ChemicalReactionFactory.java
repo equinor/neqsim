@@ -18,9 +18,6 @@ import java.util.ArrayList;
 public class ChemicalReactionFactory {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a new instance of ChemicalReactionFactory
-     */
     public ChemicalReactionFactory() {}
 
     /**

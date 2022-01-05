@@ -19,9 +19,6 @@ import java.io.ObjectOutputStream;
  * @version $Id: $Id
  */
 public class SerializationManager {
-    /**
-     * Creates a new instance of SerializationManager
-     */
     public SerializationManager() {}
 
     /**

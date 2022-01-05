@@ -1,8 +1,3 @@
-/*
- * Conductivity.java
- *
- * Created on 1. november 2000, 19:00
- */
 package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.viscosity;
 
 import static java.lang.Double.NaN;

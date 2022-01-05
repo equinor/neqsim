@@ -1,8 +1,3 @@
-/*
- * Separator.java
- *
- * Created on 12. mars 2001, 19:48
- */
 package neqsim.processSimulation.processEquipment.tank;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
@@ -281,7 +276,6 @@ public class Tank extends ProcessEquipmentBaseClass {
                 * separatorLength;
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
                 * separatorLength;
-
     }
 
     /**

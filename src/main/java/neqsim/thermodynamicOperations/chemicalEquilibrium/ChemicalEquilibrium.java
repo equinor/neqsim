@@ -24,9 +24,6 @@ public class ChemicalEquilibrium extends BaseOperation {
 
     SystemInterface system;
 
-    /**
-     * Creates a new instance of ChemicalEquilibrium
-     */
     public ChemicalEquilibrium() {}
 
     /**
