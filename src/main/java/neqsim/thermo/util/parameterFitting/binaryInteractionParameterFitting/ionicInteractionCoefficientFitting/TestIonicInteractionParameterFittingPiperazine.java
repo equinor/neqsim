@@ -79,8 +79,7 @@ public class TestIonicInteractionParameterFittingPiperazine {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        //
-        //
+
         // optim.solve();
         // optim.runMonteCarloSimulation();
         // optim.displayCurveFit();

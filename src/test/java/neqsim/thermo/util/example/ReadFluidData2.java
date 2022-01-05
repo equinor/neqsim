@@ -8,16 +8,12 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-/*
+/**
+ * <p>
+ * ReadFluidData2 class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>ReadFluidData2 class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

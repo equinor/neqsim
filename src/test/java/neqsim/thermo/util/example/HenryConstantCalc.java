@@ -44,7 +44,7 @@ public class HenryConstantCalc {
         // System.out.println("Henrys Constant " +
         // testSystem.getPhase(0).getComponent("CO2").getx()/testSystem.getPhase(1).getComponent("CO2").getx()*testSystem.getPressure());
         // System.out.println("Henrys Constant2 " +
-        // testSystem.calcHenrysConstant("CO2"));//
+        // testSystem.calcHenrysConstant("CO2"));
         // System.out.println("activity MDEA " +
         // testSystem.getPhase(1).getActivityCoefficient(0));
         // double meanact2 = testSystem.getPhase(1).getMeanIonicActivity(0,1);

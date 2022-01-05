@@ -37,7 +37,6 @@ class CompressorTest {
         compressor1.setOutletPressure(pressure_Out);
         processOps.add(inletStream);
         processOps.add(compressor1);
-
     }
 
     /**

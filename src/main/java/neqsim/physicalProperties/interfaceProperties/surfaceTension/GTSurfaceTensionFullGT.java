@@ -50,7 +50,7 @@ public class GTSurfaceTensionFullGT {
     public GTSurfaceTensionFullGT(SystemInterface flashedSystem, int phase1, int phase2) {
         int i = 0;
 
-        /* Setup local system clone and some parameters. */
+        // Setup local system clone and some parameters.
         this.sys = (SystemInterface) flashedSystem.clone();
 
         this.ncomp = this.sys.getPhase(0).getNumberOfComponents();

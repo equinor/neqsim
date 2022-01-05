@@ -395,7 +395,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
                 // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_pure[i]));
                 // chem_pot[i] = R*T*(chem_ref[i] + Math.log(n_mol[i]/n_t)+
                 // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_pure[i]));
-                //
+
                 if (system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
                         .getReferenceStateType().equals("solvent")) {
                     chem_pot[i] = R * system.getPhase(phasenumb).getTemperature() * (chem_ref[i]

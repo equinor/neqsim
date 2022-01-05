@@ -2,7 +2,6 @@ package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.stirredCellSystem;
 
 import neqsim.thermo.system.SystemInterface;
 
-// import guiAuto.*;
 /**
  * <p>
  * StirredCellSystem class.
@@ -37,7 +36,7 @@ public class StirredCellSystem
                         thermoSystem, equipmentGeometry[0]);
 
         flowNode[totalNumberOfNodes - 1] = flowNode[0].getNextNode();
-        //
+
         super.createSystem();
         this.setNodes();
     }

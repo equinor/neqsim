@@ -6,14 +6,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
-*
-* @author esol @version
-*/
 /**
  * <p>TPflash1 class.</p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -26,9 +22,8 @@ public class TPflash1 {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-        // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);//
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 100.0, 0.5);//
-
+        // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 100.0, 0.5);
         // testSystem.addComponent("CO2", 10.01);
         testSystem.addComponent("water", 10.000083156844);
 

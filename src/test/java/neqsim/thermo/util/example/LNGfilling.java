@@ -6,16 +6,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author esol
- * 
- * @version
- */
 /**
  * <p>LNGfilling class.</p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

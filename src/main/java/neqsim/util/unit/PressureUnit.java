@@ -1,8 +1,3 @@
-/*
- * LengthUnit.java
- *
- * Created on 25. januar 2002, 20:23
- */
 package neqsim.util.unit;
 
 /**

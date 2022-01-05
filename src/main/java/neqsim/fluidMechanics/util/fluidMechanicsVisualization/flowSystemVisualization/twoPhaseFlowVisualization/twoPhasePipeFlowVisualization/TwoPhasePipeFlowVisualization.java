@@ -130,7 +130,7 @@ public class TwoPhasePipeFlowVisualization extends
     public void displayResult(String name) {
         // double[][] points = new double[1][1];
         setPoints();
-        //
+
         // if(name.equals("pressure")) points = pressurePoint;
         // if(name.equals("temperature")) points = temperaturePoint;
         // if(name.equals("velocity")) points = velocityPoint;

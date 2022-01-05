@@ -867,7 +867,7 @@ abstract class SystemThermo implements SystemInterface {
             // refSystem.init(1);
             // refSystem.display();
             // refSystem.getPhase(1).getComponent(0).setRacketZ(racketZ);
-            //
+
             // // refSystem.setTemperature(273.15+80.0);
             // // refSystem.setPressure(1.01325);
             // // refSystem.init(1);
@@ -1299,7 +1299,7 @@ abstract class SystemThermo implements SystemInterface {
                     phaseArray[phaseIndex[i]].getComponent(name).getNumberOfMolesInPhase(),
                     phaseArray[phaseIndex[i]].getComponent(name).getComponentNumber());
         }
-        //
+
         componentNames.remove(name);
         // System.out.println("removing " + componentNames.toString());
         numberOfComponents--;
@@ -1632,10 +1632,10 @@ abstract class SystemThermo implements SystemInterface {
                     getPhase(j).getComponent(i)
                             .setx(getPhase(0).getComponent(i).getz() / (1.0 - beta[phaseIndex[0]]
                                     + beta[phaseIndex[0]] * getPhase(0).getComponent(i).getK()));
-                } //
-                  // phaseArray[j].getComponents()[i].setx(phaseArray[0].getComponents()[i].getx()
-                  // / phaseArray[0].getComponents()[i].getK());
-                  // System.out.println("comp: " + j + i + " " + c[j][i].getx());
+                }
+                // phaseArray[j].getComponents()[i].setx(phaseArray[0].getComponents()[i].getx()
+                // / phaseArray[0].getComponents()[i].getK());
+                // System.out.println("comp: " + j + i + " " + c[j][i].getx());
             }
             getPhase(j).normalize();
         }
@@ -1655,10 +1655,10 @@ abstract class SystemThermo implements SystemInterface {
                     getPhase(j).getComponents()[i]
                             .setx(getPhase(0).getComponents()[i].getz() / (1.0 - beta[phaseIndex[0]]
                                     + beta[phaseIndex[0]] * getPhase(0).getComponents()[i].getK()));
-                } //
-                  // phaseArray[j].getComponents()[i].setx(phaseArray[0].getComponents()[i].getx()
-                  // / phaseArray[0].getComponents()[i].getK());
-                  // System.out.println("comp: " + j + i + " " + c[j][i].getx());
+                }
+                // phaseArray[j].getComponents()[i].setx(phaseArray[0].getComponents()[i].getx()
+                // / phaseArray[0].getComponents()[i].getK());
+                // System.out.println("comp: " + j + i + " " + c[j][i].getx());
             }
             // getPhase(j).normalize();
         }
@@ -2988,7 +2988,7 @@ abstract class SystemThermo implements SystemInterface {
      */
     @Override
     public final double getPressure() {
-        return phaseArray[0].getPressure();//
+        return phaseArray[0].getPressure();
     }
 
     /**
@@ -4461,7 +4461,6 @@ abstract class SystemThermo implements SystemInterface {
         return resultTable;
     }
 
-    //
     // public String[] getResultArray1(){
     // ArrayList list = new ArrayList();
     // for(int i=0;i<resultTable[0].length;i++){
@@ -4857,7 +4856,7 @@ abstract class SystemThermo implements SystemInterface {
         // else if(phaseTypeName.equals("water")) return 2;
         // else if(phaseTypeName.equals("liquid")) return 1;
         // else return 0;
-        //
+
         for (int i = 0; i < numberOfPhases; i++) {
             if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
                 return i;
@@ -4874,7 +4873,7 @@ abstract class SystemThermo implements SystemInterface {
         // else if(phaseTypeName.equals("water")) return 2;
         // else if(phaseTypeName.equals("liquid")) return 1;
         // else return 0;
-        //
+
         for (int i = 0; i < numberOfPhases; i++) {
             if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
                 return phaseIndex[i];

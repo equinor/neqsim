@@ -1,6 +1,6 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**

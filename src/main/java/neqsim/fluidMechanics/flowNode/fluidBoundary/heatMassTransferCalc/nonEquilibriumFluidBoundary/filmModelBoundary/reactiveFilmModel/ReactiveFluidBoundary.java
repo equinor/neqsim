@@ -489,7 +489,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
             df = -heatTransferCoefficient[0] * heatTransferCorrection[0]
                     - heatTransferCoefficient[1] * heatTransferCorrection[1];
             interphaseSystem.setTemperature(interphaseSystem.getTemperature() - f / df);
-            //
+
             // System.out.println("f " + f);
             // System.out.println("int temp " + interphaseSystem.getTemperature());
             // System.out.println("gas temp " + bulkSystem.getPhases()[0].getTemperature());

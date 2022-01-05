@@ -7,7 +7,6 @@ package neqsim.thermo.util.empiric;
  * @version $Id: $Id
  */
 public class BukacekWaterInGas {
-	
 	/*
      * Calculates the ppm(mol) water content of a gas at its water dew point                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
      */
@@ -47,12 +46,13 @@ public class BukacekWaterInGas {
 	public static double waterDewPointTemperature(double moleFractionWaterInGas, double pressure) {
 		int iter = 0;
 		double newppm, newTemp = 273.15;
-		  do {
-	            iter++;
-	            //
-	            newppm = getWaterInGas(newTemp, pressure);
-	            newTemp -= (newppm - moleFractionWaterInGas)*1e5;
-	        } while (Math.abs((newppm - moleFractionWaterInGas) / moleFractionWaterInGas) > 1e-8 && iter < 1000);
+		do {
+			iter++;
+
+			newppm = getWaterInGas(newTemp, pressure);
+			newTemp -= (newppm - moleFractionWaterInGas) * 1e5;
+		} while (Math.abs((newppm - moleFractionWaterInGas) / moleFractionWaterInGas) > 1e-8
+				&& iter < 1000);
 		return newTemp;
 	}
 
@@ -62,9 +62,9 @@ public class BukacekWaterInGas {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-		System.out.println("water in gas " + BukacekWaterInGas.getWaterInGas(273.15-18.0, 70.0));
-		
-        System.out.println(
-                "water dew point temperature " + (BukacekWaterInGas.waterDewPointTemperature(20.0e-6, 70.0) - 273.15));
+        System.out.println("water in gas " + BukacekWaterInGas.getWaterInGas(273.15 - 18.0, 70.0));
+
+        System.out.println("water dew point temperature "
+                + (BukacekWaterInGas.waterDewPointTemperature(20.0e-6, 70.0) - 273.15));
     }
 }

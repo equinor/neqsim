@@ -2,10 +2,8 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Eo
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -49,9 +47,7 @@ public class TestBinaryCPAfitToActivityCoefficientDB implements Cloneable {
                 SystemInterface testSystem = new SystemSrkCPAstatoil(
                         Double.parseDouble(dataSet.getString("Temperature")),
                         Double.parseDouble(dataSet.getString("Pressure")));
-                testSystem.addComponent(dataSet.getString("Component1"), x1); // legger til
-                                                                              // komponenter til
-                                                                              // systemet
+                testSystem.addComponent(dataSet.getString("Component1"), x1);
                 testSystem.addComponent(dataSet.getString("Component2"), x2);
                 // testSystem.chemicalReactionInit();
                 testSystem.createDatabase(true);

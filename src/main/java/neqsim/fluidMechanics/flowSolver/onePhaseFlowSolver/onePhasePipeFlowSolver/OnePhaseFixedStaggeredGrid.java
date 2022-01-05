@@ -1,5 +1,5 @@
 /*
- * steadstateOnePhasePipeFlowSolver.java
+ * OnePhaseFixedStaggeredGrid.java
  *
  * Created on 17. januar 2001, 21:10
  */
@@ -214,7 +214,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                             * diffMatrix.get(i, 0) * 1e-5
                             + pipe.getNode(i).getBulkSystem().getPressure());
             pipe.getNode(i).init();
-            // if(dynamic) System.out.println("i " + i +" diff 0 " +(diffMatrix.get(i, 0) )
+            // if(dynamic) System.out.println("i " + i +" diff 0 " +(diffMatrix.get(i,
+            // 0) )
             // + " new pressure " + pipe.getNode(i).getBulkSystem().getPressure());
         }
     }
@@ -230,14 +231,15 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).setVelocityIn(pipe.getNode(i).getVelocityIn().doubleValue()
                     + (solMatrix.get(i, 0) - pipe.getNode(i).getVelocityIn().doubleValue()));
-            // if(dynamic) System.out.println("i " + i +" diffvel 0 " +(solMatrix.get(i, 0)
+            // if(dynamic) System.out.println("i " + i +" diffvel 0 " +(solMatrix.get(i,
+            // 0)
             // - pipe.getNode(i).getVelocityIn().doubleValue()));
         }
 
         for (int i = 0; i < numberOfNodes; i++) {
             double meanVelocity = 0.0;
             if (i == numberOfNodes - 1) {
-                meanVelocity = pipe.getNode(i).getVelocityIn().doubleValue();//
+                meanVelocity = pipe.getNode(i).getVelocityIn().doubleValue();
             } else {
                 meanVelocity = (pipe.getNode(i).getVelocityIn().doubleValue()
                         + pipe.getNode(i).getVelocityOut().doubleValue()) / 2.0;
@@ -735,7 +737,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
                         // System.out.println("diff1: ");
                         // diffMatrix.print(10,10);
-                        // System.out.println("diff1: "+ diffMatrix.norm1()/solMatrix.norm1());
+                        // System.out.println("diff1: "+
+                        // diffMatrix.norm1()/solMatrix.norm1());
                         initVelocity(iter);
 
                         diff = Math.abs(diffMatrix.norm1() / solMatrix.norm1());
@@ -755,7 +758,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                             // sol2Matrix.print(10,10);
                             sol2Matrix = new Matrix(d, 1).transpose();
                             diffMatrix = sol2Matrix.minus(sol2Old);
-                            // System.out.println("diff2: "+diffMatrix.norm1()/sol2Matrix.norm1());
+                            // System.out.println("diff2:
+                            // "+diffMatrix.norm1()/sol2Matrix.norm1());
                             initPressure(iter);
                             diff = Math.abs(diffMatrix.norm1() / sol2Matrix.norm1());
                             if (diff > maxDiff) {

@@ -54,8 +54,9 @@ public class CompressorResponse {
         polytropicEfficiency = inputCompressor.getPolytropicEfficiency();
         power = inputCompressor.getPower("kW");
         speed = inputCompressor.getSpeed();
-        if(inputCompressor.getAntiSurge().isActive()){
-            internalVolumeFlow = inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
-        }   
+        if (inputCompressor.getAntiSurge().isActive()) {
+            internalVolumeFlow = inputCompressor.getCompressorChart().getSurgeCurve()
+                    .getSurgeFlow(polytropicHead);
+        }
     }
 }

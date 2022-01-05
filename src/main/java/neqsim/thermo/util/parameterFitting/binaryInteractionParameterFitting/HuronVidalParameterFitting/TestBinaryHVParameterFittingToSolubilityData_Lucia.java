@@ -222,7 +222,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
                 sample.setReference(Double.toString(testSystem.getTemperature()));
                 // double parameterGuess[] = {4239.63, -232.924, -5.01417, 2.3761};
                 // double parameterGuess[] ={3209.3031222305, -2016.3262143626, 4.2211091944,
-                // -3.3157456878};//
+                // -3.3157456878};
                 // double parameterGuess[] = {5640.0, -3793.0, -5.89, 8.9}; // HV CO2
                 // double parameterGuess[] ={5251.7374371982, -3121.2788585048, -0.8420253536,
                 // -0.5123316046};//;//,0.03};//co2 scsrk-ny

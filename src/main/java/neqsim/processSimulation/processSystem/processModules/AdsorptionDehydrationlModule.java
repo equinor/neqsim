@@ -174,7 +174,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
                 * bulkDensityDesiccant * adsorberInternalDiameter * adsorberInternalDiameter);
 
         double lenghtDiameterRatio = adsorbentFillingHeight / adsorberInternalDiameter;
-        // design is done here //
+        // design is done here
     }
 
     /** {@inheritDoc} */
@@ -184,7 +184,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
             adsorber[i].getMechanicalDesign().setInnerDiameter(adsorberInternalDiameter);
             adsorber[i].getMechanicalDesign().setTantanLength(adsorbentFillingHeight * 1.5);
         }
-        // set design is done here //
+        // set design is done here
     }
 
     /**

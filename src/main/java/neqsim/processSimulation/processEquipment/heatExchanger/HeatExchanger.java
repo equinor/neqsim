@@ -402,7 +402,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
-        //
         double entrop = 0.0;
 
         for (int i = 0; i < 2; i++) {
@@ -431,7 +430,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     /** {@inheritDoc} */
     @Override
     public double getMassBalance(String unit) {
-        //
         double mass = 0.0;
 
         for (int i = 0; i < 2; i++) {

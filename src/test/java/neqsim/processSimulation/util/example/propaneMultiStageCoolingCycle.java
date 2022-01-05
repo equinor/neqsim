@@ -7,7 +7,9 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>propaneMultiStageCoolingCycle class.</p>
+ * <p>
+ * propaneMultiStageCoolingCycle class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,12 +17,15 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  */
 public class propaneMultiStageCoolingCycle {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 15.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 15.00);
         testSystem.addComponent("propane", 261759.0, "kg/hr");
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);

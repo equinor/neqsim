@@ -61,7 +61,7 @@ public class TestSeparationTrain {
         ThrottlingValve thirdStageValve =
                 new ThrottlingValve("snohvit valve2", secondStageSeparator.getLiquidOutStream());
         thirdStageValve.setOutletPressure(thirdstagePressure);
-        //
+
         ThreePhaseSeparator thirdStageSeparator =
                 new ThreePhaseSeparator("3rd stage Separator", thirdStageValve.getOutStream());
 

@@ -301,7 +301,6 @@ public class TPmultiflash_1 extends TPflash {
                 return;
             }
         }
-        //
 
         // logger.info("STABILITY ANALYSIS: ");
         // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);*/

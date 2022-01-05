@@ -1,5 +1,5 @@
 /*
- * ChungViscosityMethod.java
+ * PFCTViscosityMethod.java
  *
  * Created on 1. august 2001, 12:44
  */

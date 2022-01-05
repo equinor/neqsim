@@ -6,14 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author esol @version
- */
 /**
- * <p>HeatOfVaporization class.</p>
+ * <p>
+ * HeatOfVaporization class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

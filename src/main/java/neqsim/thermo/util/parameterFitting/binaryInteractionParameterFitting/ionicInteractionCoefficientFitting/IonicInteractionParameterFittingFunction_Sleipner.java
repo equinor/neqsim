@@ -124,27 +124,26 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
                     .setWijParameter(MDEAplusNumb, AcidNumb, value);
 
             /*
-             * double a1 =
-             * ((ComponentEosInterface)system.getPhases()[1].getComponent(AcidNumb)).geta(); double
-             * a2 = ((ComponentEosInterface)system.getPhases()[1].getComponent(MDEANumb)).geta();
-             * double b1 =
-             * ((ComponentEosInterface)system.getPhases()[1].getComponent(AcidNumb)).getb(); double
-             * b2 = ((ComponentEosInterface)system.getPhases()[1].getComponent(MDEANumb)).getb();
-             * double g11 = -a1/b1*Math.log(2); double g22 = -a2/b2*Math.log(2); double g12 =
-             * -2*Math.sqrt(b1*b2)/(b1+b2)*Math.sqrt(g11*g22)*(1-(0.2)); double para0 = (g12-g22)/R;
-             * double para1 = (g12-g11)/R;
+             * double a1 = ((ComponentEosInterface)system.getPhases()[1].getComponent(AcidNumb)).
+             * geta(); double a2 =
+             * ((ComponentEosInterface)system.getPhases()[1].getComponent(MDEANumb)). geta(); double
+             * b1 = ((ComponentEosInterface)system.getPhases()[1].getComponent(AcidNumb)). getb();
+             * double b2 = ((ComponentEosInterface)system.getPhases()[1].getComponent(MDEANumb)).
+             * getb(); double g11 = -a1/b1*Math.log(2); double g22 = -a2/b2*Math.log(2); double g12
+             * = -2*Math.sqrt(b1*b2)/(b1+b2)*Math.sqrt(g11*g22)*(1-(0.2)); double para0 =
+             * (g12-g22)/R; double para1 = (g12-g11)/R;
              * 
              * ((HVmixingRuleInterface) ((PhaseEosInterface)system.getPhases()[0]).getMixingRule()).
              * setHValphaParameter(AcidNumb,MDEANumb,0); ((HVmixingRuleInterface)
              * ((PhaseEosInterface)system.getPhases()[1]).getMixingRule()).
              * setHValphaParameter(AcidNumb,MDEANumb,0); ((HVmixingRuleInterface)
-             * ((PhaseEosInterface)system.getPhases()[0]).getMixingRule()).setHVDijParameter
+             * ((PhaseEosInterface)system.getPhases()[0]).getMixingRule()). setHVDijParameter
              * (AcidNumb,MDEANumb,para0); ((HVmixingRuleInterface)
-             * ((PhaseEosInterface)system.getPhases()[1]).getMixingRule()).setHVDijParameter
+             * ((PhaseEosInterface)system.getPhases()[1]).getMixingRule()). setHVDijParameter
              * (AcidNumb,MDEANumb,para0); ((HVmixingRuleInterface)
-             * ((PhaseEosInterface)system.getPhases()[0]).getMixingRule()).setHVDijParameter
+             * ((PhaseEosInterface)system.getPhases()[0]).getMixingRule()). setHVDijParameter
              * (MDEANumb,AcidNumb,para1); ((HVmixingRuleInterface)
-             * ((PhaseEosInterface)system.getPhases()[1]).getMixingRule()).setHVDijParameter
+             * ((PhaseEosInterface)system.getPhases()[1]).getMixingRule()). setHVDijParameter
              * (MDEANumb,AcidNumb,para1); ((HVmixingRuleInterface)
              * ((PhaseEosInterface)system.getPhases()[0]).getMixingRule()).
              * setHVDijTParameter(AcidNumb,MDEANumb,0); ((HVmixingRuleInterface)

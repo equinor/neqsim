@@ -24,7 +24,7 @@ public class TestLevenbergMarquardt_MonteCarlo {
         TestFunction function = new TestFunction();
 
         double sample1[] = {0.1}; // temperature
-        double standardDeviation1[] = {0.1}; //
+        double standardDeviation1[] = {0.1};
         SampleValue sample_01 = new SampleValue(0.5, 0.05, sample1, standardDeviation1);
         sample_01.setFunction(function);
         sampleList.add(sample_01);

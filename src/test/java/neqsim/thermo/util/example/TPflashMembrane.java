@@ -6,16 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
+/**
+ * <p>
+ * TPflashMembrane class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>TPflashMembrane class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

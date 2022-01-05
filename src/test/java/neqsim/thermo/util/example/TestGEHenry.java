@@ -6,16 +6,10 @@ import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author esol
- * 
- * @version
- */
 /**
  * <p>TestGEHenry class.</p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -28,7 +22,6 @@ public class TestGEHenry {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        //
         SystemInterface testSystem = new SystemGEWilson(273.15 + 55.0, 1.301325);
         // SystemInterface testSystem = new SystemNRTL(273.15 + 55.0,1.301325);
 

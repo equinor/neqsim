@@ -316,7 +316,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     public double getFexpdVdV() {
         return 0.0;
     }
-    //
+
     // public double getFexpdVdVdV(){
     // return 0.0;temp
     // }
@@ -466,7 +466,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         // System.out.println("dFdT " + ((fold-fnew)/(2*dv)) + " super " +
         // (getFpoldT()+getFexpdT())*1e3+ " phasetype " +getPhaseTypeName());
         return (getFpoldT() + getFexpdT()) * 1e3;// (fold-fnew)/(2*dv);
-        //
+
         // // System.out.println("FT " + getFpoldT()*1e3+ " "+ getFexpdT()*1e3 + " super
         // " + super.dFdT() + " phasetype " +getPhaseTypeName());
         // return (getFpoldT()+getFexpdT())*1e3;
@@ -537,7 +537,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         return (fold - fnew) / (2 * dv);
         // return (getFpoldVdV()+getFexpdVdV())*1e3*1e-10;
     }
-    //
+
     // public double dFdVdVdV(){
     //
     // return getFpoldVdVdV();

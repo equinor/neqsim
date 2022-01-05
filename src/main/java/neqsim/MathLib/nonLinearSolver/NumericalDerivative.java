@@ -131,7 +131,6 @@ public class NumericalDerivative implements java.io.Serializable {
         // errt= Math.max(Math.abs(a[j][i]-a[j-1][i]),Math.abs(a[j][i]-a[j-1][i-1]));
         // // System.out.println("errt : " +errt);
         //
-        //
         // if(errt<=err){
         // err=errt;
         // ans=a[j][i];

@@ -5,9 +5,14 @@
  */
 package neqsim.standards;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import neqsim.standards.salesContract.BaseContract;
 import neqsim.standards.salesContract.ContractInterface;
 import neqsim.thermo.system.SystemInterface;

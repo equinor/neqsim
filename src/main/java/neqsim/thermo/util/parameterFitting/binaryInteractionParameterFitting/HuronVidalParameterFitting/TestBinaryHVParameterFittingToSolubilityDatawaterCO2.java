@@ -77,7 +77,7 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
                 // double parameterGuess[] = {5601.2391787479, -3170.8329162571, -1.7069851770,
                 // -0.5058509407}; // HV CO2
                 double parameterGuess[] =
-                        {5251.7374371982, -3121.2788585048, -0.8420253536, -0.5123316046};//
+                        {5251.7374371982, -3121.2788585048, -0.8420253536, -0.5123316046};
                 // double parameterGuess[] ={13694.7303713825, -807.1129937507, -10.4589547972,
                 // -10.9746096153};
                 function.setInitialGuess(parameterGuess);

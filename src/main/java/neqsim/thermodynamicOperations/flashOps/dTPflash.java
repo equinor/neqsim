@@ -22,8 +22,6 @@ public class dTPflash extends TPflash {
     static Logger logger = LogManager.getLogger(dTPflash.class);
     String[] flashComp = null;
 
-    // SystemInterface clonedSystem;
-
     /**
      * <p>
      * Constructor for dTPflash.

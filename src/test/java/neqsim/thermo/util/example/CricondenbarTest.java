@@ -42,7 +42,6 @@ public class CricondenbarTest {
             // testSystem.setTemperature(250.0);
             testOps.calcCricondenBar();
             // 8 testOps.TPflash();
-
         } catch (Exception e) {
             logger.error(e.toString());
         }

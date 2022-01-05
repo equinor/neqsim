@@ -46,7 +46,7 @@ public class TestClassicAcentricPlusDens {
         // ORDER BY Temperature ASC");
         ResultSet dataSet = database.getResultSet(
                 "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='nitrogen' AND VapourPressure>0 ORDER BY Temperature ASC");
-        double guess[] = {0.04};//
+        double guess[] = {0.04};
         try {
             logger.info("adding....");
             while (!dataSet.next()) {
@@ -58,7 +58,6 @@ public class TestClassicAcentricPlusDens {
                 // testSystem.useVolumeCorrection(false);
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 // testSystem.createDatabase(true);
-                // legger til komponenter til systemet
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
                                                      // pressure
@@ -135,9 +134,7 @@ public class TestClassicAcentricPlusDens {
                 // SystemInterface testSystem = new SystemPrEos(280, 0.001);
                 // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(280, 0.001);
                 testSystem.useVolumeCorrection(false);
-                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger
-                                                                                    // komponenter
-                                                                                    // til systemet
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("VapourPressure")));
                 testSystem.init(0);
                 testSystem.setMixingRule(1);
@@ -163,7 +160,7 @@ public class TestClassicAcentricPlusDens {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        //
+
         // optim.solve();
         // optim.runMonteCarloSimulation();
         optim.displayCurveFit();

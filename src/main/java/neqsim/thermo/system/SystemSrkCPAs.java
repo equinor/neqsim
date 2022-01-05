@@ -94,7 +94,7 @@ public class SystemSrkCPAs extends SystemSrkCPA {
         // for(int i = 0; i < numberOfPhases; i++) {
         // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
         // }
-        //
+
         return clonedSystem;
     }
 }

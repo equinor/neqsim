@@ -1237,7 +1237,7 @@ abstract class Component implements ComponentInterface {
         int iter = 0;
         do {
             iter++;
-            //
+
             nyPres = getAntoineVaporPressure(nyTemp);
             nyTemp -= (nyPres - pres);
             // nyTemp = nyTemp-(nyPres - pres)/getAntoineVaporPressuredT(nyTemp);

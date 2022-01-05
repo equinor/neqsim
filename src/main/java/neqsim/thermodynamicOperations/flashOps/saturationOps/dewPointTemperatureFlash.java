@@ -1,8 +1,3 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -67,7 +62,7 @@ public class dewPointTemperatureFlash extends constantDutyTemperatureFlash {
                 system.getPhases()[0].getComponents()[i].setx(1e-40);
             } else {
                 if (system.getPhases()[1].getComponents()[i].getName().equals("water")) {
-                    system.getPhases()[1].getComponents()[i].setx(1.0);//
+                    system.getPhases()[1].getComponents()[i].setx(1.0);
                 } else if (system.getPhases()[1].hasComponent("water")) {
                     system.getPhases()[1].getComponents()[i].setx(1.0e-10);
                 } else {

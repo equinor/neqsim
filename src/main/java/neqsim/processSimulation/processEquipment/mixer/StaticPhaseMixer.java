@@ -49,7 +49,6 @@ public class StaticPhaseMixer extends StaticMixer {
                 double[] moles = new double[numberOfPhases];
                 int[] phaseType = new int[numberOfPhases];
 
-                //
                 // her maa man egentlig sjekke at phase typen er den samme !!! antar at begge er
                 // to fase elle gass - tofase
                 for (int p = 0; p < numberOfPhases; p++) {
@@ -58,7 +57,7 @@ public class StaticPhaseMixer extends StaticMixer {
                     phaseType[p] = streams.get(k).getThermoSystem().getPhase(p).getPhaseType();
                 }
                 if (k == 1) {
-                    phaseType[0] = 0;//
+                    phaseType[0] = 0;
                     mixedStream.getThermoSystem().getPhase(1)
                             .setTemperature(streams.get(k).getThermoSystem().getTemperature());
                 }

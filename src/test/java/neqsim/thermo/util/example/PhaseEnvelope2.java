@@ -1,6 +1,3 @@
-/**
- * 
- */
 package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;

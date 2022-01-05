@@ -192,7 +192,7 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
                                         + getSphericalCoreRadiusHydrate()
                                                 / cavRadius[struccture][cavityType]
                                                 * delt(5.0, radius, struccture, cavityType))));
-        //
+
         pot = Math.exp(-pot / (phase.getTemperature())) * radius * radius;
         // System.out.println("pot " + pot);
         if (Double.isNaN(pot)) {

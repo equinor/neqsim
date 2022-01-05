@@ -20,7 +20,6 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * @version $Id: $Id
  */
 public class TestCp {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCp.class);
 
     /**

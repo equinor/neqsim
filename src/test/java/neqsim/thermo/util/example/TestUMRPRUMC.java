@@ -6,14 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author esol @version
- */
 /**
- * <p>TestUMRPRUMC class.</p>
+ * <p>
+ * TestUMRPRUMC class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -76,7 +74,6 @@ public class TestUMRPRUMC {
          */
         // testSystem.addComponent("water", 10.0);
         // testSystem.addComponent("n-octane", 10.0);
-        //
 
         // testSystem.addTBPfraction("C8", 1.0, 100.0 / 1000.0, 0.8);
         // testSystem.addTBPfraction("LP_C17", 0.03, 238.779998779297 / 1000.0,

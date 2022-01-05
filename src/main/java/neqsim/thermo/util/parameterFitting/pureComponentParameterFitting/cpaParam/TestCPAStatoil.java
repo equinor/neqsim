@@ -46,7 +46,7 @@ public class TestCPAStatoil {
                 SystemInterface testSystem = new SystemSrkCPAstatoil(280, 0.001);
                 // SystemInterface testSystem = new SystemSrkEos(280, 0.001);
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
-                testSystem.createDatabase(true); // legger til komponenter til systemet
+                testSystem.createDatabase(true);
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
                                                      // pressure

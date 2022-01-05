@@ -60,7 +60,6 @@ public class SystemPsrkEos extends SystemSrkEos {
             logger.error("Cloning failed.", e);
         }
 
-        //
         // for(int i = 0; i < numberOfPhases; i++) {
         // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
         // }

@@ -671,7 +671,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
-        //
         double entrop = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
             inletStreamMixer.getStream(i).getFluid().init(3);
@@ -694,7 +693,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     /** {@inheritDoc} */
     @Override
     public double getMassBalance(String unit) {
-        //
         double flow = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
             inletStreamMixer.getStream(i).getFluid().init(3);

@@ -5,7 +5,7 @@
  */
 package neqsim.statistics.experimentalSampleCreation.sampleCreator.wettedWallColumnSampleCreator;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.statistics.dataAnalysis.dataSmoothing.DataSmoothor;
 import neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData;
 import neqsim.statistics.experimentalEquipmentData.wettedWallColumnData.WettedWallColumnData;

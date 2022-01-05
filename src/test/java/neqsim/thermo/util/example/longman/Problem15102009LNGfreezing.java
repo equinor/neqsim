@@ -9,7 +9,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 /**
  * <p>Problem15102009LNGfreezing class.</p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

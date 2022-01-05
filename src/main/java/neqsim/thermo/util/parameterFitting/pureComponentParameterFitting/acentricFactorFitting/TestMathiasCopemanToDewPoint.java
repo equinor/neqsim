@@ -47,8 +47,7 @@ public class TestMathiasCopemanToDewPoint {
         // 0.547, -0.399, 1.575, //c-hexane
         // 0.846, -0.386, 0.884, // benzene
         // 1.087, -0.747, 1.577} ; //n-heptane
-        //
-        //
+
         // initial guess
         // double guess[] ={1.4184728684, -1.6053750221, 0.7429086086, // methane
         // 1.6853, -0.4284, 0.7382, //ethane
@@ -66,8 +65,7 @@ public class TestMathiasCopemanToDewPoint {
                 -5.5636308059, -1.4091055663, 0.8232405436, -0.3922156128, -1.4347079752,
                 1.3771397711, -1.2103436623, 0.0028643344, 1.3423413878, -0.3330681068,
                 -2.1604332713, 1.1554915030, -1.7359747766, 1.1084438340, 1.1800358360,
-                -1.4810259893, 1.4887592454};//
-
+                -1.4810259893, 1.4887592454};
         String nameList[] = {"methane", "ethane", "propane", "n-butane", "i-butane", "n-pentane",
                 "c-hexane", "benzene", "n-heptane"};
 
@@ -93,8 +91,11 @@ public class TestMathiasCopemanToDewPoint {
                         testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                         // testSystem.createDatabase(true);
                         double sample1[] = {testSystem.getPressure()}; // temperature
-                        double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev temperature //
-                                                                       // presure std.dev
+                        double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev
+                                                                       // temperature
+                                                                       //
+                                                                       // presure
+                                                                       // std.dev
                                                                        // pressure
                         double val = testSystem.getTemperature();
                         double stdErr = 1.0;
@@ -153,8 +154,11 @@ public class TestMathiasCopemanToDewPoint {
                     // Double.parseDouble(dataSet.getString("x10")));
                     // testSystem.createDatabase(true);
                     double sample1[] = {testSystem.getPressure()}; // temperature
-                    double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev temperature // presure
-                                                                   // std.dev pressure
+                    double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev
+                                                                   // temperature
+                                                                   // // presure
+                                                                   // std.dev
+                                                                   // pressure
                     double val = testSystem.getTemperature();
                     double stdErr = 1.0;
                     SampleValue sample = new SampleValue(val, stdErr, sample1, standardDeviation1);

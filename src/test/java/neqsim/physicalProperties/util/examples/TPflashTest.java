@@ -6,14 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author esol @version
- */
 /**
- * <p>TPflashTest class.</p>
+ * <p>
+ * TPflashTest class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

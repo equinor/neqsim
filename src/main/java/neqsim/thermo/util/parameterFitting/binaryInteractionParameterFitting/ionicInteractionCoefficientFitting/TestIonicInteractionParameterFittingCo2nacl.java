@@ -84,7 +84,7 @@ public class TestIonicInteractionParameterFittingCo2nacl {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        //
+
         optim.solve();
         // optim.runMonteCarloSimulation();
         // optim.displayCurveFit();

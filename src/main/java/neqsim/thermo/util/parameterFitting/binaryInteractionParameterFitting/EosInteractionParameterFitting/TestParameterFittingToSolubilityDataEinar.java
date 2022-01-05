@@ -46,7 +46,7 @@ public class TestParameterFittingToSolubilityDataEinar {
                 CPAParameterFittingToSolubilityData function =
                         new CPAParameterFittingToSolubilityData();
 
-                SystemInterface testSystem = new SystemPrEos(290, 1.0); // SystemPrEos //
+                SystemInterface testSystem = new SystemPrEos(290, 1.0); // SystemPrEos
                                                                         // SystemSrkSchwartzentruberEos
                                                                         // // SystemSrkEos
                                                                         // //SystemSrkMathiasCopemanEos

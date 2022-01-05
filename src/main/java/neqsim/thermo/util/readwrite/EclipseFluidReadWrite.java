@@ -224,7 +224,6 @@ public class EclipseFluidReadWrite {
                             .setVolumeCorrectionConst(SSHIFT.get(counter));
                 }
                 fluid.changeComponentName(name, names.get(counter));
-
             }
             // System.out.println(st);
             fluid.setMixingRule(2);

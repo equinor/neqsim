@@ -332,7 +332,7 @@ public class PropertyGenerator {
      * public void test(Dataset<Row> teenagersDF){ SparkSession spark = SparkSession .builder()
      * .appName("Java Spark SQL basic example") .config("spark.some.config.option", "some-value")
      * .getOrCreate(); // Dataset<Row> df =
-     * spark.read().json("examples./src/main/resources/people.json"); Dataset<Row> df = teenagersDF;
+     * spark.read().json("examples/src/main/resources/people.json"); Dataset<Row> df = teenagersDF;
      * // Displays the content of the DataFrame to stdout df.show(); }
      */
     /**
