@@ -13,13 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-/**
- * <p>TPflashTestPablo class.</p>
- *
- * @author asmund
- * @version $Id: $Id
- * @since 2.2.3
- */
 public class TPflashTestPablo {
     /**
      * <p>main.</p>

@@ -10,7 +10,7 @@ import neqsim.util.database.NeqSimDataBase;
 /**
  * <p>WaxFlash class.</p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

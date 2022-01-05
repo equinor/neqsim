@@ -7,13 +7,13 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * <p>ConsistencyTest class.</p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class ConsistencyTest {
     /**
-     * A easy implementation to test a thermodyanmic model
+     * A easy implementation to test a thermodynamic model
      *
      * @param args an array of {@link java.lang.String} objects
      */
