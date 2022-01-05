@@ -9,10 +9,12 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import Jama.Matrix;
 import neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot.lineFitPlot;
 
@@ -714,18 +716,6 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
             }
         } catch (Exception e) {
         }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void writeToCdfFile(String name) {
-        neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file =
-                new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
-        file.setOutputFileName(name);
-        file.setXvalues(xVal[0], "x", "sec");
-        file.setYvalues(expVal, "experimental", "meter");
-        file.setYvalues(calcVal, "calculated", "meter");
-        file.createFile();
     }
 
     /** {@inheritDoc} */

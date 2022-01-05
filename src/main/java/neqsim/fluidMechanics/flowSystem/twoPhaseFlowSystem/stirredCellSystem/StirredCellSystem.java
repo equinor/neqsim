@@ -172,6 +172,5 @@ public class StirredCellSystem
 
         pipe.getNode(0).display();
         pipe.getNode(10).display();
-        // pipe.getDisplay().createNetCdfFile("c:/temp5.nc");
     }
 }

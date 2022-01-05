@@ -2,8 +2,10 @@ package neqsim.thermo.util.parameterFitting.Procede.CH4CO2WaterMDEA;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -108,7 +110,6 @@ public class TestIonicInteractionParameterFittingCH4 {
 
         optim.solve();
         optim.displayCurveFit();
-        // optim.writeToCdfFile("c:/testFit.nc");
         // optim.writeToTextFile("c:/testFit.txt");
     }
 }

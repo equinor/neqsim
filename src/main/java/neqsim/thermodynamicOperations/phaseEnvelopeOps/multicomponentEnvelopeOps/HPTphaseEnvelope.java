@@ -6,11 +6,14 @@
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import java.awt.FlowLayout;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
@@ -113,10 +116,6 @@ public class HPTphaseEnvelope extends BaseOperation {
     public double[][] getPoints(int i) {
         return points;
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public void createNetCdfFile(String name) {}
 
     /** {@inheritDoc} */
     @Override

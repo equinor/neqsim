@@ -71,15 +71,6 @@ public interface StatisticsInterface {
 
     /**
      * <p>
-     * writeToCdfFile.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void writeToCdfFile(String name);
-
-    /**
-     * <p>
      * getNumberOfTuningParameters.
      * </p>
      *

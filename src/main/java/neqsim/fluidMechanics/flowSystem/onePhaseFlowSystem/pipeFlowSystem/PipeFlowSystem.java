@@ -197,7 +197,6 @@ public class PipeFlowSystem
         // pipe.getDisplay().displayResult("composition");
         // pipe.getDisplay().displayResult("pressure");
         // pipe.getDisplay().displayResult("composition");
-        // pipe.getDisplay().createNetCdfFile("c:/temp5.nc");
         // pipe.getDisplay(1).displayResult();
     }
 }

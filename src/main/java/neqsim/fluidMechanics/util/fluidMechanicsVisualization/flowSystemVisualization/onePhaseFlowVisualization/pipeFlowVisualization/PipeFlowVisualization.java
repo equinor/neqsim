@@ -173,24 +173,4 @@ public class PipeFlowVisualization extends
             System.out.println("plotting failed");
         }
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public void createNetCdfFile(String name) {
-        calcPoints(name);
-        neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF3D.NetCdf3D file =
-                new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF3D.NetCdf3D();
-        file.setOutputFileName(name);
-        file.setXvalues(timeArray, "time", "sec");
-        file.setYvalues(xPlace, "length", "meter");
-        file.setZvalues(temperaturePoint, "temperature [K]", "sec");
-        file.setZvalues(pressurePoint, "pressure [bar]", "sec");
-        file.setZvalues(velocityPoint, "velocity [m/sec]", "sec");
-        if (absTime.length > 1) {
-            for (int p = 0; p < flowNodes[0][0].getNumberOfComponents(); p++) {
-                file.setZvalues(bulkComposition[p], ("comp " + p), "sec");
-            }
-        }
-        file.createFile();
-    }
 }

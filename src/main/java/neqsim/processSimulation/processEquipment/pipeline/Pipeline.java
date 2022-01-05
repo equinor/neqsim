@@ -272,7 +272,6 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      */
     public void runTransient() {
         pipe.solveTransient(2);
-        pipe.getDisplay().createNetCdfFile(fileName);
     }
 
     /** {@inheritDoc} */

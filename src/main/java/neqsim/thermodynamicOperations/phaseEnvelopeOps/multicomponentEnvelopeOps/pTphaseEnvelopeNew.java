@@ -2,11 +2,14 @@ package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOp
 
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
@@ -29,8 +32,6 @@ public class pTphaseEnvelopeNew extends BaseOperation {
     double[] cricondenTherm = new double[3];
     double[] cricondenBar = new double[3];
     double phaseFraction = 1e-10;
-    neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file1;
-    neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file2;
     int i, j = 0, nummer = 0, iterations = 0, maxNumberOfIterations = 10000;
     double lowPres = 1.0;
     boolean outputToFile = false;
@@ -258,24 +259,6 @@ public class pTphaseEnvelopeNew extends BaseOperation {
             }
             // monitor.close();
             mainFrame.setVisible(false);
-
-            if (outputToFile) {
-                String name1 = new String();
-                name1 = fileName + "Dew.nc";
-                file1 = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
-                file1.setOutputFileName(name1);
-                file1.setXvalues(points2[2], "temp", "sec");
-                file1.setYvalues(points2[3], "pres", "meter");
-                file1.createFile();
-
-                String name2 = new String();
-                name2 = fileName + "Bub.nc";
-                file2 = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
-                file2.setOutputFileName(name2);
-                file2.setXvalues(points2[0], "temp", "sec");
-                file2.setYvalues(points2[1], "pres", "meter");
-                file2.createFile();
-            }
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -398,12 +381,6 @@ public class pTphaseEnvelopeNew extends BaseOperation {
         } else {
             return null;
         }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void createNetCdfFile(String name) {
-        fileName = name;
     }
 
     /** {@inheritDoc} */

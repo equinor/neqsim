@@ -88,7 +88,6 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
 
         // pipe.calcFluxes();
         // pipe.print();
-        pipe.getDisplay().createNetCdfFile("c:/temp5.nc");
         // pipe.displayResult();
         // testOps.TPflash();
         // testOps.displayResult();

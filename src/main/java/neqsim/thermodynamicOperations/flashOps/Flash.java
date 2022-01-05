@@ -7,6 +7,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
@@ -455,10 +456,6 @@ abstract class Flash extends BaseOperation {
     /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
-
-    /** {@inheritDoc} */
-    @Override
-    public void createNetCdfFile(String name) {}
 
     /** {@inheritDoc} */
     @Override

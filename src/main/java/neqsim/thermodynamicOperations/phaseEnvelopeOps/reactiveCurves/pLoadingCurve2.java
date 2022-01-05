@@ -2,13 +2,15 @@ package neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves;
 
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.dataPresentation.JFreeChart.graph2b;
-import neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -156,24 +158,6 @@ public class pLoadingCurve2 extends BaseOperation {
     @Override
     public double[][] getPoints(int i) {
         return points;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void createNetCdfFile(String name) {
-        NetCdf2D file = new NetCdf2D();
-        file.setOutputFileName(name);
-        file.setXvalues(points[0], "loading", "");
-        file.setYvalues(points[1], "total pressure", "");
-        file.setYvalues(points[2], " CO2 pressure", "");
-        for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
-            file.setYvalues(points[k + 3],
-                    "mol frac " + system.getPhases()[1].getComponents()[k].getComponentName(), "");
-            file.setYvalues(points[k + 3 + system.getPhases()[1].getNumberOfComponents()],
-                    ("activity " + system.getPhases()[1].getComponents()[k].getComponentName()),
-                    "");
-        }
-        file.createFile();
     }
 
     /** {@inheritDoc} */

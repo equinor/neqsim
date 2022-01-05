@@ -2,11 +2,14 @@ package neqsim.thermodynamicOperations;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.flashOps.CriticalPointFlash;
@@ -1724,18 +1727,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             logger.error("Thread did not finish");
         }
         getOperation().displayResult();
-    }
-
-    /**
-     * <p>
-     * writeNetCDF.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void writeNetCDF(String name) {
-        fileName = name;
-        getOperation().createNetCdfFile(name);
     }
 
     /**

@@ -6,11 +6,14 @@
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import java.text.DecimalFormat;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
@@ -42,8 +45,6 @@ public class pTphaseEnvelope extends BaseOperation {
     double[] cricondenBarX = new double[100];
     double[] cricondenBarY = new double[100];
     double phaseFraction = 1e-10;
-    neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file1;
-    neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file2;
     int i, j = 0, nummer = 0, iterations = 0, maxNumberOfIterations = 10000;
     double gibbsEnergy = 0, gibbsEnergyOld = 0;
     double Kold, deviation = 0, g0 = 0, g1 = 0, lowPres = 1.0;
@@ -494,30 +495,6 @@ public class pTphaseEnvelope extends BaseOperation {
                 double nef = 0.;
                 // logger.error("error", e2);
             }
-
-            try {
-                if (outputToFile) {
-                    // update this
-                    String name1 = new String();
-                    name1 = fileName + "Dew.nc";
-                    file1 = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
-                    file1.setOutputFileName(name1);
-                    file1.setXvalues(points2[2], "temp", "sec");
-                    file1.setYvalues(points2[3], "pres", "meter");
-                    file1.createFile();
-
-                    String name2 = new String();
-                    name2 = fileName + "Bub.nc";
-                    file2 = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
-                    file2.setOutputFileName(name2);
-                    file2.setXvalues(points2[0], "temp", "sec");
-                    file2.setYvalues(points2[1], "pres", "meter");
-                    file2.createFile();
-                }
-            } catch (Exception e3) {
-                double nef = 0.;
-                logger.error("error", e3);
-            }
         } catch (Exception e4) {
             double nef = 0.;
             logger.error("error", e4);
@@ -723,12 +700,6 @@ public class pTphaseEnvelope extends BaseOperation {
         } else {
             return null;
         }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void createNetCdfFile(String name) {
-        fileName = name;
     }
 
     /**

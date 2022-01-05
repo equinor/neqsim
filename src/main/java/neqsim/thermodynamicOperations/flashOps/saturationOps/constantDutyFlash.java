@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -106,10 +107,6 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
             logger.info("Temp: " + system.getTemperature());
         } while (Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7);
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public void createNetCdfFile(String name) {}
 
     /** {@inheritDoc} */
     @Override

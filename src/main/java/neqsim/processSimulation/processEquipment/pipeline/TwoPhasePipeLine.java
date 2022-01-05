@@ -64,6 +64,5 @@ public class TwoPhasePipeLine extends Pipeline {
         super.run();
         pipe.solveSteadyState(2);
         pipe.print();
-        pipe.getDisplay().createNetCdfFile(fileName);
     }
 }

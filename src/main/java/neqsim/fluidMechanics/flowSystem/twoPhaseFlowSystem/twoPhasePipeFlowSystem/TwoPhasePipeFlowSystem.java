@@ -158,7 +158,6 @@ public class TwoPhasePipeFlowSystem
         pipe.getNode(30).display();
         // pipe.calcFluxes();
         // pipe.getDisplay().displayResult("temperature");
-        // pipe.getDisplay().createNetCdfFile("c:/temp5.nc");
         // pipe.displayResults();
         // testOps.TPflash();
         // testOps.displayResult();

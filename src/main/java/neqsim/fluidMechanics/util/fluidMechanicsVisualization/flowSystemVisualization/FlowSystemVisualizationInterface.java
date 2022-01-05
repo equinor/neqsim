@@ -50,13 +50,4 @@ public interface FlowSystemVisualizationInterface {
      * @param abstime a double
      */
     public void setNextData(FlowSystemInterface system, double abstime);
-
-    /**
-     * <p>
-     * createNetCdfFile.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void createNetCdfFile(String name);
 }

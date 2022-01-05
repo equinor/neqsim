@@ -57,10 +57,6 @@ public abstract class BaseOperation implements OperationInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void createNetCdfFile(String name) {}
-
-    /** {@inheritDoc} */
-    @Override
     public double[][] getPoints(int i) {
         return null;
     }

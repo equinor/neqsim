@@ -7,6 +7,7 @@ package neqsim.thermodynamicOperations.chemicalEquilibrium;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 
@@ -85,10 +86,6 @@ public class ChemicalEquilibrium extends BaseOperation {
     /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
-
-    /** {@inheritDoc} */
-    @Override
-    public void createNetCdfFile(String name) {}
 
     /** {@inheritDoc} */
     @Override
