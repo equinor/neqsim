@@ -27,12 +27,6 @@ public class GeneralMath implements java.io.Serializable {
      * @return a double
      */
     public static double log10(double var) {
-        double calc = Math.log(var) / Math.log(10);
-        double calc2 = Math.log10(var);
-        if (Math.abs(calc2 - calc) < 1e-20) {
-            return calc2;
-        } else {
-            return calc;
-        }
+        return Math.log(var) / Math.log(10);
     }
 }
