@@ -1,4 +1,3 @@
-
 package neqsim.thermo.component.atractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
