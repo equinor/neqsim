@@ -46,10 +46,7 @@ public class TestParameterFittingToSolubilityDataEinar {
                 CPAParameterFittingToSolubilityData function =
                         new CPAParameterFittingToSolubilityData();
 
-                SystemInterface testSystem = new SystemPrEos(290, 1.0); // SystemPrEos
-                                                                        // SystemSrkSchwartzentruberEos
-                                                                        // // SystemSrkEos
-                                                                        // //SystemSrkMathiasCopemanEos
+                SystemInterface testSystem = new SystemPrEos(290, 1.0);
                 testSystem.addComponent("methane", 1.0); // CO2 // nitrogen // methane
                 testSystem.addComponent("water", 10.0);
                 testSystem.createDatabase(true);
@@ -58,13 +55,9 @@ public class TestParameterFittingToSolubilityDataEinar {
                 testSystem.setMixingRule(2);
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] =
-                        {testSystem.getPressure() / 100.0, testSystem.getTemperature() / 100.0}; // std.dev
-                                                                                                 // temperature
-                                                                                                 // //
-                                                                                                 // presure
-                                                                                                 // std.dev
-                                                                                                 // pressure
+                
+                                                                                                 double standardDeviation1[] =
+                        {testSystem.getPressure() / 100.0, testSystem.getTemperature() / 100.0};
                 SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),
                         Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
                         standardDeviation1);

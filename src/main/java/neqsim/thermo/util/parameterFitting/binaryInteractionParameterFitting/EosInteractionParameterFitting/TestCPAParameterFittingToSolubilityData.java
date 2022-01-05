@@ -62,8 +62,7 @@ public class TestCPAParameterFittingToSolubilityData {
 
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.13, 0.12}; // std.dev temperature // presure
-                                                            // std.dev pressure
+                                 double standardDeviation1[] = {0.13, 0.12};
                 double expVal = Double.parseDouble(dataSet.getString("x1"));
                 SampleValue sample = new SampleValue(expVal,
                         Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
@@ -94,7 +93,7 @@ public class TestCPAParameterFittingToSolubilityData {
          * testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
          * testSystem.setMixingRule(10); testSystem.init(0); double sample1[] =
          * {testSystem.getPressure(), testSystem.getTemperature()}; // temperature double
-         * standardDeviation1[] = {0.13}; // std.dev temperature // presure std.dev pressure double
+         * standardDeviation1[] = {0.13};  double
          * value = Double.parseDouble(dataSet.getString("y2")); SampleValue sample = new
          * SampleValue(value, value/100.0, sample1, standardDeviation1);
          * sample.setFunction(function); sample.setThermodynamicSystem(testSystem);

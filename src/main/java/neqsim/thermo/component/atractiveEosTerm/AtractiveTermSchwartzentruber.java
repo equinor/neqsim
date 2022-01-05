@@ -116,6 +116,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         } else {
             return getComponent().geta() * alpha(temperature);
         }
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -179,6 +180,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         } else {
             return getComponent().geta() * diffalphaT(temperature);
         }
+    }
 
     /** {@inheritDoc} */
     @Override

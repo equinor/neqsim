@@ -54,8 +54,7 @@ public class TestViscosityFit {
                 testSystem.setTemperature(temp);
                 testSystem.init(0);
                 double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                                 double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(Double.parseDouble(dataSet.getString("Viscosity")),
                                 Double.parseDouble(dataSet.getString("StdDev")), sample1,

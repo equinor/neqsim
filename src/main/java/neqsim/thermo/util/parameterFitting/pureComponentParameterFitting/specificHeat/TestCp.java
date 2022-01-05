@@ -57,7 +57,7 @@ public class TestCp {
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(5.0);
                 double sample1[] = {testSystem.getPhase(0).getComponent(0).getz()}; // temperature
-                double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev temperature // presure
+                double standardDeviation1[] = {0.1, 0.1, 0.1}; // presure
                                                                // std.dev pressure
                 double val = Double.parseDouble(dataSet.getString("HeatCapacityCp"));
 

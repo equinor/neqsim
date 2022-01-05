@@ -51,9 +51,8 @@ public class TestSolidAntoine_S8 {
 
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 double vappres = Double.parseDouble(dataSet.getString("VapourPressure"));
-                double standardDeviation1[] = {0.15}; // std.dev temperature // presure std.dev
-                                                      // pressure
-                SampleValue sample = new SampleValue(vappres,
+                double standardDeviation1[] = {0.15}; 
+                                                                      SampleValue sample = new SampleValue(vappres,
                         Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
                         standardDeviation1);
                 sample.setFunction(function);

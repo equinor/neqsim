@@ -65,9 +65,8 @@ public class TestIonicInteractionParameterFittingCo2nacl {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
                 double sample1[] = {pressure}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
-                                                      // pressure
-                double value = Double.parseDouble(dataSet.getString("x1-molfrac"));
+                double standardDeviation1[] = {0.01}; 
+                                                                      double value = Double.parseDouble(dataSet.getString("x1-molfrac"));
                 SampleValue sample =
                         new SampleValue(value, value / 100.0, sample1, standardDeviation1);
                 function.setInitialGuess(guess);

@@ -56,9 +56,7 @@ public class TestCPA_ice {
                 double val = testSystem.getPressure();
 
                 double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
-
+                double standardDeviation1[] = {0.1};                                                   
                 double stddev = val / 100.0;
                 double logVal = Math.log(val);
                 SampleValue sample = new SampleValue(val, stddev, sample1, standardDeviation1);
@@ -93,9 +91,9 @@ public class TestCPA_ice {
                 // double dens = Double.parseDouble(dataSet.getString("liquiddensity"));
                 double dens = Double.parseDouble(dataSet.getString("soliddensity"));
                 double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
+
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 // double guess[] = {46939.4738048507, 1.5971863018, 0.7623134978,
                 // 0.0292037583};
@@ -128,8 +126,7 @@ public class TestCPA_ice {
                 testSystem.init(0);
                 double dens = Double.parseDouble(dataSet.getString("gasdensity"));
                 double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 // double guess[] = {46939.4738048507, 1.5971863018, 0.7623134978,
@@ -163,11 +160,10 @@ public class TestCPA_ice {
                 testSystem.init(0);
                 double dens = Double.parseDouble(dataSet.getString("gasdensity"));
                 double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
-                SampleValue sample =
+                double standardDeviation1[] = {0.1}; 
+                                                                     SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
-                // double guess[] = {46939.4738048507, 1.5971863018, 0.7623134978,
+                // double guess[] = {46939.4738048507, 1.5971863018, 0.76231
                 // 0.0292037583};
 
                 // double guess[] = {9.341E4,1.953E0,1.756E-1,92.69,0.129};
