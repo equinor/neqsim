@@ -1,41 +1,58 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
-
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * freezingPointTemperatureFlashOld class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashOld.class);
 
-    /** Creates new bubblePointFlash */
-    public freezingPointTemperatureFlashOld() {
-    }
+    /**
+     * <p>
+     * Constructor for freezingPointTemperatureFlashOld.
+     * </p>
+     */
+    public freezingPointTemperatureFlashOld() {}
 
+    /**
+     * <p>
+     * Constructor for freezingPointTemperatureFlashOld.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public freezingPointTemperatureFlashOld(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
-        int iterations = 0, maxNumberOfIterations = 15000;
-        double yold = 0, ytotal = 1;
+        int iterations = 0;
+        // int maxNumberOfIterations = 15000;
+        // double yold = 0, ytotal = 1;
         double deriv = 0, funk = 0, funkOld = 0;
         double maxTemperature = 0, minTemperature = 1e6, oldTemperature = 0.0;
         for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
             if (system.getPhase(3).getComponent(k).fugcoef(system.getPhase(3)) < 9e4
-                    && system.getPhase(3).getComponent(k).doSolidCheck()) { // checks if solid can be formed from
+                    && system.getPhase(3).getComponent(k).doSolidCheck()) { // checks if solid can
+                                                                            // be formed from
                                                                             // component k
-                system.setTemperature(system.getPhases()[0].getComponents()[k].getMeltingPointTemperature());
+                system.setTemperature(
+                        system.getPhases()[0].getComponents()[k].getMeltingPointTemperature());
                 system.init(0);
                 system.init(1);
                 iterations = 0;
@@ -56,11 +73,17 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
                                 / system.getPhases()[i].getComponents()[k].getFugasityCoeffisient();
                         deriv -= 0.01 * system.getPhases()[i].getBeta()
                                 * (system.getPhases()[3].getComponents()[k].getFugasityCoeffisient()
-                                        * Math.exp(system.getPhases()[i].getComponents()[k].getdfugdt()) * -1.0
-                                        / Math.pow(system.getPhases()[i].getComponents()[k].getFugasityCoeffisient(),
+                                        * Math.exp(system.getPhases()[i].getComponents()[k]
+                                                .getdfugdt())
+                                        * -1.0
+                                        / Math.pow(
+                                                system.getPhases()[i].getComponents()[k]
+                                                        .getFugasityCoeffisient(),
                                                 2.0)
-                                        + Math.exp(system.getPhases()[3].getComponents()[k].getdfugdt())
-                                                / system.getPhases()[i].getComponents()[k].getFugasityCoeffisient());
+                                        + Math.exp(system.getPhases()[3].getComponents()[k]
+                                                .getdfugdt())
+                                                / system.getPhases()[i].getComponents()[k]
+                                                        .getFugasityCoeffisient());
                     }
                     if (iterations >= 2) {
                         deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);
@@ -71,8 +94,8 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
                     oldTemperature = system.getTemperature();
                     funkOld = funk;
 
-                    system.setTemperature(
-                            system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv);
+                    system.setTemperature(system.getTemperature()
+                            + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv);
 
                     logger.info("funk/deriv " + funk / deriv);
                     logger.info("temperature " + system.getTemperature());
@@ -93,8 +116,7 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
         // logger.info("max freezing temp " + maxTemperature);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
-
+    public void printToFile(String name) {}
 }

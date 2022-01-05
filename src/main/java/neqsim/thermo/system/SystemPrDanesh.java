@@ -1,9 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
-
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
@@ -12,7 +6,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,10 +14,14 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemPrDanesh extends SystemPrEos {
-
     private static final long serialVersionUID = 1000;
 
     // SystemPrEos clonedSystem;
+    /**
+     * <p>
+     * Constructor for SystemPrDanesh.
+     * </p>
+     */
     public SystemPrDanesh() {
         super();
         modelName = "PR-Danesh-EOS";
@@ -35,6 +33,14 @@ public class SystemPrDanesh extends SystemPrEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemPrDanesh.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemPrDanesh(double T, double P) {
         super(T, P);
         modelName = "PR-Danesh-EOS";
@@ -46,6 +52,15 @@ public class SystemPrDanesh extends SystemPrEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemPrDanesh.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemPrDanesh(double T, double P, boolean solidCheck) {
         this(T, P);
         modelName = "PR-Danesh-EOS";
@@ -77,8 +92,9 @@ public class SystemPrDanesh extends SystemPrEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemPrDanesh clone() {
         SystemPrDanesh clonedSystem = null;
         try {
             clonedSystem = (SystemPrDanesh) super.clone();
@@ -93,5 +109,4 @@ public class SystemPrDanesh extends SystemPrEos {
 
         return clonedSystem;
     }
-
 }

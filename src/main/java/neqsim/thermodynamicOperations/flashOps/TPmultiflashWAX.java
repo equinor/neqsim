@@ -1,38 +1,20 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * TPflash.java
- *
- * Created on 2. oktober 2000, 22:26
- */
 package neqsim.thermodynamicOperations.flashOps;
 
-import Jama.*;
-import java.util.*;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * TPmultiflashWAX class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
-
+public class TPmultiflashWAX extends TPflash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPmultiflashWAX.class);
 
@@ -45,27 +27,53 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
     boolean doStabilityAnalysis = true;
 
     /**
-     * Creates new TPflash
+     * <p>
+     * Constructor for TPmultiflashWAX.
+     * </p>
      */
-    public TPmultiflashWAX() {
-    }
+    public TPmultiflashWAX() {}
 
+    /**
+     * <p>
+     * Constructor for TPmultiflashWAX.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public TPmultiflashWAX(SystemInterface system) {
         super(system);
     }
 
+    /**
+     * <p>
+     * Constructor for TPmultiflashWAX.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param check a boolean
+     */
     public TPmultiflashWAX(SystemInterface system, boolean check) {
         super(system, check);
     }
 
-    public void calcMultiPhaseBeta() {
-    }
+    /**
+     * <p>
+     * calcMultiPhaseBeta.
+     * </p>
+     */
+    public void calcMultiPhaseBeta() {}
 
+    /**
+     * <p>
+     * setXY.
+     * </p>
+     */
     public void setXY() {
         for (int k = 0; k < system.getNumberOfPhases(); k++) {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                 if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                    system.getPhase(k).getComponents()[i].setx(system.getPhase(0).getComponents()[i].getz() / E[i]
+                    system.getPhase(k).getComponents()[i].setx(system.getPhase(0).getComponents()[i]
+                            .getz() / E[i]
                             / system.getPhase(k).getComponents()[i].getFugasityCoeffisient());
                 }
                 if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
@@ -74,8 +82,9 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
                 }
                 if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
                         && system.getPhase(k).getPhaseTypeName().equals("aqueous")) {
-                    system.getPhase(k).getComponents()[i].setx(system.getPhase(k).getComponents()[i].getNumberOfmoles()
-                            / system.getPhase(k).getNumberOfMolesInPhase());
+                    system.getPhase(k).getComponents()[i]
+                            .setx(system.getPhase(k).getComponents()[i].getNumberOfmoles()
+                                    / system.getPhase(k).getNumberOfMolesInPhase());
                 }
                 if (system.hasPhaseType("wax")) {
                     system.getPhaseOfType("wax").getComponents()[i].setx(0);
@@ -85,16 +94,29 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * calcE.
+     * </p>
+     */
     public void calcE() {
         E = new double[system.getPhase(0).getNumberOfComponents()];
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             for (int k = 0; k < system.getNumberOfPhases(); k++) {
-                E[i] += system.getPhase(k).getBeta() / system.getPhase(k).getComponents()[i].getFugasityCoeffisient();
+                E[i] += system.getPhase(k).getBeta()
+                        / system.getPhase(k).getComponents()[i].getFugasityCoeffisient();
             }
         }
     }
 
+    /**
+     * <p>
+     * calcQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcQ() {
         Q = 0;
         double betaTotal = 0;
@@ -124,9 +146,9 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
             for (int j = 0; j < system.getNumberOfPhases(); j++) {
                 Qmatrix[i][j] = 0;
                 for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-                    Qmatrix[i][j] += system.getPhase(0).getComponents()[k].getz()
-                            / (E[k] * E[k] * system.getPhase(j).getComponents()[k].getFugasityCoeffisient()
-                                    * system.getPhase(i).getComponents()[k].getFugasityCoeffisient());
+                    Qmatrix[i][j] += system.getPhase(0).getComponents()[k].getz() / (E[k] * E[k]
+                            * system.getPhase(j).getComponents()[k].getFugasityCoeffisient()
+                            * system.getPhase(i).getComponents()[k].getFugasityCoeffisient());
                 }
                 if (i == j) {
                     Qmatrix[i][j] += 1e-10;
@@ -136,6 +158,13 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
         return Q;
     }
 
+    /**
+     * <p>
+     * solveBeta.
+     * </p>
+     *
+     * @param updateFugacities a boolean
+     */
     public void solveBeta(boolean updateFugacities) {
         double oldBeta[] = new double[system.getNumberOfPhases()];
         double newBeta[] = new double[system.getNumberOfPhases()];
@@ -180,12 +209,12 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
             if (updateFugacities) {
                 system.init(1);
             }
-
         } while ((ans.norm2() > 1e-6 && iter < 20) || iter < 3);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void stabilityAnalysis() {
+    public void stabilityAnalysis() {
         double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
         double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
                 .getNumberOfComponents()];
@@ -198,25 +227,28 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
         tm = new double[system.getPhase(0).getNumberOfComponents()];
 
         SystemInterface minimumGibbsEnergySystem;
-        ArrayList clonedSystem = new ArrayList(1);
+        ArrayList<SystemInterface> clonedSystem = new ArrayList<SystemInterface>(1);
 
         int waxphasenumber = 5;
         minimumGibbsEnergySystem = (SystemInterface) system.clone();
-//        minimumGibbsEnergySystem.init(1);
+        // minimumGibbsEnergySystem.init(1);
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             double numb = 0;
             if (system.getPhase(0).getComponent(i).getx() < 1e-100) {
                 clonedSystem.add(null);
                 continue;
             }
-            clonedSystem.add(system.clone());
-//            ((SystemInterface)clonedSystem.get(i)).init(0); commented out sept 2005, Even S.
+            clonedSystem.add((SystemInterface) system.clone());
+            // ((SystemInterface)clonedSystem.get(i)).init(0); commented out sept 2005, Even
+            // S.
             for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-                numb = i == j ? 1.0 : 1.0e-12; // set to 0 by Even Solbraa 23.01.2013 - chaged back to 1.0e-12 27.04.13
+                numb = i == j ? 1.0 : 1.0e-12; // set to 0 by Even Solbraa 23.01.2013 - changed back
+                                               // to 1.0e-12 27.04.13
                 if (system.getPhase(0).getComponent(j).getz() < 1e-100) {
                     numb = 0;
                 }
-                ((SystemInterface) clonedSystem.get(i)).getPhase(waxphasenumber).getComponents()[j].setx(numb);
+                ((SystemInterface) clonedSystem.get(i)).getPhase(waxphasenumber).getComponents()[j]
+                        .setx(numb);
             }
             if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
                 ((SystemInterface) clonedSystem.get(i)).init(1);
@@ -230,8 +262,8 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
             sumz += minimumGibbsEnergySystem.getPhase(0).getComponents()[k].getz();
             for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
                 if (!(((SystemInterface) clonedSystem.get(k)) == null)) {
-                    sumw[k] += ((SystemInterface) clonedSystem.get(k)).getPhase(waxphasenumber).getComponents()[i]
-                            .getx();
+                    sumw[k] += ((SystemInterface) clonedSystem.get(k)).getPhase(waxphasenumber)
+                            .getComponents()[i].getx();
                 }
             }
         }
@@ -240,18 +272,21 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
             for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
                 if (!(((SystemInterface) clonedSystem.get(k)) == null)
                         && system.getPhase(0).getComponent(k).getx() > 1e-100) {
-                    ((SystemInterface) clonedSystem.get(k)).getPhase(waxphasenumber).getComponents()[i].setx(
-                            ((SystemInterface) clonedSystem.get(k)).getPhase(waxphasenumber).getComponents()[i].getx()
-                                    / sumw[0]);
+                    ((SystemInterface) clonedSystem.get(k)).getPhase(waxphasenumber)
+                            .getComponents()[i].setx(
+                                    ((SystemInterface) clonedSystem.get(k)).getPhase(waxphasenumber)
+                                            .getComponents()[i].getx() / sumw[0]);
                     // logger.info("x: " + ((SystemInterface)
                     // clonedSystem.get(k)).getPhase(0).getComponents()[i].getx());
                 }
             }
 
             if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
-                d[k] = Math.log(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents()[k].getx())
-                        + minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents()[k]
-                                .getLogFugasityCoeffisient();
+                d[k] = Math
+                        .log(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase]
+                                .getComponents()[k].getx())
+                        + minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase]
+                                .getComponents()[k].getLogFugasityCoeffisient();
             }
         }
 
@@ -277,14 +312,16 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
         }
         for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
             if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()) {
-                if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
+                if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass())
+                        - Mmax) < 1e-5) {
                     hydrocarbonTestCompNumb = i;
                     // logger.info("CHECKING heavy component " + hydrocarbonTestCompNumb);
                 }
             }
 
             if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()) {
-                if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
+                if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass())
+                        - Mmin) < 1e-5) {
                     lightTestCompNumb = i;
                     // logger.info("CHECKING light component " + lightTestCompNumb);
                 }
@@ -309,13 +346,13 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
 
                 for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                     oldlogw[i] = logWi[i];
-                    if (!Double.isInfinite(
-                            Math.log(((SystemInterface) clonedSystem.get(j)).getPhase(waxphasenumber).getComponents()[i]
-                                    .getLogFugasityCoeffisient()))
+                    if (!Double.isInfinite(Math
+                            .log(((SystemInterface) clonedSystem.get(j)).getPhase(waxphasenumber)
+                                    .getComponents()[i].getLogFugasityCoeffisient()))
                             && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-                        logWi[i] = d[i] - Math
-                                .log(((SystemInterface) clonedSystem.get(j)).getPhase(waxphasenumber).getComponents()[i]
-                                        .getFugasityCoeffisient());
+                        logWi[i] = d[i] - Math.log(
+                                ((SystemInterface) clonedSystem.get(j)).getPhase(waxphasenumber)
+                                        .getComponents()[i].getFugasityCoeffisient());
                         if (((SystemInterface) clonedSystem.get(j)).getPhase(1).getComponents()[i]
                                 .getIonicCharge() != 0) {
                             logWi[i] = -1000.0;
@@ -332,8 +369,8 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
                 }
 
                 for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                    ((SystemInterface) clonedSystem.get(j)).getPhase(waxphasenumber).getComponents()[i]
-                            .setx(Math.exp(logWi[i]) / sumw[j]);
+                    ((SystemInterface) clonedSystem.get(j)).getPhase(waxphasenumber)
+                            .getComponents()[i].setx(Math.exp(logWi[i]) / sumw[j]);
                 }
             } while (Math.abs(err) > 1e-9 && iter < 100);
 
@@ -341,7 +378,8 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
 
             for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
                 tm[j] -= Math.exp(logWi[i]);
-                x[j][i] = ((SystemInterface) clonedSystem.get(j)).getPhase(waxphasenumber).getComponents()[i].getx();
+                x[j][i] = ((SystemInterface) clonedSystem.get(j)).getPhase(waxphasenumber)
+                        .getComponents()[i].getx();
                 // logger.info("txji: " + x[j][i]);
             }
             if (iter >= 99) {
@@ -361,10 +399,12 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
                 system.setPhaseIndex(system.getNumberOfPhases() - 1, waxphasenumber);
                 unstabcomp = k;
                 for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
-                    system.getPhase(system.getNumberOfPhases() - 1).getComponents()[i].setx(x[k][i]);
+                    system.getPhase(system.getNumberOfPhases() - 1).getComponents()[i]
+                            .setx(x[k][i]);
                 }
                 multiPhaseTest = true;
-                system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
+                system.setBeta(system.getNumberOfPhases() - 1,
+                        system.getPhase(0).getComponent(unstabcomp).getz());
 
                 system.init(1);
                 system.normalizeBeta();
@@ -378,8 +418,9 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
         logger.info("tm1: " + tm[0] + "  tm2: " + tm[1]);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         // logger.info("Starting multiphase-flash....");
 
         // system.setNumberOfPhases(system.getNumberOfPhases()+1);
@@ -401,7 +442,8 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
                 // system.init(1);
                 this.solveBeta(true);
                 oldDiff = diff;
-                diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) / oldBeta);
+                diff = Math
+                        .abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) / oldBeta);
                 // logger.info("diff multiphase " + diff);
             } while (diff > 1e-5 && iterations < 50);
             // this.solveBeta(true);
@@ -424,7 +466,8 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
                 system.getChemicalReactionOperations().solveChemEq(phase, 1);
 
                 for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                    chemdev += Math.abs(xchem[i] - system.getPhase(phase).getComponents()[i].getx());
+                    chemdev +=
+                            Math.abs(xchem[i] - system.getPhase(phase).getComponents()[i].getx());
                 }
                 logger.info("chemdev: " + chemdev);
             }
@@ -440,7 +483,8 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
         }
         if (!hasRemovedPhase) {
             for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-                if (Math.abs(system.getPhase(i).getDensity() - system.getPhase(i + 1).getDensity()) < 1.1e-4) {
+                if (Math.abs(system.getPhase(i).getDensity()
+                        - system.getPhase(i + 1).getDensity()) < 1.1e-4) {
                     system.removePhaseKeepTotalComposition(i + 1);
                     doStabilityAnalysis = false;
                     hasRemovedPhase = true;
@@ -449,9 +493,9 @@ public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
         }
         /*
          * for (int i = 0; i < system.getNumberOfPhases()-1; i++) { if
-         * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())<
-         * 1e-6 && !hasRemovedPhase) { system.removePhase(i+1);
-         * doStabilityAnalysis=false; hasRemovedPhase = true; } }
+         * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())< 1e-6 &&
+         * !hasRemovedPhase) { system.removePhase(i+1); doStabilityAnalysis=false; hasRemovedPhase =
+         * true; } }
          */
         if (hasRemovedPhase) {
             run();

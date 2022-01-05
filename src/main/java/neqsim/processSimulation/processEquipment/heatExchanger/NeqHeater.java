@@ -3,21 +3,21 @@
  *
  * Created on 15. mars 2001, 14:17
  */
-
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * NeqHeater class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class NeqHeater extends Heater implements ProcessEquipmentInterface {
-
+public class NeqHeater extends Heater {
     private static final long serialVersionUID = 1000;
 
     StreamInterface outStream;
@@ -25,28 +25,41 @@ public class NeqHeater extends Heater implements ProcessEquipmentInterface {
     SystemInterface system;
     double dH = 0.0;
 
-    /** Creates new Heater */
-    public NeqHeater() {
-    }
+    /**
+     * <p>
+     * Constructor for NeqHeater.
+     * </p>
+     */
+    public NeqHeater() {}
 
+    /**
+     * <p>
+     * Constructor for NeqHeater.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public NeqHeater(Stream inStream) {
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public StreamInterface getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setOutTemperature(double temperature) {
+    public void setOutTemperature(double temperature) {
         this.setTemperature = true;
         this.temperatureOut = temperature;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         double oldH = system.getEnthalpy();
         if (setTemperature) {
@@ -63,8 +76,9 @@ public class NeqHeater extends Heater implements ProcessEquipmentInterface {
         outStream.setThermoSystem(system);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         System.out.println("heater dH: " + dH);
     }
 }

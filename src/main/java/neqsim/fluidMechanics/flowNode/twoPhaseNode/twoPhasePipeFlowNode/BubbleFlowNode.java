@@ -8,40 +8,65 @@ import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
-
+/**
+ * <p>BubbleFlowNode class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class BubbleFlowNode extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
     private double averageBubbleDiameter = 0.001;
 
+    /**
+     * <p>Constructor for BubbleFlowNode.</p>
+     */
     public BubbleFlowNode() {
         this.flowNodeType = "bubble";
     }
 
+    /**
+     * <p>Constructor for BubbleFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public BubbleFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "bubble";
         this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
-    public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
+    /**
+     * <p>Constructor for BubbleFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
+    public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem,
+            GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "bubble";
         this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcGasLiquidContactArea() {
+    public double calcGasLiquidContactArea() {
         interphaseContactArea = pipe.getNodeLength() * interphaseContactLength[0];
         return interphaseContactArea;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void initFlowCalc() {
-
+    public void initFlowCalc() {
         // phaseFraction[0] = bulkSystem.getPhase(0).getBeta();
         phaseFraction[0] = getBulkSystem().getVolumeFraction(0);
         phaseFraction[1] = 1.0 - phaseFraction[0];
@@ -51,8 +76,9 @@ public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
         initVelocity();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public BubbleFlowNode clone() {
         BubbleFlowNode clonedSystem = null;
         try {
             clonedSystem = (BubbleFlowNode) super.clone();
@@ -63,18 +89,21 @@ public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         // System.out.println("len " + this.calcContactLength());
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcContactLength() {
-        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-                + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    public double calcContactLength() {
+        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
+                * (1.0 - 2.0 * phaseFraction[1] + Math.pow(phaseFraction[1], 1.0 / 3.0)
+                        - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
         wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
         interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -90,8 +119,9 @@ public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         BubbleFlowNode newNode = (BubbleFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -102,8 +132,15 @@ public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return newNode;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-        SystemInterface testSystem = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(295.3, 50.01325);
+        SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkSchwartzentruberEos(295.3, 50.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         PipeData pipe1 = new PipeData(0.0250203, 0.00025);
         testSystem.addComponent("CO2", 100.1061152181, "kg/hr", 0);
@@ -157,10 +194,20 @@ public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
         System.out.println("contact length " + test.getInterphaseContactArea());
     }
 
+    /**
+     * <p>Getter for the field <code>averageBubbleDiameter</code>.</p>
+     *
+     * @return a double
+     */
     public double getAverageBubbleDiameter() {
         return averageBubbleDiameter;
     }
 
+    /**
+     * <p>Setter for the field <code>averageBubbleDiameter</code>.</p>
+     *
+     * @param averageBubbleDiameter a double
+     */
     public void setAverageBubbleDiameter(double averageBubbleDiameter) {
         this.averageBubbleDiameter = averageBubbleDiameter;
     }

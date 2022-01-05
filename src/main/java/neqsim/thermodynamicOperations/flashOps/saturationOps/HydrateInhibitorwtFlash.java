@@ -1,17 +1,20 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * HydrateInhibitorwtFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
 
     double wtfrac = 0.5;
@@ -20,44 +23,60 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
     static Logger logger = LogManager.getLogger(HydrateInhibitorwtFlash.class);
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for HydrateInhibitorwtFlash.
+     * </p>
      */
-    public HydrateInhibitorwtFlash() {
-    }
+    public HydrateInhibitorwtFlash() {}
 
+    /**
+     * <p>
+     * Constructor for HydrateInhibitorwtFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param inhibitor a {@link java.lang.String} object
+     * @param wtfr a double
+     */
     public HydrateInhibitorwtFlash(SystemInterface system, String inhibitor, double wtfr) {
         super(system);
         wtfrac = wtfr;
         this.inhibitor = inhibitor;
-
     }
 
+    /**
+     * <p>
+     * stop.
+     * </p>
+     */
     public void stop() {
         system = null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
-
+    public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         int iter = 0;
         double oldWt = 1.0, newWt = 2.0;
-        double error = 1.0, oldError = 1.0, oldC = system.getPhase(0).getComponent(inhibitor).getNumberOfmoles();
+        double error = 1.0, oldError = 1.0,
+                oldC = system.getPhase(0).getComponent(inhibitor).getNumberOfmoles();
         double derrordC = 1.0;
         do {
             iter++;
             try {
-                derrordC = (error - oldError) / (system.getPhase(0).getComponent(inhibitor).getNumberOfmoles() - oldC);
+                derrordC = (error - oldError)
+                        / (system.getPhase(0).getComponent(inhibitor).getNumberOfmoles() - oldC);
                 oldError = error;
                 oldC = system.getPhase(0).getComponent(inhibitor).getNumberOfmoles();
 
                 if (iter < 4) {
                     system.addComponent(inhibitor, error * 0.01);
                 } else {
-
                     double newC = -error / derrordC;
                     double correction = newC * 0.5;// (newC -
-                                                   // system.getPhase(0).getComponent(inhibitor).getNumberOfmoles()) *
+                                                   // system.getPhase(0).getComponent(inhibitor).getNumberOfmoles())
+                                                   // *
                                                    // 0.5;
 
                     system.addComponent(inhibitor, correction);
@@ -70,36 +89,45 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
                     wtp = system.getPhase("aqueous").getComponent(inhibitor).getx()
                             * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass()
                             / (system.getPhase("aqueous").getComponent(inhibitor).getx()
-                                    * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass()
+                                    * system.getPhase("aqueous").getComponent(inhibitor)
+                                            .getMolarMass()
                                     + system.getPhase("aqueous").getComponent("water").getx()
-                                            * system.getPhase("aqueous").getComponent("water").getMolarMass());
+                                            * system.getPhase("aqueous").getComponent("water")
+                                                    .getMolarMass());
                 } else {
                     system.addComponent(inhibitor, system.getTotalNumberOfMoles());
                     ops.TPflash();
                     wtp = system.getPhase("aqueous").getComponent(inhibitor).getx()
                             * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass()
                             / (system.getPhase("aqueous").getComponent(inhibitor).getx()
-                                    * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass()
+                                    * system.getPhase("aqueous").getComponent(inhibitor)
+                                            .getMolarMass()
                                     + system.getPhase("aqueous").getComponent("water").getx()
-                                            * system.getPhase("aqueous").getComponent("water").getMolarMass());
+                                            * system.getPhase("aqueous").getComponent("water")
+                                                    .getMolarMass());
 
                 }
                 error = -(wtp - wtfrac);
 
                 logger.info("error " + error);
-
             } catch (Exception e) {
                 logger.error("error", e);
             }
-
         } while ((Math.abs(error) > 1e-5 && iter < 100) || iter < 3);
         // system.display();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 0, 100.0);
 

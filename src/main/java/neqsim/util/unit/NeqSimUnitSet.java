@@ -1,27 +1,19 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package neqsim.util.unit;
 
 /**
+ * <p>
+ * NeqSimUnitSet class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class NeqSimUnitSet {
-
     /**
+     * <p>
+     * Getter for the field <code>componentConcentrationUnit</code>.
+     * </p>
+     *
      * @return the componentConcentrationUnit
      */
     public String getComponentConcentrationUnit() {
@@ -29,6 +21,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>componentConcentrationUnit</code>.
+     * </p>
+     *
      * @param componentConcentrationUnit the componentConcentrationUnit to set
      */
     public void setComponentConcentrationUnit(String componentConcentrationUnit) {
@@ -38,6 +34,10 @@ public class NeqSimUnitSet {
     private static final long serialVersionUID = 1000;
 
     /**
+     * <p>
+     * Getter for the field <code>flowRateUnit</code>.
+     * </p>
+     *
      * @return the flowRateUnit
      */
     public String getFlowRateUnit() {
@@ -45,6 +45,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>flowRateUnit</code>.
+     * </p>
+     *
      * @param flowRateUnit the flowRateUnit to set
      */
     public void setFlowRateUnit(String flowRateUnit) {
@@ -52,6 +56,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>pressureUnit</code>.
+     * </p>
+     *
      * @return the pressureUnit
      */
     public String getPressureUnit() {
@@ -59,6 +67,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>pressureUnit</code>.
+     * </p>
+     *
      * @param pressureUnit the pressureUnit to set
      */
     public void setPressureUnit(String pressureUnit) {
@@ -66,6 +78,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>temperatureUnit</code>.
+     * </p>
+     *
      * @return the temperatureUnit
      */
     public String getTemperatureUnit() {
@@ -73,6 +89,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>temperatureUnit</code>.
+     * </p>
+     *
      * @param temperatureUnit the temperatureUnit to set
      */
     public void setTemperatureUnit(String temperatureUnit) {
@@ -83,5 +103,4 @@ public class NeqSimUnitSet {
     private String pressureUnit = "bara";
     private String flowRateUnit = "mol/sec";
     private String componentConcentrationUnit = "molefraction";
-
 }

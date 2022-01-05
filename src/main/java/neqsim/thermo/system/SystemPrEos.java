@@ -15,11 +15,9 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * @version
  */
 /**
- * This class defines a thermodynamic system using the Peng Robinson equation of
- * state
+ * This class defines a thermodynamic system using the Peng Robinson equation of state
  */
 public class SystemPrEos extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -59,10 +57,10 @@ public class SystemPrEos extends SystemEos {
     /**
      * Constructor of a fluid object using the PR-EoS (Peng Robinson)
      *
-     * @param T          The temperature in unit Kelvin
-     * @param P          The pressure in unit bara (absolute pressure)
-     * @param solidCheck a boolean variable specifying if solid phase check and
-     *                   calculation should be done
+     * @param T The temperature in unit Kelvin
+     * @param P The pressure in unit bara (absolute pressure)
+     * @param solidCheck a boolean variable specifying if solid phase check and calculation should
+     *        be done
      */
     public SystemPrEos(double T, double P, boolean solidCheck) {
         this(T, P);
@@ -95,8 +93,9 @@ public class SystemPrEos extends SystemEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemPrEos clone() {
         SystemPrEos clonedSystem = null;
         try {
             clonedSystem = (SystemPrEos) super.clone();
@@ -110,5 +109,4 @@ public class SystemPrEos extends SystemEos {
         // }
         return clonedSystem;
     }
-
 }

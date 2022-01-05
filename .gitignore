@@ -42,6 +42,7 @@ pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
 pom.xml.next
+.flattened-pom.xml
 release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
@@ -61,9 +62,15 @@ nbdist/
 .vs/
 .vscode/
 
+# git merge files
+*.orig
+*.rej
+
 # End of https://www.gitignore.io/api/java,maven,netbeans
 /bin/
 src/main/java/neqsim/util/database/NeqSimDataBase2.java
 
 neqsim.iml
 .classpath
+
+.DS_Store

@@ -1,29 +1,27 @@
-/*
- * pTphaseEnvelope.java
- *
- * Created on 14. oktober 2000, 21:59
- */
-
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * pLoadingCurve2 class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class pLoadingCurve2 extends BaseOperation implements OperationInterface, java.io.Serializable {
-
+public class pLoadingCurve2 extends BaseOperation {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pLoadingCurve2.class);
 
@@ -34,7 +32,7 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
     double lnOldOldK[], lnK[];
     double lnOldK[];
     double oldDeltalnK[], deltalnK[];
-    double tm[] = { 1, 1 };
+    double tm[] = {1, 1};
     double beta = 1e-5;
     int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
     JProgressBar monitor;
@@ -49,10 +47,20 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
     // points[2] = new double[1000];
     int speceq = 0;
 
-    /** Creates new bubblePointFlash */
-    public pLoadingCurve2() {
-    }
+    /**
+     * <p>
+     * Constructor for pLoadingCurve2.
+     * </p>
+     */
+    public pLoadingCurve2() {}
 
+    /**
+     * <p>
+     * Constructor for pLoadingCurve2.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public pLoadingCurve2(SystemInterface system) {
         this.system = system;
         lnOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -74,8 +82,9 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
         mainFrame.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         int numbPoints = 50;
         double inscr = 0.2103842275;
         points[0] = new double[numbPoints];
@@ -106,10 +115,11 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
 
             for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
                 points[k + 3][i] = system.getPhases()[1].getComponents()[k].getx();
-                points[k + 3 + system.getPhases()[1].getNumberOfComponents()][i] = system.getPhase(1)
-                        .getActivityCoefficient(k, 1);// ,1);
+                points[k + 3 + system.getPhases()[1].getNumberOfComponents()][i] =
+                        system.getPhase(1).getActivityCoefficient(k, 1);// ,1);
             }
-            logger.info("point: " + points[0][i] + " tot pres  " + points[1][i] + " CO2 pres  " + points[2][i]);
+            logger.info("point: " + points[0][i] + " tot pres  " + points[1][i] + " CO2 pres  "
+                    + points[2][i]);
             system.setPressure(points[1][i]);
             logger.info("ph: " + system.getPhases()[1].getpH());
             system.addComponent("CO2", inscr);
@@ -117,8 +127,9 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
         mainFrame.setVisible(false);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -126,58 +137,66 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
         double TC = system.getTC();
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
-        String[] navn = { "CO2 fugacity", "", "", "" };
-        String title2 = "";
+        String[] navn = {"CO2 fugacity", "", "", ""};
         String title = "CO2 vapour pressure";
 
         graph2b graph2 = new graph2b(points, navn, title, "loading [-]", "Fugacity CO2 [bar]");
         graph2.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-        neqsim.dataPresentation.dataHandeling printDat = new neqsim.dataPresentation.dataHandeling();
+    public void printToFile(String name) {
+        neqsim.dataPresentation.dataHandeling printDat =
+                new neqsim.dataPresentation.dataHandeling();
         printDat.printToFile(points, name);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return points;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         NetCdf2D file = new NetCdf2D();
         file.setOutputFileName(name);
         file.setXvalues(points[0], "loading", "");
         file.setYvalues(points[1], "total pressure", "");
         file.setYvalues(points[2], " CO2 pressure", "");
         for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
-            file.setYvalues(points[k + 3], "mol frac " + system.getPhases()[1].getComponents()[k].getComponentName(),
-                    "");
+            file.setYvalues(points[k + 3],
+                    "mol frac " + system.getPhases()[1].getComponents()[k].getComponentName(), "");
             file.setYvalues(points[k + 3 + system.getPhases()[1].getNumberOfComponents()],
-                    ("activity " + system.getPhases()[1].getComponents()[k].getComponentName()), "");
+                    ("activity " + system.getPhases()[1].getComponents()[k].getComponentName()),
+                    "");
         }
         file.createFile();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double[] get(String name) {
+    public double[] get(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return system;
     }
 }

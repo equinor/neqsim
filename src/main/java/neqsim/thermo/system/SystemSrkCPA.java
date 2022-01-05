@@ -18,7 +18,6 @@ import neqsim.thermo.phase.PhaseSrkCPA;
  * This class defines a thermodynamic system using the CPA EoS equation of state
  */
 public class SystemSrkCPA extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -35,6 +34,14 @@ public class SystemSrkCPA extends SystemSrkEos {
         commonInitialization();
     }
 
+    /**
+     * <p>
+     * Constructor for SystemSrkCPA.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemSrkCPA(double T, double P) {
         super(T, P);
         modelName = "CPA-SRK-EOS";
@@ -47,6 +54,15 @@ public class SystemSrkCPA extends SystemSrkEos {
         commonInitialization();
     }
 
+    /**
+     * <p>
+     * Constructor for SystemSrkCPA.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemSrkCPA(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
         for (int i = 0; i < numberOfPhases; i++) {
@@ -74,8 +90,9 @@ public class SystemSrkCPA extends SystemSrkEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemSrkCPA clone() {
         SystemSrkCPA clonedSystem = null;
         try {
             clonedSystem = (SystemSrkCPA) super.clone();
@@ -86,18 +103,24 @@ public class SystemSrkCPA extends SystemSrkEos {
         // for(int i = 0; i < numberOfPhases; i++) {
         // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
         // }
-        //
+
         return clonedSystem;
     }
 
+    /**
+     * <p>
+     * commonInitialization.
+     * </p>
+     */
     public void commonInitialization() {
         setImplementedCompositionDeriativesofFugacity(true);
         setImplementedPressureDeriativesofFugacity(true);
         setImplementedTemperatureDeriativesofFugacity(true);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void addComponent(String componentName, double moles) {
+    public void addComponent(String componentName, double moles) {
         // if (componentName.equals("Ca++") || componentName.equals("Na+") ||
         // componentName.equals("Cl-")) {
         // componentName = "NaCl";

@@ -1,26 +1,17 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package neqsim.thermo.characterization;
 
-import Jama.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
-public class NewtonSolveAB extends Object implements java.io.Serializable {
+/**
+ * <p>NewtonSolveAB class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class NewtonSolveAB implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     int iter = 0;
     Matrix Jac;
@@ -32,9 +23,17 @@ public class NewtonSolveAB extends Object implements java.io.Serializable {
 
     SystemInterface system = null;
 
-    public NewtonSolveAB() {
-    }
+    /**
+     * <p>Constructor for NewtonSolveAB.</p>
+     */
+    public NewtonSolveAB() {}
 
+    /**
+     * <p>Constructor for NewtonSolveAB.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param characterizeClass a {@link neqsim.thermo.characterization.TBPCharacterize} object
+     */
     public NewtonSolveAB(SystemInterface system, TBPCharacterize characterizeClass) {
         this.system = system;
         this.characterizeClass = characterizeClass;
@@ -46,23 +45,31 @@ public class NewtonSolveAB extends Object implements java.io.Serializable {
         sol.set(1, 0, characterizeClass.getPlusCoefs(1));
     }
 
+    /**
+     * <p>Setter for the field <code>fvec</code>.</p>
+     */
     public void setfvec() {
         double f0 = -characterizeClass.getZPlus();
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                 .getLastPlusFractionNumber(); i++) {
-            f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
+            f0 += Math.exp(
+                    characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
         }
         fvec.set(0, 0, f0);
 
         f0 = -characterizeClass.getMPlus() * characterizeClass.getZPlus();
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                 .getLastPlusFractionNumber(); i++) {
-            f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i))
+            f0 += Math.exp(
+                    characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i))
                     * (14.0 * i - 4.0);
         }
         fvec.set(1, 0, f0);
     }
 
+    /**
+     * <p>setJac.</p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -70,35 +77,39 @@ public class NewtonSolveAB extends Object implements java.io.Serializable {
         double f0 = 0.0;
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                 .getLastPlusFractionNumber(); i++) {
-            f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
+            f0 += Math.exp(
+                    characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
         }
         Jac.set(0, 0, f0 + (0.0));
 
         f0 = 0.0;
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                 .getLastPlusFractionNumber(); i++) {
-            f0 += characterizeClass.getPlusCoefs(1)
-                    * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
+            f0 += characterizeClass.getPlusCoefs(1) * Math.exp(
+                    characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
         }
         Jac.set(1, 0, f0);
 
         f0 = 0.0;
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                 .getLastPlusFractionNumber(); i++) {
-            f0 += (14.0 * i - 4.0)
-                    * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
+            f0 += (14.0 * i - 4.0) * Math.exp(
+                    characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
         }
         Jac.set(0, 1, f0);
 
         f0 = 0.0;
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                 .getLastPlusFractionNumber(); i++) {
-            f0 += (14.0 * i - 4.0) * characterizeClass.getPlusCoefs(1)
-                    * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
+            f0 += (14.0 * i - 4.0) * characterizeClass.getPlusCoefs(1) * Math.exp(
+                    characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
         }
         Jac.set(1, 1, f0 + (0.0));
     }
 
+    /**
+     * <p>solve.</p>
+     */
     public void solve() {
         do {
             iter++;

@@ -3,40 +3,50 @@
  *
  * Created on 1. februar 2001, 13:05
  */
-
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile.wettedWallColumnReader;
 
-import java.io.*;
-import java.util.*;
+import java.io.RandomAccessFile;
+import java.util.StringTokenizer;
+
 import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
 
 /**
+ * <p>
+ * WettedWallDataReader class.
+ * </p>
  *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class WettedWallDataReader extends DataReader {
+    /**
+     * <p>
+     * Constructor for WettedWallDataReader.
+     * </p>
+     */
+    public WettedWallDataReader() {}
 
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new WettedWallDataReader */
-    public WettedWallDataReader() {
-    }
-
+    /**
+     * <p>
+     * Constructor for WettedWallDataReader.
+     * </p>
+     *
+     * @param fileName a {@link java.lang.String} object
+     */
     public WettedWallDataReader(String fileName) {
         super(fileName);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void readData() {
+    public void readData() {
         StringTokenizer tokenizer;
         String token;
         int k = 0;
         String path = "c:/logdata/" + this.fileName + ".log";
         System.out.println(path);
 
-        try {
-            RandomAccessFile file = new RandomAccessFile(path, "r");
+        try (RandomAccessFile file = new RandomAccessFile(path, "r")) {
             long filepointer = 0;
             long length = file.length();
             for (int i = 0; i < 6; i++) {
@@ -81,19 +91,29 @@ public class WettedWallDataReader extends DataReader {
         System.out.println(k + " datapoints imported from file");
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         WettedWallDataReader reader = new WettedWallDataReader("31011222");
         int i = 0;
         do {
-            System.out.println("svar: " + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getTime());
+            System.out.println("svar: "
+                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getTime());
             System.out.println("total gas flow: "
-                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getInletTotalGasFlow());
+                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getInletTotalGasFlow());
             System.out.println("co2 flow: "
-                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getCo2SupplyFlow());
-            System.out.println(
-                    "pressure: " + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getPressure());
+                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getCo2SupplyFlow());
+            System.out.println("pressure: "
+                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getPressure());
             i++;
         } while (i < reader.getSampleObjectList().size() - 1);
     }
-
 }

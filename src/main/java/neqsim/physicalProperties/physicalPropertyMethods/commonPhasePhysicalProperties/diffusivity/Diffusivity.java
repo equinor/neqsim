@@ -1,44 +1,54 @@
-/*
- * Conductivity.java
- *
- * Created on 1. november 2000, 19:00
- */
-
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * Diffusivity class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class Diffusivity extends CommonPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface, Cloneable {
-
+public class Diffusivity extends CommonPhysicalPropertyMethod implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
 
     double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
     double[] effectiveDiffusionCoefficient;
 
-    /** Creates new Conductivity */
-    public Diffusivity() {
-    }
+    /**
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
+     */
+    public Diffusivity() {}
 
-    public Diffusivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
+    /**
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
+     *
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
+    public Diffusivity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
-        binaryDiffusionCoeffisients = new double[phase.getPhase().getNumberOfComponents()][phase.getPhase()
-                .getNumberOfComponents()];
-        binaryLennardJonesOmega = new double[phase.getPhase().getNumberOfComponents()][phase.getPhase()
-                .getNumberOfComponents()];
+        binaryDiffusionCoeffisients = new double[phase.getPhase().getNumberOfComponents()][phase
+                .getPhase().getNumberOfComponents()];
+        binaryLennardJonesOmega = new double[phase.getPhase().getNumberOfComponents()][phase
+                .getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[phase.getPhase().getNumberOfComponents()];
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public Diffusivity clone() {
         Diffusivity properties = null;
 
         try {
@@ -50,20 +60,20 @@ public class Diffusivity extends CommonPhysicalPropertyMethod
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
-
+    public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         return 1.0e-6;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
-
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
             for (int j = 0; j < phase.getPhase().getNumberOfComponents(); j++) {
-                binaryDiffusionCoeffisients[i][j] = calcBinaryDiffusionCoefficient(i, j,
-                        binaryDiffusionCoefficientMethod);
+                binaryDiffusionCoeffisients[i][j] =
+                        calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
                 // System.out.println("diff gas " + binaryDiffusionCoeffisients[i][j]);
             }
         }
@@ -76,8 +86,9 @@ public class Diffusivity extends CommonPhysicalPropertyMethod
         return binaryDiffusionCoeffisients;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void calcEffectiveDiffusionCoeffisients() {
+    public void calcEffectiveDiffusionCoeffisients() {
         double sum = 0;
 
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
@@ -85,35 +96,38 @@ public class Diffusivity extends CommonPhysicalPropertyMethod
             for (int j = 0; j < phase.getPhase().getNumberOfComponents(); j++) {
                 if (i == j) {
                 } else {
-                    sum += phase.getPhase().getComponents()[j].getx() / binaryDiffusionCoeffisients[i][j];
+                    sum += phase.getPhase().getComponents()[j].getx()
+                            / binaryDiffusionCoeffisients[i][j];
                 }
             }
-            effectiveDiffusionCoefficient[i] = (1.0 - phase.getPhase().getComponents()[i].getx()) / sum;
+            effectiveDiffusionCoefficient[i] =
+                    (1.0 - phase.getPhase().getComponents()[i].getx()) / sum;
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getFickBinaryDiffusionCoefficient(int i, int j) {
+    public double getFickBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getEffectiveDiffusionCoefficient(int i) {
+    public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
+    public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         /*
          * double temp = (i==j)? 1.0: 0.0; double nonIdealCorrection = temp +
          * gasPhase.getPhase().getComponents()[i].getx() *
          * gasPhase.getPhase().getComponents()[i].getdfugdn(j) *
-         * gasPhase.getPhase().getNumberOfMolesInPhase(); if
-         * (Double.isNaN(nonIdealCorrection)) nonIdealCorrection=1.0; return
-         * binaryDiffusionCoeffisients[i][j]/nonIdealCorrection; // shuld be divided by
-         * non ideality factor
+         * gasPhase.getPhase().getNumberOfMolesInPhase(); if (Double.isNaN(nonIdealCorrection))
+         * nonIdealCorrection=1.0; return binaryDiffusionCoeffisients[i][j]/nonIdealCorrection; //
+         * shuld be divided by non ideality factor
          */
         return binaryDiffusionCoeffisients[i][j];
     }
-
 }

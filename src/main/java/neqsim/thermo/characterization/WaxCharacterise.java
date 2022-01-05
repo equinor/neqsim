@@ -1,30 +1,38 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.thermo.characterization;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * WaxCharacterise class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
-public class WaxCharacterise extends Object implements java.io.Serializable, Cloneable {
+public class WaxCharacterise implements java.io.Serializable, Cloneable {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(WaxCharacterise.class);
     SystemInterface thermoSystem = null;
     String name = "";
     protected WaxModelInterface model = new PedersenWaxModel();
 
+    /**
+     * <p>
+     * Constructor for WaxCharacterise.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public WaxCharacterise(SystemInterface system) {
         thermoSystem = system;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public WaxCharacterise clone() {
         WaxCharacterise clonedSystem = null;
         try {
             clonedSystem = (WaxCharacterise) super.clone();
@@ -36,13 +44,12 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
     }
 
     public abstract class WaxBaseModel implements WaxModelInterface {
-
         double[] parameterWax = new double[3];
         double[] parameterWaxHeatOfFusion = new double[1];
         double[] parameterWaxTriplePointTemperature = new double[1];
 
         @Override
-		public Object clone() {
+        public WaxBaseModel clone() {
             WaxBaseModel clonedSystem = null;
             try {
                 clonedSystem = (WaxBaseModel) super.clone();
@@ -53,32 +60,30 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         }
 
         @Override
-		public void addTBPWax() {
-
-        }
+        public void addTBPWax() {}
 
         @Override
-		public void setWaxParameters(double[] parameters) {
+        public void setWaxParameters(double[] parameters) {
             parameterWax = parameters;
         }
 
         @Override
-		public void setWaxParameter(int i, double parameters) {
+        public void setWaxParameter(int i, double parameters) {
             parameterWax[i] = parameters;
         }
 
         @Override
-		public void setParameterWaxHeatOfFusion(int i, double parameters) {
+        public void setParameterWaxHeatOfFusion(int i, double parameters) {
             parameterWaxHeatOfFusion[i] = parameters;
         }
 
         @Override
-		public void setParameterWaxTriplePointTemperature(int i, double parameters) {
+        public void setParameterWaxTriplePointTemperature(int i, double parameters) {
             parameterWaxTriplePointTemperature[i] = parameters;
         }
 
         @Override
-		public double[] getWaxParameters() {
+        public double[] getWaxParameters() {
             return parameterWax;
         }
 
@@ -86,7 +91,7 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
          * @return the parameterWaxHeatOfFusion
          */
         @Override
-		public double[] getParameterWaxHeatOfFusion() {
+        public double[] getParameterWaxHeatOfFusion() {
             return parameterWaxHeatOfFusion;
         }
 
@@ -94,7 +99,7 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
          * @param parameterWaxHeatOfFusion the parameterWaxHeatOfFusion to set
          */
         @Override
-		public void setParameterWaxHeatOfFusion(double[] parameterWaxHeatOfFusion) {
+        public void setParameterWaxHeatOfFusion(double[] parameterWaxHeatOfFusion) {
             this.parameterWaxHeatOfFusion = parameterWaxHeatOfFusion;
         }
 
@@ -102,24 +107,21 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
          * @return the parameterWaxTriplePointTemperature
          */
         @Override
-		public double[] getParameterWaxTriplePointTemperature() {
+        public double[] getParameterWaxTriplePointTemperature() {
             return parameterWaxTriplePointTemperature;
         }
 
         /**
-         * @param parameterWaxTriplePointTemperature the
-         *                                           parameterWaxTriplePointTemperature
-         *                                           to set
+         * @param parameterWaxTriplePointTemperature the parameterWaxTriplePointTemperature to set
          */
         @Override
-		public void setParameterWaxTriplePointTemperature(double[] parameterWaxTriplePointTemperature) {
+        public void setParameterWaxTriplePointTemperature(
+                double[] parameterWaxTriplePointTemperature) {
             this.parameterWaxTriplePointTemperature = parameterWaxTriplePointTemperature;
         }
-
     }
 
     public class PedersenWaxModel extends WaxBaseModel {
-
         public PedersenWaxModel() {
             parameterWax[0] = 1.074;
             parameterWax[1] = 6.584e-6;
@@ -127,37 +129,37 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
 
             parameterWaxHeatOfFusion[0] = 1.0;
             parameterWaxTriplePointTemperature[0] = 1.0;
-
         }
 
         public double calcTriplePointTemperature(int componentNumber) {
             return parameterWaxTriplePointTemperature[0] * (374.5 + (0.02617
-                    * (thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0)
-                    - 20172.0 / (thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0)));
+                    * (thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass()
+                            * 1000.0)
+                    - 20172.0
+                            / (thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass()
+                                    * 1000.0)));
         }
 
         public double calcHeatOfFusion(int componentNumber) {
             return getParameterWaxHeatOfFusion()[0] * 0.1426 / 0.238845
                     * thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0
-                    * thermoSystem.getPhase(0).getComponent(componentNumber).getTriplePointTemperature();
+                    * thermoSystem.getPhase(0).getComponent(componentNumber)
+                            .getTriplePointTemperature();
         }
 
         public double calcParaffinDensity(int componentNumber) {
-            return 0.3915
-                    + 0.0675 * Math.log(thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0);
+            return 0.3915 + 0.0675 * Math.log(
+                    thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0);
         }
 
         public double calcPCwax(int componentNumber, String normalComponent) {
-
             return thermoSystem.getPhase(0).getComponent(normalComponent).getPC()
-                    * Math.pow(
-                            calcParaffinDensity(componentNumber)
-                                    / thermoSystem.getPhase(0).getComponent(normalComponent).getNormalLiquidDensity(),
-                            3.46);
+                    * Math.pow(calcParaffinDensity(componentNumber) / thermoSystem.getPhase(0)
+                            .getComponent(normalComponent).getNormalLiquidDensity(), 3.46);
         }
 
         @Override
-		public void addTBPWax() {
+        public void addTBPWax() {
             int numberOfCOmponents = thermoSystem.getPhase(0).getNumberOfComponents();
             boolean hasWax = false;
             for (int i = 0; i < numberOfCOmponents; i++) {
@@ -167,29 +169,34 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
             }
 
             for (int i = 0; i < numberOfCOmponents; i++) {
-                if (hasWax && thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
+                if (hasWax
+                        && thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
                     double A = parameterWax[0], B = parameterWax[1], C = parameterWax[2];
-                    String compName = thermoSystem.getPhase(0).getComponent(i).getName().substring(3);
+                    String compName =
+                            thermoSystem.getPhase(0).getComponent(i).getName().substring(3);
 
                     double densityLocal = calcParaffinDensity(i);
 
-                    double molesChange = thermoSystem.getPhase(
-                            0).getComponent(compName).getNumberOfmoles() * (1.0
-                                    - (A + B * thermoSystem.getPhase(0).getComponent(compName).getMolarMass() * 1000.0)
-                                            * Math.pow(
-                                                    (thermoSystem.getPhase(0).getComponent(compName)
-                                                            .getNormalLiquidDensity() - densityLocal) / densityLocal,
-                                                    C));
+                    double molesChange = thermoSystem.getPhase(0).getComponent(compName)
+                            .getNumberOfmoles()
+                            * (1.0 - (A + B
+                                    * thermoSystem.getPhase(0).getComponent(compName).getMolarMass()
+                                    * 1000.0)
+                                    * Math.pow((thermoSystem.getPhase(0).getComponent(compName)
+                                            .getNormalLiquidDensity() - densityLocal)
+                                            / densityLocal, C));
 
                     if (molesChange < 0) {
                         molesChange = 0.0;
                     }
 
                     thermoSystem.addComponent(compName, -molesChange);
-                    thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(), molesChange);
+                    thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(),
+                            molesChange);
                     for (int k = 0; k < thermoSystem.getNumberOfPhases(); k++) {
                         thermoSystem.getPhase(k).getComponent(i).setWaxFormer(true);
-                        thermoSystem.getPhase(k).getComponent(i).setHeatOfFusion(calcHeatOfFusion(i));
+                        thermoSystem.getPhase(k).getComponent(i)
+                                .setHeatOfFusion(calcHeatOfFusion(i));
                         thermoSystem.getPhase(k).getComponent(i)
                                 .setTriplePointTemperature(calcTriplePointTemperature(i));
                     }
@@ -199,25 +206,31 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
                     double A = parameterWax[0], B = parameterWax[1], C = parameterWax[2];
 
                     double densityLocal = calcParaffinDensity(i);
-                    double molesChange = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles() * (1.0
-                            - (A + B * thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000.0) * Math.pow(
-                                    (thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity() - densityLocal)
-                                            / densityLocal,
-                                    C));
+                    double molesChange =
+                            thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles() * (1.0 - (A
+                                    + B * thermoSystem.getPhase(0).getComponent(i).getMolarMass()
+                                            * 1000.0)
+                                    * Math.pow((thermoSystem.getPhase(0).getComponent(i)
+                                            .getNormalLiquidDensity() - densityLocal)
+                                            / densityLocal, C));
                     // if(molesChange<0) molesChange=0.0;
                     // System.out.println("moles change " + molesChange);
-                    thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getComponentName(),
+                    thermoSystem.addComponent(
+                            thermoSystem.getPhase(0).getComponent(i).getComponentName(),
                             -molesChange);
-                    thermoSystem.addTBPfraction("wax" + thermoSystem.getPhase(0).getComponent(i).getComponentName(),
+                    thermoSystem.addTBPfraction(
+                            "wax" + thermoSystem.getPhase(0).getComponent(i).getComponentName(),
                             molesChange, thermoSystem.getPhase(0).getComponent(i).getMolarMass(),
                             thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
 
                     int cNumb = thermoSystem.getPhase(0).getNumberOfComponents() - 1;
-                    double waxPC = calcPCwax(cNumb, thermoSystem.getPhase(0).getComponent(i).getComponentName());
+                    double waxPC = calcPCwax(cNumb,
+                            thermoSystem.getPhase(0).getComponent(i).getComponentName());
 
                     for (int k = 0; k < thermoSystem.getNumberOfPhases(); k++) {
                         thermoSystem.getPhase(k).getComponent(cNumb).setWaxFormer(true);
-                        thermoSystem.getPhase(k).getComponent(cNumb).setHeatOfFusion(calcHeatOfFusion(cNumb));
+                        thermoSystem.getPhase(k).getComponent(cNumb)
+                                .setHeatOfFusion(calcHeatOfFusion(cNumb));
                         thermoSystem.getPhase(k).getComponent(cNumb)
                                 .setTriplePointTemperature(calcTriplePointTemperature(cNumb));
                         thermoSystem.getPhase(k).getComponent(cNumb).setPC(waxPC);
@@ -227,19 +240,28 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         }
 
         @Override
-		public void removeWax() {
+        public void removeWax() {
             for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
                 if (thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
-                    String compName = thermoSystem.getPhase(0).getComponent(i).getName().substring(3);
+                    String compName =
+                            thermoSystem.getPhase(0).getComponent(i).getName().substring(3);
                     double moles = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles();
-                    thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getComponentName(), -moles);
+                    thermoSystem.addComponent(
+                            thermoSystem.getPhase(0).getComponent(i).getComponentName(), -moles);
                     thermoSystem.addComponent(compName, moles);
                 }
             }
         }
-
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>model</code>.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.thermo.characterization.WaxModelInterface} object
+     */
     public WaxModelInterface getModel(String name) {
         this.name = name;
         if (name.equals("PedersenWax")) {
@@ -248,6 +270,13 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         return new PedersenWaxModel();
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>model</code>.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setModel(String name) {
         this.name = name;
         if (name.equals("PedersenWax")) {
@@ -256,12 +285,25 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         model = new PedersenWaxModel();
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>model</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.thermo.characterization.WaxModelInterface} object
+     */
     public WaxModelInterface getModel() {
         return model;
     }
 
+    /**
+     * <p>
+     * setModelName.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setModelName(String name) {
         this.name = name;
     }
-
 }

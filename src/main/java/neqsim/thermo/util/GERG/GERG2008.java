@@ -1,19 +1,18 @@
-/**
- * 
- */
 package neqsim.thermo.util.GERG;
 
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
-//import java.lang.Math.*;
 
 /**
- * @author esol
+ * <p>
+ * GERG2008 class.
+ * </p>
  *
+ * @author esol
+ * @version $Id: $Id
  */
 public class GERG2008 {
-
     // Variables containing the common parameters in the GERG-2008 equations
     static double RGERG;
     static int NcGERG = 21, MaxFlds = 21, MaxMdl = 10, MaxTrmM = 12, MaxTrmP = 24;
@@ -60,6 +59,14 @@ public class GERG2008 {
     static double[][] taupijk = new double[MaxFlds + 1][MaxTrmM + 1];
     static double dPdDsave;
 
+    /**
+     * <p>
+     * MolarMassGERG.
+     * </p>
+     *
+     * @param x an array of {@link double} objects
+     * @param Mm a {@link org.netlib.util.doubleW} object
+     */
     public static void MolarMassGERG(double[] x, doubleW Mm) {
         // Sub MolarMassGERG(x, Mm)
 
@@ -82,6 +89,17 @@ public class GERG2008 {
         }
     }
 
+    /**
+     * <p>
+     * PressureGERG.
+     * </p>
+     *
+     * @param T a double
+     * @param D a double
+     * @param x an array of {@link double} objects
+     * @param P a {@link org.netlib.util.doubleW} object
+     * @param Z a {@link org.netlib.util.doubleW} object
+     */
     public static void PressureGERG(double T, double D, double[] x, doubleW P, doubleW Z) {
         // Sub PressureGERG(T, D, x, P, Z)
 
@@ -118,7 +136,21 @@ public class GERG2008 {
         dPdDsave = RGERG * T * (1 + 2 * ar[0][1].val + ar[0][2].val);
     }
 
-    public static void DensityGERG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr, StringW herr) {
+    /**
+     * <p>
+     * DensityGERG.
+     * </p>
+     *
+     * @param iFlag a int
+     * @param T a double
+     * @param P a double
+     * @param x an array of {@link double} objects
+     * @param D a {@link org.netlib.util.doubleW} object
+     * @param ierr a {@link org.netlib.util.intW} object
+     * @param herr a {@link org.netlib.util.StringW} object
+     */
+    public static void DensityGERG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr,
+            StringW herr) {
         // Sub DensityGERG(iFlag, T, P, x, D, ierr, herr)
 
         // Calculate density as a function of temperature and pressure. This is an
@@ -160,10 +192,12 @@ public class GERG2008 {
         doubleW Tcx = new doubleW(0.0d), Dcx = new doubleW(0.0d);
 
         doubleW dPdD = new doubleW(0.0d), d2PdD2 = new doubleW(0.0d), d2PdTD = new doubleW(0.0d),
-                dPdT = new doubleW(0.0d), U = new doubleW(0.0d), H = new doubleW(0.0d), S = new doubleW(0.0d),
-                A = new doubleW(0.0d), P2 = new doubleW(0.0d), Z = new doubleW(0.0d);
-        doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d), G = new doubleW(0.0d),
-                JT = new doubleW(0.0d), Kappa = new doubleW(0.0d), PP = new doubleW(0.0d);
+                dPdT = new doubleW(0.0d), U = new doubleW(0.0d), H = new doubleW(0.0d),
+                S = new doubleW(0.0d), A = new doubleW(0.0d), P2 = new doubleW(0.0d),
+                Z = new doubleW(0.0d);
+        doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d),
+                G = new doubleW(0.0d), JT = new doubleW(0.0d), Kappa = new doubleW(0.0d),
+                PP = new doubleW(0.0d);
 
         ierr.val = 0;
         herr.val = "";
@@ -196,14 +230,17 @@ public class GERG2008 {
                     // Iteration failed (above loop did not find a solution or checks made below
                     // indicate possible 2-phase state)
                     ierr.val = 1;
-                    herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
+                    herr.val =
+                            "Calculation failed to converge in GERG method, ideal gas density returned.";
                     D.val = P / RGERG / T;
                 }
                 nFail++;
                 if (nFail == 1) {
-                    D.val = Dcx.val * 3; // If vapor phase search fails, look for root in liquid region
+                    D.val = Dcx.val * 3; // If vapor phase search fails, look for root in liquid
+                                         // region
                 } else if (nFail == 2) {
-                    D.val = Dcx.val * 2.5; // If liquid phase search fails, look for root between liquid and critical
+                    D.val = Dcx.val * 2.5; // If liquid phase search fails, look for root between
+                                           // liquid and critical
                                            // regions
                 } else if (nFail == 3) {
                     D.val = Dcx.val * 2; // If search fails, look for root in critical region
@@ -241,14 +278,16 @@ public class GERG2008 {
 
                         // If requested, check to see if point is possibly 2-phase
                         if (iFlag > 0) {
-                            PropertiesGERG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-                                    Kappa, A);
+                            PropertiesGERG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S,
+                                    Cv, Cp, W, G, JT, Kappa, A);
                             if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0)
                                     || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
-                                // Iteration failed (above loop did find a solution or checks made below
+                                // Iteration failed (above loop did find a solution or checks made
+                                // below
                                 // indicate possible 2-phase state)
                                 ierr.val = 1;
-                                herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
+                                herr.val =
+                                        "Calculation failed to converge in GERG method, ideal gas density returned.";
                                 D.val = P / RGERG / T;
                             }
                             return;
@@ -265,9 +304,35 @@ public class GERG2008 {
         D.val = P / RGERG / T;
     }
 
-    public static void PropertiesGERG(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD,
-            doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp,
-            doubleW W, doubleW G, doubleW JT, doubleW Kappa, doubleW A) {
+    /**
+     * <p>
+     * PropertiesGERG.
+     * </p>
+     *
+     * @param T a double
+     * @param D a double
+     * @param x an array of {@link double} objects
+     * @param P a {@link org.netlib.util.doubleW} object
+     * @param Z a {@link org.netlib.util.doubleW} object
+     * @param dPdD a {@link org.netlib.util.doubleW} object
+     * @param d2PdD2 a {@link org.netlib.util.doubleW} object
+     * @param d2PdTD a {@link org.netlib.util.doubleW} object
+     * @param dPdT a {@link org.netlib.util.doubleW} object
+     * @param U a {@link org.netlib.util.doubleW} object
+     * @param H a {@link org.netlib.util.doubleW} object
+     * @param S a {@link org.netlib.util.doubleW} object
+     * @param Cv a {@link org.netlib.util.doubleW} object
+     * @param Cp a {@link org.netlib.util.doubleW} object
+     * @param W a {@link org.netlib.util.doubleW} object
+     * @param G a {@link org.netlib.util.doubleW} object
+     * @param JT a {@link org.netlib.util.doubleW} object
+     * @param Kappa a {@link org.netlib.util.doubleW} object
+     * @param A a {@link org.netlib.util.doubleW} object
+     */
+    public static void PropertiesGERG(double T, double D, double[] x, doubleW P, doubleW Z,
+            doubleW dPdD, doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H,
+            doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa,
+            doubleW A) {
         // Sub PropertiesGERG(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv,
         // Cp, W, G, JT, Kappa, A)
 
@@ -346,7 +411,8 @@ public class GERG2008 {
         if (D > epsilon) {
             Cp.val = Cv.val + T * (dPdT.val / D) * (dPdT.val / D) / dPdD.val;
             d2PdD2.val = RT * (2 * ar[0][1].val + 4 * ar[0][2].val + ar[0][3].val) / D;
-            JT.val = (T / D * dPdT.val / dPdD.val - 1) / Cp.val / D; // '=(dB/dT*T-B)/Cp for an ideal gas, but dB/dT is
+            JT.val = (T / D * dPdT.val / dPdD.val - 1) / Cp.val / D; // '=(dB/dT*T-B)/Cp for an
+                                                                     // ideal gas, but dB/dT is
                                                                      // not known
         } else {
             Cp.val = Cv.val + R;
@@ -361,7 +427,7 @@ public class GERG2008 {
         Kappa.val = Math.pow(W.val, 2) * Mm.val / (RT * 1000 * Z.val);
     }
 
-//The following routines are low-level routines that should not be called outside of this code.
+    // The following routines are low-level routines that should not be called outside of this code.
     static void ReducingParametersGERG(double[] x, doubleW Tr, doubleW Dr) {
         // Private Sub ReducingParametersGERG(x, Tr, Dr)
 
@@ -378,7 +444,8 @@ public class GERG2008 {
         double Vr, xij, F;
         int icheck;
 
-// Check to see if a component fraction has changed.  If x is the same as the previous call, then exit.
+        // Check to see if a component fraction has changed. If x is the same as the previous call,
+        // then exit.
         icheck = 0;
         for (int i = 1; i <= NcGERG; ++i) {
             if (Math.abs(x[i] - xold[i]) > 0.0000001) {
@@ -394,7 +461,7 @@ public class GERG2008 {
         Told = 0;
         Trold2 = 0;
 
-// Calculate reducing variables for T and D
+        // Calculate reducing variables for T and D
         Dr.val = 0;
         Vr = 0;
         Tr.val = 0;
@@ -474,7 +541,8 @@ public class GERG2008 {
                         }
                     }
                 }
-                a0[0].val += +x[i] * (LogxD + n0i[i][1] + n0i[i][2] / T - n0i[i][3] * LogT + SumHyp0);
+                a0[0].val +=
+                        +x[i] * (LogxD + n0i[i][1] + n0i[i][2] / T - n0i[i][3] * LogT + SumHyp0);
                 a0[1].val += +x[i] * (n0i[i][3] + n0i[i][2] / T + SumHyp1);
                 a0[2].val += -x[i] * (n0i[i][3] + SumHyp2);
             }
@@ -570,7 +638,8 @@ public class GERG2008 {
                         ar[2][0].val += ndtt * (toik[i][k] - 1);
                         ar[1][1].val += ndtt * ex2;
                         ar[1][2].val += ndtt * (ex3 - coik[i][k] * ex);
-                        ar[0][3].val += ndt * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + coik[i][k]) * coik[i][k]);
+                        ar[0][3].val += ndt
+                                * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + coik[i][k]) * coik[i][k]);
                     }
                 }
             }
@@ -615,7 +684,8 @@ public class GERG2008 {
                                     ar[2][0].val += ndtt * (tijk[mn][k] - 1);
                                     ar[1][1].val += ndtt * ex;
                                     ar[1][2].val += ndtt * ex2;
-                                    ar[0][3].val += ndt * (ex * (ex2 - 2 * (dijk[mn][k] - 2 * cij0)) + 2 * dijk[mn][k]);
+                                    ar[0][3].val += ndt * (ex * (ex2 - 2 * (dijk[mn][k] - 2 * cij0))
+                                            + 2 * dijk[mn][k]);
                                 }
                             }
                         }
@@ -686,10 +756,16 @@ public class GERG2008 {
         }
     }
 
-//The following routine must be called once before any other routine.
+    // The following routine must be called once before any other routine.
+    /**
+     * <p>
+     * SetupGERG.
+     * </p>
+     */
     public static void SetupGERG() {
-// Initialize all the constants and parameters in the GERG-2008 model.
-// Some values are modified for calculations that do not depend on T, D, and x in order to speed up the program.
+        // Initialize all the constants and parameters in the GERG-2008 model.
+        // Some values are modified for calculations that do not depend on T, D, and x in order to
+        // speed up the program.
 
         double o13, Rs, Rsr;
         double[][] bijk = new double[MaxMdl + 1][MaxTrmM + 1];
@@ -705,7 +781,7 @@ public class GERG2008 {
         }
         Told = 0;
 
-// Molar masses [g/mol]
+        // Molar masses [g/mol]
         MMiGERG[1] = 16.04246; // Methane
         MMiGERG[2] = 28.0134; // Nitrogen
         MMiGERG[3] = 44.0095; // Carbon dioxide
@@ -728,7 +804,7 @@ public class GERG2008 {
         MMiGERG[20] = 4.002602; // Helium
         MMiGERG[21] = 39.948; // Argon
 
-// Number of polynomial and exponential terms
+        // Number of polynomial and exponential terms
         for (int i = 1; i <= MaxFlds; ++i) {
             kpol[i] = 6;
             kexp[i] = 6;
@@ -761,7 +837,7 @@ public class GERG2008 {
         kpolij[10] = 10;
         kexpij[10] = 0;
 
-// Critical densities [mol/l]
+        // Critical densities [mol/l]
         Dc[1] = 10.139342719;
         Dc[2] = 11.1839;
         Dc[3] = 10.624978698;
@@ -784,7 +860,7 @@ public class GERG2008 {
         Dc[20] = 17.399;
         Dc[21] = 13.407429659;
 
-// Critical temperatures [K]
+        // Critical temperatures [K]
         Tc[1] = 190.564;
         Tc[2] = 126.192;
         Tc[3] = 304.1282;
@@ -807,7 +883,7 @@ public class GERG2008 {
         Tc[20] = 5.1953;
         Tc[21] = 150.687;
 
-// Exponents in pure fluid equations
+        // Exponents in pure fluid equations
         for (int i = 1; i <= MaxFlds; ++i) {
             Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
             Tc2[i] = Math.sqrt(Tc[i]);
@@ -925,8 +1001,8 @@ public class GERG2008 {
             }
         }
 
-// Coefficients of pure fluid equations
-// Methane
+        // Coefficients of pure fluid equations
+        // Methane
         noik[1][1] = 0.57335704239162;
         noik[1][2] = -1.676068752373;
         noik[1][3] = 0.23405291834916;
@@ -951,7 +1027,7 @@ public class GERG2008 {
         noik[1][22] = 0.040061416708429;
         noik[1][23] = -0.033752085907575;
         noik[1][24] = -2.5127658213357E-03;
-// Nitrogen
+        // Nitrogen
         noik[2][1] = 0.59889711801201;
         noik[2][2] = -1.6941557480731;
         noik[2][3] = 0.24579736191718;
@@ -976,7 +1052,7 @@ public class GERG2008 {
         noik[2][22] = 0.043563505956635;
         noik[2][23] = -0.036251690750939;
         noik[2][24] = -2.8974026866543E-03;
-// Ethane
+        // Ethane
         noik[4][1] = 0.63596780450714;
         noik[4][2] = -1.7377981785459;
         noik[4][3] = 0.28914060926272;
@@ -1001,7 +1077,7 @@ public class GERG2008 {
         noik[4][22] = 0.046917166277885;
         noik[4][23] = -0.039401755804649;
         noik[4][24] = -3.2569956247611E-03;
-// Propane
+        // Propane
         noik[5][1] = 1.0403973107358;
         noik[5][2] = -2.8318404081403;
         noik[5][3] = 0.84393809606294;
@@ -1014,7 +1090,7 @@ public class GERG2008 {
         noik[5][10] = -0.06931341308986;
         noik[5][11] = -0.029632145981653;
         noik[5][12] = 0.01404012675138;
-// Isobutane
+        // Isobutane
         noik[6][1] = 1.04293315891;
         noik[6][2] = -2.8184272548892;
         noik[6][3] = 0.8617623239785;
@@ -1027,7 +1103,7 @@ public class GERG2008 {
         noik[6][10] = -0.080369342764109;
         noik[6][11] = -0.029761373251151;
         noik[6][12] = 0.01305963030314;
-// n-Butane
+        // n-Butane
         noik[7][1] = 1.0626277411455;
         noik[7][2] = -2.862095182835;
         noik[7][3] = 0.88738233403777;
@@ -1040,7 +1116,7 @@ public class GERG2008 {
         noik[7][10] = -0.079050969051011;
         noik[7][11] = -0.020636720547775;
         noik[7][12] = 0.005705380933475;
-// Isopentane
+        // Isopentane
         noik[8][1] = 1.0963;
         noik[8][2] = -3.0402;
         noik[8][3] = 1.0317;
@@ -1053,7 +1129,7 @@ public class GERG2008 {
         noik[8][10] = -0.10107;
         noik[8][11] = -0.035484;
         noik[8][12] = 0.018156;
-// n-Pentane
+        // n-Pentane
         noik[9][1] = 1.0968643098001;
         noik[9][2] = -2.9988888298061;
         noik[9][3] = 0.99516886799212;
@@ -1066,7 +1142,7 @@ public class GERG2008 {
         noik[9][10] = -0.10931956843993;
         noik[9][11] = -0.03207322332799;
         noik[9][12] = 0.016877016216975;
-// Hexane
+        // Hexane
         noik[10][1] = 1.0553238013661;
         noik[10][2] = -2.6120615890629;
         noik[10][3] = 0.7661388296726;
@@ -1079,7 +1155,7 @@ public class GERG2008 {
         noik[10][10] = -0.093750558924659;
         noik[10][11] = -6.7273247155994E-03;
         noik[10][12] = -5.1141583585428E-03;
-// Heptane
+        // Heptane
         noik[11][1] = 1.0543747645262;
         noik[11][2] = -2.6500681506144;
         noik[11][3] = 0.81730047827543;
@@ -1092,7 +1168,7 @@ public class GERG2008 {
         noik[11][10] = -0.13801821610756;
         noik[11][11] = -6.1595287380011E-03;
         noik[11][12] = 4.8602510393022E-04;
-// Octane
+        // Octane
         noik[12][1] = 1.0722544875633;
         noik[12][2] = -2.4632951172003;
         noik[12][3] = 0.65386674054928;
@@ -1105,7 +1181,7 @@ public class GERG2008 {
         noik[12][10] = -0.14069963991934;
         noik[12][11] = -7.8966330500036E-03;
         noik[12][12] = 3.3036597968109E-03;
-// Nonane
+        // Nonane
         noik[13][1] = 1.1151;
         noik[13][2] = -2.702;
         noik[13][3] = 0.83416;
@@ -1118,7 +1194,7 @@ public class GERG2008 {
         noik[13][10] = -0.15043;
         noik[13][11] = -0.012982;
         noik[13][12] = 0.0044325;
-// Decane
+        // Decane
         noik[14][1] = 1.0461;
         noik[14][2] = -2.4807;
         noik[14][3] = 0.74372;
@@ -1131,7 +1207,7 @@ public class GERG2008 {
         noik[14][10] = -0.18507;
         noik[14][11] = -0.020775;
         noik[14][12] = 0.012335;
-// Oxygen
+        // Oxygen
         noik[16][1] = 0.88878286369701;
         noik[16][2] = -2.4879433312148;
         noik[16][3] = 0.59750190775886;
@@ -1144,7 +1220,7 @@ public class GERG2008 {
         noik[16][10] = -0.026726814910919;
         noik[16][11] = -0.025675298677127;
         noik[16][12] = 9.5714302123668E-03;
-// Carbon monoxide
+        // Carbon monoxide
         noik[17][1] = 0.90554;
         noik[17][2] = -2.4515;
         noik[17][3] = 0.53149;
@@ -1157,7 +1233,7 @@ public class GERG2008 {
         noik[17][10] = -0.027896;
         noik[17][11] = -0.034154;
         noik[17][12] = 0.016329;
-// Hydrogen sulfide
+        // Hydrogen sulfide
         noik[19][1] = 0.87641;
         noik[19][2] = -2.0367;
         noik[19][3] = 0.21634;
@@ -1170,7 +1246,7 @@ public class GERG2008 {
         noik[19][10] = -0.034714;
         noik[19][11] = -0.014885;
         noik[19][12] = 0.0074154;
-// Argon
+        // Argon
         noik[21][1] = 0.85095714803969;
         noik[21][2] = -2.400322294348;
         noik[21][3] = 0.54127841476466;
@@ -1183,7 +1259,7 @@ public class GERG2008 {
         noik[21][10] = -0.016387350791552;
         noik[21][11] = -0.024987666851475;
         noik[21][12] = 8.8769204815709E-03;
-// Carbon dioxide
+        // Carbon dioxide
         coik[3][1] = 0;
         doik[3][1] = 1;
         toik[3][1] = 0;
@@ -1272,7 +1348,7 @@ public class GERG2008 {
         doik[3][22] = 5;
         toik[3][22] = 26;
         noik[3][22] = -0.0153809489533;
-// Hydrogen
+        // Hydrogen
         coik[15][1] = 0;
         doik[15][1] = 1;
         toik[15][1] = 0.5;
@@ -1329,7 +1405,7 @@ public class GERG2008 {
         doik[15][14] = 1;
         toik[15][14] = 8;
         noik[15][14] = -2.8955902866816E-03;
-// Water
+        // Water
         coik[18][1] = 0;
         doik[18][1] = 1;
         toik[18][1] = 0.5;
@@ -1394,7 +1470,7 @@ public class GERG2008 {
         doik[18][16] = 1;
         toik[18][16] = 6;
         noik[18][16] = 4.6918522004538E-03;
-// Helium
+        // Helium
         coik[20][1] = 0;
         doik[20][1] = 1;
         toik[20][1] = 0;
@@ -1444,8 +1520,8 @@ public class GERG2008 {
         toik[20][12] = 5;
         noik[20][12] = -0.022173365245954;
 
-// Exponents in mixture equations
-// Methane-Nitrogen
+        // Exponents in mixture equations
+        // Methane-Nitrogen
         dijk[3][1] = 1;
         tijk[3][1] = 0;
         cijk[3][1] = 0;
@@ -1509,7 +1585,7 @@ public class GERG2008 {
         bijk[3][9] = 3;
         gijk[3][9] = 0.5;
         nijk[3][9] = 0.22369816716981;
-// Methane-Carbon dioxide
+        // Methane-Carbon dioxide
         dijk[4][1] = 1;
         tijk[4][1] = 2.6;
         cijk[4][1] = 0;
@@ -1552,7 +1628,7 @@ public class GERG2008 {
         bijk[4][6] = 3;
         gijk[4][6] = 0.5;
         nijk[4][6] = 0.23855347281124;
-// Methane-Ethane
+        // Methane-Ethane
         dijk[1][1] = 3;
         tijk[1][1] = 0.65;
         cijk[1][1] = 0;
@@ -1637,7 +1713,7 @@ public class GERG2008 {
         bijk[1][12] = 3;
         gijk[1][12] = 0.5;
         nijk[1][12] = 1.0630185306388;
-// Methane-Propane
+        // Methane-Propane
         dijk[2][1] = 3;
         tijk[2][1] = 1.85;
         cijk[2][1] = 0;
@@ -1701,7 +1777,7 @@ public class GERG2008 {
         bijk[2][9] = 3;
         gijk[2][9] = 0.5;
         nijk[2][9] = -0.30632197804624;
-// Nitrogen-Carbon dioxide
+        // Nitrogen-Carbon dioxide
         dijk[5][1] = 2;
         tijk[5][1] = 1.85;
         cijk[5][1] = 0;
@@ -1744,7 +1820,7 @@ public class GERG2008 {
         bijk[5][6] = 3;
         gijk[5][6] = 0.5;
         nijk[5][6] = 0.17673538204534;
-// Nitrogen-Ethane
+        // Nitrogen-Ethane
         dijk[6][1] = 2;
         tijk[6][1] = 0;
         cijk[6][1] = 0;
@@ -1787,7 +1863,7 @@ public class GERG2008 {
         bijk[6][6] = 1.25;
         gijk[6][6] = 0.5;
         nijk[6][6] = 0.69226192739021;
-// Methane-Hydrogen
+        // Methane-Hydrogen
         dijk[7][1] = 1;
         tijk[7][1] = 2;
         cijk[7][1] = 0;
@@ -1816,8 +1892,8 @@ public class GERG2008 {
         bijk[7][4] = 0;
         gijk[7][4] = 0;
         nijk[7][4] = -0.035592212573239;
-// Methane-n-Butane, Methane-Isobutane, Ethane-Propane, Ethane-n-Butane,
-// Ethane-Isobutane, Propane-n-Butane, Propane-Isobutane, and n-Butane-Isobutane
+        // Methane-n-Butane, Methane-Isobutane, Ethane-Propane, Ethane-n-Butane,
+        // Ethane-Isobutane, Propane-n-Butane, Propane-Isobutane, and n-Butane-Isobutane
         dijk[10][1] = 1;
         tijk[10][1] = 1;
         cijk[10][1] = 0;
@@ -1889,7 +1965,7 @@ public class GERG2008 {
         gijk[10][10] = 0;
         nijk[10][10] = 5.5527385721943E-05;
 
-// Generalized parameters
+        // Generalized parameters
         fij[1][2] = 1; // Methane-Nitrogen
         fij[1][3] = 1; // Methane-CO2
         fij[1][4] = 1; // Methane-Ethane
@@ -1906,7 +1982,7 @@ public class GERG2008 {
         fij[5][7] = 0.0312572600489; // Propane-n-Butane
         fij[6][7] = -0.0551240293009; // Isobutane-n-Butane
 
-// Model numbers for binary mixtures with no excess functions (mn=-1)
+        // Model numbers for binary mixtures with no excess functions (mn=-1)
         for (int i = 1; i <= MaxFlds; ++i) {
             mNumb[i][i] = -1;
             for (int j = i + 1; j <= MaxFlds; ++j) {
@@ -1916,7 +1992,7 @@ public class GERG2008 {
             }
         }
 
-// Model numbers for excess functions, 10 is for generalized equation
+        // Model numbers for excess functions, 10 is for generalized equation
         mNumb[1][2] = 3;
         mNumb[1][3] = 4;
         mNumb[1][4] = 1;
@@ -1933,7 +2009,7 @@ public class GERG2008 {
         mNumb[5][7] = 10;
         mNumb[6][7] = 10;
 
-// Ideal gas parameters
+        // Ideal gas parameters
         n0i[1][3] = 4.00088;
         n0i[1][4] = 0.76315;
         n0i[1][5] = 0.0046;
@@ -2166,7 +2242,7 @@ public class GERG2008 {
         th0i[21][6] = 0;
         th0i[21][7] = 0;
 
-// Mixture parameters for reducing variables
+        // Mixture parameters for reducing variables
         bvij[1][2] = 0.998721377;
         gvij[1][2] = 1.013950311;
         btij[1][2] = 0.99809883;
@@ -2528,7 +2604,8 @@ public class GERG2008 {
         btij[5][21] = 1;
         gtij[5][21] = 1; // C3H8-Ar
 
-// The beta values for isobutane+butane are the reciprocal values of those in the GERG-2008 publication because the order was reversed in this work.
+        // The beta values for isobutane+butane are the reciprocal values of those in the GERG-2008
+        // publication because the order was reversed in this work.
         bvij[6][7] = 0.999120311;
         gvij[6][7] = 1.00041444;
         btij[6][7] = 0.999922459;
@@ -3032,7 +3109,7 @@ public class GERG2008 {
             }
         }
 
-// Ideal gas terms
+        // Ideal gas terms
         T0 = 298.15;
         d0 = 101.325 / RGERG / T0;
         for (int i = 1; i <= MaxFlds; ++i) {
@@ -3046,33 +3123,41 @@ public class GERG2008 {
         }
         return;
 
-// Code to produce nearly exact values for n0(1) and n0(2)
-// This is not called in the current code, but included below to show how the values were calculated.  The return above can be removed to call this code.
-// T0 = 298.15;
-// d0 = 101.325 / RGERG / T0;
-// for (int i = 1; i <= MaxFlds; ++i){
-//   n1 = 0; n2 = 0;
-//   if (th0i[i][4] > epsilon) { n2 += - n0i[i][4] * th0i[i][4] / Tanh(th0i[i][4] / T0); n1 += - n0i[i][4] * log(Sinh(th0i[i][4] / T0)); }
-//   if (th0i[i][5] > epsilon) { n2 += + n0i[i][5] * th0i[i][5] * Tanh(th0i[i][5] / T0); n1 += + n0i[i][5] * log(Cosh(th0i[i][5] / T0)); }
-//   if (th0i[i][6] > epsilon) { n2 += - n0i[i][6] * th0i[i][6] / Tanh(th0i[i][6] / T0); n1 += - n0i[i][6] * log(Sinh(th0i[i][6] / T0)); }
-//   if (th0i[i][7] > epsilon) { n2 += + n0i[i][7] * th0i[i][7] * Tanh(th0i[i][7] / T0); n1 += + n0i[i][7] * log(Cosh(th0i[i][7] / T0)); }
-//   n0i[i][3] = n0i[i][3] - 1;
-//   n0i[i][1] = n1 - n2 / T0 + n0i[i][3] * (1 + log(T0));
-//   n0i[i][2] = n2 - n0i[i][3] * T0;
-//   for (int j = 1; j <= 7; ++j){
-//     n0i[i][j] = Rsr * n0i[i][j];
-//   }
-//   n0i[i][2] = n0i[i][2] - T0;
-//   n0i[i][1] = n0i[i][1] - log(d0);
-// }
+        // Code to produce nearly exact values for n0(1) and n0(2)
+        // This is not called in the current code, but included below to show how the values were
+        // calculated. The return above can be removed to call this code.
+        // T0 = 298.15;
+        // d0 = 101.325 / RGERG / T0;
+        // for (int i = 1; i <= MaxFlds; ++i){
+        // n1 = 0; n2 = 0;
+        // if (th0i[i][4] > epsilon) { n2 += - n0i[i][4] * th0i[i][4] / Tanh(th0i[i][4] / T0); n1 +=
+        // - n0i[i][4] * log(Sinh(th0i[i][4] / T0)); }
+        // if (th0i[i][5] > epsilon) { n2 += + n0i[i][5] * th0i[i][5] * Tanh(th0i[i][5] / T0); n1 +=
+        // + n0i[i][5] * log(Cosh(th0i[i][5] / T0)); }
+        // if (th0i[i][6] > epsilon) { n2 += - n0i[i][6] * th0i[i][6] / Tanh(th0i[i][6] / T0); n1 +=
+        // - n0i[i][6] * log(Sinh(th0i[i][6] / T0)); }
+        // if (th0i[i][7] > epsilon) { n2 += + n0i[i][7] * th0i[i][7] * Tanh(th0i[i][7] / T0); n1 +=
+        // + n0i[i][7] * log(Cosh(th0i[i][7] / T0)); }
+        // n0i[i][3] = n0i[i][3] - 1;
+        // n0i[i][1] = n1 - n2 / T0 + n0i[i][3] * (1 + log(T0));
+        // n0i[i][2] = n2 - n0i[i][3] * T0;
+        // for (int j = 1; j <= 7; ++j){
+        // n0i[i][j] = Rsr * n0i[i][j];
+        // }
+        // n0i[i][2] = n0i[i][2] - T0;
+        // n0i[i][1] = n0i[i][1] - log(d0);
+        // }
     }
 
     /**
-     * @param args
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
-
         GERG2008 test = new GERG2008();
         GERG2008.SetupGERG();
 
@@ -3085,8 +3170,9 @@ public class GERG2008 {
         int iFlag = 0;
         StringW herr = new StringW("");
 
-        double x[] = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
-                0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
+        double x[] = {0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215,
+                0.00088, 0.00024, 0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007,
+                0.001};
 
         GERG2008.MolarMassGERG(x, Mm);
 
@@ -3101,47 +3187,61 @@ public class GERG2008 {
         System.out.println("density " + D.val);
 
         doubleW dPdD = new doubleW(0.0d), d2PdD2 = new doubleW(0.0d), d2PdTD = new doubleW(0.0d),
-                dPdT = new doubleW(0.0d), U = new doubleW(0.0d), H = new doubleW(0.0d), S = new doubleW(0.0d),
-                A = new doubleW(0.0d), P2 = new doubleW(0.0d);
-        doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d), G = new doubleW(0.0d),
-                JT = new doubleW(0.0d), Kappa = new doubleW(0.0d), PP = new doubleW(0.0d);
+                dPdT = new doubleW(0.0d), U = new doubleW(0.0d), H = new doubleW(0.0d),
+                S = new doubleW(0.0d), A = new doubleW(0.0d), P2 = new doubleW(0.0d);
+        doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d),
+                G = new doubleW(0.0d), JT = new doubleW(0.0d), Kappa = new doubleW(0.0d),
+                PP = new doubleW(0.0d);
 
-        GERG2008.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
+        GERG2008.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W,
+                G, JT, Kappa, A);
 
         /*
-         * // test.PressureGERG(400, 12.798286, x); String herr = "";
-         * test.DensityGERG(0, T, P, x, ierr, herr); double pres = test.P; double
-         * molarmass = test.Mm;
+         * // test.PressureGERG(400, 12.798286, x); String herr = ""; test.DensityGERG(0, T, P, x,
+         * ierr, herr); double pres = test.P; double molarmass = test.Mm;
          * 
-         * // double dPdD=0.0, dPdD2=0.0, d2PdTD=0.0, dPdT=0.0, U=0.0, H=0.0, S=0.0, //
-         * Cv=0.0, Cp=0.0, W=0.0, G=0.0, JT=0.0, Kappa=0.0, A=0.0;
+         * // double dPdD=0.0, dPdD2=0.0, d2PdTD=0.0, dPdT=0.0, U=0.0, H=0.0, S=0.0, // Cv=0.0,
+         * Cp=0.0, W=0.0, G=0.0, JT=0.0, Kappa=0.0, A=0.0;
          * 
          * // void DensityGERG(const int iFlag, const double T, const double P, const //
-         * std::vector<double> &x, double &D, int &ierr, std::string &herr) //
-         * test.DensityGERG(0, T, P, x, ierr, herr);
+         * std::vector<double> &x, double &D, int &ierr, std::string &herr) // test.DensityGERG(0,
+         * T, P, x, ierr, herr);
          * 
-         * // Sub PropertiesGERG(T, D, x, P, Z, dPdD, dPdD2, d2PdTD, dPdT, U, H, S, Cv,
-         * Cp, // W, G, JT, Kappa) // test.PropertiesGERG(T, test.D, x);
+         * // Sub PropertiesGERG(T, D, x, P, Z, dPdD, dPdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, // W, G,
+         * JT, Kappa) // test.PropertiesGERG(T, test.D, x);
          */
         System.out.println("Outputs-----\n");
-        System.out.println("Molar mass [g/mol]:                 20.54274450160000 != %0.16g\n" + Mm.val);
-        System.out.println("Molar density [mol/l]:              12.79828626082062 != %0.16g\n" + D.val);
-        System.out.println("Pressure [kPa]:                     50000.00000000001 != %0.16g\n" + P.val);
-        System.out.println("Compressibility factor:             1.174690666383717 != %0.16g\n" + Z.val);
-        System.out.println("d(P)/d(rho) [kPa/(mol/l)]:          7000.694030193327 != %0.16g\n" + dPdD.val);
-        System.out.println("d^2(P)/d(rho)^2 [kPa/(mol/l)^2]:    1130.481239114938 != %0.16g\n" + d2PdD2.val);
-        System.out.println("d(P)/d(T) [kPa/K]:                  235.9832292593096 != %0.16g\n" + dPdT.val);
-        System.out.println("Energy [J/mol]:                     -2746.492901212530 != %0.16g\n" + U.val);
-        System.out.println("Enthalpy [J/mol]:                   1160.280160510973 != %0.16g\n" + H.val);
-        System.out.println("Entropy [J/mol-K]:                  -38.57590392409089 != %0.16g\n" + S.val);
-        System.out.println("Isochoric heat capacity [J/mol-K]:  39.02948218156372 != %0.16g\n" + Cv.val);
-        System.out.println("Isobaric heat capacity [J/mol-K]:   58.45522051000366 != %0.16g\n" + Cp.val);
-        System.out.println("Speed of sound [m/s]:               714.4248840596024 != %0.16g\n" + W.val);
-        System.out.println("Gibbs energy [J/mol]:               16590.64173014733 != %0.16g\n" + G.val);
-        System.out.println("Joule-Thomson coefficient [K/kPa]:  7.155629581480913E-05 != %0.16g\n" + JT.val);
-        System.out.println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);
-        ;
-
+        System.out.println(
+                "Molar mass [g/mol]:                 20.54274450160000 != %0.16g\n" + Mm.val);
+        System.out.println(
+                "Molar density [mol/l]:              12.79828626082062 != %0.16g\n" + D.val);
+        System.out.println(
+                "Pressure [kPa]:                     50000.00000000001 != %0.16g\n" + P.val);
+        System.out.println(
+                "Compressibility factor:             1.174690666383717 != %0.16g\n" + Z.val);
+        System.out.println(
+                "d(P)/d(rho) [kPa/(mol/l)]:          7000.694030193327 != %0.16g\n" + dPdD.val);
+        System.out.println(
+                "d^2(P)/d(rho)^2 [kPa/(mol/l)^2]:    1130.481239114938 != %0.16g\n" + d2PdD2.val);
+        System.out.println(
+                "d(P)/d(T) [kPa/K]:                  235.9832292593096 != %0.16g\n" + dPdT.val);
+        System.out.println(
+                "Energy [J/mol]:                     -2746.492901212530 != %0.16g\n" + U.val);
+        System.out.println(
+                "Enthalpy [J/mol]:                   1160.280160510973 != %0.16g\n" + H.val);
+        System.out.println(
+                "Entropy [J/mol-K]:                  -38.57590392409089 != %0.16g\n" + S.val);
+        System.out.println(
+                "Isochoric heat capacity [J/mol-K]:  39.02948218156372 != %0.16g\n" + Cv.val);
+        System.out.println(
+                "Isobaric heat capacity [J/mol-K]:   58.45522051000366 != %0.16g\n" + Cp.val);
+        System.out.println(
+                "Speed of sound [m/s]:               714.4248840596024 != %0.16g\n" + W.val);
+        System.out.println(
+                "Gibbs energy [J/mol]:               16590.64173014733 != %0.16g\n" + G.val);
+        System.out.println(
+                "Joule-Thomson coefficient [K/kPa]:  7.155629581480913E-05 != %0.16g\n" + JT.val);
+        System.out.println(
+                "Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);;
     }
-
 }

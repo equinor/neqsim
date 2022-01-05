@@ -1,11 +1,6 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
-import java.util.*;
+import java.util.ArrayList;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -13,30 +8,30 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * TestSaturationPresFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TestSaturationPresFunction extends java.lang.Object {
-
-    private static final long serialVersionUID = 1000;
-
+public class TestSaturationPresFunction {
     /**
-     * Creates new TestAcentric
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
-    public TestSaturationPresFunction() {
-    }
-
     public static void main(String[] args) {
-
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         try {
             System.out.println("adding....");
             int i = 0;
             while (i < 1) {
                 SaturationPressureFunction function = new SaturationPressureFunction();
-                double guess[] = { 341.6 / 1000.0 };
+                double guess[] = {341.6 / 1000.0};
                 function.setInitialGuess(guess);
 
                 SystemInterface tempSystem = new SystemSrkEos(273.15 + 120, 100.0);
@@ -62,10 +57,11 @@ public class TestSaturationPresFunction extends java.lang.Object {
                 tempSystem.init(0);
                 tempSystem.init(1);
 
-                double sample1[] = { 273.15 + 100 };
+                double sample1[] = {273.15 + 100};
                 double satPres = 400.0;
-                double standardDeviation1[] = { 1.5 };
-                SampleValue sample = new SampleValue(satPres, satPres / 100.0, sample1, standardDeviation1);
+                double standardDeviation1[] = {1.5};
+                SampleValue sample =
+                        new SampleValue(satPres, satPres / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
                 function.setInitialGuess(guess);
                 sample.setThermodynamicSystem(tempSystem);

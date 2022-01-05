@@ -1,24 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
-* To change this license header, choose License Headers in Project Properties.
-* To change this template file, choose Tools | Templates
-* and open the template in the editor.
-*/
 package neqsim.processSimulation.processSystem.processModules;
 
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -31,12 +10,19 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>
+ * PropaneCoolingModule class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class PropaneCoolingModule extends ProcessModuleBaseClass {
-
     /**
+     * <p>
+     * Setter for the field <code>condenserTemperature</code>.
+     * </p>
+     *
      * @param condenserTemperature the condenserTemperature to set
      */
     public void setCondenserTemperature(double condenserTemperature) {
@@ -44,6 +30,10 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>vaporizerTemperature</code>.
+     * </p>
+     *
      * @param vaporizerTemperature the vaporizerTemperature to set
      */
     public void setVaporizerTemperature(double vaporizerTemperature) {
@@ -56,15 +46,17 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     private double condenserTemperature = 273.15 + 30.0; // Kelvin
     private double vaporizerTemperature = 273.15 - 40.0; // Kelvin
 
+    /** {@inheritDoc} */
     @Override
-	public void addInputStream(String streamName, StreamInterface stream) {
+    public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("refrigerant")) {
             this.refrigerantStream = stream;
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public StreamInterface getOutputStream(String streamName) {
+    public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -77,8 +69,9 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void initializeModule() {
+    public void initializeModule() {
         isInitializedModule = true;
 
         refrigerantStream.getThermoSystem().setTemperature(condenserTemperature);
@@ -119,8 +112,9 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         System.out.println("finished adding operations....");
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
@@ -130,29 +124,33 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         // gasExitStream = secondStageAfterCooler.getOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void initializeStreams() {
+    public void initializeStreams() {
         isInitializedStreams = true;
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void calcDesign() {
-        // design is done here //
+    public void calcDesign() {
+        // design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setDesign() {
-        // set design is done here //
+    public void setDesign() {
+        // set design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setSpecification(String specificationName, double value) {
+    public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("vaporizerTemperature")) {
             setVaporizerTemperature(value);
         } else if (specificationName.equals("condenserTemperature")) {
@@ -160,9 +158,16 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         }
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 - 20, 1);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos(273.15 - 20, 1);
         testSystem.addComponent("propane", 0.30);
         testSystem.createDatabase(true);
 
@@ -174,20 +179,28 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         propaneModule.addInputStream("refrigerant", porpane);
         propaneModule.run();
 
-        double compressorWork = ((CompressorInterface) propaneModule.getOperations().getUnit("propane compressor"))
-                .getEnergy();
+        double compressorWork =
+                ((CompressorInterface) propaneModule.getOperations().getUnit("propane compressor"))
+                        .getEnergy();
 
-        double evaporatorDuty = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getEnergyInput();
-        double evaporatorPressure = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
-                .getOutStream().getPressure();
-        double evaporatorTemperature = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
-                .getOutStream().getTemperature();
+        double evaporatorDuty =
+                ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
+                        .getEnergyInput();
+        double evaporatorPressure =
+                ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
+                        .getOutStream().getPressure();
+        double evaporatorTemperature =
+                ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
+                        .getOutStream().getTemperature();
 
-        double condenserDuty = ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getEnergyInput();
-        double condenserPressure = ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutStream()
-                .getPressure();
-        double condenserTemperature = ((Heater) propaneModule.getOperations().getUnit("propane condenser"))
-                .getOutStream().getTemperature();
+        double condenserDuty = ((Heater) propaneModule.getOperations().getUnit("propane condenser"))
+                .getEnergyInput();
+        double condenserPressure =
+                ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutStream()
+                        .getPressure();
+        double condenserTemperature =
+                ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutStream()
+                        .getTemperature();
 
         System.out.println("Compressor work " + compressorWork + " W");
 

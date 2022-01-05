@@ -1,37 +1,18 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
-
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * QfuncFlash class.
+ * </p>
  *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
-public class QfuncFlash extends Flash implements java.io.Serializable {
-
+public class QfuncFlash extends Flash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(QfuncFlash.class);
 
@@ -39,10 +20,22 @@ public class QfuncFlash extends Flash implements java.io.Serializable {
     Flash tpFlash;
     int type = 0;
 
-    /** Creates new PHflash */
-    public QfuncFlash() {
-    }
+    /**
+     * <p>
+     * Constructor for QfuncFlash.
+     * </p>
+     */
+    public QfuncFlash() {}
 
+    /**
+     * <p>
+     * Constructor for QfuncFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Hspec a double
+     * @param type a int
+     */
     public QfuncFlash(SystemInterface system, double Hspec, int type) {
         this.system = system;
         this.tpFlash = new TPflash(system);
@@ -50,16 +43,37 @@ public class QfuncFlash extends Flash implements java.io.Serializable {
         this.type = type;
     }
 
+    /**
+     * <p>
+     * calcdQdTT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdTT() {
         double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCp();
         return dQdTT;
     }
 
+    /**
+     * <p>
+     * calcdQdT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdT() {
         double dQ = system.getEnthalpy() - Hspec;
         return dQ;
     }
 
+    /**
+     * <p>
+     * solveQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double solveQ() {
         double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
         double iterations = 1;
@@ -70,12 +84,14 @@ public class QfuncFlash extends Flash implements java.io.Serializable {
             nyTemp = oldTemp - calcdQdT() / calcdQdTT();
             system.setTemperature(1.0 / nyTemp);
             tpFlash.run();
-        } while (Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / nyTemp)) > 1e-9 && iterations < 1000);
+        } while (Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / nyTemp)) > 1e-9
+                && iterations < 1000);
         return 1.0 / nyTemp;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
         logger.info("entropy: " + system.getEntropy());
         sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2,
@@ -84,9 +100,9 @@ public class QfuncFlash extends Flash implements java.io.Serializable {
         secondOrderSolver.solve(1);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-
 }

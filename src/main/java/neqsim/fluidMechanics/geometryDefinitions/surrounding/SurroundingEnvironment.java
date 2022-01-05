@@ -1,21 +1,47 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.fluidMechanics.geometryDefinitions.surrounding;
 
 /**
+ * <p>
+ * SurroundingEnvironment interface.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public interface SurroundingEnvironment {
-
+    /**
+     * <p>
+     * getTemperature.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTemperature();
 
+    /**
+     * <p>
+     * setTemperature.
+     * </p>
+     *
+     * @param temperature a double
+     */
     public void setTemperature(double temperature);
 
+    /**
+     * <p>
+     * getHeatTransferCoefficient.
+     * </p>
+     *
+     * @return a double
+     */
     public double getHeatTransferCoefficient();
 
+    /**
+     * <p>
+     * setHeatTransferCoefficient.
+     * </p>
+     *
+     * @param heatTransferCoefficient a double
+     */
     public void setHeatTransferCoefficient(double heatTransferCoefficient);
 }

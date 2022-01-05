@@ -1,27 +1,35 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.costEstimation.separator;
 
 import neqsim.processSimulation.costEstimation.UnitCostEstimateBaseClass;
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 
 /**
+ * <p>
+ * SeparatorCostEstimate class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for SeparatorCostEstimate.
+     * </p>
+     *
+     * @param mechanicalEquipment a
+     *        {@link neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign}
+     *        object
+     */
     public SeparatorCostEstimate(SeparatorMechanicalDesign mechanicalEquipment) {
         super(mechanicalEquipment);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getTotaltCost() {
+    public double getTotaltCost() {
         SeparatorMechanicalDesign sepMecDesign = (SeparatorMechanicalDesign) mechanicalEquipment;
 
         sepMecDesign.getWeightTotal();

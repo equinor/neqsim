@@ -1,21 +1,5 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * Separator.java
+ * SimpleReservoir.java
  *
  * Created on 12. mars 2001, 19:48
  */
@@ -23,7 +7,6 @@ package neqsim.processSimulation.processEquipment.reservoir;
 
 import java.util.ArrayList;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -31,12 +14,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * SimpleReservoir class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class SimpleReservoir extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
-
+public class SimpleReservoir extends ProcessEquipmentBaseClass {
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
@@ -52,19 +37,28 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
     double OOIP = 0.0;
     double OGIP = 0.0;
 
-//	StreamInterface gasOutStream;
-//	StreamInterface oilOutStream;
+    // StreamInterface gasOutStream;
+    // StreamInterface oilOutStream;
     double reservoirVolume = 0.0;
     double lowPressureLimit = 50.0;
     double time = 0.0;
 
     /**
-     * Creates new Separator
+     * <p>
+     * Constructor for SimpleReservoir.
+     * </p>
      */
     public SimpleReservoir() {
         super();
     }
 
+    /**
+     * <p>
+     * getReservoirFluid.
+     * </p>
+     *
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SystemInterface getReservoirFluid() {
         return thermoSystem;
     }
@@ -77,15 +71,31 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
      * public StreamInterface getOilOutStream() { return oilOutStream; }
      */
 
+    /**
+     * <p>
+     * Constructor for SimpleReservoir.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public SimpleReservoir(String name) {
         super(name);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getFluid() {
+    public SystemInterface getFluid() {
         return thermoSystem;
     }
 
+    /**
+     * <p>
+     * addGasProducer.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface addGasProducer(String name) {
         Well newWell = new Well(name);
         gasProducer.add(newWell);
@@ -96,6 +106,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return newWell.getStream();
     }
 
+    /**
+     * <p>
+     * addOilProducer.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface addOilProducer(String name) {
         Well newWell = new Well(name);
         oilProducer.add(newWell);
@@ -106,6 +124,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return newWell.getStream();
     }
 
+    /**
+     * <p>
+     * addWaterInjector.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface addWaterInjector(String name) {
         Well newWell = new Well(name);
         waterInjector.add(newWell);
@@ -117,6 +143,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return newWell.getStream();
     }
 
+    /**
+     * <p>
+     * addGasInjector.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface addGasInjector(String name) {
         Well newWell = new Well(name);
         gasInjector.add(newWell);
@@ -127,6 +161,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return newWell.getStream();
     }
 
+    /**
+     * <p>
+     * getGasInPlace.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getGasInPlace(String unit) {
         SystemInterface locStream = (SystemInterface) (thermoSystem).clone();
         locStream.setTemperature(288.15);
@@ -144,6 +186,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return volume;
     }
 
+    /**
+     * <p>
+     * getOilInPlace.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getOilInPlace(String unit) {
         SystemInterface locStream = (SystemInterface) (thermoSystem).clone();
         locStream.setTemperature(288.15);
@@ -161,14 +211,38 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return volume;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>gasProducer</code>.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
+     */
     public Well getGasProducer(int i) {
         return gasProducer.get(i);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>oilProducer</code>.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
+     */
     public Well getOilProducer(int i) {
         return oilProducer.get(i);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>oilProducer</code>.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
+     */
     public Well getOilProducer(String name) {
         for (int i = 0; i < oilProducer.size(); i++) {
             if (oilProducer.get(i).getName().equals(name)) {
@@ -178,6 +252,16 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return null;
     }
 
+    /**
+     * <p>
+     * setReservoirFluid.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param gasVolume a double
+     * @param oilVolume a double
+     * @param waterVolume a double
+     */
     public void setReservoirFluid(SystemInterface thermoSystem, double gasVolume, double oilVolume,
             double waterVolume) {
         this.thermoSystem = thermoSystem;
@@ -201,15 +285,17 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
                 if (j == 1) {
                     relFact = oilVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
                     totalliquidVolume += oilVolume / thermoSystem2.getPhase(j).getMolarVolume();
-
                 } else if (j == 2) {
                     relFact = waterVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
                     totalliquidVolume += waterVolume / thermoSystem2.getPhase(j).getMolarVolume();
                 }
             }
             for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
-                thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentNumber(),
-                        relFact * thermoSystem2.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
+                thermoSystem.addComponent(
+                        thermoSystem.getPhase(j).getComponent(i).getComponentNumber(),
+                        relFact * thermoSystem2.getPhase(j).getComponent(i)
+                                .getNumberOfMolesInPhase(),
+                        j);
             }
         }
         /*
@@ -223,7 +309,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         thermoSystem.initProperties();
         // thermoSystem.display();
         // gasOutStream = new Stream();
-//		gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));
+        // gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));
         reservoirVolume = gasVolume + oilVolume + waterVolume;
 
         OOIP = getOilInPlace("Sm3");
@@ -234,8 +320,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         lowPressureLimit = 50.0;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         System.out.println("gas volume " + thermoSystem.getPhase("gas").getVolume("m3"));
         System.out.println("oil volume " + thermoSystem.getPhase("oil").getVolume("m3"));
         System.out.println("water volume " + thermoSystem.getPhase("aqueous").getVolume("m3"));
@@ -255,24 +342,39 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
 
         // gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));
         // gasOutStream.run();
-
     }
 
+    /**
+     * <p>
+     * GORprodution.
+     * </p>
+     *
+     * @return a double
+     */
     public double GORprodution() {
-
         double GOR = 0.0;
         double flow = 0.0;
         for (int i = 0; i < gasProducer.size(); i++) {
             flow += gasProducer.get(i).getStream().getFluid().getNumberOfMoles();
-            GOR += gasProducer.get(i).getGOR() * gasProducer.get(i).getStream().getFluid().getNumberOfMoles();
+            GOR += gasProducer.get(i).getGOR()
+                    * gasProducer.get(i).getStream().getFluid().getNumberOfMoles();
         }
         for (int i = 0; i < oilProducer.size(); i++) {
             flow += oilProducer.get(i).getStream().getFluid().getNumberOfMoles();
-            GOR += oilProducer.get(i).getGOR() * oilProducer.get(i).getStream().getFluid().getNumberOfMoles();
+            GOR += oilProducer.get(i).getGOR()
+                    * oilProducer.get(i).getStream().getFluid().getNumberOfMoles();
         }
         return GOR / flow;
     }
 
+    /**
+     * <p>
+     * getGasProdution.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getGasProdution(String unit) {
         double volume = 0.0;
         for (int i = 0; i < gasProducer.size(); i++) {
@@ -288,6 +390,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return volume;
     }
 
+    /**
+     * <p>
+     * getOilProdution.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getOilProdution(String unit) {
         double volume = 0.0;
         for (int i = 0; i < gasProducer.size(); i++) {
@@ -303,8 +413,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return volume;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         time = getTime() + dt;
         if (thermoSystem.getPressure("bara") < lowPressureLimit) {
             System.out.println("low pressure reservoir limit reached");
@@ -316,22 +427,23 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
             // thermoSystem.addComponent(i, -10000000000.001);
             for (int k = 0; k < gasProducer.size(); k++) {
-                thermoSystem.addComponent(i,
-                        -gasProducer.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles() * dt);
+                thermoSystem.addComponent(i, -gasProducer.get(k).getStream().getFluid()
+                        .getComponent(i).getNumberOfmoles() * dt);
             }
 
             for (int k = 0; k < oilProducer.size(); k++) {
-                thermoSystem.addComponent(i,
-                        -oilProducer.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles() * dt);
+                thermoSystem.addComponent(i, -oilProducer.get(k).getStream().getFluid()
+                        .getComponent(i).getNumberOfmoles() * dt);
             }
 
             for (int k = 0; k < waterInjector.size(); k++) {
-                thermoSystem.addComponent(i,
-                        waterInjector.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles() * dt);
+                thermoSystem.addComponent(i, waterInjector.get(k).getStream().getFluid()
+                        .getComponent(i).getNumberOfmoles() * dt);
             }
             for (int k = 0; k < gasInjector.size(); k++) {
                 thermoSystem.addComponent(i,
-                        gasInjector.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles() * dt);
+                        gasInjector.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles()
+                                * dt);
             }
         }
 
@@ -341,9 +453,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
 
         /*
          * if (thermoSystem.hasPhaseType("gas")) System.out.println("gas volume " +
-         * thermoSystem.getPhase("gas").getVolume("m3")); if
-         * (thermoSystem.hasPhaseType("oil")) System.out.println("oil volume " +
-         * thermoSystem.getPhase("oil").getVolume("m3")); if
+         * thermoSystem.getPhase("gas").getVolume("m3")); if (thermoSystem.hasPhaseType("oil"))
+         * System.out.println("oil volume " + thermoSystem.getPhase("oil").getVolume("m3")); if
          * (thermoSystem.hasPhaseType("aqueous")) System.out.println("water volume " +
          * thermoSystem.getPhase("aqueous").getVolume("m3"));
          */
@@ -364,8 +475,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
             }
         }
         /*
-         * if(thermoSystem.hasPhaseType("aqueous")) { for (int k = 0; k <
-         * waterInjector.size(); k++) { waterInjector.get(k).getStream().getFluid()
+         * if(thermoSystem.hasPhaseType("aqueous")) { for (int k = 0; k < waterInjector.size(); k++)
+         * { waterInjector.get(k).getStream().getFluid()
          * .setMolarComposition(thermoSystem.getPhase("aqueous").getMolarComposition());
          * waterInjector.get(k).getStream().run(); }
          */
@@ -385,7 +496,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         // getReservoirFluid().getPhase("oil").getVolume("m3")/1.0e6 + " water volume "+
         // getReservoirFluid().getPhase("aqueous").getVolume("m3")/1.0e6);
         // oilOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("oil").getMolarComposition());
-//		oilOutStream.run();
+        // oilOutStream.run();
 
         // thermoSystem.display();
         for (int k = 0; k < gasProducer.size(); k++) {
@@ -402,17 +513,24 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         for (int k = 0; k < gasInjector.size(); k++) {
             gasInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         thermoSystem.display();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0),
-                200.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 200.00);
         testSystem.addComponent("nitrogen", 0.100);
         testSystem.addComponent("methane", 30.00);
         testSystem.addComponent("ethane", 1.0);
@@ -438,7 +556,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         StreamInterface producedGasStream = reservoirOps.addGasProducer("SLP_A32562G");
         StreamInterface waterInjectorStream = reservoirOps.addWaterInjector("SLP_WI32562O");
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(reservoirOps);
         operations.save("c:/temp/resmode1.neqsim");
 
@@ -452,10 +571,11 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         // StreamInterface injectorGasStream =
         // reservoirOps.addGasInjector("SLP_A32562GI");
         injectorGasStream.setFlowRate(0.01, "MSm3/day");
-//		injectorGasStream.getFluid().setMolarComposition(.new double[0.1, 0.1]);
+        // injectorGasStream.getFluid().setMolarComposition(.new double[0.1, 0.1]);
 
-//		StreamInterface producedGasStream2 = reservoirOps.addGasProducer("SLP_A32562G2");
-//		producedGasStream2.setFlowRate(0.011, "MSm3/hr");
+        // StreamInterface producedGasStream2 =
+        // reservoirOps.addGasProducer("SLP_A32562G2");
+        // producedGasStream2.setFlowRate(0.011, "MSm3/hr");
 
         producedOilStream.setFlowRate(50000000.0, "kg/day");
 
@@ -464,18 +584,20 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         // StreamInterface producedGasStream = reservoirOps.getGasOutStream();
         // producedGasStream.setFlowRate(1.0e-3, "MSm3/day");
 
-//		StreamInterface producedOilStream = reservoirOps.getOilOutStream();
-//		producedOilStream.setFlowRate(1500000.0, "kg/hr");
+        // StreamInterface producedOilStream = reservoirOps.getOilOutStream();
+        // producedOilStream.setFlowRate(1500000.0, "kg/hr");
 
         reservoirOps.run();
 
         reservoirOps.runTransient(60 * 60 * 24 * 3);
         for (int i = 0; i < 1; i++) {
             reservoirOps.runTransient(60 * 60 * 24 * 15);
+            System.out.println("water volume"
+                    + reservoirOps.getReservoirFluid().getPhase("aqueous").getVolume("m3") / 1.0e6);
             System.out.println(
-                    "water volume" + reservoirOps.getReservoirFluid().getPhase("aqueous").getVolume("m3") / 1.0e6);
-            System.out.println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
-            System.out.println("total produced  " + reservoirOps.getProductionTotal("MSm3 oe") + " MSm3 oe");
+                    "oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
+            System.out.println(
+                    "total produced  " + reservoirOps.getProductionTotal("MSm3 oe") + " MSm3 oe");
             if (reservoirOps.getFluid().getPressure() < 50.0)
                 break;
         }
@@ -485,21 +607,28 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
 
         // System.out.println("GOR oil " + reservoirOps.getOilProducer(0).getGOR());
 
-        System.out.println("gas production  " + reservoirOps.getGasProdution("Sm3/day") + " Sm3/day");
-        System.out.println("oil production  " + reservoirOps.getOilProdution("Sm3/day") + " Sm3/day");
+        System.out
+                .println("gas production  " + reservoirOps.getGasProdution("Sm3/day") + " Sm3/day");
+        System.out
+                .println("oil production  " + reservoirOps.getOilProdution("Sm3/day") + " Sm3/day");
 
-        System.out.println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
+        System.out.println(
+                "oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
 
         // reservoirOps.runTransient(60 * 60 * 24 * 365);
         // reservoirOps.runTransient(60 * 60 * 24 * 365);
         // reservoirOps.runTransient(60 * 60 * 24 * 365);
-        System.out.println("gas production  total" + reservoirOps.getGasProductionTotal("GSm3") + " GSm3");
+        System.out.println(
+                "gas production  total" + reservoirOps.getGasProductionTotal("GSm3") + " GSm3");
 
-        System.out.println("oil production  total" + reservoirOps.getOilProductionTotal("MSm3") + " MSm3");
+        System.out.println(
+                "oil production  total" + reservoirOps.getOilProductionTotal("MSm3") + " MSm3");
         System.out.println("gas in place (GIP) " + reservoirOps.getGasInPlace("GSm3") + " GSm3");
         System.out.println("oil in place (OIP) " + reservoirOps.getOilInPlace("MSm3") + " MSm3");
-        System.out.println("original oil in place (OOIP) " + reservoirOps.getOOIP("MSm3") + " MSm3");
-        System.out.println("original gas in place (OGIP) " + reservoirOps.getOGIP("GSm3") + " GSm3");
+        System.out
+                .println("original oil in place (OOIP) " + reservoirOps.getOOIP("MSm3") + " MSm3");
+        System.out
+                .println("original gas in place (OGIP) " + reservoirOps.getOGIP("GSm3") + " GSm3");
 
         // reservoirOps.runTransient(60 * 60 * 24 * 365);
         // producedGasStream.setFlowRate(4.0, "MSm3/day");
@@ -507,7 +636,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
 
         for (int i = 0; i < 300; i++) {
             // reservoirOps.runTransient(60 * 60 * 24 * 365);
-
         }
         System.out.println("oil flow " + producedOilStream.getFlowRate("kg/hr"));
 
@@ -531,9 +659,16 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
                     + producedOilStream.getPressure("bara") + " pipe out pres "
                     + testPipe.getOutStream().getFluid().getPressure());
         }
-
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>gasProductionTotal</code>.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getGasProductionTotal(String unit) {
         if (unit.equals("MSm3"))
             return gasProductionTotal / 1e6;
@@ -542,12 +677,28 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return gasProductionTotal;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>oilProductionTotal</code>.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getOilProductionTotal(String unit) {
         if (unit.equals("MSm3"))
             return oilProductionTotal / 1e6;
         return oilProductionTotal;
     }
 
+    /**
+     * <p>
+     * getProductionTotal.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getProductionTotal(String unit) {
         double prod = getOilProductionTotal("Sm3") + getGasProductionTotal("Sm3") / 1.0e3;
         if (unit.equals("MSm3 oe"))
@@ -555,20 +706,42 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return prod;
     }
 
+    /**
+     * <p>
+     * getOOIP.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getOOIP(String unit) {
         if (unit.equals("MSm3"))
             return OOIP / 1.0e6;
         return OOIP;
     }
 
+    /**
+     * <p>
+     * getOGIP.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getOGIP(String unit) {
         if (unit.equals("GSm3"))
             return OGIP / 1.0e9;
         return OGIP;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>time</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTime() {
         return time;
     }
-
 }

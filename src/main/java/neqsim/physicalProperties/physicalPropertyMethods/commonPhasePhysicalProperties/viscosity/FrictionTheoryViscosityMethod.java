@@ -5,15 +5,19 @@
  */
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * FrictionTheoryViscosityMethod class.
+ * </p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
-public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.thermo.ThermodynamicConstantsInterface {
-
+public class FrictionTheoryViscosityMethod extends Viscosity
+        implements neqsim.thermo.ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
 
     public double[] pureComponentViscosity, Fc, omegaVisc;
@@ -24,11 +28,11 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
     protected double kaprc_fconst = 6.99574e-3;
     protected double kaprrc_fconst = 1.26358e-3;
 
-    protected double[][] kapa_fconst = { { -0.114804, 0.246622, -3.94638e-2 }, { 0.246622, -1.15648e-4, 4.18863e-5 },
-            { -3.94638e-2, 4.18863e-5, -5.91999e-9 } };
+    protected double[][] kapa_fconst = {{-0.114804, 0.246622, -3.94638e-2},
+            {0.246622, -1.15648e-4, 4.18863e-5}, {-3.94638e-2, 4.18863e-5, -5.91999e-9}};
 
-    protected double[][] kapr_fconst = { { -0.315903, 0.566713, -7.29995e-2 }, { 0.566713, -1.0086e-4, 5.17459e-5 },
-            { -7.29995e-2, 5.17459e-5, -5.68708e-9 } };
+    protected double[][] kapr_fconst = {{-0.315903, 0.566713, -7.29995e-2},
+            {0.566713, -1.0086e-4, 5.17459e-5}, {-7.29995e-2, 5.17459e-5, -5.68708e-9}};
 
     protected double kaprr_fconst = 1.35994e-8;
     static Logger logger = LogManager.getLogger(FrictionTheoryViscosityMethod.class);
@@ -48,11 +52,21 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
     //
     // protected double kaprr_fconst = 1.37290e-8;
     /**
-     * Creates new ChungViscosityMethod
+     * <p>
+     * Constructor for FrictionTheoryViscosityMethod.
+     * </p>
      */
-    public FrictionTheoryViscosityMethod() {
-    }
+    public FrictionTheoryViscosityMethod() {}
 
+    /**
+     * <p>
+     * Constructor for FrictionTheoryViscosityMethod.
+     * </p>
+     *
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public FrictionTheoryViscosityMethod(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
@@ -65,28 +79,29 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
             kaprc_fconst = 1.19902e-2;
             kaprrc_fconst = 8.55115e-4;
 
-            double[][] kapa_fconst = { { -4.89197e-2, 0.270572, -4.48111e-2 }, { 0.270572, -1.10473e-4, 4.08972e-5 },
-                    { -4.48111e-2, 4.08972e-5, -5.79765e-9 } };
+            double[][] kapa_fconst = {{-4.89197e-2, 0.270572, -4.48111e-2},
+                    {0.270572, -1.10473e-4, 4.08972e-5}, {-4.48111e-2, 4.08972e-5, -5.79765e-9}};
             this.kapa_fconst = kapa_fconst;
 
-            double[][] kapr_fconst = { { -0.357875, 0.637572, -7.9024e-2 }, { 0.637572, -6.02128e-5, 3.72408e-5 },
-                    { -7.9024e-2, 3.72408e-5, -5.65610e-9 } };
+            double[][] kapr_fconst = {{-0.357875, 0.637572, -7.9024e-2},
+                    {0.637572, -6.02128e-5, 3.72408e-5}, {-7.9024e-2, 3.72408e-5, -5.65610e-9}};
             this.kapr_fconst = kapr_fconst;
 
             kaprr_fconst = 1.37290e-8;
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcViscosity() {
+    public double calcViscosity() {
         initChungPureComponentViscosity();
 
         double visk0 = 0.0;
         double visk1 = 0.0;
         double MM = 0.0;
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-            visk0 += phase.getPhase().getComponent(i).getx() * Math.log(getPureComponentViscosity(i));
+            visk0 += phase.getPhase().getComponent(i).getx()
+                    * Math.log(getPureComponentViscosity(i));
             MM += phase.getPhase().getComponent(i).getx()
                     / Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 0.3);
         }
@@ -95,8 +110,10 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
         double Patractive = 1;
         try {
             // frictional term
-            Prepulsive = ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase()).getPressureRepulsive();
-            Patractive = ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase()).getPressureAtractive();
+            Prepulsive = ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase())
+                    .getPressureRepulsive();
+            Patractive = ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase())
+                    .getPressureAtractive();
             // logger.info("P rep " + Prepulsive);
             // logger.info("P atr " + Patractive);
         } catch (Exception e) {
@@ -113,8 +130,10 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
                 nci *= TBPcorrection;
             }
 
-            double phi = 1e1 * R * phase.getPhase().getComponent(i).getTC() / phase.getPhase().getComponent(i).getPC();
-            double bigGam = phase.getPhase().getComponent(i).getTC() / phase.getPhase().getTemperature();
+            double phi = 1e1 * R * phase.getPhase().getComponent(i).getTC()
+                    / phase.getPhase().getComponent(i).getPC();
+            double bigGam =
+                    phase.getPhase().getComponent(i).getTC() / phase.getPhase().getTemperature();
 
             double kapri = getRedKapr(i, phi, bigGam);
             double kaprri = getRedKaprr(i, phi, bigGam);
@@ -124,8 +143,8 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
                     / (Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 0.3) * MM);
             kaprmx += zi * nci * kapri / phase.getPhase().getComponent(i).getPC();
             kapamx += zi * nci * kapai / phase.getPhase().getComponent(i).getPC();
-            kaprrmx += zi * nci * kaprri
-                    / (phase.getPhase().getComponent(i).getPC() * phase.getPhase().getComponent(i).getPC());
+            kaprrmx += zi * nci * kaprri / (phase.getPhase().getComponent(i).getPC()
+                    * phase.getPhase().getComponent(i).getPC());
         }
         visk1 = kaprmx * Prepulsive + kapamx * Patractive + kaprrmx * Prepulsive * Prepulsive;
 
@@ -135,6 +154,16 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
         return (visk0 + visk1) * 1.0e-7;
     }
 
+    /**
+     * <p>
+     * getRedKapr.
+     * </p>
+     *
+     * @param compNumb a int
+     * @param phi a double
+     * @param bigGamma a double
+     * @return a double
+     */
     public double getRedKapr(int compNumb, double phi, double bigGamma) {
         return kaprc_fconst + kapr_fconst[0][0] * (bigGamma - 1.0)
                 + (kapr_fconst[1][0] + kapr_fconst[1][1] * phi) * (Math.exp(bigGamma - 1.0) - 1.0)
@@ -142,23 +171,49 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
                         * (Math.exp(2 * bigGamma - 2.0) - 1.0);
     }
 
+    /**
+     * <p>
+     * getRedKaprr.
+     * </p>
+     *
+     * @param compNumb a int
+     * @param phi a double
+     * @param bigGamma a double
+     * @return a double
+     */
     public double getRedKaprr(int compNumb, double phi, double bigGamma) {
-        return kaprrc_fconst + kaprr_fconst * phi * (Math.exp(2.0 * bigGamma) - 1.0) * Math.pow(bigGamma - 1.0, 2.0);
+        return kaprrc_fconst + kaprr_fconst * phi * (Math.exp(2.0 * bigGamma) - 1.0)
+                * Math.pow(bigGamma - 1.0, 2.0);
     }
 
+    /**
+     * <p>
+     * getRedKapa.
+     * </p>
+     *
+     * @param compNumb a int
+     * @param phi a double
+     * @param bigGamma a double
+     * @return a double
+     */
     public double getRedKapa(int compNumb, double phi, double bigGamma) {
-
         return kapac_fconst + kapa_fconst[0][0] * (bigGamma - 1.0)
                 + (kapa_fconst[1][0] + kapa_fconst[1][1] * phi) * (Math.exp(bigGamma - 1.0) - 1.0)
                 + (kapa_fconst[2][0] + kapa_fconst[2][1] * phi + kapa_fconst[2][2] * phi * phi)
                         * (Math.exp(2.0 * bigGamma - 2.0) - 1.0);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getPureComponentViscosity(int i) {
+    public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 
+    /**
+     * <p>
+     * initChungPureComponentViscosity.
+     * </p>
+     */
     public void initChungPureComponentViscosity() {
         double tempVar = 0;
         double A = 1.16145, B = 0.14874, C = 0.52487, D = 0.77320, E = 2.16178, F = 2.43787;
@@ -166,12 +221,14 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
             Fc[i] = 1.0 - 0.2756 * phase.getPhase().getComponents()[i].getAcentricFactor();
 
-            tempVar = 1.2593 * phase.getPhase().getTemperature() / phase.getPhase().getComponents()[i].getTC();
+            tempVar = 1.2593 * phase.getPhase().getTemperature()
+                    / phase.getPhase().getComponents()[i].getTC();
             // eq. 9.4.3 TPoLG
             double varLast = -6.435e-4 * Math.pow(tempVar, 0.14874)
                     * Math.sin(18.0323 * Math.pow(tempVar, -0.76830) - 7.27371);
 
-            omegaVisc[i] = A / Math.pow(tempVar, B) + C / Math.exp(D * tempVar) + E / Math.exp(F * tempVar) + varLast;
+            omegaVisc[i] = A / Math.pow(tempVar, B) + C / Math.exp(D * tempVar)
+                    + E / Math.exp(F * tempVar) + varLast;
 
             // double critVol = 0.000235751e6+
             // 1e4*3.4277*(phase.getPhase().getComponents()[i].getPC()/(R*phase.getPhase().getComponents()[i].getTC()));
@@ -185,12 +242,14 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void tuneModel(double val, double temperature, double pressure) {
+    public void tuneModel(double val, double temperature, double pressure) {
         double calcVisc = 0;
         int iter = 0;
         double err = 0.0;
-        double oldTemp = phase.getPhase().getTemperature(), oldPres = phase.getPhase().getPressure();
+        double oldTemp = phase.getPhase().getTemperature(),
+                oldPres = phase.getPhase().getPressure();
         phase.getPhase().setTemperature(temperature);
         phase.getPhase().setPressure(pressure);
         phase.getPhase().init();
@@ -208,14 +267,15 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
                     if (phase.getPhase().getComponent(i).isIsPlusFraction()
                             || phase.getPhase().getComponent(i).isIsTBPfraction()) {
                         phase.getPhase().getComponent(i).setCriticalViscosity(
-                                phase.getPhase().getComponent(i).getCriticalViscosity() * (1 - err));
+                                phase.getPhase().getComponent(i).getCriticalViscosity()
+                                        * (1 - err));
                     }
                 }
             } else {
                 logger.info("no plus fraction ");
                 for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-                    phase.getPhase().getComponent(i)
-                            .setCriticalViscosity(phase.getPhase().getComponent(i).getCriticalViscosity() * (1 - err));
+                    phase.getPhase().getComponent(i).setCriticalViscosity(
+                            phase.getPhase().getComponent(i).getCriticalViscosity() * (1 - err));
                 }
             }
         } while (Math.abs(err) > 1e-4 && iter < 500);
@@ -225,12 +285,25 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
         phase.getPhase().init();
     }
 
+    /**
+     * <p>
+     * setTBPviscosityCorrection.
+     * </p>
+     *
+     * @param correction a double
+     */
     public void setTBPviscosityCorrection(double correction) {
         TBPcorrection = correction;
     }
 
+    /**
+     * <p>
+     * getTBPviscosityCorrection.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTBPviscosityCorrection() {
         return TBPcorrection;
     }
-
 }

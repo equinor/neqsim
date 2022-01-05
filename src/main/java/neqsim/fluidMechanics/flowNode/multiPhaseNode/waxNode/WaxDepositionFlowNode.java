@@ -10,33 +10,57 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneable {
-
+/**
+ * <p>WaxDepositionFlowNode class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for WaxDepositionFlowNode.</p>
+     */
     public WaxDepositionFlowNode() {
         this.flowNodeType = "wax deposition node";
     }
 
+    /**
+     * <p>Constructor for WaxDepositionFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public WaxDepositionFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "wax deposition node";
         this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
+    /**
+     * <p>Constructor for WaxDepositionFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public WaxDepositionFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "wax deposition node";
         this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public StratifiedFlowNode clone() {
         StratifiedFlowNode clonedSystem = null;
         try {
             clonedSystem = (StratifiedFlowNode) super.clone();
@@ -47,18 +71,21 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneab
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         // System.out.println("len " + this.calcContactLength());
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcContactLength() {
-        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-                + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    public double calcContactLength() {
+        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
+                * (1.0 - 2.0 * phaseFraction[1] + Math.pow(phaseFraction[1], 1.0 / 3.0)
+                        - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
         wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
         interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -66,8 +93,9 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneab
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         StratifiedFlowNode newNode = (StratifiedFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -78,6 +106,12 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneab
         return newNode;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 40.0, 10.0);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3, 1.01325);
@@ -120,16 +154,14 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneab
         /*
          * double length = 0;
          * 
-         * double[][] temperatures2 = new double[3][1000]; int k = 0; for (int i = 0; i
-         * < 11; i++) { length += test.getLengthOfNode(); test.initFlowCalc();
-         * test.calcFluxes(); if (i > 1 && (i % 1) == 0) { k++; test.display("length " +
-         * length); // test.getBulkSystem().display("length " + length);
+         * double[][] temperatures2 = new double[3][1000]; int k = 0; for (int i = 0; i < 11; i++) {
+         * length += test.getLengthOfNode(); test.initFlowCalc(); test.calcFluxes(); if (i > 1 && (i
+         * % 1) == 0) { k++; test.display("length " + length);
+         * test.getBulkSystem().display("length " + length);
          * test.getInterphaseSystem().display("length " + length);
-         * //test.getFluidBoundary().display("length " + length);
-         * test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-         * temperatures2[0][k] = length; temperatures2[1][k] =
-         * test.getGeometry().getTemperature(); //
-         * test.getFluidBoundary().display("test"); }
+         * //test.getFluidBoundary().display("length " + length); test.setLengthOfNode(0.000005 +
+         * test.getLengthOfNode() / 2.0); temperatures2[0][k] = length; temperatures2[1][k] =
+         * test.getGeometry().getTemperature(); test.getFluidBoundary().display("test"); }
          * 
          * //test.getBulkSystem().display(); test.update();
          * test.getFluidBoundary().display("length " + length);
@@ -138,8 +170,8 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneab
          * 
          * //test.getFluidBoundary().display("test"); }
          * 
-         * for (int i = 0; i < k; i++) { System.out.println("len temp  " +
-         * temperatures2[0][i] + " " + temperatures2[1][i]); }
+         * for (int i = 0; i < k; i++) { System.out.println("len temp  " + temperatures2[0][i] + " "
+         * + temperatures2[1][i]); }
          */
     }
 }

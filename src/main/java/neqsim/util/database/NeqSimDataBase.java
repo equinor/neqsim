@@ -1,40 +1,30 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package neqsim.util.database;
 
-/*
- * testPointbase.java
- *
- * Created on 1. november 2001, 08:56
- */
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * NeqSimDataBase class.
+ * </p>
  *
  * @author Even Solbraa
  * @version Dec 2018
  */
 public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     /**
+     * <p>
+     * createTemporaryTables.
+     * </p>
+     *
      * @return the createTemporaryTables
      */
     public static boolean createTemporaryTables() {
@@ -42,6 +32,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     /**
+     * <p>
+     * Setter for the field <code>createTemporaryTables</code>.
+     * </p>
+     *
      * @param createTemporaryTables the createTemporaryTables to set
      */
     public static void setCreateTemporaryTables(boolean createTemporaryTables) {
@@ -49,6 +43,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     private static final long serialVersionUID = 1000;
+    /** Constant <code>dataBasePath=""</code> */
     public static String dataBasePath = "";
     static Logger logger = LogManager.getLogger(NeqSimDataBase.class);
     private static boolean createTemporaryTables = false;
@@ -58,17 +53,20 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     private static String username = "remote";
     private static String password = "remote";
 
-    static String dataBaseType = "MSAccessUCanAccess";
-    public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
+    // static String dataBaseType = "MSAccessUCanAccess";
+    // public static String connectionString =
+    // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
+    // Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 
     private Statement statement = null;
     protected Connection databaseConnection = null;
 
     /**
-     * Creates new testPointbase
+     * <p>
+     * Constructor for NeqSimDataBase.
+     * </p>
      */
     public NeqSimDataBase() {
-
         setDataBaseType(dataBaseType);
 
         try {
@@ -77,15 +75,19 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         } catch (Exception ex) {
             logger.error("SQLException " + ex.getMessage());
             throw new RuntimeException(ex);
-
         }
     }
 
     /**
-     * Creates new NeqSimDataBase
+     * <p>
+     * openConnection.
+     * </p>
+     *
+     * @return a Connection object
+     * @throws java.sql.SQLException if any.
+     * @throws java.lang.ClassNotFoundException if any.
      */
     public Connection openConnection() throws SQLException, ClassNotFoundException {
-
         javax.naming.InitialContext ctx = null;
         javax.sql.DataSource ds = null;
         try {
@@ -98,13 +100,14 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
             } else if (dataBaseType.equals("MSAccess")) {
                 String dir = "";
                 if (System.getProperty("NeqSim.home") == null) {
-                    dir = neqsim.util.util.FileSystemSettings.root + "\\programming\\NeqSimSourceCode\\java\\neqsim";
+                    dir = neqsim.util.util.FileSystemSettings.root
+                            + "\\programming\\NeqSimSourceCode\\java\\neqsim";
                 } else {
                     dir = System.getProperty("NeqSim.home");
                 }
-                return DriverManager.getConnection(
-                        "jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
-
+                return DriverManager
+                        .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ="
+                                + dir + "\\data\\NeqSimDatabase");
             } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
                 return DriverManager.getConnection(connectionString, "sa", "");
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
@@ -133,10 +136,25 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * getConnection.
+     * </p>
+     *
+     * @return a Connection object
+     */
     public Connection getConnection() {
         return databaseConnection;
     }
 
+    /**
+     * <p>
+     * getResultSet.
+     * </p>
+     *
+     * @param sqlString a {@link java.lang.String} object
+     * @return a ResultSet object
+     */
     public ResultSet getResultSet(String sqlString) {
         try {
             ResultSet result = getStatement().executeQuery(sqlString);
@@ -147,6 +165,13 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * execute.
+     * </p>
+     *
+     * @param sqlString a {@link java.lang.String} object
+     */
     public void execute(String sqlString) {
         try {
             if (databaseConnection == null) {
@@ -161,14 +186,36 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public static String getDataBaseType() {
         return dataBaseType;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @param aDataBaseType a {@link java.lang.String} object
+     */
     public static void setDataBaseType(String aDataBaseType) {
         setDataBaseType(aDataBaseType, null);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @param aDataBaseType a {@link java.lang.String} object
+     * @param connectionString a {@link java.lang.String} object
+     */
     public static void setDataBaseType(String aDataBaseType, String connectionString) {
         dataBaseType = aDataBaseType;
 
@@ -178,7 +225,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
 
         try {
             if (dataBaseType.equals("MSAccess")) {
-                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").newInstance();
+                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor()
+                        .newInstance();
             } else if (dataBaseType.equals("H2")) {
                 Class.forName("org.h2.Driver");
             } else if (dataBaseType.equals("H2RT")) {
@@ -186,15 +234,18 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
                 Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
             } else if (dataBaseType.equals("mySQL")) {
-                Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+                Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
             } else if (dataBaseType.equals("mySQLNTNU")) {
-                Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+                Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
             } else if (dataBaseType.equals("Derby")) {
-                Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance();
+                Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor()
+                        .newInstance();
             } else if (dataBaseType.equals("oracle")) {
-                Class.forName("oracle.jdbc.driver.OracleDriver").newInstance();
+                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor()
+                        .newInstance();
             } else if (dataBaseType.equals("oracleST")) {
-                Class.forName("oracle.jdbc.driver.OracleDriver").newInstance();
+                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor()
+                        .newInstance();
             } else {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
             }
@@ -204,17 +255,33 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>statement</code>.
+     * </p>
+     *
+     * @return a Statement object
+     */
     public Statement getStatement() {
         return statement;
-
-    }
-
-    public void setStatement(Statement statement) {
-        this.statement = statement;
-
     }
 
     /**
+     * <p>
+     * Setter for the field <code>statement</code>.
+     * </p>
+     *
+     * @param statement a Statement object
+     */
+    public void setStatement(Statement statement) {
+        this.statement = statement;
+    }
+
+    /**
+     * <p>
+     * Setter for the field <code>username</code>.
+     * </p>
+     *
      * @param aUsername the username to set
      */
     public static void setUsername(String aUsername) {
@@ -222,6 +289,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     /**
+     * <p>
+     * Setter for the field <code>password</code>.
+     * </p>
+     *
      * @param aPassword the password to set
      */
     public static void setPassword(String aPassword) {
@@ -229,6 +300,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     /**
+     * <p>
+     * Getter for the field <code>connectionString</code>.
+     * </p>
+     *
      * @return the connectionString
      */
     public static String getConnectionString() {
@@ -236,12 +311,23 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     /**
+     * <p>
+     * Setter for the field <code>connectionString</code>.
+     * </p>
+     *
      * @param aConnectionString the connectionString to set
      */
     public static void setConnectionString(String aConnectionString) {
         connectionString = aConnectionString;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         NeqSimDataBase database = new NeqSimDataBase();
 
@@ -250,14 +336,19 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         try {
             dataSet.next();
             logger.info("dataset " + dataSet.getString("molarmass"));
-
         } catch (Exception e) {
             logger.error("failed " + e.toString());
             throw new RuntimeException(e);
         }
-
     }
 
+    /**
+     * <p>
+     * getComponentNames.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public static String[] getComponentNames() {
         NeqSimDataBase database = new NeqSimDataBase();
         try {
@@ -272,12 +363,21 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * hasComponent.
+     * </p>
+     *
+     * @param compName a {@link java.lang.String} object
+     * @return a boolean
+     */
     public static boolean hasComponent(String compName) {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
         String[] names = null;
         try {
-            dataSet = database.getResultSet("select count(*) from comp WHERE NAME='" + compName + "'");
+            dataSet = database
+                    .getResultSet("select count(*) from comp WHERE NAME='" + compName + "'");
             dataSet.next();
             int size = dataSet.getInt(1);
             if (size == 0) {

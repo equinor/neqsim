@@ -1,9 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
-
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
@@ -12,16 +6,14 @@ import neqsim.thermo.phase.PhaseSrkCPAs;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the CPA-EOS of Equinor
- * equation of state
+ * This class defines a thermodynamic system using the CPA-EOS of Equinor equation of state
  */
 public class SystemSrkCPAstatoil extends SystemSrkCPAs {
-
     private static final long serialVersionUID = 1000;
     /** Creates a thermodynamic system using the SRK equation of state. */
     // SystemSrkEos clonedSystem;
@@ -56,10 +48,10 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
     /**
      * Constructor of a fluid object using the CPA-EoS version of Equinor
      *
-     * @param T          The temperature in unit Kelvin
-     * @param P          The pressure in unit bara (absolute pressure)
-     * @param solidCheck a boolean variable specifying if solid phase check and
-     *                   calculation should be done
+     * @param T The temperature in unit Kelvin
+     * @param P The pressure in unit bara (absolute pressure)
+     * @param solidCheck a boolean variable specifying if solid phase check and calculation should
+     *        be done
      */
     public SystemSrkCPAstatoil(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
@@ -89,8 +81,9 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemSrkCPAstatoil clone() {
         SystemSrkCPAstatoil clonedSystem = null;
         try {
             clonedSystem = (SystemSrkCPAstatoil) super.clone();
@@ -101,8 +94,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
         // for(int i = 0; i < numberOfPhases; i++) {
         // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
         // }
-        //
+
         return clonedSystem;
     }
-
 }

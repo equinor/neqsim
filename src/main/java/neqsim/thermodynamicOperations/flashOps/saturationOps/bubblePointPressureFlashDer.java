@@ -1,29 +1,42 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
-
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * bubblePointPressureFlashDer class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(bubblePointPressureFlashDer.class);
 
-    /** Creates new bubblePointFlash */
-    public bubblePointPressureFlashDer() {
-    }
+    /**
+     * <p>
+     * Constructor for bubblePointPressureFlashDer.
+     * </p>
+     */
+    public bubblePointPressureFlashDer() {}
 
+    /**
+     * <p>
+     * Constructor for bubblePointPressureFlashDer.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public bubblePointPressureFlashDer(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         if (system.getPhase(0).getNumberOfComponents() == 1
                 && system.getTemperature() > system.getPhase(0).getComponent(0).getTC()) {
             setSuperCritical(true);
@@ -45,12 +58,14 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
         }
 
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-            system.getPhases()[1].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getz());
+            system.getPhases()[1].getComponents()[i]
+                    .setx(system.getPhases()[0].getComponents()[i].getz());
             if (system.getPhases()[0].getComponents()[i].getIonicCharge() != 0) {
                 system.getPhases()[0].getComponents()[i].setx(1e-40);
             } else {
-                system.getPhases()[0].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getK()
-                        * system.getPhases()[1].getComponents()[i].getz());
+                system.getPhases()[0].getComponents()[i]
+                        .setx(system.getPhases()[0].getComponents()[i].getK()
+                                * system.getPhases()[1].getComponents()[i].getz());
             }
         }
 
@@ -78,29 +93,36 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
                 for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
                     do {
                         yold = system.getPhases()[0].getComponents()[i].getx();
-                        if (!Double.isNaN(Math
-                                .exp(Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()) - Math
-                                        .log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient())))) {
+                        if (!Double.isNaN(Math.exp(Math.log(
+                                system.getPhases()[1].getComponents()[i].getFugasityCoeffisient())
+                                - Math.log(system.getPhases()[0].getComponents()[i]
+                                        .getFugasityCoeffisient())))) {
                             if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
                                 system.getPhases()[0].getComponents()[i].setK(1e-40);
                             } else {
                                 system.getPhases()[0].getComponents()[i].setK(Math.exp(Math
-                                        .log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient())
-                                        - Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient())));
+                                        .log(system.getPhases()[1].getComponents()[i]
+                                                .getFugasityCoeffisient())
+                                        - Math.log(system.getPhases()[0].getComponents()[i]
+                                                .getFugasityCoeffisient())));
                             }
                         }
-                        system.getPhases()[1].getComponents()[i].setK(system.getPhases()[0].getComponents()[i].getK());
-                        system.getPhases()[0].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getK()
-                                * system.getPhases()[1].getComponents()[i].getz());
+                        system.getPhases()[1].getComponents()[i]
+                                .setK(system.getPhases()[0].getComponents()[i].getK());
+                        system.getPhases()[0].getComponents()[i]
+                                .setx(system.getPhases()[0].getComponents()[i].getK()
+                                        * system.getPhases()[1].getComponents()[i].getz());
                         // logger.info("y err " +
                         // Math.abs(system.getPhases()[0].getComponents()[i].getx()-yold));
-                    } while (Math.abs(system.getPhases()[0].getComponents()[i].getx() - yold) / yold > 1e-8);
+                    } while (Math.abs(system.getPhases()[0].getComponents()[i].getx() - yold)
+                            / yold > 1e-8);
                     ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
                 }
                 for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                     if (!Double.isNaN(system.getPhases()[0].getComponents()[i].getK())) {
-                        system.getPhases()[0].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getK()
-                                * system.getPhases()[1].getComponents()[i].getz());
+                        system.getPhases()[0].getComponents()[i]
+                                .setx(system.getPhases()[0].getComponents()[i].getK()
+                                        * system.getPhases()[1].getComponents()[i].getz());
                     } else {
                         system.init(0);
                         logger.error("K error : nan");
@@ -117,8 +139,10 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
                             * system.getPhases()[1].getComponents()[i].getK();
                     deriv += system.getPhases()[1].getComponents()[i].getx()
                             * system.getPhases()[1].getComponents()[i].getK()
-                            * (system.getPhases()[1].getComponents()[i].logfugcoefdP(this.system.getPhase(1))
-                                    - system.getPhases()[0].getComponents()[i].logfugcoefdP(this.system.getPhase(0)));
+                            * (system.getPhases()[1].getComponents()[i]
+                                    .logfugcoefdP(this.system.getPhase(1))
+                                    - system.getPhases()[0].getComponents()[i]
+                                            .logfugcoefdP(this.system.getPhase(0)));
                 }
                 // logger.info("ytot " + ytotal + " pres " + system.getPressure());
 
@@ -151,7 +175,8 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
                 // logger.info("iter in bub calc " + iterations + " pres " +
                 // system.getPressure()+ " ytot " + ytotal + " chem iter " + chemIter);
 
-            } while (((((Math.abs(ytotal - 1.0)) > 1e-7) || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-6)
+            } while (((((Math.abs(ytotal - 1.0)) > 1e-7)
+                    || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-6)
                     && (iterations < maxNumberOfIterations)) || iterations < 5);
 
             if (system.isChemicalSystem()) {// && (iterations%3)==0 && iterations<50){
@@ -163,14 +188,15 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
             // logger.info("iter in bub calc " + iterations + " pres " +
             // system.getPressure()+ " chem iter " + chemIter);
 
-        } while ((Math.abs(oldChemPres - system.getPressure()) / oldChemPres > 1e-6 || chemIter < 2 || !chemSolved)
-                && chemIter < 20);
+        } while ((Math.abs(oldChemPres - system.getPressure()) / oldChemPres > 1e-6 || chemIter < 2
+                || !chemSolved) && chemIter < 20);
         // if(system.getPressure()>300) system.setPressure(300.0);
         // logger.info("iter in bub calc " + iterations + " pres " +
         // system.getPressure()+ " chem iter " + chemIter);
         // logger.info("iter " + iterations + " XTOT " +ytotal + " ktot " +ktot);
         system.init(1);
-        if (Math.abs(ytotal - 1.0) > 1e-4 || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
+        if (Math.abs(ytotal - 1.0) > 1e-4
+                || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
             logger.info("ytot " + Math.abs(ytotal - 1.0));
             // Print command added by Neeraj
             logger.info("Supercritical vapor phase !!");
@@ -178,8 +204,7 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
-
+    public void printToFile(String name) {}
 }

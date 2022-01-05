@@ -8,19 +8,25 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>
+ * AtractiveTermMatCopPR class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class AtractiveTermMatCopPR extends AtractiveTermPr {
-
     private static final long serialVersionUID = 1000;
 
     double orgpar = 0.0;
     boolean useStandardAlphaForSupercritical = true;
 
     /**
-     * Creates new AtractiveTermSrk
+     * <p>
+     * Constructor for AtractiveTermMatCopPR.
+     * </p>
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
     public AtractiveTermMatCopPR(ComponentEosInterface component) {
         super(component);
@@ -37,11 +43,15 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
             parameters[1] = 2.945E0;
             parameters[2] = -5.982E0;
         }
-
     }
 
     /**
-     * Creates new AtractiveTermSrk
+     * <p>
+     * Constructor for AtractiveTermMatCopPR.
+     * </p>
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     * @param params an array of {@link double} objects
      */
     public AtractiveTermMatCopPR(ComponentEosInterface component, double[] params) {
         this(component);
@@ -63,8 +73,9 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public AtractiveTermMatCopPR clone() {
         AtractiveTermMatCopPR atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermMatCopPR) super.clone();
@@ -75,9 +86,11 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double alpha(double temperature) {
-        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0) || parameters[0] < 1e-20) {
+    public double alpha(double temperature) {
+        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0)
+                || parameters[0] < 1e-20) {
             return super.alpha(temperature);
         } else {
             double Tr = temperature / getComponent().getTC();
@@ -88,18 +101,22 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double aT(double temperature) {
-        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0) || parameters[0] < 1e-20) {
+    public double aT(double temperature) {
+        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0)
+                || parameters[0] < 1e-20) {
             return super.aT(temperature);
         } else {
             return getComponent().geta() * alpha(temperature);
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double diffalphaT(double temperature) {
-        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0) || parameters[0] < 1e-20) {
+    public double diffalphaT(double temperature) {
+        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0)
+                || parameters[0] < 1e-20) {
             return super.diffalphaT(temperature);
         }
 
@@ -109,14 +126,16 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
         return 2.0
                 * (1.0 + parameters[0] * rootTR + parameters[1] * rootTR * rootTR
                         + parameters[2] * rootTR * rootTR * rootTR)
-                * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * rootTR / Math.sqrt(Tr) / TC
+                * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0
+                        - parameters[1] * rootTR / Math.sqrt(Tr) / TC
                         - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC);
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double diffdiffalphaT(double temperature) {
-        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0) || parameters[0] < 1e-20) {
+    public double diffdiffalphaT(double temperature) {
+        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0)
+                || parameters[0] < 1e-20) {
             return super.diffdiffalphaT(temperature);
         }
 
@@ -124,29 +143,38 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
         double TC = getComponent().getTC();
         double rootTR = 1.0 - Math.sqrt(Tr);
         return 2.0
-                * Math.pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * rootTR / Math.sqrt(Tr) / TC
-                        - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC, 2.0)
-                + 2.0 * (1.0 + parameters[0] * rootTR + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                * Math.pow(
+                        -parameters[0] / Math.sqrt(Tr) / TC / 2.0
+                                - parameters[1] * rootTR / Math.sqrt(Tr) / TC
+                                - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC,
+                        2.0)
+                + 2.0 * (1.0 + parameters[0] * rootTR
+                        + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                         + parameters[2] * rootTR * rootTR * rootTR)
                         * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0
                                 + parameters[1] / temperature / TC / 2.0
                                 + parameters[1] * rootTR / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
                                 + 3.0 / 2.0 * parameters[2] * rootTR / temperature / TC
-                                + 3.0 / 4.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
+                                + 3.0 / 4.0 * parameters[2] * rootTR * rootTR
+                                        / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double diffaT(double temperature) {
-        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0) || parameters[0] < 1e-20) {
+    public double diffaT(double temperature) {
+        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0)
+                || parameters[0] < 1e-20) {
             return super.diffaT(temperature);
         } else {
             return getComponent().geta() * diffalphaT(temperature);
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double diffdiffaT(double temperature) {
-        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0) || parameters[0] < 1e-20) {
+    public double diffdiffaT(double temperature) {
+        if ((useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0)
+                || parameters[0] < 1e-20) {
             return super.diffdiffaT(temperature);
         } else {
             return getComponent().geta() * diffdiffalphaT(temperature);

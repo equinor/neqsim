@@ -1,10 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
-import java.util.*;
+import java.util.ArrayList;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -12,16 +8,25 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * TestFitToOilFieldFluid class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class TestFitToOilFieldFluid {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         try {
             System.out.println("adding....");
@@ -29,7 +34,7 @@ public class TestFitToOilFieldFluid {
             while (i < 1) {
                 i++;
                 FunctionJohanSverderup function = new FunctionJohanSverderup();
-                double guess[] = { 17.90 };
+                double guess[] = {17.90};
                 SystemInterface tempSystem = new SystemSrkEos(273.15 + 83.5, 50.0);
                 tempSystem.addComponent("nitrogen", 0.586);
                 tempSystem.addComponent("CO2", 0.087);
@@ -51,10 +56,11 @@ public class TestFitToOilFieldFluid {
                 tempSystem.init(0);
                 tempSystem.init(1);
 
-                double sample1[] = { 273.15 + 100 };
+                double sample1[] = {273.15 + 100};
                 double satPres = 75.0;
-                double standardDeviation1[] = { 75.0 / 100.0 };
-                SampleValue sample = new SampleValue(satPres, satPres / 100.0, sample1, standardDeviation1);
+                double standardDeviation1[] = {75.0 / 100.0};
+                SampleValue sample =
+                        new SampleValue(satPres, satPres / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
                 function.setInitialGuess(guess);
                 sample.setThermodynamicSystem(tempSystem);
@@ -70,6 +76,5 @@ public class TestFitToOilFieldFluid {
         optim.setSampleSet(sampleSet);
         optim.solve();
         optim.displayCurveFit();
-
     }
 }

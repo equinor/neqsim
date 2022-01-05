@@ -1,9 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
-
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
@@ -12,19 +6,22 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the PC-SAFT with association
- * equation of state
+ * This class defines a thermodynamic system using the PC-SAFT with association equation of state
  */
 public class SystemPCSAFTa extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     // SystemSrkEos clonedSystem;
+    /**
+     * <p>
+     * Constructor for SystemPCSAFTa.
+     * </p>
+     */
     public SystemPCSAFTa() {
         super();
         modelName = "PCSAFTa-EOS";
@@ -37,6 +34,14 @@ public class SystemPCSAFTa extends SystemSrkEos {
         this.useVolumeCorrection(false);
     }
 
+    /**
+     * <p>
+     * Constructor for SystemPCSAFTa.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemPCSAFTa(double T, double P) {
         super(T, P);
         modelName = "PCSAFTa-EOS";
@@ -49,6 +54,15 @@ public class SystemPCSAFTa extends SystemSrkEos {
         this.useVolumeCorrection(false);
     }
 
+    /**
+     * <p>
+     * Constructor for SystemPCSAFTa.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemPCSAFTa(double T, double P, boolean solidCheck) {
         this(T, P);
         modelName = "PCSAFTa-EOS";
@@ -80,8 +94,9 @@ public class SystemPCSAFTa extends SystemSrkEos {
         this.useVolumeCorrection(false);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemPCSAFTa clone() {
         SystemPCSAFTa clonedSystem = null;
         try {
             clonedSystem = (SystemPCSAFTa) super.clone();
@@ -96,5 +111,4 @@ public class SystemPCSAFTa extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

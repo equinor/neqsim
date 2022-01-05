@@ -1,11 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.PVTsimulation.simulation;
 
-import neqsim.PVTsimulation.util.parameterfitting.CVDFunction;
 import java.util.ArrayList;
+import neqsim.PVTsimulation.util.parameterfitting.CVDFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -13,15 +9,18 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * ConstantVolumeDepletion class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ConstantVolumeDepletion extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     // double temperature = 273.15 + 150.5;
-    //
+
     private double[] relativeVolume = null;
     double[] totalVolume = null, liquidVolumeRelativeToVsat = null, liquidVolume = null;
     boolean saturationConditionFound = false;
@@ -31,28 +30,47 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
     double[] pressure = null;
 
+    /**
+     * <p>
+     * Constructor for ConstantVolumeDepletion.
+     * </p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ConstantVolumeDepletion(SystemInterface tempSystem) {
         super(tempSystem);
     }
 
+    /**
+     * <p>
+     * setTemperaturesAndPressures.
+     * </p>
+     *
+     * @param temperature an array of {@link double} objects
+     * @param pressure an array of {@link double} objects
+     */
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
-
         this.pressure = pressure;
         this.temperatures = temperature;
         experimentalData = new double[temperature.length][1];
-
     }
 
+    /**
+     * <p>
+     * calcSaturationConditions.
+     * </p>
+     */
     public void calcSaturationConditions() {
-
         getThermoSystem().setPressure(1.0);
         do {
             getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-        } while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure() < 1000.0);
+        } while (getThermoSystem().getNumberOfPhases() == 1
+                && getThermoSystem().getPressure() < 1000.0);
         do {
             getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
             thermoOps.TPflash();
-        } while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure() < 1000.0);
+        } while (getThermoSystem().getNumberOfPhases() > 1
+                && getThermoSystem().getPressure() < 1000.0);
         double minPres = getThermoSystem().getPressure() - 10.0;
         double maxPres = getThermoSystem().getPressure();
         do {
@@ -65,8 +83,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
             }
         } while (Math.abs(maxPres - minPres) > 1e-5);
         /*
-         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
-         * e.printStackTrace(); }
+         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) { e.printStackTrace(); }
          */
         saturationVolume = getThermoSystem().getVolume();
         saturationPressure = getThermoSystem().getPressure();
@@ -74,6 +91,11 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         saturationConditionFound = true;
     }
 
+    /**
+     * <p>
+     * runCalc.
+     * </p>
+     */
     public void runCalc() {
         saturationConditionFound = false;
         relativeVolume = new double[pressures.length];
@@ -97,8 +119,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
             // getThermoSystem().display();
             totalVolume[i] = getThermoSystem().getVolume();
             System.out.println("volume " + totalVolume[i]);
-            cummulativeMolePercDepleted[i] = 100.0
-                    - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100;
+            cummulativeMolePercDepleted[i] =
+                    100.0 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100;
             if (getThermoSystem().getNumberOfPhases() > 1) {
                 if (!saturationConditionFound) {
                     calcSaturationConditions();
@@ -116,14 +138,16 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
                 Zgas[i] = getThermoSystem().getPhase(0).getZ();
                 Zmix[i] = getThermoSystem().getZ();
                 if (getThermoSystem().getNumberOfPhases() > 1) {
-                    liquidRelativeVolume[i] = getThermoSystem().getPhase("oil").getVolume() / saturationVolume * 100;
+                    liquidRelativeVolume[i] =
+                            getThermoSystem().getPhase("oil").getVolume() / saturationVolume * 100;
                 }
 
                 double volumeCorrection = getThermoSystem().getVolume() - saturationVolume;
                 double test = volumeCorrection / getThermoSystem().getPhase(0).getMolarVolume();
 
                 for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-                    getThermoSystem().addComponent(j, -test * getThermoSystem().getPhase(0).getComponent(j).getx());
+                    getThermoSystem().addComponent(j,
+                            -test * getThermoSystem().getPhase(0).getComponent(j).getx());
                     // }
                 }
             }
@@ -136,32 +160,37 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         System.out.println("test finished");
     }
 
+    /**
+     * <p>
+     * runTuning.
+     * </p>
+     */
     public void runTuning() {
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         try {
             System.out.println("adding....");
 
             for (int i = 0; i < experimentalData[0].length; i++) {
                 CVDFunction function = new CVDFunction();
-                double[] guess = new double[] { 234.0 / 1000.0 };// getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus()/1000.0};
+                double[] guess = new double[] {234.0 / 1000.0};// getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus()/1000.0};
                 function.setInitialGuess(guess);
 
-                SystemInterface tempSystem = getThermoSystem();// (SystemInterface) getThermoSystem().clone();
+                SystemInterface tempSystem = getThermoSystem();// (SystemInterface)
+                                                               // getThermoSystem().clone();
 
                 tempSystem.setTemperature(temperature);
                 tempSystem.setPressure(pressures[i]);
                 // thermoOps.TPflash();
                 // tempSystem.display();
-                double sample1[] = { temperatures[i], pressures[i] };
+                double sample1[] = {temperatures[i], pressures[i]};
                 double relativeVolume = experimentalData[0][i];
-                double standardDeviation1[] = { 1.5 };
+                double standardDeviation1[] = {1.5};
                 SampleValue sample = new SampleValue(relativeVolume, relativeVolume / 50.0, sample1,
                         standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -178,19 +207,25 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         // optim.displayCurveFit();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface tempSystem = new SystemSrkEos(298.0, 211.0);
         /*
-         * tempSystem.addComponent("nitrogen", 0.64); tempSystem.addComponent("CO2",
-         * 3.53); tempSystem.addComponent("methane", 70.78);
-         * tempSystem.addComponent("ethane", 8.94); tempSystem.addComponent("propane",
-         * 5.05); tempSystem.addComponent("i-butane", 0.85);
-         * tempSystem.addComponent("n-butane", 1.68); tempSystem.addComponent("iC5",
-         * 0.62); tempSystem.addComponent("n-pentane", 0.79);
-         * tempSystem.addComponent("n-hexane", 0.83); tempSystem.addTBPfraction("C7",
-         * 1.06, 92.2 / 1000.0, 0.7324); tempSystem.addTBPfraction("C8", 1.06, 104.6 /
-         * 1000.0, 0.7602); tempSystem.addTBPfraction("C9", 0.79, 119.1 / 1000.0,
-         * 0.7677); tempSystem.addTBPfraction("C10", 0.57, 133.0 / 1000.0, 0.79);
+         * tempSystem.addComponent("nitrogen", 0.64); tempSystem.addComponent("CO2", 3.53);
+         * tempSystem.addComponent("methane", 70.78); tempSystem.addComponent("ethane", 8.94);
+         * tempSystem.addComponent("propane", 5.05); tempSystem.addComponent("i-butane", 0.85);
+         * tempSystem.addComponent("n-butane", 1.68); tempSystem.addComponent("iC5", 0.62);
+         * tempSystem.addComponent("n-pentane", 0.79); tempSystem.addComponent("n-hexane", 0.83);
+         * tempSystem.addTBPfraction("C7", 1.06, 92.2 / 1000.0, 0.7324);
+         * tempSystem.addTBPfraction("C8", 1.06, 104.6 / 1000.0, 0.7602);
+         * tempSystem.addTBPfraction("C9", 0.79, 119.1 / 1000.0, 0.7677);
+         * tempSystem.addTBPfraction("C10", 0.57, 133.0 / 1000.0, 0.79);
          * tempSystem.addTBPfraction("C11", 0.38, 155.0 / 1000.0, 0.795);
          * tempSystem.addTBPfraction("C12", 0.37, 162.0 / 1000.0, 0.806);
          * tempSystem.addTBPfraction("C13", 0.32, 177.0 / 1000.0, 0.824);
@@ -201,8 +236,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
          * tempSystem.addTBPfraction("C18", 0.13, 251.0 / 1000.0, 0.844);
          * tempSystem.addTBPfraction("C19", 0.13, 270.0 / 1000.0, 0.854);
          * tempSystem.addPlusFraction("C20", 0.62, 381.0 / 1000.0, 0.88);
-         * tempSystem.getCharacterization().getLumpingModel().
-         * setNumberOfLumpedComponents(6);
+         * tempSystem.getCharacterization().getLumpingModel(). setNumberOfLumpedComponents(6);
          * tempSystem.getCharacterization().characterisePlusFraction();
          */
         // tempSystem.addComponent("methane", 70.78);
@@ -234,32 +268,37 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
         ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(tempSystem);
         CVDsim.setTemperature(315.0);
-        CVDsim.setPressures(new double[] { 400, 300.0, 200.0, 150.0, 100.0, 50.0 });
+        CVDsim.setPressures(new double[] {400, 300.0, 200.0, 150.0, 100.0, 50.0});
         CVDsim.runCalc();
-        CVDsim.setTemperaturesAndPressures(new double[] { 313, 313, 313, 313 },
-                new double[] { 400, 300.0, 200.0, 100.0 });
-        double[][] expData = { { 0.95, 0.99, 1.0, 1.1 } };
+        CVDsim.setTemperaturesAndPressures(new double[] {313, 313, 313, 313},
+                new double[] {400, 300.0, 200.0, 100.0});
+        double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
         CVDsim.setExperimentalData(expData);
         // CVDsim.runTuning();
-
     }
 
     /**
+     * <p>
+     * Getter for the field <code>relativeVolume</code>.
+     * </p>
+     *
      * @return the relativeVolume
      */
     public double[] getRelativeVolume() {
         return relativeVolume;
     }
 
-    /**
-     * @return the saturationPressure
-     */
+    /** {@inheritDoc} */
     @Override
-	public double getSaturationPressure() {
+    public double getSaturationPressure() {
         return saturationPressure;
     }
 
     /**
+     * <p>
+     * getZmix.
+     * </p>
+     *
      * @return the Zmix
      */
     public double[] getZmix() {
@@ -267,6 +306,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * getZgas.
+     * </p>
+     *
      * @return the Zgas
      */
     public double[] getZgas() {
@@ -274,6 +317,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>liquidRelativeVolume</code>.
+     * </p>
+     *
      * @return the liquidRelativeVolume
      */
     public double[] getLiquidRelativeVolume() {
@@ -281,6 +328,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>cummulativeMolePercDepleted</code>.
+     * </p>
+     *
      * @return the cummulativeMolePercDepleted
      */
     public double[] getCummulativeMolePercDepleted() {

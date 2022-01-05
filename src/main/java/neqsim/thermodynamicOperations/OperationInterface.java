@@ -1,52 +1,101 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * OperationInterafce.java
+ * OperationInterface.java
  *
  * Created on 2. oktober 2000, 22:14
  */
-
 package neqsim.thermodynamicOperations;
-
-import java.io.Serializable;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * OperationInterface interface.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public interface OperationInterface extends Runnable, Serializable {
+public interface OperationInterface extends Runnable, java.io.Serializable {
+    /**
+     * <p>
+     * displayResult.
+     * </p>
+     */
     public void displayResult();
 
+    /**
+     * <p>
+     * getPoints.
+     * </p>
+     *
+     * @param i a int
+     * @return an array of {@link double} objects
+     */
     public double[][] getPoints(int i);
 
+    /**
+     * <p>
+     * addData.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param data an array of {@link double} objects
+     */
     public void addData(String name, double[][] data);
 
+    /**
+     * <p>
+     * getResultTable.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[][] getResultTable();
 
+    /**
+     * <p>
+     * createNetCdfFile.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void createNetCdfFile(String name);
 
+    /**
+     * <p>
+     * printToFile.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void printToFile(String name);
 
+    /**
+     * <p>
+     * get.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return an array of {@link double} objects
+     */
     public double[] get(String name);
 
+    /**
+     * <p>
+     * getJFreeChart.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link org.jfree.chart.JFreeChart} object
+     */
     public org.jfree.chart.JFreeChart getJFreeChart(String name);
 
+    /**
+     * <p>
+     * getThermoSystem.
+     * </p>
+     *
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SystemInterface getThermoSystem();
 }

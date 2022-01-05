@@ -1,35 +1,50 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
-
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * calcSaltSatauration class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class calcSaltSatauration extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(calcSaltSatauration.class);
     String saltName;
 
-    /** Creates new bubblePointFlash */
-    public calcSaltSatauration() {
-    }
+    /**
+     * <p>
+     * Constructor for calcSaltSatauration.
+     * </p>
+     */
+    public calcSaltSatauration() {}
 
+    /**
+     * <p>
+     * Constructor for calcSaltSatauration.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param name a {@link java.lang.String} object
+     */
     public calcSaltSatauration(SystemInterface system, String name) {
         super(system);
         this.saltName = name;
         logger.info("ok ");
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         double ksp = 0.0;
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt WHERE SaltName='" + saltName + "'");
+        java.sql.ResultSet dataSet =
+                database.getResultSet("SELECT * FROM compsalt WHERE SaltName='" + saltName + "'");
         double stoc1 = 1e-20, stoc2 = 1e-20;
         String name1 = "";
         String name2 = "";
@@ -63,33 +78,45 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
             // system.init(1);
             system.init(0);
             system.initPhysicalProperties();
-            kspcalc1 = Math
-                    .pow(system.getPhase(1).getComponent(name1).getx() / system.getPhase(1).getMolarMass()
-                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0, stoc1)
-                    * Math.pow(system.getPhase(1).getComponent(name2).getx() / system.getPhase(1).getMolarMass()
-                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0, stoc2);
+            kspcalc1 = Math.pow(
+                    system.getPhase(1).getComponent(name1).getx()
+                            / system.getPhase(1).getMolarMass()
+                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0,
+                    stoc1)
+                    * Math.pow(system.getPhase(1).getComponent(name2).getx()
+                            / system.getPhase(1).getMolarMass()
+                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0,
+                            stoc2);
 
             system.addComponent(name1, -2 * 0.001);// *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
             system.addComponent(name2, -2 * 0.001);
             // system.init(1);
             system.init(0);
             system.initPhysicalProperties();
-            kspcalc2 = Math
-                    .pow(system.getPhase(1).getComponent(name1).getx() / system.getPhase(1).getMolarMass()
-                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0, stoc1)
-                    * Math.pow(system.getPhase(1).getComponent(name2).getx() / system.getPhase(1).getMolarMass()
-                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0, stoc2);
+            kspcalc2 = Math.pow(
+                    system.getPhase(1).getComponent(name1).getx()
+                            / system.getPhase(1).getMolarMass()
+                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0,
+                    stoc1)
+                    * Math.pow(system.getPhase(1).getComponent(name2).getx()
+                            / system.getPhase(1).getMolarMass()
+                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0,
+                            stoc2);
 
             system.addComponent(name1, 0.001);// *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
             system.addComponent(name2, 0.001);
             // system.init(1);
             system.init(0);
             system.initPhysicalProperties();
-            kspcalc = Math
-                    .pow(system.getPhase(1).getComponent(name1).getx() / system.getPhase(1).getMolarMass()
-                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0, stoc1)
-                    * Math.pow(system.getPhase(1).getComponent(name2).getx() / system.getPhase(1).getMolarMass()
-                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0, stoc2);
+            kspcalc = Math.pow(
+                    system.getPhase(1).getComponent(name1).getx()
+                            / system.getPhase(1).getMolarMass()
+                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0,
+                    stoc1)
+                    * Math.pow(system.getPhase(1).getComponent(name2).getx()
+                            / system.getPhase(1).getMolarMass()
+                            * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0,
+                            stoc2);
 
             double diff = (kspcalc1 - kspcalc2) / 0.002;
             // logger.info("diff " + diff);
@@ -101,15 +128,12 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
             // system.init(1);
             system.init(0);
             system.initPhysicalProperties();
-
         } while (Math.abs(err / ksp) > 1e-5 && iter < 1000);
 
         logger.info("solution found after " + iter + " iterations in calcSaltSatauration()");
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
-
+    public void printToFile(String name) {}
 }

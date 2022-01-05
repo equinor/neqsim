@@ -1,39 +1,25 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * pTphaseEnvelope.java
- *
- * Created on 14. oktober 2000, 21:59
- * Updated on May 2019, by Nefeli 
- */
-
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
-import java.text.*;
-import javax.swing.*;
+import java.text.DecimalFormat;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
-public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterface, java.io.Serializable {
-
+/**
+ * <p>
+ * pTphaseEnvelopeMay class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class pTphaseEnvelopeMay extends BaseOperation {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pTphaseEnvelopeMay.class);
 
@@ -57,7 +43,7 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
     double lnOldK[];
     double lnKwil[];
     double oldDeltalnK[], deltalnK[];
-    double tm[] = { 1, 1 };
+    double tm[] = {1, 1};
     double beta = 1e-5;
     int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
     JProgressBar monitor;
@@ -79,18 +65,33 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
     int np = 0;
     // points[2] = new double[1000];
     int speceq = 0;
-    String[] navn = { "bubble point", "dew point", "bubble point", "dew point", "dew points" };
+    String[] navn = {"bubble point", "dew point", "bubble point", "dew point", "dew points"};
     int npfirst;
     int ncrfirst;
     double Tcfirst;
     double Pcfirst;
     double Tmin = 0.0;
 
-    public pTphaseEnvelopeMay() {
-    }
+    /**
+     * <p>
+     * Constructor for pTphaseEnvelopeMay.
+     * </p>
+     */
+    public pTphaseEnvelopeMay() {}
 
-    public pTphaseEnvelopeMay(SystemInterface system, String name, double phaseFraction, double lowPres,
-            boolean bubfirst) {
+    /**
+     * <p>
+     * Constructor for pTphaseEnvelopeMay.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param name a {@link java.lang.String} object
+     * @param phaseFraction a double
+     * @param lowPres a double
+     * @param bubfirst a boolean
+     */
+    public pTphaseEnvelopeMay(SystemInterface system, String name, double phaseFraction,
+            double lowPres, boolean bubfirst) {
         this.bubblePointFirst = bubfirst;
         if (name != null) {
             outputToFile = true;
@@ -104,15 +105,13 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         this.lowPres = lowPres;
         oldDeltalnK = new double[system.getPhase(0).getNumberOfComponents()];
         deltalnK = new double[system.getPhase(0).getNumberOfComponents()];
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
-
-        speceq = 0; // initiallization
+    public void run() {
+        speceq = 0; // initialization
         try {
-
             points[0] = new double[10000]; // declarations for points
             points[1] = new double[10000]; // declarations for points
 
@@ -137,9 +136,9 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                 }
             }
 
-            // initiallized the first step of the phase envelope
+            // initialized the first step of the phase envelope
             // pressure is already defined
-            // temperature is the antoine vapor pressure of the selected component
+            // temperature is the Antoine vapor pressure of the selected component
             // (least or most volatile.
             pres = lowPres;
             // temp =
@@ -156,8 +155,8 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
             ThermodynamicOperations testOps = new ThermodynamicOperations(system);
 
             // this part converges the first phase envelope point.
-            // if the plasefraction is more than 0.5 it does a dew point initiallization
-            // else a bubble point initiallization
+            // if the phase fraction is more than 0.5 it does a dew point initialization
+            // else a bubble point initialization
 
             for (int i = 0; i < 5; i++) {
                 try {
@@ -186,18 +185,16 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
             system.setPressure(pres);
             system.setTemperature(temp);
 
-            sysNewtonRhapsonPhaseEnvelope nonLinSolver = new sysNewtonRhapsonPhaseEnvelope(system, 2,
-                    system.getPhase(0).getNumberOfComponents());
+            sysNewtonRhapsonPhaseEnvelope nonLinSolver = new sysNewtonRhapsonPhaseEnvelope(system,
+                    2, system.getPhase(0).getNumberOfComponents());
             startPres = system.getPressure();
             nonLinSolver.setu();
             for (np = 1; np < 9980; np++) {
-
                 try {
                     // solves the np point of the envelope
                     nonLinSolver.calcInc(np);
                     nonLinSolver.solve(np);
 
-                    // this catches the exceptions
                     double TT = system.getPhase(0).getTemperature();
                     double PP = system.getPhase(0).getPressure();
                 } catch (Exception e0) {
@@ -207,7 +204,6 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                     // and then stops
 
                     if (restart) {
-
                         restart = false;
                         // keep values
                         Tmin = points[0][np - 2];
@@ -236,14 +232,10 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                         }
                         run();
                         break;
-
                     } else {
-
                         np = np - 1;
                         break;
-
                     }
-
                 }
 
                 // check for critical point
@@ -266,7 +258,8 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                         nonLinSolver.npCrit = np;
                         system.invertPhaseTypes();
                         nonLinSolver.etterCP = true;
-                        // the critical point is found from interpolation plynimials based on K=1 of the
+                        // the critical point is found from interpolation plynimials based on K=1 of
+                        // the
                         // most or least volatile component
                         nonLinSolver.calcCrit();
                     }
@@ -277,7 +270,7 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                     nonLinSolver.calcCrit();
                 }
 
-                // stores critondenbar and cricondentherm
+                // stores cricondenbar and cricondentherm
                 // HERE the new cricoT and crico P values will be called instead
                 if (system.getTemperature() > cricondenTherm[0]) {
                     cricondenTherm[1] = system.getPressure();
@@ -304,16 +297,16 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                 // Keeps the calculated points
                 points[0][np - 1] = system.getTemperature();
                 points[1][np - 1] = system.getPressure();
-                pointsH[np - 1] = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
+                pointsH[np - 1] = system.getPhase(1).getEnthalpy()
+                        / system.getPhase(1).getNumberOfMolesInPhase()
                         / system.getPhase(1).getMolarMass() / 1e3;
                 pointsV[np - 1] = system.getPhase(1).getDensity();
-                pointsS[np - 1] = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
+                pointsS[np - 1] = system.getPhase(1).getEntropy()
+                        / system.getPhase(1).getNumberOfMolesInPhase()
                         / system.getPhase(1).getMolarMass() / 1e3;
-
             }
 
             try {
-
                 int ncr = nonLinSolver.getNpCrit();
                 if (ncr == 0) {
                     ncr = np;
@@ -326,7 +319,6 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                     pointsH2 = new double[8][];
                     pointsS2 = new double[8][];
                     pointsV2 = new double[8][];
-
                 }
 
                 // points2 are plotted
@@ -369,7 +361,6 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                     pointsS2[0][i] = pointsS[i];
                     pointsV2[1][i] = points[1][i];
                     pointsV2[0][i] = pointsV[i];
-
                 }
                 if (ncr2 > 2) {
                     for (int i = 1; i < (ncr2 - 2); i++) {
@@ -386,7 +377,6 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                 }
 
                 if (hascopiedPoints) {
-
                     if (ncrfirst > npfirst) {
                         ncr = copiedPoints[0].length - 1;
                         ncr2 = npfirst - ncr;
@@ -435,7 +425,6 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                         pointsS2[4][i] = copiedPoints[3][i];
                         pointsV2[5][i] = copiedPoints[1][i];
                         pointsV2[4][i] = copiedPoints[4][i];
-
                     }
                     if (ncr2 > 2) {
                         for (int i = 1; i < (ncr2 - 2); i++) {
@@ -448,10 +437,8 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                             pointsS2[6][i] = copiedPoints[3][i + ncr - 1];
                             pointsV2[7][i] = copiedPoints[1][i + ncr - 1];
                             pointsV2[6][i] = copiedPoints[4][i + ncr - 1];
-
                         }
                     }
-
                 }
 
                 // critical point
@@ -467,14 +454,12 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                     points2[2][0] = system.getTC();
                     points2[3][0] = system.getPC();
                 }
-
             } catch (Exception e2) {
                 double nef = 0.;
                 logger.error("error", e2);
             }
 
             try {
-
                 if (outputToFile) {
                     // update this
                     String name1 = new String();
@@ -492,9 +477,7 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
                     file2.setXvalues(points2[0], "temp", "sec");
                     file2.setYvalues(points2[1], "pres", "meter");
                     file2.createFile();
-
                 }
-
             } catch (Exception e3) {
                 double nef = 0.;
                 logger.error("error", e3);
@@ -505,8 +488,12 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         }
     }
 
+    /**
+     * <p>
+     * calcHydrateLine.
+     * </p>
+     */
     public void calcHydrateLine() {
-
         ThermodynamicOperations opsHyd = new ThermodynamicOperations(system);
         try {
             opsHyd.hydrateEquilibriumLine(10.0, 300.0);
@@ -515,11 +502,11 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         }
 
         double[][] hydData = opsHyd.getData();
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -541,10 +528,14 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         double PC = system.getPC();
 
         String title2 = "";
-        String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-        String title3 = "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-        String title4 = "Density-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-        String title5 = "PS-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
+        String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
+                + String.valueOf(nf.format(PC));
+        String title3 = "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
+                + String.valueOf(nf.format(PC));
+        String title4 = "Density-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
+                + String.valueOf(nf.format(PC));
+        String title5 = "PS-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
+                + String.valueOf(nf.format(PC));
 
         graph2b graph3 = new graph2b(pointsH2, navn, title3, "Enthalpy [kJ/kg]", "Pressure [bara]");
         graph3.setVisible(true);
@@ -556,7 +547,8 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         // graph4.saveFigure(util.util.FileSystemSettings.tempDir +
         // "NeqSimTempFig2.png");
 
-        graph2b graph5 = new graph2b(pointsS2, navn, title5, "Entropy [kJ/kg*K]", "Pressure [bara]");
+        graph2b graph5 =
+                new graph2b(pointsS2, navn, title5, "Entropy [kJ/kg*K]", "Pressure [bara]");
         graph5.setVisible(true);
         // graph5.saveFigure(util.util.FileSystemSettings.tempDir +
         // "NeqSimTempFig3.png");
@@ -567,24 +559,25 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         // "NeqSimTempFig1.png");
 
         /*
-         * JDialog dialog = new JDialog(); Container dialogContentPane =
-         * dialog.getContentPane(); dialogContentPane.setLayout(new FlowLayout());
-         * JFreeChartPanel chartPanel = graph4.getChartPanel();
-         * dialogContentPane.add(chartPanel); dialog.show();
+         * JDialog dialog = new JDialog(); Container dialogContentPane = dialog.getContentPane();
+         * dialogContentPane.setLayout(new FlowLayout()); JFreeChartPanel chartPanel =
+         * graph4.getChartPanel(); dialogContentPane.add(chartPanel); dialog.show();
          */
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return points2;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void addData(String name, double[][] data) {
+    public void addData(String name, double[][] data) {
         double[][] localPoints = new double[points2.length + data.length][];
         navn[localPoints.length / 2 - 1] = name;
         System.arraycopy(points2, 0, localPoints, 0, points2.length);
@@ -592,8 +585,9 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         points2 = localPoints;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double[] get(String name) {
+    public double[] get(String name) {
         if (name.equals("dewT")) {
             return points2[0];
         }
@@ -643,17 +637,18 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
             return cricondenBar;
         }
         if (name.equals("criticalPoint1")) {
-            return new double[] { system.getTC(), system.getPC() };
+            return new double[] {system.getTC(), system.getPC()};
         }
         if (name.equals("criticalPoint2")) {
-            return new double[] { 0, 0 };
+            return new double[] {0, 0};
         } else {
             return null;
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         fileName = name;
     }
 
@@ -661,9 +656,7 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
      * Getter for property bubblePointFirst.
      *
      * @return Value of property bubblePointFirst.
-     *
      */
-
     public boolean isBubblePointFirst() {
         return bubblePointFirst;
     }
@@ -672,20 +665,27 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
      * Setter for property bubblePointFirst.
      *
      * @param bubblePointFirst New value of property bubblePointFirst.
-     *
      */
-
     public void setBubblePointFirst(boolean bubblePointFirst) {
         this.bubblePointFirst = bubblePointFirst;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 
+    /**
+     * <p>
+     * tempKWilson.
+     * </p>
+     *
+     * @param beta a double
+     * @param P a double
+     * @return a double
+     */
     public double tempKWilson(double beta, double P) {
-
         // Initiallizes the temperature of a saturation point for given pressure
         // based on K values of Wilson
         // see Michelsen book thermodynamics & computational aspects
@@ -718,28 +718,33 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         }
 
         if (beta <= 0.5) {
-            initTc = system.getPhase(0).getComponents()[lc].getTC(); // closer to bubble point get the lightest
+            initTc = system.getPhase(0).getComponents()[lc].getTC(); // closer to bubble point get
+                                                                     // the lightest
                                                                      // component
             initPc = system.getPhase(0).getComponents()[lc].getPC();
             initAc = system.getPhase(0).getComponents()[lc].getAcentricFactor();
         } else if (beta > 0.5) {
-            initTc = system.getPhase(0).getComponents()[hc].getTC(); // closer to dew point get the heaviest component
+            initTc = system.getPhase(0).getComponents()[hc].getTC(); // closer to dew point get the
+                                                                     // heaviest component
             initPc = system.getPhase(0).getComponents()[hc].getPC();
             initAc = system.getPhase(0).getComponents()[hc].getAcentricFactor();
         }
-        Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc)); // initial T based on
+        Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc)); // initial
+                                                                                                // T
+                                                                                                // based
+                                                                                                // on
                                                                                                 // the
                                                                                                 // lighterst/heaviest
                                                                                                 // component
 
         // solve for Tstart with Newton
         for (int i = 0; i < 1000; i++) {
-
             initT = 0.;
             dinitT = 0.;
             for (int j = 0; j < numberOfComponents; j++) {
                 Kwil[j] = system.getPhase(0).getComponents()[j].getPC() / P
-                        * Math.exp(5.373 * (1. + system.getPhase(0).getComponents()[j].getAcentricFactor())
+                        * Math.exp(5.373
+                                * (1. + system.getPhase(0).getComponents()[j].getAcentricFactor())
                                 * (1. - system.getPhase(0).getComponents()[j].getTC() / Tstart));
                 system.getPhases()[0].getComponents()[j].setK(Math.log(Kwil[j]));
             }
@@ -774,8 +779,9 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         return Tstart;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -783,12 +789,11 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         double TC = system.getTC();
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
-        String[] navn = { "bubble point", "dew point", "bubble point", "dew point" };
+        String[] navn = {"bubble point", "dew point", "bubble point", "dew point"};
         String title2 = "";
         String title = "PT-graph. TC=" + String.valueOf(nf.format(TC)) + "K, PC="
                 + String.valueOf(nf.format(PC) + " bara");
         graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
         return graph2.getChart();
     }
-
 }

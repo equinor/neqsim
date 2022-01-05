@@ -1,16 +1,13 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package neqsim.statistics;
 
 /**
+ * <p>
+ * test class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class test {
-
     private static final long serialVersionUID = 1000;
-
 }

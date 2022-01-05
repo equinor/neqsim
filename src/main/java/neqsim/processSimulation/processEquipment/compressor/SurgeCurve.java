@@ -1,12 +1,18 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
-import java.io.Serializable;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public class SurgeCurve implements Serializable {
+/**
+ * <p>SurgeCurve class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class SurgeCurve implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SurgeCurve.class);
     double[] flow;
@@ -17,14 +23,29 @@ public class SurgeCurve implements Serializable {
     final WeightedObservedPoints flowFitter = new WeightedObservedPoints();
     PolynomialFunction flowFitterFunc = null;
 
-    public SurgeCurve() {
-    }
+    /**
+     * <p>Constructor for SurgeCurve.</p>
+     */
+    public SurgeCurve() {}
 
+    /**
+     * <p>Constructor for SurgeCurve.</p>
+     *
+     * @param flow an array of {@link double} objects
+     * @param head an array of {@link double} objects
+     */
     public SurgeCurve(double[] flow, double[] head) {
         this.flow = flow;
         this.head = head;
     }
 
+    /**
+     * <p>setCurve.</p>
+     *
+     * @param chartConditions an array of {@link double} objects
+     * @param flow an array of {@link double} objects
+     * @param head an array of {@link double} objects
+     */
     public void setCurve(double[] chartConditions, double[] flow, double[] head) {
         this.flow = flow;
         this.head = head;
@@ -41,24 +62,30 @@ public class SurgeCurve implements Serializable {
         // surge kurva er invariat i plottet trykkforhold mot redused flow
         // CCC bruker dP/ (over maaleblnde som representerer flow) dP/Ps - paa x-aksen
         // trykkforhold paa y-aksen (trykk ut/trykk inn)
-        //
-
     }
 
+    /**
+     * <p>getSurgeFlow.</p>
+     *
+     * @param head a double
+     * @return a double
+     */
     public double getSurgeFlow(double head) {
         return flowFitterFunc.value(head);
     }
 
+    /**
+     * <p>isSurge.</p>
+     *
+     * @param head a double
+     * @param flow a double
+     * @return a boolean
+     */
     public boolean isSurge(double head, double flow) {
         if (getSurgeFlow(head) > flow)
             return true;
         else
             return false;
-    }
-
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-
     }
 
     boolean isActive() {
@@ -68,5 +95,4 @@ public class SurgeCurve implements Serializable {
     void setActive(boolean isActive) {
         this.isActive = isActive;
     }
-
 }

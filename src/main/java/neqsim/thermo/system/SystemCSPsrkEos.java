@@ -1,9 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
-
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseCSPsrkEos;
@@ -12,7 +6,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,9 +14,13 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemCSPsrkEos extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for SystemCSPsrkEos.
+     * </p>
+     */
     public SystemCSPsrkEos() {
         super();
         modelName = "CSPsrk-EOS";
@@ -34,6 +32,14 @@ public class SystemCSPsrkEos extends SystemSrkEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemCSPsrkEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemCSPsrkEos(double T, double P) {
         super(T, P);
         modelName = "CSPsrk-EOS";
@@ -45,6 +51,15 @@ public class SystemCSPsrkEos extends SystemSrkEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemCSPsrkEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemCSPsrkEos(double T, double P, boolean solidCheck) {
         this(T, P);
         modelName = "CSPsrk-EOS";
@@ -76,8 +91,9 @@ public class SystemCSPsrkEos extends SystemSrkEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemCSPsrkEos clone() {
         SystemCSPsrkEos clonedSystem = null;
         try {
             clonedSystem = (SystemCSPsrkEos) super.clone();
@@ -87,5 +103,4 @@ public class SystemCSPsrkEos extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

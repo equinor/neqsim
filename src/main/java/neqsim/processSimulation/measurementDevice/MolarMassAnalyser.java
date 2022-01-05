@@ -1,34 +1,41 @@
-/*
- * TemperatureTransmitter.java
- *
- * Created on 6. juni 2006, 15:24
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
-
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
+ * <p>
+ * MolarMassAnalyser class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class MolarMassAnalyser extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
+    /** Constant <code>numberOfStreams=0</code> */
     protected static int numberOfStreams = 0;
     protected StreamInterface stream = null;
 
-    /** Creates a new instance of TemperatureTransmitter */
+    /**
+     * <p>
+     * Constructor for MolarMassAnalyser.
+     * </p>
+     */
     public MolarMassAnalyser() {
         name = "molar mass analsyer";
         unit = "gr/mol";
     }
 
+    /**
+     * <p>
+     * Constructor for MolarMassAnalyser.
+     * </p>
+     *
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public MolarMassAnalyser(StreamInterface stream) {
         this.stream = stream;
         numberOfStreams++;
@@ -37,13 +44,16 @@ public class MolarMassAnalyser extends MeasurementDeviceBaseClass {
         unit = "gr/mol";
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
-        System.out.println("measured temperature " + stream.getThermoSystem().getMolarMass() * 1000.0);
+    public void displayResult() {
+        System.out.println(
+                "measured temperature " + stream.getThermoSystem().getMolarMass() * 1000.0);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getMeasuredValue() {
+    public double getMeasuredValue() {
         return stream.getThermoSystem().getMolarMass() * 1000.0;
     }
 }

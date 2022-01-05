@@ -1,38 +1,58 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.mechanicalDesign.designStandards;
-
-import java.io.Serializable;
 
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
+ * <p>
+ * DesignStandard class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
-public class DesignStandard implements Serializable {
-
+public class DesignStandard implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     public MechanicalDesign equipment = null;
     public String standardName = "";
 
-    public DesignStandard() {
+    /**
+     * <p>
+     * Constructor for DesignStandard.
+     * </p>
+     */
+    public DesignStandard() {}
 
-    }
-
+    /**
+     * <p>
+     * Constructor for DesignStandard.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
+     */
     public DesignStandard(String name, MechanicalDesign equipmentInn) {
         equipment = equipmentInn;
         standardName = name;
     }
 
+    /**
+     * <p>
+     * setDesignStandardName.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setDesignStandardName(String name) {
         setStandardName(name);
     }
 
     /**
+     * <p>
+     * Getter for the field <code>equipment</code>.
+     * </p>
+     *
      * @return the equipment
      */
     public MechanicalDesign getEquipment() {
@@ -40,6 +60,10 @@ public class DesignStandard implements Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>equipment</code>.
+     * </p>
+     *
      * @param equipment the equipment to set
      */
     public void setEquipment(MechanicalDesign equipment) {
@@ -47,6 +71,10 @@ public class DesignStandard implements Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>standardName</code>.
+     * </p>
+     *
      * @return the standardName
      */
     public String getStandardName() {
@@ -54,6 +82,10 @@ public class DesignStandard implements Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>standardName</code>.
+     * </p>
+     *
      * @param standardName the standardName to set
      */
     public void setStandardName(String standardName) {

@@ -1,28 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * SnohvitCO2RemovalModule.java
- *
- * Created on 1. november 2006, 20:33
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
-
 package neqsim.processSimulation.processSystem.processModules;
 
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
@@ -35,15 +10,18 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>
+ * MEGReclaimerModule class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class MEGReclaimerModule extends ProcessModuleBaseClass {
-
     private static final long serialVersionUID = 1000;
 
-    protected StreamInterface streamToReclaimer = null, streamToWaterRemoval = null, streamFromBoosterCompressor = null,
-            streamWithWaste = null;
+    protected StreamInterface streamToReclaimer = null, streamToWaterRemoval = null,
+            streamFromBoosterCompressor = null, streamWithWaste = null;
 
     ThrottlingValve inletValve = null;
     Mixer inletMixer = null;
@@ -55,19 +33,22 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
     double reclaimerPressure = 0.17;
 
-    /** Creates a new instance of SnohvitCO2RemovalModule */
-    public MEGReclaimerModule() {
-    }
+    /**
+     * Creates a new instance of SnohvitCO2RemovalModule
+     */
+    public MEGReclaimerModule() {}
 
+    /** {@inheritDoc} */
     @Override
-	public void addInputStream(String streamName, StreamInterface stream) {
+    public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("streamToReclaimer")) {
             this.streamToReclaimer = stream;
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public StreamInterface getOutputStream(String streamName) {
+    public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -78,8 +59,9 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void initializeStreams() {
+    public void initializeStreams() {
         isInitializedStreams = true;
         try {
             this.streamToWaterRemoval = (Stream) this.streamToReclaimer.clone();
@@ -95,8 +77,9 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void initializeModule() {
+    public void initializeModule() {
         isInitializedModule = true;
 
         inletValve = new ThrottlingValve(streamToReclaimer);
@@ -133,34 +116,49 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         getOperations().add(recircValve);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
         for (int i = 0; i < 2; i++) {
             getOperations().run();
             flashSeparator.displayResult();
-            System.out.println(
-                    "flow to vacum separator " + inletMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles());
+            System.out.println("flow to vacum separator "
+                    + inletMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles());
         }
 
         streamToWaterRemoval = flashSeparator.getGasOutStream();
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /**
+     * <p>
+     * setOperationPressure.
+     * </p>
+     *
+     * @param pressure a double
+     */
     public void setOperationPressure(double pressure) {
         reclaimerPressure = pressure;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 30.0), 10.0);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 30.0), 10.0);
 
         testSystem.addComponent("methane", 0.001);
         testSystem.addComponent("CO2", 0.001);
@@ -178,17 +176,17 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
         reclaimer.run();
         // reclaimer.displayResult();
-
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void calcDesign() {
-        // design is done here //
+    public void calcDesign() {
+        // design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setDesign() {
-        // set design is done here //
+    public void setDesign() {
+        // set design is done here
     }
-
 }

@@ -1,23 +1,24 @@
 /*
- * Separator.java
+ * GasScrubberSimple.java
  *
  * Created on 12. mars 2001, 19:48
  */
 package neqsim.processSimulation.processEquipment.separator;
 
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * GasScrubberSimple class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class GasScrubberSimple extends Separator implements ProcessEquipmentInterface, SeparatorInterface {
-
+public class GasScrubberSimple extends Separator {
     private static final long serialVersionUID = 1000;
 
     SystemInterface gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -27,7 +28,9 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
     String name = new String();
 
     /**
-     * Creates new Separator
+     * <p>
+     * Constructor for GasScrubberSimple.
+     * </p>
      */
     public GasScrubberSimple() {
         super();
@@ -35,22 +38,45 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
         this.setOrientation("vertical");
     }
 
+    /**
+     * <p>
+     * Constructor for GasScrubberSimple.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public GasScrubberSimple(Stream inletStream) {
         this();
         this.setInletStream(inletStream);
     }
 
+    /**
+     * <p>
+     * Constructor for GasScrubberSimple.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public GasScrubberSimple(String name, Stream inletStream) {
         this();
         this.name = name;
         this.setInletStream(inletStream);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>inletStream</code>.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public void setInletStream(Stream inletStream) {
         this.inletStream = inletStream;
 
@@ -63,29 +89,33 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
         liquidOutStream = new Stream(liquidSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Stream getLiquidOutStream() {
+    public Stream getLiquidOutStream() {
         return liquidOutStream;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Stream getGasOutStream() {
+    public Stream getGasOutStream() {
         return gasOutStream;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Stream getGas() {
+    public Stream getGas() {
         return getGasOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Stream getLiquid() {
+    public Stream getLiquid() {
         return getLiquidOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
-
+    public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
@@ -106,11 +136,19 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
         liquidOutStream.setThermoSystem(liquidSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
+    /**
+     * <p>
+     * calcLiquidCarryoverFraction.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcLiquidCarryoverFraction() {
         double Ktot = 1.0;
 
@@ -119,11 +157,16 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
         }
         System.out.println("Ktot " + (1.0 - Ktot));
         double area = getInternalDiameter() * getInternalDiameter() / 4.0 * 3.14;
-        double gasVel = thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
+        double gasVel =
+                thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
         setLiquidCarryoverFraction(Ktot);
         return gasVel;
     }
 
-    public void runTransient() {
-    }
+    /**
+     * <p>
+     * runTransient.
+     * </p>
+     */
+    public void runTransient() {}
 }

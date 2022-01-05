@@ -1,40 +1,26 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
  * FurstElectrolyteConstants.java
  *
  * Created on 29. oktober 2001, 14:08
  */
-
 package neqsim.thermo.util.constants;
 
 /**
+ * <p>
+ * FurstElectrolyteConstants class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class FurstElectrolyteConstants implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     // public static double[] furstParams = {0.0982e-6, 7.003e-6, 77.22e-6,
     // -25.314e-6, -0.05813e-6, -44.383e-6};
-    public static double[] furstParams = { 0.0000001117, 0.0000053771, 0.0000699219, 0.0000043984, -0.0000000606,
-            -0.0000217950 };
+    /** Constant <code>furstParams</code> */
+    public static double[] furstParams =
+            {0.0000001117, 0.0000053771, 0.0000699219, 0.0000043984, -0.0000000606, -0.0000217950};
     // public static double[] furstParams = {0.0000001018, 0.0000064366,
     // 0.0001103447, -0.0001631115, -0.0000000565, -0.0000565052};
     // public static double[] furstParams = {0.10688e-6, 6.5665e-6, 35.09e-6,
@@ -53,29 +39,66 @@ public class FurstElectrolyteConstants implements java.io.Serializable {
     // public static double[] furstParamsCPA = {0.0000000752, 0.0000037242,
     // 0.0000250998, 0.0000198635, -0.0000000311, -0.0000006630}; // before fitting
     // 2015
-    public static double[] furstParamsCPA = { 0.00000014880379801585537, 0.000005016259143319152,
-            0.00004614450758742748, -0.00006428039395924042, -0.000000039695971380410286, -0.000021035816766450363 };
-    public static double[] furstParamsCPA_MDEA = { 0.0000000752, 0.0000037242, -0.0004725836, 0.0026038239,
-            -0.0000002479, -0.0000082501 };
+    /** Constant <code>furstParamsCPA</code> */
+    public static double[] furstParamsCPA =
+            {0.00000014880379801585537, 0.000005016259143319152, 0.00004614450758742748,
+                    -0.00006428039395924042, -0.000000039695971380410286, -0.000021035816766450363};
+    /** Constant <code>furstParamsCPA_MDEA</code> */
+    public static double[] furstParamsCPA_MDEA =
+            {0.0000000752, 0.0000037242, -0.0004725836, 0.0026038239, -0.0000002479, -0.0000082501};
 
     // 0.0000001880, 0.0000014139, 0.0000284666, 0.0000389043, -0.0000000451,
     // 0.0000088136
-    /** Creates new FurstElectrolyteConstants */
-    public FurstElectrolyteConstants() {
-    }
+    /**
+     * <p>
+     * Constructor for FurstElectrolyteConstants.
+     * </p>
+     */
+    public FurstElectrolyteConstants() {}
 
+    /**
+     * <p>
+     * setFurstParam.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public static void setFurstParam(int i, double value) {
         furstParams[i] = value;
     }
 
+    /**
+     * <p>
+     * getFurstParam.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public static double getFurstParam(int i) {
         return furstParams[i];
     }
 
+    /**
+     * <p>
+     * getFurstParamMDEA.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public static double getFurstParamMDEA(int i) {
         return furstParamsCPA_MDEA[i];
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>furstParams</code>.
+     * </p>
+     *
+     * @param type a {@link java.lang.String} object
+     */
     public static void setFurstParams(String type) {
         if (type.equals("electrolyteCPA")) {
             furstParams = furstParamsCPA;

@@ -1,0 +1,79 @@
+-- Generated with PVTsim Nova version 4.0.651.0 at 12/9/2021 5:40:31 PM
+-- Fluid: methane                                                                          
+-- Database: C:\Users\esol\Documents\Calsep\demodataV4.nfdb
+-- Units
+METRIC
+-- Number of components:
+NCOMPS
+ 2 /
+-- Equation of state
+EOS
+SRK /
+-- Reservoir temperature (C)
+RTEMP
+     15.00 /
+-- Standard Conditions (C and bara)
+STCOND
+   15.00000    1.01325  /
+-- Component names
+CNAMES
+C1
+C2      /
+-- Tc (K)
+TCRIT
+   190.600
+   305.400 /
+-- Pc (Bar)
+PCRIT
+   46.0015
+   48.8387 /
+-- Omega
+ACF
+   0.00800
+   0.09800 /
+-- OmegaA
+OMEGAA
+     0.42748
+     0.42748 /
+-- OmegaB
+OMEGAB
+     0.08664
+     0.08664 /
+-- Molecular weights
+MW
+   16.0429
+   30.0698 /
+-- Boiling points (K)
+TBOIL
+   111.600
+   184.600 /
+-- Critical volumes (m3/kg-mole)
+VCRIT
+   0.09900
+   0.14800 /
+-- Critical Z-factors
+ZCRIT
+   0.28737
+   0.28465 /
+-- Volume translation/co-volume
+SSHIFT
+  0.021107
+  0.058382 /
+-- Parachors (dyn/cm)
+PARACHOR
+    77.300
+   108.900 /
+-- Overall composition
+ZI
+  0.990000
+  0.00000000010000 /
+-- Binary interaction coefficients for SRK
+BIC
+  0.0000
+/
+BICS
+  0.0000
+/
+-- LBC coefficients
+LBCCOEF
+   0.1023000    0.0233640    0.0585330   -0.0407580    0.0093324 /

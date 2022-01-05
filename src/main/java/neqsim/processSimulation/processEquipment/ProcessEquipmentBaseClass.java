@@ -1,42 +1,25 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
  * ProcessEquipmentBaseClass.java
  *
  * Created on 6. juni 2006, 15:12
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 package neqsim.processSimulation.processEquipment;
 
 import java.util.HashMap;
-
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.EnergyStream;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * Abstract ProcessEquipmentBaseClass class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
-
     private static final long serialVersionUID = 1000;
 
     private ControllerDeviceInterface controller = null;
@@ -57,48 +40,68 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
         mechanicalDesign = new MechanicalDesign(this);
     }
 
+    /**
+     * <p>
+     * Constructor for ProcessEquipmentBaseClass.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public ProcessEquipmentBaseClass(String name) {
         this();
         this.name = name;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
-    }
+    public void run() {}
 
+    /** {@inheritDoc} */
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         run();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getFluid() {
+    public SystemInterface getFluid() {
         return getThermoSystem();
     }
 
     ;
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
-    }
+    public void displayResult() {}
 
     ;
 
+    /** {@inheritDoc} */
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * <p>
+     * getProperty.
+     * </p>
+     *
+     * @param propertyName a {@link java.lang.String} object
+     * @return a {@link java.lang.Object} object
+     */
     public Object getProperty(String propertyName) {
         // if(properties.containsKey(propertyName)) {
         // return properties.get(properties).getValue();
@@ -106,118 +109,170 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setRegulatorOutSignal(double signal) {
-    }
+    public void setRegulatorOutSignal(double signal) {}
 
+    /** {@inheritDoc} */
     @Override
-	public void setController(ControllerDeviceInterface controller) {
+    public void setController(ControllerDeviceInterface controller) {
         this.controller = controller;
         hasController = true;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>flowValveController</code>.
+     * </p>
+     *
+     * @param controller a
+     *        {@link neqsim.processSimulation.controllerDevice.ControllerDeviceInterface} object
+     */
     public void setFlowValveController(ControllerDeviceInterface controller) {
         this.flowValveController = controller;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public ControllerDeviceInterface getController() {
+    public ControllerDeviceInterface getController() {
         return controller;
     }
 
-    /**
-     * @return the mechanicalDesign
-     */
+    /** {@inheritDoc} */
     @Override
-	public MechanicalDesign getMechanicalDesign() {
+    public MechanicalDesign getMechanicalDesign() {
         return mechanicalDesign;
     }
 
     /**
+     * <p>
+     * Setter for the field <code>mechanicalDesign</code>.
+     * </p>
+     *
      * @param mechanicalDesign the mechanicalDesign to set
      */
     public void setMechanicalDesign(MechanicalDesign mechanicalDesign) {
         this.mechanicalDesign = mechanicalDesign;
     }
 
-    /**
-     * @return the specification
-     */
+    /** {@inheritDoc} */
     @Override
-	public String getSpecification() {
+    public String getSpecification() {
         return specification;
     }
 
-    /**
-     * @param specification the specification to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setSpecification(String specification) {
+    public void setSpecification(String specification) {
         this.specification = specification;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String[][] reportResults() {
+    public String[][] reportResults() {
         return report;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public boolean solved() {
+    public boolean solved() {
         return true;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>energyStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream} object
+     */
     public EnergyStream getEnergyStream() {
         return energyStream;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>energyStream</code>.
+     * </p>
+     *
+     * @param energyStream a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream}
+     *        object
+     */
     public void setEnergyStream(EnergyStream energyStream) {
         setEnergyStream(true);
         this.energyStream = energyStream;
     }
 
+    /**
+     * <p>
+     * isSetEnergyStream.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean isSetEnergyStream() {
         return isSetEnergyStream;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>energyStream</code>.
+     * </p>
+     *
+     * @param isSetEnergyStream a boolean
+     */
     public void setEnergyStream(boolean isSetEnergyStream) {
         this.isSetEnergyStream = isSetEnergyStream;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getPressure() {
+    public double getPressure() {
         return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setPressure(double pressure) {
+    public void setPressure(double pressure) {}
 
-    }
-
+    /** {@inheritDoc} */
     @Override
-	public double getEntropyProduction(String unit) {
+    public double getEntropyProduction(String unit) {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getMassBalance(String unit) {
+    public double getMassBalance(String unit) {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double sourrondingTemperature) {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
-
-    }
+    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
 
     public String conditionAnalysisMessage = "";
 
+    /** {@inheritDoc} */
     @Override
-	public String getConditionAnalysisMessage() {
+    public String getConditionAnalysisMessage() {
         return conditionAnalysisMessage;
     }
 
+    /**
+     * <p>
+     * getResultTable.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
+    public String[][] getResultTable() {
+        return null;
+    }
 }

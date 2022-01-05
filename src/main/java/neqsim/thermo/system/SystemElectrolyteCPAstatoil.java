@@ -1,9 +1,3 @@
-/*
- * SystemModifiedFurstElectrolyteEos.java
- *
- * Created on 26. februar 2001, 17:38
- */
-
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseElectrolyteCPAstatoil;
@@ -11,18 +5,20 @@ import neqsim.thermo.util.constants.FurstElectrolyteConstants;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 /**
- * This class defines a thermodynamic system using the Electrolyte CPA EoS of
- * Equinor
+ * This class defines a thermodynamic system using the Electrolyte CPA EoS of Equinor
  */
 public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
-
     private static final long serialVersionUID = 1000;
 
-    /** Creates new SystemModifiedFurstElectrolyteEos */
+    /**
+     * <p>
+     * Constructor for SystemElectrolyteCPAstatoil.
+     * </p>
+     */
     public SystemElectrolyteCPAstatoil() {
         super();
         modelName = "Electrolyte-CPA-EOS-statoil";
@@ -34,6 +30,14 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
         this.useVolumeCorrection(true);
     }
 
+    /**
+     * <p>
+     * Constructor for SystemElectrolyteCPAstatoil.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemElectrolyteCPAstatoil(double T, double P) {
         super(T, P);
         attractiveTermNumber = 15;
@@ -47,8 +51,9 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
         this.useVolumeCorrection(true);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemElectrolyteCPAstatoil clone() {
         SystemElectrolyteCPAstatoil clonedSystem = null;
         try {
             clonedSystem = (SystemElectrolyteCPAstatoil) super.clone();
@@ -62,5 +67,4 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
 
         return clonedSystem;
     }
-
 }

@@ -8,10 +8,14 @@ package neqsim.thermo.characterization;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * TBPCharacterize class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
-public class TBPCharacterize extends PlusCharacterize implements java.io.Serializable, CharacteriseInterface {
+public class TBPCharacterize extends PlusCharacterize {
     private static final long serialVersionUID = 1000;
     int startPlus = 7;
     int endPlus = 20;
@@ -22,18 +26,27 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
     double[] TBP_Mnom = null;
     double[] TBP_M = null;
 
-    /** Creates a new instance of TBPCharacterize */
-    public TBPCharacterize() {
-    }
+    /**
+     * Creates a new instance of TBPCharacterize
+     */
+    public TBPCharacterize() {}
 
+    /**
+     * <p>
+     * Constructor for TBPCharacterize.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public TBPCharacterize(SystemInterface system) {
         this.system = system;
         firstPlusFractionNumber = 7;
         lastPlusFractionNumber = 40;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public boolean groupTBPfractions() {
+    public boolean groupTBPfractions() {
         system.init(0);
         double old = 0;
 
@@ -105,14 +118,23 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         return length > 1;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void addTBPFractions() {
+    public void addTBPFractions() {
         for (int i = 0; i < TBPdens.length; i++) {
             // System.out.println("Mi " + TBP_M[i] + " dens " + TBPdens[i]);
-            system.addTBPfraction("C" + Integer.toString(carbonNumberVector[i]), TBPmoles[i], TBP_M[i], TBPdens[i]);
+            system.addTBPfraction("C" + Integer.toString(carbonNumberVector[i]), TBPmoles[i],
+                    TBP_M[i], TBPdens[i]);
         }
     }
 
+    /**
+     * <p>
+     * saveCharacterizedFluid.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean saveCharacterizedFluid() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             // double boilpoint =
@@ -123,7 +145,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
 
     /**
      * Getter for property TBPfractions.
-     * 
+     *
      * @return Value of property TBPfractions.
      */
     public double[] getTBPfractions() {
@@ -131,65 +153,87 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property coefs.
-     * 
-     * @param coefs New value of property coefs.
      */
     @Override
-	public void setCoefs(double coef, int i) {
+    public void setCoefs(double coef, int i) {
         this.coefs[i] = coef;
     }
 
+    /**
+     * <p>
+     * getTBPfractions.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getTBPfractions(int i) {
         return this.TBPfractions[i];
     }
 
     /**
      * Setter for property TBPfractions.
-     * 
+     *
      * @param TBPfractions New value of property TBPfractions.
      */
     public void setTBPfractions(double[] TBPfractions) {
         this.TBPfractions = TBPfractions;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void solve() {
+    public void solve() {
         NewtonSolveABCD solver = new NewtonSolveABCD(system, this);
         solver.solve();
     }
 
+    /**
+     * <p>
+     * solveAB.
+     * </p>
+     */
     public void solveAB() {
         NewtonSolveAB solver = new NewtonSolveAB(system, this);
         solver.solve();
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property coefs.
-     * 
-     * @param coefs New value of property coefs.
      */
     @Override
-	public void setCoefs(double[] coefs) {
+    public void setCoefs(double[] coefs) {
         this.coefs = coefs;
     }
 
     /**
      * Getter for property TBPdens.
-     * 
+     *
      * @return Value of property TBPdens.
      */
     public double[] getTBPdens() {
         return this.TBPdens;
     }
 
+    /**
+     * <p>
+     * getTBPdens.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getTBPdens(int i) {
         return this.TBPdens[i];
     }
 
     /**
      * Setter for property TBPdens.
-     * 
+     *
      * @param TBPdens New value of property TBPdens.
      */
     public void setTBPdens(double[] TBPdens) {
@@ -197,18 +241,18 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property length.
-     * 
-     * @return Value of property length.
      */
     @Override
-	public int getLength() {
+    public int getLength() {
         return length;
     }
 
     /**
      * Getter for property TBP_M.
-     * 
+     *
      * @return Value of property TBP_M.
      */
     public double[] getTBP_M() {
@@ -217,7 +261,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
 
     /**
      * Setter for property TBP_M.
-     * 
+     *
      * @param TBP_M New value of property TBP_M.
      */
     public void setTBP_M(double[] TBP_M) {
@@ -225,28 +269,28 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property carbonNumberVector.
-     * 
-     * @return Value of property carbonNumberVector.
      */
     @Override
-	public int[] getCarbonNumberVector() {
+    public int[] getCarbonNumberVector() {
         return this.carbonNumberVector;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property carbonNumberVector.
-     * 
-     * @param carbonNumberVector New value of property carbonNumberVector.
      */
     @Override
-	public void setCarbonNumberVector(int[] carbonNumberVector) {
+    public void setCarbonNumberVector(int[] carbonNumberVector) {
         this.carbonNumberVector = carbonNumberVector;
     }
 
     /**
      * Getter for property calcTBPfractions.
-     * 
+     *
      * @return Value of property calcTBPfractions.
      */
     public double[] getCalcTBPfractions() {
@@ -255,7 +299,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
 
     /**
      * Setter for property calcTBPfractions.
-     * 
+     *
      * @param calcTBPfractions New value of property calcTBPfractions.
      */
     public void setCalcTBPfractions(double[] calcTBPfractions) {
@@ -263,62 +307,67 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property plusCoefs.
-     * 
-     * @return Value of property plusCoefs.
      */
     @Override
-	public double[] getPlusCoefs() {
+    public double[] getPlusCoefs() {
         return this.plusCoefs;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getPlusCoefs(int i) {
+    public double getPlusCoefs(int i) {
         return this.plusCoefs[i];
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property plusCoefs.
-     * 
-     * @param plusCoefs New value of property plusCoefs.
      */
     @Override
-	public void setPlusCoefs(double[] plusCoefs) {
+    public void setPlusCoefs(double[] plusCoefs) {
         this.plusCoefs = plusCoefs;
     }
 
     /**
-     * Getter for property densPlus.
-     * 
-     * @return Value of property densPlus.
+     * {@inheritDoc}
      *
+     * Getter for property densPlus.
      */
     @Override
-	public double getDensPlus() {
+    public double getDensPlus() {
         return densPlus;
     }
 
     /**
-     * Setter for property densPlus.
-     * 
-     * @param densPlus New value of property densPlus.
+     * {@inheritDoc}
      *
+     * Setter for property densPlus.
      */
     @Override
-	public void setDensPlus(double densPlus) {
+    public void setDensPlus(double densPlus) {
         this.densPlus = densPlus;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public boolean isPseudocomponents() {
+    public boolean isPseudocomponents() {
         return false;
     }
 
-    public void addPlusFraction() {
-    }
+    /**
+     * <p>
+     * addPlusFraction.
+     * </p>
+     */
+    public void addPlusFraction() {}
 
+    /** {@inheritDoc} */
     @Override
-	public void addHeavyEnd() {
+    public void addHeavyEnd() {
         int old = getFirstPlusFractionNumber();
         setFirstPlusFractionNumber(length + 7);
         generateTBPFractions();

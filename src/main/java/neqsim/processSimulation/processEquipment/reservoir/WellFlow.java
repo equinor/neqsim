@@ -1,10 +1,20 @@
 package neqsim.processSimulation.processEquipment.reservoir;
 
+/**
+ * <p>
+ * WellFlow class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class WellFlow {
-
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-
-    }
-
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    public static void main(String[] args) {}
 }

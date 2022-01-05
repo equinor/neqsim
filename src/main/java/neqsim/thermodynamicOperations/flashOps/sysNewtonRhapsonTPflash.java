@@ -1,25 +1,17 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package neqsim.thermodynamicOperations.flashOps;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
-public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializable {
-
+/**
+ * <p>
+ * sysNewtonRhapsonTPflash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class sysNewtonRhapsonTPflash implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     int neq = 0, iter = 0;
     int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
@@ -38,13 +30,24 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
     Matrix dx;
     Matrix xcoef;
 
-    public sysNewtonRhapsonTPflash() {
-    }
+    /**
+     * <p>
+     * Constructor for sysNewtonRhapsonTPflash.
+     * </p>
+     */
+    public sysNewtonRhapsonTPflash() {}
 
     /**
-     * Creates new nonlin
+     * <p>
+     * Constructor for sysNewtonRhapsonTPflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param numberOfPhases a int
+     * @param numberOfComponents a int
      */
-    public sysNewtonRhapsonTPflash(SystemInterface system, int numberOfPhases, int numberOfComponents) {
+    public sysNewtonRhapsonTPflash(SystemInterface system, int numberOfPhases,
+            int numberOfComponents) {
         this.system = system;
         this.numberOfComponents = numberOfComponents;
         neq = numberOfComponents;
@@ -57,18 +60,26 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
         // System.out.println("Spec : " +speceq);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>fvec</code>.
+     * </p>
+     */
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
-
-            fvec.set(i, 0,
-                    Math.log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
+            fvec.set(i, 0, Math
+                    .log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
                             * system.getPhase(0).getComponents()[i].getx() * system.getPressure())
-                            - Math.log(system.getPhase(1).getComponents()[i].getFugasityCoeffisient()
-                                    * system.getPhase(1).getComponents()[i].getx() * system.getPressure()));
-
+                    - Math.log(system.getPhase(1).getComponents()[i].getFugasityCoeffisient()
+                            * system.getPhase(1).getComponents()[i].getx() * system.getPressure()));
         }
     }
 
+    /**
+     * <p>
+     * setJac.
+     * </p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -82,21 +93,30 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
                 tempJ = 1.0 / system.getBeta()
                         * (dij / system.getPhase(0).getComponents()[i].getx() - 1.0
                                 + system.getPhase(0).getComponents()[i].getdfugdx(j))
-                        + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhase(1).getComponents()[i].getx() - 1.0
-                                + system.getPhase(1).getComponents()[i].getdfugdx(j));
+                        + 1.0 / (1.0 - system.getBeta())
+                                * (dij / system.getPhase(1).getComponents()[i].getx() - 1.0
+                                        + system.getPhase(1).getComponents()[i].getdfugdx(j));
                 Jac.set(i, j, tempJ);
             }
         }
-
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>u</code>.
+     * </p>
+     */
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
             u.set(i, 0, system.getBeta() * system.getPhase(0).getComponents()[i].getx());
         }
-
     }
 
+    /**
+     * <p>
+     * init.
+     * </p>
+     */
     public void init() {
         double temp = 0;
 
@@ -108,17 +128,25 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
         for (int i = 0; i < numberOfComponents; i++) {
             system.getPhase(0).getComponents()[i].setx(u.get(i, 0) / system.getBeta());
             system.getPhase(1).getComponents()[i]
-                    .setx((system.getPhase(0).getComponents()[i].getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
-            system.getPhase(0).getComponents()[i]
-                    .setK(system.getPhase(0).getComponents()[i].getx() / system.getPhase(1).getComponents()[i].getx());
-            system.getPhase(1).getComponents()[i].setK(system.getPhase(0).getComponents()[i].getK());
-
+                    .setx((system.getPhase(0).getComponents()[i].getz() - u.get(i, 0))
+                            / (1.0 - system.getBeta()));
+            system.getPhase(0).getComponents()[i].setK(system.getPhase(0).getComponents()[i].getx()
+                    / system.getPhase(1).getComponents()[i].getx());
+            system.getPhase(1).getComponents()[i]
+                    .setK(system.getPhase(0).getComponents()[i].getK());
         }
 
         system.init(3);
-
     }
 
+    /**
+     * <p>
+     * solve.
+     * </p>
+     *
+     * @return a double
+     * @throws java.lang.Exception if any.
+     */
     public double solve() throws Exception {
         try {
             iter++;
@@ -133,5 +161,4 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
             throw e;
         }
     }
-
 }

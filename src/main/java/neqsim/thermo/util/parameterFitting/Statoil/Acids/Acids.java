@@ -1,59 +1,40 @@
 package neqsim.thermo.util.parameterFitting.Statoil.Acids;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
-/*
- * Sleipneracetate.java
- *
- * Created on August 6, 2004, 11:41 AM
- */
 /**
+ * <p>Acids class.</p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class Acids {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Acids.class);
 
     /**
-     * Creates a new instance of Sleipneracetate
+     * <p>Constructor for Acids.</p>
      */
-    public Acids() {
-    }
+    public Acids() {}
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
-        FileOutputStream outfile;
-        PrintStream p;
-        try {
-            outfile = new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/Statoil.txt");
-            p = new PrintStream(outfile);
-            p.close();
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
-
-        FileOutputStream outfile1;
-        PrintStream p1;
-        try {
-            outfile1 = new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/activity.txt");
-            p1 = new PrintStream(outfile1);
-            p1.close();
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
-
         int j;
-        int AcidNumb = 0, AcnNumb = 0, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0, MDEAHpNumb = 0,
-                CO3Numb = 0, OHNumb;
+        int AcidNumb = 0, AcnNumb = 0, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0,
+                MDEAHpNumb = 0, CO3Numb = 0, OHNumb;
         double nCO2, nMDEA, nHCO3, nCO3, nMDEAp, nOH, nHAc, nAcn;
         double aCO2, aMDEA, aHCO3, awater, aMDEAp, aOH, aCO3, aHAc, aAcn;
         double error, newValue, oldValue, guess, dx, dP, Pold, Pnew;
@@ -87,55 +68,64 @@ public class Acids {
             do {
                 CO2Numb = j;
                 j++;
-            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("CO2"));
+            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                    .equals("CO2"));
 
             j = 0;
             do {
                 MDEANumb = j;
                 j++;
-            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("MDEA"));
+            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                    .equals("MDEA"));
 
             j = 0;
             do {
                 WaterNumb = j;
                 j++;
-            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("water"));
+            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                    .equals("water"));
 
             j = 0;
             do {
                 HCO3Numb = j;
                 j++;
-            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("HCO3-"));
+            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                    .equals("HCO3-"));
 
             j = 0;
             do {
                 CO3Numb = j;
                 j++;
-            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("CO3--"));
+            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                    .equals("CO3--"));
 
             j = 0;
             do {
                 OHNumb = j;
                 j++;
-            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("OH-"));
+            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                    .equals("OH-"));
 
             j = 0;
             do {
                 MDEAHpNumb = j;
                 j++;
-            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("MDEA+"));
+            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                    .equals("MDEA+"));
 
             j = 0;
             do {
                 AcidNumb = j;
                 j++;
-            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("AceticAcid"));
+            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                    .equals("AceticAcid"));
 
             j = 0;
             do {
                 AcnNumb = j;
                 j++;
-            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("Ac-"));
+            } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                    .equals("Ac-"));
 
             logger.info("CO2 number " + CO2Numb);
 
@@ -165,24 +155,21 @@ public class Acids {
             aHAc = testSystem.getPhase(1).getActivityCoefficient(AcidNumb, WaterNumb);
             aAcn = testSystem.getPhase(1).getActivityCoefficient(AcnNumb, WaterNumb);
 
-            try {
-                outfile = new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/Statoil.txt", true);
-                p = new PrintStream(outfile);
-                p.println(loading + " " + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx()
-                        + " " + nCO2 + " " + nMDEA + " " + nHCO3 + " " + nMDEAp + " " + nCO3 + " " + nOH + " " + nHAc
-                        + " " + nAcn);
-                p.close();
+            try (PrintStream p = new PrintStream(
+                    new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/Statoil.txt", true))) {
+                p.println(loading + " "
+                        + testSystem.getPressure()
+                                * testSystem.getPhase(0).getComponent(CO2Numb).getx()
+                        + " " + nCO2 + " " + nMDEA + " " + nHCO3 + " " + nMDEAp + " " + nCO3 + " "
+                        + nOH + " " + nHAc + " " + nAcn);
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file " + e.getMessage());
             }
 
-            try {
-                outfile1 = new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/activity.txt",
-                        true);
-                p1 = new PrintStream(outfile1);
-                p1.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " " + aMDEAp + " " + aCO3
-                        + " " + aOH + " " + aHAc + " " + aAcn);
-                p1.close();
+            try (PrintStream p = new PrintStream(
+                    new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/activity.txt", true))) {
+                p.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " "
+                        + aMDEAp + " " + aCO3 + " " + aOH + " " + aHAc + " " + aAcn);
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file" + e.getMessage());
             }
@@ -192,10 +179,8 @@ public class Acids {
             } else {
                 loading += 0.1;
             }
-
         }
 
         logger.info("Finished");
-
     }
 }

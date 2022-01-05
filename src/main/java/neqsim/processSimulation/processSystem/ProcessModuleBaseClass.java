@@ -1,26 +1,7 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
  * ProcessModuleBaseClass.java
  *
  * Created on 1. november 2006, 22:07
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 package neqsim.processSimulation.processSystem;
 
@@ -30,181 +11,224 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * Abstract ProcessModuleBaseClass class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public abstract class ProcessModuleBaseClass implements ModuleInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String preferedThermodynamicModel = "", moduleName = "";
     protected boolean isInitializedModule = false, isInitializedStreams = false;
     private boolean isCalcDesign = false;
-    private neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+    private neqsim.processSimulation.processSystem.ProcessSystem operations =
+            new neqsim.processSimulation.processSystem.ProcessSystem();
 
     /**
      * Creates a new instance of ProcessModuleBaseClass
      */
-    public ProcessModuleBaseClass() {
-    }
+    public ProcessModuleBaseClass() {}
 
+    /** {@inheritDoc} */
     @Override
-	public String getPreferedThermodynamicModel() {
+    public String getPreferedThermodynamicModel() {
         return preferedThermodynamicModel;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setPreferedThermodynamicModel(String preferedThermodynamicModel) {
+    public void setPreferedThermodynamicModel(String preferedThermodynamicModel) {
         this.preferedThermodynamicModel = preferedThermodynamicModel;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         getOperations().displayResult();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String getName() {
+    public String getName() {
         return moduleName;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         moduleName = name;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setRegulatorOutSignal(double signal) {
-    }
+    public void setRegulatorOutSignal(double signal) {}
 
+    /** {@inheritDoc} */
     @Override
-	public void setController(ControllerDeviceInterface controller) {
-    }
+    public void setController(ControllerDeviceInterface controller) {}
 
+    /** {@inheritDoc} */
     @Override
-	public ControllerDeviceInterface getController() {
+    public ControllerDeviceInterface getController() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public MechanicalDesign getMechanicalDesign() {
-        return null;
-    }
-
-    public abstract void calcDesign();
-
-    public abstract void setDesign();
-
-    @Override
-	public String[][] reportResults() {
+    public MechanicalDesign getMechanicalDesign() {
         return null;
     }
 
     /**
-     * @return the isCalcDesign
+     * <p>
+     * calcDesign.
+     * </p>
      */
+    public abstract void calcDesign();
+
+    /**
+     * <p>
+     * setDesign.
+     * </p>
+     */
+    public abstract void setDesign();
+
+    /** {@inheritDoc} */
     @Override
-	public boolean isCalcDesign() {
+    public String[][] reportResults() {
+        return null;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isCalcDesign() {
         return isCalcDesign;
     }
 
-    /**
-     * @param isCalcDesign the isCalcDesign to set
-     */
+    /** {@inheritDoc} */
     @Override
-	public void setIsCalcDesign(boolean isCalcDesign) {
+    public void setIsCalcDesign(boolean isCalcDesign) {
         this.isCalcDesign = isCalcDesign;
     }
 
-    /**
-     * @return the operations
-     */
+    /** {@inheritDoc} */
     @Override
-	public neqsim.processSimulation.processSystem.ProcessSystem getOperations() {
+    public neqsim.processSimulation.processSystem.ProcessSystem getOperations() {
         return operations;
     }
 
     // this method needs to be updated...need to chec if all equipment are solved
     // correctly
+    /** {@inheritDoc} */
     @Override
-	public boolean solved() {
+    public boolean solved() {
         return true;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getFluid() {
+    public SystemInterface getFluid() {
         return getThermoSystem();
     }
 
-    public void setSpecification(String specificationName, double value) {
+    /**
+     * <p>
+     * setSpecification.
+     * </p>
+     *
+     * @param specificationName a {@link java.lang.String} object
+     * @param value a double
+     */
+    public void setSpecification(String specificationName, double value) {}
 
+    /** {@inheritDoc} */
+    @Override
+    public String getSpecification() {
+        return null;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setSpecification(String specification) {}
+
+    /** {@inheritDoc} */
+    @Override
+    public Object getUnit(String name) {
+        return operations.getUnit("name");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setProperty(String propertyName, double value) {
+        setSpecification(propertyName, value);
     }
 
     /**
-     * @return the specification
+     * <p>
+     * setProperty.
+     * </p>
+     *
+     * @param propertyName a {@link java.lang.String} object
+     * @param value a double
+     * @param unit a {@link java.lang.String} object
      */
+    public void setProperty(String propertyName, double value, String unit) {}
+
+    /** {@inheritDoc} */
     @Override
-	public String getSpecification() {
+    public double getPressure() {
+        return 1.0;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setPressure(double pressure) {}
+
+    /** {@inheritDoc} */
+    @Override
+    public double getEntropyProduction(String unit) {
+        return 0.0;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double getMassBalance(String unit) {
+        return 0.0;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double getExergyChange(String unit, double sourrondingTemperature) {
+        return 0.0;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
+
+    /** {@inheritDoc} */
+    @Override
+    public String getConditionAnalysisMessage() {
         return null;
     }
 
     /**
-     * @param specification the specification to set
+     * <p>
+     * getResultTable.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
      */
-    @Override
-	public void setSpecification(String specification) {
-    }
-
-    @Override
-	public Object getUnit(String name) {
-        return operations.getUnit("name");
-    }
-
-    @Override
-	public void setProperty(String propertyName, double value) {
-        setSpecification(propertyName, value);
-    }
-
-    public void setProperty(String propertyName, double value, String unit) {
-    }
-
-    @Override
-	public double getPressure() {
-        return 1.0;
-    }
-
-    @Override
-	public void setPressure(double pressure) {
-
-    }
-
-    @Override
-	public double getEntropyProduction(String unit) {
-        return 0.0;
-    }
-
-    @Override
-	public double getMassBalance(String unit) {
-        return 0.0;
-    }
-
-    @Override
-	public double getExergyChange(String unit, double sourrondingTemperature) {
-        return 0.0;
-    }
-
-    @Override
-	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
-
-    }
-
-    @Override
-	public String getConditionAnalysisMessage() {
+    public String[][] getResultTable() {
         return null;
     }
 }

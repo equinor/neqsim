@@ -1,35 +1,21 @@
 /*
- * Copyright 2018 ESOL.
+ * PHflash.java
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Created on 8. mars 2001, 10:56
  */
-
-/*
-* PHflash.java
-*
-* Created on 8. mars 2001, 10:56
-*/
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * PSFlash class.
+ * </p>
  *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
-public class PSFlash extends QfuncFlash implements java.io.Serializable {
-
+public class PSFlash extends QfuncFlash {
     private static final long serialVersionUID = 1000;
 
     double Sspec = 0;
@@ -37,11 +23,21 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
     int type = 0;
 
     /**
-     * Creates new PHflash
+     * <p>
+     * Constructor for PSFlash.
+     * </p>
      */
-    public PSFlash() {
-    }
+    public PSFlash() {}
 
+    /**
+     * <p>
+     * Constructor for PSFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Sspec a double
+     * @param type a int
+     */
     public PSFlash(SystemInterface system, double Sspec, int type) {
         this.system = system;
         this.tpFlash = new TPflash(system);
@@ -49,8 +45,9 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
         this.type = type;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcdQdTT() {
+    public double calcdQdTT() {
         double cP1 = 0.0, cP2 = 0.0;
 
         if (system.getNumberOfPhases() == 1) {
@@ -64,14 +61,16 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
         return dQdTT;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcdQdT() {
+    public double calcdQdT() {
         double dQ = -system.getEntropy() + Sspec;
         return dQ;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double solveQ() {
+    public double solveQ() {
         double oldTemp = system.getTemperature(), nyTemp = system.getTemperature();
         int iterations = 1;
         double error = 1.0, erorOld = 10.0e10;
@@ -92,7 +91,8 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
             newCorr = factor * calcdQdT() / calcdQdTT();
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
-                nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
+                nyTemp = system.getTemperature()
+                        - Math.signum(system.getTemperature() - nyTemp) * 10.0;
                 correctFactor = false;
             } else if (nyTemp < 0) {
                 nyTemp = Math.abs(system.getTemperature() - 10.0);
@@ -116,12 +116,16 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
         return nyTemp;
     }
 
-    public void onPhaseSolve() {
+    /**
+     * <p>
+     * onPhaseSolve.
+     * </p>
+     */
+    public void onPhaseSolve() {}
 
-    }
-
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
 
         if (type == 0) {

@@ -1,15 +1,14 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.thermo.characterization;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * Recombine class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Recombine {
     private static final long serialVersionUID = 1000;
@@ -18,15 +17,32 @@ public class Recombine {
     private double GOR = 1000.0;
     private double oilDesnity = 0.8;
 
-    public Recombine(SystemInterface gas, SystemInterface oil) {
+    /**
+     * <p>
+     * Constructor for Recombine.
+     * </p>
+     *
+     * @param gas a {@link neqsim.thermo.system.SystemInterface} object
+     * @param oil a {@link neqsim.thermo.system.SystemInterface} object
+     */
+    public Recombine(SystemInterface gas, SystemInterface oil) {}
 
-    }
-
+    /**
+     * <p>
+     * runRecombination.
+     * </p>
+     *
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SystemInterface runRecombination() {
         return getRecombinedSystem();
     }
 
     /**
+     * <p>
+     * getGOR.
+     * </p>
+     *
      * @return the GOR
      */
     public double getGOR() {
@@ -34,6 +50,10 @@ public class Recombine {
     }
 
     /**
+     * <p>
+     * setGOR.
+     * </p>
+     *
      * @param GOR the GOR to set
      */
     public void setGOR(double GOR) {
@@ -41,6 +61,10 @@ public class Recombine {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>oilDesnity</code>.
+     * </p>
+     *
      * @return the oilDesnity
      */
     public double getOilDesnity() {
@@ -48,6 +72,10 @@ public class Recombine {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>oilDesnity</code>.
+     * </p>
+     *
      * @param oilDesnity the oilDesnity to set
      */
     public void setOilDesnity(double oilDesnity) {
@@ -55,10 +83,13 @@ public class Recombine {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>recombinedSystem</code>.
+     * </p>
+     *
      * @return the recombinedSystem
      */
     public SystemInterface getRecombinedSystem() {
         return recombinedSystem;
     }
-
 }

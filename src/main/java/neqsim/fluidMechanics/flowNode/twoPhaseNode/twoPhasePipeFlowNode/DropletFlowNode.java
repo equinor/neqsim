@@ -9,40 +9,65 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
-
+/**
+ * <p>DropletFlowNode class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class DropletFlowNode extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
     private double averageDropletDiameter = 100.0e-6;
 
+    /**
+     * <p>Constructor for DropletFlowNode.</p>
+     */
     public DropletFlowNode() {
         this.flowNodeType = "droplet";
     }
 
+    /**
+     * <p>Constructor for DropletFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public DropletFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "droplet";
         this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
-    public DropletFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
+    /**
+     * <p>Constructor for DropletFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
+    public DropletFlowNode(SystemInterface system, SystemInterface interphaseSystem,
+            GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stratified";
         this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcGasLiquidContactArea() {
+    public double calcGasLiquidContactArea() {
         interphaseContactArea = pipe.getNodeLength() * interphaseContactLength[0];
         return interphaseContactArea;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void initFlowCalc() {
-
+    public void initFlowCalc() {
         // phaseFraction[0] = bulkSystem.getPhase(0).getBeta();
         phaseFraction[0] = getBulkSystem().getVolumeFraction(0);
         phaseFraction[1] = 1.0 - phaseFraction[0];
@@ -52,8 +77,9 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         initVelocity();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public DropletFlowNode clone() {
         DropletFlowNode clonedSystem = null;
         try {
             clonedSystem = (DropletFlowNode) super.clone();
@@ -64,18 +90,21 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         // System.out.println("len " + this.calcContactLength());
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcContactLength() {
-        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-                + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    public double calcContactLength() {
+        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
+                * (1.0 - 2.0 * phaseFraction[1] + Math.pow(phaseFraction[1], 1.0 / 3.0)
+                        - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
         wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
         interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -91,8 +120,9 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         DropletFlowNode newNode = (DropletFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -103,6 +133,12 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return newNode;
     }
 
+    /**
+     * <p>mainOld.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    @SuppressWarnings("unused")
     public static void mainOld(String[] args) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 11.0, 60.0);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3, 1.01325);
@@ -175,9 +211,13 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
         ops.TPflash();
         testSystem.display();
-
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 5.0, 10.0e-3);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -247,13 +287,22 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
         ops.TPflash();
         testSystem.display();
-
     }
 
+    /**
+     * <p>Getter for the field <code>averageDropletDiameter</code>.</p>
+     *
+     * @return a double
+     */
     public double getAverageDropletDiameter() {
         return averageDropletDiameter;
     }
 
+    /**
+     * <p>Setter for the field <code>averageDropletDiameter</code>.</p>
+     *
+     * @param averageDropletDiameter a double
+     */
     public void setAverageDropletDiameter(double averageDropletDiameter) {
         this.averageDropletDiameter = averageDropletDiameter;
     }

@@ -1,31 +1,42 @@
-/*
- * LiquidPhysicalProperties.java
- *
- * Created on 29. oktober 2000, 16:17
- */
-
 package neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.conductivity.Conductivity;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density.Density;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.CO2water;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.viscosity.Viscosity;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * CO2waterPhysicalProperties class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class CO2waterPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
-
+public class CO2waterPhysicalProperties
+        extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CO2waterPhysicalProperties.class);
 
-    public CO2waterPhysicalProperties() {
-    }
+    /**
+     * <p>
+     * Constructor for CO2waterPhysicalProperties.
+     * </p>
+     */
+    public CO2waterPhysicalProperties() {}
 
+    /**
+     * <p>
+     * Constructor for CO2waterPhysicalProperties.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param binaryDiffusionCoefficientMethod a int
+     * @param multicomponentDiffusionMethod a int
+     */
     public CO2waterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
@@ -35,8 +46,9 @@ public class CO2waterPhysicalProperties extends neqsim.physicalProperties.physic
         densityCalc = new Density(this);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public CO2waterPhysicalProperties clone() {
         CO2waterPhysicalProperties properties = null;
 
         try {
@@ -46,5 +58,4 @@ public class CO2waterPhysicalProperties extends neqsim.physicalProperties.physic
         }
         return properties;
     }
-
 }

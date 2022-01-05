@@ -1,15 +1,23 @@
 package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhasePipeFlowSystem;
 
-//import guiAuto.*;
-public class TwoPhasePipeFlowSystem extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {
-
+/**
+ * <p>TwoPhasePipeFlowSystem class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class TwoPhasePipeFlowSystem
+        extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {
     private static final long serialVersionUID = 1000;
 
-    public TwoPhasePipeFlowSystem() {
-    }
+    /**
+     * <p>Constructor for TwoPhasePipeFlowSystem.</p>
+     */
+    public TwoPhasePipeFlowSystem() {}
 
+    /** {@inheritDoc} */
     @Override
-	public void createSystem() {
+    public void createSystem() {
         // thermoSystem.init(1);
         flowLeg = new neqsim.fluidMechanics.flowLeg.pipeLeg.PipeLeg[this.getNumberOfLegs()];
 
@@ -19,14 +27,17 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidMechanics.flowSystem.two
 
         flowNode = new neqsim.fluidMechanics.flowNode.FlowNodeInterface[totalNumberOfNodes];
         if (initFlowPattern.equals("stratified")) {
-            flowNode[0] = new neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.StratifiedFlowNode(
-                    thermoSystem, equipmentGeometry[0]);
+            flowNode[0] =
+                    new neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.StratifiedFlowNode(
+                            thermoSystem, equipmentGeometry[0]);
         } else if (initFlowPattern.equals("annular")) {
-            flowNode[0] = new neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.AnnularFlow(thermoSystem,
-                    equipmentGeometry[0]);
+            flowNode[0] =
+                    new neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.AnnularFlow(
+                            thermoSystem, equipmentGeometry[0]);
         } else {
-            flowNode[0] = new neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.StratifiedFlowNode(
-                    thermoSystem, equipmentGeometry[0]);
+            flowNode[0] =
+                    new neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.StratifiedFlowNode(
+                            thermoSystem, equipmentGeometry[0]);
         }
         flowNode[totalNumberOfNodes - 1] = flowNode[0].getNextNode();
 
@@ -34,8 +45,9 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidMechanics.flowSystem.two
         this.setNodes();
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         for (int j = 0; j < getTotalNumberOfNodes(); j++) {
             flowNode[j].initFlowCalc();
             flowNode[j].init();
@@ -54,20 +66,23 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidMechanics.flowSystem.two
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void solveSteadyState(int solverType) {
-        double[] times = { 0.0 };
-        display = new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.twoPhasePipeFlowVisualization.TwoPhasePipeFlowVisualization(
-                this.getTotalNumberOfNodes(), 1);
+    public void solveSteadyState(int solverType) {
+        double[] times = {0.0};
+        display =
+                new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.twoPhasePipeFlowVisualization.TwoPhasePipeFlowVisualization(
+                        this.getTotalNumberOfNodes(), 1);
         getTimeSeries().setTimes(times);
-        neqsim.thermo.system.SystemInterface[] systems = { flowNode[0].getBulkSystem() };
+        neqsim.thermo.system.SystemInterface[] systems = {flowNode[0].getBulkSystem()};
         getTimeSeries().setInletThermoSystems(systems);
         getTimeSeries().setNumberOfTimeStepsInInterval(1);
-        double[] outletFlowRates = { 0.0, 0.0 };
+        double[] outletFlowRates = {0.0, 0.0};
         getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
-        flowSolver = new neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.TwoPhaseFixedStaggeredGridSolver(
-                this, getSystemLength(), this.getTotalNumberOfNodes(), false);
+        flowSolver =
+                new neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.TwoPhaseFixedStaggeredGridSolver(
+                        this, getSystemLength(), this.getTotalNumberOfNodes(), false);
         flowSolver.setSolverType(solverType);
         flowSolver.solveTDMA();
 
@@ -75,28 +90,31 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidMechanics.flowSystem.two
         display.setNextData(this);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void solveTransient(int type) {
+    public void solveTransient(int type) {
         // pipeSolver pipeSolve = new pipeSolver(this, getSystemLength(),
         // getTotalNumberOfNodes());
         // pipeSolve.solveTDMA();
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         // Initierer et nyt rorsystem
         neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe = new TwoPhasePipeFlowSystem();
 
-        // Definerer termodyanmikken5
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(295.3, 5.0); // initierer
-                                                                                                             // et
-                                                                                                             // system
-                                                                                                             // som
-                                                                                                             // benytter
-                                                                                                             // SRK
-                                                                                                             // tilstandsligning
-        // med trykk 305.3 K og 125 bar
-        neqsim.thermodynamicOperations.ThermodynamicOperations testOps = new neqsim.thermodynamicOperations.ThermodynamicOperations(
-                testSystem); // gjor termodyanmiske Flash rutiner tilgjengelige
+        // Definerer termodyanmikken5 - initierer et system som benytter SRK tilstandsligning
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);
+
+        // med trykk 305.3 K og 125 bar - // gjor termodynamiske Flash rutiner tilgjengelige
+        neqsim.thermodynamicOperations.ThermodynamicOperations testOps =
+                new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);
         testSystem.addComponent("methane", 0.11152181, 0);
         // testSystem.addComponent("ethane", 0.0011152181, 0);
         testSystem.addComponent("water", 0.04962204876, 1);
@@ -106,14 +124,16 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidMechanics.flowSystem.two
 
         pipe.setInletThermoSystem(testSystem); // setter termodyanmikken for rorsystemet
         pipe.setNumberOfLegs(5); // deler inn roret i et gitt antall legger
-        pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr. leg
-        double[] height = { 0, 0, 0, 0, 0, 0 };
-        double[] length = { 0.0, 1.7, 3.5, 5.0, 7.5, 10.4 };
-        double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0, 278.0, 278.0 };// , 278.0, 275.0, 275.0, 275.0,
-                                                                                 // 275.0};
-        double[] roughness = { 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5 };
-        double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
-        double[] wallHeacCoef = { 15.0, 15.0, 15.0, 15.0, 15.0, 15.0 };
+        pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr.
+                                        // leg
+        double[] height = {0, 0, 0, 0, 0, 0};
+        double[] length = {0.0, 1.7, 3.5, 5.0, 7.5, 10.4};
+        double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0};// , 278.0, 275.0,
+                                                                               // 275.0, 275.0,
+                                                                               // 275.0};
+        double[] roughness = {1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5};
+        double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+        double[] wallHeacCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
 
         pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
         pipe.setLegPositions(length); // setter avstand til hver leg-ende
@@ -121,13 +141,13 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidMechanics.flowSystem.two
         pipe.setLegWallHeatTransferCoefficients(wallHeacCoef);
         pipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
 
-        neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGemometry = new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[6]; // Deffinerer
-                                                                                                                                                                // geometrien
-                                                                                                                                                                // for
-                                                                                                                                                                // roret
-        double[] pipeDiameter = { 0.02588, 0.02588, 0.02588, 0.02588, 0.02588, 0.02588 };
+        // Definerer geometrien for roret
+        neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGemometry =
+                new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[6];
+        double[] pipeDiameter = {0.02588, 0.02588, 0.02588, 0.02588, 0.02588, 0.02588};
         for (int i = 0; i < pipeDiameter.length; i++) {
-            pipeGemometry[i] = new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
+            pipeGemometry[i] =
+                    new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
         }
         pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
         // utforer bergninger

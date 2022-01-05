@@ -1,13 +1,7 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
-
 package neqsim.thermo.system;
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -15,10 +9,11 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
-    /** Creates a thermodynamic system using the SRK equation of state. */
+    /**
+     * Creates a thermodynamic system using the SRK equation of state.
+     */
     // SystemSrkEos clonedSystem;
     public SystemSrkTwuCoonParamEos() {
         super();
@@ -26,20 +21,38 @@ public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
         attractiveTermNumber = 12;
     }
 
+    /**
+     * <p>
+     * Constructor for SystemSrkTwuCoonParamEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemSrkTwuCoonParamEos(double T, double P) {
         super(T, P);
         modelName = "TwuCoonRKparam-EOS";
         attractiveTermNumber = 12;
     }
 
+    /**
+     * <p>
+     * Constructor for SystemSrkTwuCoonParamEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemSrkTwuCoonParamEos(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
         modelName = "TwuCoonRKparam-EOS";
         attractiveTermNumber = 12;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Object clone() {
+    public SystemSrkTwuCoonParamEos clone() {
         SystemSrkTwuCoonParamEos clonedSystem = null;
         try {
             clonedSystem = (SystemSrkTwuCoonParamEos) super.clone();
@@ -47,12 +60,11 @@ public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
             logger.error("Cloning failed.", e);
         }
 
-//        
-//        for(int i = 0; i < numberOfPhases; i++) {
-//            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-//        }
+        //
+        // for(int i = 0; i < numberOfPhases; i++) {
+        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+        // }
 
         return clonedSystem;
     }
-
 }

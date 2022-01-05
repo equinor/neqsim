@@ -1,34 +1,42 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 /**
+ * <p>
+ * BinaryWSParameterFittingToSolubilityData class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunction {
-
     private static final long serialVersionUID = 1000;
 
     int phase = 1;
     int type = 1;
 
-    /** Creates new Test */
-    public BinaryWSParameterFittingToSolubilityData() {
-    }
+    /**
+     * <p>
+     * Constructor for BinaryWSParameterFittingToSolubilityData.
+     * </p>
+     */
+    public BinaryWSParameterFittingToSolubilityData() {}
 
+    /**
+     * <p>
+     * Constructor for BinaryWSParameterFittingToSolubilityData.
+     * </p>
+     *
+     * @param phase a int
+     * @param type a int
+     */
     public BinaryWSParameterFittingToSolubilityData(int phase, int type) {
         this.phase = phase;
         this.type = type;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
         if (type == 1) {
             // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
@@ -38,8 +46,9 @@ public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunctio
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 }

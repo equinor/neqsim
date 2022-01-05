@@ -1,17 +1,16 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
+ * <p>
+ * GasScrubberDesignStandard class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class GasScrubberDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     double gasLoadFactor = 0.11;
@@ -20,10 +19,20 @@ public class GasScrubberDesignStandard extends DesignStandard {
     double lengthGasInetToHHLL = 550.0; // unit: mm
     double lengthMeshPadToDemistingCyclone = 550.0; // unit: mm
 
+    /**
+     * <p>
+     * Constructor for GasScrubberDesignStandard.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
+     */
     public GasScrubberDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
 
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
@@ -45,13 +54,11 @@ public class GasScrubberDesignStandard extends DesignStandard {
                         designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
                     }
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
             // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -66,10 +73,24 @@ public class GasScrubberDesignStandard extends DesignStandard {
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>gasLoadFactor</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getGasLoadFactor() {
         return gasLoadFactor;
     }
 
+    /**
+     * <p>
+     * getVolumetricDesignFactor.
+     * </p>
+     *
+     * @return a double
+     */
     public double getVolumetricDesignFactor() {
         return designFactorVolumeFlow;
     }
