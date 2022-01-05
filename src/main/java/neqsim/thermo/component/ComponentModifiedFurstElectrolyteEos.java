@@ -121,27 +121,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
             logger.error("Cloning failed.", e);
         }
 
-        public ComponentModifiedFurstElectrolyteEos(String component_name, double moles,
-                        double molesInPhase, int compnumber) {
-                super(component_name, moles, molesInPhase, compnumber);
-                ionicCoVolume = this.getIonicDiameter();
-                if (ionicCharge != 0) {
-                        setIsIon(true);
-                }
-                b = ionicCharge != 0
-                                ? (neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[0]
-                                                * Math.pow(getIonicDiameter(), 3.0)
-                                                + neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[1])
-                                                * 1e5
-                                : b;
-                a = ionicCharge != 0 ? 1.0e-35 : a;
-                setAtractiveParameter(
-                                new neqsim.thermo.component.atractiveEosTerm.AtractiveTermSchwartzentruber(
-                                                this));
-                lennardJonesMolecularDiameter = ionicCharge != 0
-                                ? Math.pow((6.0 * b / 1.0e5) / (pi * avagadroNumber), 1.0 / 3.0)
-                                                * 1e10
-                                : lennardJonesMolecularDiameter;
+        return clonedComponent;
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -151,6 +132,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
         } else {
             return super.calca();
         }
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -160,6 +142,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
         } else {
             return super.calcb();
         }
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -219,6 +202,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
         if (getLennardJonesMolecularDiameter() > 0) {
             XBorni = ionicCharge * ionicCharge / (getLennardJonesMolecularDiameter() * 1e-10);
         }
+        super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, type);
+    }
 
     /**
      * <p>
@@ -425,15 +410,16 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
         if (getIonicCharge() != 0) {
             return 0.0;
         }
-
-        @Override
-        public double calca() {
-                if (ionicCharge != 0) {
-                        return a;
-                } else {
-                        return super.calca();
-                }
+        double ans2 = 0.0;
+        for (int i = 0; i < numberOfComponents; i++) {
+            if (phase.getComponent(i).getIonicCharge() == 0) {
+                ans2 += phase.getComponent(i).getNumberOfMolesInPhase();
+            }
         }
+        // return 0.0;
+        return getDiElectricConstant(temperature) / ans2
+                - ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstant() / ans2;
+    }
 
     /**
      * <p>
@@ -453,11 +439,11 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
                 .getIonicCharge() != 0) {
             return 0.0;
         }
-
-        @Override
-        public void init(double temperature, double pressure, double totalNumberOfMoles,
-                        double beta, int type) {
-                super.init(temperature, pressure, totalNumberOfMoles, beta, type);
+        double ans2 = 0.0;
+        for (int i = 0; i < numberOfComponents; i++) {
+            if (phase.getComponent(i).getIonicCharge() == 0) {
+                ans2 += phase.getComponent(i).getNumberOfMolesInPhase();
+            }
         }
         // return 0.0;
         return -getDiElectricConstant(temperature) / (ans2 * ans2)
@@ -483,25 +469,11 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
         if (getIonicCharge() != 0) {
             return 0.0;
         }
-
-        public double dAlphaLRdndn(int j, PhaseInterface phase, int numberOfComponents,
-                        double temperature, double pressure) {
-                double temp = 2.0 * electronCharge * electronCharge * avagadroNumber
-                                / (vacumPermittivity * Math
-                                                .pow(((PhaseModifiedFurstElectrolyteEos) phase)
-                                                                .getDiElectricConstant(), 3.0)
-                                                * R * temperature)
-                                * diElectricdn
-                                * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-                                                .getComponents()[j]).getDiElectricConstantdn()
-                                - electronCharge * electronCharge * avagadroNumber
-                                                / (vacumPermittivity * Math.pow(
-                                                                ((PhaseModifiedFurstElectrolyteEos) phase)
-                                                                                .getDiElectricConstant(),
-                                                                2.0) * R * temperature)
-                                                * calcdiElectricdndn(j, phase, numberOfComponents,
-                                                                temperature, pressure);
-                return temp;
+        double ans2 = 0.0;
+        for (int i = 0; i < numberOfComponents; i++) {
+            if (phase.getComponent(i).getIonicCharge() == 0) {
+                ans2 += phase.getComponent(i).getNumberOfMolesInPhase();
+            }
         }
         // return 0.0;
         return getDiElectricConstantdT(temperature) / ans2
@@ -800,6 +772,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
                     * (avagadroNumber * Math.pow(lennardJonesMolecularDiameter * 1.0e-10, 3.0))
                     * (1.0 / (phase.getMolarVolume() * 1.0e-5 * phase.getNumberOfMolesInPhase()));
         }
+    }
 
     /**
      * <p>
@@ -817,6 +790,9 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
         if (ionicCharge == 0) {
             return 0.0;
         }
+        return (-avagadroNumber * pi / 6.0 * Math.pow(lennardJonesMolecularDiameter * 1e-10, 3.0)
+                / (Math.pow(phase.getMolarVolume() * 1e-5 * phase.getNumberOfMolesInPhase(), 2.0)));
+    }
 
     // Born term equations and derivatives
     /**

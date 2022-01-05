@@ -44,16 +44,9 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
+
         return atractiveTerm;
     }
-
-    /** Creates new AtractiveTermSrk */
-    // public AtractiveTermTwuCoon(ComponentEosInterface component, double[] params) {
-    // this(component);
-    // System.arraycopy(params,0,this.parameters,0,params.length);
-    // // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
-    // // d = 1-1.0/d;
-    // }
 
     /** {@inheritDoc} */
     @Override

@@ -1032,7 +1032,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         // double calcRooBonVtVolFinder = calcRootVolFinder(phasetype);
         // BonV = calcRooBonVtVolFinder;
         // double BonVInit = BonV;
-        if (BonV <= 0) {
+        if (BonV < 0) {
             BonV = 1.0e-8;
         }
 
