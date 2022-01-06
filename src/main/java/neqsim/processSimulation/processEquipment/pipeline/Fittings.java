@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
-import java.util.*;
+import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  * <p>
@@ -10,7 +11,7 @@ import java.util.*;
  * @author ESOL
  * @version $Id: $Id
  */
-public class Fittings {
+public class Fittings implements Serializable {
     private static final long serialVersionUID = 1000;
 
     ArrayList<Fitting> fittingList = new ArrayList<Fitting>();
@@ -56,7 +57,7 @@ public class Fittings {
         return fittingList;
     }
 
-    public class Fitting {
+    public class Fitting implements Serializable {
         private static final long serialVersionUID = 1000;
 
         private String fittingName = "";

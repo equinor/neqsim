@@ -17,8 +17,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class ConstantMassExpansion extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
     double[] relativeVolume = null;
     double[] totalVolume = null;
     private double[] liquidRelativeVolume = null;

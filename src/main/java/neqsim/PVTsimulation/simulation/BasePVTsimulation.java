@@ -13,8 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class BasePVTsimulation implements SimulationInterface {
-    private static final long serialVersionUID = 1000;
-
     private SystemInterface thermoSystem = null;
     private SystemInterface baseThermoSystem = null;
     public ThermodynamicOperations thermoOps = null;

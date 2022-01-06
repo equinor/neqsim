@@ -9,8 +9,6 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Hu
  * @version $Id: $Id
  */
 public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunction {
-    private static final long serialVersionUID = 1000;
-
     int phase = 1;
     int type = 1;
 

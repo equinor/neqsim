@@ -20,7 +20,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class TestSolidComplexFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestSolidComplexFunction.class);
 
     /**
@@ -56,8 +55,8 @@ public class TestSolidComplexFunction {
                 testSystem.setMixingRule(10);
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.13, 0.1}; 
-                                                           
+                double standardDeviation1[] = {0.13, 0.1};
+
                 SampleValue sample = new SampleValue(val,
                         Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
                         standardDeviation1);

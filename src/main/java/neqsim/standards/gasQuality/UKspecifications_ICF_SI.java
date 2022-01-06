@@ -14,8 +14,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
-    private static final long serialVersionUID = 1000;
-
     String componentName = "", unit = "-";
     Standard_ISO6976 iso6976 = null;
     double propaneNumber = 0.0;

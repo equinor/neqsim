@@ -17,7 +17,6 @@ import neqsim.statistics.parameterFitting.StatisticsBaseClass;
  * @version $Id: $Id
  */
 public class LevenbergMarquardt extends StatisticsBaseClass {
-    private static final long serialVersionUID = 1000;
     double oldChiSquare = 1e100;
     double newChiSquare = 0;
     Matrix parameterStdDevMatrix;

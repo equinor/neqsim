@@ -12,8 +12,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public abstract class BaseFunction implements FunctionInterface {
-    private static final long serialVersionUID = 1000;
-
     public double[] params = null;
     public double[][] bounds = null;
 

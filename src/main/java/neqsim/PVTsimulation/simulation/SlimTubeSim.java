@@ -13,8 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SlimTubeSim extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
     SystemInterface inectionGasSystem = null;
     private int numberOfSlimTubeNodes = 200;
     SystemInterface[] slimTubeNodeSystem = null;

@@ -14,8 +14,6 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  */
 public class TwoPhasePipeFlowVisualization extends
         neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.TwoPhaseFlowVisualization {
-    private static final long serialVersionUID = 1000;
-
     double[][][] pressurePoint = new double[2][10][10];
     double[][][] velocityPoint = new double[2][10][10];
     double[][][] reynoldsNumber = new double[2][10][10];

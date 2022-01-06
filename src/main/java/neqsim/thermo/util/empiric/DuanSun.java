@@ -13,7 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class DuanSun {
-    private static final long serialVersionUID = 1000;
     double[] c = new double[] {0.1, 0.2, 0.3, 0.4, 0.5};
     double[] d = new double[] {0.1, 0.2, 0.3, 0.4, 0.5};
 

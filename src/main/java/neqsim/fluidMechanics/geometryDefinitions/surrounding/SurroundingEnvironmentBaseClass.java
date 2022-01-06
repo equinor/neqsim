@@ -8,13 +8,7 @@ package neqsim.fluidMechanics.geometryDefinitions.surrounding;
  * @author ESOL
  * @version $Id: $Id
  */
-public class SurroundingEnvironmentBaseClass
-        implements SurroundingEnvironment /**
-                                           * @return the heatTransferCoefficient
-                                           */
-{
-    private static final long serialVersionUID = 1000;
-
+public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment {
     /** {@inheritDoc} */
     @Override
     public double getTemperature() {

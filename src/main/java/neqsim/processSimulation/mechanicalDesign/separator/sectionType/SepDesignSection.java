@@ -11,8 +11,6 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  * @version $Id: $Id
  */
 public class SepDesignSection {
-    private static final long serialVersionUID = 1000;
-
     SeparatorSection separatorSection = null;
     public double totalWeight = 1.0;
     public double totalHeight = 1.0;

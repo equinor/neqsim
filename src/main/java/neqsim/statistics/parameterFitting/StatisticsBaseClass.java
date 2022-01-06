@@ -25,8 +25,6 @@ import neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot.lineFitPlot;
  * @version $Id: $Id
  */
 public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterface {
-    private static final long serialVersionUID = 1000;
-
     protected SampleSet sampleSet = new SampleSet();
     protected double chiSquare = 0;
     protected double[][] dyda;

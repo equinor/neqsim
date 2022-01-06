@@ -12,8 +12,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class CMEFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     double molarMass = 0.0;
     double saturationVolume = 0, saturationPressure = 0;
     double Zsaturation = 0;

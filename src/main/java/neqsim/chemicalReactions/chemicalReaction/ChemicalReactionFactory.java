@@ -16,8 +16,6 @@ import java.util.ArrayList;
  * @version $Id: $Id
  */
 public class ChemicalReactionFactory {
-    private static final long serialVersionUID = 1000;
-
     public ChemicalReactionFactory() {}
 
     /**

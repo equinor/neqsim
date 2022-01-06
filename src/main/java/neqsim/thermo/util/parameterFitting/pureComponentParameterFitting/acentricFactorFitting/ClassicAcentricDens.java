@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class ClassicAcentricDens extends ClassicAcentricFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ClassicAcentricDens.class);
 
     int phasetype = 1;

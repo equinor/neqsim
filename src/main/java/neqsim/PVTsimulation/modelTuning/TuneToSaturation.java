@@ -11,8 +11,6 @@ import neqsim.PVTsimulation.simulation.SimulationInterface;
  * @version $Id: $Id
  */
 public class TuneToSaturation extends BaseTuningClass {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for TuneToSaturation.

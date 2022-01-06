@@ -18,7 +18,6 @@ import no.uib.cipr.matrix.DenseMatrix;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionFullGT {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GTSurfaceTensionFullGT.class);
 
     private int ncomp; // Number of components.

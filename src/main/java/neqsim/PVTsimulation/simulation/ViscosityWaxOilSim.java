@@ -17,8 +17,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class ViscosityWaxOilSim extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
     double[] temperature = null;
 
     double[] pressure = null;

@@ -10,8 +10,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version
  */
 abstract class WongSandlerFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for WongSandlerFunction.

@@ -15,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Draft_GERG2004 extends neqsim.standards.Standard {
-    private static final long serialVersionUID = 1000;
     double specPressure = 70.0;
     double initTemperature = 273.15;
 

@@ -9,5 +9,4 @@ package neqsim.statistics;
  * @version $Id: $Id
  */
 public class test {
-    private static final long serialVersionUID = 1000;
 }

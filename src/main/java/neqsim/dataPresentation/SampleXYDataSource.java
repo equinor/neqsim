@@ -26,7 +26,6 @@ package neqsim.dataPresentation;
  * @version $Id: $Id
  */
 public class SampleXYDataSource {
-    private static final long serialVersionUID = 1000;
     // implements XYDataSource, java.io.Serializable {
     double[][] points;
     int numberOfSeries;
