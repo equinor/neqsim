@@ -211,16 +211,16 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.7</version>
-                <configuration>
-                    <excludes>
-                        <exclude>neqsim/physicalProperties/util/parameterFitting/**/*</exclude>
-                        <exclude>neqsim/fluidMechanics/util/parameterFitting/**/*</exclude>
-                        <exclude>neqsim/PVTsimulation/util/parameterFitting/**/*</exclude>
-                        <exclude>neqsim/thermo/util/parameterFitting/**/*</exclude>
-                        <exclude>neqsim/statistics/util/parameterFitting/**/*</exclude>
-                        <exclude>neqsim/PVTsimulation/util/parameterfitting/**/*</exclude>
-                    </excludes>
-                </configuration>
+				<configuration>
+					<excludes>
+						<exclude>neqsim/physicalProperties/util/parameterFitting/**/*</exclude>
+						<exclude>neqsim/fluidMechanics/util/parameterFitting/**/*</exclude>
+						<exclude>neqsim/PVTsimulation/util/parameterFitting/**/*</exclude>
+						<exclude>neqsim/thermo/util/parameterFitting/**/*</exclude>
+						<exclude>neqsim/statistics/util/parameterFitting/**/*</exclude>
+						<exclude>neqsim/PVTsimulation/util/parameterfitting/**/*</exclude>
+					</excludes>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>
