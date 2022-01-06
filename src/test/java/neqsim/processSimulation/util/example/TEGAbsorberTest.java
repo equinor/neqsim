@@ -10,7 +10,9 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>TEGAbsorberTest class.</p>
+ * <p>
+ * TEGAbsorberTest class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -52,10 +54,10 @@ public class TEGAbsorberTest {
         absorber.addSolventInStream(TEGstreamIn);
         absorber.setNumberOfStages(5);
         absorber.setStageEfficiency(0.5);
-        //
+
         Stream gasStreamOut = new Stream(absorber.getGasOutStream());
         gasStreamOut.setName("gasStreamOut");
-        //
+
         Stream TEGStreamOut = new Stream(absorber.getSolventOutStream());
         TEGStreamOut.setName("TEGStreamOut");
 
@@ -69,7 +71,7 @@ public class TEGAbsorberTest {
 
         StreamInterface MPstreamLiq = MPseparator.getLiquidOutStream();
         MPstreamLiq.setName("MPLiqStream");
-        //
+
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", MPstreamLiq);
         LP_valve.setOutletPressure(1.5);
 
@@ -92,7 +94,7 @@ public class TEGAbsorberTest {
 
         Stream ReboilLiqStream = mix.getOutStream();
         ReboilLiqStream.setName("ReboilLiqStream");
-        //
+
         // Stream ReboilGasStream = reboiler.getOutStream();
         // ReboilLiqStream.setName("ReboilLiqStream");
 

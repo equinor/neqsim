@@ -36,15 +36,15 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     // protected double kapac_fconst = -0.140464;
     // protected double kaprc_fconst = 1.19902e-2;
     // protected double kaprrc_fconst = 8.55115e-4;
-    //
+
     // protected double[][] kapa_fconst = {{-4.89197e-2, 0.270572,-4.48111e-2},
     // {0.270572, -1.10473e-4, 4.08972e-5},
     // {-4.48111e-2,4.08972e-5,-5.79765e-9}};
-    //
+
     // protected double[][] kapr_fconst = {{-0.357875, 0.637572 , -7.9024e-2 },
     // {0.637572 , -6.02128e-5, 3.72408e-5},
     // {-7.9024e-2,3.72408e-5,-5.65610e-9}};
-    //
+
     // protected double kaprr_fconst = 1.37290e-8;
     /**
      * <p>

@@ -87,8 +87,7 @@ public class WaxFractionSim extends BasePVTsimulation {
 
                 function.setInitialGuess(guess);
 
-                SystemInterface tempSystem = getThermoSystem();//
-                                                               // getThermoSystem().clone();
+                SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
 
                 tempSystem.setTemperature(temperature[i]);
                 tempSystem.setPressure(pressure[i]);

@@ -639,8 +639,6 @@ public interface FlowNodeInterface extends Cloneable {
      */
     public void setVelocity(double vel);
 
-    // public double getVelocityOut();
-    // public double getVelocityIn();
     /**
      * <p>
      * setVelocityOut.
@@ -661,8 +659,9 @@ public interface FlowNodeInterface extends Cloneable {
     public DoubleCloneable getVelocityIn(int i);
 
     // public double calcWallHeatTransferCoeffisient(int phase);
-    // public double calcWallMassTransferCoeffisient(double schmidtNumber, int
-    // phase);
+
+    // public double calcWallMassTransferCoeffisient(double schmidtNumber, int phase);
+
     /**
      * <p>
      * calcTotalHeatTransferCoefficient.
@@ -681,6 +680,7 @@ public interface FlowNodeInterface extends Cloneable {
     // public double calcdTdz();
     // public double calcdVoiddz();
     // public double[] calcdxdz();
+
     /**
      * <p>
      * initBulkSystem.

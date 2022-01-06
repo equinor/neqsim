@@ -501,13 +501,13 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     @Override
     public double dFdV() {
         // double dv = molarVolume/1000.0;
-        //
+
         // molarVolume = molarVolume + dv;
         // double fold = getF();
         // molarVolume = molarVolume - 2*dv;
         // double fnew = getF();
         // molarVolume = molarVolume + dv;
-        //
+
         // System.out.println("dFdV " + ((fold-fnew)/(2*dv)) + " super " + super.dFdV()+
         // " phasetype " +getPhaseTypeName());
         // // return (fold-fnew)/(2*dv);
@@ -535,7 +535,6 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     }
 
     // public double dFdVdVdV(){
-    //
     // return getFpoldVdVdV();
     // }
 

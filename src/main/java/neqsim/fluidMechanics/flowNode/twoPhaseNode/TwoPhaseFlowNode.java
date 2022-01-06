@@ -17,6 +17,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
     // public double[] molarMassTransferFlux;
     // public double[] molarMassTransfer;
+
     /**
      * <p>
      * Constructor for TwoPhaseFlowNode.

@@ -46,7 +46,7 @@ public class LNGfilling {
         // testSystem.chemicalReactionInit();
         // testSystem.createDatabase(true);
         testSystem.setMixingRule(7);
-        //
+
         // testSystem.setMultiPhaseCheck(true);
         testSystem.setHydrateCheck(true);
 
@@ -68,12 +68,12 @@ public class LNGfilling {
 }
 // testSystem = testSystem.setModel("GERG-water");
 // testSystem.setMixingRule(8);
-//
+
 // testSystem = testSystem.autoSelectModel();
 // testSystem.autoSelectMixingRule();
 // testSystem.setMultiPhaseCheck(true);
 // testOps.setSystem(testSystem);
-//
+
 // System.out.println("new model name " + testSystem.getModelName());
 // try{
 // testOps.TPflash();

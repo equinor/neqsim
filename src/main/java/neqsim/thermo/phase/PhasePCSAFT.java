@@ -809,9 +809,9 @@ public class PhasePCSAFT extends PhaseSrkEos {
     @Override
     public double getF() {
         // System.out.println("F-HC " + useHS*F_HC_SAFT());
-        //
+
         // System.out.println("F-DISP1 " + useDISP1*F_DISP1_SAFT());
-        //
+
         // System.out.println("F-DISP2 " + useDISP2*F_DISP2_SAFT());
         return useHS * F_HC_SAFT() + useDISP1 * F_DISP1_SAFT() + useDISP2 * F_DISP2_SAFT();
     }
@@ -822,7 +822,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
         // System.out.println("N-saft " + getNSAFT());
         // System.out.println("F-HC " + useHS*F_HC_SAFT());
         // System.out.println("F-DISP1 " + useDISP1*F_DISP1_SAFT());
-        //
+
         // System.out.println("F-DISP2 " + useDISP2*F_DISP2_SAFT());
 
         return (useHS * dF_HC_SAFTdV() + useDISP1 * dF_DISP1_SAFTdV()
@@ -1138,7 +1138,6 @@ public class PhasePCSAFT extends PhaseSrkEos {
                 setMolarVolume(oldMolarVolume / 10.0);
             }
             Z = pressure * getMolarVolume() / (R * temperature);
-            //
         } while (Math.abs((oldMolarVolume - getMolarVolume()) / oldMolarVolume) > 1.0e-10
                 && iterations < 200);
         // System.out.println("Z " + Z + " iterations " + iterations);

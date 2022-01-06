@@ -262,7 +262,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         // System.out.println("molar flow " + molarFlow);
         // System.out.println("Cv " + getCv());
         // System.out.println("density " + inletStream.getThermoSystem().getDensity());
-        //
+
         // 8 } else {
         // molarFlow=inletStream.getThermoSystem().getTotalNumberOfMoles();
         // }

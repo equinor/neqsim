@@ -207,7 +207,6 @@ abstract class SystemThermo implements SystemInterface {
         clonedSystem.phaseType = phaseType.clone();
         clonedSystem.phaseIndex = phaseIndex.clone();
 
-
         clonedSystem.componentNames = new ArrayList<String>(componentNames);
         if (interfaceProp != null) {
             // clonedSystem.interfaceProp = (InterphasePropertiesInterface)
@@ -874,8 +873,6 @@ abstract class SystemThermo implements SystemInterface {
             // //refSystem.initPhysicalProperties();
             // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
             // sammenligne med API-standard for tetthet - og sette Penloux dt
-            //
-            //
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -1007,15 +1004,13 @@ abstract class SystemThermo implements SystemInterface {
             // refSystem.init(1);
             // refSystem.display();
             // refSystem.getPhase(1).getComponent(0).setRacketZ(racketZ);
-            //
+
             // // refSystem.setTemperature(273.15+80.0);
             // // refSystem.setPressure(1.01325);
             // // refSystem.init(1);
-            // //refSystem.initPhysicalProperties();
+            // // refSystem.initPhysicalProperties();
             // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
             // // sammenligne med API-standard for tetthet - og sette Penloux dt
-            //
-            //
         } catch (Exception e) {
             logger.error("error", e);
         }

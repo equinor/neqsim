@@ -707,7 +707,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     /** {@inheritDoc} */
     @Override
     public double getExergyChange(String unit, double sourrondingTemperature) {
-        //
         double exergy = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
             inletStreamMixer.getStream(i).getFluid().init(3);

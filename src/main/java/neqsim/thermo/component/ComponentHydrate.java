@@ -675,7 +675,7 @@ public class ComponentHydrate extends Component {
     // } else dfugdt=0;
     // return dfugdt;
     // }
-    //
+
     // public double getEmptyHydrateStructureVapourPressure2(int type, double
     // temperature){
     // double par1_struc1=4.6477;
@@ -690,10 +690,10 @@ public class ComponentHydrate extends Component {
     // return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
     // } else return 0.0;
     // }
-    //
+
     // public double getEmptyHydrateStructureVapourPressure(int type, double
     // temperature){
-    //
+
     // if(type==0){
     // return Math.exp(par1_struc1+par2_struc1/temperature)*1.01325;
     // }
@@ -701,10 +701,10 @@ public class ComponentHydrate extends Component {
     // return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
     // } else return 0.0;
     // }
-    //
+
     // public double getEmptyHydrateStructureVapourPressuredT(int type, double
     // temperature){
-    //
+
     // if(type==0){
     // return
     // -par2_struc1/(temperature*temperature)*Math.exp(par1_struc1+par2_struc1/temperature);

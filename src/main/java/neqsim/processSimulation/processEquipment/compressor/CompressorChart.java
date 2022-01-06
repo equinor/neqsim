@@ -174,11 +174,6 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         surgeCurve = new SurgeCurve(flow, head);
     }
 
-    // public double getPolytropicHead(double flow, double speed) {
-    // checkSurge1(flow, speed);
-    // return 100.0;
-    // }
-
     /**
      * <p>
      * polytropicEfficiency.

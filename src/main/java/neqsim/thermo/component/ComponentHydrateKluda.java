@@ -332,7 +332,7 @@ public class ComponentHydrateKluda extends Component {
                         * (delt(intnumb, 4.0, radius, struccture, cavityType, phase) + corerad
                                 / cavRadius[intnumb][struccture][cavityType]
                                 * delt(intnumb, 5.0, radius, struccture, cavityType, phase))));
-        //
+
         // intnumb++;
         // pot += 2.0*coordNumb[intnumb][struccture][cavityType]*lenjonsenergy*(
         // (Math.pow(diam,12.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],11.0)*
@@ -342,7 +342,7 @@ public class ComponentHydrateKluda extends Component {
         // radius)*(delt(intnumb,
         // 4.0,radius,struccture,cavityType,phase)+corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,5.0,radius,struccture,cavityType,phase)))
         // );
-        //
+
         // intnumb++;
         // pot += 2.0*coordNumb[intnumb][struccture][cavityType]*lenjonsenergy*(
         // (Math.pow(diam,12.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],11.0)*

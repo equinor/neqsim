@@ -50,7 +50,6 @@ public class Cooler extends Heater {
     /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
-        //
         double entrop = 0.0;
 
         inStream.run();

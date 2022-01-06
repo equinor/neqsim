@@ -11,7 +11,7 @@ package neqsim.thermo.system;
 public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
     private static final long serialVersionUID = 1000;
 
-public SystemSrkTwuCoonStatoilEos() {
+    public SystemSrkTwuCoonStatoilEos() {
         super();
         modelName = "TwuCoonStatoil-EOS";
         attractiveTermNumber = 18;
@@ -56,7 +56,6 @@ public SystemSrkTwuCoonStatoilEos() {
             logger.error("Cloning failed.", e);
         }
 
-        //
         // for(int i = 0; i < numberOfPhases; i++) {
         // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
         // }

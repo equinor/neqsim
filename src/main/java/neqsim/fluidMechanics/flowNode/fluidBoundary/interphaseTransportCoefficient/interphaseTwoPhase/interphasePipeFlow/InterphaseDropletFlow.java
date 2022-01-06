@@ -180,7 +180,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
     // //System.out.println("diff " +
     // node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity() /
     // schmidtNumber);
-    //
+
     // //massTrans = 3.66 / node.getHydraulicDiameter(phase) / schmidtNumber *
     // node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity();
     // massTrans=0.010;

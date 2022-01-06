@@ -191,7 +191,7 @@ public class ComponentSolid extends ComponentSrk {
     // if(componentName.equals("water")){
     // // double solvol = 1.0/getPureComponentSolidDensity(getMeltingPointTemperature())*molarMass;
     // double solvol = 1.0/(780*0.92)*getMolarMass();
-    //
+
     // dfugdt =
     // Math.log((getSolidVaporPressuredT(temp)*Math.exp(solvol/(R*temp)*(pres-getSolidVaporPressure(temp))))/pres);
     // }
@@ -204,7 +204,7 @@ public class ComponentSolid extends ComponentSrk {
     // dfugdt =
     // Math.log((getSolidVaporPressuredT(temp)*10*Math.exp(solvol/(R*temp)*(pres-getSolidVaporPressure(temp)*10)))/pres);
     // }
-    //
+
     // else dfugdt=0;
     // return dfugdt;
     // }
