@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>LNGfilling class.</p>
+ * <p>
+ * LNGfilling class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,12 +19,14 @@ public class LNGfilling {
     static Logger logger = LogManager.getLogger(LNGfilling.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        // SystemInterface testSystem2 = (SystemInterface)
+        // SystemInterface testSystem2 =
         // util.serialization.SerializationManager.open("c:/test.fluid");
         // testSystem2.display();
         // SystemInterface testSystem = new SystemElectrolyteCPAstatoil(293.15, 1.0);
@@ -70,13 +74,13 @@ public class LNGfilling {
 // testSystem.setMultiPhaseCheck(true);
 // testOps.setSystem(testSystem);
 //
-//        System.out.println("new model name " + testSystem.getModelName());
-//        try{
-//            testOps.TPflash();
-//            testSystem.display();
-//        }
-//        catch(Exception e){
-//            System.out.println(e.toString());
-//        }
-//    }
-//}
+// System.out.println("new model name " + testSystem.getModelName());
+// try{
+// testOps.TPflash();
+// testSystem.display();
+// }
+// catch(Exception e){
+// System.out.println(e.toString());
+// }
+// }
+// }

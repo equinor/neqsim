@@ -87,7 +87,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         outStream = new Stream(thermoSystem);
     }
 
@@ -159,7 +159,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     public void run() {
         // System.out.println("valve running..");
         // outStream.setSpecification(inletStream.getSpecification());
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoSystem.init(3);
         double enthalpy = thermoSystem.getEnthalpy();
@@ -208,7 +208,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         inletStream.getThermoSystem().init(3);
         // inletStream.run();
 
-        outStream.setThermoSystem((SystemInterface) thermoSystem.clone());
+        outStream.setThermoSystem(thermoSystem.clone());
         outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
         outStream.getThermoSystem().init(3);
         // outStream.run();
@@ -240,7 +240,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     public void runTransient(double dt) {
         runController(dt);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoSystem.init(3);
 

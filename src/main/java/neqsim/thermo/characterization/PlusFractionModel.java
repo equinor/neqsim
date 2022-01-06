@@ -33,6 +33,8 @@ public class PlusFractionModel implements java.io.Serializable {
     }
 
     class PedersenPlusModel implements PlusFractionModelInterface, Cloneable {
+        private static final long serialVersionUID = 1000;
+
         double[] coefs = {4.4660105006, -1.1266303727, 0.80, 0.0408709562};
         double[] SRKcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
         double[] PRcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
@@ -147,10 +149,10 @@ public class PlusFractionModel implements java.io.Serializable {
                         Mmin = M;
                         if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4)
                                 .equals("_")) {
-                            firstTBPNumber = new Integer(system.getPhase(0).getComponent(i)
+                            firstTBPNumber = Integer.valueOf(system.getPhase(0).getComponent(i)
                                     .getComponentName().substring(1, 3));
                         } else {
-                            firstTBPNumber = new Integer(system.getPhase(0).getComponent(i)
+                            firstTBPNumber = Integer.valueOf(system.getPhase(0).getComponent(i)
                                     .getComponentName().substring(1, 2));
                         }
                     }
@@ -187,14 +189,14 @@ public class PlusFractionModel implements java.io.Serializable {
         @Override
         public void characterizePlusFraction(TBPModelInterface TBPModel) {
             system.init(0);
-            Integer firstPlusNumber = new Integer(0);
+            Integer firstPlusNumber = Integer.valueOf(0);
             if (system.getPhase(0).getComponent(plusComponentNumber).getComponentName()
                     .substring(3, 4).equals("_")) {
-                firstPlusNumber = new Integer(system.getPhase(0).getComponent(plusComponentNumber)
-                        .getComponentName().substring(1, 3));
+                firstPlusNumber = Integer.valueOf(system.getPhase(0)
+                        .getComponent(plusComponentNumber).getComponentName().substring(1, 3));
             } else {
-                firstPlusNumber = new Integer(system.getPhase(0).getComponent(plusComponentNumber)
-                        .getComponentName().substring(1, 2));
+                firstPlusNumber = Integer.valueOf(system.getPhase(0)
+                        .getComponent(plusComponentNumber).getComponentName().substring(1, 2));
             }
             if (firstPlusFractionNumber < firstPlusNumber.intValue()) {
                 firstPlusFractionNumber = firstPlusNumber.intValue();
@@ -278,6 +280,8 @@ public class PlusFractionModel implements java.io.Serializable {
     }
 
     private class PedersenHeavyOilPlusModel extends PedersenPlusModel {
+        private static final long serialVersionUID = 1000;
+
         public PedersenHeavyOilPlusModel() {
             lastPlusFractionNumber = 200;
             maxPlusMolarMass = 2.10;

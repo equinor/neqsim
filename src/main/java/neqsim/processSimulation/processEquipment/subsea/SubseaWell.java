@@ -18,6 +18,8 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  * @version $Id: $Id
  */
 public class SubseaWell extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000;
+
     protected StreamInterface inStream;
     private StreamInterface outStream;
     public double height = 1000.0, length = 1200.0;
@@ -33,7 +35,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
      */
     public SubseaWell(StreamInterface instream) {
         this.inStream = instream;
-        setOutStream((StreamInterface) instream.clone());
+        setOutStream(instream.clone());
         pipeline = new AdiabaticTwoPhasePipe(instream);
     }
 
@@ -56,8 +58,8 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         getOutStream().setFluid(pipeline.getOutStream().getFluid());
 
         /*
-         * System.out.println("stary P " ); SystemInterface fluidIn = (SystemInterface)
-         * (inStream.getFluid()).clone(); fluidIn.initProperties();
+         * System.out.println("stary P " ); SystemInterface fluidIn = (inStream.getFluid()).clone();
+         * fluidIn.initProperties();
          * 
          * double density = fluidIn.getDensity("kg/m3");
          * 

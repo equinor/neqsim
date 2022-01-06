@@ -66,7 +66,7 @@ public class SlimTubeSim extends BasePVTsimulation {
         inectionGasSystem.init(1);
 
         for (int i = 0; i < numberOfSlimTubeNodes + 1; i++) {
-            slimTubeNodeSystem[i] = (SystemInterface) getThermoSystem().clone();
+            slimTubeNodeSystem[i] = getThermoSystem().clone();
         }
 
         slimTubeNodeSystem[numberOfSlimTubeNodes].reset();

@@ -59,11 +59,9 @@ public class CostEstimateBaseClass implements java.io.Serializable {
         ArrayList<String> names = procesSystem.getAllUnitNames();
         for (int i = 0; i < names.size(); i++) {
             try {
-                if (!((ProcessEquipmentInterface) procesSystem
-                        .getUnit((String) names.get(i)) == null)) {
-                    cost += ((ProcessEquipmentInterface) procesSystem
-                            .getUnit((String) names.get(i))).getMechanicalDesign().getCostEstimate()
-                                    .getTotaltCost();
+                if (!((ProcessEquipmentInterface) procesSystem.getUnit(names.get(i)) == null)) {
+                    cost += ((ProcessEquipmentInterface) procesSystem.getUnit(names.get(i)))
+                            .getMechanicalDesign().getCostEstimate().getTotaltCost();
                 }
             } catch (Exception e) {
                 e.printStackTrace();

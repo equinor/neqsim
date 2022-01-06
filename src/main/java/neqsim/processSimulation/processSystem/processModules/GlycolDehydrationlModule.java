@@ -50,7 +50,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("gasStreamToAbsorber")) {
             this.gasStreamToAbsorber = stream;
-            this.strippingGas = (StreamInterface) stream.clone();
+            this.strippingGas = stream.clone();
         }
         if (streamName.equals("strippingGas")) {
             this.strippingGas = stream;
@@ -128,13 +128,13 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     public void initializeStreams() {
         isInitializedStreams = true;
         try {
-            this.gasStreamFromAbsorber = (StreamInterface) this.gasStreamToAbsorber.clone();
+            this.gasStreamFromAbsorber = this.gasStreamToAbsorber.clone();
             this.gasStreamFromAbsorber.setName("Stream from TEG Absorber");
 
-            this.gasFromStripper = (StreamInterface) this.gasStreamToAbsorber.clone();
+            this.gasFromStripper = this.gasStreamToAbsorber.clone();
             this.gasFromStripper.setName("Gas stream from Stripper");
 
-            this.leanTEGStreamToAbsorber = (StreamInterface) this.gasStreamToAbsorber.clone();
+            this.leanTEGStreamToAbsorber = this.gasStreamToAbsorber.clone();
             this.leanTEGStreamToAbsorber.setName("lean TEG to absorber");
 
             this.leanTEGStreamToAbsorber.getThermoSystem().removeMoles();
@@ -356,7 +356,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         double K = calcKglycol();// gasStreamToAbsorber.getThermoSystem().getPhase(1).getComponent("water").getFugasityCoefficient()
                                  // /
                                  // gasStreamToAbsorber.getThermoSystem().getPhase(0).getComponent("water").getFugasityCoefficient();
-        gasStreamFromAbsorber = (StreamInterface) gasStreamToAbsorber.clone();
+        gasStreamFromAbsorber = gasStreamToAbsorber.clone();
         // gasStreamFromAbsorber.getThermoSystem().addComponent("water", 1.0);
         gasStreamFromAbsorber.getThermoSystem().setTemperature(waterDewPontSpecification);
         gasStreamFromAbsorber.run();

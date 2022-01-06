@@ -94,8 +94,7 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
             logger.error("Cloning failed.", e);
         }
 
-        clonedComponent.setAtractiveParameter(
-                (AtractiveTermInterface) this.getAtractiveParameter().clone());
+        clonedComponent.setAtractiveParameter(this.getAtractiveParameter().clone());
 
         return clonedComponent;
     }

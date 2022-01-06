@@ -59,7 +59,7 @@ public abstract class NonEquilibriumFluidBoundary
                         getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
         molFractionDifference =
                 new double[2][getBulkSystem().getPhases()[0].getNumberOfComponents() - 1];
-        // interphaseSystem = (SystemInterface) bulkSystem.clone();
+        // interphaseSystem = bulkSystem.clone();
         // interphaseOps = new ThermodynamicOperations(interphaseSystem);
         // interphaseOps.TPflash();
         // // interphaseOps.displayResult();
@@ -89,7 +89,7 @@ public abstract class NonEquilibriumFluidBoundary
         totalMassTransferCoefficientMatrix[1] =
                 new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
                         getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-        // interphaseSystem = (SystemInterface) bulkSystem.clone();
+        // interphaseSystem = bulkSystem.clone();
         molFractionDifference =
                 new double[2][getBulkSystem().getPhases()[0].getNumberOfComponents() - 1];
         // interphaseOps = new ThermodynamicOperations(interphaseSystem);
@@ -604,7 +604,7 @@ public abstract class NonEquilibriumFluidBoundary
     /** {@inheritDoc} */
     @Override
     public void solve() {
-        // interphaseSystem = (SystemInterface) bulkSystem.clone();
+        // interphaseSystem = bulkSystem.clone();
         initInterphaseSystem();
         init();
         int iterOuter = 0, iterInner = 0;

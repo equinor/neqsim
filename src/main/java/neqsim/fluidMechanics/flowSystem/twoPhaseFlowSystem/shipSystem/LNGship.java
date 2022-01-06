@@ -1,9 +1,8 @@
 package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem;
 
 import java.text.DecimalFormat;
-
-import org.apache.logging.log4j.*;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.standards.StandardInterface;
 import neqsim.standards.gasQuality.Standard_ISO6578;
 import neqsim.standards.gasQuality.Standard_ISO6976;
@@ -142,7 +141,7 @@ public class LNGship
     /** {@inheritDoc} */
     @Override
     public void solveTransient(int type) {
-        SystemInterface tempThermoSystem = (SystemInterface) getThermoSystem().clone();
+        SystemInterface tempThermoSystem = getThermoSystem().clone();
         WI = new double[numberOffTimeSteps];
         GCV = new double[numberOffTimeSteps];
         GCVmass = new double[numberOffTimeSteps];
@@ -188,7 +187,7 @@ public class LNGship
         int iterations = 0;
         double boilOffCorrection = 0.0;
         do {
-            setThermoSystem((SystemInterface) tempThermoSystem.clone());
+            setThermoSystem(tempThermoSystem.clone());
             thermoOperations = new ThermodynamicOperations(getThermoSystem());
             standardDensity = new Standard_ISO6578(getThermoSystem());
             getStandardISO6976().setThermoSystem(getThermoSystem());

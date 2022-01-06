@@ -188,6 +188,12 @@
 					<source>1.8</source>
 					<target>1.8</target>
 					<encoding>${project.build.sourceEncoding}</encoding>
+                    <!-- Uncomment below to get compiler warnings -->
+                    <compilerArgs>
+						<arg>-Xlint</arg>
+					</compilerArgs>
+					<showWarnings>true</showWarnings> 
+                    <!-- Uncomment above to get compiler warnings -->>
 				</configuration>
 			</plugin>
 			<plugin>

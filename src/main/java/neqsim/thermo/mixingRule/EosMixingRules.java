@@ -965,7 +965,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         public ClassicSRKT clone() {
             ClassicSRKT clonedSystem = null;
             try {
-                clonedSystem = (ClassicSRKT) super.clone();
+                clonedSystem = super.clone();
             } catch (Exception e) {
                 logger.error("Cloning failed.", e);
             }

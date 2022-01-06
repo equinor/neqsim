@@ -67,7 +67,7 @@ public class Kinetics implements java.io.Serializable {
         phase.getPhysicalProperties().calcEffectiveDiffusionCoefficients();
 
         while (e.hasNext()) {
-            reaction = (ChemicalReaction) e.next();
+            reaction = e.next();
             ktemp = reaction.getRateFactor(interPhase);
             irr = 1.0 / reaction.getK(phase);
             // System.out.println("reaction heat " + reaction.getReactionHeat(phase));

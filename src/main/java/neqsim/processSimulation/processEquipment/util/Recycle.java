@@ -79,7 +79,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         streams.add(newStream);
 
         if (numberOfInputStreams == 0) {
-            mixedStream = (StreamInterface) streams.get(0).clone();
+            mixedStream = streams.get(0).clone();
             // mixedStream.getThermoSystem().setNumberOfPhases(2);
             // mixedStream.getThermoSystem().reInitPhaseType();
             // mixedStream.getThermoSystem().init(0);
@@ -87,7 +87,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         }
         mixedStream.setEmptyThermoSystem(streams.get(0).getThermoSystem());
         numberOfInputStreams++;
-        lastIterationStream = (StreamInterface) mixedStream.clone();
+        lastIterationStream = mixedStream.clone();
     }
 
     /**
@@ -181,7 +181,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
             enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-            // System.out.println("total enthalpy k : " + ((SystemInterface) ((Stream)
+            // System.out.println("total enthalpy k : " + ( ((Stream)
             // streams.get(k)).getThermoSystem()).getEnthalpy());
         }
         // System.out.println("total enthalpy of streams: " + enthalpy);
@@ -208,7 +208,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
      * @param outstream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public void initiateDownstreamProperties(Stream outstream) {
-        lastIterationStream = (Stream) outstream.clone();
+        lastIterationStream = outstream.clone();
     }
 
     /**
@@ -238,7 +238,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         // System.out.println("flow rate old in recycle " +
         // outletStream.getFlowRate("kg/hr"));
         // ((Stream) streams.get(0)).getThermoSystem().display();
-        SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
+        SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
         // System.out.println("total number of moles " +
         // thermoSystem2.getTotalNumberOfMoles());
         mixedStream.setThermoSystem(thermoSystem2);
@@ -458,6 +458,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
      */
     public void setOutletStream(StreamInterface outletStream) {
         this.outletStream = outletStream;
-        lastIterationStream = (StreamInterface) this.outletStream.clone();
+        lastIterationStream = this.outletStream.clone();
     }
 }

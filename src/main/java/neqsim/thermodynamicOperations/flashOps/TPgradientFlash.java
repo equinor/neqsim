@@ -130,11 +130,11 @@ public class TPgradientFlash extends Flash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        tempSystem = (SystemInterface) system.clone();
+        tempSystem = system.clone();
         tempSystem.init(0);
         tempSystem.init(3);
 
-        localSystem = (SystemInterface) system.clone();
+        localSystem = system.clone();
         // localSystem.setPressure(height*9.81*height);
 
         deltaT = (temperature - system.getTemperature()) / 20.0;
@@ -152,7 +152,7 @@ public class TPgradientFlash extends Flash {
             }
             // localSystem.display();
 
-            tempSystem = (SystemInterface) localSystem.clone();
+            tempSystem = localSystem.clone();
             tempSystem.init(3);
         }
     }

@@ -62,9 +62,9 @@ public class SampleSet implements Cloneable {
             e.printStackTrace(System.err);
         }
 
-        clonedSet.samples = (ArrayList<SampleValue>) samples.clone();
+        clonedSet.samples = new ArrayList<SampleValue>(samples);
         for (int i = 0; i < samples.size(); i++) {
-            clonedSet.samples.set(i, (SampleValue) samples.get(i).clone());
+            clonedSet.samples.set(i, samples.get(i).clone());
         }
 
         return clonedSet;
@@ -103,7 +103,7 @@ public class SampleSet implements Cloneable {
      * @return a {@link neqsim.statistics.parameterFitting.SampleValue} object
      */
     public SampleValue getSample(int i) {
-        return (SampleValue) this.samples.get(i);
+        return this.samples.get(i);
     }
 
     // public SampleValue[] getSamples() {
@@ -133,7 +133,7 @@ public class SampleSet implements Cloneable {
      * @return a {@link neqsim.statistics.parameterFitting.SampleSet} object
      */
     public SampleSet createNewNormalDistributedSet() {
-        SampleSet newSet = (SampleSet) this.clone();
+        SampleSet newSet = this.clone();
 
         for (int i = 0; i < samples.size(); i++) {
             for (int j = 0; j < newSet.getSample(i).getDependentValues().length; j++) {

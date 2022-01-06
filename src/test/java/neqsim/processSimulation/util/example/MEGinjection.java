@@ -9,7 +9,9 @@ import neqsim.processSimulation.processEquipment.util.Adjuster;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>MEGinjection class.</p>
+ * <p>
+ * MEGinjection class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -17,7 +19,9 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  */
 public class MEGinjection {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -51,8 +55,7 @@ public class MEGinjection {
         feedGasStream.setTemperature(50.0, "C");
         feedGasStream.setPressure(55.00, "bara");
 
-        neqsim.thermo.system.SystemInterface feedMEG =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface feedMEG = feedGas.clone();
         feedMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                 0.0, 0.0, 0.0, 0.1, 0.9});
 
@@ -100,8 +103,7 @@ public class MEGinjection {
         ThreePhaseSeparator slugCatcher =
                 new ThreePhaseSeparator("slug catcher", onshoreChockeValve.getOutStream());
 
-        neqsim.thermo.system.SystemInterface feedMEGOnshore =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface feedMEGOnshore = feedGas.clone();
         feedMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                 0.0, 0.0, 0.0, 0.1, 0.9});
 

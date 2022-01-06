@@ -62,8 +62,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         inStream = new Stream[2];
         this.inStream[0] = inStream1;
         this.inStream[1] = inStream1;
-        outStream[0] = (StreamInterface) inStream1.clone();
-        outStream[1] = (StreamInterface) inStream1.clone();
+        outStream[0] = inStream1.clone();
+        outStream[1] = inStream1.clone();
     }
 
     /**
@@ -81,8 +81,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         inStream = new Stream[2];
         this.inStream[0] = inStream1;
         this.inStream[1] = inStream2;
-        outStream[0] = (StreamInterface) inStream1.clone();
-        outStream[1] = (StreamInterface) inStream2.clone();
+        outStream[0] = inStream1.clone();
+        outStream[1] = inStream2.clone();
     }
 
     /**
@@ -108,7 +108,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      */
     public void setFeedStream(int number, StreamInterface inStream) {
         this.inStream[number] = inStream;
-        outStream[number] = (StreamInterface) inStream.clone();
+        outStream[number] = inStream.clone();
     }
 
     /** {@inheritDoc} */
@@ -195,9 +195,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
             nonOutStreamSpecifiedStreamNumber = 1;
         }
 
-        SystemInterface systemOut0 = (SystemInterface) inStream[nonOutStreamSpecifiedStreamNumber]
-                .getThermoSystem().clone();
-        // SystemInterface systemOut1 = (SystemInterface)
+        SystemInterface systemOut0 =
+                inStream[nonOutStreamSpecifiedStreamNumber].getThermoSystem().clone();
+        // SystemInterface systemOut1 =
         // inStream[outStreamSpecificationNumber].getThermoSystem().clone();
 
         if (getSpecification().equals("out stream")) {
@@ -205,7 +205,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
                     getInStream(outStreamSpecificationNumber).getFlowRate("kg/sec"), "kg/sec");
             outStream[outStreamSpecificationNumber].run();
             temperatureOut = outStream[outStreamSpecificationNumber].getTemperature();
-            // system = (SystemInterface)
+            // system =
             // outStream[outStreamSpecificationNumber].getThermoSystem().clone();
         }
 
@@ -232,7 +232,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         // inStream[1].displayResult();
         if (firstTime) {
             firstTime = false;
-            SystemInterface systemOut0 = (SystemInterface) inStream[0].getThermoSystem().clone();
+            SystemInterface systemOut0 = inStream[0].getThermoSystem().clone();
             outStream[0].setThermoSystem(systemOut0);
             outStream[0].getThermoSystem().setTemperature(guessOutTemperature);
             outStream[0].run();
@@ -248,10 +248,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
             // streamToCalculate = 1;
             // streamToSet = 0;
         }
-        SystemInterface systemOut0 =
-                (SystemInterface) inStream[streamToSet].getThermoSystem().clone();
-        SystemInterface systemOut1 =
-                (SystemInterface) inStream[streamToCalculate].getThermoSystem().clone();
+        SystemInterface systemOut0 = inStream[streamToSet].getThermoSystem().clone();
+        SystemInterface systemOut1 = inStream[streamToCalculate].getThermoSystem().clone();
 
         // systemOut1.setTemperature(inTemp1);
         outStream[streamToSet].setThermoSystem(systemOut0);
@@ -334,11 +332,11 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
          * inStream[0].getThermoSystem().getNumberOfMoles() /
          * inStream[1].getThermoSystem().getNumberOfMoles();
          * 
-         * systemOut1 = (SystemInterface) inStream[1].getThermoSystem().clone();
-         * System.out.println("dent " + dEntalphy); testOps = new
-         * ThermodynamicOperations(systemOut1); testOps.PHflash(systemOut1.getEnthalpy() -
-         * corrected_Entalphy, 0); outStream[1].setThermoSystem(systemOut1);
-         * System.out.println("temperatur out " + outStream[1].getTemperature()); }
+         * systemOut1 = inStream[1].getThermoSystem().clone(); System.out.println("dent " +
+         * dEntalphy); testOps = new ThermodynamicOperations(systemOut1);
+         * testOps.PHflash(systemOut1.getEnthalpy() - corrected_Entalphy, 0);
+         * outStream[1].setThermoSystem(systemOut1); System.out.println("temperatur out " +
+         * outStream[1].getTemperature()); }
          */
     }
 

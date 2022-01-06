@@ -77,7 +77,7 @@ public class ScalePotentialCheckStream extends Stream {
     public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
-            thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
+            thermoSystem = this.stream.getThermoSystem().clone();
         }
         if (stream != null) {
             reactiveThermoSystem =

@@ -77,8 +77,8 @@ public class ChemicalReactionFactory {
         String[] nameArray = new String[names.size()];
         double[] stocCoefArray = new double[names.size()];
         for (int i = 0; i < names.size(); i++) {
-            nameArray[i] = (String) names.get(i);
-            stocCoefArray[i] = Double.parseDouble((String) stocCoef.get(i));
+            nameArray[i] = names.get(i);
+            stocCoefArray[i] = Double.parseDouble(stocCoef.get(i));
         }
         return new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy,
                 refT);

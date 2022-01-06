@@ -89,7 +89,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
         interphaseFrictionFactor = new double[2];
         velocity[0] = 0.0;
 
-        this.bulkSystem = (SystemInterface) system.clone();
+        this.bulkSystem = system.clone();
         if (this.bulkSystem.isChemicalSystem()) {
             this.bulkSystem.chemicalReactionInit();
         }
@@ -113,7 +113,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
      */
     public FlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         this(system);
-        this.pipe = (GeometryDefinitionInterface) pipe.clone();
+        this.pipe = pipe.clone();
     }
 
     /**
@@ -150,7 +150,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     /** {@inheritDoc} */
     @Override
     public void setGeometryDefinitionInterface(GeometryDefinitionInterface pipe) {
-        this.pipe = (GeometryDefinitionInterface) pipe.clone();
+        this.pipe = pipe.clone();
     }
 
     /** {@inheritDoc} */
@@ -218,8 +218,8 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
             e.printStackTrace(System.err);
         }
 
-        clonedSystem.bulkSystem = (SystemInterface) bulkSystem.clone();
-        clonedSystem.pipe = (GeometryDefinitionInterface) pipe.clone();
+        clonedSystem.bulkSystem = bulkSystem.clone();
+        clonedSystem.pipe = pipe.clone();
         clonedSystem.velocity = new double[2];
         clonedSystem.volumetricFlowRate = new double[2];
         clonedSystem.reynoldsNumber = new double[2];
@@ -238,8 +238,8 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
         clonedSystem.velocityOut = velocityOut.clone();
 
         for (int i = 0; i < 2; i++) {
-            clonedSystem.velocityIn[i] = (DoubleCloneable) velocityIn[i].clone();
-            clonedSystem.velocityOut[i] = (DoubleCloneable) velocityOut[i].clone();
+            clonedSystem.velocityIn[i] = velocityIn[i].clone();
+            clonedSystem.velocityOut[i] = velocityOut[i].clone();
         }
         System.arraycopy(this.flowDirection, 0, clonedSystem.flowDirection, 0,
                 this.flowDirection.length);
@@ -439,7 +439,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     /** {@inheritDoc} */
     @Override
     public void setInterphaseSystem(SystemInterface interphaseSystem) {
-        fluidBoundary.setInterphaseSystem((SystemInterface) interphaseSystem.clone());
+        fluidBoundary.setInterphaseSystem(interphaseSystem.clone());
     }
 
     /** {@inheritDoc} */
@@ -467,7 +467,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     /** {@inheritDoc} */
     @Override
     public void setBulkSystem(SystemInterface bulkSystem) {
-        this.bulkSystem = (SystemInterface) bulkSystem.clone();
+        this.bulkSystem = bulkSystem.clone();
         phaseOps = new ThermodynamicOperations(this.getBulkSystem());
         phaseOps.TPflash();
         init();

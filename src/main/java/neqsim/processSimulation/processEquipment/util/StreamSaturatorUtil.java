@@ -42,7 +42,7 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
     public void setInletStream(Stream inletStream) {
         this.inletStream = inletStream;
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         outStream = new Stream(thermoSystem);
     }
 
@@ -61,7 +61,7 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
     @Override
     public void run() {
         boolean changeBack = false;
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         if (multiPhase && !thermoSystem.doMultiPhaseCheck()) {
             thermoSystem.setMultiPhaseCheck(true);
             changeBack = true;

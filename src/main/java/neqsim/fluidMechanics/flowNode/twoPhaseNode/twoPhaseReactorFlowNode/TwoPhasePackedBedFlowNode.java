@@ -137,7 +137,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     /** {@inheritDoc} */
     @Override
     public FlowNodeInterface getNextNode() {
-        TwoPhasePackedBedFlowNode newNode = (TwoPhasePackedBedFlowNode) this.clone();
+        TwoPhasePackedBedFlowNode newNode = this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
             // newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);

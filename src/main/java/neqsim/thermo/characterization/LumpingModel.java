@@ -41,6 +41,8 @@ public class LumpingModel implements java.io.Serializable {
      */
     public class StandardLumpingModel
             implements LumpingModelInterface, Cloneable, java.io.Serializable {
+        private static final long serialVersionUID = 1000;
+
         public StandardLumpingModel() {}
 
         @Override
@@ -214,6 +216,8 @@ public class LumpingModel implements java.io.Serializable {
      * @version 1.0
      */
     public class PVTLumpingModel extends StandardLumpingModel {
+        private static final long serialVersionUID = 1000;
+
         public PVTLumpingModel() {}
 
         @Override

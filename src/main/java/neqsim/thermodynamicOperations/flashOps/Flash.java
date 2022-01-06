@@ -51,7 +51,7 @@ abstract class Flash extends BaseOperation {
      */
     public int findLowestGibbsEnergyPhase() {
         if (!findLowesGibsPhaseIsChecked) {
-            minimumGibbsEnergySystem = (SystemInterface) system.clone();
+            minimumGibbsEnergySystem = system.clone();
             minimumGibbsEnergySystem.init(0);
             minimumGibbsEnergySystem.init(1);
             if ((minimumGibbsEnergySystem.getPhase(0).getGibbsEnergy()

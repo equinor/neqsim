@@ -56,7 +56,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
     public void setInletStream(Stream inletStream) {
         this.inletStream = inletStream;
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         outStream = new Stream(thermoSystem);
     }
 
@@ -74,7 +74,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         if (equipment.equals("pipeline") && flowPattern.equals("stratified")) {
             runStratified();
         } else if (equipment.equals("pipeline") && flowPattern.equals("annular")) {

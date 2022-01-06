@@ -42,7 +42,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
         this();
         name = "GOR fitter";
         this.inletStream = stream;
-        this.outletStream = (StreamInterface) stream.clone();
+        this.outletStream = stream.clone();
     }
 
     /**
@@ -70,7 +70,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
         try {
-            this.outletStream = (StreamInterface) inletStream.clone();
+            this.outletStream = inletStream.clone();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -138,7 +138,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        SystemInterface tempFluid = (SystemInterface) inletStream.getThermoSystem().clone();
+        SystemInterface tempFluid = inletStream.getThermoSystem().clone();
         double flow = tempFluid.getFlowRate("kg/sec");
         tempFluid.setTemperature(15.0, "C");
         tempFluid.setPressure(1.01325, "bara");
@@ -149,7 +149,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
             e.printStackTrace();
         }
         if (!tempFluid.hasPhaseType("gas")) {
-            outletStream = (StreamInterface) inletStream.clone();
+            outletStream = inletStream.clone();
             return;
         }
         tempFluid.initPhysicalProperties("density");
@@ -168,9 +168,8 @@ public class GORfitter extends ProcessEquipmentBaseClass {
         for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
             tempFluid.addComponent(i, moleChange[i]);
         }
-        tempFluid.setPressure(((SystemInterface) inletStream.getThermoSystem()).getPressure());
-        tempFluid
-                .setTemperature(((SystemInterface) inletStream.getThermoSystem()).getTemperature());
+        tempFluid.setPressure((inletStream.getThermoSystem()).getPressure());
+        tempFluid.setTemperature((inletStream.getThermoSystem()).getTemperature());
         tempFluid.setTotalFlowRate(flow, "kg/sec");
         try {
             thermoOps.TPflash();

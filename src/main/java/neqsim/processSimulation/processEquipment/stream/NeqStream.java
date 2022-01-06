@@ -66,7 +66,7 @@ public class NeqStream extends Stream {
             e.printStackTrace(System.err);
         }
 
-        thermoSystem = (SystemInterface) thermoSystem.clone();
+        thermoSystem = thermoSystem.clone();
 
         return clonedStream;
     }
@@ -76,7 +76,7 @@ public class NeqStream extends Stream {
     public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
-            thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
+            thermoSystem = this.stream.getThermoSystem().clone();
         }
         this.thermoSystem.init_x_y();
         this.thermoSystem.initBeta();

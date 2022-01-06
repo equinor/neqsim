@@ -4,7 +4,6 @@ import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDeisgn;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -195,7 +194,7 @@ public class AdiabaticPipe extends Pipeline {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         inletPressure = system.getPressure();
         // system.setMultiPhaseCheck(true);
         if (setTemperature) {

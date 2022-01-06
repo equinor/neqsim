@@ -34,7 +34,7 @@ public class FluidBoundaryNode implements FluidBoundaryNodeInterface {
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
     public FluidBoundaryNode(SystemInterface system) {
-        this.system = (SystemInterface) system.clone();
+        this.system = system.clone();
     }
 
     /** {@inheritDoc} */

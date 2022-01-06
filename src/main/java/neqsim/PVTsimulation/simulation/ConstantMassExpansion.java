@@ -191,7 +191,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
                                 / 1000.0};
                 function.setInitialGuess(guess);
 
-                SystemInterface tempSystem = getThermoSystem();// (SystemInterface)
+                SystemInterface tempSystem = getThermoSystem();//
                                                                // getThermoSystem().clone();
 
                 tempSystem.setTemperature(temperature);

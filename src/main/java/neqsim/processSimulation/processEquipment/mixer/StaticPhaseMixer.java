@@ -1,7 +1,5 @@
 package neqsim.processSimulation.processEquipment.mixer;
 
-import neqsim.thermo.system.SystemInterface;
-
 /**
  * <p>
  * StaticPhaseMixer class.
@@ -111,7 +109,7 @@ public class StaticPhaseMixer extends StaticMixer {
             enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
         }
 
-        mixedStream.setThermoSystem(((SystemInterface) streams.get(0).getThermoSystem().clone()));
+        mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
         mixedStream.getThermoSystem().init(0);
         mixedStream.getThermoSystem().setBeta(1, 1e-10);
         mixedStream.getThermoSystem().init(2);

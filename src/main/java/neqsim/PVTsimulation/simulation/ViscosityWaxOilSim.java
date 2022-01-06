@@ -9,7 +9,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>ViscosityWaxOilSim class.</p>
+ * <p>
+ * ViscosityWaxOilSim class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -27,7 +29,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     private double[] shareRate;
 
     /**
-     * <p>Constructor for ViscosityWaxOilSim.</p>
+     * <p>
+     * Constructor for ViscosityWaxOilSim.
+     * </p>
      *
      * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -40,7 +44,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>setTemperaturesAndPressures.</p>
+     * <p>
+     * setTemperaturesAndPressures.
+     * </p>
      *
      * @param temperature an array of {@link double} objects
      * @param pressure an array of {@link double} objects
@@ -52,7 +58,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>runTuning.</p>
+     * <p>
+     * runTuning.
+     * </p>
      */
     public void runTuning() {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
@@ -65,7 +73,7 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
                 double guess[] = {1.0};// getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
                 function.setInitialGuess(guess);
 
-                SystemInterface tempSystem = (SystemInterface) getThermoSystem().clone();
+                SystemInterface tempSystem = getThermoSystem().clone();
 
                 tempSystem.setTemperature(temperature[i]);
                 tempSystem.setPressure(pressure[i]);
@@ -96,7 +104,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>runCalc.</p>
+     * <p>
+     * runCalc.
+     * </p>
      */
     public void runCalc() {
         gasViscosity = new double[pressure.length];
@@ -135,7 +145,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -175,7 +187,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>Getter for the field <code>waxFraction</code>.</p>
+     * <p>
+     * Getter for the field <code>waxFraction</code>.
+     * </p>
      *
      * @return the waxFraction
      */
@@ -184,7 +198,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>Getter for the field <code>gasViscosity</code>.</p>
+     * <p>
+     * Getter for the field <code>gasViscosity</code>.
+     * </p>
      *
      * @return the gasViscosity
      */
@@ -193,7 +209,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>Getter for the field <code>oilViscosity</code>.</p>
+     * <p>
+     * Getter for the field <code>oilViscosity</code>.
+     * </p>
      *
      * @return the oilViscosity
      */
@@ -202,7 +220,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>Getter for the field <code>aqueousViscosity</code>.</p>
+     * <p>
+     * Getter for the field <code>aqueousViscosity</code>.
+     * </p>
      *
      * @return the aqueousViscosity
      */
@@ -211,7 +231,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>Getter for the field <code>shareRate</code>.</p>
+     * <p>
+     * Getter for the field <code>shareRate</code>.
+     * </p>
      *
      * @return the shareRate
      */
@@ -220,7 +242,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>Setter for the field <code>shareRate</code>.</p>
+     * <p>
+     * Setter for the field <code>shareRate</code>.
+     * </p>
      *
      * @param shareRate the shareRate to set
      */
@@ -229,7 +253,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
-     * <p>Getter for the field <code>oilwaxDispersionViscosity</code>.</p>
+     * <p>
+     * Getter for the field <code>oilwaxDispersionViscosity</code>.
+     * </p>
      *
      * @return the oilwaxDispersionViscosity
      */
