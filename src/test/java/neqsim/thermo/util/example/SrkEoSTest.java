@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.junit.jupiter.api.Disabled;
 
 /**
  * <p>
@@ -42,6 +43,7 @@ public class SrkEoSTest {
      * </p>
      */
     @Test
+    @Disabled
     public void testTPflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
         testOps.TPflash();
@@ -54,6 +56,7 @@ public class SrkEoSTest {
      * </p>
      */
     @Test
+    @Disabled
     public void testSaturateWIthWater() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
         testOps.saturateWithWater();
