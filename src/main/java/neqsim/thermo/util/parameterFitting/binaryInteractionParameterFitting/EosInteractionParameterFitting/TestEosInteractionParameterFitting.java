@@ -20,7 +20,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class TestEosInteractionParameterFitting {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestEosInteractionParameterFitting.class);
 
     /**

@@ -13,7 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Draft_ISO18453 extends neqsim.standards.Standard {
-    private static final long serialVersionUID = 1000;
     String dewPointTemperatureUnit = "C", pressureUnit = "bar";
     double dewPointTemperature = 273.0, dewPointTemperatureSpec = -12.0;
     double specPressure = 70.0;

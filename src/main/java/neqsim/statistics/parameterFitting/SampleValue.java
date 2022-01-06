@@ -17,8 +17,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SampleValue implements Cloneable {
-    private static final long serialVersionUID = 1000;
-
     protected FunctionInterface testFunction;
     double sampleValue = 0;
     double[] dependentValues;

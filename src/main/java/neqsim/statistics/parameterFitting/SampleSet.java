@@ -17,8 +17,6 @@ import java.util.Arrays;
  * @version $Id: $Id
  */
 public class SampleSet implements Cloneable {
-    private static final long serialVersionUID = 1000;
-
     private ArrayList<SampleValue> samples = new ArrayList<SampleValue>(1);
 
     /**

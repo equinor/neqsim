@@ -26,8 +26,6 @@ import visad.util.ContourWidget;
  * @version $Id: $Id
  */
 public class surfaceFitPlot {
-    private static final long serialVersionUID = 1000;
-
     private RealType longitude, latitude, temperature, isotemperature;
 
     private RealTupleType domain_tuple;

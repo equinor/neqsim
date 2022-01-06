@@ -30,8 +30,6 @@ import visad.java2d.DisplayImplJ2D;
  * @version $Id: $Id
  */
 public class visAdContourPlot {
-    private static final long serialVersionUID = 1000;
-
     private RealType longitude, latitude, temperature;
 
     private RealTupleType domain_tuple;

@@ -11,8 +11,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class RacketFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for RacketFunction.

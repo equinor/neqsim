@@ -12,8 +12,6 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
  */
 public class InterphaseTransportCoefficientBaseClass
         implements InterphaseTransportCoefficientInterface {
-    private static final long serialVersionUID = 1000;
-
     public InterphaseTransportCoefficientBaseClass() {}
 
     /**

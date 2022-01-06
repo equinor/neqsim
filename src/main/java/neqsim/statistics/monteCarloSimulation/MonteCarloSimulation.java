@@ -18,7 +18,6 @@ import neqsim.statistics.parameterFitting.StatisticsInterface;
  * @version $Id: $Id
  */
 public class MonteCarloSimulation {
-    private static final long serialVersionUID = 1000;
     StatisticsInterface baseStatClass;
     StatisticsInterface[] statClasses;
     double[][] reportMatrix;

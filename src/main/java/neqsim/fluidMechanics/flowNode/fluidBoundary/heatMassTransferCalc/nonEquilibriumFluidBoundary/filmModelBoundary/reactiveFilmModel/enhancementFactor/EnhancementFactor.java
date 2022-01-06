@@ -17,8 +17,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version $Id: $Id
  */
 public class EnhancementFactor implements EnhancementFactorInterface {
-    private static final long serialVersionUID = 1000;
-
     protected double[] enhancementVec = null;
     protected double[] hattaNumber = null;
     protected FluidBoundaryInterface fluidBoundary;

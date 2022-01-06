@@ -16,8 +16,6 @@ import neqsim.standards.StandardInterface;
  * @version $Id: $Id
  */
 public class ContractSpecification {
-    private static final long serialVersionUID = 1000;
-
     StandardInterface standard = null;
     private String name = "";
     String description = "dew point temperature specification";

@@ -14,7 +14,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionPiperazine extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunctionPiperazine.class);
 

@@ -12,8 +12,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     double molarMass = 0.0;
 
     /**

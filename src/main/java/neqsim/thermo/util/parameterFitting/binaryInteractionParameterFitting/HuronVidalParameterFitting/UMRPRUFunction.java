@@ -13,8 +13,6 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  * @version $Id: $Id
  */
 public class UMRPRUFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for UMRPRUFunction.

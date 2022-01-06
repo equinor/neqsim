@@ -16,8 +16,6 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
  * @version $Id: $Id
  */
 public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
-    private static final long serialVersionUID = 1000;
-
     public double[] temperature = new double[2];
     public double[] reynoldsNumber = new double[2];
     public double[] interfaceTemperature = new double[2];

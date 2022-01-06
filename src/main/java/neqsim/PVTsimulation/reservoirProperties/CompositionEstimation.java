@@ -9,8 +9,6 @@ package neqsim.PVTsimulation.reservoirProperties;
  * @version $Id: $Id
  */
 public class CompositionEstimation {
-    private static final long serialVersionUID = 1000;
-
     double reservoirTemperature;
     double reservoirPressure;
 

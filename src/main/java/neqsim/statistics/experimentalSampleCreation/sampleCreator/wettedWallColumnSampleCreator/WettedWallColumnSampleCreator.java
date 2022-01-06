@@ -24,7 +24,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class WettedWallColumnSampleCreator extends SampleCreator {
-    private static final long serialVersionUID = 1000;
     WettedWallDataReader reader;
     DataSmoothor smoothor;
     double[] time, pressure, inletLiquidTemperature, outletLiquidTemperature, inletGasTemperature,

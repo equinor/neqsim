@@ -15,8 +15,6 @@ import java.text.DecimalFormat;
  * @version $Id: $Id
  */
 public class dataHandeling {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for dataHandeling.

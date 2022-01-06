@@ -15,8 +15,6 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisuali
  */
 public class PipeFlowVisualization extends
         neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.onePhaseFlowVisualization.OnePhaseFlowVisualization {
-    private static final long serialVersionUID = 1000;
-
     double[][] pressurePoint = new double[10][10];
     double[][] velocityPoint = new double[10][10];
     double[][] temperaturePoint = new double[10][10];

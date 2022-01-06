@@ -18,8 +18,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version $Id: $Id
  */
 public class FluidBoundarySolver implements FluidBoundarySolverInterface {
-    private static final long serialVersionUID = 1000;
-
     FluidBoundarySystemInterface boundary;
     double xNew[][];
     protected Matrix[] solMatrix, diffMatrix;

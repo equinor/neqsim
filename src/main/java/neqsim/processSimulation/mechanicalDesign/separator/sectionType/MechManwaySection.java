@@ -11,8 +11,6 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  * @version $Id: $Id
  */
 public class MechManwaySection extends SepDesignSection {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for MechManwaySection.

@@ -15,7 +15,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version $Id: $Id
  */
 public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAParameterFittingToDewPointData.class);
 
     /**

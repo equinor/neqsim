@@ -14,8 +14,6 @@ package neqsim.statistics.parameterFitting.nonLinearParameterFitting;
  * @version $Id: $Id
  */
 public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for LevenbergMarquardtBiasDev.

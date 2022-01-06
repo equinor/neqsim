@@ -27,8 +27,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public abstract class Standard implements StandardInterface {
-    private static final long serialVersionUID = 1000;
-
     protected String name = "Base Standard";
     protected String standardDescription = "Base Description";
     protected ContractInterface salesContract = new BaseContract();

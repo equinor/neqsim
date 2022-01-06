@@ -16,8 +16,6 @@ import neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData;
  * @version $Id: $Id
  */
 public class WettedWallColumnData extends ExperimentalEquipmentData {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for WettedWallColumnData.

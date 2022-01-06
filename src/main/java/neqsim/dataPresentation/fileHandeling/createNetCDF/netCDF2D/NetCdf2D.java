@@ -16,8 +16,6 @@ import ucar.nc2.Variable;
  * @version $Id: $Id
  */
 public class NetCdf2D {
-    private static final long serialVersionUID = 1000;
-
     String fileName = "c:/temp/example.nc";
     double[] xvalues = new double[3];
     String xName = "xDefault", yName = "yDefault", zName = "zDefault";

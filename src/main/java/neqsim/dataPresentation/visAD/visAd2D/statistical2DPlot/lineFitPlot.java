@@ -27,8 +27,6 @@ import visad.java2d.DisplayImplJ2D;
  * @version $Id: $Id
  */
 public class lineFitPlot {
-    private static final long serialVersionUID = 1000;
-
     private RealType x, y, index;
 
     private RealTupleType x_y_tuple;

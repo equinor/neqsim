@@ -10,8 +10,6 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisuali
  */
 public class TwoPhaseFlowVisualization extends
         neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for TwoPhaseFlowVisualization.
