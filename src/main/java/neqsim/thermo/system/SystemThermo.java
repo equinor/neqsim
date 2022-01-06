@@ -832,7 +832,7 @@ abstract class SystemThermo implements SystemInterface {
             // Math.pow((molarMass/5.805e-5*Math.pow(density,0.9371)), 1.0/2.3776);
             // acs = TBPfractionModel.calcAcentricFactor(molarMass, density);
             // System.out.println("acentric " + acs);
-            // 3.0/7.0*MathLib.generalMath.GeneralMath.log10(PC/1.01325)/(TC/TB-1.0)-1.0;
+            // 3.0/7.0*Math.log10(PC/1.01325)/(TC/TB-1.0)-1.0;
             molarMass /= 1000.0;
 
             for (int i = 0; i < refSystem.getNumberOfPhases(); i++) {

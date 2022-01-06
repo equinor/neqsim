@@ -1,6 +1,5 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
-import neqsim.MathLib.generalMath.GeneralMath;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDeisgn;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -119,7 +118,7 @@ public class AdiabaticPipe extends Pipeline {
         } else {
             flowPattern = "turbulent";
             return Math.pow(
-                    (1.0 / (-1.8 * GeneralMath
+                    (1.0 / (-1.8 * Math
                             .log10(6.9 / reynoldsNumber + Math.pow(relativeRoughnes / 3.7, 1.11)))),
                     2.0);
         }

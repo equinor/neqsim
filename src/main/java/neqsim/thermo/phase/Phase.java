@@ -1821,8 +1821,8 @@ abstract class Phase implements PhaseInterface {
         // initPhysicalProperties();
         // for(int i = 0; i<numberOfComponents; i++) {
         // if(componentArray[i].getName().equals("H3O+")){
-        // return -
-        // MathLib.generalMath.GeneralMath.log10(componentArray[i].getNumberOfMolesInPhase()*getPhysicalProperties().getDensity()/(numberOfMolesInPhase*getMolarMass())*1e-3);
+        // return
+        // -Math.log10(componentArray[i].getNumberOfMolesInPhase()*getPhysicalProperties().getDensity()/(numberOfMolesInPhase*getMolarMass())*1e-3);
         // }
         // }
         // System.out.println("no H3Oplus");
@@ -1839,11 +1839,10 @@ abstract class Phase implements PhaseInterface {
     public double getpH_old() {
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getName().equals("H3O+")) {
-                // return -neqsim.MathLib.generalMath.GeneralMath.log10(componentArray[i].getx()
+                // return -Math.log10(componentArray[i].getx()
                 // * getActivityCoefficient(i));
-                return -java.lang.Math.log10(componentArray[i].getx() * getActivityCoefficient(i)
-                        / (0.01802 * neqsim.thermo.util.empiric.Water.waterDensity(temperature)
-                                / 1000.0));
+                return -Math.log10(componentArray[i].getx() * getActivityCoefficient(i) / (0.01802
+                        * neqsim.thermo.util.empiric.Water.waterDensity(temperature) / 1000.0));
             }
         }
         logger.info("no H3Oplus");
