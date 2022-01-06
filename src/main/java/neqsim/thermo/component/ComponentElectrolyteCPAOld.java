@@ -75,7 +75,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
                 a = aCPA;
                 b = bCPA;
             }
-            setAtractiveTerm(0);
+            setAttractiveTerm(0);
         }
     }
 
@@ -109,7 +109,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
                 a = aCPA;
                 b = bCPA;
             }
-            setAtractiveTerm(0);
+            setAttractiveTerm(0);
         }
     }
 
@@ -152,10 +152,10 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
-        super.setAtractiveTerm(i);
+    public void setAttractiveTerm(int i) {
+        super.setAttractiveTerm(i);
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-            getAtractiveTerm().setm(mCPA);
+            getAttractiveTerm().setm(mCPA);
         }
     }
 

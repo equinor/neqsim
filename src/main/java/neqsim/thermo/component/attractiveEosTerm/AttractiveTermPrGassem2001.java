@@ -1,42 +1,42 @@
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  * <p>
- * AtractiveTermPrGassem2001 class.
+ * AttractiveTermPrGassem2001 class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
+public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
     private static final long serialVersionUID = 1000;
 
     protected double A = 2.0, B = 0.836, C = 0.134, D = 0.508, E = -0.0467;
 
     /**
      * <p>
-     * Constructor for AtractiveTermPrGassem2001.
+     * Constructor for AttractiveTermPrGassem2001.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
-    public AtractiveTermPrGassem2001(ComponentEosInterface component) {
+    public AttractiveTermPrGassem2001(ComponentEosInterface component) {
         super(component);
     }
 
     /** {@inheritDoc} */
     @Override
-    public AtractiveTermPrGassem2001 clone() {
-        AtractiveTermPrGassem2001 atractiveTerm = null;
+    public AttractiveTermPrGassem2001 clone() {
+        AttractiveTermPrGassem2001 attractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermPrGassem2001) super.clone();
+            attractiveTerm = (AttractiveTermPrGassem2001) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
 
-        return atractiveTerm;
+        return attractiveTerm;
     }
 
     /** {@inheritDoc} */

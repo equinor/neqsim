@@ -383,7 +383,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
     /** {@inheritDoc} */
     @Override
-    public double getPressureAtractive() {
+    public double getPressureAttractive() {
         double presrep = R * temperature / (getMolarVolume() - getb());
         double presatr = pressure - presrep;
         // presatr = getaT()/((molarVolume+delta1)*(molarVolume+delta2));

@@ -1,28 +1,28 @@
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  * <p>
- * AtractiveTermTwuCoonParam class.
+ * AttractiveTermTwuCoonStatoil class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
-public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
+public class AttractiveTermTwuCoonStatoil extends AttractiveTermBaseClass {
     private static final long serialVersionUID = 1000;
 
     private double a = 0.0, b = 0.0, c = 0.0;
 
     /**
      * <p>
-     * Constructor for AtractiveTermTwuCoonParam.
+     * Constructor for AttractiveTermTwuCoonStatoil.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
-    public AtractiveTermTwuCoonParam(ComponentEosInterface component) {
+    public AttractiveTermTwuCoonStatoil(ComponentEosInterface component) {
         super(component);
         a = this.parameters[0];
         b = this.parameters[1];
@@ -31,13 +31,13 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
 
     /**
      * <p>
-     * Constructor for AtractiveTermTwuCoonParam.
+     * Constructor for AttractiveTermTwuCoonStatoil.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
      */
-    public AtractiveTermTwuCoonParam(ComponentEosInterface component, double[] params) {
+    public AttractiveTermTwuCoonStatoil(ComponentEosInterface component, double[] params) {
         this(component);
         // this.parameters [0] for aa benytte gitte input parametre
         System.arraycopy(params, 0, this.parameters, 0, params.length);
@@ -45,15 +45,15 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public AtractiveTermTwuCoonParam clone() {
-        AtractiveTermTwuCoonParam atractiveTerm = null;
+    public AttractiveTermTwuCoonStatoil clone() {
+        AttractiveTermTwuCoonStatoil attractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermTwuCoonParam) super.clone();
+            attractiveTerm = (AttractiveTermTwuCoonStatoil) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
 
-        return atractiveTerm;
+        return attractiveTerm;
     }
 
     /** {@inheritDoc} */

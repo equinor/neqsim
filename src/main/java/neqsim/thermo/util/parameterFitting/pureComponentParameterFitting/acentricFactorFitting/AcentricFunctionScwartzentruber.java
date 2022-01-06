@@ -55,7 +55,7 @@ public class AcentricFunctionScwartzentruber extends LevenbergMarquardtFunction 
         params[i] = value;
         system.getPhases()[0].getComponents()[0].setSchwartzentruberParams(i, value);
         system.getPhases()[1].getComponents()[0].setSchwartzentruberParams(i, value);
-        system.getPhases()[0].getComponents()[0].getAtractiveTerm().setParameters(i, value);
-        system.getPhases()[1].getComponents()[0].getAtractiveTerm().setParameters(i, value);
+        system.getPhases()[0].getComponents()[0].getAttractiveTerm().setParameters(i, value);
+        system.getPhases()[1].getComponents()[0].getAttractiveTerm().setParameters(i, value);
     }
 }

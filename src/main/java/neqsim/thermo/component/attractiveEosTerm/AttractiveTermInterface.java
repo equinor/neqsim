@@ -1,19 +1,19 @@
 /*
- * AtractiveTermInterface.java
+ * AttractiveTermInterface.java
  *
  * Created on 13. mai 2001, 21:54
  */
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 /**
  * <p>
- * AtractiveTermInterface interface.
+ * AttractiveTermInterface interface.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public interface AtractiveTermInterface extends Cloneable, java.io.Serializable {
+public interface AttractiveTermInterface extends Cloneable, java.io.Serializable {
     /**
      * <p>
      * init.
@@ -115,7 +115,7 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
      * clone.
      * </p>
      *
-     * @return a {@link neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface} object
+     * @return a {@link neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface} object
      */
-    public AtractiveTermInterface clone();
+    public AttractiveTermInterface clone();
 }

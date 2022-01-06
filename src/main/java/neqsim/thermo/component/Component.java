@@ -9,7 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.atomElement.Element;
-import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
+import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
@@ -17,7 +17,7 @@ abstract class Component implements ComponentInterface {
     private static final long serialVersionUID = 1000;
 
     double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
-    protected int index, componentNumber, atractiveTermNumber = 0, numberOfAssociationSites = 0;
+    protected int index, componentNumber, attractiveTermNumber = 0, numberOfAssociationSites = 0;
     protected double logFugasityCoeffisient = 0.0, associationVolume = 0.0, associationEnergy = 0.0,
             aCPA = 0.0, bCPA = 0.0, mCPA = 0.0, srkacentricFactor = 0.0;
     protected String componentName = "default", referenceStateType = "solvent",
@@ -1341,7 +1341,7 @@ abstract class Component implements ComponentInterface {
     @Override
     public void setAcentricFactor(double val) {
         acentricFactor = val;
-        getAtractiveTerm().init();
+        getAttractiveTerm().init();
     }
 
     /** {@inheritDoc} */
@@ -1352,13 +1352,13 @@ abstract class Component implements ComponentInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
-        atractiveTermNumber = i;
+    public void setAttractiveTerm(int i) {
+        attractiveTermNumber = i;
     }
 
     /** {@inheritDoc} */
     @Override
-    public AtractiveTermInterface getAtractiveTerm() {
+    public AttractiveTermInterface getAttractiveTerm() {
         return null;
     }
 
@@ -1497,11 +1497,11 @@ abstract class Component implements ComponentInterface {
     /**
      * {@inheritDoc}
      *
-     * Getter for property atractiveTermNumber.
+     * Getter for property attractiveTermNumber.
      */
     @Override
-    public final int getAtractiveTermNumber() {
-        return atractiveTermNumber;
+    public final int getAttractiveTermNumber() {
+        return attractiveTermNumber;
     }
 
     /** {@inheritDoc} */

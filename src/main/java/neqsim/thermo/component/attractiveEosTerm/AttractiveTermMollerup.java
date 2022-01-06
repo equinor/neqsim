@@ -1,53 +1,53 @@
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  * <p>
- * AtractiveTermMollerup class.
+ * AttractiveTermMollerup class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class AtractiveTermMollerup extends AtractiveTermBaseClass {
+public class AttractiveTermMollerup extends AttractiveTermBaseClass {
     private static final long serialVersionUID = 1000;
 
     /**
      * <p>
-     * Constructor for AtractiveTermMollerup.
+     * Constructor for AttractiveTermMollerup.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
-    public AtractiveTermMollerup(ComponentEosInterface component) {
+    public AttractiveTermMollerup(ComponentEosInterface component) {
         super(component);
     }
 
     /**
      * <p>
-     * Constructor for AtractiveTermMollerup.
+     * Constructor for AttractiveTermMollerup.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
      */
-    public AtractiveTermMollerup(ComponentEosInterface component, double[] params) {
+    public AttractiveTermMollerup(ComponentEosInterface component, double[] params) {
         this(component);
         System.arraycopy(params, 0, this.parameters, 0, params.length);
     }
 
     /** {@inheritDoc} */
     @Override
-    public AtractiveTermMollerup clone() {
-        AtractiveTermMollerup atractiveTerm = null;
+    public AttractiveTermMollerup clone() {
+        AttractiveTermMollerup attractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermMollerup) super.clone();
+            attractiveTerm = (AttractiveTermMollerup) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
 
-        return atractiveTerm;
+        return attractiveTerm;
     }
 
     /** {@inheritDoc} */

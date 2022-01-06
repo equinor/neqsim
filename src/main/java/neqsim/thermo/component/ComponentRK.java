@@ -1,6 +1,6 @@
 package neqsim.thermo.component;
 
-import neqsim.thermo.component.atractiveEosTerm.AtractiveTermRk;
+import neqsim.thermo.component.attractiveEosTerm.AttractiveTermRk;
 
 /**
  * <p>
@@ -49,7 +49,7 @@ public class ComponentRK extends ComponentEos {
         b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
         delta1 = 1.0;
         delta2 = 0.0;
-        setAtractiveParameter(new AtractiveTermRk(this));
+        setAttractiveParameter(new AttractiveTermRk(this));
     }
 
     /**

@@ -1474,12 +1474,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
     /**
      * <p>
-     * setAtractiveTerm.
+     * setAttractiveTerm.
      * </p>
      *
      * @param i a int
      */
-    public void setAtractiveTerm(int i);
+    public void setAttractiveTerm(int i);
 
     /**
      * <p>
