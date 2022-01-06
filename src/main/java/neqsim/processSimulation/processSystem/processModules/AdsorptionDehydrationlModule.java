@@ -170,7 +170,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         adsorbentFillingHeight = 400.0 * waterLoadingCycle / (Math.PI * usefulDesiccantCapacity
                 * bulkDensityDesiccant * adsorberInternalDiameter * adsorberInternalDiameter);
 
-        double lenghtDiameterRatio = adsorbentFillingHeight / adsorberInternalDiameter;
+        // double lenghtDiameterRatio = adsorbentFillingHeight / adsorberInternalDiameter;
         // design is done here
     }
 

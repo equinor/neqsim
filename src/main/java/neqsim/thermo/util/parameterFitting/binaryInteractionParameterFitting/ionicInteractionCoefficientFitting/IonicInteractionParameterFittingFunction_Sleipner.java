@@ -55,8 +55,8 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
-        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3Numb = 0, WaterNumb = 0, AcidNumb = 0,
-                AcidnegNumb = 0;
+        int MDEAplusNumb = 0, MDEANumb = 0, AcidNumb = 0, AcidnegNumb = 0;
+        // int CO2Numb = 0, HCO3Numb = 0, WaterNumb = 0;
         int j = 0;
         do {
             MDEAplusNumb = j;
@@ -68,23 +68,21 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
             MDEANumb = j;
             j++;
         } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("MDEA"));
-        j = 0;
-        do {
-            CO2Numb = j;
-            j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("CO2"));
 
-        j = 0;
-        do {
-            HCO3Numb = j;
-            j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("HCO3-"));
+        /*
+         * j = 0; do { CO2Numb = j; j++; } while (!system.getPhases()[1].getComponents()[j -
+         * 1].getComponentName().equals("CO2"));
+         */
 
-        j = 0;
-        do {
-            WaterNumb = j;
-            j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("water"));
+        /*
+         * j = 0; do { HCO3Numb = j; j++; } while (!system.getPhases()[1].getComponents()[j -
+         * 1].getComponentName().equals("HCO3-"));
+         */
+
+        /*
+         * j = 0; do { WaterNumb = j; j++; } while (!system.getPhases()[1].getComponents()[j -
+         * 1].getComponentName().equals("water"));
+         */
 
         j = 0;
         do {

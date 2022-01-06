@@ -47,7 +47,7 @@ public class TSFlash extends QfuncFlash {
     /** {@inheritDoc} */
     @Override
     public double calcdQdTT() {
-        double cP1 = 0.0, cP2 = 0.0;
+        // double cP1 = 0.0, cP2 = 0.0;
 
         if (system.getNumberOfPhases() == 1) {
             return -system.getPhase(0).getCp() / system.getTemperature();
@@ -74,10 +74,10 @@ public class TSFlash extends QfuncFlash {
         double oldTemp = system.getPressure(), nyTemp = system.getPressure();
         int iterations = 1;
         double error = 1.0, erorOld = 10.0e10;
-        double factor = 0.8;
+        // double factor = 0.8;
 
-        boolean correctFactor = true;
-        double newCorr = 1.0;
+        // boolean correctFactor = true;
+        // double newCorr = 1.0;
         do {
             iterations++;
             oldTemp = system.getPressure();

@@ -1502,7 +1502,7 @@ abstract class Phase implements PhaseInterface {
         double act1 = 0.0;
         double act2 = 0.0;
         int watNumb = 0;
-        double vminus = 0.0, vplus = 0.0;
+        // double vminus = 0.0, vplus = 0.0;
         double ions = 0.0;
         for (int j = 0; j < this.numberOfComponents; j++) {
             if (getComponent(j).getIonicCharge() != 0) {
@@ -1572,13 +1572,14 @@ abstract class Phase implements PhaseInterface {
     // }
     // else return getOsmoticCoefficient(watNumb);
     // }
+
     /** {@inheritDoc} */
     @Override
     public double getMeanIonicActivity(int comp1, int comp2) {
         double act1 = 0.0;
         double act2 = 0.0;
         int watNumb = 0;
-        double vminus = 0.0, vplus = 0.0;
+        // double vminus = 0.0, vplus = 0.0;
 
         for (int j = 0; j < this.numberOfComponents; j++) {
             if (getComponent(j).getComponentName().equals("water")) {

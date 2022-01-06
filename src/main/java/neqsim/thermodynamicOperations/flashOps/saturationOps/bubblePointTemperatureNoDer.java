@@ -44,7 +44,7 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
 
         int iterations = 0, maxNumberOfIterations = 1000;
         double yold = 0, ytotal = 1;
-        double deriv = 0, funk = 0;
+        // double deriv = 0, funk = 0;
         // logger.info("starting");
 
         system.init(0);
@@ -69,7 +69,7 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
             }
         }
 
-        double oldPres = 0;
+        // double oldPres = 0;
         if (system.isChemicalSystem()) {
             system.getChemicalReactionOperations().solveChemEq(0);
             system.getChemicalReactionOperations().solveChemEq(1);

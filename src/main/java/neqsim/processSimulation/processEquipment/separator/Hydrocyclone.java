@@ -98,13 +98,14 @@ public class Hydrocyclone extends Separator {
         inletStreamMixer.run();
         thermoSystem = inletStreamMixer.getOutStream().getThermoSystem().clone();
 
-        double oilInWaterIn = 0.0001;// thermoSystem.getPhase("aqueous").getOilMolarConcentration();
-        double oilInWaterOut = 0.0;
+        // double oilInWaterIn = 0.0001; //
+        // thermoSystem.getPhase("aqueous").getOilMolarConcentration();
+        // double oilInWaterOut = 0.0;
         double inPressure = thermoSystem.getPressure("bara");
         underflowPressure = inPressure / 2.0;
         overflowPressure = inPressure + (inPressure - underflowPressure) / 1.0 / PDR;
         separationEfficiency = 0.9;
-        oilInWaterOut = oilInWaterIn * separationEfficiency;
+        // oilInWaterOut = oilInWaterIn * separationEfficiency;
 
         thermoSystem.setMultiPhaseCheck(true);
         thermoSystem.setPressure(underflowPressure);

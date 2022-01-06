@@ -79,7 +79,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
     @Override
     public void initializeModule() {
         isInitializedModule = true;
-        double inletPressure = feedStream.getPressure();
+        // double inletPressure = feedStream.getPressure();
 
         ValveInterface inletValve = new ThrottlingValve("inlet valve", feedStream);
         inletValve.setOutletPressure(pressureAfterRedValve);

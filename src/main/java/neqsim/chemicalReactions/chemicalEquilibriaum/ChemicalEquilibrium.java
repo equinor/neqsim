@@ -244,15 +244,16 @@ public class ChemicalEquilibrium implements java.io.Serializable {
      */
     public void updateMoles() {
         upMoles++;
-        double changeMoles = 0.0;
+        // double changeMoles = 0.0;
         for (int i = 0; i < components.length; i++) {
             system.addComponent(components[i].getComponentNumber(), (n_mol[i]
                     - system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
                             .getNumberOfMolesInPhase()),
                     phasenumb);
-            changeMoles += n_mol[i]
-                    - system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                            .getNumberOfMolesInPhase();
+
+            // changeMoles += n_mol[i] -
+            // system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+            // .getNumberOfMolesInPhase();
         }
         system.initBeta(); // this was added for mass trans calc
         system.init_x_y();
@@ -268,10 +269,10 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     public boolean solve() {
         double error = 1e10, errOld = 1e10, thisError = 0;
         double p = 1.0;
-        boolean negN = false;
+        // boolean negN = false;
         double maxError = 1e-8;
         upMoles = 0;
-        double old = 0;
+        // double old = 0;
         try {
             do {
                 p++;
@@ -308,9 +309,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
                 }
                 // Print statement added by Neeraj
                 // System.out.println("Error " + error);
-            } // Number of iterations changed to 1000 by Neeraj (initially only 350
-              // interations were performed)
-            while (((errOld > maxError && Math.abs(error) > maxError) && p < 350) || p < 2);
+            } while (((errOld > maxError && Math.abs(error) > maxError) && p < 350) || p < 2);
         } catch (Exception e) {
             e.printStackTrace();
             return false;

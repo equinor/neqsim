@@ -81,11 +81,10 @@ public class ComponentWax extends ComponentSolid {
                         * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
                                 * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
                                 + presTerm);
-        double SolidFug2 =
-                getx() * liquidPhaseFugacity
-                        * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
-                                * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
-                                + presTerm);
+
+        // double SolidFug2 = getx() * liquidPhaseFugacity * Math.exp(-getHeatOfFusion() / (R *
+        // phase1.getTemperature()) * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
+        // + presTerm);
 
         fugasityCoeffisient = SolidFug / (phase1.getPressure() * getx());
         logFugasityCoeffisient = Math.log(fugasityCoeffisient);

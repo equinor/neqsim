@@ -421,9 +421,10 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
                     // thermoSystem.getFlowRate("m3/hr")));
                 }
                 if (surgeCheck && getAntiSurge().isActive()) {
-                    double surgeFLow =
-                            getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
-                    double correction = surgeFLow / thermoSystem.getFlowRate("m3/hr");
+                    // double surgeFLow =
+                    // getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
+
+                    // double correction = surgeFLow / thermoSystem.getFlowRate("m3/hr");
                     thermoSystem.setTotalNumberOfMoles(getAntiSurge().getSurgeControlFactor()
                             * thermoSystem.getTotalNumberOfMoles());
                     thermoSystem.init(3);

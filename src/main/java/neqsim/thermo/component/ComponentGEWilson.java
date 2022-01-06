@@ -185,8 +185,9 @@ public class ComponentGEWilson extends ComponentGE {
         // calculating transition enthalpy
 
         double deltaHtot = (3.7791 * carbonnumber - 12.654) * 1000;
-        double Ttrans =
-                420.42 - 134.784 * Math.exp(-4.344 * Math.pow(carbonnumber + 6.592, 0.14627));
+        // double Ttrans = 420.42 - 134.784 * Math.exp(-4.344 * Math.pow(carbonnumber + 6.592,
+        // 0.14627));
+
         double Tf = 374.5 + 0.2617 * getMolarMass() - 20.172 / getMolarMass();
         double deltaHf = (0.1426 * getMolarMass() * Tf) * 4.1868;
         double deltaHtrans = (deltaHtot - deltaHf);

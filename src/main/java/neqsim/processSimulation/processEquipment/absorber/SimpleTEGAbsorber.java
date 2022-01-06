@@ -327,8 +327,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     @Override
     public void run() {
         try {
-            double y0 = 0.0, y1 = 0.0,
-                    yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
+            double y0 = 0.0, y1 = 0.0;
+            // double yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
             double absorptionEffiency = 0.0;
             mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
             mixedStream.getThermoSystem().setNumberOfPhases(2);
@@ -398,20 +398,20 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
                     gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx(), yMean));
             // System.out.println("NTU " + getNTU());
 
-            double Ks = 0.055;
+            // double Ks = 0.055;
             getSolventOutStream().getThermoSystem().initPhysicalProperties();
             getGasOutStream().getThermoSystem().initPhysicalProperties();
-            double vtemp = Ks * Math.sqrt((getSolventOutStream().getThermoSystem().getPhase(0)
-                    .getPhysicalProperties().getDensity()
-                    - getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties()
-                            .getDensity())
-                    / getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties()
-                            .getDensity());
-            double d = Math.sqrt(4.0 * getGasOutStream().getMolarRate()
-                    * getGasOutStream().getThermoSystem().getPhase(0).getMolarMass()
-                    / getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties()
-                            .getDensity()
-                    / 3.14 / vtemp);
+
+            // double vtemp = Ks * Math.sqrt((getSolventOutStream().getThermoSystem().getPhase(0)
+            // .getPhysicalProperties().getDensity() -
+            // getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties()
+            // .getDensity()) /
+            // getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
+
+            // double d = Math.sqrt(4.0 * getGasOutStream().getMolarRate() *
+            // getGasOutStream().getThermoSystem().getPhase(0).getMolarMass() /
+            // getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties()
+            // .getDensity()/ 3.14 / vtemp);
             // System.out.println("diameter " + d);
         } catch (Exception e) {
             e.printStackTrace();

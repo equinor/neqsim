@@ -60,7 +60,7 @@ public class UMRPRUFunction extends LevenbergMarquardtFunction {
         if (i == 2) {
             PhaseGEUnifac unifacp = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[0])
                     .getMixingRule().getGEPhase();
-            double aa = unifacp.getAij(0, 2);
+            // double aa = unifacp.getAij(0, 2);
             unifacp.setAij(2, 0, value);
             unifacp.setAij(2, 1, value);
 

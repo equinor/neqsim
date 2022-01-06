@@ -562,12 +562,13 @@ public abstract class NonEquilibriumFluidBoundary
     @Override
     public void massTransSolve() {
         int iter = 1;
-        double err = 1.0e10, oldErr = 0.0;
+        double err = 1.0e10;
+        // double oldErr = 0.0;
         double factor = 10.0;
         // if(bulkSystem.isChemicalSystem()) factor=100.0;
         setuMassTrans();
         do {
-            oldErr = err;
+            // oldErr = err;
             iter++;
             init();
             setfvecMassTrans2();

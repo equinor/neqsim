@@ -448,7 +448,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
         nf.applyPattern("#.#####E0");
 
         String[][] table = new String[bulkSystem.getPhases()[0].getNumberOfComponents() * 10][5];
-        String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
+        // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
         table[0][0] = "";
         table[0][1] = "";
         table[0][2] = "";

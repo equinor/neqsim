@@ -922,7 +922,7 @@ public class TPmultiflash extends TPflash {
 
         int iterations = 0;
         if (multiPhaseTest) {// && !system.isChemicalSystem()) {
-            double oldBeta = 1.0;
+            // double oldBeta = 1.0;
             double diff = 1.0e10, oldDiff = 1.0e10;
 
             double chemdev = 0;
@@ -962,7 +962,7 @@ public class TPmultiflash extends TPflash {
                 iterations = 0;
                 do {
                     iterations++;
-                    oldBeta = system.getBeta(system.getNumberOfPhases() - 1);
+                    // oldBeta = system.getBeta(system.getNumberOfPhases() - 1);
                     // system.init(1);
                     oldDiff = diff;
                     diff = this.solveBeta();

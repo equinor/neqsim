@@ -131,8 +131,8 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         // outStreamAir.getFluid().setTemperature(800.0);
         // outStreamAir.getFluid().createDatabase(true);
         double moleMethane = outStreamAir.getFluid().getComponent("methane").getNumberOfmoles();
-        double moleEthane = outStreamAir.getFluid().getComponent("ethane").getNumberOfmoles();
-        double molePropane = outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
+        // double moleEthane = outStreamAir.getFluid().getComponent("ethane").getNumberOfmoles();
+        // double molePropane = outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
 
         outStreamAir.run();
         Heater locHeater = new Heater(outStreamAir);
