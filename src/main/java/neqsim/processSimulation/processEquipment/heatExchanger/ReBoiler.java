@@ -39,7 +39,7 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
      */
     public ReBoiler(StreamInterface inStream) {
         this.inStream = inStream;
-        outStream = (StreamInterface) inStream.clone();
+        outStream = inStream.clone();
     }
 
     /**
@@ -56,7 +56,7 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
         double oldH = system.getEnthalpy();

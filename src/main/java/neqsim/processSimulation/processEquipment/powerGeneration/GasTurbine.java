@@ -107,7 +107,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
         try {
-            this.outStream = (StreamInterface) inletStream.clone();
+            this.outStream = inletStream.clone();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -118,7 +118,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     public void run() {
         // System.out.println("compressor running..");
         double heatOfCombustion = inletStream.LCV() * inletStream.getFlowRate("mole/sec");
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         airStream.setFlowRate(thermoSystem.getFlowRate("mole/sec") * airGasRatio, "mole/sec");
         airStream.setPressure(1.01325);
         airStream.run();
@@ -126,7 +126,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         airCompressor.setOutletPressure(combustionpressure);
         airCompressor.run();
         compressorPower = airCompressor.getPower();
-        StreamInterface outStreamAir = (StreamInterface) airCompressor.getOutStream().clone();
+        StreamInterface outStreamAir = airCompressor.getOutStream().clone();
         outStreamAir.getFluid().addFluid(thermoSystem);
         // outStreamAir.getFluid().setTemperature(800.0);
         // outStreamAir.getFluid().createDatabase(true);

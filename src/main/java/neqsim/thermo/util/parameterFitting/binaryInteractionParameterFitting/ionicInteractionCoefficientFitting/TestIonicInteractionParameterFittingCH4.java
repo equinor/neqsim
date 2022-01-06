@@ -150,7 +150,7 @@ public class TestIonicInteractionParameterFittingCH4 {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        //
+
         optim.solve();
         // optim.runMonteCarloSimulation();
         // optim.displayCurveFit();

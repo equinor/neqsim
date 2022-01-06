@@ -19,12 +19,14 @@ public class TPflashMembrane {
     static Logger logger = LogManager.getLogger(TPflashMembrane.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        // SystemInterface testSystem2 = (SystemInterface)
+        // SystemInterface testSystem2 =
         // util.serialization.SerializationManager.open("c:/test.fluid");
         // testSystem2.display();
         SystemInterface testSystem = new SystemSrkEos(298, 1.01325);

@@ -200,7 +200,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         inletPressure = system.getPressure();
         // system.setMultiPhaseCheck(true);
         if (setTemperature) {

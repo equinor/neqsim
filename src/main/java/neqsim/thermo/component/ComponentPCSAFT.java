@@ -134,7 +134,7 @@ public class ComponentPCSAFT extends ComponentSrk {
         // dF_DISP1_SAFTdN(phase,numberOfComponents,temperature,pressure));
         // System.out.println("term getF23 " +
         // dF_DISP2_SAFTdN(phase,numberOfComponents,temperature,pressure));
-        //
+
         // System.out.println("term furgacity coef " + getFugasityCoefficient());
         return useHS * dF_HC_SAFTdN(phase, numberOfComponents, temperature, pressure)
                 + useDISP1 * dF_DISP1_SAFTdN(phase, numberOfComponents, temperature, pressure)

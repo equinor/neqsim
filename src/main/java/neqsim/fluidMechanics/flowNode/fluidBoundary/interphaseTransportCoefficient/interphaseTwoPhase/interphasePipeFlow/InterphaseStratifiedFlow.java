@@ -163,7 +163,7 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
         // node.getReynoldsNumber(phase) + " COMP " + );
         return massTrans;
     }
-    //
+
     // public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber,
     // FlowNodeInterface node){
     // double redMassTrans=0.0, massTrans=0.0;
@@ -180,7 +180,7 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
     // //System.out.println("diff " +
     // node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity() /
     // schmidtNumber);
-    //
+
     // //massTrans = 3.66 / node.getHydraulicDiameter(phase) / schmidtNumber *
     // node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity();
     // massTrans=0.010;

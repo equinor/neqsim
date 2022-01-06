@@ -16,6 +16,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Filter extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000;
+
     private double deltaP = 0.01;
     protected StreamInterface outStream;
     protected StreamInterface inStream;
@@ -37,7 +39,7 @@ public class Filter extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        SystemInterface system = (SystemInterface) inStream.getThermoSystem().clone();
+        SystemInterface system = inStream.getThermoSystem().clone();
         if (Math.abs(getDeltaP()) > 1e-10) {
             system.setPressure(inStream.getPressure() - getDeltaP());
             ThermodynamicOperations testOps = new ThermodynamicOperations(system);

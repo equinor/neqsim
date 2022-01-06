@@ -64,7 +64,7 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
     /** {@inheritDoc} */
     @Override
     public double getMeasuredValue(String unit) {
-        SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
+        SystemInterface tempFluid = stream.getThermoSystem().clone();
         tempFluid.removeComponent("water");
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
         try {
@@ -87,7 +87,7 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
      * @return a double
      */
     public double getMeasuredValue2(String unit, double temp) {
-        SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
+        SystemInterface tempFluid = stream.getThermoSystem().clone();
         tempFluid.setTemperature(temp, "C");
         tempFluid.setPressure(10.0, "bara");
         if (tempFluid.getPhase(0).hasComponent("water")) {

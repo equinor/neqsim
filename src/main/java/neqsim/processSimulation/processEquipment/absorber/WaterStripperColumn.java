@@ -207,7 +207,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
             enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-            // System.out.println("total enthalpy k : " + ((SystemInterface)
+            // System.out.println("total enthalpy k : " + (
             // ((StreamInterface) streams.get(k)).getThermoSystem()).getEnthalpy());
         }
         // System.out.println("total enthalpy of streams: " + enthalpy);
@@ -314,8 +314,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
             double x2 = getSolventInStream().getFluid().getPhase(0).getComponent("water").getz();
             double x0 = 0.0;
             double absorptionEffiency = 0.0;
-            mixedStream
-                    .setThermoSystem(((SystemInterface) streams.get(0).getThermoSystem().clone()));
+            mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
             mixedStream.getThermoSystem().setNumberOfPhases(2);
             mixedStream.getThermoSystem().reInitPhaseType();
             mixedStream.getThermoSystem().init(0);
@@ -331,16 +330,14 @@ public class WaterStripperColumn extends SimpleAbsorber {
             if (mixedStream.getThermoSystem().getNumberOfPhases() == 1) {
                 if (mixedStream.getThermoSystem().getPhase(0).getPhaseTypeName()
                         .equals("aqueous")) {
-                    SystemInterface tempSystem =
-                            (SystemInterface) mixedStream.getThermoSystem().clone();
+                    SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
                     gasOutStream.setEmptyThermoSystem(tempSystem);
                     gasOutStream.run();
                     solventOutStream.setThermoSystem(tempSystem);
                     solventOutStream.run();
                 }
                 if (mixedStream.getThermoSystem().getPhase(0).getPhaseTypeName().equals("gas")) {
-                    SystemInterface tempSystem =
-                            (SystemInterface) mixedStream.getThermoSystem().clone();
+                    SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
                     solventOutStream.setEmptyThermoSystem(tempSystem);
                     solventOutStream.run();
                     gasOutStream.setThermoSystem(tempSystem);
@@ -368,7 +365,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
                     * mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase();
             // System.out.println("mole water to move " + molesWaterToMove);
 
-            Stream stream = (Stream) mixedStream.clone();
+            Stream stream = mixedStream.clone();
             stream.setName("test");
             stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
             stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
@@ -378,12 +375,12 @@ public class WaterStripperColumn extends SimpleAbsorber {
             mixedStream = stream;
             // stream.getThermoSystem().display();
 
-            SystemInterface tempSystem = (SystemInterface) mixedStream.getThermoSystem().clone();
+            SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
             SystemInterface gasTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[0]);
             gasTemp.init(2);
             gasOutStream.setThermoSystem(gasTemp);
 
-            tempSystem = (SystemInterface) mixedStream.getThermoSystem().clone();
+            tempSystem = mixedStream.getThermoSystem().clone();
             SystemInterface liqTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[1]);
             liqTemp.init(2);
             solventOutStream.setThermoSystem(liqTemp);

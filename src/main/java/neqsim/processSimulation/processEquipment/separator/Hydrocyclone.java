@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.separator;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -66,7 +65,7 @@ public class Hydrocyclone extends Separator {
     public void setInletStream(StreamInterface inletStream) {
         super.setInletStream(inletStream);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         waterSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         waterOutStream = new Stream(waterSystem);
     }
@@ -97,7 +96,7 @@ public class Hydrocyclone extends Separator {
     @Override
     public void run() {
         inletStreamMixer.run();
-        thermoSystem = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
+        thermoSystem = inletStreamMixer.getOutStream().getThermoSystem().clone();
 
         double oilInWaterIn = 0.0001;// thermoSystem.getPhase("aqueous").getOilMolarConcentration();
         double oilInWaterOut = 0.0;
@@ -124,8 +123,8 @@ public class Hydrocyclone extends Separator {
             gasOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
         }
         // //gasOutStream.run();
-        //
-        //// liquidSystem = (SystemInterface) thermoSystem.phaseToSystem(1);
+
+        //// liquidSystem = thermoSystem.phaseToSystem(1);
         //// liquidOutStream.setThermoSystem(liquidSystem);
         if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
             liquidOutStream.setThermoSystemFromPhase(thermoSystem, "liquid");

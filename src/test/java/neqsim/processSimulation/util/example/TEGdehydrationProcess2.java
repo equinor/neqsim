@@ -14,7 +14,9 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>TEGdehydrationProcess2 class.</p>
+ * <p>
+ * TEGdehydrationProcess2 class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -22,7 +24,9 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  */
 public class TEGdehydrationProcess2 {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -54,8 +58,7 @@ public class TEGdehydrationProcess2 {
         StreamSaturatorUtil saturatedFeedGas = new StreamSaturatorUtil(dryFeedGas);
         Stream waterSaturatedFeedGas = new Stream(saturatedFeedGas.getOutStream());
         saturatedFeedGas.setName("water saturator");
-        neqsim.thermo.system.SystemInterface feedTEG =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
         feedTEG.setMolarComposition(
                 new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.98});
 
@@ -131,8 +134,7 @@ public class TEGdehydrationProcess2 {
 
         Stream hotLeanTEG = new Stream(regenerator2.getLiquidOutStream());
 
-        neqsim.thermo.system.SystemInterface stripGas =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface stripGas = feedGas.clone();
         stripGas.setMolarComposition(
                 new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
 
@@ -173,8 +175,7 @@ public class TEGdehydrationProcess2 {
         Stream leanTEGtoabs = new Stream(hotLeanTEGPump2.getOutStream());
         leanTEGtoabs.setName("lean TEG to absorber");
 
-        neqsim.thermo.system.SystemInterface pureTEG =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
         pureTEG.setMolarComposition(
                 new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
@@ -247,7 +248,7 @@ public class TEGdehydrationProcess2 {
         System.out.println("Energy reboiler " + heaterToReboiler.getDuty());
         mixerTOreboiler.addStream(liquidRegenReflux);
         mixerTOreboiler.addStream(resycle3.getOutStream());
-        //
+
         operations.run();
         absorber.replaceSolventInStream(resycleLeanTEG.getOutStream());
         operations.run();

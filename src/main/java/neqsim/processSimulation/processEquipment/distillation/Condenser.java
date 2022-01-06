@@ -67,8 +67,7 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
         if (!refluxIsSet) {
             super.run();
         } else {
-            SystemInterface thermoSystem2 =
-                    (SystemInterface) streams.get(0).getThermoSystem().clone();
+            SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
             // System.out.println("total number of moles " +
             // thermoSystem2.getTotalNumberOfMoles());
             mixedStream.setThermoSystem(thermoSystem2);

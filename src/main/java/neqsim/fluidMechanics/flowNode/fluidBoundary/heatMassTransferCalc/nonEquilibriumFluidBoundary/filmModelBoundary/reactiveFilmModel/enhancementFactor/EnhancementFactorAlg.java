@@ -78,7 +78,7 @@ public class EnhancementFactorAlg extends EnhancementFactor {
     // double[][] stocMatrix =
     // fluidBoundary.getBulkSystem().getChemicalReactionOperations().getReactionList().getStocMatrix();
     // fluidBoundary.getBulkSystem().getPhases()[phase].getPhysicalProperties().calcEffectiveDiffusionCoefficients();
-    //
+
     // for(int
     // i=0;i<fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents();i++){
     // for(int
@@ -94,14 +94,14 @@ public class EnhancementFactorAlg extends EnhancementFactor {
     // (stocMatrix[i][i]/stocMatrix[i][j]) *
     // (fluidBoundary.getBulkSystem().getPhases()[phase].getComponents()[j].getx()*fluidBoundary.getBulkSystem().getPhases()[phase].getDensity()/fluidBoundary.getBulkSystem().getPhases()[phase].getMolarMass())/
     // (fluidBoundary.getInterphaseSystem().getPhases()[phase].getComponents()[i].getx()*fluidBoundary.getInterphaseSystem().getPhases()[phase].getDensity()/fluidBoundary.getInterphaseSystem().getPhases()[phase].getMolarMass());
-    //
+
     // System.out.println("components " +
     // fluidBoundary.getBulkSystem().getPhases()[phase].getComponents()[i].getComponentName()
     // + " " +
     // fluidBoundary.getBulkSystem().getPhases()[phase].getComponents()[j].getComponentName());
     // System.out.println("hatta : " + hattaNumber[phase].get(i,j));
     // System.out.println("phi : " + phiVal);
-    //
+
     // if(hattaNumber[phase].get(i,j)>=2.0){
     // // Functions F = Functions.functions;
     // cern.colt.function.DoubleFunction fun = cern.jet.math.Functions.tanh;

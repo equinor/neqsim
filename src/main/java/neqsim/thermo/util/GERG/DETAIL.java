@@ -373,17 +373,13 @@ public class DETAIL {
         d2PdTD.val = 0;
     }
 
-
     /**
-     * @param x
+     * // Calculate terms dependent only on composition
+     * 
+     * @param x Composition (mole fraction)
      */
     // The following routines are low-level routines that should not be called outside of this code.
     static void xTermsDetail(double[] x) {
-        // Calculate terms dependent only on composition
-        //
-        // Inputs:
-        // x() - Composition (mole fraction)
-
         double G, Q, F, U, Q2, xij, xi2;
         int icheck;
 
@@ -463,7 +459,6 @@ public class DETAIL {
         }
     }
 
-
     /**
      * @param T
      * @param D
@@ -537,7 +532,6 @@ public class DETAIL {
         a0[1].val = a0[1].val * RDetail;
         a0[2].val = a0[2].val * RDetail;
     }
-
 
     /**
      * @param itau

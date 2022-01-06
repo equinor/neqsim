@@ -73,13 +73,11 @@ abstract class Phase implements PhaseInterface {
 
         clonedPhase.componentArray = this.componentArray.clone();
         for (int i = 0; i < numberOfComponents; i++) {
-            clonedPhase.componentArray[i] = (ComponentInterface) this.componentArray[i].clone();
+            clonedPhase.componentArray[i] = this.componentArray[i].clone();
         }
         // System.out.println("cloed length: " + componentArray.length);
         if (physicalPropertyHandler != null) {
-            clonedPhase.physicalPropertyHandler =
-                    ((neqsim.physicalProperties.PhysicalPropertyHandler) this.physicalPropertyHandler
-                            .clone());
+            clonedPhase.physicalPropertyHandler = this.physicalPropertyHandler.clone();
         }
 
         return clonedPhase;
@@ -111,7 +109,7 @@ abstract class Phase implements PhaseInterface {
             }
             // logger.info("length " + temp.size());
             for (int i = 0; i < temp.size(); i++) {
-                this.componentArray[i] = (ComponentInterface) temp.get(i);
+                this.componentArray[i] = temp.get(i);
                 this.getComponent(i).setComponentNumber(i);
             }
         } catch (Exception e) {

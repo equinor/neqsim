@@ -342,7 +342,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         // gv2 = 1.0/(2.0-getB()/(4.0*getTotalVolume()))*getB()/(4.0*Math.pow(getTotalVolume()
         // ,2.0))
         // - 3.0/(1.0-getB()/(4.0*getTotalVolume()))*getB()/(4.0*Math.pow(getTotalVolume() ,2.0));
-        //
+
         // System.out.println("err gv " + (100.0-gv/gv2*100));
         // -2.0*getB()*(10.0*getTotalVolume()-getB())/getTotalVolume()/((8.0*getTotalVolume()-getB())*(4.0*getTotalVolume()-getB()));
         // System.out.println("gv " + gv);

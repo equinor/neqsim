@@ -74,7 +74,6 @@ public class TestVHflash {
             // logger.info("Cp " +
             // testSystem.getPhase(0).getCp()/testSystem.getPhase(0).getNumberOfMolesInPhase());
 
-            //
             logger.info("Volume Nitrogen "
                     + testSystem.getPhase(0).getMolarMass() * testSystem.getNumberOfMoles()
                             / testSystem.getPhase(0).getPhysicalProperties().getDensity());
@@ -84,7 +83,7 @@ public class TestVHflash {
             logger.info("Volume Nitrogen from vacum breaker system "
                     + testSystem4.getPhase(0).getMolarMass() * testSystem4.getNumberOfMoles()
                             / testSystem4.getPhase(0).getPhysicalProperties().getDensity());
-            //
+
             testOps3.VHflash(testSystem.getVolume(),
                     testSystem.getEnthalpy() + testSystem2.getEnthalpy());
             testSystem3.display();
@@ -101,12 +100,12 @@ public class TestVHflash {
 }
 // testSystem = testSystem.setModel("GERG-water");
 // testSystem.setMixingRule(8);
-//
+
 // testSystem = testSystem.autoSelectModel();
 // testSystem.autoSelectMixingRule();
 // testSystem.setMultiPhaseCheck(true);
 // testOps.setSystem(testSystem);
-//
+
 // logger.info("new model name " + testSystem.getModelName());
 // try{
 // testOps.TPflash();

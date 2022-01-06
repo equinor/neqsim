@@ -16,14 +16,15 @@ import neqsim.thermo.component.ComponentInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ReferencePotComparator implements Comparator, java.io.Serializable {
+public class ReferencePotComparator
+        implements Comparator<ComponentInterface>, java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     /** {@inheritDoc} */
     @Override
-    public int compare(Object o1, Object o2) {
-        double v1 = ((ComponentInterface) o1).getReferencePotential();
-        double v2 = ((ComponentInterface) o2).getReferencePotential();
+    public int compare(ComponentInterface o1, ComponentInterface o2) {
+        double v1 = o1.getReferencePotential();
+        double v2 = o2.getReferencePotential();
 
         int ans = v1 >= v2 ? 1 : 0;
 

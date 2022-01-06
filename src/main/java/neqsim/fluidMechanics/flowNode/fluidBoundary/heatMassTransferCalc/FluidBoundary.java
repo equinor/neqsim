@@ -97,7 +97,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
      * </p>
      */
     public void initInterphaseSystem() {
-        interphaseSystem = (SystemInterface) bulkSystem.clone();
+        interphaseSystem = bulkSystem.clone();
         interphaseSystem.setNumberOfPhases(2);
 
         // interphaseSystem.addComponent("methane", 100.0,0);
@@ -141,7 +141,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
             e.printStackTrace(System.err);
         }
 
-        clonedSystem.interphaseSystem = (SystemInterface) interphaseSystem.clone();
+        clonedSystem.interphaseSystem = interphaseSystem.clone();
         clonedSystem.nFlux = (Matrix) nFlux.clone();
 
         return clonedSystem;

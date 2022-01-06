@@ -99,7 +99,7 @@ public class GTSurfaceTension extends SurfaceTension {
         double surftens = 0.0;
         int refcompIndex = 0;
 
-        localSystem = (SystemInterface) this.system.clone();
+        localSystem = this.system.clone();
         switch (useFullGT) {
             case 1:
                 surftens = solveFullDensityProfile(localSystem, interface1, interface2);

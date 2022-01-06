@@ -106,7 +106,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
         try {
-            this.outStream = (StreamInterface) inletStream.clone();
+            this.outStream = inletStream.clone();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -286,7 +286,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     /** {@inheritDoc} */
     @Override
     public void run() {
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps = new ThermodynamicOperations(getThermoSystem());
         getThermoSystem().init(3);

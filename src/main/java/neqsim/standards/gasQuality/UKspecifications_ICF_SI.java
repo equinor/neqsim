@@ -127,7 +127,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
      * @return a double
      */
     public double calcWithNitrogenAsInert() {
-        SystemInterface tempThermo = (SystemInterface) thermoSystem.clone();
+        SystemInterface tempThermo = thermoSystem.clone();
         Standard_ISO6976 localIso6976 = new Standard_ISO6976(tempThermo);
 
         localIso6976.calculate();

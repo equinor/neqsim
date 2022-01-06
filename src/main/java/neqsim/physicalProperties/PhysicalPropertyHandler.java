@@ -166,29 +166,19 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         }
         try {
             if (gasPhysicalProperties != null) {
-                clonedHandler.gasPhysicalProperties =
-                        (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) gasPhysicalProperties
-                                .clone();
+                clonedHandler.gasPhysicalProperties = gasPhysicalProperties.clone();
             }
             if (oilPhysicalProperties != null) {
-                clonedHandler.oilPhysicalProperties =
-                        (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) oilPhysicalProperties
-                                .clone();
+                clonedHandler.oilPhysicalProperties = oilPhysicalProperties.clone();
             }
             if (aqueousPhysicalProperties != null) {
-                clonedHandler.aqueousPhysicalProperties =
-                        (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) aqueousPhysicalProperties
-                                .clone();
+                clonedHandler.aqueousPhysicalProperties = aqueousPhysicalProperties.clone();
             }
             if (solidPhysicalProperties != null) {
-                clonedHandler.solidPhysicalProperties =
-                        (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) solidPhysicalProperties
-                                .clone();
+                clonedHandler.solidPhysicalProperties = solidPhysicalProperties.clone();
             }
             if (mixingRule != null) {
-                clonedHandler.mixingRule =
-                        (neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule) mixingRule
-                                .clone();
+                clonedHandler.mixingRule = mixingRule.clone();
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);

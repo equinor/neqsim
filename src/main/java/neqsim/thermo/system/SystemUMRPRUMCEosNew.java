@@ -7,6 +7,8 @@ package neqsim.thermo.system;
  * @version
  */
 public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
+    private static final long serialVersionUID = 1000;
+
     /**
      * <p>
      * Constructor for SystemUMRPRUMCEosNew.

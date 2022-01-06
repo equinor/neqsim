@@ -497,7 +497,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
 
         for (int i = 0; i < list.size(); i++) {
             try {
-                system.removeComponent((String) list.get(i));
+                system.removeComponent(list.get(i));
                 logger.info("removing " + list.get(i));
             } catch (Exception e) {
                 logger.error("not able to remove " + list.get(i));

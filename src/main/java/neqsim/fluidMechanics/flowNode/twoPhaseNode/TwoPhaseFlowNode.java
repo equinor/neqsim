@@ -1,7 +1,6 @@
 package neqsim.fluidMechanics.flowNode.twoPhaseNode;
 
 import neqsim.fluidMechanics.flowNode.FlowNode;
-import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -18,6 +17,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
     // public double[] molarMassTransferFlux;
     // public double[] molarMassTransfer;
+
     /**
      * <p>
      * Constructor for TwoPhaseFlowNode.
@@ -63,7 +63,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         // clonedSystem.molarMassTransferFlux.clone();;
         // clonedSystem.molarMassTransfer = (double[])
         // clonedSystem.molarMassTransferFlux.clone();
-        clonedSystem.fluidBoundary = (FluidBoundaryInterface) fluidBoundary.clone();
+        clonedSystem.fluidBoundary = fluidBoundary.clone();
         return clonedSystem;
     }
 

@@ -56,8 +56,8 @@ public class Element implements ThermodynamicConstantsInterface {
             nameArray = new String[names.size()];
             coefArray = new double[nameArray.length];
             for (int i = 0; i < nameArray.length; i++) {
-                coefArray[i] = Double.parseDouble((String) stocCoef.get(i));
-                nameArray[i] = (String) names.get(i);
+                coefArray[i] = Double.parseDouble(stocCoef.get(i));
+                nameArray[i] = names.get(i);
             }
             dataSet.close();
             database.getConnection().close();

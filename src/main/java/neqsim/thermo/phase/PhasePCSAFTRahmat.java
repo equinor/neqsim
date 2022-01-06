@@ -126,10 +126,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         dnSAFTdVdVdV = -6.0 * ThermodynamicConstantsInterface.pi / 6.0
                 * ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase()
                 / Math.pow(volumeSAFT, 4.0) * getDSAFT();
-        //
 
         // added by rahmat
-
         dNSAFTdT = 1.0 * ThermodynamicConstantsInterface.pi / 6.0
                 * ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase()
                 / volumeSAFT * getdDSAFTdT();
@@ -1177,9 +1175,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     @Override
     public double getF() {
         // System.out.println("F-HC " + useHS*F_HC_SAFT());
-        //
+
         // System.out.println("F-DISP1 " + useDISP1*F_DISP1_SAFT());
-        //
+
         // System.out.println("F-DISP2 " + useDISP2*F_DISP2_SAFT());
         return useHS * F_HC_SAFT() + useDISP1 * F_DISP1_SAFT() + useDISP2 * F_DISP2_SAFT();
     }
@@ -1190,7 +1188,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         // System.out.println("N-saft " + getNSAFT());
         // System.out.println("F-HC " + useHS*F_HC_SAFT());
         // System.out.println("F-DISP1 " + useDISP1*F_DISP1_SAFT());
-        //
+
         // System.out.println("F-DISP2 " + useDISP2*F_DISP2_SAFT());
 
         return (useHS * dF_HC_SAFTdV() + useDISP1 * dF_DISP1_SAFTdV()

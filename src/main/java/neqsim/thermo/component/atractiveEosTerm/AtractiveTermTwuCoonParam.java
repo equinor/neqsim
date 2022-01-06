@@ -83,14 +83,14 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
     // d = 1.0-1.0/d;
     // return Math.pow(Math.exp(c*(1.0-Math.pow(temperature/component.getTC(),1.0*d))),2.0);
     // }
-    //
+
     // private double diffalphaCritT(double temperature){
     // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
     // d = 1.0-1.0/d;
     // return
     // -2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/component.getTC(),1.0*d))),2.0)*c*Math.pow(temperature/component.getTC(),1.0*d)*d/temperature;
     // }
-    //
+
     // private double diffdiffalphaCritT(double temperature){
     // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
     // d = 1-1.0/d;

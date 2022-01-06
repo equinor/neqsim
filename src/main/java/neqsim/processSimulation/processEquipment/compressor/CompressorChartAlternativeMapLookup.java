@@ -22,6 +22,8 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class CompressorChartAlternativeMapLookup
         implements CompressorChartInterface, java.io.Serializable {
+    private static final long serialVersionUID = 1000;
+
     static Logger logger = LogManager.getLogger(CompressorChart.class);
     ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
     ArrayList<Double> chartSpeeds = new ArrayList<Double>();
@@ -173,11 +175,6 @@ public class CompressorChartAlternativeMapLookup
     public void addSurgeCurve(double[] flow, double[] head) {
         surgeCurve = new SurgeCurve(flow, head);
     }
-
-    // public double getPolytropicHead(double flow, double speed) {
-    // checkSurge1(flow, speed);
-    // return 100.0;
-    // }
 
     /**
      * <p>

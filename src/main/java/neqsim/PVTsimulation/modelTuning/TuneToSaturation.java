@@ -1,7 +1,6 @@
 package neqsim.PVTsimulation.modelTuning;
 
 import neqsim.PVTsimulation.simulation.SimulationInterface;
-import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
@@ -62,8 +61,7 @@ public class TuneToSaturation extends BaseTuningClass {
             iter++;
             dp = getSimulation().getThermoSystem().getPressure() - saturationPressure;
             plusMolarMass -= sign * dp / 1000.0;
-            getSimulation().setThermoSystem(
-                    (SystemInterface) getSimulation().getBaseThermoSystem().clone());
+            getSimulation().setThermoSystem(getSimulation().getBaseThermoSystem().clone());
             getSimulation().getThermoSystem().resetCharacterisation();
             getSimulation().getThermoSystem().createDatabase(true);
             getSimulation().getThermoSystem()

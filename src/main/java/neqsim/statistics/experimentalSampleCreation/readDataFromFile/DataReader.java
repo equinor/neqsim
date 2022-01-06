@@ -19,7 +19,7 @@ import java.util.StringTokenizer;
  */
 public class DataReader implements DataReaderInterface {
     protected String fileName;
-    protected ArrayList sampleObjectList = new ArrayList();
+    protected ArrayList<DataObject> sampleObjectList = new ArrayList<DataObject>();
 
     /**
      * <p>
@@ -77,9 +77,9 @@ public class DataReader implements DataReaderInterface {
      * Getter for the field <code>sampleObjectList</code>.
      * </p>
      *
-     * @return a {@link java.util.ArrayList} object
+     * @return a {@link java.util.ArrayList} of {@link DataObject}
      */
-    public ArrayList getSampleObjectList() {
+    public ArrayList<DataObject> getSampleObjectList() {
         return sampleObjectList;
     }
 

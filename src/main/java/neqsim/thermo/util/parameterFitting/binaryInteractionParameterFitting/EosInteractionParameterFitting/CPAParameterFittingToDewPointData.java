@@ -40,10 +40,6 @@ public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunctio
         // return system.getPhases()[1].getComponents()[0].getx(); // for MEG
     }
 
-    // public double calcTrueValue(double val){
-    // return val;
-    // }
-    //
     /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {

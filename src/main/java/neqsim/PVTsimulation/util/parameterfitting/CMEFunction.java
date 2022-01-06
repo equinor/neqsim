@@ -68,7 +68,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
                 plusNumber = i;
             }
         }
-        SystemInterface tempSystem = (SystemInterface) system.clone();
+        SystemInterface tempSystem = system.clone();
         tempSystem.resetCharacterisation();
         tempSystem.createDatabase(true);
         tempSystem.setMixingRule(system.getMixingRule());

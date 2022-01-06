@@ -13,7 +13,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>AnnularFlow class.</p>
+ * <p>
+ * AnnularFlow class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -24,17 +26,22 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     // double liquidFilmThickness=0;
 
     /**
-     * <p>Constructor for AnnularFlow.</p>
+     * <p>
+     * Constructor for AnnularFlow.
+     * </p>
      */
     public AnnularFlow() {
         this.flowNodeType = "annular";
     }
 
     /**
-     * <p>Constructor for AnnularFlow.</p>
+     * <p>
+     * Constructor for AnnularFlow.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
      */
     public AnnularFlow(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -46,11 +53,14 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>Constructor for AnnularFlow.</p>
+     * <p>
+     * Constructor for AnnularFlow.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
      */
     public AnnularFlow(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
@@ -96,7 +106,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     /** {@inheritDoc} */
     @Override
     public FlowNodeInterface getNextNode() {
-        AnnularFlow newNode = (AnnularFlow) this.clone();
+        AnnularFlow newNode = this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
             // newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);
@@ -106,7 +116,9 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

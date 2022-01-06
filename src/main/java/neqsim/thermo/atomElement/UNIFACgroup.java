@@ -14,7 +14,25 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable {
+public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<UNIFACgroup> {
+    private static final long serialVersionUID = 1000;
+    double R = 0.0;
+    double Q = 0.0;
+    int n = 0;
+    double xComp = 0.0;
+    double QComp = 0.0, QMix = 0.0;
+    public double[] QMixdN = null;// , xMixdN = null;
+    double[] lnGammaMixdn = new double[MAX_NUMBER_OF_COMPONENTS];
+    double lnGammaComp = 0.0, lnGammaMix = 0.0;
+    double lnGammaCompdT = 0.0, lnGammaMixdT = 0.0;
+    private double lnGammaCompdTdT = 0.0;
+    private double lnGammaMixdTdT = 0.0;
+    int groupIndex = 0;
+    String groupName = "";
+    int mainGroup = 0;
+    int subGroup = 0;
+    static Logger logger = LogManager.getLogger(UNIFACgroup.class);
+
     /**
      * <p>
      * getQMixdN.
@@ -36,24 +54,6 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     public void setQMixdN(double[] QMixdN) {
         this.QMixdN = QMixdN;
     }
-
-    private static final long serialVersionUID = 1000;
-    double R = 0.0;
-    double Q = 0.0;
-    int n = 0;
-    double xComp = 0.0;
-    double QComp = 0.0, QMix = 0.0;
-    public double[] QMixdN = null;// , xMixdN = null;
-    double[] lnGammaMixdn = new double[MAX_NUMBER_OF_COMPONENTS];
-    double lnGammaComp = 0.0, lnGammaMix = 0.0;
-    double lnGammaCompdT = 0.0, lnGammaMixdT = 0.0;
-    private double lnGammaCompdTdT = 0.0;
-    private double lnGammaMixdTdT = 0.0;
-    int groupIndex = 0;
-    String groupName = "";
-    int mainGroup = 0;
-    int subGroup = 0;
-    static Logger logger = LogManager.getLogger(UNIFACgroup.class);
 
     /**
      * <p>
@@ -213,49 +213,25 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
         this.groupName = groupName;
     }
 
-    /**
-     * {@inheritDoc} Compares this object with the specified object for order. Returns a negative
-     * integer, zero, or a positive integer as this object is less than, equal to, or greater than
-     * the specified object. In the foregoing description, the notation
-     * <code>sgn(</code><i>expression</i><code>)</code> designates the mathematical <i>signum</i>
-     * function, which is defined to return one of <code>-1</code>, <code>0</code>, or
-     * <code>1</code> according to whether the value of <i>expression</i> is negative, zero or
-     * positive.
-     *
-     * The implementor must ensure <code>sgn(x.compareTo(y)) ==
-     * -sgn(y.compareTo(x))</code> for all <code>x</code> and <code>y</code>. (This implies that
-     * <code>x.compareTo(y)</code> must throw an exception iff <code>y.compareTo(x)</code> throws an
-     * exception.)
-     *
-     * The implementor must also ensure that the relation is transitive:
-     * <code>(x.compareTo(y)&gt;0 &amp;&amp; y.compareTo(z)&gt;0)</code> implies
-     * <code>x.compareTo(z)&gt;0</code>.
-     *
-     * Finally, the implementer must ensure that <code>x.compareTo(y)==0</code> implies that
-     * <code>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</code>, for all <code>z</code>.
-     *
-     * It is strongly recommended, but <i>not</i> strictly required that
-     * <code>(x.compareTo(y)==0) == (x.equals(y))</code>. Generally speaking, any class that
-     * implements the <code>Comparable</code> interface and violates this condition should clearly
-     * indicate this fact. The recommended language is "Note: this class has a natural ordering that
-     * is inconsistent with equals."
-     */
-    @Override
-    public boolean equals(Object o) {
-        return ((UNIFACgroup) o).getSubGroup() == getSubGroup();
-    }
-
     /** {@inheritDoc} */
     @Override
-    public int compareTo(java.lang.Object o) {
-        if (((UNIFACgroup) o).getSubGroup() < getSubGroup()) {
+    public int compareTo(UNIFACgroup o) {
+        if (o.getSubGroup() < getSubGroup()) {
             return 1;
-        } else if (((UNIFACgroup) o).getSubGroup() == getSubGroup()) {
+        } else if (o.getSubGroup() == getSubGroup()) {
             return 0;
         } else {
             return -1;
         }
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        return ((UNIFACgroup) o).getSubGroup() == getSubGroup();
+    }
+
+    // TODO: generate hashcode from eclipse
 
     /**
      * Getter for property xComp.

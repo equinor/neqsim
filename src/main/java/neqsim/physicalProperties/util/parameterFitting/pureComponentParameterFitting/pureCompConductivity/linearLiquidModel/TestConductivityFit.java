@@ -54,7 +54,7 @@ public class TestConductivityFit {
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(2);
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; 
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(Double.parseDouble(dataSet.getString("Conductivity")),
                                 Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
@@ -69,8 +69,7 @@ public class TestConductivityFit {
 
         double sample1[] = {0.1};
         for (int i = 0; i < sampleList.size(); i++) {
-            logger.info(
-                    "ans: " + ((SampleValue) sampleList.get(i)).getFunction().calcValue(sample1));
+            logger.info("ans: " + (sampleList.get(i)).getFunction().calcValue(sample1));
         }
 
         SampleSet sampleSet = new SampleSet(sampleList);

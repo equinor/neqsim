@@ -51,7 +51,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
      */
     public Heater(StreamInterface inStream) {
         this.inStream = inStream;
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         outStream = new Stream(system);
     }
 
@@ -67,7 +67,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     public Heater(String name, StreamInterface inStream) {
         super(name);
         this.inStream = inStream;
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         outStream = new Stream(system);
     }
 
@@ -154,7 +154,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     /** {@inheritDoc} */
     @Override
     public void run() {
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         system.init(3);
         double oldH = system.getEnthalpy();
         if (isSetEnergyStream()) {
@@ -170,7 +170,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
             getOutStream().setFlowRate(getInStream().getFlowRate("kg/sec"), "kg/sec");
             getOutStream().run();
             temperatureOut = getOutStream().getTemperature();
-            system = (SystemInterface) getOutStream().getThermoSystem().clone();
+            system = getOutStream().getThermoSystem().clone();
         } else if (setTemperature) {
             system.setTemperature(temperatureOut, temperatureUnit);
             testOps.TPflash();

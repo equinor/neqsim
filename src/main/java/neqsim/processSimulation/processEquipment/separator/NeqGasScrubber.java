@@ -77,11 +77,11 @@ public class NeqGasScrubber extends Separator {
     public void setInletStream(Stream inletStream) {
         this.inletStream = inletStream;
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
         gasOutStream = new Stream(gasSystem);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         liquidOutStream = new Stream(liquidSystem);
     }
@@ -124,12 +124,12 @@ public class NeqGasScrubber extends Separator {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
         gasSystem.setNumberOfPhases(1);
         gasOutStream.setThermoSystem(gasSystem);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         liquidSystem.setNumberOfPhases(1);
         liquidOutStream.setThermoSystem(liquidSystem);

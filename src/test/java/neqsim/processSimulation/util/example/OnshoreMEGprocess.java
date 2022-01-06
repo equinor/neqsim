@@ -19,7 +19,9 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>OnshoreMEGprocess class.</p>
+ * <p>
+ * OnshoreMEGprocess class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -27,7 +29,9 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  */
 public class OnshoreMEGprocess {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -70,8 +74,7 @@ public class OnshoreMEGprocess {
                 new Compressor("Compressor 1 - second stage", interstageGasCooler.getOutStream());
         inletCompressor2ndstage.setOutletPressure(105.0, "bara");
 
-        neqsim.thermo.system.SystemInterface feedMEG =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface feedMEG = feedGas.clone();
         feedMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6});
 
         Stream MEGFeed = new Stream("lean MEG to header", feedMEG);
@@ -191,8 +194,7 @@ public class OnshoreMEGprocess {
         Stream leanMEGtoMixer = new Stream(coolerHotMEG2.getOutStream());
         leanMEGtoMixer.setName("lean MEG to makeup mixer");
 
-        neqsim.thermo.system.SystemInterface pureMEG =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface pureMEG = feedGas.clone();
         pureMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
         Stream makeupMEG = new Stream("makeup MEG", pureMEG);

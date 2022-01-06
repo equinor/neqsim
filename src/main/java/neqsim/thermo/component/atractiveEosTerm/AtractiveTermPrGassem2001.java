@@ -86,7 +86,7 @@ public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
     @Override
     public double diffdiffalphaT(double temperature) {
         // not implemented dubble derivative
-        //
+
         return m * m / temperature / getComponent().getTC() / 2.0
                 + (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
                         / Math.sqrt(temperature * temperature * temperature

@@ -79,7 +79,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         // Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
         // totalMassTransferCoefficientMatrix[1] = new
         // Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
-        // interphaseSystem = (SystemInterface) bulkSystem.clone();
+        // interphaseSystem = bulkSystem.clone();
         // molFractionDifference = new
         // double[2][getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1];
     }

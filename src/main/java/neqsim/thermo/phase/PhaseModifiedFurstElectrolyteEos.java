@@ -452,7 +452,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
 
     // public double calcShieldingParameter2(){
     // if(phaseType==1) return 0.0;
-    //
+
     // double df=0, f=0;
     // int ions=0;
     // int iterations=0;

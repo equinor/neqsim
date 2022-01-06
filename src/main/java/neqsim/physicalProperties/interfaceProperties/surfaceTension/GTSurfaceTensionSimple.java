@@ -67,7 +67,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
      */
     @Override
     public double calcSurfaceTension(int interface1, int interface2) {
-        localSystem = (SystemInterface) system.clone();
+        localSystem = system.clone();
 
         double surdenstemp = 0.0;
         int referenceComponentNumber = getComponentWithHighestBoilingpoint();// 2;//localSystem.getPhase(0).getNumberOfComponents()

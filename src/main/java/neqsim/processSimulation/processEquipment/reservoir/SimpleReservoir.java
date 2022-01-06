@@ -170,7 +170,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * @return a double
      */
     public double getGasInPlace(String unit) {
-        SystemInterface locStream = (SystemInterface) (thermoSystem).clone();
+        SystemInterface locStream = (thermoSystem).clone();
         locStream.setTemperature(288.15);
         locStream.setPressure(1.01325);
         ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
@@ -195,7 +195,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * @return a double
      */
     public double getOilInPlace(String unit) {
-        SystemInterface locStream = (SystemInterface) (thermoSystem).clone();
+        SystemInterface locStream = (thermoSystem).clone();
         locStream.setTemperature(288.15);
         locStream.setPressure(1.01325);
         ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
@@ -272,7 +272,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         ops.TPflash();
 
         // thermoSystem.display();
-        SystemInterface thermoSystem2 = (SystemInterface) thermoSystem.clone();
+        SystemInterface thermoSystem2 = thermoSystem.clone();
 
         thermoSystem.removeMoles();// (1.0e-10);
         // thermoSystem.init(1);

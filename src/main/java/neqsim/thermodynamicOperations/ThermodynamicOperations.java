@@ -140,7 +140,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         double flowRate = system.getTotalNumberOfMoles();
         double minimumFlowRate = 1e-50;
         if (flowRate < 1e-3) {
-        	system.setTotalNumberOfMoles(1.0);
+            system.setTotalNumberOfMoles(1.0);
         }
         operation = new neqsim.thermodynamicOperations.flashOps.TPflash(system,
                 system.doSolidPhaseCheck());
@@ -948,7 +948,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         double[] hydTemps = new double[temperature.length];
         SystemInterface systemTemp;
         ThermodynamicOperations opsTemp;
-        systemTemp = (SystemInterface) system.clone();
+        systemTemp = system.clone();
 
         for (int i = 0; i < temperature.length; i++) {
             /*

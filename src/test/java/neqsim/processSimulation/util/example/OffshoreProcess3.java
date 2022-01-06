@@ -11,7 +11,6 @@ import neqsim.processSimulation.processEquipment.util.MoleFractionControllerUtil
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -68,7 +67,7 @@ public class OffshoreProcess3 {
                 new ThrottlingValve("inlet choke valve", inletTempControl.getOutStream());
         valve.setOutletPressure(35.21);
 
-        Stream oilToInletSep = new Stream((SystemInterface) fluid3.clone());
+        Stream oilToInletSep = new Stream(fluid3.clone());
         oilToInletSep.setFlowRate(1e-10, "kg/hr");
         ThreePhaseSeparator inletSeparator =
                 new ThreePhaseSeparator("1st stage separator", valve.getOutStream());
@@ -97,7 +96,7 @@ public class OffshoreProcess3 {
         Stream gasFromWaterTreatment = new Stream(waterStabSep.getGasOutStream());
         gasFromWaterTreatment.setName("gas from water treatment");
 
-        Stream oilToSep = new Stream((SystemInterface) fluid3.clone());
+        Stream oilToSep = new Stream(fluid3.clone());
         oilToSep.setFlowRate(1e-10, "kg/hr");
 
         ThreePhaseSeparator mpseparator =
@@ -123,8 +122,7 @@ public class OffshoreProcess3 {
         lpgasheater.setName("1st stage gas cooler");
         lpgasheater.setOutTemperature(35.0, "C");
 
-        neqsim.thermo.system.SystemInterface coolingWaterSYstm =
-                (neqsim.thermo.system.SystemInterface) fluid3.clone();
+        neqsim.thermo.system.SystemInterface coolingWaterSYstm = fluid3.clone();
         // coolingWaterSYstm.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0,
         // 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
         coolingWaterSYstm.removeMoles();

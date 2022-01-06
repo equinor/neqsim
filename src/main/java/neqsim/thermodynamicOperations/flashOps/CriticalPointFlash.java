@@ -34,7 +34,7 @@ public class CriticalPointFlash extends Flash {
      */
     public CriticalPointFlash(SystemInterface system) {
         this.system = system;
-        // clonedsystem = (SystemInterface) system.clone();
+        // clonedsystem = system.clone();
         numberOfComponents = system.getPhase(0).getNumberOfComponents();
         Mmatrix = new SimpleMatrix(numberOfComponents, numberOfComponents);
         Nmatrix = new SimpleMatrix(numberOfComponents, numberOfComponents);

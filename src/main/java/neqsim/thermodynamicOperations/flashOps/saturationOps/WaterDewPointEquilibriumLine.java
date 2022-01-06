@@ -36,7 +36,7 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        SystemInterface system = (SystemInterface) this.system.clone();
+        SystemInterface system = this.system.clone();
         hydratePoints = new double[2][numberOfPoints];
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
 

@@ -28,7 +28,6 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         m = component.getAcentricFactor();
     }
 
-    /** {@inheritDoc} */
     // public AtractiveTermTwuCoon(ComponentEosInterface component, double[] params) {
     // this(component);
     // System.arraycopy(params,0,this.parameters,0,params.length);

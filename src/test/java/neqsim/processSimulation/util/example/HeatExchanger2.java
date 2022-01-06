@@ -5,11 +5,12 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>HeatExchanger2 class.</p>
+ * <p>
+ * HeatExchanger2 class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -33,7 +34,7 @@ public class HeatExchanger2 {
         testOps.TPflash();
 
         Stream stream_Hot = new Stream("Stream1", testSystem);
-        Stream stream_Cold = new Stream("Stream1", (SystemInterface) testSystem.clone());
+        Stream stream_Cold = new Stream("Stream1", testSystem.clone());
 
         HeatExchanger heatEx = new HeatExchanger();
         heatEx.setFeedStream(0, stream_Hot);

@@ -69,7 +69,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
 
         // Setup local system clone and some parameters.
         this.yscale = yscale;
-        this.sys = (SystemInterface) flashedSystem.clone();
+        this.sys = flashedSystem.clone();
         this.refcomp = referenceComponent;
         this.ncomp = this.sys.getPhase(0).getNumberOfComponents();
         this.t = this.sys.getPhase(0).getTemperature();

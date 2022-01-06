@@ -257,21 +257,21 @@ public class TPmultiflash extends TPflash {
         // SystemInterface minimumGibbsEnergySystem;
         ArrayList<SystemInterface> clonedSystem = new ArrayList<SystemInterface>(1);
         // if (minimumGibbsEnergySystem == null) {
-        // minimumGibbsEnergySystem = (SystemInterface) system.clone();
+        // minimumGibbsEnergySystem = system.clone();
         // }
         minimumGibbsEnergySystem = system;
-        clonedSystem.add((SystemInterface) system.clone());
+        clonedSystem.add(system.clone());
         /*
          * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
          * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue;
          * } double numb = 0; clonedSystem.add(system.clone());
          * 
-         * // ((SystemInterface)clonedSystem.get(i)).init(0); commented out sept 2005, Even S. for
-         * (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) { numb = i == j ? 1.0 :
-         * 1.0e-12; // set to 0 by Even Solbraa 23.01.2013 - chaged back to 1.0e-12 27.04.13 if
-         * (system.getPhase(0).getComponent(j).getz() < 1e-100) { numb = 0; } ((SystemInterface)
+         * // (clonedSystem.get(i)).init(0); commented out sept 2005, Even S. for (int j = 0; j <
+         * system.getPhase(0).getNumberOfComponents(); j++) { numb = i == j ? 1.0 : 1.0e-12; // set
+         * to 0 by Even Solbraa 23.01.2013 - chaged back to 1.0e-12 27.04.13 if
+         * (system.getPhase(0).getComponent(j).getz() < 1e-100) { numb = 0; } (
          * clonedSystem.get(i)).getPhase(1).getComponents()[j].setx(numb); } if
-         * (system.getPhase(0).getComponent(i).getIonicCharge() == 0) { ((SystemInterface)
+         * (system.getPhase(0).getComponent(i).getIonicCharge() == 0) { (
          * clonedSystem.get(i)).init(1); } }
          */
 
@@ -279,18 +279,16 @@ public class TPmultiflash extends TPflash {
         /*
          * // logger.info("low gibbs phase " + lowestGibbsEnergyPhase); for (int k = 0; k <
          * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for (int i = 0; i <
-         * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if
-         * (!(((SystemInterface) clonedSystem.get(k)) == null)) { sumw[k] += ((SystemInterface)
+         * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
+         * clonedSystem.get(k)) == null)) { sumw[k] += (
          * clonedSystem.get(k)).getPhase(1).getComponents()[i].getx(); } } }
          * 
          * for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
          * for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
-         * if (!(((SystemInterface) clonedSystem.get(k)) == null) &&
-         * system.getPhase(0).getComponent(k).getx() > 1e-100) { ((SystemInterface)
-         * clonedSystem.get(k)).getPhase(1).getComponents()[i].setx(((SystemInterface)
+         * if (!(( clonedSystem.get(k)) == null) && system.getPhase(0).getComponent(k).getx() >
+         * 1e-100) { ( clonedSystem.get(k)).getPhase(1).getComponents()[i].setx((
          * clonedSystem.get(k)).getPhase(1).getComponents()[i].getx() / sumw[0]); }
-         * logger.info("x: " + ((SystemInterface)
-         * clonedSystem.get(k)).getPhase(0).getComponents()[i].getx()); } if
+         * logger.info("x: " + ( clonedSystem.get(k)).getPhase(0).getComponents()[i].getx()); } if
          * (system.getPhase(0).getComponent(k).getx() > 1e-100) { d[k] =
          * Math.log(system.getPhase(0).getComponents()[k].getx()) +
          * system.getPhase(0).getComponents()[k].getLogFugasityCoeffisient();
@@ -595,7 +593,7 @@ public class TPmultiflash extends TPflash {
         // SystemInterface minimumGibbsEnergySystem;
         ArrayList<SystemInterface> clonedSystem = new ArrayList<SystemInterface>(1);
         // if (minimumGibbsEnergySystem == null) {
-        // minimumGibbsEnergySystem = (SystemInterface) system.clone();
+        // minimumGibbsEnergySystem = system.clone();
         // }
         minimumGibbsEnergySystem = system;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -604,8 +602,8 @@ public class TPmultiflash extends TPflash {
                 continue;
             }
             double numb = 0;
-            clonedSystem.add((SystemInterface) system.clone());
-            // ((SystemInterface)clonedSystem.get(i)).init(0); commented out sept 2005, Even
+            clonedSystem.add(system.clone());
+            // (clonedSystem.get(i)).init(0); commented out sept 2005, Even
             // S.
             for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
                 numb = i == j ? 1.0 : 1.0e-12; // set to 0 by Even Solbraa 23.01.2013 - chaged back
@@ -613,10 +611,10 @@ public class TPmultiflash extends TPflash {
                 if (system.getPhase(0).getComponent(j).getz() < 1e-100) {
                     numb = 0;
                 }
-                ((SystemInterface) clonedSystem.get(i)).getPhase(1).getComponents()[j].setx(numb);
+                (clonedSystem.get(i)).getPhase(1).getComponents()[j].setx(numb);
             }
             if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-                ((SystemInterface) clonedSystem.get(i)).init(1);
+                (clonedSystem.get(i)).init(1);
             }
         }
 
@@ -625,23 +623,20 @@ public class TPmultiflash extends TPflash {
         // logger.info("low gibbs phase " + lowestGibbsEnergyPhase);
         for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
             for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
-                if (!(((SystemInterface) clonedSystem.get(k)) == null)) {
-                    sumw[k] +=
-                            ((SystemInterface) clonedSystem.get(k)).getPhase(1).getComponents()[i]
-                                    .getx();
+                if (!((clonedSystem.get(k)) == null)) {
+                    sumw[k] += (clonedSystem.get(k)).getPhase(1).getComponents()[i].getx();
                 }
             }
         }
 
         for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
             for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
-                if (!(((SystemInterface) clonedSystem.get(k)) == null)
+                if (!((clonedSystem.get(k)) == null)
                         && system.getPhase(0).getComponent(k).getx() > 1e-100) {
-                    ((SystemInterface) clonedSystem.get(k)).getPhase(1).getComponents()[i].setx(
-                            ((SystemInterface) clonedSystem.get(k)).getPhase(1).getComponents()[i]
-                                    .getx() / sumw[0]);
+                    (clonedSystem.get(k)).getPhase(1).getComponents()[i].setx(
+                            (clonedSystem.get(k)).getPhase(1).getComponents()[i].getx() / sumw[0]);
                 }
-                // logger.info("x: " + ((SystemInterface)
+                // logger.info("x: " + (
                 // clonedSystem.get(k)).getPhase(0).getComponents()[i].getx());
             }
             if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
@@ -738,16 +733,18 @@ public class TPmultiflash extends TPflash {
                             oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
                             oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
                         }
-                        ((SystemInterface) clonedSystem.get(j)).init(1, 1);
+                        (clonedSystem.get(j)).init(1, 1);
                         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                             // oldlogw[i] = logWi[i];
-                            if (!Double.isInfinite(((SystemInterface) clonedSystem.get(j))
-                                    .getPhase(1).getComponents()[i].getLogFugasityCoeffisient())
+                            if (!Double
+                                    .isInfinite((clonedSystem.get(j)).getPhase(1).getComponents()[i]
+                                            .getLogFugasityCoeffisient())
                                     && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-                                logWi[i] = d[i] - ((SystemInterface) clonedSystem.get(j))
-                                        .getPhase(1).getComponents()[i].getLogFugasityCoeffisient();
-                                if (((SystemInterface) clonedSystem.get(j)).getPhase(1)
-                                        .getComponents()[i].getIonicCharge() != 0) {
+                                logWi[i] =
+                                        d[i] - (clonedSystem.get(j)).getPhase(1).getComponents()[i]
+                                                .getLogFugasityCoeffisient();
+                                if ((clonedSystem.get(j)).getPhase(1).getComponents()[i]
+                                        .getIonicCharge() != 0) {
                                     logWi[i] = -1000.0;
                                 }
                             }
@@ -769,8 +766,8 @@ public class TPmultiflash extends TPflash {
                         oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
                         oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
                     }
-                    ((SystemInterface) clonedSystem.get(j)).init(3, 1);
-                    alpha = new double[((SystemInterface) clonedSystem.get(j)).getPhases()[0]
+                    (clonedSystem.get(j)).init(3, 1);
+                    alpha = new double[(clonedSystem.get(j)).getPhases()[0]
                             .getNumberOfComponents()];
                     df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
                             system.getPhases()[0].getNumberOfComponents());
@@ -780,27 +777,26 @@ public class TPmultiflash extends TPflash {
                     // secondOrderStabilityAnalysis = true;
                     // }
 
-                    for (int i = 0; i < ((SystemInterface) clonedSystem.get(j)).getPhases()[0]
+                    for (int i = 0; i < (clonedSystem.get(j)).getPhases()[0]
                             .getNumberOfComponents(); i++) {
                         alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
                     }
 
                     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                         if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                            f.set(i, 0,
-                                    Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
-                                            + ((SystemInterface) clonedSystem.get(j)).getPhases()[1]
-                                                    .getComponents()[i].getLogFugasityCoeffisient()
-                                            - d[i]));
+                            f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
+                                    + (clonedSystem.get(j)).getPhases()[1].getComponents()[i]
+                                            .getLogFugasityCoeffisient()
+                                    - d[i]));
                         }
-                        for (int k = 0; k < ((SystemInterface) clonedSystem.get(j)).getPhases()[0]
+                        for (int k = 0; k < (clonedSystem.get(j)).getPhases()[0]
                                 .getNumberOfComponents(); k++) {
                             double kronDelt = (i == k) ? 1.0 : 0.0;
                             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
                                 df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
-                                        * ((SystemInterface) clonedSystem.get(j)).getPhases()[1]
-                                                .getComponents()[i].getdfugdn(k));// *
-                                                                                  // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                                        * (clonedSystem.get(j)).getPhases()[1].getComponents()[i]
+                                                .getdfugdn(k));// *
+                                                               // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
                             } else {
                                 df.set(i, k, 0);// *
                                                 // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
@@ -835,12 +831,11 @@ public class TPmultiflash extends TPflash {
 
                 for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                     if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
-                        ((SystemInterface) clonedSystem.get(j)).getPhase(1).getComponents()[i]
+                        (clonedSystem.get(j)).getPhase(1).getComponents()[i]
                                 .setx(Math.exp(logWi[i]) / sumw[j]);
                     }
                     if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
-                        ((SystemInterface) clonedSystem.get(j)).getPhase(1).getComponents()[i]
-                                .setx(1e-50);
+                        (clonedSystem.get(j)).getPhase(1).getComponents()[i].setx(1e-50);
                     }
                 }
             } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 200);
@@ -854,8 +849,7 @@ public class TPmultiflash extends TPflash {
                 if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
                     tm[j] -= Math.exp(logWi[i]);
                 }
-                x[j][i] = ((SystemInterface) clonedSystem.get(j)).getPhase(1).getComponents()[i]
-                        .getx();
+                x[j][i] = (clonedSystem.get(j)).getPhase(1).getComponents()[i].getx();
                 // logger.info("txji: " + x[j][i]);
 
                 xTrivialCheck0 += Math.abs(x[j][i] - system.getPhase(0).getComponent(i).getx());

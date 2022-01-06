@@ -182,8 +182,8 @@ public class LinearProgrammingChemicalEquilibrium
             minChanges--;
         }
         ComponentInterface tempComp;
-        tempComp = (ComponentInterface) components[minChanges - 1].clone();
-        components[minChanges - 1] = (ComponentInterface) components[changes].clone();
+        tempComp = components[minChanges - 1].clone();
+        components[minChanges - 1] = components[changes].clone();
         components[changes] = tempComp;
         changes++;
         // chemRefPot = operations.calcChemRefPot();
