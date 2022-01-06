@@ -45,7 +45,7 @@ import neqsim.util.database.NeqSimDataBase;
  */
 
 abstract class SystemThermo implements SystemInterface {
-    private static final long serialVersionUID = 1000;// implements System_Interface{
+    private static final long serialVersionUID = 1000;
     // Class variables
 
     private boolean implementedTemperatureDeriativesofFugacity = true;
@@ -5452,5 +5452,22 @@ abstract class SystemThermo implements SystemInterface {
     @Override
     public void setForcePhaseTypes(boolean forcePhaseTypes) {
         this.forcePhaseTypes = forcePhaseTypes;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        try {
+            SystemThermo sys = (SystemThermo) o;
+            return sys.getModelName().equals(this.getModelName());
+        } catch (Exception ex) {
+        }
+        return false;
     }
 }

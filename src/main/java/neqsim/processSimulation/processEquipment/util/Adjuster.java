@@ -300,4 +300,17 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     public void setActivateWhenLess(boolean activateWhenLess) {
         this.activateWhenLess = activateWhenLess;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

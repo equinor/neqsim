@@ -355,4 +355,17 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         return outStream.getThermoSystem().getEntropy(unit)
                 - inStream.getThermoSystem().getEntropy(unit);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

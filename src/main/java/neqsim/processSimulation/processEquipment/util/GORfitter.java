@@ -259,4 +259,17 @@ public class GORfitter extends ProcessEquipmentBaseClass {
     public void setGOR(double gOR) {
         this.GOR = gOR;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

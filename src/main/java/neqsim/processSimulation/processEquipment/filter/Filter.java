@@ -125,4 +125,17 @@ public class Filter extends ProcessEquipmentBaseClass {
     public void setCvFactor(double pressureCoef) {
         this.Cv = pressureCoef;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

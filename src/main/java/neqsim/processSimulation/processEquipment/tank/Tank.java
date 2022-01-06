@@ -419,4 +419,17 @@ public class Tank extends ProcessEquipmentBaseClass {
     public void setVolume(double volume) {
         this.volume = volume;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

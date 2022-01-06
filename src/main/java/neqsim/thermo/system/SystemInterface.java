@@ -2430,4 +2430,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      * @param propertyName a {@link java.lang.String} object
      */
     public void addCapeOpenProperty(String propertyName);
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o);
 }

@@ -91,4 +91,17 @@ public class Calculator extends ProcessEquipmentBaseClass {
     public void setOutputVariable(ProcessEquipmentInterface outputVariable) {
         this.outputVariable = outputVariable;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

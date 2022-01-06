@@ -27,11 +27,10 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ProcessSystem implements java.io.Serializable, Runnable {
+public class ProcessSystem implements java.io.Serializable, Runnable, Cloneable {
     private static final long serialVersionUID = 1000;
 
     Thread thisThread;
-    // ProcessEquipmentInterface[]
     String[][] signalDB = new String[100][100];
     private double time = 0;
     private double surroundingTemperature = 288.15;
@@ -879,12 +878,20 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
 
     /**
      * <p>
-     * copy.
+     * Create deep copy.
      * </p>
      *
      * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
      */
     public ProcessSystem copy() {
+        // TODO: Should be deprecated and replaced with clone?
+        return this.clone();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ProcessSystem clone() {
+        // TODO: should be shallow clone?
         byte[] bytes = SerializationUtils.serialize(this);
         ProcessSystem copyOperation = (ProcessSystem) SerializationUtils.deserialize(bytes);
         return copyOperation;
@@ -900,6 +907,28 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     public ConditionMonitor getConditionMonitor() {
         return new ConditionMonitor(this);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+
+        ProcessSystem sys = (ProcessSystem) o;
+
+        if (this.name.compareTo(sys.name) != 0) {
+            return false;
+        }
+
+        // TODO: add checks
+
+        return true;
+    }
+
     /*
      * @XmlRootElement private class Report extends Object{ public Double name; public
      * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();

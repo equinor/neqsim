@@ -468,4 +468,17 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     public StreamInterface getInStream() {
         return inStream;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

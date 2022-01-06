@@ -508,6 +508,7 @@ public class ComponentGeDuanSun extends ComponentGE {
         // }else
         return gamma;
     }
+
     /////////////////////////////////////////////////////
     /*
      * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double

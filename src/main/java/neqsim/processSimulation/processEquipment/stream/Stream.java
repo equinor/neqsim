@@ -514,4 +514,31 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public void setStream(StreamInterface stream) {
         this.stream = stream;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        try {
+            Stream s = (Stream) o;
+
+            if (!s.getThermoSystem().equals(this.getThermoSystem())) {
+                return false;
+            }
+
+            if (!s.properties.equals(this.properties)) {
+                return false;
+            }
+
+            return true;
+        } catch (Exception ex) {
+        }
+
+        return false;
+    }
 }

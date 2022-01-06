@@ -216,4 +216,17 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     public void setHeat(double heat) {
         this.heat = heat;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

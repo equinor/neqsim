@@ -11,7 +11,9 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
- * <p>WellFluidModule class.</p>
+ * <p>
+ * WellFluidModule class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -192,7 +194,9 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -239,5 +243,18 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         // ((Recycle) operations.getUnit("Resycle")).setTolerance(1e-9);
 
         operations.run();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        // TODO Auto-generated method stub
+        return false;
     }
 }
