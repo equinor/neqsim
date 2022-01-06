@@ -401,7 +401,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
         ops.setRunAsThread(true);
         ops.calcPTphaseEnvelope(true);
-        boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
+        ops.waitAndCheckForFinishedCalculation(10000);
         ops.displayResult();
         // ops.getJfreeChart();
     }
@@ -413,7 +413,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
         ops.setRunAsThread(true);
         ops.calcPTphaseEnvelope(true);
-        boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
+        ops.waitAndCheckForFinishedCalculation(10000);
         if (unit.equals("bara") || unit.equals("bar")) {
             return ops.get("cricondenbar")[1];
         } else {
@@ -433,7 +433,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
         ops.setRunAsThread(true);
         ops.calcPTphaseEnvelope(true);
-        boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
+        ops.waitAndCheckForFinishedCalculation(10000);
         if (unit.equals("bara") || unit.equals("bar")) {
             return ops.get("cricondentherm")[1];
         } else {
@@ -455,7 +455,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         try {
             ops.bubblePointPressureFlash(false);
         } catch (Exception e) {
-            String error = e.getMessage();
         }
         return localSyst.getPressure(unit);
     }

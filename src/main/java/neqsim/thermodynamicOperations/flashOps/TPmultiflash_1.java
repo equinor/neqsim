@@ -151,7 +151,7 @@ public class TPmultiflash_1 extends TPflash {
      */
     public void solveBeta() {
         double oldBeta[] = new double[system.getNumberOfPhases()];
-        double newBeta[] = new double[system.getNumberOfPhases()];
+        // double newBeta[] = new double[system.getNumberOfPhases()];
 
         Matrix ans;
         int iter = 1;
@@ -195,7 +195,8 @@ public class TPmultiflash_1 extends TPflash {
         double[][] Wi = new double[system.getPhases()[1]
                 .getNumberOfComponents()][system.getPhases()[0].getNumberOfComponents()];
         double[] sumw = new double[system.getPhases()[1].getNumberOfComponents()];
-        double sumz = 0, err = 0;
+        // double sumz = 0;
+        double err = 0;
         double[] oldlogw = new double[system.getPhases()[1].getNumberOfComponents()];
         double[] d = new double[system.getPhases()[1].getNumberOfComponents()];
         double[][] x = new double[system.getPhases()[1]
@@ -222,7 +223,7 @@ public class TPmultiflash_1 extends TPflash {
         // logger.info("low gibbs phase " + lowestGibbsEnergyPhase);
 
         for (int k = 0; k < minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents(); k++) {
-            sumz += minimumGibbsEnergySystem.getPhases()[1].getComponents()[k].getz();
+            // sumz += minimumGibbsEnergySystem.getPhases()[1].getComponents()[k].getz();
             for (int i = 0; i < minimumGibbsEnergySystem.getPhases()[1]
                     .getNumberOfComponents(); i++) {
                 sumw[k] += (clonedSystem.get(k)).getPhases()[1].getComponents()[i].getx();

@@ -65,9 +65,10 @@ public class PHflashSingleComp extends Flash {
                 / system.getPhase(0).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();
         double liqEnthalpy = system.getPhase(1).getEnthalpy()
                 / system.getPhase(1).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();
-        double solidEnthalpy = 0.0;
 
         /*
+         * double solidEnthalpy = 0.0;
+         * 
          * if (system.doSolidPhaseCheck()) { system.init(3, 3); solidEnthalpy =
          * system.getPhases()[3].getEnthalpy() / system.getPhases()[3].getNumberOfMolesInPhase()
          * system.getTotalNumberOfMoles();

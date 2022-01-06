@@ -218,9 +218,10 @@ public class Tank extends ProcessEquipmentBaseClass {
         inletStreamMixer.run();
 
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-        double inMoles = inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
-        double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
-        double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
+        // double inMoles =
+        // inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
+        // double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
+        // double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
         thermoSystem.init(3);
         gasOutStream.getThermoSystem().init(3);
         liquidOutStream.getThermoSystem().init(3);

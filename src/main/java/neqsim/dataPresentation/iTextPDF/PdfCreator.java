@@ -64,7 +64,7 @@ public class PdfCreator {
      */
     public void generatePDF(neqsim.thermo.system.SystemInterface thermoSystem) {
         document.addTitle("NeqSim Simulation Report");
-        String temp = "Temperature " + Double.toString(thermoSystem.getTemperature());
+        // String temp = "Temperature " + Double.toString(thermoSystem.getTemperature());
     }
 
     /**

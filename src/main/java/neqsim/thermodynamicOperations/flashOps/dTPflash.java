@@ -47,16 +47,16 @@ public class dTPflash extends TPflash {
     public void run() {
         iterations = 0;
         double diff = 0.0;
-        double fracdiff = 0.0;
+        // double fracdiff = 0.0;
 
         // system.setBeta(0.5);
         do {
             diff = 0.0;
-            fracdiff = 0.0;
+            // fracdiff = 0.0;
             iterations++;
             system.init(1);
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                boolean hasgot = false;
+                // boolean hasgot = false;
                 for (int j = 0; j < flashComp.length; j++) {
                     if (flashComp[j].equals(system.getPhase(0).getComponent(i).getName())) {
                         diff += Math.abs((system.getPhase(1).getComponent(i).getx()
@@ -76,9 +76,11 @@ public class dTPflash extends TPflash {
                                                 * system.getPhase(1).getComponent(i)
                                                         .getFugasityCoefficient()
                                                 * system.getPhase(1).getPressure()));
-                        fracdiff += system.getPhase(1).getComponent(i).getz()
-                                - system.getPhase(1).getComponent(i).getx();
-                        hasgot = true;
+
+                        // fracdiff += system.getPhase(1).getComponent(i).getz() -
+                        // system.getPhase(1).getComponent(i).getx();
+
+                        // hasgot = true;
                         // logger.info("x " + system.getPhase(1).getComponent(i).getx());
                     }
                 }

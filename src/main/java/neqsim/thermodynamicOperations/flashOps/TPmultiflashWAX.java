@@ -167,7 +167,7 @@ public class TPmultiflashWAX extends TPflash {
      */
     public void solveBeta(boolean updateFugacities) {
         double oldBeta[] = new double[system.getNumberOfPhases()];
-        double newBeta[] = new double[system.getNumberOfPhases()];
+        // double newBeta[] = new double[system.getNumberOfPhases()];
 
         Matrix ans = new Matrix(system.getNumberOfPhases() - 1, 1);
 

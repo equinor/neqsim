@@ -98,31 +98,20 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
                     M[i] = Double.parseDouble(dataSet.getString("MolarMass"));
                 } catch (Exception e) {
                     try {
-                        dataSet.close();
-                        if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                .equals("inert")) {
-                            dataSet = database.getResultSet(
-                                    ("SELECT * FROM iso6976constants WHERE ComponentName='nitrogen'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                .equals("HC")) {
-                            dataSet = database.getResultSet(
-                                    ("SELECT * FROM iso6976constants WHERE ComponentName='n-heptane'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                .equals("alcohol")
-                                || this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                        .equals("glycol")) {
-                            dataSet = database.getResultSet(
-                                    ("SELECT * FROM iso6976constants WHERE ComponentName='methanol'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                .equals("TPB")
-                                || this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                        .equals("plus")) {
-                            dataSet = database.getResultSet(
-                                    ("SELECT * FROM iso6976constants WHERE ComponentName='n-heptane'"));
-                        } else {
-                            dataSet = database.getResultSet(
-                                    ("SELECT * FROM iso6976constants WHERE ComponentName='nitrogen'"));
+                        String compName = "inert";
+                        String compType =
+                                this.thermoSystem.getPhase(0).getComponent(i).getComponentType();
+                        if (compType.equals("HC") || compType.equals("TPB")
+                                || compType.equals("plus")) {
+                            compName = "n-heptane";
+                        } else if (compType.equals("alcohol") || compType.equals("glycol")) {
+                            compName = "methanol";
                         }
+
+                        dataSet.close();
+                        dataSet = database.getResultSet(
+                                ("SELECT * FROM iso6976constants WHERE ComponentName='" + compName
+                                        + "'"));
                         M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
                         dataSet.next();
                     } catch (Exception er) {
@@ -132,6 +121,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
                             "this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
                     // logger.info("added component not specified by ISO6976 " +
                     // this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
+                } finally {
+                    dataSet.close();
                 }
 
                 carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));

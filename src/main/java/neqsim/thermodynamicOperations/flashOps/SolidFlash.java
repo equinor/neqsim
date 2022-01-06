@@ -211,7 +211,7 @@ public class SolidFlash extends TPflash {
      */
     public void solveBeta(boolean ideal) {
         double oldBeta[] = new double[system.getNumberOfPhases() - 1];
-        double newBeta[] = new double[system.getNumberOfPhases() - 1];
+        // double newBeta[] = new double[system.getNumberOfPhases() - 1];
         int iter = 0;
         Matrix ans = new Matrix(system.getNumberOfPhases() - 1, 1);
         do {
@@ -222,7 +222,7 @@ public class SolidFlash extends TPflash {
             calcQ();
 
             oldBeta = new double[system.getNumberOfPhases() - 1];
-            newBeta = new double[system.getNumberOfPhases() - 1];
+            // newBeta = new double[system.getNumberOfPhases() - 1];
             iter++;
             for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
                 oldBeta[k] = system.getBeta(k);
@@ -319,12 +319,12 @@ public class SolidFlash extends TPflash {
      */
     public void calcSolidBeta() {
         double tempVar = system.getPhase(0).getComponents()[solidComponent].getz();
-        double beta = 1.0;
+        // double beta = 1.0;
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
             tempVar -= system.getBeta(i)
                     * system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient()
                     / system.getPhase(i).getComponent(solidComponent).getFugasityCoeffisient();
-            beta -= system.getBeta(i);
+            // beta -= system.getBeta(i);
         }
         if (tempVar > 0 && tempVar < 1.0) {
             system.setBeta(system.getNumberOfPhases() - 1, tempVar);

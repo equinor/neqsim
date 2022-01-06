@@ -186,14 +186,14 @@ public class PhaseBWRSEos extends PhaseSrkEos {
      */
     public double getFpoldVdVdV() {
         double temp = 0.0, temp2 = 0.0;
-        double temp3 = 0.0, temp4 = 0.0;
+        // double temp3 = 0.0, temp4 = 0.0;
         for (int i = 1; i < OP; i++) {
             temp += (i - 2) * (i - 1) * (i) * ((ComponentBWRS) componentArray[0]).getBP(i)
                     / (i - 0.0) * Math.pow(getMolarDensity(), i - 3);
             temp2 += (i - 1) * (i) * ((ComponentBWRS) componentArray[0]).getBP(i) / (i - 0.0)
                     * Math.pow(getMolarDensity(), i - 2);
-            temp3 += (i) * ((ComponentBWRS) componentArray[0]).getBP(i) / (i - 0.0)
-                    * Math.pow(getMolarDensity(), i - 1);
+            // temp3 += (i) * ((ComponentBWRS) componentArray[0]).getBP(i) / (i - 0.0) *
+            // Math.pow(getMolarDensity(), i - 1);
         }
         return numberOfMolesInPhase / (R * temperature) * temp * Math.pow(getdRhodV(), 3)
                 + 2 * numberOfMolesInPhase / (R * temperature) * temp2 * Math.pow(getdRhodV(), 1)

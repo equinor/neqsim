@@ -51,7 +51,6 @@ public class LinearProgrammingChemicalEquilibrium
      */
     public LinearProgrammingChemicalEquilibrium() {}
 
-    @SuppressWarnings("unchecked")
     /**
      * <p>
      * Constructor for LinearProgrammingChemicalEquilibrium.

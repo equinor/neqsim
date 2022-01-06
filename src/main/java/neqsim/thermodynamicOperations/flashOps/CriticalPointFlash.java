@@ -183,13 +183,14 @@ public class CriticalPointFlash extends Flash {
             double detM, olddetM, ddetdT;
             double dT = 0.1;
             calcMmatrix();
-            int i = Mmatrix.eig().getNumberOfEigenvalues();
+            // int i = Mmatrix.eig().getNumberOfEigenvalues();
             SimpleMatrix eigenVector = Mmatrix.eig().getEigenVector(0);
             SimpleMatrix evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
             detM = Mmatrix.determinant();// evalMatrix.get(0, 0);
             int iter = 0;
             system.setTemperature(system.getTemperature() + dT);
-            double dTOld = 111110;
+
+            // double dTOld = 111110;
 
             do {
                 system.init(3);
@@ -201,7 +202,7 @@ public class CriticalPointFlash extends Flash {
                 evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
                 detM = Mmatrix.determinant();// evalMatrix.get(0, 0);
                 ddetdT = (detM - olddetM) / dT;
-                dTOld = dT;
+                // dTOld = dT;
                 dT = -detM / ddetdT;
                 if (Math.abs(dT) > 5.0) {
                     // dT = Math.signum(dT) * 5.0;

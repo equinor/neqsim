@@ -88,7 +88,7 @@ public class AbsorberMechanicalDesign extends MechanicalDesign {
         double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
 
         double materialsCost = 0.0;
-        double sepLength = 0.0;
+        // double sepLength = 0.0;
 
         double gasDensity = ((Separator) getProcessEquipment()).getGasOutStream().getThermoSystem()
                 .getPhase(0).getPhysicalProperties().getDensity();

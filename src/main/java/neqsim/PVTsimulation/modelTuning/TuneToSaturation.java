@@ -25,7 +25,7 @@ public class TuneToSaturation extends BaseTuningClass {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        double error = 1.0;
+        // double error = 1.0;
         double maxError = 0.01;
         int plusNumber = 0;
         double plusMolarMass = 0;

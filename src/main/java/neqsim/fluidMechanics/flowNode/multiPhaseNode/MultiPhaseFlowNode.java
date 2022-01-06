@@ -130,10 +130,10 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
                 phaseFraction[0] -= phaseFraction[0] / step;
             }
             phaseFraction[1] = 1.0 - phaseFraction[0];
-        } // while(Math.abs((f-fOld)/f)>1e-8 && iterations<10000);
-        while (Math.abs(f) > 1e-2 && iterations < 100);
+        } while (Math.abs(f) > 1e-2 && iterations < 100);
+        // while(Math.abs((f-fOld)/f)>1e-8 && iterations<10000);
 
-        if (iterations == 10000) {
+        if (iterations == 100) {
             System.out.println("error in void init calc");
         }
         this.init();

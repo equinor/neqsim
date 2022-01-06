@@ -147,7 +147,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
      * @return a boolean
      */
     public boolean checkFugasityCoeffisientsDn2() {
-        boolean test1 = false, test2 = false;
+        // boolean test1 = false, test2 = false;
         double temp1 = 0, temp2 = 0;
         double sum = 0;
 
@@ -185,7 +185,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
      * @return a boolean
      */
     public boolean checkFugasityCoeffisientsDP() {
-        boolean test1 = false, test2 = false;
+        // boolean test1 = false, test2 = false;
         double temp1 = 0, temp2 = 0;
         double sum = 0;
 
@@ -221,7 +221,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
      * @return a boolean
      */
     public boolean checkFugasityCoeffisientsDT() {
-        boolean test1 = false, test2 = false;
+        // boolean test1 = false, test2 = false;
         double temp1 = 0, temp2 = 0;
         double sum = 0;
 

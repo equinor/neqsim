@@ -5,7 +5,6 @@ import neqsim.processSimulation.mechanicalDesign.designStandards.MaterialPipeDes
 import neqsim.processSimulation.mechanicalDesign.designStandards.PipelineDesignStandard;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
-import neqsim.processSimulation.processEquipment.pipeline.Pipeline;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
@@ -58,17 +57,13 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
     @Override
     public void calcDesign() {
         super.calcDesign();
-
-        Pipeline pipeline = (Pipeline) getProcessEquipment();
-
-        double flow =
-                ((AdiabaticPipe) getProcessEquipment()).getOutStream().getThermoSystem().getVolume()
-                        / 1e5;
-
-        double innerArea = Math.PI * innerDiameter * innerDiameter / 4.0;
-
-        double gasVelocity = flow / innerArea;
-        double wallThickness = 0.0;
+        /*
+         * Pipeline pipeline = (Pipeline) getProcessEquipment(); double flow = ((AdiabaticPipe)
+         * getProcessEquipment()).getOutStream().getThermoSystem().getVolume() / 1e5;
+         * 
+         * double innerArea = Math.PI * innerDiameter * innerDiameter / 4.0; double gasVelocity =
+         * flow / innerArea; double wallThickness = 0.0;
+         */
 
         // ASME/ANSI Code B31.8
         if (designStandardCode.equals("ANSI/ASME Standard B31.8")) {

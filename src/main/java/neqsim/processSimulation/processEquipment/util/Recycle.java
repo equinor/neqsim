@@ -109,7 +109,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
      */
     public void mixStream() {
         int index = 0;
-        String compName = new String();
+        // String compName = new String();
 
         for (int k = 1; k < streams.size(); k++) {
             for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
@@ -118,7 +118,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
                 String componentName =
                         streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
                 // System.out.println("adding: " + componentName);
-                int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
+                // int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
 
                 double moles = streams.get(k).getThermoSystem().getPhase(0).getComponent(i)
                         .getNumberOfmoles();
@@ -131,8 +131,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
                         gotComponent = true;
                         index = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
                                 .getComponentNumber();
-                        compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
-                                .getComponentName();
+                        // compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
+                        // .getComponentName();
                     }
                 }
 
@@ -254,7 +254,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
             try {
                 enthalpy = calcMixStreamEnthalpy();
             } catch (Exception e) {
-                String error = e.getMessage();
+                // String error = e.getMessage();
                 return;
             }
             // System.out.println("temp guess " + guessTemperature());

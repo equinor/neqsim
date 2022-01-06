@@ -237,9 +237,10 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
     /** {@inheritDoc} */
     @Override
     public void solve() {
-        double d[];
+        // double d[];
         int iter = 0, iterTop = 0;
-        double maxDiff = 0, maxDiffOld = 0;
+        double maxDiff = 0;
+        // double maxDiffOld = 0;
         double diff = 0;
         xNew = new double[boundary.getNode(0).getBulkSystem().getPhases()[0]
                 .getNumberOfComponents()][boundary.getNumberOfNodes()];
@@ -251,7 +252,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
                 " vol " + boundary.getNode(2).getBulkSystem().getPhases()[0].getMolarVolume());
 
         do {
-            maxDiffOld = maxDiff;
+            // maxDiffOld = maxDiff;
             maxDiff = 0;
             iterTop++;
             iter = 0;
@@ -277,6 +278,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
             } while (diff > 1e-15 && iter < 100);
 
             System.out.println("maxDiff " + maxDiff);
-        } while (Math.abs(maxDiff) > 1e-10 && iterTop < 10);// diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
+        } while (Math.abs(maxDiff) > 1e-10 && iterTop < 10);
+        // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
     }
 }

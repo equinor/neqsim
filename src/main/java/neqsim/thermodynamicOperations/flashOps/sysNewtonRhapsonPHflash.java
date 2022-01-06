@@ -142,7 +142,7 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         double dij = 0.0;
 
         double tempJ = 0.0, sumdyidbeta = 0, sumdxidbeta = 0;
-        int nofc = numberOfComponents;
+        // int nofc = numberOfComponents;
 
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
@@ -247,7 +247,7 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
      * @return a int
      */
     public int solve(int np) {
-        Matrix dx;
+        // Matrix dx;
         iter = 1;
         do {
             iter++;

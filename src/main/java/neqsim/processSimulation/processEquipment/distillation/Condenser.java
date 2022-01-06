@@ -11,7 +11,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id: $Id
  */
-public class Condenser extends neqsim.processSimulation.processEquipment.distillation.SimpleTray {
+public class Condenser extends SimpleTray {
     private static final long serialVersionUID = 1000;
 
     private double refluxRatio = 0.1;

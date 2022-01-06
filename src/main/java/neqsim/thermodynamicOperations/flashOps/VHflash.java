@@ -38,19 +38,20 @@ public class VHflash extends Flash {
         this.pHFlash = new PHflash(system, Hspec, 0);
         this.Hspec = Hspec;
         this.Vspec = Vspec;
-        // System.out.println("entalpy " + Hspec);
+        // System.out.println("enthalpy " + Hspec);
         // System.out.println("volume " + Vspec);
     }
 
     /** {@inheritDoc} */
     @Override
     public void run() {
-        double oldVol = system.getVolume(), newVol = system.getVolume();
-        double pNew = system.getPressure(), pOld = system.getPressure(), pOldOld = 0.0;
+        // double oldVol = system.getVolume();
+        double newVol = system.getVolume();
+        // double pNew = system.getPressure(), pOld = system.getPressure(), pOldOld = 0.0;
         double err = 0.0;
         int iterations = 0;
-        // System.out.println("entalpy start " + system.getEnthalpy());
-        double dPdV = 0.0;
+        // System.out.println("enthalpy start " + system.getEnthalpy());
+        // double dPdV = 0.0;
         double wallHeat = 0.0;
         for (int i = 0; i < 1; i++) {
             wallHeat = 0 * i / 20.0 * 400.0 * 1295.0 * 1000.0 * (293.15 - system.getTemperature());
@@ -62,9 +63,9 @@ public class VHflash extends Flash {
                 this.pHFlash = new PHflash(system, Hspec + wallHeat, 0);
                 // System.out.println("Hspec " + Hspec);
                 this.pHFlash.run();
-                pOldOld = pOld;
-                pOld = system.getPressure();
-                oldVol = newVol;
+                // pOldOld = pOld;
+                // pOld = system.getPressure();
+                // oldVol = newVol;
                 newVol = system.getVolume();
 
                 err = (newVol - Vspec) / Vspec;
@@ -78,12 +79,12 @@ public class VHflash extends Flash {
                     system.setPressure(system.getPressure()
                             - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec));// system.getdVdPtn()*(newVol-Vspec));//dPdV*(newVol-Vspec));
                 }
-                pNew = system.getPressure();
-                dPdV = (pOld - pOldOld) / (newVol - oldVol);
+                // pNew = system.getPressure();
+                // dPdV = (pOld - pOldOld) / (newVol - oldVol);
                 // System.out.println("pressure " + system.getPressure());
             } while ((Math.abs(err) > 1e-10 && iterations < 1000) || iterations < 7);
         }
-        // System.out.println("entalpy end " + system.getEnthalpy());
+        // System.out.println("enthalpy end " + system.getEnthalpy());
         // System.out.println("iterations " + iterations);
     }
 

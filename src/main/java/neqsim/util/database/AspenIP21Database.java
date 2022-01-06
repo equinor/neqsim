@@ -58,7 +58,7 @@ public class AspenIP21Database
      */
     public Connection openConnection(String database) throws SQLException, ClassNotFoundException {
         javax.naming.InitialContext ctx = null;
-        javax.sql.DataSource ds = null;
+        // javax.sql.DataSource ds = null;
 
         try {
             return DriverManager.getConnection(".....");

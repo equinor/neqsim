@@ -63,9 +63,7 @@ public class DataReader implements DataReaderInterface {
 
                 filepointer = file.getFilePointer();
                 tokenizer.nextToken();
-            }
-
-            while (filepointer < length);
+            } while (filepointer < length);
         } catch (Exception e) {
             String err = e.toString();
             System.out.println(err);

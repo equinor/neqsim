@@ -194,7 +194,7 @@ public class SolidFlash12 extends TPflash {
      */
     public void solveBeta() {
         double oldBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
-        double newBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
+        // double newBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
         int iter = 0;
         Matrix ans = new Matrix(system.getNumberOfPhases() - solidsNumber, 1);
         do {
@@ -204,7 +204,7 @@ public class SolidFlash12 extends TPflash {
             calcQ();
 
             oldBeta = new double[system.getNumberOfPhases() - solidsNumber];
-            newBeta = new double[system.getNumberOfPhases() - solidsNumber];
+            // newBeta = new double[system.getNumberOfPhases() - solidsNumber];
             iter++;
             for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
                 oldBeta[k] = system.getBeta(k);
@@ -223,7 +223,7 @@ public class SolidFlash12 extends TPflash {
             dQM.print(10, 10);
             dQdBM.print(10, 10);
             ans.print(30, 30);
-            double betaReductionFactor = 1.0;
+            // double betaReductionFactor = 1.0;
             // betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
             // betaMatrixTemp.print(10, 2);
 
@@ -293,12 +293,12 @@ public class SolidFlash12 extends TPflash {
      */
     public void calcSolidBeta() {
         double tempVar = system.getPhase(0).getComponents()[solidIndex].getz();
-        double beta = 1.0;
+        // double beta = 1.0;
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
             tempVar -= system.getBeta(i)
                     * system.getPhase(3).getComponent(solidIndex).getFugasityCoeffisient()
                     / system.getPhase(i).getComponent(solidIndex).getFugasityCoeffisient();
-            beta -= system.getBeta(i);
+            // beta -= system.getBeta(i);
         }
         if (tempVar > 0 && tempVar < 1.0) {
             system.setBeta(system.getNumberOfPhases() - 1, tempVar);
@@ -382,7 +382,8 @@ public class SolidFlash12 extends TPflash {
      * @return a double
      */
     public double solvebeta1() {
-        double numberOfMolesFreeze = system.getPhase(0).getComponent(solidIndex).getNumberOfmoles();
+        // double numberOfMolesFreeze =
+        // system.getPhase(0).getComponent(solidIndex).getNumberOfmoles();
         double solidCandidate = 0;
         int iter = 0;
         double dn = -0.01;
