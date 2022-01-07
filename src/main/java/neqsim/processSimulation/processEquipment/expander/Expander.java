@@ -61,7 +61,7 @@ public class Expander extends Compressor implements ExpanderInterface {
         double hinn = getThermoSystem().getEnthalpy();
         // double densInn = getThermoSystem().getDensity();
         double entropy = getThermoSystem().getEntropy();
-        inletEnthalpy = hinn;
+        this.inletEnthalpy = hinn;
 
         if (usePolytropicCalc) {
             int numbersteps = 40;

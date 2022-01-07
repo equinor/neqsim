@@ -4,7 +4,9 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>process1 class.</p>
+ * <p>
+ * process1 class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -52,7 +54,7 @@ public class process1 {
         compr.setOutletPressure(80.0);
         compr.setOutTemperature(345.0);
         compr.setUsePolytropicCalc(true);
-        // compr.setNumberOfCompresorCalcSteps(10);
+        // compr.setNumberOfCompressorCalcSteps(10);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

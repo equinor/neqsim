@@ -36,8 +36,12 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     private double outTemperature = 298.15;
     private boolean useOutTemperature = false;
     private boolean calculateAsCompressor = true;
-    public double isentropicEfficiency = 1.0;
+
+    private double isentropicEfficiency = 1.0;
+
+
     public boolean powerSet = false;
+
     private String pressureUnit = "bara";
     private PumpChart pumpChart = new PumpChart();
 
@@ -172,11 +176,11 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
                 thermoOps.PSflash(entropy);
                 // double densOutIdeal = getThermoSystem().getDensity();
                 if (!powerSet) {
-                    dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
+                    this.dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
                 }
-                double hout = hinn + dH;
+                double hout = hinn + this.dH;
                 isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
-                dH = hout - hinn;
+                this.dH = hout - hinn;
                 thermoOps = new ThermodynamicOperations(getThermoSystem());
                 thermoOps.PHflash(hout, 0);
             } else if (pumpChart.isUsePumpChart()) {
