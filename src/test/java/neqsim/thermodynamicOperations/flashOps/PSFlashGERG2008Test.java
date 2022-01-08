@@ -45,7 +45,7 @@ class PSFlashGERG2008Test {
 		 testOps.PSflashGERG2008(gergEntropy);
 		 gergProps = testSystem.getPhase(0).getProperties_GERG2008();
 		 double gergEntropy2  = gergProps[8]*testSystem.getPhase(0).getNumberOfMolesInPhase();
-		assertEquals(gergEntropy, gergEntropy2, gergEntropy/1000.0);
+		 assertEquals(gergEntropy, gergEntropy2, Math.abs(gergEntropy2)/1000.0);
 	}
 
 }
