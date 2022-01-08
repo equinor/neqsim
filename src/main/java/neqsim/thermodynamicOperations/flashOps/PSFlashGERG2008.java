@@ -43,31 +43,18 @@ public class PSFlashGERG2008 extends QfuncFlash {
         this.system = system;
         this.tpFlash = new TPflash(system);
         this.Sspec = Sspec;
-        
-        
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcdQdTT() {
-        // double cP1 = 0.0, cP2 = 0.0;
-
-        if (system.getNumberOfPhases() == 1) {
-            return -system.getPhase(0).getCp() / system.getTemperature();
-        }
-
-        double dQdTT = 0.0;
-        for (int i = 0; i < system.getNumberOfPhases(); i++) {
-            dQdTT -= system.getPhase(i).getCp() / system.getPhase(i).getTemperature();
-        }
-        return dQdTT;
-    }
+        return -cP_GERG2008 / system.getTemperature();
+    	}
 
     /** {@inheritDoc} */
     @Override
     public double calcdQdT() {
-        double dQ = -system.getEntropy() + Sspec;
-        return dQ;
+    	return -entropy_GERG2008 + Sspec;
     }
 
     /** {@inheritDoc} */
@@ -90,10 +77,9 @@ public class PSFlashGERG2008 extends QfuncFlash {
 
             iterations++;
             oldTemp = system.getTemperature();
-            system.init(2);
             gergProps = system.getPhase(0).getProperties_GERG2008();
-            entropy_GERG2008 = gergProps[11]*system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
-            cP_GERG2008 = gergProps[13]*system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
+            entropy_GERG2008 = gergProps[8]*system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
+            cP_GERG2008 = gergProps[10]*system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
             newCorr = factor * calcdQdT() / calcdQdTT();
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
@@ -113,10 +99,6 @@ public class PSFlashGERG2008 extends QfuncFlash {
             system.setTemperature(nyTemp);
             erorOld = error;
             error = Math.abs(calcdQdT());// Math.abs((nyTemp - oldTemp) / (nyTemp));
-            // if(error>erorOld) factor *= -1.0;
-            // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
-            // " error "+ error + " correction " + newCorr + " factor "+ factor);
-            // newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
         } while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
         return nyTemp;
     }
@@ -130,6 +112,7 @@ public class PSFlashGERG2008 extends QfuncFlash {
         	return;
         }
 	    solveQ();
+	    system.init(3);
 	    return;
     }
 }
