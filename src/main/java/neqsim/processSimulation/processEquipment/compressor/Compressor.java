@@ -475,11 +475,30 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 					for (int i = 0; i < numbersteps; i++) {
 						entropy = getThermoSystem().getEntropy();
 						hinn = getThermoSystem().getEnthalpy();
+						if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+							double[] gergProps;
+							gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
+							hinn = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+							entropy = gergProps[8] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+						}
 						getThermoSystem().setPressure(getThermoSystem().getPressure() + dp, pressureUnit);
 						thermoOps = new ThermodynamicOperations(getThermoSystem());
-						thermoOps.PSflash(entropy);
-						double hout = hinn + (getThermoSystem().getEnthalpy() - hinn) / polytropicEfficiency;
+						if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+							thermoOps.PSflashGERG2008(entropy);
+						} else {
+							thermoOps.PSflash(entropy);
+						}
+						double newEnt = getThermoSystem().getEnthalpy();
+						if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+							double[] gergProps;
+							gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
+							newEnt = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+						}
+						double hout = hinn + (newEnt - hinn) / polytropicEfficiency;
 						thermoOps.PHflash(hout, 0);
+						if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+							thermoOps.PHflashGERG2008(hout);
+						}
 					}
 				} else if (polytropicMethod.equals("schultz")) {
 					double schultzX = thermoSystem.getTemperature() / thermoSystem.getVolume()
@@ -490,6 +509,13 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 					thermoSystem.initProperties();
 					double densOutIsentropic = thermoSystem.getDensity("kg/m3");
 					double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
+					if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+						thermoOps.PSflashGERG2008(entropy);
+						double[] gergProps;
+						gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
+						densOutIsentropic = getThermoSystem().getPhase(0).getDensity_GERG2008();
+						enthalpyOutIsentropic = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+					}
 					double isenthalpicvolumeexponent = Math.log(getOutletPressure() / presinn)
 							/ Math.log(densOutIsentropic / densInn);
 					double nV = (1.0 + schultzX)
@@ -504,15 +530,24 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 					double hout = hinn + dH;
 					thermoOps = new ThermodynamicOperations(getThermoSystem());
 					thermoOps.PHflash(hout, 0);
+					if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+						thermoOps.PHflashGERG2008(hout);
+					}
 				} else {
 					thermoSystem.setPressure(getOutletPressure(), pressureUnit);
 					thermoOps.PSflash(entropy);
 					thermoSystem.initProperties();
 					double densOutIsentropic = thermoSystem.getDensity("kg/m3");
 					double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
+					if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+						thermoOps.PSflashGERG2008(entropy);
+						double[] gergProps;
+						gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
+						densOutIsentropic = getThermoSystem().getPhase(0).getDensity_GERG2008();
+						enthalpyOutIsentropic = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+					}
 					double isenthalpicvolumeexponent = Math.log(getOutletPressure() / presinn)
 							/ Math.log(densOutIsentropic / densInn);
-
 					double term = isenthalpicvolumeexponent / (isenthalpicvolumeexponent - 1.0)
 							* (polytropicEfficiency);
 					double term2 = 1e5 * (getOutletPressure() / densOutIsentropic - presinn / densInn);
@@ -522,6 +557,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 					double hout = hinn + dH;
 					thermoOps = new ThermodynamicOperations(getThermoSystem());
 					thermoOps.PHflash(hout, 0);
+					if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+						thermoOps.PHflashGERG2008(hout);
+					}
 				}
 			}
 		} else {
@@ -529,15 +567,28 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			// System.out.println("entropy inn.." + entropy);
 			thermoOps = new ThermodynamicOperations(getThermoSystem());
 			thermoOps.PSflash(entropy);
+			if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+				thermoOps.PSflashGERG2008(entropy);
+			}
 			// double densOutIdeal = getThermoSystem().getDensity();
+			double newEnt = getThermoSystem().getEnthalpy();
 			if (!powerSet) {
 				dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
+				if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+					double[] gergProps;
+					gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
+					newEnt = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+					dH = (newEnt - hinn) / isentropicEfficiency;
+				}
 			}
 			double hout = hinn + dH;
-			isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
+			isentropicEfficiency = (newEnt - hinn) / dH;
 			dH = hout - hinn;
 			thermoOps = new ThermodynamicOperations(getThermoSystem());
 			thermoOps.PHflash(hout, 0);
+			if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+				thermoOps.PHflashGERG2008(hout);
+			}
 		}
 		// thermoSystem.display();
 
