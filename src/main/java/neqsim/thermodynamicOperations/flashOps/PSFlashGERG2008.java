@@ -1,10 +1,14 @@
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * <p>
- * PSFlash class.
+ * PSFlashGERG2008 class.
  * </p>
  *
  * @author even solbraa
@@ -12,32 +16,35 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class PSFlashGERG2008 extends QfuncFlash {
     private static final long serialVersionUID = 1000;
+    static Logger logger = LogManager.getLogger(PSFlashGERG2008.class);
 
     double Sspec = 0;
     Flash tpFlash;
-    int type = 0;
+    
+    double entropy_GERG2008 = 0.0;
+    double cP_GERG2008 = 0.0;
 
     /**
      * <p>
-     * Constructor for PSFlash.
+     * Constructor for PSFlashGERG2008.
      * </p>
      */
     public PSFlashGERG2008() {}
 
     /**
      * <p>
-     * Constructor for PSFlash.
+     * Constructor for PSFlashGERG2008.
      * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Sspec a double
-     * @param type a int
      */
-    public PSFlashGERG2008(SystemInterface system, double Sspec, int type) {
+    public PSFlashGERG2008(SystemInterface system, double Sspec) {
         this.system = system;
         this.tpFlash = new TPflash(system);
         this.Sspec = Sspec;
-        this.type = type;
+        
+        
     }
 
     /** {@inheritDoc} */
@@ -73,6 +80,7 @@ public class PSFlashGERG2008 extends QfuncFlash {
 
         boolean correctFactor = true;
         double newCorr = 1.0;
+        double[] gergProps;
         do {
             if (error > erorOld && factor > 0.1 && correctFactor) {
                 factor *= 0.5;
@@ -83,6 +91,9 @@ public class PSFlashGERG2008 extends QfuncFlash {
             iterations++;
             oldTemp = system.getTemperature();
             system.init(2);
+            gergProps = system.getPhase(0).getProperties_GERG2008();
+            entropy_GERG2008 = gergProps[11]*system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
+            cP_GERG2008 = gergProps[13]*system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
             newCorr = factor * calcdQdT() / calcdQdTT();
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
@@ -100,7 +111,6 @@ public class PSFlashGERG2008 extends QfuncFlash {
             }
 
             system.setTemperature(nyTemp);
-            tpFlash.run();
             erorOld = error;
             error = Math.abs(calcdQdT());// Math.abs((nyTemp - oldTemp) / (nyTemp));
             // if(error>erorOld) factor *= -1.0;
@@ -111,27 +121,15 @@ public class PSFlashGERG2008 extends QfuncFlash {
         return nyTemp;
     }
 
-    /**
-     * <p>
-     * onPhaseSolve.
-     * </p>
-     */
-    public void onPhaseSolve() {}
-
     /** {@inheritDoc} */
     @Override
     public void run() {
         tpFlash.run();
-
-        if (type == 0) {
-            solveQ();
-        } else {
-            sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2,
-                    system.getPhases()[0].getNumberOfComponents(), 1);
-            secondOrderSolver.setSpec(Sspec);
-            secondOrderSolver.solve(1);
+        if(system.getNumberOfPhases()>1) {
+        	logger.error("PSFlashGERG2008 only supprt single phase gas calculations");
+        	return;
         }
-        // System.out.println("Entropy: " + system.getEntropy());
-        // System.out.println("Temperature: " + system.getTemperature());
+	    solveQ();
+	    return;
     }
 }

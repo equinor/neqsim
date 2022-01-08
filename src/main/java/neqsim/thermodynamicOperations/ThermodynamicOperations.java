@@ -14,6 +14,7 @@ import neqsim.thermodynamicOperations.flashOps.PHflash;
 import neqsim.thermodynamicOperations.flashOps.PHflashSingleComp;
 import neqsim.thermodynamicOperations.flashOps.PHsolidFlash;
 import neqsim.thermodynamicOperations.flashOps.PSFlash;
+import neqsim.thermodynamicOperations.flashOps.PSFlashGERG2008;
 import neqsim.thermodynamicOperations.flashOps.PSflashSingleComp;
 import neqsim.thermodynamicOperations.flashOps.PVrefluxflash;
 import neqsim.thermodynamicOperations.flashOps.SaturateWithWater;
@@ -428,6 +429,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         } else {
             operation = new PSFlash(system, Sspec, 0);
         }
+        getOperation().run();
+    }
+    
+    /**
+     * <p>
+     * PSflashGERG2008.
+     * </p>
+     * Run a flash at constant pressure and entropy using the GERG2008 EoS
+     * @param Sspec is the specidfied entropy
+     */
+    public void PSflashGERG2008(double Sspec) {
+        operation = new PSFlashGERG2008(system, Sspec);
         getOperation().run();
     }
 
