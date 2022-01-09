@@ -104,11 +104,6 @@
 			<artifactId>mtj</artifactId>
 			<version>1.0.4</version>
 		</dependency>
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.27</version>
-		</dependency>
 		<!-- https://mvnrepository.com/artifact/edu.ucar/netcdf4 -->
 		<dependency>
 			<groupId>edu.ucar</groupId>
@@ -121,21 +116,6 @@
 			<version>48.4.2</version>
 		</dependency>
 		<dependency>
-			<groupId>org.xerial</groupId>
-			<artifactId>sqlite-jdbc</artifactId>
-			<version>3.34.0</version>
-		</dependency>
-		<dependency>
-			<groupId>net.sf.ucanaccess</groupId>
-			<artifactId>ucanaccess</artifactId>
-			<version>5.0.1</version>
-		</dependency>
-		<dependency>
-			<groupId>io.airlift</groupId>
-			<artifactId>units</artifactId>
-			<version>1.6</version>
-		</dependency>
-		<dependency>
 			<groupId>edu.wisc.ssec</groupId>
 			<artifactId>visad</artifactId>
 			<version>2.0-20130124</version>
@@ -143,6 +123,18 @@
 	</dependencies>
 	<build>
 		<plugins>
+		<plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-jar-plugin</artifactId>
+	<version>2.4</version>
+	<configuration>
+	  <archive>
+	    <manifest>
+		<mainClass>neqsim.thermo.util.benchmark.TPflash_benchmark</mainClass>
+	    </manifest>
+	  </archive>
+	</configuration>
+    </plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>flatten-maven-plugin</artifactId>
