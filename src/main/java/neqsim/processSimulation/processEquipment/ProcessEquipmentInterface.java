@@ -13,7 +13,16 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface ProcessEquipmentInterface extends Runnable, java.io.Serializable {
-    /** {@inheritDoc} */
+    /** {@inheritDoc} 
+     *     /
+     * <p>
+     * run
+     * </p>
+     * In this method all thermodynamic and unit the operation 
+     * will be calculated in a steady state calculation.
+     *
+     * @return void
+     */
     @Override
     public void run();
 
@@ -26,12 +35,16 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      */
     public String[][] reportResults();
 
-    /**
+    /** {@inheritDoc} 
+     *     /
      * <p>
-     * runTransient.
+     * runTransient
      * </p>
+     * In this method all thermodynamic and unit the operation 
+     * will be calculated in a dynamic calculation.
+     * dt is the delta time step (seconds)
      *
-     * @param dt a double
+     * @return void
      */
     public void runTransient(double dt);
 
