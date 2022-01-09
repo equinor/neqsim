@@ -393,13 +393,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		}
 		if (compressorChart.isUseCompressorChart()) {
 			do {
-				double polytropEff = getCompressorChart().getPolytropicEfficiency(thermoSystem.getFlowRate("m3/hr"),
-						getSpeed());
-				setPolytropicEfficiency(polytropEff / 100.0);
-				// logger.info("actual inlet flow " + thermoSystem.getFlowRate("m3/hr") + "
-				// m/hr");
-				polytropicHead = getCompressorChart().getPolytropicHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
-				double temperature_inlet = thermoSystem.getTemperature();
+				double actualFlowRate = thermoSystem.getFlowRate("m3/hr");
 				double z_inlet = thermoSystem.getZ();
 				double MW = thermoSystem.getMolarMass();
 
@@ -408,9 +402,19 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				} else {
 					kappa = thermoSystem.getGamma2();
 				}
-
+				if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+					double[] gergProps;
+					gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
+					actualFlowRate *= gergProps[1]/z_inlet;
+					kappa = gergProps[14];
+				}
+				
+				double polytropEff = getCompressorChart().getPolytropicEfficiency(actualFlowRate,
+						getSpeed());
+				setPolytropicEfficiency(polytropEff / 100.0);
+				polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, getSpeed());
+				double temperature_inlet = thermoSystem.getTemperature();
 				double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
-				// logger.info("n " + n);
 				polytropicExponent = n;
 				if (getCompressorChart().getHeadUnit().equals("meter")) {
 					polytropicFluidHead = polytropicHead / 1000.0 * 9.81;
@@ -419,55 +423,43 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 					polytropicFluidHead = polytropicHead;
 					polytropicHeadMeter = polytropicHead * 1000.0 / 9.81;
 				}
-
 				double pressureRatio = Math.pow(
 						(polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet * 8.314 * (temperature_inlet) / MW))
 								/ (n / (n - 1.0) * z_inlet * 8.314 * (temperature_inlet) / MW),
 						n / (n - 1.0));
-				// System.out.println("pressure ratio " + pressureRatio);
-				// logger.info("pressure ratio " + pressureRatio);
 				setOutletPressure(thermoSystem.getPressure() * pressureRatio);
-				// logger.info("polytropic head " + polytropicFluidHead + " kj/kg");
-				// logger.info("polytropic head " + polytropicHeadMeter + " meter");
 				if (getAntiSurge().isActive()) {
 					logger.info("surge flow " + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead)
 							+ " m3/hr");
-					surgeCheck = isSurge(polytropicHead, thermoSystem.getFlowRate("m3/hr"));
-					// logger.info("surge? " + surgeCheck);
+					surgeCheck = isSurge(polytropicHead, actualFlowRate);
 				}
 				if (getCompressorChart().getStoneWallCurve().isActive()) {
 					// logger.info("stone wall? " + isStoneWall(polytropicHead,
 					// thermoSystem.getFlowRate("m3/hr")));
 				}
 				if (surgeCheck && getAntiSurge().isActive()) {
-					// double surgeFLow =
-					// getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
-
-					// double correction = surgeFLow / thermoSystem.getFlowRate("m3/hr");
 					thermoSystem.setTotalNumberOfMoles(
 							getAntiSurge().getSurgeControlFactor() * thermoSystem.getTotalNumberOfMoles());
 					thermoSystem.init(3);
 					fractionAntiSurge = thermoSystem.getTotalNumberOfMoles() / orginalMolarFLow - 1.0;
 					getAntiSurge().setCurrentSurgeFraction(fractionAntiSurge);
-					// logger.info("fractionAntiSurge: " + fractionAntiSurge);
 				}
 
 				powerSet = true;
 				dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
 						* thermoSystem.getTotalNumberOfMoles();
-				// logger.info("dH: " + dH);
 			} while (surgeCheck && getAntiSurge().isActive());
 		}
 
 		if (usePolytropicCalc) {
 			if (powerSet) {
-				// dH = (getPower() - hinn) / polytropicEfficiency;
 				double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
 				thermoSystem.setPressure(pressure, pressureUnit);
-				// findOutPressure(hinn, hout, polytropicEfficiency);
-				// System.out.println("hout " + hout);
 				thermoOps = new ThermodynamicOperations(getThermoSystem());
 				thermoOps.PHflash(hout, 0);
+				if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+					thermoOps.PHflashGERG2008(hout);
+				}
 			} else {
 				if (polytropicMethod.equals("detailed")) {
 					int numbersteps = numberOfCompresorCalcSteps;
