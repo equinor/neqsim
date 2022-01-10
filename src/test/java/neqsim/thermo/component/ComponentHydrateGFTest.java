@@ -48,7 +48,6 @@ class ComponentHydrateGFTest {
 			 assertTrue(false);
 			 return;
 		 }
-		thermoSystem.display();
 		assertEquals(286.4105348944992,thermoSystem.getTemperature("K"), 0.001);
 	}
 
