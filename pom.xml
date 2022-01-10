@@ -21,10 +21,6 @@
 			<url>https://repo1.maven.org/maven2/</url>
 		</repository>
 		<repository>
-			<id>boundless</id>
-			<url>https://repo.boundlessgeo.com/main/</url>
-		</repository>
-		<repository>
 			<id>unidata-all</id>
 			<name>Unidata All</name>
 			<url>https://artifacts.unidata.ucar.edu/repository/unidata-all/</url>
