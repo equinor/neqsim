@@ -170,7 +170,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * @return a double
      */
     public double getGasInPlace(String unit) {
-        SystemInterface locStream = (SystemInterface) (thermoSystem).clone();
+        SystemInterface locStream = (thermoSystem).clone();
         locStream.setTemperature(288.15);
         locStream.setPressure(1.01325);
         ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
@@ -195,7 +195,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * @return a double
      */
     public double getOilInPlace(String unit) {
-        SystemInterface locStream = (SystemInterface) (thermoSystem).clone();
+        SystemInterface locStream = (thermoSystem).clone();
         locStream.setTemperature(288.15);
         locStream.setPressure(1.01325);
         ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
@@ -272,22 +272,23 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         ops.TPflash();
 
         // thermoSystem.display();
-        SystemInterface thermoSystem2 = (SystemInterface) thermoSystem.clone();
+        SystemInterface thermoSystem2 = thermoSystem.clone();
 
         thermoSystem.removeMoles();// (1.0e-10);
         // thermoSystem.init(1);
         // thermoSystem.display();
         // System.out.println("number of phases " + thermoSystem.getNumberOfPhases());
-        double totalliquidVolume = 0.0;
+        // double totalliquidVolume = 0.0;
         for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
             double relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
             if (j >= 1) {
                 if (j == 1) {
                     relFact = oilVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
-                    totalliquidVolume += oilVolume / thermoSystem2.getPhase(j).getMolarVolume();
+                    // totalliquidVolume += oilVolume / thermoSystem2.getPhase(j).getMolarVolume();
                 } else if (j == 2) {
                     relFact = waterVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
-                    totalliquidVolume += waterVolume / thermoSystem2.getPhase(j).getMolarVolume();
+                    // totalliquidVolume += waterVolume /
+                    // thermoSystem2.getPhase(j).getMolarVolume();
                 }
             }
             for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
@@ -486,12 +487,12 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         for (int k = 0; k < gasInjector.size(); k++) {
             gasInjector.get(k).getStream().run();
         }
+        /*
+         * double totalVolume = 0; for (int i = 0; i < getReservoirFluid().getNumberOfPhases(); i++)
+         * { totalVolume += getReservoirFluid().getPhase(i).getVolume("m3"); }
+         * System.out.println("tot volume " + totalVolume/1.0e6 + " gas volume "+
+         */
 
-        double totalVolume = 0;
-        for (int i = 0; i < getReservoirFluid().getNumberOfPhases(); i++) {
-            totalVolume += getReservoirFluid().getPhase(i).getVolume("m3");
-        }
-        // System.out.println("tot volume " + totalVolume/1.0e6 + " gas volume "+
         // getReservoirFluid().getPhase("gas").getVolume("m3")/1.0e6 + " oil volume "+
         // getReservoirFluid().getPhase("oil").getVolume("m3")/1.0e6 + " water volume "+
         // getReservoirFluid().getPhase("aqueous").getVolume("m3")/1.0e6);

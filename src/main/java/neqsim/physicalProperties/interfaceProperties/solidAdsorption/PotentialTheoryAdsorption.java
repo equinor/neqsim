@@ -61,7 +61,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
     /** {@inheritDoc} */
     @Override
     public void calcAdorption(int phase) {
-        SystemInterface tempSystem = (SystemInterface) system.clone();
+        SystemInterface tempSystem = system.clone();
         tempSystem.init(3);
         double[] bulkFug = new double[system.getPhase(phase).getNumberOfComponents()];
         double[] corrx = new double[system.getPhase(phase).getNumberOfComponents()];

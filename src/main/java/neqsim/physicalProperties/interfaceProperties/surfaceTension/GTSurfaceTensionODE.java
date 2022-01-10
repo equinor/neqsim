@@ -28,7 +28,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GTSurfaceTensionODE.class);
 
     private boolean initialized = false;
@@ -69,7 +68,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
 
         // Setup local system clone and some parameters.
         this.yscale = yscale;
-        this.sys = (SystemInterface) flashedSystem.clone();
+        this.sys = flashedSystem.clone();
         this.refcomp = referenceComponent;
         this.ncomp = this.sys.getPhase(0).getNumberOfComponents();
         this.t = this.sys.getPhase(0).getTemperature();

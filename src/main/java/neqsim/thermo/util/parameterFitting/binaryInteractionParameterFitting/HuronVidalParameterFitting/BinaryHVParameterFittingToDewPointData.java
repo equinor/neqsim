@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version $Id: $Id
  */
 public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingToDewPointData.class);
 
     int phase = 1;

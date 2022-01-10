@@ -42,7 +42,7 @@ public class TestIonicInteractionParameterFitting {
         // Reference<>'Bahiri1984' AND Temperature<393.15 AND loading>0.05 AND loading<1.2 AND
         // VapourPressure1<15.0 AND wtMDEA>40 AND wtMDEA<60 ORDER BY
         // wtMDEA,Temperature,Reference,loading");
-        //
+
         // //ResultSet dataSet = database.getResultSet( "SELECT * FROM CO2KurCor WHERE
         // Reference<>'Bahiri1984' AND wtMDEA>40.0 AND Temperature>=280.15 AND Temperature<=470.15
         // AND loading>0.00002 AND VapourPressure1<25.0 ORDER BY wtMDEA,Temperature,Reference");
@@ -50,7 +50,7 @@ public class TestIonicInteractionParameterFitting {
         // WHERE Component1='MDEA' AND Component2='water'");AND Reference='Lemoine2000'
         // //ResultSet dataSet = database.getResultSet( "SELECT * FROM CO2KurCor WHERE
         // Reference='Austgen1991' AND loading>0.01");
-        //
+
         // try{
         // int i=0;
         // while(dataSet.next() && i<450){
@@ -274,8 +274,7 @@ public class TestIonicInteractionParameterFitting {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        //
-        //
+
         optim.solve();
         // optim.runMonteCarloSimulation();
         // optim.displayCurveFit();

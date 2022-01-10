@@ -9,7 +9,7 @@ package neqsim.thermo.system;
 public class SystemSrkMathiasCopeman extends SystemSrkEos {
     private static final long serialVersionUID = 1000;
 
-public SystemSrkMathiasCopeman() {
+    public SystemSrkMathiasCopeman() {
         super();
         modelName = "Mathias-Copeman-SRK-EOS";
         attractiveTermNumber = 4;
@@ -54,7 +54,6 @@ public SystemSrkMathiasCopeman() {
             logger.error("Cloning failed.", e);
         }
 
-        //
         // for(int i = 0; i < numberOfPhases; i++) {
         // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
         // }

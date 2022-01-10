@@ -17,8 +17,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class ConstantMassExpansion extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
     double[] relativeVolume = null;
     double[] totalVolume = null;
     private double[] liquidRelativeVolume = null;
@@ -191,8 +189,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
                                 / 1000.0};
                 function.setInitialGuess(guess);
 
-                SystemInterface tempSystem = getThermoSystem();// (SystemInterface)
-                                                               // getThermoSystem().clone();
+                SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
 
                 tempSystem.setTemperature(temperature);
                 tempSystem.setPressure(pressures[i]);

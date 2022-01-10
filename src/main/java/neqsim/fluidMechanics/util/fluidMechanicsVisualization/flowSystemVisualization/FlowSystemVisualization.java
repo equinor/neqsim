@@ -13,8 +13,6 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  * @version $Id: $Id
  */
 public class FlowSystemVisualization implements FlowSystemVisualizationInterface {
-    private static final long serialVersionUID = 1000;
-
     protected FlowNodeVisualizationInterface[][] flowNodes;
     protected FlowSystemInterface[] flowSystem;
     protected int time = 0;

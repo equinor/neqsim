@@ -52,16 +52,16 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
         inStream = new Stream[2];
         this.inStream[0] = inStream1;
         this.inStream[1] = inStream1;
-        outStream[0] = (Stream) inStream1.clone();
-        outStream[1] = (Stream) inStream1.clone();
+        outStream[0] = inStream1.clone();
+        outStream[1] = inStream1.clone();
 
-        SystemInterface systemOut1 = (SystemInterface) inStream1.getThermoSystem().clone();
+        SystemInterface systemOut1 = inStream1.getThermoSystem().clone();
         outStream[0].setThermoSystem(systemOut1);
 
         double molCO2 =
                 inStream1.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
         System.out.println("mol CO2 " + molCO2);
-        SystemInterface systemOut0 = (SystemInterface) inStream1.getThermoSystem().clone();
+        SystemInterface systemOut0 = inStream1.getThermoSystem().clone();
         systemOut0.init(0);
         systemOut0.addComponent("MDEA", molCO2 * absorptionEfficiency);
         systemOut0.addComponent("water", molCO2 * absorptionEfficiency * 10.0);
@@ -173,7 +173,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        SystemInterface systemOut1 = (SystemInterface) inStream[1].getThermoSystem().clone();
+        SystemInterface systemOut1 = inStream[1].getThermoSystem().clone();
         outStream[0].setThermoSystem(systemOut1);
         outStream[0].run();
 

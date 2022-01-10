@@ -13,8 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class BasePVTsimulation implements SimulationInterface {
-    private static final long serialVersionUID = 1000;
-
     private SystemInterface thermoSystem = null;
     private SystemInterface baseThermoSystem = null;
     public ThermodynamicOperations thermoOps = null;
@@ -34,9 +32,9 @@ public class BasePVTsimulation implements SimulationInterface {
      * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public BasePVTsimulation(SystemInterface tempSystem) {
-        thermoSystem = tempSystem;// (SystemInterface) tempSystem.clone();
+        thermoSystem = tempSystem;// tempSystem.clone();
         thermoOps = new ThermodynamicOperations(getThermoSystem());
-        baseThermoSystem = (SystemInterface) thermoSystem.clone();
+        baseThermoSystem = thermoSystem.clone();
     }
 
     /**

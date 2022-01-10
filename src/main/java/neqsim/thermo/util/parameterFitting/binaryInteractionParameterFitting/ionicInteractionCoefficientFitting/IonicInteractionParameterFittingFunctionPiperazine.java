@@ -14,7 +14,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionPiperazine extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunctionPiperazine.class);
 
@@ -104,7 +103,7 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
         // ((ElectrolyteMixingRulesInterface)
         // ((PhaseModifiedFurstElectrolyteEos)system.getPhases()[1]).getElectrolyteMixingRule()).setWijParameter(PiperazineplusNumb,
         // Waternumb, value);
-        //
+
         // if((ElectrolyteMixingRulesInterface)((PhaseModifiedFurstElectrolyteEos)((PhaseModifiedFurstElectrolyteEos)system.getPhases()[1]).getRefPhase(PiperazineplusNumb)).getElectrolyteMixingRule()!=null){
         // //((ElectrolyteMixingRulesInterface)((PhaseModifiedFurstElectrolyteEos)((PhaseModifiedFurstElectrolyteEos)system.getPhases()[0]).getRefPhase(PiperazineplusNumb)).getElectrolyteMixingRule()).setWijParameter(0,
         // 1, value);
@@ -127,19 +126,15 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
         // ((ElectrolyteMixingRulesInterface)
         // ((PhaseModifiedFurstElectrolyteEos)system.getPhases()[1]).getElectrolyteMixingRule()).setWijParameter(H3OplusNumb,
         // MDEANumb, value);
-        //
         // }
-        //
-        //
-        //
-        //
+
         // if(i==4){
         // ((PhaseEosInterface)system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(CO2Numb,MDEANumb,
         // value*1e3);
         // ((PhaseEosInterface)system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(CO2Numb,MDEANumb,
         // value*1e3);
         // }
-        //
+
         // if(i==20){
         // system.getPhase(0).getComponent(MDEAplusNumb).setStokesCationicDiameter(value);
         // ((PhaseModifiedFurstElectrolyteEos)system.getPhases()[0]).reInitFurstParam();
@@ -155,9 +150,7 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
         // if(i==60){
         // system.getChemicalReactionOperations().getReactionList().getReaction(0).setK(2,value);
         // }
-        //
-        //
-        //
+
         // if(i==10){
         // ((HVmixingRuleInterface)
         // ((PhaseEosInterface)system.getPhases()[0]).getMixingRule()).setHVDijParameter(CO2Numb,MDEANumb,
@@ -190,7 +183,7 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
         // ((PhaseEosInterface)system.getPhases()[1]).getMixingRule()).setHVDijTParameter(MDEANumb,
         // CO2Numb, value*1e8);
         // }
-        //
+
         // // Temp der 1
         // if(i==50){
         // ((ElectrolyteMixingRulesInterface)
@@ -224,8 +217,7 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
         // ((PhaseModifiedFurstElectrolyteEos)system.getPhases()[1]).getElectrolyteMixingRule()).setWijT1Parameter(MDEAplusNumb,
         // Waternumb, value);
         // }
-        //
-        //
+
         // // Temp der 2
         // if(i==66){
         // ((ElectrolyteMixingRulesInterface)

@@ -25,8 +25,6 @@ import neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot.lineFitPlot;
  * @version $Id: $Id
  */
 public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterface {
-    private static final long serialVersionUID = 1000;
-
     protected SampleSet sampleSet = new SampleSet();
     protected double chiSquare = 0;
     protected double[][] dyda;
@@ -60,7 +58,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
             e.printStackTrace(System.err);
         }
 
-        clonedClass.sampleSet = (SampleSet) sampleSet.clone();
+        clonedClass.sampleSet = sampleSet.clone();
 
         return clonedClass;
     }
@@ -90,7 +88,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     /** {@inheritDoc} */
     @Override
     public StatisticsBaseClass createNewRandomClass() {
-        StatisticsBaseClass newClass = (StatisticsBaseClass) this.clone();
+        StatisticsBaseClass newClass = this.clone();
         newClass.setSampleSet(this.sampleSet.createNewNormalDistributedSet());
         return newClass;
     }

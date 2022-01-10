@@ -1,11 +1,9 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
-import neqsim.MathLib.generalMath.GeneralMath;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDeisgn;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -119,7 +117,7 @@ public class AdiabaticPipe extends Pipeline {
         } else {
             flowPattern = "turbulent";
             return Math.pow(
-                    (1.0 / (-1.8 * GeneralMath
+                    (1.0 / (-1.8 * Math
                             .log10(6.9 / reynoldsNumber + Math.pow(relativeRoughnes / 3.7, 1.11)))),
                     2.0);
         }
@@ -196,7 +194,7 @@ public class AdiabaticPipe extends Pipeline {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         inletPressure = system.getPressure();
         // system.setMultiPhaseCheck(true);
         if (setTemperature) {

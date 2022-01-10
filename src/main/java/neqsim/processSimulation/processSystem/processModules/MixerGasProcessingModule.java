@@ -12,7 +12,9 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
- * <p>MixerGasProcessingModule class.</p>
+ * <p>
+ * MixerGasProcessingModule class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -66,7 +68,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     @Override
     public void initializeModule() {
         isInitializedModule = true;
-        double inletPressure = feedStream.getPressure();
+        // double inletPressure = feedStream.getPressure();
 
         Cooler inletCooler = new Cooler("inlet well stream cooler", feedStream);
         inletCooler.setOutTemperature(inletSepTemperature + 273.15);
@@ -185,7 +187,9 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

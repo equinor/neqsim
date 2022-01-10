@@ -45,7 +45,7 @@ public class LGTSurfaceTension extends SurfaceTension {
     @Override
     public double calcSurfaceTension(int interface1, int interface2) {
         double surdenstemp = 0.0;
-        localSystem = (SystemInterface) system.clone();
+        localSystem = system.clone();
 
         int referenceComponentNumber = getComponentWithHighestBoilingpoint();
         // double influenceParamReferenceComponent =

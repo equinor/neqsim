@@ -13,7 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
-    private static final long serialVersionUID = 1000;
     String unit = "bara";
     double RVP = 1.0;
 
@@ -39,7 +38,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        double TVP = this.thermoSystem.getPressure();
+
+        // double TVP = this.thermoSystem.getPressure();
         double liquidVolume = thermoSystem.getVolume();
 
         this.thermoSystem.setPressure(0.9);

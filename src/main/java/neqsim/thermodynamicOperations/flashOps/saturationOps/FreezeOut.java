@@ -3,10 +3,8 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
@@ -218,7 +216,6 @@ public class FreezeOut extends constantDutyTemperatureFlash
                                 .toString(system.getPhases()[0].getComponents()[k].getz()));
                 pr_writer.flush();
             }
-            pr_writer.close();
         } catch (SecurityException e) {
             logger.error("writeFile: caught security exception");
         } catch (IOException ioe) {

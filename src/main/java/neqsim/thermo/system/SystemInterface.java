@@ -256,7 +256,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      * @return new fluid
      */
     public static SystemInterface addFluids(SystemInterface addFluid1, SystemInterface addFluid2) {
-        SystemInterface newFluid = (SystemInterface) addFluid1.clone();
+        SystemInterface newFluid = addFluid1.clone();
         newFluid.addFluid(addFluid2);
         return newFluid;
     }

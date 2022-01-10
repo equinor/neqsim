@@ -194,7 +194,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                     resultTable[numb][1] = Double.toString(scalePotentialFactor);
                     resultTable[numb][2] = "";
                     // double maxn = scalePotentialFactor/(stoc1*stoc2);
-                    //
+
                     // double x1max =system.getPhase(phaseNumber).getComponent(name1).getx()/maxn;
                     // double x2max =system.getPhase(phaseNumber).getComponent(name2).getx()/maxn;
                 }

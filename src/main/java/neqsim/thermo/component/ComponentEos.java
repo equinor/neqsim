@@ -94,8 +94,7 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
             logger.error("Cloning failed.", e);
         }
 
-        clonedComponent.setAtractiveParameter(
-                (AtractiveTermInterface) this.getAtractiveParameter().clone());
+        clonedComponent.setAtractiveParameter(this.getAtractiveParameter().clone());
 
         return clonedComponent;
     }
@@ -595,15 +594,16 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     /** {@inheritDoc} */
     @Override
     public double getSurfaceTenisionInfluenceParameter(double temperature) {
-        double a_inf = -3.471 + 4.927 * getCriticalCompressibilityFactor()
-                + 13.085 * Math.pow(getCriticalCompressibilityFactor(), 2.0)
-                - 2.067 * getAcentricFactor() + 1.891 * Math.pow(getAcentricFactor(), 2.0);
-        double b_inf = -1.690 + 2.311 * getCriticalCompressibilityFactor()
-                + 5.644 * Math.pow(getCriticalCompressibilityFactor(), 2.0)
-                - 1.027 * getAcentricFactor() + 1.424 * Math.pow(getAcentricFactor(), 2.0);
-        double c_inf = -0.318 + 0.299 * getCriticalCompressibilityFactor()
-                + 1.710 * Math.pow(getCriticalCompressibilityFactor(), 2.0)
-                - 0.174 * getAcentricFactor() + 0.157 * Math.pow(getAcentricFactor(), 2.0);
+        /*
+         * double a_inf = -3.471 + 4.927 * getCriticalCompressibilityFactor() + 13.085 *
+         * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 2.067 * getAcentricFactor() + 1.891 *
+         * Math.pow(getAcentricFactor(), 2.0); double b_inf = -1.690 + 2.311 *
+         * getCriticalCompressibilityFactor() + 5.644 * Math.pow(getCriticalCompressibilityFactor(),
+         * 2.0) - 1.027 * getAcentricFactor() + 1.424 * Math.pow(getAcentricFactor(), 2.0); double
+         * c_inf = -0.318 + 0.299 * getCriticalCompressibilityFactor() + 1.710 *
+         * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 0.174 * getAcentricFactor() + 0.157 *
+         * Math.pow(getAcentricFactor(), 2.0);
+         */
         double TR = 1.0 - temperature / getTC();
         if (TR < 1) {
             TR = 0.5;
@@ -647,11 +647,11 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     public double getChemicalPotential(PhaseInterface phase) {
         double entalp = getHID(phase.getTemperature()) * numberOfMolesInPhase;
         double entrop = numberOfMolesInPhase * getIdEntropy(phase.getTemperature());
-        double chempot = ((entalp - phase.getTemperature() * entrop)
-                + numberOfMolesInPhase * R * phase.getTemperature()
-                        * Math.log(numberOfMolesInPhase * R * phase.getTemperature()
-                                / phase.getVolume() / referencePressure)
-                + getAresnTV(phase) * numberOfMolesInPhase) / numberOfMolesInPhase;
+        // double chempot = ((entalp - phase.getTemperature() * entrop) + numberOfMolesInPhase * R *
+        // phase.getTemperature() * Math.log(numberOfMolesInPhase * R * phase.getTemperature() /
+        // phase.getVolume() / referencePressure) + getAresnTV(phase) * numberOfMolesInPhase) /
+        // numberOfMolesInPhase;
+
         // double chempot2 = super.getChemicalPotential(phase);
         // System.out.println("d " + chempot + " " + chempot2);
         return ((entalp - phase.getTemperature() * entrop)

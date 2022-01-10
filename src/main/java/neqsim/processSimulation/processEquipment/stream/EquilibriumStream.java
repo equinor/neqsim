@@ -67,7 +67,7 @@ public class EquilibriumStream extends Stream {
             e.printStackTrace(System.err);
         }
 
-        thermoSystem = (SystemInterface) thermoSystem.clone();
+        thermoSystem = thermoSystem.clone();
         return clonedStream;
     }
 

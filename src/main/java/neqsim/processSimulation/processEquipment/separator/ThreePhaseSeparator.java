@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.separator;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -119,7 +118,7 @@ public class ThreePhaseSeparator extends Separator {
     public void setInletStream(StreamInterface inletStream) {
         super.setInletStream(inletStream);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         waterSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         waterOutStream = new Stream(waterSystem);
     }
@@ -150,7 +149,7 @@ public class ThreePhaseSeparator extends Separator {
     @Override
     public void run() {
         inletStreamMixer.run();
-        thermoSystem = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
+        thermoSystem = inletStreamMixer.getOutStream().getThermoSystem().clone();
 
         thermoSystem.setMultiPhaseCheck(true);
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -171,7 +170,7 @@ public class ThreePhaseSeparator extends Separator {
         // thermoSystem.init(3);
         // thermoSystem.setMultiPhaseCheck(false);
 
-        // //gasSystem = (SystemInterface) thermoSystem.phaseToSystem(0);
+        // //gasSystem = thermoSystem.phaseToSystem(0);
         // //gasOutStream.setThermoSystem(gasSystem);
         if (thermoSystem.hasPhaseType("gas")) {
             gasOutStream.setThermoSystemFromPhase(thermoSystem, "gas");
@@ -180,7 +179,7 @@ public class ThreePhaseSeparator extends Separator {
         }
         // //gasOutStream.run();
 
-        //// liquidSystem = (SystemInterface) thermoSystem.phaseToSystem(1);
+        //// liquidSystem = thermoSystem.phaseToSystem(1);
         //// liquidOutStream.setThermoSystem(liquidSystem);
         if (thermoSystem.hasPhaseType("oil")) {
             // thermoSystem.display();
@@ -191,7 +190,7 @@ public class ThreePhaseSeparator extends Separator {
         }
         // //liquidOutStream.run();
 
-        //// waterSystem = (SystemInterface) thermoSystem.phaseToSystem(2);
+        //// waterSystem = thermoSystem.phaseToSystem(2);
         //// waterOutStream.setThermoSystem(waterSystem);
         if (thermoSystem.hasPhaseType("aqueous")) {
             waterOutStream.setThermoSystemFromPhase(thermoSystem, "aqueous");

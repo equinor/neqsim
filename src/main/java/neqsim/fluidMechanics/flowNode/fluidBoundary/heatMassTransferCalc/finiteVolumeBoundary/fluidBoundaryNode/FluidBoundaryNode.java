@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidBoundaryNode implements FluidBoundaryNodeInterface {
-    private static final long serialVersionUID = 1000;
     protected SystemInterface system;
 
     /**
@@ -34,7 +33,7 @@ public class FluidBoundaryNode implements FluidBoundaryNodeInterface {
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
     public FluidBoundaryNode(SystemInterface system) {
-        this.system = (SystemInterface) system.clone();
+        this.system = system.clone();
     }
 
     /** {@inheritDoc} */

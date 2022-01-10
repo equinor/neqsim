@@ -11,8 +11,6 @@ import neqsim.PVTsimulation.simulation.SimulationInterface;
  * @version $Id: $Id
  */
 public class BaseTuningClass implements TuningInterface {
-    private static final long serialVersionUID = 1000;
-
     private SimulationInterface simulation = null;
     private boolean tunePlusMolarMass = false;
     private boolean tuneVolumeCorrection = false;

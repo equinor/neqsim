@@ -12,8 +12,6 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  * @version $Id: $Id
  */
 public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for TwoPhaseFlowNodeVisualization.

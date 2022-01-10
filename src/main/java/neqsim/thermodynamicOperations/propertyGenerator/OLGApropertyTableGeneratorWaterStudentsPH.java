@@ -284,7 +284,6 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
 
     /** {@inheritDoc} */
     @Override
-    @SuppressWarnings("empty-statement")
     public void run() {
         calcRSWTOB();
         logger.info("RSWTOB " + RSWTOB);

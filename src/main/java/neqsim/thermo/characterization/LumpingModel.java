@@ -41,6 +41,8 @@ public class LumpingModel implements java.io.Serializable {
      */
     public class StandardLumpingModel
             implements LumpingModelInterface, Cloneable, java.io.Serializable {
+        private static final long serialVersionUID = 1000;
+
         public StandardLumpingModel() {}
 
         @Override
@@ -84,7 +86,7 @@ public class LumpingModel implements java.io.Serializable {
             lumpedComponentNames = new String[numberOfLumpedComponents];
             fractionOfHeavyEnd = new double[numberOfPseudocomponents];
             double[] zPlus = new double[numberOfPseudocomponents];
-            double[] MPlus = new double[numberOfPseudocomponents];
+            // double[] MPlus = new double[numberOfPseudocomponents];
 
             double weightFrac = 0.0;
             double weightTot = 0.0;
@@ -101,7 +103,7 @@ public class LumpingModel implements java.io.Serializable {
 
             double meanWeightFrac = weightTot / (numberOfPseudocomponents + 1e-10);
             int k = 0;
-            int firstPS = charac.getPlusFractionModel().getFirstTBPFractionNumber();
+            // int firstPS = charac.getPlusFractionModel().getFirstTBPFractionNumber();
             double Maverage = 0.0, denstemp1 = 0.0, denstemp2 = 0.0;
             double totalNumberOfMoles = system.getNumberOfMoles();
             int numbComp = system.getPhase(0).getNumberOfComponents();
@@ -148,7 +150,7 @@ public class LumpingModel implements java.io.Serializable {
                     weightFrac = 0.0;
                     Maverage = 0.0;
                     k++;
-                    firstPS = i + 1;
+                    // firstPS = i + 1;
 
                     added++;
                 }
@@ -186,7 +188,7 @@ public class LumpingModel implements java.io.Serializable {
                     weightFrac = 0.0;
                     Maverage = 0.0;
                     k++;
-                    firstPS = i + 1;
+                    // firstPS = i + 1;
                 }
             }
             if (charac.getPlusFractionModel().hasPlusFraction()) {
@@ -214,6 +216,8 @@ public class LumpingModel implements java.io.Serializable {
      * @version 1.0
      */
     public class PVTLumpingModel extends StandardLumpingModel {
+        private static final long serialVersionUID = 1000;
+
         public PVTLumpingModel() {}
 
         @Override

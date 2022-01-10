@@ -12,8 +12,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class GOR extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
     double[] temperature = null;
     double[] pressure = null;
     double[] Sm3gas, m3oil;

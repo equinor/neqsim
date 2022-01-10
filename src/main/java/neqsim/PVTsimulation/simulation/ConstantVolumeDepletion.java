@@ -17,10 +17,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class ConstantVolumeDepletion extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
-    // double temperature = 273.15 + 150.5;
-
     private double[] relativeVolume = null;
     double[] totalVolume = null, liquidVolumeRelativeToVsat = null, liquidVolume = null;
     boolean saturationConditionFound = false;
@@ -176,8 +172,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
                 double[] guess = new double[] {234.0 / 1000.0};// getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus()/1000.0};
                 function.setInitialGuess(guess);
 
-                SystemInterface tempSystem = getThermoSystem();// (SystemInterface)
-                                                               // getThermoSystem().clone();
+                SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
 
                 tempSystem.setTemperature(temperature);
                 tempSystem.setPressure(pressures[i]);

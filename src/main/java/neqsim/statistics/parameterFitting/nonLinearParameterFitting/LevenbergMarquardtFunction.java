@@ -11,8 +11,6 @@ import neqsim.statistics.parameterFitting.BaseFunction;
  * @version $Id: $Id
  */
 public class LevenbergMarquardtFunction extends BaseFunction {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for LevenbergMarquardtFunction.

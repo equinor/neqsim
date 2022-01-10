@@ -86,22 +86,12 @@ public abstract class PhysicalProperties
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
-        properties.densityCalc =
-                (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface) densityCalc
-                        .clone();
-        properties.diffusivityCalc =
-                (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface) diffusivityCalc
-                        .clone();
-        properties.viscosityCalc =
-                (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface) viscosityCalc
-                        .clone();
-        properties.conductivityCalc =
-                (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface) conductivityCalc
-                        .clone();
+        properties.densityCalc = densityCalc.clone();
+        properties.diffusivityCalc = diffusivityCalc.clone();
+        properties.viscosityCalc = viscosityCalc.clone();
+        properties.conductivityCalc = conductivityCalc.clone();
         if (mixingRule != null)
-            properties.mixingRule =
-                    (neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface) mixingRule
-                            .clone();
+            properties.mixingRule = mixingRule.clone();
         return properties;
     }
 

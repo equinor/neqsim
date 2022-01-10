@@ -255,9 +255,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
         return fugasityCoeffisient;
     }
 
-    // public int getHydrateStructure() {
-    // return this.getHydrateStructure();
-    // }
     /** {@inheritDoc} */
     @Override
     public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {

@@ -14,7 +14,6 @@ import neqsim.thermo.component.ComponentHydrate;
  * @version $Id: $Id
  */
 public class HydrateFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFunction.class);
 
     /**

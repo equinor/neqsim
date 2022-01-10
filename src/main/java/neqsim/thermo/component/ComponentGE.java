@@ -82,8 +82,8 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
      * @return a double
      */
     public double fugcoefDiffPres(PhaseInterface phase) {
-        double temperature = phase.getTemperature(), pressure = phase.getPressure();
-        int numberOfComponents = phase.getNumberOfComponents();
+        // double temperature = phase.getTemperature(), pressure = phase.getPressure();
+        // int numberOfComponents = phase.getNumberOfComponents();
         if (referenceStateType.equals("solvent")) {
             dfugdp = 0.0; // forelopig uten pointing
         } else {
@@ -101,8 +101,9 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
      * @return a double
      */
     public double fugcoefDiffTemp(PhaseInterface phase) {
-        double temperature = phase.getTemperature(), pressure = phase.getPressure();
-        int numberOfComponents = phase.getNumberOfComponents();
+        double temperature = phase.getTemperature();
+        // double pressure = phase.getPressure();
+        // int numberOfComponents = phase.getNumberOfComponents();
 
         if (referenceStateType.equals("solvent")) {
             dfugdt = dlngammadt + 1.0 / getAntoineVaporPressure(temperature)

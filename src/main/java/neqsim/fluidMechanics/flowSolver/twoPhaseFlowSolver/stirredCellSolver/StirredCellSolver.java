@@ -97,7 +97,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
      * </p>
      */
     public void initProfiles() {
-        SystemInterface tempSyst = (SystemInterface) pipe.getNode(0).getBulkSystem().clone();
+        SystemInterface tempSyst = pipe.getNode(0).getBulkSystem().clone();
         ThermodynamicOperations testOps = new ThermodynamicOperations(tempSyst);
         testOps.TPflash();
         testOps.displayResult();

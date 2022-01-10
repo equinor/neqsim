@@ -1,13 +1,14 @@
 package neqsim.thermo.util.referenceEquations;
 
 /**
- * <p>methaneBWR32 class.</p>
+ * <p>
+ * methaneBWR32 class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class methaneBWR32 {
-    private static final long serialVersionUID = 1000;
     double gamma = 0.0096;
     double[] N = new double[] {-1.84E-02, 1.051016206, 1.61E+01, 8.48E+02, -4.27E+04, 7.66E-04,
             -4.84E-01, 8.52E+01, -1.66E+04, -3.75E-05, 2.86E-02, -2.868528597, 1.19E-04, -8.53E-03,
@@ -16,7 +17,9 @@ public class methaneBWR32 {
             -2.17E-06, 2.40E-05};
 
     /**
-     * <p>calcPressure.</p>
+     * <p>
+     * calcPressure.
+     * </p>
      *
      * @param molDens a double
      * @param temp a double
@@ -55,7 +58,9 @@ public class methaneBWR32 {
     }
 
     /**
-     * <p>molDens.</p>
+     * <p>
+     * molDens.
+     * </p>
      *
      * @param temp a double
      * @param pres a double
@@ -89,7 +94,9 @@ public class methaneBWR32 {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

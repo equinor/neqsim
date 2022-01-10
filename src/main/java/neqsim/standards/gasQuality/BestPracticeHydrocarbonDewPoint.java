@@ -13,7 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
-    private static final long serialVersionUID = 1000;
     String dewPointTemperatureUnit = "C", pressureUnit = "bar";
     double dewPointTemperature = 273.0, dewPointTemperatureSpec = -12.0;
     double specPressure = 50.0;

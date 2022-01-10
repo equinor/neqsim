@@ -12,8 +12,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class SwellingTest extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
     double[] gasInjected = null;
     private double[] pressures = null;
     private double[] relativeOilVolume = null;

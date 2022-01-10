@@ -15,8 +15,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionUtils {
-    private static final long serialVersionUID = 1000;
-
     private static final double Pa = 1e-5;
     private static final double m3 = 1e-5;
 

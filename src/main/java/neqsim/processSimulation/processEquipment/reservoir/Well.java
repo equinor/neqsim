@@ -13,6 +13,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Well implements java.io.Serializable {
+    private static final long serialVersionUID = 1000;
+
     private StreamInterface stream = null;
     private String name;
     double x, y, z;
@@ -66,7 +68,7 @@ public class Well implements java.io.Serializable {
      * @return a double
      */
     public double getGOR() {
-        SystemInterface locStream = (SystemInterface) (stream.getFluid()).clone();
+        SystemInterface locStream = (stream.getFluid()).clone();
         locStream.setTemperature(288.15);
         locStream.setPressure(1.01325);
         ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
@@ -87,7 +89,7 @@ public class Well implements java.io.Serializable {
      * @return a double
      */
     public double getStdGasProduction() {
-        SystemInterface locStream = (SystemInterface) (stream.getFluid()).clone();
+        SystemInterface locStream = (stream.getFluid()).clone();
         locStream.setTemperature(288.15);
         locStream.setPressure(1.01325);
         ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
@@ -107,7 +109,7 @@ public class Well implements java.io.Serializable {
      * @return a double
      */
     public double getStdOilProduction() {
-        SystemInterface locStream = (SystemInterface) (stream.getFluid()).clone();
+        SystemInterface locStream = (stream.getFluid()).clone();
         locStream.setTemperature(288.15);
         locStream.setPressure(1.01325);
         ThermodynamicOperations ops = new ThermodynamicOperations(locStream);

@@ -48,7 +48,7 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         outStream = new Stream(thermoSystem);
     }
 
@@ -130,7 +130,7 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
     @Override
     public void run() {
         // System.out.println("MoleFractionContollerUtil running..");
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         if (thermoSystem.getPhase(0).hasComponent(compName)) {
             thermoOps = new ThermodynamicOperations(thermoSystem);
             thermoSystem.init(1);

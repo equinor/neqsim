@@ -63,7 +63,7 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
     public void calcDesign() {
         super.calcDesign();
         SimpleAdsorber separator = (SimpleAdsorber) getProcessEquipment();
-        double Fg = 1.0;
+        // double Fg = 1.0;
 
         double emptyVesselWeight = 0.0, internalsWeight = 0.0, externalNozzelsWeight = 0.0;
         double pipingWeight = 0.0, structualWeight = 0.0, electricalWeight = 0.0;
@@ -72,12 +72,12 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
         double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
 
         double materialsCost = 0.0;
-        double sepLength = 0.0;
+        // double sepLength = 0.0;
 
-        double gasDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem()
-                .getPhase(0).getPhysicalProperties().getDensity();
-        double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem()
-                .getPhase(1).getPhysicalProperties().getDensity();
+        // double gasDensity = ((SeparatorInterface)
+        // getProcessEquipment()).getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+        // double liqDensity = ((SeparatorInterface)
+        // getProcessEquipment()).getThermoSystem().getPhase(1).getPhysicalProperties().getDensity();
 
         // maxDesignVolumeFlow = volumeSafetyFactor * ((Separator)
         // getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5;

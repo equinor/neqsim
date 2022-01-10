@@ -7,7 +7,9 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 
 /**
- * <p>MasstransferMeOH class.</p>
+ * <p>
+ * MasstransferMeOH class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -15,7 +17,9 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
  */
 public class MasstransferMeOH {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -43,8 +47,7 @@ public class MasstransferMeOH {
         Stream waterSaturatedFeedGas = new Stream(saturatedFeedGas.getOutStream());
         waterSaturatedFeedGas.setName("water saturated feed gas");
 
-        neqsim.thermo.system.SystemInterface feedMeOH =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface feedMeOH = feedGas.clone();
         feedMeOH.setMolarComposition(new double[] {0.0, 0.0, 1.0});
 
         Stream MeOHFeed = new Stream("lean TEG to absorber", feedMeOH);

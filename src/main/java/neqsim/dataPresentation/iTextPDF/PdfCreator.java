@@ -14,7 +14,6 @@ package neqsim.dataPresentation.iTextPDF;
  * @version $Id: $Id
  */
 public class PdfCreator {
-    private static final long serialVersionUID = 1000;
     // Rectangle pageSize = new Rectangle(144, 720);
     // Document document = new Document(pageSize);
     // Document document = new Document(PageSize.A5, 36, 72, 108, 180);
@@ -65,7 +64,7 @@ public class PdfCreator {
      */
     public void generatePDF(neqsim.thermo.system.SystemInterface thermoSystem) {
         document.addTitle("NeqSim Simulation Report");
-        String temp = "Temperature " + Double.toString(thermoSystem.getTemperature());
+        // String temp = "Temperature " + Double.toString(thermoSystem.getTemperature());
     }
 
     /**

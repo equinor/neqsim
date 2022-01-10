@@ -80,11 +80,11 @@ public class GasScrubberSimple extends Separator {
     public void setInletStream(Stream inletStream) {
         this.inletStream = inletStream;
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(0);
         gasOutStream = new Stream(gasSystem);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(1);
         liquidOutStream = new Stream(liquidSystem);
     }
@@ -116,7 +116,7 @@ public class GasScrubberSimple extends Separator {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
         if (separatorSection.size() > 0) {
@@ -127,7 +127,7 @@ public class GasScrubberSimple extends Separator {
         gasSystem.setNumberOfPhases(1);
         gasOutStream.setThermoSystem(gasSystem);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         if (separatorSection.size() > 0) {
             thermoSystem.addGasToLiquid(getGasCarryunderFraction());
             liquidSystem = thermoSystem.phaseToSystem(1);

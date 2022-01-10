@@ -11,7 +11,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class Recombine {
-    private static final long serialVersionUID = 1000;
     SystemInterface gas, oil;
     private SystemInterface recombinedSystem = null;
     private double GOR = 1000.0;

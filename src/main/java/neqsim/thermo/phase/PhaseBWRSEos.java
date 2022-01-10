@@ -186,14 +186,14 @@ public class PhaseBWRSEos extends PhaseSrkEos {
      */
     public double getFpoldVdVdV() {
         double temp = 0.0, temp2 = 0.0;
-        double temp3 = 0.0, temp4 = 0.0;
+        // double temp3 = 0.0, temp4 = 0.0;
         for (int i = 1; i < OP; i++) {
             temp += (i - 2) * (i - 1) * (i) * ((ComponentBWRS) componentArray[0]).getBP(i)
                     / (i - 0.0) * Math.pow(getMolarDensity(), i - 3);
             temp2 += (i - 1) * (i) * ((ComponentBWRS) componentArray[0]).getBP(i) / (i - 0.0)
                     * Math.pow(getMolarDensity(), i - 2);
-            temp3 += (i) * ((ComponentBWRS) componentArray[0]).getBP(i) / (i - 0.0)
-                    * Math.pow(getMolarDensity(), i - 1);
+            // temp3 += (i) * ((ComponentBWRS) componentArray[0]).getBP(i) / (i - 0.0) *
+            // Math.pow(getMolarDensity(), i - 1);
         }
         return numberOfMolesInPhase / (R * temperature) * temp * Math.pow(getdRhodV(), 3)
                 + 2 * numberOfMolesInPhase / (R * temperature) * temp2 * Math.pow(getdRhodV(), 1)
@@ -501,13 +501,13 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     @Override
     public double dFdV() {
         // double dv = molarVolume/1000.0;
-        //
+
         // molarVolume = molarVolume + dv;
         // double fold = getF();
         // molarVolume = molarVolume - 2*dv;
         // double fnew = getF();
         // molarVolume = molarVolume + dv;
-        //
+
         // System.out.println("dFdV " + ((fold-fnew)/(2*dv)) + " super " + super.dFdV()+
         // " phasetype " +getPhaseTypeName());
         // // return (fold-fnew)/(2*dv);
@@ -535,7 +535,6 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     }
 
     // public double dFdVdVdV(){
-    //
     // return getFpoldVdVdV();
     // }
 

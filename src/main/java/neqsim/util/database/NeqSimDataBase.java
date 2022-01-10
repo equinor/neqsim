@@ -374,7 +374,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     public static boolean hasComponent(String compName) {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
-        String[] names = null;
+        // String[] names = null;
         try {
             dataSet = database
                     .getResultSet("select count(*) from comp WHERE NAME='" + compName + "'");

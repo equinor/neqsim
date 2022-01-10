@@ -11,8 +11,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class WaxFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     double molarMass = 0.0;
 
     /**

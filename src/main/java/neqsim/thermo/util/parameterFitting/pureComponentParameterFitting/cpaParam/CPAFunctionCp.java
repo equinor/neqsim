@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class CPAFunctionCp extends CPAFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunctionCp.class);
 
     int phasetype = 1;

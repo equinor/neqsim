@@ -28,7 +28,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class BaseContract implements ContractInterface {
-    private static final long serialVersionUID = 1000;
 
     private String[][] resultTable = new String[50][9];
     double waterDewPointTemperature = -12.0;

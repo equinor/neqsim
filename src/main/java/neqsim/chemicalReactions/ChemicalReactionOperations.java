@@ -277,7 +277,7 @@ public class ChemicalReactionOperations
         int k = 0;
         Iterator<String> newe = elementsLocal.iterator();
         while (newe.hasNext()) {
-            elementList[k++] = (String) newe.next();
+            elementList[k++] = newe.next();
         }
         /*
          * for(int j=0;j<elementList.length;j++){ System.out.println("elements2: " +elementList[j]);

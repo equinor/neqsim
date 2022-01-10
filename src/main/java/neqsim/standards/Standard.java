@@ -27,8 +27,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public abstract class Standard implements StandardInterface {
-    private static final long serialVersionUID = 1000;
-
     protected String name = "Base Standard";
     protected String standardDescription = "Base Description";
     protected ContractInterface salesContract = new BaseContract();
@@ -131,7 +129,7 @@ public abstract class Standard implements StandardInterface {
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
         String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
-        String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
+        // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
         table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
 
         for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {

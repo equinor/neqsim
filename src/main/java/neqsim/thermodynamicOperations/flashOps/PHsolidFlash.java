@@ -8,7 +8,6 @@ package neqsim.thermodynamicOperations.flashOps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -54,7 +53,7 @@ public class PHsolidFlash extends Flash {
         double err = 0;
         int iter = 0;
         double f_func = 0.0, f_func_old = 0.0, df_func_dt = 0, t_old = 0, t_oldold = 0.0;
-        ThermodynamicOperations ops = new ThermodynamicOperations(system);
+        // ThermodynamicOperations ops = new ThermodynamicOperations(system);
         tpFlash.run();
         double dt = 10;
         do {

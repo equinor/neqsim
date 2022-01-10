@@ -84,8 +84,9 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
         Jac.timesEquals(0.0);
         double dij = 0.0;
 
-        double tempJ = 0.0, sumdyidbeta = 0, sumdxidbeta = 0;
-        int nofc = numberOfComponents;
+        double tempJ = 0.0;
+        // double sumdyidbeta = 0, sumdxidbeta = 0;
+        // int nofc = numberOfComponents;
 
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {

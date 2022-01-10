@@ -5,7 +5,7 @@
  */
 package neqsim.statistics.dataAnalysis.dataSmoothing;
 
-import Jama.*;
+import Jama.Matrix;
 
 /**
  * <p>
@@ -16,8 +16,6 @@ import Jama.*;
  * @version $Id: $Id
  */
 public class DataSmoothor {
-    private static final long serialVersionUID = 1000;
-
     double[] nonSmoothedNumbers, smoothedNumbers, cCoef;
     int nl = 0, nr = 0, ld = 0, m = 0, mm = 0, imj = 0, kk = 0;
     int[] index;

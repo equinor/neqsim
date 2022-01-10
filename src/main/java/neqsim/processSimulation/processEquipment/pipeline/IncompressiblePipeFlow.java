@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -102,7 +101,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         // system.setMultiPhaseCheck(true);
         if (setTemperature) {
             system.setTemperature(this.temperatureOut);

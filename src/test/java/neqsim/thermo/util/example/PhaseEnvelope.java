@@ -9,7 +9,9 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>PhaseEnvelope class.</p>
+ * <p>
+ * PhaseEnvelope class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -19,7 +21,9 @@ public class PhaseEnvelope {
     static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -84,7 +88,7 @@ public class PhaseEnvelope {
 
         // testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
         // testSystem.getCharacterization().characterisePlusFraction();
-        //
+
         // testSystem.createDatabase(true);
 
         testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");

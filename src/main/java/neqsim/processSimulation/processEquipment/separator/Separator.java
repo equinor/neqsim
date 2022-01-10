@@ -95,11 +95,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
      */
     public void setInletStream(StreamInterface inletStream) {
         inletStreamMixer.addStream(inletStream);
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
         gasOutStream = new Stream(gasSystem);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         liquidOutStream = new Stream(liquidSystem);
     }
@@ -175,7 +175,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     @Override
     public void run() {
         inletStreamMixer.run();
-        thermoSystem2 = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
+        thermoSystem2 = inletStreamMixer.getOutStream().getThermoSystem().clone();
         thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
 
         if (thermoSystem2.hasPhaseType("gas")) {
@@ -194,7 +194,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         liquidOutStream.run();
         // liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "aqueous");
         try {
-            thermoSystem = (SystemInterface) thermoSystem2.clone();
+            thermoSystem = thermoSystem2.clone();
             thermoSystem.setTotalNumberOfMoles(1.0e-10);
             thermoSystem.init(1);
             // System.out.println("number of phases " + thermoSystem.getNumberOfPhases());
@@ -258,9 +258,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         inletStreamMixer.run();
 
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-        double inMoles = inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
-        double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
-        double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
+        // double inMoles =
+        // inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
+        // double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
+        // double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
         thermoSystem.init(3);
         gasOutStream.getThermoSystem().init(3);
         liquidOutStream.getThermoSystem().init(3);
@@ -707,7 +708,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     /** {@inheritDoc} */
     @Override
     public double getExergyChange(String unit, double sourrondingTemperature) {
-        //
         double exergy = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
             inletStreamMixer.getStream(i).getFluid().init(3);

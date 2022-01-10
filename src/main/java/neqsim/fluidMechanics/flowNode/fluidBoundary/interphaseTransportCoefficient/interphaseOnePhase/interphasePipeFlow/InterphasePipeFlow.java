@@ -1,6 +1,5 @@
 package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseOnePhase.interphasePipeFlow;
 
-import neqsim.MathLib.generalMath.GeneralMath;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseOnePhase.InterphaseOnePhase;
 
@@ -13,8 +12,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
  * @version $Id: $Id
  */
 public class InterphasePipeFlow extends InterphaseOnePhase {
-    private static final long serialVersionUID = 1000;
-
     public InterphasePipeFlow() {}
 
     /**
@@ -31,7 +28,7 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
     /** {@inheritDoc} */
     @Override
     public double calcWallFrictionFactor(FlowNodeInterface node) {
-        return calcWallFrictionFactor(0,node);
+        return calcWallFrictionFactor(0, node);
     }
 
     /** {@inheritDoc} */
@@ -41,7 +38,7 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
             return 64.0 / node.getReynoldsNumber(phase);
         } else {
             return Math.pow(
-                    (1.0 / (-1.8 * GeneralMath.log10(6.9 / node.getReynoldsNumber(phase)
+                    (1.0 / (-1.8 * Math.log10(6.9 / node.getReynoldsNumber(phase)
                             + Math.pow(node.getGeometry().getRelativeRoughnes() / 3.7, 1.11)))),
                     2.0);
         }

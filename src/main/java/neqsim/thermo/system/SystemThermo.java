@@ -66,7 +66,7 @@ abstract class SystemThermo implements SystemInterface {
     protected double[] beta = new double[6];
     protected int a, initType = 3;
     private ArrayList<String> componentNames = new ArrayList<String>();
-    protected ArrayList resultArray1 = new ArrayList();
+    // protected ArrayList<String> resultArray1 = new ArrayList<String>();
     protected String[] CapeOpenProperties11 = {"molecularWeight", "speedOfSound",
             "jouleThomsonCoefficient", "internalEnergy", "internalEnergy.Dtemperature",
             "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient", "logFugacityCoefficient",
@@ -206,16 +206,15 @@ abstract class SystemThermo implements SystemInterface {
         clonedSystem.attractiveTermNumber = attractiveTermNumber;
         clonedSystem.phaseType = phaseType.clone();
         clonedSystem.phaseIndex = phaseIndex.clone();
-        clonedSystem.componentNames = (ArrayList<String>) componentNames.clone();
+
+        clonedSystem.componentNames = new ArrayList<String>(componentNames);
         if (interfaceProp != null) {
             // clonedSystem.interfaceProp = (InterphasePropertiesInterface)
             // interfaceProp.clone();
         }
-        clonedSystem.characterization =
-                (neqsim.thermo.characterization.Characterise) characterization.clone();
+        clonedSystem.characterization = characterization.clone();
         if (clonedSystem.waxCharacterisation != null) {
-            clonedSystem.waxCharacterisation =
-                    (neqsim.thermo.characterization.WaxCharacterise) waxCharacterisation.clone();
+            clonedSystem.waxCharacterisation = waxCharacterisation.clone();
         }
 
         System.arraycopy(this.beta, 0, clonedSystem.beta, 0, beta.length);
@@ -224,7 +223,7 @@ abstract class SystemThermo implements SystemInterface {
 
         clonedSystem.phaseArray = phaseArray.clone();
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+            clonedSystem.phaseArray[i] = phaseArray[i].clone();
         }
         return clonedSystem;
     }
@@ -502,7 +501,7 @@ abstract class SystemThermo implements SystemInterface {
         ArrayList<PhaseInterface> phaseList = new ArrayList<PhaseInterface>(0);
         for (int i = 0; i < numberOfPhases; i++) {
             if (specPhase != i) {
-                phaseList.add((PhaseInterface) phaseArray[phaseIndex[i]]);
+                phaseList.add(phaseArray[phaseIndex[i]]);
             }
         }
 
@@ -521,7 +520,7 @@ abstract class SystemThermo implements SystemInterface {
     @Override
     public void replacePhase(int repPhase, PhaseInterface newPhase) {
         for (int i = 0; i < 2; i++) {
-            phaseArray[i] = (PhaseInterface) newPhase.clone();
+            phaseArray[i] = newPhase.clone();
         }
         setTotalNumberOfMoles(newPhase.getNumberOfMolesInPhase());
     }
@@ -535,7 +534,7 @@ abstract class SystemThermo implements SystemInterface {
         }
 
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-            phaseArray[i] = (PhaseInterface) newPhase.clone();
+            phaseArray[i] = newPhase.clone();
         }
 
         setTotalNumberOfMoles(newPhase.getNumberOfMolesInPhase());
@@ -553,7 +552,7 @@ abstract class SystemThermo implements SystemInterface {
     public SystemInterface getEmptySystemClone() {
         int phaseNumber = 0;
 
-        SystemInterface newSystem = (SystemInterface) this.clone();
+        SystemInterface newSystem = this.clone();
 
         for (int j = 0; j < getMaxNumberOfPhases(); j++) {
             phaseNumber = j;
@@ -593,7 +592,7 @@ abstract class SystemThermo implements SystemInterface {
     /** {@inheritDoc} */
     @Override
     public SystemInterface phaseToSystem(int phaseNumber) {
-        SystemInterface newSystem = (SystemInterface) this.clone();
+        SystemInterface newSystem = this.clone();
 
         for (int j = 0; j < getMaxNumberOfPhases(); j++) {
             for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
@@ -616,7 +615,7 @@ abstract class SystemThermo implements SystemInterface {
     /** {@inheritDoc} */
     @Override
     public SystemInterface phaseToSystem(int phaseNumber1, int phaseNumber2) {
-        SystemInterface newSystem = (SystemInterface) this.clone();
+        SystemInterface newSystem = this.clone();
 
         for (int j = 0; j < getMaxNumberOfPhases(); j++) {
             for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
@@ -832,7 +831,7 @@ abstract class SystemThermo implements SystemInterface {
             // Math.pow((molarMass/5.805e-5*Math.pow(density,0.9371)), 1.0/2.3776);
             // acs = TBPfractionModel.calcAcentricFactor(molarMass, density);
             // System.out.println("acentric " + acs);
-            // 3.0/7.0*MathLib.generalMath.GeneralMath.log10(PC/1.01325)/(TC/TB-1.0)-1.0;
+            // 3.0/7.0*Math.log10(PC/1.01325)/(TC/TB-1.0)-1.0;
             molarMass /= 1000.0;
 
             for (int i = 0; i < refSystem.getNumberOfPhases(); i++) {
@@ -874,8 +873,6 @@ abstract class SystemThermo implements SystemInterface {
             // //refSystem.initPhysicalProperties();
             // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
             // sammenligne med API-standard for tetthet - og sette Penloux dt
-            //
-            //
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -1007,15 +1004,13 @@ abstract class SystemThermo implements SystemInterface {
             // refSystem.init(1);
             // refSystem.display();
             // refSystem.getPhase(1).getComponent(0).setRacketZ(racketZ);
-            //
+
             // // refSystem.setTemperature(273.15+80.0);
             // // refSystem.setPressure(1.01325);
             // // refSystem.init(1);
-            // //refSystem.initPhysicalProperties();
+            // // refSystem.initPhysicalProperties();
             // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
             // // sammenligne med API-standard for tetthet - og sette Penloux dt
-            //
-            //
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -2344,7 +2339,7 @@ abstract class SystemThermo implements SystemInterface {
         }
         String[] componentList = new String[components.size()];
         for (int j = 0; j < numberOfComponents; j++) {
-            componentList[j] = (String) components.get(j);
+            componentList[j] = components.get(j);
         }
         return componentList;
     }
@@ -2621,12 +2616,16 @@ abstract class SystemThermo implements SystemInterface {
         switch (unit) {
             case "J":
                 conversionFactor = 1.0;
+                break;
             case "J/mole":
                 conversionFactor = 1.0 / getTotalNumberOfMoles();
+                break;
             case "J/kg":
                 conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass();
+                break;
             case "kJ/kg":
                 conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
+                break;
         }
         return refEnthalpy * conversionFactor;
     }
@@ -3792,7 +3791,7 @@ abstract class SystemThermo implements SystemInterface {
         if (getMaxNumberOfPhases() < 3) {
             if (multiPhaseCheck) {
                 setMaxNumberOfPhases(3);
-                phaseArray[2] = (PhaseInterface) phaseArray[1].clone();
+                phaseArray[2] = phaseArray[1].clone();
                 phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleNumber());
                 phaseArray[2].resetPhysicalProperties();
                 phaseArray[2].initPhysicalProperties();

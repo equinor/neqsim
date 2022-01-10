@@ -13,8 +13,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version $Id: $Id
  */
 public class CPAParameterFittingToSolubilityData_Vap extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for CPAParameterFittingToSolubilityData_Vap.
@@ -33,10 +31,6 @@ public class CPAParameterFittingToSolubilityData_Vap extends LevenbergMarquardtF
         // return system.getPhases()[1].getComponents()[0].getx(); // for MEG
     }
 
-    // public double calcTrueValue(double val){
-    // return val;
-    // }
-    //
     /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {

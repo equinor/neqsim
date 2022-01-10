@@ -2,7 +2,6 @@ package neqsim.thermo.characterization;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -27,6 +26,8 @@ public class TBPfractionModel implements java.io.Serializable {
 
     public abstract class TBPBaseModel
             implements TBPModelInterface, Cloneable, java.io.Serializable {
+        private static final long serialVersionUID = 1000;
+
         protected boolean calcm = true;
 
         @Override
@@ -69,8 +70,7 @@ public class TBPfractionModel implements java.io.Serializable {
             double TC = calcTC(molarMass, density);
             double TB = calcTB(molarMass, density);
             double PC = calcPC(molarMass, density);
-            return 3.0 / 7.0 * neqsim.MathLib.generalMath.GeneralMath.log10(PC / 1.01325)
-                    / (TC / TB - 1.0) - 1.0;
+            return 3.0 / 7.0 * Math.log10(PC / 1.01325) / (TC / TB - 1.0) - 1.0;
         }
 
         @Override
@@ -106,6 +106,8 @@ public class TBPfractionModel implements java.io.Serializable {
     }
 
     public class PedersenTBPModelSRK extends TBPBaseModel {
+        private static final long serialVersionUID = 1000;
+
         double[][] TBPfractionCoefOil =
                 {{163.12, 86.052, 0.43475, -1877.4, 0.0}, {-0.13408, 2.5019, 208.46, -3987.2, 1.0},
                         {0.7431, 0.0048122, 0.0096707, -3.7184e-6, 0.0}};
@@ -195,6 +197,8 @@ public class TBPfractionModel implements java.io.Serializable {
     }
 
     public class PedersenTBPModelSRKHeavyOil extends PedersenTBPModelSRK {
+        private static final long serialVersionUID = 1000;
+
         double[][] TBPfractionCoefsHeavyOil = {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
                 {8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25},
                 {-4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0}};
@@ -210,6 +214,8 @@ public class TBPfractionModel implements java.io.Serializable {
     }
 
     public class PedersenTBPModelPR extends PedersenTBPModelSRK {
+        private static final long serialVersionUID = 1000;
+
         public PedersenTBPModelPR() {
             double[][] TBPfractionCoefOil2 = {{73.4043, 97.3562, 0.618744, -2059.32, 0.0},
                     {0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0},
@@ -226,6 +232,8 @@ public class TBPfractionModel implements java.io.Serializable {
     }
 
     public class PedersenTBPModelPRHeavyOil extends PedersenTBPModelPR {
+        private static final long serialVersionUID = 1000;
+
         public PedersenTBPModelPRHeavyOil() {
             double[][] TBPfractionCoefHeavyOil2 =
                     {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
@@ -239,6 +247,8 @@ public class TBPfractionModel implements java.io.Serializable {
     }
 
     public class RiaziDaubert extends PedersenTBPModelSRK {
+        private static final long serialVersionUID = 1000;
+
         public RiaziDaubert() {
             calcm = false;
         }
@@ -273,8 +283,7 @@ public class TBPfractionModel implements java.io.Serializable {
             double TC = calcTC(molarMass, density);
             double TB = calcTB(molarMass, density);
             double PC = calcPC(molarMass, density);
-            return 3.0 / 7.0 * neqsim.MathLib.generalMath.GeneralMath.log10(PC / 1.01325)
-                    / (TC / TB - 1.0) - 1.0;
+            return 3.0 / 7.0 * Math.log10(PC / 1.01325) / (TC / TB - 1.0) - 1.0;
         }
 
         @Override

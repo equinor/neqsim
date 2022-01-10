@@ -12,8 +12,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
  * @version $Id: $Id
  */
 public class InterphaseOnePhase extends InterphaseTransportCoefficientBaseClass {
-    private static final long serialVersionUID = 1000;
-
     public InterphaseOnePhase() {}
 
     /**

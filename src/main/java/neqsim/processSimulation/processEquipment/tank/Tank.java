@@ -73,11 +73,11 @@ public class Tank extends ProcessEquipmentBaseClass {
      */
     public void setInletStream(Stream inletStream) {
         inletStreamMixer.addStream(inletStream);
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
         gasOutStream = new Stream(gasSystem);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         liquidOutStream = new Stream(liquidSystem);
     }
@@ -147,8 +147,7 @@ public class Tank extends ProcessEquipmentBaseClass {
     @Override
     public void run() {
         inletStreamMixer.run();
-        SystemInterface thermoSystem2 =
-                (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
+        SystemInterface thermoSystem2 = inletStreamMixer.getOutStream().getThermoSystem().clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
         ops.VUflash(thermoSystem2.getVolume(), thermoSystem2.getInternalEnergy());
         System.out.println("Volume " + thermoSystem2.getVolume() + " internalEnergy "
@@ -165,7 +164,7 @@ public class Tank extends ProcessEquipmentBaseClass {
             gasOutStream.setThermoSystemFromPhase(thermoSystem2.getEmptySystemClone(), "oil");
         }
 
-        thermoSystem = (SystemInterface) thermoSystem2.clone();
+        thermoSystem = thermoSystem2.clone();
         thermoSystem.setTotalNumberOfMoles(1.0e-10);
         thermoSystem.init(1);
         System.out.println("number of phases " + thermoSystem.getNumberOfPhases());
@@ -219,9 +218,10 @@ public class Tank extends ProcessEquipmentBaseClass {
         inletStreamMixer.run();
 
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-        double inMoles = inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
-        double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
-        double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
+        // double inMoles =
+        // inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
+        // double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
+        // double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
         thermoSystem.init(3);
         gasOutStream.getThermoSystem().init(3);
         liquidOutStream.getThermoSystem().init(3);

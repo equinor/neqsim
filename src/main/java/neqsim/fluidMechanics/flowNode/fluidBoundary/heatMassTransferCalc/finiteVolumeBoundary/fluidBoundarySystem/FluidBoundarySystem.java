@@ -14,8 +14,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version $Id: $Id
  */
 public class FluidBoundarySystem implements FluidBoundarySystemInterface {
-    private static final long serialVersionUID = 1000;
-
     protected FluidBoundaryInterface boundary;
     protected int numberOfNodes = 10;
     protected double filmThickness = 0.01;

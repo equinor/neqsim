@@ -15,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Draft_GERG2004 extends neqsim.standards.Standard {
-    private static final long serialVersionUID = 1000;
     double specPressure = 70.0;
     double initTemperature = 273.15;
 
@@ -114,7 +113,7 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
         String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
-        String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
+        // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
         table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
 
         for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {

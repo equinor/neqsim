@@ -70,7 +70,7 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
         double val = -x / (getTotalVolume() * getTotalVolume() * u) + xV / (getTotalVolume() * u)
                 - x / (getTotalVolume() * u * u) * (-1.0) * xV;
         return -val;
-        //
+
         // double gvv
         // =0.225625/Math.pow(1.0-0.475*getB()/getTotalVolume(),2.0)*Math.pow(getB(),2.0)/(Math.pow(getTotalVolume(),4.0))+0.95/(1.0-0.475*getB()/getTotalVolume())*getB()/(Math.pow(getTotalVolume(),3.0));
         // System.out.println("val2 " + gvv);

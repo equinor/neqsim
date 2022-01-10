@@ -28,7 +28,6 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         m = component.getAcentricFactor();
     }
 
-    /** {@inheritDoc} */
     // public AtractiveTermTwuCoon(ComponentEosInterface component, double[] params) {
     // this(component);
     // System.arraycopy(params,0,this.parameters,0,params.length);
@@ -97,9 +96,8 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
      * @return double
      */
     private double diffdiffalphaCritT(double temperature) {
-        double t = temperature;
         double TC = getComponent().getTC();
-        // double Tr = (t / TC);
+        // double Tr = (temperature / TC);
         return 4.0 * Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / TC, 1.0 * d))), 2.0) * c
                 * c * Math.pow(Math.pow(temperature / TC, 1.0 * d), 2.0) * d * d
                 / (temperature * temperature)

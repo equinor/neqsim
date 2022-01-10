@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class FreezeSolidFunction extends HuronVidalFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(FreezeSolidFunction.class);
 
     /**

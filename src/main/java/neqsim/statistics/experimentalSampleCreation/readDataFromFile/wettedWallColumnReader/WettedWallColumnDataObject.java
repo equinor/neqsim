@@ -17,8 +17,6 @@ import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataObject;
  * @version $Id: $Id
  */
 public class WettedWallColumnDataObject extends DataObject {
-    private static final long serialVersionUID = 1000;
-
     double pressure = 0, inletGasTemperature = 0, outletGasTemperature = 0;
     double inletLiquidTemperature = 0, outletLiquidTemperature = 0, columnWallTemperature = 0;
     double totalGasFlow = 0, co2SupplyFlow = 0, inletLiquidFlow = 0;

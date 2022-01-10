@@ -53,19 +53,17 @@ public class SystemMechanicalDesign implements java.io.Serializable {
         ArrayList<String> names = processSystem.getAllUnitNames();
         for (int i = 0; i < names.size(); i++) {
             try {
-                if (!((ProcessEquipmentInterface) processSystem
-                        .getUnit((String) names.get(i)) == null)) {
-                    ((ProcessEquipmentInterface) processSystem.getUnit((String) names.get(i)))
+                if (!((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)) == null)) {
+                    ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
                             .getMechanicalDesign().calcDesign();
                     totalPlotSpace += ((ProcessEquipmentInterface) processSystem
-                            .getUnit((String) names.get(i))).getMechanicalDesign().getModuleHeight()
-                            * ((ProcessEquipmentInterface) processSystem
-                                    .getUnit((String) names.get(i))).getMechanicalDesign()
-                                            .getModuleLength();
-                    totalVolume += ((ProcessEquipmentInterface) processSystem
-                            .getUnit((String) names.get(i))).getMechanicalDesign().getVolumeTotal();
-                    totalWeight += ((ProcessEquipmentInterface) processSystem
-                            .getUnit((String) names.get(i))).getMechanicalDesign().getWeightTotal();
+                            .getUnit(names.get(i))).getMechanicalDesign().getModuleHeight()
+                            * ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                                    .getMechanicalDesign().getModuleLength();
+                    totalVolume += ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                            .getMechanicalDesign().getVolumeTotal();
+                    totalWeight += ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                            .getMechanicalDesign().getWeightTotal();
                     numberOfModules++;
                 }
             } catch (Exception e) {

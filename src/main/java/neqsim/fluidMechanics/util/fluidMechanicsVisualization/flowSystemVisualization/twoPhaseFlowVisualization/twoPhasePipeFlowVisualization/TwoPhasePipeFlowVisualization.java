@@ -14,8 +14,6 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  */
 public class TwoPhasePipeFlowVisualization extends
         neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.TwoPhaseFlowVisualization {
-    private static final long serialVersionUID = 1000;
-
     double[][][] pressurePoint = new double[2][10][10];
     double[][][] velocityPoint = new double[2][10][10];
     double[][][] reynoldsNumber = new double[2][10][10];
@@ -129,10 +127,10 @@ public class TwoPhasePipeFlowVisualization extends
         // if(name.equals("pressure")) points = pressurePoint;
         // if(name.equals("temperature")) points = temperaturePoint;
         // if(name.equals("velocity")) points = velocityPoint;
-        //
+
         // try{
         // System.out.println("points: " + points.length);
-        //
+
         // if(pressurePoint.length>1){
         // System.out.println("3D plot ");
         // plot = new visAd3DPlot("title[0]", "title[1]", "title[2]");
@@ -163,7 +161,7 @@ public class TwoPhasePipeFlowVisualization extends
     // // file.setZvalues(temperaturePoint, "time","sec");
     // file.createFile();
     // }
-    //
+
     /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {

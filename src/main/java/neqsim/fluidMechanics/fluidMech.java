@@ -9,5 +9,4 @@ package neqsim.fluidMechanics;
  * @version $Id: $Id
  */
 public class fluidMech {
-    private static final long serialVersionUID = 1000;
 }

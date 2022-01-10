@@ -31,8 +31,6 @@ public class NeqSimUnitSet {
         this.componentConcentrationUnit = componentConcentrationUnit;
     }
 
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Getter for the field <code>flowRateUnit</code>.

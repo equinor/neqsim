@@ -11,8 +11,6 @@ import java.util.ArrayList;
  * @version $Id: $Id
  */
 public class Wall implements WallInterface {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Getter for the field <code>heatTransferCoefficient</code>.

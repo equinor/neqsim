@@ -73,13 +73,11 @@ abstract class Phase implements PhaseInterface {
 
         clonedPhase.componentArray = this.componentArray.clone();
         for (int i = 0; i < numberOfComponents; i++) {
-            clonedPhase.componentArray[i] = (ComponentInterface) this.componentArray[i].clone();
+            clonedPhase.componentArray[i] = this.componentArray[i].clone();
         }
         // System.out.println("cloed length: " + componentArray.length);
         if (physicalPropertyHandler != null) {
-            clonedPhase.physicalPropertyHandler =
-                    ((neqsim.physicalProperties.PhysicalPropertyHandler) this.physicalPropertyHandler
-                            .clone());
+            clonedPhase.physicalPropertyHandler = this.physicalPropertyHandler.clone();
         }
 
         return clonedPhase;
@@ -111,7 +109,7 @@ abstract class Phase implements PhaseInterface {
             }
             // logger.info("length " + temp.size());
             for (int i = 0; i < temp.size(); i++) {
-                this.componentArray[i] = (ComponentInterface) temp.get(i);
+                this.componentArray[i] = temp.get(i);
                 this.getComponent(i).setComponentNumber(i);
             }
         } catch (Exception e) {
@@ -1504,7 +1502,7 @@ abstract class Phase implements PhaseInterface {
         double act1 = 0.0;
         double act2 = 0.0;
         int watNumb = 0;
-        double vminus = 0.0, vplus = 0.0;
+        // double vminus = 0.0, vplus = 0.0;
         double ions = 0.0;
         for (int j = 0; j < this.numberOfComponents; j++) {
             if (getComponent(j).getIonicCharge() != 0) {
@@ -1574,13 +1572,14 @@ abstract class Phase implements PhaseInterface {
     // }
     // else return getOsmoticCoefficient(watNumb);
     // }
+
     /** {@inheritDoc} */
     @Override
     public double getMeanIonicActivity(int comp1, int comp2) {
         double act1 = 0.0;
         double act2 = 0.0;
         int watNumb = 0;
-        double vminus = 0.0, vplus = 0.0;
+        // double vminus = 0.0, vplus = 0.0;
 
         for (int j = 0; j < this.numberOfComponents; j++) {
             if (getComponent(j).getComponentName().equals("water")) {
@@ -1821,8 +1820,8 @@ abstract class Phase implements PhaseInterface {
         // initPhysicalProperties();
         // for(int i = 0; i<numberOfComponents; i++) {
         // if(componentArray[i].getName().equals("H3O+")){
-        // return -
-        // MathLib.generalMath.GeneralMath.log10(componentArray[i].getNumberOfMolesInPhase()*getPhysicalProperties().getDensity()/(numberOfMolesInPhase*getMolarMass())*1e-3);
+        // return
+        // -Math.log10(componentArray[i].getNumberOfMolesInPhase()*getPhysicalProperties().getDensity()/(numberOfMolesInPhase*getMolarMass())*1e-3);
         // }
         // }
         // System.out.println("no H3Oplus");
@@ -1839,11 +1838,10 @@ abstract class Phase implements PhaseInterface {
     public double getpH_old() {
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getName().equals("H3O+")) {
-                // return -neqsim.MathLib.generalMath.GeneralMath.log10(componentArray[i].getx()
+                // return -Math.log10(componentArray[i].getx()
                 // * getActivityCoefficient(i));
-                return -java.lang.Math.log10(componentArray[i].getx() * getActivityCoefficient(i)
-                        / (0.01802 * neqsim.thermo.util.empiric.Water.waterDensity(temperature)
-                                / 1000.0));
+                return -Math.log10(componentArray[i].getx() * getActivityCoefficient(i) / (0.01802
+                        * neqsim.thermo.util.empiric.Water.waterDensity(temperature) / 1000.0));
             }
         }
         logger.info("no H3Oplus");

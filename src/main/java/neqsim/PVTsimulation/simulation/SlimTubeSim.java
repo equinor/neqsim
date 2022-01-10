@@ -13,8 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SlimTubeSim extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
     SystemInterface inectionGasSystem = null;
     private int numberOfSlimTubeNodes = 200;
     SystemInterface[] slimTubeNodeSystem = null;
@@ -66,7 +64,7 @@ public class SlimTubeSim extends BasePVTsimulation {
         inectionGasSystem.init(1);
 
         for (int i = 0; i < numberOfSlimTubeNodes + 1; i++) {
-            slimTubeNodeSystem[i] = (SystemInterface) getThermoSystem().clone();
+            slimTubeNodeSystem[i] = getThermoSystem().clone();
         }
 
         slimTubeNodeSystem[numberOfSlimTubeNodes].reset();

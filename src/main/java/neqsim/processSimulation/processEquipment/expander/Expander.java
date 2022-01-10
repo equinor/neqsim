@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.expander;
 
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -54,13 +53,13 @@ public class Expander extends Compressor implements ExpanderInterface {
     @Override
     public void run() {
         // System.out.println("expander running..");
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoSystem.init(3);
-        double presinn = getThermoSystem().getPressure();
+        // double presinn = getThermoSystem().getPressure();
         double hinn = getThermoSystem().getEnthalpy();
-        double densInn = getThermoSystem().getDensity();
+        // double densInn = getThermoSystem().getDensity();
         double entropy = getThermoSystem().getEntropy();
         inletEnthalpy = hinn;
 
@@ -100,7 +99,7 @@ public class Expander extends Compressor implements ExpanderInterface {
 
             // System.out.println("entropy inn.." + entropy);
             thermoOps.PSflash(entropy);
-            double densOutIdeal = getThermoSystem().getDensity();
+            // double densOutIdeal = getThermoSystem().getDensity();
             if (!powerSet) {
                 dH = (getThermoSystem().getEnthalpy() - hinn) * isentropicEfficiency;
             }

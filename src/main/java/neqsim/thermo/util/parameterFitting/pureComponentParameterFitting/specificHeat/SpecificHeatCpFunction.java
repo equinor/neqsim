@@ -13,7 +13,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SpecificHeatCpFunction.class);
 
     /**

@@ -14,8 +14,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
-    private static final long serialVersionUID = 1000;
-
     String componentName = "", unit = "-";
     Standard_ISO6976 iso6976 = null;
     double propaneNumber = 0.0;
@@ -127,7 +125,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
      * @return a double
      */
     public double calcWithNitrogenAsInert() {
-        SystemInterface tempThermo = (SystemInterface) thermoSystem.clone();
+        SystemInterface tempThermo = thermoSystem.clone();
         Standard_ISO6976 localIso6976 = new Standard_ISO6976(tempThermo);
 
         localIso6976.calculate();

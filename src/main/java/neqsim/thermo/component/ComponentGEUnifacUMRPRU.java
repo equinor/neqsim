@@ -363,7 +363,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
             FCommontemp += (compArray[j].getQ() * compArray[j].getx());
         }
 
-        int initType = phase.getInitType();
+        // int initType = phase.getInitType();
     }
 
     // TODO impement dlngammadn

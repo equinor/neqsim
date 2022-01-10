@@ -18,7 +18,6 @@ import no.uib.cipr.matrix.DenseMatrix;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionFullGT {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GTSurfaceTensionFullGT.class);
 
     private int ncomp; // Number of components.
@@ -51,7 +50,7 @@ public class GTSurfaceTensionFullGT {
         int i = 0;
 
         // Setup local system clone and some parameters.
-        this.sys = (SystemInterface) flashedSystem.clone();
+        this.sys = flashedSystem.clone();
 
         this.ncomp = this.sys.getPhase(0).getNumberOfComponents();
         this.t = this.sys.getPhase(0).getTemperature();

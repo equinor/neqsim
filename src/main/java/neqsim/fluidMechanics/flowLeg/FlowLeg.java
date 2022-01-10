@@ -129,13 +129,13 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
     /** {@inheritDoc} */
     @Override
     public void setThermoSystem(SystemInterface thermoSystem) {
-        this.thermoSystem = (SystemInterface) thermoSystem.clone();
+        this.thermoSystem = thermoSystem.clone();
     }
 
     /** {@inheritDoc} */
     @Override
     public void setEquipmentGeometry(GeometryDefinitionInterface equipmentGeometry) {
-        this.equipmentGeometry = (GeometryDefinitionInterface) equipmentGeometry.clone();
+        this.equipmentGeometry = equipmentGeometry.clone();
     }
 
     /** {@inheritDoc} */

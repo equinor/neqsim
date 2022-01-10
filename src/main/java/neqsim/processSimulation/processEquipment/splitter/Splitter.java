@@ -99,8 +99,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         try {
             for (int i = 0; i < splitNumber; i++) {
                 // System.out.println("splitting...." + i);
-                splitStream[i] = new Stream("Split Stream",
-                        (SystemInterface) inletStream.getThermoSystem().clone());
+                splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -117,7 +116,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     @Override
     public void run() {
         for (int i = 0; i < splitNumber; i++) {
-            thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+            thermoSystem = inletStream.getThermoSystem().clone();
             thermoSystem.init(0);
             splitStream[i].setThermoSystem(thermoSystem);
             for (int j = 0; j < inletStream.getThermoSystem().getPhase(0)

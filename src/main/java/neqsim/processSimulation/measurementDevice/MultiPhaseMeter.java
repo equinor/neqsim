@@ -116,7 +116,7 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
         }
 
         if (measurement.equals("GOR")) {
-            SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
+            SystemInterface tempFluid = stream.getThermoSystem().clone();
             tempFluid.setTemperature(temperature, unitT);
             tempFluid.setPressure(pressure, unitP);
             ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
@@ -138,7 +138,7 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
         }
         if (measurement.equals("gasDensity") || measurement.equals("oilDensity")
                 || measurement.equals("waterDensity")) {
-            SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
+            SystemInterface tempFluid = stream.getThermoSystem().clone();
             tempFluid.setTemperature(temperature, unitT);
             tempFluid.setPressure(pressure, unitP);
             ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
@@ -171,7 +171,7 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
             }
             return 0.0;
         } else if (measurement.equals("GOR_std")) {
-            SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
+            SystemInterface tempFluid = stream.getThermoSystem().clone();
             tempFluid.setTemperature(15.0, "C");
             tempFluid.setPressure(1.01325, "bara");
             ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);

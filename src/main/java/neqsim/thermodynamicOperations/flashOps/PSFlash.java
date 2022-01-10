@@ -43,7 +43,7 @@ public class PSFlash extends QfuncFlash {
     /** {@inheritDoc} */
     @Override
     public double calcdQdTT() {
-        double cP1 = 0.0, cP2 = 0.0;
+        // double cP1 = 0.0, cP2 = 0.0;
 
         if (system.getNumberOfPhases() == 1) {
             return -system.getPhase(0).getCp() / system.getTemperature();

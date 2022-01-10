@@ -1,6 +1,5 @@
 package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow;
 
-import neqsim.MathLib.generalMath.GeneralMath;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
@@ -35,7 +34,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
             return 64.0 / node.getReynoldsNumber(phase);
         } else {
             return Math.pow(
-                    (1.0 / (-1.8 * GeneralMath.log10(6.9 / node.getReynoldsNumber(phase)
+                    (1.0 / (-1.8 * Math.log10(6.9 / node.getReynoldsNumber(phase)
                             + Math.pow(node.getGeometry().getRelativeRoughnes() / 3.7, 1.11)))),
                     2.0);
         }
@@ -164,7 +163,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         // node.getReynoldsNumber(phase) + " COMP " + );
         return massTrans;
     }
-    
+
     // public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber,
     // FlowNodeInterface node){
     // double redMassTrans=0.0, massTrans=0.0;
@@ -181,7 +180,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
     // //System.out.println("diff " +
     // node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity() /
     // schmidtNumber);
-    //
+
     // //massTrans = 3.66 / node.getHydraulicDiameter(phase) / schmidtNumber *
     // node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity();
     // massTrans=0.010;

@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>HydrateFlash2 class.</p>
+ * <p>
+ * HydrateFlash2 class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -17,7 +19,9 @@ public class HydrateFlash2 {
     static Logger logger = LogManager.getLogger(HydrateFlash2.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -34,7 +38,7 @@ public class HydrateFlash2 {
         // testSystem.addComponent("propane", 4.0);
         // testSystem.addComponent("i-butane", 0.5);
         // testSystem.addComponent("n-butane", 0.5);
-        //
+
         // testSystem.addTBPfraction("C6",0.06,86.178/1000.0,0.664);
         // testSystem.addTBPfraction("C7",0.06,96.0/1000.0,0.738);
         // testSystem.addTBPfraction("C8",0.05,107.0/1000.0,0.765);
@@ -86,7 +90,7 @@ public class HydrateFlash2 {
         // testSystem2.addComponent("iC5", testSystem.getPhase(0).getComponent("iC5").getx());
         // testSystem2.addComponent("n-pentane",
         // testSystem.getPhase(0).getComponent("n-pentane").getx());
-        ////
+
         // testSystem2.addTBPfraction("C6",testSystem.getPhase(0).getComponent("C6_DefaultName").getx(),86.178/1000.0,0.664);
         // testSystem2.addTBPfraction("C7",testSystem.getPhase(0).getComponent("C7_DefaultName").getx(),96.0/1000.0,0.738);
         // testSystem2.addTBPfraction("C8",testSystem.getPhase(0).getComponent("C8_DefaultName").getx(),107.0/1000.0,0.765);
@@ -98,7 +102,7 @@ public class HydrateFlash2 {
         // testSystem.getPhase(0).getComponent("water").getx());
         // testSystem2.addComponent("MEG",
         // testSystem.getPhase(0).getComponent("MEG").getx());
-        //
+
         // SystemInterface testSystem2 = testSystem.phaseToSystem(testSystem.getPhase(0));
         // testSystem2.createDatabase(true);
         // testSystem2.setMixingRule(7);

@@ -11,6 +11,8 @@ import java.util.ArrayList;
  * @version $Id: $Id
  */
 public class RecycleController implements java.io.Serializable {
+    private static final long serialVersionUID = 1000;
+
     ArrayList<Recycle> recycleArray = new ArrayList<Recycle>();
     ArrayList<Integer> priorityArray = new ArrayList<Integer>();
     private int currentPriorityLevel = 100;

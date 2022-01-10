@@ -65,7 +65,7 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     /** {@inheritDoc} */
     @Override
     public double getMeasuredValue(String unit) {
-        SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
+        SystemInterface tempFluid = stream.getThermoSystem().clone();
         if (!tempFluid.doHydrateCheck()) {
             tempFluid.setHydrateCheck(true);
         }

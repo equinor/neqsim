@@ -81,13 +81,13 @@ public class Fluid {
         SystemInterface tempFluid = new neqsim.thermo.system.SystemSrkEos();
 
         definedComponent.keySet().forEach(key -> {
-            tempFluid.addComponent(key, (Double) definedComponent.get(key).get("molFraction"));
+            tempFluid.addComponent(key, definedComponent.get(key).get("molFraction"));
         });
 
         oilComponent.keySet().forEach(key -> {
-            tempFluid.addTBPfraction(key, (Double) definedComponent.get(key).get("molFraction"),
-                    (Double) definedComponent.get(key).get("molarMass"),
-                    (Double) definedComponent.get(key).get("normalLiquidDensity"));
+            tempFluid.addTBPfraction(key, definedComponent.get(key).get("molFraction"),
+                    definedComponent.get(key).get("molarMass"),
+                    definedComponent.get(key).get("normalLiquidDensity"));
         });
 
         tempFluid.setMixingRule(2);

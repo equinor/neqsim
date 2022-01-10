@@ -43,7 +43,8 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
         }
 
         int iterations = 0, maxNumberOfIterations = 500;
-        double yold = 0, ytotal = 1, deriv = 0, funk = 0;
+        double yold = 0, ytotal = 1;
+        // double deriv = 0, funk = 0;
         boolean chemSolved = true;
         // logger.info("starting");
         // system.setPressure(1.0);

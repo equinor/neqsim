@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseEosInterface;
@@ -36,9 +34,7 @@ public class EclipseFluidReadWrite {
                 new neqsim.thermo.system.SystemSrkEos(288.15, 1.01325);
 
         double[][] kij = null;
-        try {
-            File file = new File(inputFile);
-            BufferedReader br = new BufferedReader(new FileReader(file));
+        try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
             String st;
 
             ArrayList<String> names = new ArrayList<String>();
@@ -161,7 +157,8 @@ public class EclipseFluidReadWrite {
                         if (arr.length == 1) {
                             break;
                         }
-                        List<String> list = Arrays.asList(arr);
+
+                        // List<String> list = Arrays.asList(arr);
                         for (int i = 0; i < arr.length - 1; i++) {
                             BIC.add(Double.parseDouble(arr[i + 1]));
                             kij[numb][i] = Double.parseDouble(arr[i + 1]);

@@ -2,7 +2,6 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -182,7 +181,7 @@ public class FugTestConstP extends constantDutyTemperatureFlash
         // java.lang.Double.toString(Fug[5+k*6][i]) );
         // pr_writer.flush();
         // pr_writer.close();
-        //
+
         // logger.error("Successful attempt to write to " + myFile);
         // }
         // catch (SecurityException e) {

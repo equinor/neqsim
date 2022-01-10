@@ -15,8 +15,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class Standard_ISO6578 extends neqsim.standards.Standard {
-    private static final long serialVersionUID = 1000;
-
     double LNGdensity = 0.0;
     String densityUnit = "kg/m^3";
     double KMcorrectionFactor1 = 0.0, KMcorrectionFactor2 = 0.0;
@@ -157,52 +155,52 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
         Vi = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         PolynomialSplineFunction function = null;
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-            double a = 0, b = 0, c = 0;
+            // double a, b, c;
             if (thermoSystem.getPhase(0).getComponent(i).getName().equals("methane")) {
-                a = 8.452e-7;
-                b = -5.744e-5;
-                c = 3.383e-2;
+                // a = 8.452e-7;
+                // b = -5.744e-5;
+                // c = 3.383e-2;
                 function = liearInterpol.interpolate(Vitemperatures, Vimethane);
             } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("ethane")) {
-                a = 1.905e-7;
-                b = 4.133e-5;
-                c = 4.083e-2;
+                // a = 1.905e-7;
+                // b = 4.133e-5;
+                // c = 4.083e-2;
                 function = liearInterpol.interpolate(Vitemperatures, Viethane);
             } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("propane")) {
-                a = 1.310e-7;
-                b = 6.102e-5;
-                c = 5.391e-2;
+                // a = 1.310e-7;
+                // b = 6.102e-5;
+                // c = 5.391e-2;
                 function = liearInterpol.interpolate(Vitemperatures, Vipropane);
             } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("i-butane")) {
-                a = 1.25e-7;
-                b = 7.257e-5;
-                c = 6.854e-2;
+                // a = 1.25e-7;
+                // b = 7.257e-5;
+                // c = 6.854e-2;
                 function = liearInterpol.interpolate(Vitemperatures, ViiC4);
             } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("n-butane")) {
-                a = 1.101e-7;
-                b = 7.114e-5;
-                c = 6.742e-2;
+                // a = 1.101e-7;
+                // b = 7.114e-5;
+                // c = 6.742e-2;
                 function = liearInterpol.interpolate(Vitemperatures, VinC4);
             } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("i-pentane")
                     || thermoSystem.getPhase(0).getComponent(i).getName().equals("iC5")) {
-                a = 9.524e-8;
-                b = 8.727e-5;
-                c = 8.063e-2;
+                // a = 9.524e-8;
+                // b = 8.727e-5;
+                // c = 8.063e-2;
                 function = liearInterpol.interpolate(Vitemperatures, ViiC5);
             } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("n-pentane")) {
-                a = 5.060e-8;
-                b = 9.386e-5;
-                c = 8.031e-2;
+                // a = 5.060e-8;
+                // b = 9.386e-5;
+                // c = 8.031e-2;
                 function = liearInterpol.interpolate(Vitemperatures, VinC5);
             } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("n-hexane")) {
-                a = 5.060e-8;
-                b = 9.386e-5;
-                c = 8.031e-2;
+                // a = 5.060e-8;
+                // b = 9.386e-5;
+                // c = 8.031e-2;
                 function = liearInterpol.interpolate(Vitemperatures, VinC6);
             } else if (thermoSystem.getPhase(0).getComponent(i).getName().equals("nitrogen")) {
-                a = 1.968e-5;
-                b = -3.753e-3;
-                c = 2.198e-1;
+                // a = 1.968e-5;
+                // b = -3.753e-3;
+                // c = 2.198e-1;
                 function = liearInterpol.interpolate(Vitemperatures, Vinitrogen);
             } else {
                 Vi[i] = 0.036315;

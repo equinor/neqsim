@@ -36,7 +36,7 @@ public class NeqHeater extends Heater {
      */
     public NeqHeater(Stream inStream) {
         this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+        outStream = inStream.clone();
     }
 
     /** {@inheritDoc} */
@@ -55,7 +55,7 @@ public class NeqHeater extends Heater {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         double oldH = system.getEnthalpy();
         if (setTemperature) {
             system.setTemperature(temperatureOut);
