@@ -29,7 +29,7 @@ class ComponentHydrateGFTest {
 	        thermoSystem.addComponent("CO2", 1.0);
 	        thermoSystem.addComponent("water", 11.0);
 	        thermoSystem.setMixingRule(10);
-	        thermoSystem.setHydrateCheck(true);
+	        
 	        
 	}
 
@@ -39,12 +39,17 @@ class ComponentHydrateGFTest {
 	@Test
 	void testComponentHydrateGFStringDoubleDoubleInt() {
 		 ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
-		 try {
+		try {
+			thermoSystem.setHydrateCheck(true);
 	        testOps.hydrateFormationTemperature();
 		 }
 		 catch(Exception e) {
 			 e.printStackTrace();
+			 assertTrue(false);
+			 return;
 		 }
+		thermoSystem.display();
+		assertEquals(286.4105348944992,thermoSystem.getTemperature("K"), 0.001);
 	}
 
 }
