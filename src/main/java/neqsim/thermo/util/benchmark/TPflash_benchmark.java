@@ -24,7 +24,6 @@ public class TPflash_benchmark {
      */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
-        double[][] points;
 
         SystemInterface testSystem = new SystemSrkEos(303.15, 35.01325);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(303.15, 10.0);
