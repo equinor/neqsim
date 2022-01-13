@@ -1,28 +1,28 @@
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  * <p>
- * AtractiveTermSchwartzentruber class.
+ * AttractiveTermSchwartzentruber class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
+public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
     private static final long serialVersionUID = 1000;
 
     private double c = 0.0, d = 0.0;
 
     /**
      * <p>
-     * Constructor for AtractiveTermSchwartzentruber.
+     * Constructor for AttractiveTermSchwartzentruber.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
-    public AtractiveTermSchwartzentruber(ComponentEosInterface component) {
+    public AttractiveTermSchwartzentruber(ComponentEosInterface component) {
         super(component);
         m = (0.48508 + 1.55191 * component.getAcentricFactor()
                 - 0.15613 * component.getAcentricFactor() * component.getAcentricFactor());
@@ -30,13 +30,13 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
 
     /**
      * <p>
-     * Constructor for AtractiveTermSchwartzentruber.
+     * Constructor for AttractiveTermSchwartzentruber.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
      */
-    public AtractiveTermSchwartzentruber(ComponentEosInterface component, double[] params) {
+    public AttractiveTermSchwartzentruber(ComponentEosInterface component, double[] params) {
         this(component);
         System.arraycopy(params, 0, this.parameters, 0, params.length);
         d = 1.0 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
@@ -45,15 +45,15 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public AtractiveTermSchwartzentruber clone() {
-        AtractiveTermSchwartzentruber atractiveTerm = null;
+    public AttractiveTermSchwartzentruber clone() {
+        AttractiveTermSchwartzentruber attractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermSchwartzentruber) super.clone();
+            attractiveTerm = (AttractiveTermSchwartzentruber) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
 
-        return atractiveTerm;
+        return attractiveTerm;
     }
 
     /** {@inheritDoc} */

@@ -102,15 +102,15 @@ public class FrictionTheoryViscosityMethod extends Viscosity
         }
         visk0 = Math.exp(visk0);
         double Prepulsive = 1;
-        double Patractive = 1;
+        double Pattractive = 1;
         try {
             // frictional term
             Prepulsive = ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase())
                     .getPressureRepulsive();
-            Patractive = ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase())
-                    .getPressureAtractive();
+            Pattractive = ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase())
+                    .getPressureAttractive();
             // logger.info("P rep " + Prepulsive);
-            // logger.info("P atr " + Patractive);
+            // logger.info("P atr " + Pattractive);
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -141,7 +141,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity
             kaprrmx += zi * nci * kaprri / (phase.getPhase().getComponent(i).getPC()
                     * phase.getPhase().getComponent(i).getPC());
         }
-        visk1 = kaprmx * Prepulsive + kapamx * Patractive + kaprrmx * Prepulsive * Prepulsive;
+        visk1 = kaprmx * Prepulsive + kapamx * Pattractive + kaprrmx * Prepulsive * Prepulsive;
 
         if ((visk0 + visk1) < 1e-20) {
             return 1e-6;

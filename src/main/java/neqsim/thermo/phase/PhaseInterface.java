@@ -638,12 +638,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
     /**
      * <p>
-     * setAtractiveTerm.
+     * setAttractiveTerm.
      * </p>
      *
      * @param i a int
      */
-    public void setAtractiveTerm(int i);
+    public void setAttractiveTerm(int i);
 
     /**
      * <p>

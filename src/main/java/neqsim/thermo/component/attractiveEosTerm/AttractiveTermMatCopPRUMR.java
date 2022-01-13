@@ -1,28 +1,28 @@
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  * <p>
- * AtractiveTermMatCopPRUMR class.
+ * AttractiveTermMatCopPRUMR class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
+public class AttractiveTermMatCopPRUMR extends AttractiveTermPr {
     private static final long serialVersionUID = 1000;
     double orgpar = 0.0;
     boolean useStandardAlphaForSupercritical = false;
 
     /**
      * <p>
-     * Constructor for AtractiveTermMatCopPRUMR.
+     * Constructor for AttractiveTermMatCopPRUMR.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
-    public AtractiveTermMatCopPRUMR(ComponentEosInterface component) {
+    public AttractiveTermMatCopPRUMR(ComponentEosInterface component) {
         super(component);
         m = (0.384401 + 1.52276 * component.getAcentricFactor()
                 - 0.213808 * component.getAcentricFactor() * component.getAcentricFactor()
@@ -43,13 +43,13 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
     /**
      * <p>
-     * Constructor for AtractiveTermMatCopPRUMR.
+     * Constructor for AttractiveTermMatCopPRUMR.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
      */
-    public AtractiveTermMatCopPRUMR(ComponentEosInterface component, double[] params) {
+    public AttractiveTermMatCopPRUMR(ComponentEosInterface component, double[] params) {
         this(component);
         System.arraycopy(params, 0, this.parameters, 0, params.length);
         orgpar = parameters[0];
@@ -71,15 +71,15 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
     /** {@inheritDoc} */
     @Override
-    public AtractiveTermMatCopPRUMR clone() {
-        AtractiveTermMatCopPRUMR atractiveTerm = null;
+    public AttractiveTermMatCopPRUMR clone() {
+        AttractiveTermMatCopPRUMR attractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermMatCopPRUMR) super.clone();
+            attractiveTerm = (AttractiveTermMatCopPRUMR) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
 
-        return atractiveTerm;
+        return attractiveTerm;
     }
 
     /** {@inheritDoc} */
