@@ -150,9 +150,24 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 
     /** {@inheritDoc} */
     @Override
+    @Deprecated
     public StreamInterface getOutStream() {
         return outStream;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public StreamInterface getInletStream() {
+        return inletStream;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public StreamInterface getOutletStream() {
+        return outStream;
+    }
+
+
 
     /** {@inheritDoc} */
     @Override

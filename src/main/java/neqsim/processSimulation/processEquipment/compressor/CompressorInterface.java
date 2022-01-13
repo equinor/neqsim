@@ -60,6 +60,7 @@ public interface CompressorInterface extends ProcessEquipmentInterface {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamInterface getOutStream();
 
     /**
