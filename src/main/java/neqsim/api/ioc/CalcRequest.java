@@ -8,6 +8,7 @@ import neqsim.api.ioc.exceptions.NeqSimFlashModeException;
 import neqsim.api.ioc.exceptions.NeqSimFnException;
 import neqsim.api.ioc.exceptions.NeqSimFractionsException;
 import neqsim.api.ioc.exceptions.NeqSimSpException;
+import neqsim.thermo.system.SystemInterface;
 
 
 
@@ -21,6 +22,8 @@ public class CalcRequest {
     private static final double fractionsDelta = 0.01;
     private static final double onlineFractionsDelta = 5;
 
+    protected SystemInterface fluid;
+
     public List<Double> Sp1;
     public List<Double> Sp2;
     public int FlashMode;
@@ -29,6 +32,24 @@ public class CalcRequest {
     public List<String> components;
     public List<Double> fractions;
     public List<List<Double>> onlineFractions;
+
+    public CalcRequest(List<Double> spec1, List<Double> spec2, int mode, SystemInterface fluid) {
+        this.Sp1 = spec1;
+        this.Sp2 = spec2;
+
+        this.FlashMode = mode;
+        this.fluid = fluid;
+    }
+
+    public CalcRequest(List<Double> spec1, List<Double> spec2, int mode, List<String> components,
+            List<List<Double>> fractions) {
+        this.Sp1 = spec1;
+        this.Sp2 = spec2;
+
+        this.FlashMode = mode;
+        this.components = components;
+        this.onlineFractions = fractions;
+    }
 
     public boolean isEmpty() {
         if (Sp1 == null || Sp1.isEmpty())

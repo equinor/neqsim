@@ -12,24 +12,30 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * 
  * @author jo.lyshoel
  */
-public class NeqSim {
+public class FluidProperties {
 
-    private static final Logger LOGGER = LogManager.getLogger(NeqSim.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(FluidProperties.class.getName());
     private static final String[] phaseName = {"gas", "oil", "aqueous"};;
 
     public CalculationResult doCalculation(CalcRequest req) throws NeqSimException {
         Double[][] fluidProperties = new Double[req.Sp1.size()][70]; // 70 cols
         String[] calculationError = new String[req.Sp1.size()];
 
-        SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 22.0);
-        NeqSimFluidManager.addComponents(req.fn, fluid);
-        ThermodynamicOperations fluidOps = new ThermodynamicOperations(fluid);
+        SystemInterface fluid;
 
-        if (req.isStaticFractions() && req.fractions != null && !req.fractions.isEmpty()) {
-            fluid.setMolarComposition(NeqSimFluidManager.getPreparedFractions(req.fn,
-                    req.components != null ? req.components.toArray(new String[0]) : null,
-                    req.getFractionsAsArray(), false));
+        if (req.fluid == null) {
+            fluid = new SystemSrkEos();
+            NeqSimFluidManager.addComponents(req.fn, fluid);
+            if (req.isStaticFractions() && req.fractions != null && !req.fractions.isEmpty()) {
+                fluid.setMolarComposition(NeqSimFluidManager.getPreparedFractions(req.fn,
+                        req.components != null ? req.components.toArray(new String[0]) : null,
+                        req.getFractionsAsArray(), false));
+            }
+        } else {
+            fluid = req.fluid;
         }
+
+        ThermodynamicOperations fluidOps = new ThermodynamicOperations(fluid);
 
         for (int t = 0; t < req.Sp1.size(); t++) {
             int k = 0;
