@@ -843,7 +843,7 @@ abstract class SystemThermo implements SystemInterface {
                 refSystem.getPhase(i).getComponent(0).setComponentType("TBPfraction");
                 refSystem.getPhase(i).getComponent(0).setIsTBPfraction(true);
                 if (characterization.getTBPModel().isCalcm()) {
-                    refSystem.getPhase(i).getComponent(0).getAtractiveTerm().setm(m);
+                    refSystem.getPhase(i).getComponent(0).getAttractiveTerm().setm(m);
                     acs = refSystem.getPhase(i).getComponent(0).getAcentricFactor();
                 }
             }
@@ -895,7 +895,7 @@ abstract class SystemThermo implements SystemInterface {
         double cpd = 0.0;
 
         for (int i = 0; i < numberOfPhases; i++) {
-            getPhase(i).setAtractiveTerm(attractiveTermNumber);
+            getPhase(i).setAttractiveTerm(attractiveTermNumber);
             getPhase(i).getComponent(componentName).setMolarMass(molarMass);
             getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
             getPhase(i).getComponent(componentName).setNormalLiquidDensity(density);
@@ -981,7 +981,7 @@ abstract class SystemThermo implements SystemInterface {
                 refSystem.getPhase(i).getComponent(0).setComponentType("TBPfraction");
                 refSystem.getPhase(i).getComponent(0).setIsTBPfraction(true);
                 if (characterization.getTBPModel().isCalcm()) {
-                    refSystem.getPhase(i).getComponent(0).getAtractiveTerm().setm(m);
+                    refSystem.getPhase(i).getComponent(0).getAttractiveTerm().setm(m);
                     acs = refSystem.getPhase(i).getComponent(0).getAcentricFactor();
                 }
             }
@@ -1033,7 +1033,7 @@ abstract class SystemThermo implements SystemInterface {
         double cpd = 0.0;
 
         for (int i = 0; i < numberOfPhases; i++) {
-            getPhase(i).setAtractiveTerm(attractiveTermNumber);
+            getPhase(i).setAttractiveTerm(attractiveTermNumber);
             getPhase(i).getComponent(componentName).setMolarMass(molarMass);
             getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
             getPhase(i).getComponent(componentName).setNormalLiquidDensity(density);
@@ -1199,7 +1199,7 @@ abstract class SystemThermo implements SystemInterface {
             componentNames.add(componentName);
             for (int i = 0; i < getMaxNumberOfPhases(); i++) {
                 getPhase(i).addcomponent(componentName, moles, moles, numberOfComponents);
-                getPhase(i).setAtractiveTerm(attractiveTermNumber);
+                getPhase(i).setAttractiveTerm(attractiveTermNumber);
             }
             numberOfComponents++;
         } else {
@@ -1255,7 +1255,7 @@ abstract class SystemThermo implements SystemInterface {
                     k = 1.0e-30;
                 }
                 getPhase(i).addcomponent(componentName, moles, moles * k, numberOfComponents);
-                getPhase(i).setAtractiveTerm(attractiveTermNumber);
+                getPhase(i).setAttractiveTerm(attractiveTermNumber);
             }
             numberOfComponents++;
         } else {
@@ -3026,9 +3026,9 @@ abstract class SystemThermo implements SystemInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
+    public void setAttractiveTerm(int i) {
         for (int k = 0; k < getMaxNumberOfPhases(); k++) {
-            phaseArray[k].setAtractiveTerm(i);
+            phaseArray[k].setAttractiveTerm(i);
         }
     }
 

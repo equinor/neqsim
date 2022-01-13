@@ -1,26 +1,26 @@
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  * <p>
- * AtractiveTermUMRPRU class.
+ * AttractiveTermUMRPRU class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class AtractiveTermUMRPRU extends AtractiveTermPr {
+public class AttractiveTermUMRPRU extends AttractiveTermPr {
     private static final long serialVersionUID = 1000;
 
     /**
      * <p>
-     * Constructor for AtractiveTermUMRPRU.
+     * Constructor for AttractiveTermUMRPRU.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
-    public AtractiveTermUMRPRU(ComponentEosInterface component) {
+    public AttractiveTermUMRPRU(ComponentEosInterface component) {
         super(component);
         m = (0.384401 + 1.52276 * component.getAcentricFactor()
                 - 0.213808 * component.getAcentricFactor() * component.getAcentricFactor()
@@ -30,15 +30,15 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
 
     /** {@inheritDoc} */
     @Override
-    public AtractiveTermUMRPRU clone() {
-        AtractiveTermUMRPRU atractiveTerm = null;
+    public AttractiveTermUMRPRU clone() {
+        AttractiveTermUMRPRU attractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermUMRPRU) super.clone();
+            attractiveTerm = (AttractiveTermUMRPRU) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
 
-        return atractiveTerm;
+        return attractiveTerm;
     }
 
     /** {@inheritDoc} */

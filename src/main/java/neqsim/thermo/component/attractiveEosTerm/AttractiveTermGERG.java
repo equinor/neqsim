@@ -1,28 +1,28 @@
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  * <p>
- * AtractiveTermGERG class.
+ * AttractiveTermGERG class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class AtractiveTermGERG extends AtractiveTermPr {
+public class AttractiveTermGERG extends AttractiveTermPr {
     private static final long serialVersionUID = 1000;
     protected double parametersGERG[] = {0.905436, -0.213781, 0.26005};
     protected double parametersSolidGERG[] = {0.106025, 2.683845, -4.75638};
 
     /**
      * <p>
-     * Constructor for AtractiveTermGERG.
+     * Constructor for AttractiveTermGERG.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
-    public AtractiveTermGERG(ComponentEosInterface component) {
+    public AttractiveTermGERG(ComponentEosInterface component) {
         super(component);
         if (component.getName().equals("water")) {
             System.arraycopy(component.getMatiascopemanParams(), 0, this.parameters, 0,
@@ -34,20 +34,20 @@ public class AtractiveTermGERG extends AtractiveTermPr {
 
     /**
      * <p>
-     * AtractiveTermGERG.
+     * AttractiveTermGERG.
      * </p>
      *
      * @return a {@link java.lang.Object} object
      */
-    public Object AtractiveTermGERG() {
-        AtractiveTermGERG atractiveTerm = null;
+    public Object AttractiveTermGERG() {
+        AttractiveTermGERG attractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermGERG) super.clone();
+            attractiveTerm = (AttractiveTermGERG) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
 
-        return atractiveTerm;
+        return attractiveTerm;
     }
 
     /** {@inheritDoc} */

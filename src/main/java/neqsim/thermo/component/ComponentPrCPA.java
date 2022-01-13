@@ -55,7 +55,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
             }
             a = aCPA;
             b = bCPA;
-            setAtractiveTerm(1);
+            setAttractiveTerm(1);
         }
     }
 
@@ -81,7 +81,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
             a = aCPA;
             b = bCPA;
         }
-        setAtractiveTerm(1);
+        setAttractiveTerm(1);
     }
 
     /** {@inheritDoc} */
@@ -134,10 +134,10 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
-        super.setAtractiveTerm(i);
+    public void setAttractiveTerm(int i) {
+        super.setAttractiveTerm(i);
         if ((getNumberOfAssociationSites() > 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
-            getAtractiveTerm().setm(mCPA);
+            getAttractiveTerm().setm(mCPA);
         }
     }
 

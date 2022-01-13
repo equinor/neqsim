@@ -53,12 +53,12 @@ public interface PhaseEosInterface_1 extends PhaseInterface {
 
     /**
      * <p>
-     * getPressureAtractive.
+     * getPressureAttractive.
      * </p>
      *
      * @return a double
      */
-    public double getPressureAtractive();
+    public double getPressureAttractive();
     // public double getA();
     // public double getB();
     // double calcA(ComponentEosInterface[] compArray, double temperature, double

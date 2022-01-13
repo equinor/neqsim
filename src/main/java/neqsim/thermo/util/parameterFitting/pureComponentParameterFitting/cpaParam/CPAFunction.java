@@ -60,8 +60,8 @@ public class CPAFunction extends LevenbergMarquardtFunction {
             system.getPhases()[1].getComponents()[0].setb(value);
         }
         if (i == 12) {
-            system.getPhase(0).getComponent(0).getAtractiveTerm().setm(value);
-            system.getPhases()[1].getComponents()[0].getAtractiveTerm().setm(value);
+            system.getPhase(0).getComponent(0).getAttractiveTerm().setm(value);
+            system.getPhases()[1].getComponents()[0].getAttractiveTerm().setm(value);
         }
         if (i == 14) {
             system.getPhase(0).getComponent(0).setAssociationEnergy(value * 1e4);
@@ -73,14 +73,16 @@ public class CPAFunction extends LevenbergMarquardtFunction {
         }
 
         if (i == 15) {
-            system.getPhase(0).getComponent(0).getAtractiveTerm().setm(value);
-            system.getPhases()[1].getComponents()[0].getAtractiveTerm().setm(value);
+            system.getPhase(0).getComponent(0).getAttractiveTerm().setm(value);
+            system.getPhases()[1].getComponents()[0].getAttractiveTerm().setm(value);
         }
         if (i >= 5 && i < 8) {
             system.getPhases()[0].getComponents()[0].setMatiascopemanParams(i - 5, value);
             system.getPhases()[1].getComponents()[0].setMatiascopemanParams(i - 5, value);
-            system.getPhases()[0].getComponents()[0].getAtractiveTerm().setParameters(i - 5, value);
-            system.getPhases()[1].getComponents()[0].getAtractiveTerm().setParameters(i - 5, value);
+            system.getPhases()[0].getComponents()[0].getAttractiveTerm().setParameters(i - 5,
+                    value);
+            system.getPhases()[1].getComponents()[0].getAttractiveTerm().setParameters(i - 5,
+                    value);
         }
         if (i == 0) {
             system.getPhases()[0].getComponents()[0].setRacketZCPA(value);

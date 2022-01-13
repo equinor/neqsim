@@ -242,8 +242,8 @@ public class ComponentSolid extends ComponentSrk {
                     refPhase.addcomponent("methane", 10.0, 10.0, 0);
                     refPhase.getComponent("methane").setComponentName(componentName);
                 }
-                refPhase.getComponent(componentName).setAtractiveTerm(
-                        phase.getComponent(componentName).getAtractiveTermNumber());
+                refPhase.getComponent(componentName).setAttractiveTerm(
+                        phase.getComponent(componentName).getAttractiveTermNumber());
                 refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
             }
         } catch (Exception e) {

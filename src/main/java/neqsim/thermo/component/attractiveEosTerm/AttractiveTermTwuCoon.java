@@ -1,16 +1,16 @@
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  * <p>
- * AtractiveTermTwuCoon class.
+ * AttractiveTermTwuCoon class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
+public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
     private static final long serialVersionUID = 1000;
 
     private double a = -0.201158, b = 0.141599, c = 2.29528, d = -0.660145, e = 0.500315,
@@ -18,17 +18,17 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 
     /**
      * <p>
-     * Constructor for AtractiveTermTwuCoon.
+     * Constructor for AttractiveTermTwuCoon.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
-    public AtractiveTermTwuCoon(ComponentEosInterface component) {
+    public AttractiveTermTwuCoon(ComponentEosInterface component) {
         super(component);
         m = component.getAcentricFactor();
     }
 
-    // public AtractiveTermTwuCoon(ComponentEosInterface component, double[] params) {
+    // public AttractiveTermTwuCoon(ComponentEosInterface component, double[] params) {
     // this(component);
     // System.arraycopy(params,0,this.parameters,0,params.length);
     // // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
@@ -36,15 +36,15 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
     // }
 
     @Override
-    public AtractiveTermTwuCoon clone() {
-        AtractiveTermTwuCoon atractiveTerm = null;
+    public AttractiveTermTwuCoon clone() {
+        AttractiveTermTwuCoon attractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermTwuCoon) super.clone();
+            attractiveTerm = (AttractiveTermTwuCoon) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
 
-        return atractiveTerm;
+        return attractiveTerm;
     }
 
     /** {@inheritDoc} */

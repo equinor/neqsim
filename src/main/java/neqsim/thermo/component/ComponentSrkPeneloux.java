@@ -1,6 +1,6 @@
 package neqsim.thermo.component;
 
-import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
+import neqsim.thermo.component.attractiveEosTerm.AttractiveTermSrk;
 
 /**
  * <p>
@@ -55,8 +55,8 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         delta1 = 1.0;
         delta2 = 0.0;
         // System.out.println("a " + a);
-        // atractiveParameter = new AtractiveTermSchwartzentruber(this);
-        setAtractiveParameter(new AtractiveTermSrk(this));
+        // attractiveParameter = new AttractiveTermSchwartzentruber(this);
+        setAttractiveParameter(new AttractiveTermSrk(this));
 
         double[] surfTensInfluenceParamtemp =
                 {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};

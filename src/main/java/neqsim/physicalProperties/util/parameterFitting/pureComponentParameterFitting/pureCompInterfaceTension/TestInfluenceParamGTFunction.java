@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestInfluenceParamGTFunction class.</p>
+ * <p>
+ * TestInfluenceParamGTFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,7 +23,9 @@ public class TestInfluenceParamGTFunction {
     static Logger logger = LogManager.getLogger(TestInfluenceParamGTFunction.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -83,7 +87,7 @@ public class TestInfluenceParamGTFunction {
                 // / 1.0e3, 0);
                 // logger.error(testSystem.getTemperature() + " " + influenceParam);
                 // double factor = influenceParam /
-                // (testSystem.getPhase(0).getComponent(0).getAtractiveTerm().aT(testSystem.getTemperature())
+                // (testSystem.getPhase(0).getComponent(0).getAttractiveTerm().aT(testSystem.getTemperature())
                 // * 1.0e-5) / Math.pow(((ComponentEosInterface)
                 // testSystem.getPhase(0).getComponent(0)).calcb() * 1e-5, 2.0 / 3.0);
                 // sample.setDescription((1.0 - testSystem.getTemperature() /
@@ -123,7 +127,7 @@ public class TestInfluenceParamGTFunction {
          * ((GTSurfaceTension) testSystem.getInterphaseProperties().getSurfaceTensionModel(0)).
          * getInfluenceParameter(surfTens / 1.0e3, 0); logger.error(testSystem.getTemperature() +
          * " " + influenceParam); double factor = influenceParam /
-         * (testSystem.getPhase(0).getComponent(0).getAtractiveTerm().aT(testSystem.
+         * (testSystem.getPhase(0).getComponent(0).getAttractiveTerm().aT(testSystem.
          * getTemperature()) * 1.0e-5) / Math.pow(((ComponentEosInterface)
          * testSystem.getPhase(0).getComponent(0)).calcb() * 1e-5, 2.0 / 3.0);
          * sample.setDescription((1.0 - testSystem.getTemperature() /

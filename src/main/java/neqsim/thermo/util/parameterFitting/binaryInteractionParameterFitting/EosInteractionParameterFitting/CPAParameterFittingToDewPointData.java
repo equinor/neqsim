@@ -58,8 +58,8 @@ public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunctio
             system.getPhases()[1].getComponents()[1].setb(value);
         }
         if (i == 3) {
-            system.getPhase(0).getComponent(1).getAtractiveTerm().setm(value);
-            system.getPhases()[1].getComponents()[1].getAtractiveTerm().setm(value);
+            system.getPhase(0).getComponent(1).getAttractiveTerm().setm(value);
+            system.getPhases()[1].getComponents()[1].getAttractiveTerm().setm(value);
         }
         if (i == 5) {
             system.getPhase(0).getComponent(1).setAssociationEnergy(value);

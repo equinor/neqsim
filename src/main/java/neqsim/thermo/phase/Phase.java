@@ -566,9 +566,9 @@ abstract class Phase implements PhaseInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
+    public void setAttractiveTerm(int i) {
         for (int k = 0; k < numberOfComponents; k++) {
-            componentArray[k].setAtractiveTerm(i);
+            componentArray[k].setAttractiveTerm(i);
         }
     }
 
@@ -1325,7 +1325,7 @@ abstract class Phase implements PhaseInterface {
                 } else {
                     refPhase[i].addcomponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
                 }
-                refPhase[i].setAtractiveTerm(this.getComponent(i).getAtractiveTermNumber());
+                refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
                 refPhase[i].setMixingRule(this.getMixingRuleNumber());
                 refPhase[i].setPhaseType(this.getPhaseType());
                 refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getPhaseType(),
@@ -1346,7 +1346,7 @@ abstract class Phase implements PhaseInterface {
                             0);
                 }
                 refPhase[i].addcomponent(name, 10.0, 10.0, 1);
-                refPhase[i].setAtractiveTerm(this.getComponent(i).getAtractiveTermNumber());
+                refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
                 refPhase[i].setMixingRule(this.getMixingRuleNumber());
                 refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getPhaseType(),
                         1.0);

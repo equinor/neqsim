@@ -1,6 +1,6 @@
 package neqsim.thermo.component;
 
-import neqsim.thermo.component.atractiveEosTerm.AtractiveTermPr;
+import neqsim.thermo.component.attractiveEosTerm.AttractiveTermPr;
 
 /**
  * <p>
@@ -51,7 +51,7 @@ public class ComponentPR extends ComponentEos {
 
         delta1 = 1.0 + Math.sqrt(2.0);
         delta2 = 1.0 - Math.sqrt(2.0);
-        setAtractiveParameter(new AtractiveTermPr(this));
+        setAttractiveParameter(new AttractiveTermPr(this));
 
         double[] surfTensInfluenceParamtemp = {1.3192, 1.6606, 1.1173, 0.8443};
         this.surfTensInfluenceParam = surfTensInfluenceParamtemp;

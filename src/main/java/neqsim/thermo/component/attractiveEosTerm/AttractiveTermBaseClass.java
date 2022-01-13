@@ -1,9 +1,9 @@
 /*
- * AtractiveTermBaseClass.java
+ * AttractiveTermBaseClass.java
  *
  * Created on 13. mai 2001, 21:58
  */
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,13 +11,13 @@ import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  * <p>
- * AtractiveTermBaseClass class.
+ * AttractiveTermBaseClass class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class AtractiveTermBaseClass implements AtractiveTermInterface {
+public class AttractiveTermBaseClass implements AttractiveTermInterface {
     private static final long serialVersionUID = 1000;
 
     private ComponentEosInterface component = null;
@@ -25,23 +25,23 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
     protected double parameters[] = new double[3];
     protected double parametersSolid[] = new double[3];
 
-    static Logger logger = LogManager.getLogger(AtractiveTermBaseClass.class);
+    static Logger logger = LogManager.getLogger(AttractiveTermBaseClass.class);
 
     /**
      * <p>
-     * Constructor for AtractiveTermBaseClass.
+     * Constructor for AttractiveTermBaseClass.
      * </p>
      */
-    public AtractiveTermBaseClass() {}
+    public AttractiveTermBaseClass() {}
 
     /**
      * <p>
-     * Constructor for AtractiveTermBaseClass.
+     * Constructor for AttractiveTermBaseClass.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
-    public AtractiveTermBaseClass(ComponentEosInterface component) {
+    public AttractiveTermBaseClass(ComponentEosInterface component) {
         this.setComponent(component);
     }
 
@@ -54,19 +54,19 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
 
     /** {@inheritDoc} */
     @Override
-    public AtractiveTermBaseClass clone() {
-        AtractiveTermBaseClass atractiveTerm = null;
+    public AttractiveTermBaseClass clone() {
+        AttractiveTermBaseClass attractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermBaseClass) super.clone();
+            attractiveTerm = (AttractiveTermBaseClass) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
 
         // atSystem.out.println("m " + m);ractiveTerm.parameters = (double[])
         // parameters.clone();
-        // System.arraycopy(parameters,0, atractiveTerm.parameters, 0,
+        // System.arraycopy(parameters,0, attractiveTerm.parameters, 0,
         // parameters.length);
-        return atractiveTerm;
+        return attractiveTerm;
     }
 
     /** {@inheritDoc} */

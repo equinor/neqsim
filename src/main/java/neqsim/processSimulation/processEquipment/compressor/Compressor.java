@@ -240,7 +240,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         run();
         useOutTemperature = true;
         int iter = 0;
-
         // System.out.println("use polytropic " + usePolytropicCalc);
         do {
             iter++;
