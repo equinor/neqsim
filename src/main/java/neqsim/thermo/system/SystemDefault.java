@@ -54,4 +54,9 @@ public class SystemDefault extends SystemThermo {
             phaseArray[i].setPressure(P);
         }
     }
+
+    /** {@inheritDoc} */
+    public Double[] getFluidProperties() {
+        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    }
 }

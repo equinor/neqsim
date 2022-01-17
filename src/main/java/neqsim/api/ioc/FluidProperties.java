@@ -1,12 +1,14 @@
 
 package neqsim.api.ioc;
 
-import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+
+
 
 /**
  * 
@@ -15,10 +17,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class FluidProperties {
 
     private static final Logger LOGGER = LogManager.getLogger(FluidProperties.class.getName());
-    private static final String[] phaseName = {"gas", "oil", "aqueous"};;
+    protected static int nCols = 70;
 
     public CalculationResult doCalculation(CalcRequest req) throws NeqSimException {
-        Double[][] fluidProperties = new Double[req.Sp1.size()][70]; // 70 cols
+        Double[][] fluidProperties = new Double[req.Sp1.size()][nCols]; // 70 cols
         String[] calculationError = new String[req.Sp1.size()];
 
         SystemInterface fluid;
@@ -38,7 +40,6 @@ public class FluidProperties {
         ThermodynamicOperations fluidOps = new ThermodynamicOperations(fluid);
 
         for (int t = 0; t < req.Sp1.size(); t++) {
-            int k = 0;
             try {
                 Double Sp1 = req.Sp1.get(t);
                 Double Sp2 = req.Sp2.get(t);
@@ -84,189 +85,9 @@ public class FluidProperties {
                             + " and not 1. Check input fragments.", t);
                     continue;
                 }
+                SystemProperties a = fluid.getProperties();
 
-                fluidProperties[t][k++] = (double) fluid.getNumberOfPhases(); // Mix Number of
-                                                                              // Phases
-                fluidProperties[t][k++] = fluid.getPressure("Pa"); // Mix Pressure [Pa]
-                fluidProperties[t][k++] = fluid.getTemperature("K"); // Mix Temperature [K]
-                fluidProperties[t][k++] = fluid.getNumberOfMoles() * 100; // Mix Mole Percent
-                fluidProperties[t][k++] = 100.0; // Mix Weight Percent
-                fluidProperties[t][k++] = 1.0 / fluid.getDensity("mol/m3"); // Mix Molar Volume
-                                                                            // [m3/mol]
-                fluidProperties[t][k++] = 100.0; // Mix Volume Percent
-                fluidProperties[t][k++] = fluid.getDensity("kg/m3"); // Mix Density [kg/m3]
-                fluidProperties[t][k++] = fluid.getZ(); // Mix Z Factor
-                fluidProperties[t][k++] = fluid.getMolarMass() * 1000; // Mix Molecular Weight
-                                                                       // [g/mol]
-                // fluidProperties[t][k++] = fluid.getEnthalpy()/fluid.getNumberOfMoles(); // Mix
-                // Enthalpy [J/mol]
-                fluidProperties[t][k++] = fluid.getEnthalpy("J/mol");
-                // fluidProperties[t][k++] = fluid.getEntropy()/fluid.getNumberOfMoles(); // Mix
-                // Entropy [J/molK]
-                fluidProperties[t][k++] = fluid.getEntropy("J/molK");
-                fluidProperties[t][k++] = fluid.getCp("J/molK"); // Mix Heat Capacity-Cp [J/molK]
-                fluidProperties[t][k++] = fluid.getCv("J/molK");// Mix Heat Capacity-Cv [J/molK]
-                // fluidProperties[t][k++] = fluid.getCp()/fluid.getCv();// Mix Gamma (Cp/Cv)
-                fluidProperties[t][k++] = fluid.getGamma();// Mix Gamma (Cp/Cv)
-                fluidProperties[t][k++] = Double.NaN; // Mix JT Coefficient [K/Pa]
-                fluidProperties[t][k++] = Double.NaN; // Mix Velocity of Sound [m/s]
-                fluidProperties[t][k++] = fluid.getViscosity("kg/msec"); // Mix Viscosity [Pa s] or
-                                                                         // [kg/(m*s)]
-                fluidProperties[t][k++] = fluid.getThermalConductivity("W/mK"); // Mix Thermal
-                                                                                // Conductivity
-                // [W/mK]
-                // fluidProperties[t][0] = fluid.getInterfacialTension("gas","oil"); // Surface
-                // Tension(N/m) between gas and oil phase** NOT USED
-                // fluidProperties[t][0] = fluid.getInterfacialTension("gas","aqueous"); // Surface
-                // Tension(N/m) between gas and aqueous phase** NOT USED
-
-                // Phase properties (phase: gas=0, liquid=1, Aqueous=2)
-                for (int j = 0; j < 3; j++) {
-                    if (fluid.hasPhaseType(phaseName[j])) {
-                        int phaseNumber = fluid.getPhaseNumberOfPhase(phaseName[j]);
-                        fluidProperties[t][k++] = fluid.getMoleFraction(phaseNumber) * 100; // Phase
-                                                                                            // Mole
-                                                                                            // Percent
-                        fluidProperties[t][k++] = fluid.getWtFraction(phaseNumber) * 100; // Phase
-                                                                                          // Weight
-                                                                                          // Percent
-                        fluidProperties[t][k++] =
-                                1.0 / fluid.getPhase(phaseNumber).getDensity("mol/m3"); // Phase
-                                                                                        // Molar
-                                                                                        // Volume
-                                                                                        // [m3/mol]
-                        fluidProperties[t][k++] =
-                                fluid.getCorrectedVolumeFraction(phaseNumber) * 100;// Phase Volume
-                                                                                    // Percent
-                        fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getDensity("kg/m3"); // Phase
-                                                                                                   // Density
-                                                                                                   // [kg/m3]
-
-                        if (Objects.equals(phaseName[j], "oil")
-                                || Objects.equals(phaseName[j], "aqueous")) {
-                            // Phase doesn't calculate correct result for these properties. See
-                            // specs
-                            fluidProperties[t][k++] = Double.NaN; // Phase Z Factor
-                        } else {
-                            fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getZ(); // Phase Z
-                                                                                          // Factor
-                        }
-
-                        fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getMolarMass() * 1000; // Phase
-                                                                                                     // Molecular
-                                                                                                     // Weight
-                                                                                                     // [g/mol]
-                        // fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getEnthalpy() /
-                        // fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Enthalpy
-                        // [J/mol]
-                        fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getEnthalpy("J/mol"); // Phase
-                                                                                                    // Enthalpy
-                                                                                                    // [J/mol]
-                        // fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getEntropy() /
-                        // fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Entropy
-                        // [J/molK]
-                        fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getEntropy("J/molK"); // Phase
-                                                                                                    // Entropy
-                                                                                                    // [J/molK]
-                        // fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCp() /
-                        // fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Heat
-                        // Capacity-Cp [J/molK]
-                        fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCp("J/molK"); // Phase
-                                                                                               // Heat
-                                                                                               // Capacity-Cp
-                                                                                               // [J/molK]
-                        // fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCv() /
-                        // fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Heat
-                        // Capacity-Cv [J/molK]
-                        fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCv("J/molK"); // Phase
-                                                                                               // Heat
-                                                                                               // Capacity-Cv
-                                                                                               // [J/molK]
-                        // fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCp() /
-                        // fluid.getPhase(phaseNumber).getCv(); // Phase Kappa (Cp/Cv)
-                        fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getGamma(); // Phase
-                                                                                          // Gamma
-                                                                                          // (Cp/Cv)
-
-                        if (Objects.equals(phaseName[j], "oil")
-                                || Objects.equals(phaseName[j], "aqueous")) {
-                            // Phase doesn't calculate correct result for these properties. See
-                            // specs
-                            fluidProperties[t][k++] = Double.NaN; // Phase JT Coefficient [K/Pa]
-                            fluidProperties[t][k++] = Double.NaN; // Phase Velocity of Sound [m/s]
-                        } else {
-                            fluidProperties[t][k++] =
-                                    fluid.getPhase(phaseNumber).getJouleThomsonCoefficient() / 1e5; // Phase
-                                                                                                    // JT
-                                                                                                    // Coefficient
-                                                                                                    // [K/Pa]
-                            fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getSoundSpeed(); // Phase
-                                                                                                   // Velocity
-                                                                                                   // of
-                                                                                                   // Sound
-                                                                                                   // [m/s]
-                        }
-
-                        // fluidProperties[t][k++] =
-                        // fluid.getPhase(phaseNumber).getPhysicalProperties().getViscosity();//
-                        // Phase Viscosity [Pa s]
-                        fluidProperties[t][k++] =
-                                fluid.getPhase(phaseNumber).getViscosity("kg/msec");// Phase
-                                                                                    // Viscosity [Pa
-                                                                                    // s] or
-                                                                                    // [kg/msec]
-                        // fluidProperties[t][k++] =
-                        // fluid.getPhase(phaseNumber).getPhysicalProperties().getConductivity(); //
-                        // Phase Thermal Conductivity [W/mK]
-                        fluidProperties[t][k++] =
-                                fluid.getPhase(phaseNumber).getConductivity("W/mK"); // Phase
-                                                                                     // Thermal
-                                                                                     // Conductivity
-                                                                                     // [W/mK]
-                        // Phase Surface Tension(N/m) ** NOT USED
-                    } else {
-                        fluidProperties[t][k++] = Double.NaN; // Phase Mole Percent
-                        fluidProperties[t][k++] = Double.NaN; // Phase Weight Percent
-                        fluidProperties[t][k++] = Double.NaN; // Phase Molar Volume [m3/mol]
-                        fluidProperties[t][k++] = Double.NaN; // Phase Volume Percent
-                        fluidProperties[t][k++] = Double.NaN; // Phase Density [kg/m3]
-                        fluidProperties[t][k++] = Double.NaN; // Phase Z Factor
-                        fluidProperties[t][k++] = Double.NaN; // Phase Molecular Weight [g/mol]
-                        fluidProperties[t][k++] = Double.NaN; // Phase Enthalpy [J/mol]
-                        fluidProperties[t][k++] = Double.NaN; // Phase Entropy [J/molK]
-                        fluidProperties[t][k++] = Double.NaN; // Phase Heat Capacity-Cp [J/molK]
-                        fluidProperties[t][k++] = Double.NaN; // Phase Heat Capacity-Cv [J/molK]
-                        fluidProperties[t][k++] = Double.NaN; // Phase Kappa (Cp/Cv)
-                        fluidProperties[t][k++] = Double.NaN; // Phase JT Coefficient K/Pa]
-                        fluidProperties[t][k++] = Double.NaN; // Phase Velocity of Sound [m/s]
-                        fluidProperties[t][k++] = Double.NaN;// Phase Viscosity [Pa s]
-                        fluidProperties[t][k++] = Double.NaN; // Phase Thermal Conductivity [W/mK]
-                    }
-                }
-                if (fluid.hasPhaseType("gas") && fluid.hasPhaseType("oil")) {
-                    fluidProperties[t][k++] = fluid.getInterfacialTension("gas", "oil"); // Interfacial
-                                                                                         // Tension
-                                                                                         // Gas/Oil
-                                                                                         // [N/m]
-                } else {
-                    fluidProperties[t][k++] = Double.NaN;
-                }
-                if (fluid.hasPhaseType("gas") && fluid.hasPhaseType("aqueous")) {
-                    fluidProperties[t][k++] = fluid.getInterfacialTension("gas", "aqueous"); // Interfacial
-                                                                                             // Tension
-                                                                                             // Gas/Aqueous
-                                                                                             // [N/m]
-                } else {
-                    fluidProperties[t][k++] = Double.NaN;
-                }
-                if (fluid.hasPhaseType("oil") && fluid.hasPhaseType("aqueous")) {
-                    fluidProperties[t][k++] = fluid.getInterfacialTension("oil", "aqueous"); // Interfacial
-                                                                                             // Tension
-                                                                                             // Oil/Aqueous
-                                                                                             // [N/m]
-                } else {
-                    fluidProperties[t][k++] = Double.NaN;
-                }
+                fluidProperties[t] = a.values;
             } catch (Exception ex) {
                 calculationError[t] = ex.getMessage();
                 LOGGER.warn("Single calculation failed", ex);
