@@ -1,4 +1,4 @@
-package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.AntoineParameter;
+package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
