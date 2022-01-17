@@ -20,7 +20,9 @@ public class TestPCSAFT {
     static Logger logger = LogManager.getLogger(TestPCSAFT.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -69,7 +71,7 @@ public class TestPCSAFT {
         // System.out.println("enthalpy " + (testSystem.getEnthalpy() - oldEnthalpy));
         logger.info("fuagcity gas" + testSystem.getPhase(0).getFugacity(0));
         logger.info("fuagcity liquid" + testSystem.getPhase(1).getFugacity(0));
-        logger.info("K " + testSystem.getPhase(1).getComponent(0).getFugasityCoefficient()
-                / testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
+        logger.info("K " + testSystem.getPhase(1).getComponent(0).getFugacityCoefficient()
+                / testSystem.getPhase(0).getComponent(0).getFugacityCoefficient());
     }
 }

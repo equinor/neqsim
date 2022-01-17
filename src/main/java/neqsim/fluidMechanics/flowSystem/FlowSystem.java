@@ -94,9 +94,9 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
             this.flowLeg[i].setOuterTemperatures(legOuterTemperatures[i],
                     legOuterTemperatures[i + 1]);
             this.flowLeg[i].setLongitudionalCoordinates(legPositions[i], legPositions[i + 1]);
-            this.flowLeg[i].setOuterHeatTransferCOefficients(legOuterHeatTransferCoefficients[i],
+            this.flowLeg[i].setOuterHeatTransferCoefficients(legOuterHeatTransferCoefficients[i],
                     legOuterHeatTransferCoefficients[i + 1]);
-            this.flowLeg[i].setWallHeatTransferCOefficients(legWallHeatTransferCoefficients[i],
+            this.flowLeg[i].setWallHeatTransferCoefficients(legWallHeatTransferCoefficients[i],
                     legWallHeatTransferCoefficients[i + 1]);
             this.flowLeg[i].createFlowNodes(flowNode[0]);
         }

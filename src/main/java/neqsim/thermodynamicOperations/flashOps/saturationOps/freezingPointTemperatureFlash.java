@@ -3,10 +3,8 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -83,7 +81,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                 funk = system.getPhase(0).getComponent(k).getz();
                 for (int i = 0; i < system.getNumberOfPhases(); i++) {
                     funk -= system.getPhase(i).getBeta() * SolidFugCoeff
-                            / system.getPhase(i).getComponents()[k].getFugasityCoeffisient();
+                            / system.getPhase(i).getComponents()[k].getFugacityCoefficient();
                 }
             }
         }
@@ -129,7 +127,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                     funk = system.getPhase(0).getComponent(k).getz();
                     for (int i = 0; i < system.getNumberOfPhases(); i++) {
                         funk -= system.getPhase(i).getBeta() * SolidFugCoeff
-                                / system.getPhase(i).getComponents()[k].getFugasityCoeffisient();
+                                / system.getPhase(i).getComponents()[k].getFugacityCoefficient();
                     }
                     logger.info("funk " + funk);
                     if (iterations > 1) {// && oldPhaseType == system.getPhase(0).getPhaseType()) {

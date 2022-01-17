@@ -676,9 +676,9 @@ public class DuanSun {
         fluid1.setPhaseIndex(0, 1);
         // fluid1.save
         System.out.println(
-                "CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getLogFugasityCoeffisient());
+                "CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getLogFugacityCoefficient());
         System.out.println(
-                "CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getFugasityCoeffisient());
+                "CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getFugacityCoefficient());
         System.out
                 .println("CO2 in liquid " + fluid1.getPhase("aqueous").getComponent("CO2").getx());
     }

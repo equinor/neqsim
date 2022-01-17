@@ -309,10 +309,10 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     @Override
     public double fugcoef(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
-        logFugasityCoeffisient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
+        logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
                 - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
-        fugasityCoeffisient = Math.exp(logFugasityCoeffisient);
-        return fugasityCoeffisient;
+        fugacityCoefficient = Math.exp(logFugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */

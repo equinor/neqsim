@@ -67,10 +67,10 @@ public class cricondenBarTemp implements java.io.Serializable {
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0, Math
-                    .log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                    .log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                             * system.getPhases()[0].getComponents()[i].getx()
                             * system.getPressure())
-                    - Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
+                    - Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient()
                             * system.getPhases()[1].getComponents()[i].getx()
                             * system.getPressure()));
         }

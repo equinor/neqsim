@@ -58,7 +58,7 @@ public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash 
                     / system.getPhase(0).getFugacity("water")));
             system.setPressure(system.getPressure() * (system.getPhase(4).getFugacity("water")
                     / system.getPhase(0).getFugacity("water")));
-            logger.info("presure " + system.getPressure());
+            logger.info("pressure " + system.getPressure());
             // logger.info("x water " + system.getPhase(3).getComponent("water").getx());
         } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-8
                 && iter < 100);

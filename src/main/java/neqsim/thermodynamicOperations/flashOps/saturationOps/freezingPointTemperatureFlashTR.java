@@ -3,10 +3,8 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
@@ -164,19 +162,19 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
                 ops.TPflash();
                 testOps2.TPflash();
                 SolidFug = Pvapsolid / pres * Math.exp(solvol / (R * temp) * (pres - Pvapsolid));
-                SolVapFugCoeff = testSystem2.getPhase(0).getComponent(0).getFugasityCoeffisient();
+                SolVapFugCoeff = testSystem2.getPhase(0).getComponent(0).getFugacityCoefficient();
 
                 funk = system.getPhases()[0].getComponents()[k].getz();
 
                 for (int i = 0; i < system.getNumberOfPhases(); i++) {
                     funk -= system.getPhases()[i].getBeta() * SolidFug * SolVapFugCoeff
-                            / system.getPhases()[i].getComponents()[k].getFugasityCoeffisient();
+                            / system.getPhases()[i].getComponents()[k].getFugacityCoefficient();
                     deriv -= 0.01 * system.getPhases()[i].getBeta() * (SolidFug * SolVapFugCoeff
                             * Math.exp(system.getPhases()[i].getComponents()[k].getdfugdt()) * -1.0
                             / Math.pow(system.getPhases()[i].getComponents()[k]
-                                    .getFugasityCoeffisient(), 2.0)
+                                    .getFugacityCoefficient(), 2.0)
                             + Math.exp(dfugdt) / system.getPhases()[i].getComponents()[k]
-                                    .getFugasityCoeffisient());
+                                    .getFugacityCoefficient());
                 }
                 if (iterations >= 2) {
                     deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);

@@ -239,8 +239,8 @@ public class CricondenBarFlash extends pTphaseEnvelope {
      */
     public void setNewK() {
         for (int j = 0; j < numberOfComponents; j++) {
-            double kap = system.getPhase(0).getComponent(j).getFugasityCoeffisient()
-                    / system.getPhase(1).getComponent(j).getFugasityCoeffisient();
+            double kap = system.getPhase(0).getComponent(j).getFugacityCoefficient()
+                    / system.getPhase(1).getComponent(j).getFugacityCoefficient();
             system.getPhase(0).getComponents()[j].setK(kap);
             u.set(j, 0, kap);
         }
@@ -311,8 +311,8 @@ public class CricondenBarFlash extends pTphaseEnvelope {
              * double T=system.getPhase(0).getPressure(); double
              * P=system.getPhase(1).getTemperature() ;
              */
-            double fugl = system.getPhase(0).getComponent(j).getLogFugasityCoeffisient();
-            double fugv = system.getPhase(1).getComponent(j).getLogFugasityCoeffisient();
+            double fugl = system.getPhase(0).getComponent(j).getLogFugacityCoefficient();
+            double fugv = system.getPhase(1).getComponent(j).getLogFugacityCoefficient();
 
             double fugTl = system.getPhase(0).getComponent(j).getdfugdt();
             double fugTv = system.getPhase(1).getComponent(j).getdfugdt();
@@ -335,8 +335,8 @@ public class CricondenBarFlash extends pTphaseEnvelope {
             double xx = system.getPhase(0).getComponent(j).getx();
             double yy = system.getPhase(1).getComponent(j).getx();
 
-            double fugl = system.getPhase(0).getComponents()[j].getLogFugasityCoeffisient();
-            double fugv = system.getPhase(1).getComponents()[j].getLogFugasityCoeffisient();
+            double fugl = system.getPhase(0).getComponents()[j].getLogFugacityCoefficient();
+            double fugv = system.getPhase(1).getComponents()[j].getLogFugacityCoefficient();
 
             double fugPl = system.getPhase(0).getComponents()[j].getdfugdp();
             double fugPv = system.getPhase(1).getComponents()[j].getdfugdp();

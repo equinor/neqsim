@@ -39,14 +39,14 @@ public class SiddiqiLucasMethod extends Diffusivity {
         // method - estimation method
         // if(method==? then)
         // remember this is the Maxwell-Stefan diffusion coefficients
-        binaryDiffusionCoeffisients[i][j] = 1.0e-4 * 2.98e-7
+        binaryDiffusionCoefficients[i][j] = 1.0e-4 * 2.98e-7
                 * Math.pow(liquidPhase.getPureComponentViscosity(j), -1.026)
                 * Math.pow(
                         1.0 / liquidPhase.getPhase().getComponents()[i].getNormalLiquidDensity()
                                 * liquidPhase.getPhase().getComponents()[i].getMolarMass() * 1000,
                         -0.5473)
                 * liquidPhase.getPhase().getTemperature();
-        return binaryDiffusionCoeffisients[i][j];
+        return binaryDiffusionCoefficients[i][j];
     }
 
     // non-aqueous correlation
@@ -64,7 +64,7 @@ public class SiddiqiLucasMethod extends Diffusivity {
         // method - estimation method
         // if(method==? then)
         // remember this is the Maxwell-Stefan diffusion coefficients
-        binaryDiffusionCoeffisients[i][j] = 1.0e-4 * 9.89e-8
+        binaryDiffusionCoefficients[i][j] = 1.0e-4 * 9.89e-8
                 * Math.pow(liquidPhase.getPureComponentViscosity(j), -0.907)
                 * Math.pow(
                         1.0 / liquidPhase.getPhase().getComponents()[i].getNormalLiquidDensity()
@@ -75,6 +75,6 @@ public class SiddiqiLucasMethod extends Diffusivity {
                                 * liquidPhase.getPhase().getComponents()[j].getMolarMass() * 1000,
                         0.265)
                 * liquidPhase.getPhase().getTemperature();
-        return binaryDiffusionCoeffisients[i][j];
+        return binaryDiffusionCoefficients[i][j];
     }
 }

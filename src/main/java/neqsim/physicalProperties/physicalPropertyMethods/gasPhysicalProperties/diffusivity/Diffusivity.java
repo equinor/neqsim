@@ -18,7 +18,7 @@ public class Diffusivity extends
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
 
-    double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
+    double[][] binaryDiffusionCoefficients, binaryLennardJonesOmega;
     double[] effectiveDiffusionCoefficient;
 
     /**
@@ -40,7 +40,7 @@ public class Diffusivity extends
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         super(gasPhase);
-        binaryDiffusionCoeffisients = new double[gasPhase.getPhase()
+        binaryDiffusionCoefficients = new double[gasPhase.getPhase()
                 .getNumberOfComponents()][gasPhase.getPhase().getNumberOfComponents()];
         binaryLennardJonesOmega = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase
                 .getPhase().getNumberOfComponents()];
@@ -58,10 +58,10 @@ public class Diffusivity extends
             logger.error("Cloning failed.", e);
         }
 
-        properties.binaryDiffusionCoeffisients = this.binaryDiffusionCoeffisients.clone();
+        properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
         for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
-            System.arraycopy(this.binaryDiffusionCoeffisients[i], 0,
-                    properties.binaryDiffusionCoeffisients[i], 0,
+            System.arraycopy(this.binaryDiffusionCoefficients[i], 0,
+                    properties.binaryDiffusionCoefficients[i], 0,
                     gasPhase.getPhase().getNumberOfComponents());
         }
         return properties;
@@ -77,37 +77,37 @@ public class Diffusivity extends
         double tempVar2 = gasPhase.getPhase().getTemperature() / binaryEnergyParameter[i][j];
         binaryLennardJonesOmega[i][j] = A2 / Math.pow(tempVar2, B2) + C2 / Math.exp(D2 * tempVar2)
                 + E2 / Math.exp(F2 * tempVar2) + G2 / Math.exp(H2 * tempVar2);
-        binaryDiffusionCoeffisients[i][j] =
+        binaryDiffusionCoefficients[i][j] =
                 0.00266 * Math.pow(gasPhase.getPhase().getTemperature(), 1.5)
                         / (gasPhase.getPhase().getPressure() * Math.sqrt(binaryMolecularMass[i][j])
                                 * Math.pow(binaryMolecularDiameter[i][j], 2)
                                 * binaryLennardJonesOmega[i][j]);
-        return binaryDiffusionCoeffisients[i][j] *= 1e-4;
+        return binaryDiffusionCoefficients[i][j] *= 1e-4;
     }
 
     /** {@inheritDoc} */
     @Override
-    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
             for (int j = i; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
-                binaryDiffusionCoeffisients[i][j] =
+                binaryDiffusionCoefficients[i][j] =
                         calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
-                binaryDiffusionCoeffisients[j][i] = binaryDiffusionCoeffisients[i][j];
+                binaryDiffusionCoefficients[j][i] = binaryDiffusionCoefficients[i][j];
             }
         }
 
         if (multicomponentDiffusionMethod == 0) {
             // ok use full matrix
         } else if (multicomponentDiffusionMethod == 0) {
-            // calcEffectiveDiffusionCoeffisients();
+            // calcEffectiveDiffusionCoefficients();
         }
-        return binaryDiffusionCoeffisients;
+        return binaryDiffusionCoefficients;
     }
 
     /** {@inheritDoc} */
     @Override
-    public void calcEffectiveDiffusionCoeffisients() {
+    public void calcEffectiveDiffusionCoefficients() {
         double sum = 0;
 
         for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
@@ -116,7 +116,7 @@ public class Diffusivity extends
                 if (i == j) {
                 } else {
                     sum += gasPhase.getPhase().getComponents()[j].getx()
-                            / binaryDiffusionCoeffisients[i][j];
+                            / binaryDiffusionCoefficients[i][j];
                 }
             }
             effectiveDiffusionCoefficient[i] =
@@ -127,7 +127,7 @@ public class Diffusivity extends
     /** {@inheritDoc} */
     @Override
     public double getFickBinaryDiffusionCoefficient(int i, int j) {
-        return binaryDiffusionCoeffisients[i][j];
+        return binaryDiffusionCoefficients[i][j];
     }
 
     /** {@inheritDoc} */
@@ -144,9 +144,9 @@ public class Diffusivity extends
          * gasPhase.getPhase().getComponents()[i].getx() *
          * gasPhase.getPhase().getComponents()[i].getdfugdn(j) *
          * gasPhase.getPhase().getNumberOfMolesInPhase(); if (Double.isNaN(nonIdealCorrection))
-         * nonIdealCorrection=1.0; return binaryDiffusionCoeffisients[i][j]/nonIdealCorrection; //
+         * nonIdealCorrection=1.0; return binaryDiffusionCoefficients[i][j]/nonIdealCorrection; //
          * shuld be divided by non ideality factor
          */
-        return binaryDiffusionCoeffisients[i][j];
+        return binaryDiffusionCoefficients[i][j];
     }
 }

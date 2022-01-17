@@ -130,7 +130,7 @@ public class FugTestConstP extends constantDutyTemperatureFlash
                     testOps2.TPflash();
 
                     SolVapFugCoeff =
-                            testSystem2.getPhase(0).getComponent(0).getFugasityCoeffisient();
+                            testSystem2.getPhase(0).getComponent(0).getFugacityCoefficient();
 
                     Fug[3][i] = testSystem.getPhase(0).getFugacity(k);
                     Fug[1][i] = SolidFug * SolVapFugCoeff;

@@ -119,7 +119,7 @@ public class ComponentPCSAFT extends ComponentSrk {
 
         F2dispZHCdn = ((PhasePCSAFT) phase).getF2dispZHCdN() * getDnSAFTdi()
                 + ((PhasePCSAFT) phase).getF2dispZHCdm() * getDmSAFTdi();
-        // System.out.println("fugasity " + getFugasityCoefficient());
+        // System.out.println("fugacity " + getFugacityCoefficient());
     }
 
     /** {@inheritDoc} */
@@ -135,7 +135,7 @@ public class ComponentPCSAFT extends ComponentSrk {
         // System.out.println("term getF23 " +
         // dF_DISP2_SAFTdN(phase,numberOfComponents,temperature,pressure));
 
-        // System.out.println("term furgacity coef " + getFugasityCoefficient());
+        // System.out.println("term furgacity coef " + getFugacityCoefficient());
         return useHS * dF_HC_SAFTdN(phase, numberOfComponents, temperature, pressure)
                 + useDISP1 * dF_DISP1_SAFTdN(phase, numberOfComponents, temperature, pressure)
                 + useDISP2 * dF_DISP2_SAFTdN(phase, numberOfComponents, temperature, pressure);

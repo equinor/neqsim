@@ -81,11 +81,11 @@ public class TEGdehydrationProcess2 {
         glycol_flash_valve.setName("Rich TEG HP flash valve");
         glycol_flash_valve.setOutletPressure(4.9);
 
-        Heater richGLycolHeaterCondeser = new Heater(glycol_flash_valve.getOutStream());
-        richGLycolHeaterCondeser.setName("rich TEG preheater");
-        richGLycolHeaterCondeser.setOutTemperature(273.15 + 35.5);
+        Heater richGLycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
+        richGLycolHeaterCondenser.setName("rich TEG preheater");
+        richGLycolHeaterCondenser.setOutTemperature(273.15 + 35.5);
 
-        Heater richGLycolHeater = new Heater(richGLycolHeaterCondeser.getOutStream());
+        Heater richGLycolHeater = new Heater(richGLycolHeaterCondenser.getOutStream());
         richGLycolHeater.setName("rich TEG heater HP");
         richGLycolHeater.setOutTemperature(273.15 + 62.0);
 
@@ -114,7 +114,7 @@ public class TEGdehydrationProcess2 {
         Heater sepregenGasCooler = new Heater(gasFromRegenerator);
         sepregenGasCooler.setOutTemperature(273.15 + 109.0);
         sepregenGasCooler.setOutPressure(1.23);
-        // sepregenGasCooler.setEnergyStream(richGLycolHeaterCondeser.getEnergyStream());
+        // sepregenGasCooler.setEnergyStream(richGLycolHeaterCondenser.getEnergyStream());
 
         Separator sepRegen = new Separator(sepregenGasCooler.getOutStream());
 
@@ -208,7 +208,7 @@ public class TEGdehydrationProcess2 {
         operations.add(dehydratedGas);
         operations.add(richTEG);
         operations.add(glycol_flash_valve);
-        operations.add(richGLycolHeaterCondeser);
+        operations.add(richGLycolHeaterCondenser);
         operations.add(richGLycolHeater);
         operations.add(flashSep);
         operations.add(flashGas);

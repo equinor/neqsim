@@ -75,8 +75,8 @@ public class TPflash extends Flash {
             } else {
                 Kold = system.getPhase(0).getComponent(i).getK();
                 system.getPhase(0).getComponent(i)
-                        .setK(system.getPhase(1).getComponent(i).getFugasityCoeffisient()
-                                / system.getPhase(0).getComponent(i).getFugasityCoeffisient()
+                        .setK(system.getPhase(1).getComponent(i).getFugacityCoefficient()
+                                / system.getPhase(0).getComponent(i).getFugacityCoefficient()
                                 * presdiff);
                 if (Double.isNaN(system.getPhase(0).getComponent(i).getK())) {
                     system.getPhase(0).getComponent(i).setK(Kold);
@@ -154,8 +154,8 @@ public class TPflash extends Flash {
             lnOldOldOldK[i] = lnOldOldK[i];
             lnOldOldK[i] = lnOldK[i];
             lnOldK[i] = lnK[i];
-            lnK[i] = Math.log(system.getPhase(1).getComponent(i).getFugasityCoeffisient())
-                    - Math.log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient());
+            lnK[i] = Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
+                    - Math.log(system.getPhase(0).getComponents()[i].getFugacityCoefficient());
 
             oldoldDeltalnK[i] = lnOldOldK[i] - lnOldOldOldK[i];
             oldDeltalnK[i] = lnOldK[i] - lnOldOldK[i];
@@ -225,7 +225,7 @@ public class TPflash extends Flash {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
             minGibsLogFugCoef[i] =
-                    system.getPhase(minGibbsPhase).getComponent(i).getLogFugasityCoeffisient();
+                    system.getPhase(minGibbsPhase).getComponent(i).getLogFugacityCoefficient();
         }
 
         presdiff = system.getPhase(1).getPressure() / system.getPhase(0).getPressure();
@@ -292,11 +292,11 @@ public class TPflash extends Flash {
         } else {
             for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 tpdy += system.getPhase(0).getComponent(i).getx()
-                        * (Math.log(system.getPhase(0).getComponent(i).getFugasityCoeffisient())
+                        * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
                                 + Math.log(system.getPhase(0).getComponents()[i].getx())
                                 - minGibsPhaseLogZ[i] - minGibsLogFugCoef[i]);
                 tpdx += system.getPhase(1).getComponent(i).getx()
-                        * (Math.log(system.getPhase(1).getComponent(i).getFugasityCoeffisient())
+                        * (Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
                                 + Math.log(system.getPhase(1).getComponents()[i].getx())
                                 - minGibsPhaseLogZ[i] - minGibsLogFugCoef[i]);
             }
@@ -309,7 +309,7 @@ public class TPflash extends Flash {
                     for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                         system.getPhase(0).getComponent(i)
                                 .setK(Math.exp(Math.log(
-                                        system.getPhase(1).getComponent(i).getFugasityCoeffisient())
+                                        system.getPhase(1).getComponent(i).getFugacityCoefficient())
                                         - minGibsLogFugCoef[i]) * presdiff);
                         system.getPhase(1).getComponent(i)
                                 .setK(system.getPhase(0).getComponent(i).getK());
@@ -319,7 +319,7 @@ public class TPflash extends Flash {
                         system.getPhase(0).getComponents()[i]
                                 .setK(Math
                                         .exp(minGibsLogFugCoef[i] - Math.log(system.getPhase(0)
-                                                .getComponent(i).getFugasityCoeffisient()))
+                                                .getComponent(i).getFugacityCoefficient()))
                                         * presdiff);
                         system.getPhase(1).getComponent(i)
                                 .setK(system.getPhase(0).getComponent(i).getK());

@@ -120,10 +120,10 @@ public abstract class NonEquilibriumFluidBoundary
         double sumx = 0, sumy = 0;
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
             fvec.set(i, 0, Math.log(
-                    (interphaseSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                    (interphaseSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                             * interphaseSystem.getPhases()[0].getComponents()[i].getx()))
                     - Math.log((interphaseSystem.getPhases()[1].getComponents()[i]
-                            .getFugasityCoeffisient()
+                            .getFugacityCoefficient()
                             * interphaseSystem.getPhases()[1].getComponents()[i].getx())));
             sumx += interphaseSystem.getPhases()[0].getComponents()[i].getx();
             sumy += interphaseSystem.getPhases()[1].getComponents()[i].getx();
@@ -162,10 +162,10 @@ public abstract class NonEquilibriumFluidBoundary
         double sumx = 0.0, sumy = 0.0;
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
             fvec.set(i, 0, Math.log(
-                    (interphaseSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                    (interphaseSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                             * interphaseSystem.getPhases()[0].getComponents()[i].getx()))
                     - Math.log((interphaseSystem.getPhases()[1].getComponents()[i]
-                            .getFugasityCoeffisient()
+                            .getFugacityCoefficient()
                             * interphaseSystem.getPhases()[1].getComponents()[i].getx())));
             sumx += interphaseSystem.getPhases()[1].getComponents()[i].getx();
             sumy += interphaseSystem.getPhases()[0].getComponents()[i].getx();
@@ -249,7 +249,7 @@ public abstract class NonEquilibriumFluidBoundary
                         + interphaseSystem.getPhases()[0].getComponents()[i].getdfugdx(j);
 
                 // tempJ=
-                // dij*interphaseSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()+interphaseSystem.getPhases()[0].getComponents()[i].getx()*interphaseSystem.getPhases()[0].getComponents()[i].getdfugdx(j);
+                // dij*interphaseSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()+interphaseSystem.getPhases()[0].getComponents()[i].getx()*interphaseSystem.getPhases()[0].getComponents()[i].getdfugdx(j);
                 Jac.set(i, j, tempJ);
             }
         }
@@ -270,7 +270,7 @@ public abstract class NonEquilibriumFluidBoundary
                         + interphaseSystem.getPhases()[1].getComponents()[i].getdfugdx(j);
 
                 // tempJ=
-                // dij*interphaseSystem.getPhases()[1].getComponents()[i].getFugasityCoeffisient()+interphaseSystem.getPhases()[1].getComponents()[i].getx()*interphaseSystem.getPhases()[1].getComponents()[i].getdfugdx(j);
+                // dij*interphaseSystem.getPhases()[1].getComponents()[i].getFugacityCoefficient()+interphaseSystem.getPhases()[1].getComponents()[i].getx()*interphaseSystem.getPhases()[1].getComponents()[i].getdfugdx(j);
                 Jac.set(i, j + bulkSystem.getPhases()[0].getNumberOfComponents(), -tempJ);
             }
         }
@@ -448,12 +448,12 @@ public abstract class NonEquilibriumFluidBoundary
 
     /**
      * <p>
-     * calcHeatTransferCoeffisients.
+     * calcHeatTransferCoefficients.
      * </p>
      *
      * @param phase a int
      */
-    public void calcHeatTransferCoeffisients(int phase) {
+    public void calcHeatTransferCoefficients(int phase) {
         prandtlNumber[phase] = getBulkSystem().getPhases()[phase].getCp()
                 / getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()
                 * getBulkSystem().getPhases()[phase].getPhysicalProperties().getViscosity()

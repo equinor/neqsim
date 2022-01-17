@@ -48,7 +48,7 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         }
         if (type == 0) {
             return (system.getPressure() * system.getPhases()[0].getComponent(0).getx()
-                    * system.getPhase(0).getComponent(0).getFugasityCoeffisient());
+                    * system.getPhase(0).getComponent(0).getFugacityCoefficient());
         } else {
             return (system.getPressure());
         }
