@@ -54,7 +54,7 @@ public class TestParameterFittingToSolubilityDataEinar {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")) / 1.0e5);
                 testSystem.setMixingRule(2);
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] =
                         {testSystem.getPressure() / 100.0, testSystem.getTemperature() / 100.0};
                 SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),

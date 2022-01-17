@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestIonicInteractionParameterFittingCo2nacl class.</p>
+ * <p>
+ * TestIonicInteractionParameterFittingCo2nacl class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,7 +23,9 @@ public class TestIonicInteractionParameterFittingCo2nacl {
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFittingCo2nacl.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -64,9 +68,8 @@ public class TestIonicInteractionParameterFittingCo2nacl {
                 testSystem.setTemperature(temperature);
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
-                double sample1[] = {pressure}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
-                                                      // pressure
+                double sample1[] = {pressure};
+                double standardDeviation1[] = {0.01};
                 double value = Double.parseDouble(dataSet.getString("x1-molfrac"));
                 SampleValue sample =
                         new SampleValue(value, value / 100.0, sample1, standardDeviation1);

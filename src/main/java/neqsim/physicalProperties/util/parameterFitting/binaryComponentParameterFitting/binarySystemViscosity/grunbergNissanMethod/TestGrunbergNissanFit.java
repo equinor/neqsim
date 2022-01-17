@@ -53,7 +53,7 @@ public class TestGrunbergNissanFit {
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.init(0);
                 testSystem.initPhysicalProperties();
-                double sample1[] = {x1, testSystem.getTemperature()}; // temperature
+                double sample1[] = {x1, testSystem.getTemperature()};
                 double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(Double.parseDouble(dataSet.getString("Viscosity")),

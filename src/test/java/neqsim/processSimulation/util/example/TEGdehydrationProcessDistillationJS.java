@@ -240,10 +240,10 @@ public class TEGdehydrationProcessDistillationJS {
         glycol_flash_valve.setName("Rich TEG HP flash valve");
         glycol_flash_valve.setOutletPressure(flashDrumPressure);
 
-        Heater richGLycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
-        richGLycolHeaterCondenser.setName("rich TEG preheater");
+        Heater richGlycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
+        richGlycolHeaterCondenser.setName("rich TEG preheater");
 
-        HeatExchanger heatEx2 = new HeatExchanger(richGLycolHeaterCondenser.getOutStream());
+        HeatExchanger heatEx2 = new HeatExchanger(richGlycolHeaterCondenser.getOutStream());
         heatEx2.setName("rich TEG heat exchanger 1");
         heatEx2.setGuessOutTemperature(273.15 + 62.0);
         heatEx2.setUAvalue(UAvalueRichTEGHeatExchanger_1);
@@ -370,8 +370,8 @@ public class TEGdehydrationProcessDistillationJS {
         resycleLeanTEG.setPriority(200);
         resycleLeanTEG.setDownstreamProperty("flow rate");
 
-        richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
-        // richGLycolHeater.isSetEnergyStream();
+        richGlycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
+        // richGlycolHeater.isSetEnergyStream();
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -387,7 +387,7 @@ public class TEGdehydrationProcessDistillationJS {
         operations.add(waterDewPointAnalyser);
         operations.add(richTEG);
         operations.add(glycol_flash_valve);
-        operations.add(richGLycolHeaterCondenser);
+        operations.add(richGlycolHeaterCondenser);
         operations.add(heatEx2);
         operations.add(flashSep);
         operations.add(flashGas);

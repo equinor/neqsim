@@ -10,7 +10,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 
 /**
- * <p>TestFitToAntoineVapPres class.</p>
+ * <p>
+ * TestFitToAntoineVapPres class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,7 +21,9 @@ public class TestFitToAntoineVapPres {
     static Logger logger = LogManager.getLogger(TestFitToAntoineVapPres.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -51,7 +55,7 @@ public class TestFitToAntoineVapPres {
                         new neqsim.thermodynamicOperations.ThermodynamicOperations(
                                 testSystemAntoine);
 
-                double sample1[] = {i * 5 + 273.15}; // temperature
+                double sample1[] = {i * 5 + 273.15};
                 double standardDeviation1[] = {0.1, 0.1, 0.1};
                 double val = Math.log(testSystemAntoine.getPhase(0).getComponent(0)
                         .getAntoineVaporPressure(273.15 + i * 5));

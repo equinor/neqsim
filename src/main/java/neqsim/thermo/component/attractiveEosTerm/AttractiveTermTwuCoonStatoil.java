@@ -100,6 +100,7 @@ public class AttractiveTermTwuCoonStatoil extends AttractiveTermBaseClass {
     // temperature)+2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(
     // temperature/TC,1.0*d)*d/(temperature*temperature);
     // }
+
     /** {@inheritDoc} */
     @Override
     public double aT(double temperature) {

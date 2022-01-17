@@ -1,4 +1,4 @@
-package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
+package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.AntoineParameter;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -8,19 +8,20 @@ import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.AntoineParameter.AntoineSolidFunctionS8;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
  * <p>
- * TestSolidAntoine class.
+ * TestSolidAntoine_S8 class.
  * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class TestSolidAntoine {
-    static Logger logger = LogManager.getLogger(TestSolidAntoine.class);
+public class TestSolidAntoine_S8 {
+    static Logger logger = LogManager.getLogger(TestSolidAntoine_S8.class);
 
     /**
      * <p>
@@ -37,30 +38,27 @@ public class TestSolidAntoine {
         NeqSimDataBase database = new NeqSimDataBase();
 
         ResultSet dataSet = database.getResultSet(
-                "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY FreezingTemperature");
+                "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='S8' AND VapourPressure<100");
 
         try {
             while (dataSet.next()) {
-                FreezeSolidFunction function = new FreezeSolidFunction();
-                double guess[] = {-7566.84658558, 17.38710706}; // MEG
+                AntoineSolidFunctionS8 function = new AntoineSolidFunctionS8();
+                // double guess[] = {8.046, -4600.0, -144.0}; // S8
+                double guess[] = {1.181E1, -8.356E3}; // S8
                 function.setInitialGuess(guess);
 
-                SystemInterface testSystem = new SystemSrkSchwartzentruberEos(280, 1.101);
-                testSystem.addComponent(dataSet.getString("ComponentSolvent1"),
-                        Double.parseDouble(dataSet.getString("x1")));
-                testSystem.addComponent(dataSet.getString("ComponentSolvent2"),
-                        Double.parseDouble(dataSet.getString("x2")));
-                // testSystem.createDatabase(true);
-                testSystem.setSolidPhaseCheck(true);
-                testSystem.setMixingRule(4);
-                testSystem.init(0);
-                double sample1[] = {testSystem.getPhase(0).getComponent(0).getz()}; 
-                double standardDeviation1[] = {0.1, 0.1, 0.1};
-                double val = Double.parseDouble(dataSet.getString("FreezingTemperature"));
-                testSystem.setTemperature(val);
-                SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
+                SystemInterface testSystem = new SystemSrkEos(280, 0.001);
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
+
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
+                double vappres = Double.parseDouble(dataSet.getString("VapourPressure"));
+                double standardDeviation1[] = {0.15};
+                SampleValue sample = new SampleValue(vappres,
+                        Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
+                        standardDeviation1);
                 sample.setFunction(function);
-                sample.setReference(dataSet.getString("Reference"));
+
+                function.setInitialGuess(guess);
                 sample.setThermodynamicSystem(testSystem);
                 sampleList.add(sample);
             }

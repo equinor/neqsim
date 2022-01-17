@@ -64,9 +64,8 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
                 testSystem.setMixingRule("HV");
 
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
-                                                      // pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
+                double standardDeviation1[] = {0.01};
                 double val = testSystem.getPressure();
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -106,9 +105,8 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
                 testSystem.setMixingRule("HV");
 
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
-                                                      // pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
+                double standardDeviation1[] = {0.01};
                 double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);

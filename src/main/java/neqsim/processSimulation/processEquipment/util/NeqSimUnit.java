@@ -131,10 +131,10 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
             // test.getFluidBoundary().display("test");
         }
 
-        for (int i = 0; i < k; i++) {
-            // System.out.println("len temp " + temperatures2[0][i] + " " +
-            // temperatures2[1][i]);
-        }
+        /*
+         * for (int i = 0; i < k; i++) { System.out.println("len temp " + temperatures2[0][i] + " "
+         * + temperatures2[1][i]); }
+         */
         // test.display("length " + length);
         outStream.setThermoSystem(test.getBulkSystem());
     }
@@ -183,10 +183,10 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
             // test.getFluidBoundary().display("test");
         }
 
-        for (int i = 0; i < k; i++) {
-            // System.out.println("len temp " + temperatures2[0][i] + " " +
-            // temperatures2[1][i]);
-        }
+        /*
+         * for (int i = 0; i < k; i++) { System.out.println("len temp " + temperatures2[0][i] + " "
+         * + temperatures2[1][i]); }
+         */
         // test.display("length " + length);
         outStream.setThermoSystem(test.getBulkSystem());
     }
@@ -235,10 +235,10 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
             // test.getFluidBoundary().display("test");
         }
 
-        for (int i = 0; i < k; i++) {
-            // System.out.println("len temp " + temperatures2[0][i] + " " +
-            // temperatures2[1][i]);
-        }
+        /*
+         * for (int i = 0; i < k; i++) { System.out.println("len temp " + temperatures2[0][i] + " "
+         * + temperatures2[1][i]); }
+         */
         // test.display("length " + length);
         outStream.setThermoSystem(test.getBulkSystem());
     }
