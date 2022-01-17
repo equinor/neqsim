@@ -128,20 +128,16 @@ public class PHflash extends Flash {
                 minTemperature = system.getTemperature();
             }
 
-            if (false && error * erorOld < 0) {
-                system.setTemperature(
-                        (Math.abs(erorOld) * 1.0 / oldTemp + Math.abs(error) * 1.0 / nyTemp)
-                                / (Math.abs(erorOld) + Math.abs(error)));
-                tpFlash.run();
-                system.init(2);
-                erorOld = error;
-                error = calcdQdT();
-                System.out.println("reset temperature -- new temp " + system.getTemperature()
-                        + " error " + error + " iter " + iterations);
-            }
-            // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
-            // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
-            // " error "+ error + " correction " + newCorr + " factor "+ factor);
+            /*
+             * if (false && error * erorOld < 0) { system.setTemperature( (Math.abs(erorOld) * 1.0 /
+             * oldTemp + Math.abs(error) * 1.0 / nyTemp) / (Math.abs(erorOld) + Math.abs(error)));
+             * tpFlash.run(); system.init(2); erorOld = error; error = calcdQdT();
+             * System.out.println("reset temperature -- new temp " + system.getTemperature() +
+             * " error " + error + " iter " + iterations); } error = Math.abs((1.0 / nyTemp - 1.0 /
+             * oldTemp) / (1.0 / oldTemp)); System.out.println("temp " + system.getTemperature() +
+             * " iter "+ iterations + " error "+ error + " correction " + newCorr + " factor "+
+             * factor);
+             */
         } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3)
                 && iterations < 200);
         // System.out.println("temp " + system.getTemperature() + " iter " + iterations
