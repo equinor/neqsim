@@ -81,28 +81,28 @@ public class TEGdehydrationProcess2 {
         glycol_flash_valve.setName("Rich TEG HP flash valve");
         glycol_flash_valve.setOutletPressure(4.9);
 
-        Heater richGlycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
-        richGlycolHeaterCondenser.setName("rich TEG preheater");
-        richGlycolHeaterCondenser.setOutTemperature(273.15 + 35.5);
+        Heater richGLycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
+        richGLycolHeaterCondenser.setName("rich TEG preheater");
+        richGLycolHeaterCondenser.setOutTemperature(273.15 + 35.5);
 
-        Heater richGlycolHeater = new Heater(richGlycolHeaterCondenser.getOutStream());
-        richGlycolHeater.setName("rich TEG heater HP");
-        richGlycolHeater.setOutTemperature(273.15 + 62.0);
+        Heater richGLycolHeater = new Heater(richGLycolHeaterCondenser.getOutStream());
+        richGLycolHeater.setName("rich TEG heater HP");
+        richGLycolHeater.setOutTemperature(273.15 + 62.0);
 
-        Separator flashSep = new Separator(richGlycolHeater.getOutStream());
+        Separator flashSep = new Separator(richGLycolHeater.getOutStream());
         flashSep.setName("degasing separator");
         Stream flashGas = new Stream(flashSep.getGasOutStream());
         flashGas.setName("gas from degasing separator");
         Stream flashLiquid = new Stream(flashSep.getLiquidOutStream());
         flashLiquid.setName("liquid from degasing separator");
 
-        Heater richGlycolHeater2 = new Heater(flashLiquid);
-        richGlycolHeater2.setName("LP rich glycol heater");
-        richGlycolHeater2.setOutTemperature(273.15 + 139.0);
-        richGlycolHeater2.setOutPressure(1.23);
+        Heater richGLycolHeater2 = new Heater(flashLiquid);
+        richGLycolHeater2.setName("LP rich glycol heater");
+        richGLycolHeater2.setOutTemperature(273.15 + 139.0);
+        richGLycolHeater2.setOutPressure(1.23);
 
         Mixer mixerTOreboiler = new Mixer("reboil mxer");
-        mixerTOreboiler.addStream(richGlycolHeater2.getOutStream());
+        mixerTOreboiler.addStream(richGLycolHeater2.getOutStream());
 
         Heater heaterToReboiler = new Heater(mixerTOreboiler.getOutStream());
         heaterToReboiler.setOutTemperature(273.15 + 206.6);
@@ -114,7 +114,7 @@ public class TEGdehydrationProcess2 {
         Heater sepregenGasCooler = new Heater(gasFromRegenerator);
         sepregenGasCooler.setOutTemperature(273.15 + 109.0);
         sepregenGasCooler.setOutPressure(1.23);
-        // sepregenGasCooler.setEnergyStream(richGlycolHeaterCondenser.getEnergyStream());
+        // sepregenGasCooler.setEnergyStream(richGLycolHeaterCondenser.getEnergyStream());
 
         Separator sepRegen = new Separator(sepregenGasCooler.getOutStream());
 
@@ -208,12 +208,12 @@ public class TEGdehydrationProcess2 {
         operations.add(dehydratedGas);
         operations.add(richTEG);
         operations.add(glycol_flash_valve);
-        operations.add(richGlycolHeaterCondenser);
-        operations.add(richGlycolHeater);
+        operations.add(richGLycolHeaterCondenser);
+        operations.add(richGLycolHeater);
         operations.add(flashSep);
         operations.add(flashGas);
         operations.add(flashLiquid);
-        operations.add(richGlycolHeater2);
+        operations.add(richGLycolHeater2);
         operations.add(mixerTOreboiler);
         operations.add(heaterToReboiler);
         operations.add(regenerator2);
@@ -244,7 +244,7 @@ public class TEGdehydrationProcess2 {
         operations.add(resycleLeanTEG);
 
         operations.run();
-        richGlycolHeater2.getOutStream().getFluid().display();
+        richGLycolHeater2.getOutStream().getFluid().display();
         System.out.println("Energy reboiler " + heaterToReboiler.getDuty());
         mixerTOreboiler.addStream(liquidRegenReflux);
         mixerTOreboiler.addStream(resycle3.getOutStream());
@@ -252,7 +252,7 @@ public class TEGdehydrationProcess2 {
         operations.run();
         absorber.replaceSolventInStream(resycleLeanTEG.getOutStream());
         operations.run();
-        // richGlycolHeater2.getOutStream().getFluid().display();
+        // richGLycolHeater2.getOutStream().getFluid().display();
 
         System.out.println("Energy reboiler 2 " + heaterToReboiler.getDuty());
 

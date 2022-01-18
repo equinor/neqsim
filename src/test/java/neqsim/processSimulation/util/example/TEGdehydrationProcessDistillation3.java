@@ -91,14 +91,14 @@ public class TEGdehydrationProcessDistillation3 {
         glycol_flash_valve.setName("Rich TEG HP flash valve");
         glycol_flash_valve.setOutletPressure(4.9);
 
-        Heater richGlycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
-        richGlycolHeaterCondenser.setName("rich TEG preheater");
+        Heater richGLycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
+        richGLycolHeaterCondenser.setName("rich TEG preheater");
 
-        Heater richGlycolHeater = new Heater(richGlycolHeaterCondenser.getOutStream());
-        richGlycolHeater.setName("rich TEG heater HP");
-        richGlycolHeater.setOutTemperature(273.15 + 62.0);
+        Heater richGLycolHeater = new Heater(richGLycolHeaterCondenser.getOutStream());
+        richGLycolHeater.setName("rich TEG heater HP");
+        richGLycolHeater.setOutTemperature(273.15 + 62.0);
 
-        Separator flashSep = new Separator(richGlycolHeater.getOutStream());
+        Separator flashSep = new Separator(richGLycolHeater.getOutStream());
         flashSep.setName("degasing separator");
 
         Stream flashGas = new Stream(flashSep.getGasOutStream());
@@ -107,10 +107,10 @@ public class TEGdehydrationProcessDistillation3 {
         Stream flashLiquid = new Stream(flashSep.getLiquidOutStream());
         flashLiquid.setName("liquid from degasing separator");
 
-        Heater richGlycolHeater2 = new Heater(flashLiquid);
-        richGlycolHeater2.setName("LP rich glycol heater");
-        richGlycolHeater2.setOutTemperature(273.15 + 139.0);
-        richGlycolHeater2.setOutPressure(1.23);
+        Heater richGLycolHeater2 = new Heater(flashLiquid);
+        richGLycolHeater2.setName("LP rich glycol heater");
+        richGLycolHeater2.setOutTemperature(273.15 + 139.0);
+        richGLycolHeater2.setOutPressure(1.23);
 
         neqsim.thermo.system.SystemInterface stripGas = feedGas.clone();
         stripGas.setMolarComposition(
@@ -126,7 +126,7 @@ public class TEGdehydrationProcessDistillation3 {
 
         DistillationColumn column = new DistillationColumn(1, true, true);
         column.setName("TEG regeneration column");
-        column.addFeedStream(richGlycolHeater2.getOutStream(), 0);
+        column.addFeedStream(richGLycolHeater2.getOutStream(), 0);
         column.getReboiler().setOutTemperature(273.15 + 206.6);
         column.getCondenser().setOutTemperature(273.15 + 101.0);
         column.getReboiler().addStream(gasToReboiler);
@@ -210,8 +210,8 @@ public class TEGdehydrationProcessDistillation3 {
         resycleLeanTEG.setPriority(200);
         resycleLeanTEG.setDownstreamProperty("flow rate");
 
-        richGlycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
-        richGlycolHeater.isSetEnergyStream();
+        richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
+        richGLycolHeater.isSetEnergyStream();
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -223,12 +223,12 @@ public class TEGdehydrationProcessDistillation3 {
         operations.add(dehydratedGas);
         operations.add(richTEG);
         operations.add(glycol_flash_valve);
-        operations.add(richGlycolHeaterCondenser);
-        operations.add(richGlycolHeater);
+        operations.add(richGLycolHeaterCondenser);
+        operations.add(richGLycolHeater);
         operations.add(flashSep);
         operations.add(flashGas);
         operations.add(flashLiquid);
-        operations.add(richGlycolHeater2);
+        operations.add(richGLycolHeater2);
         operations.add(gasToReboiler);
         operations.add(column);
         operations.add(coolerRegenGas);
@@ -311,11 +311,11 @@ public class TEGdehydrationProcessDistillation3 {
         System.out.println("condenser duty  "
                 + ((Condenser) ((DistillationColumn) operations.getUnit("TEG regeneration column"))
                         .getCondenser()).getDuty() / 1.0e3);
-        System.out.println("richGlycolHeaterCondenser duty  "
-                + richGlycolHeaterCondenser.getEnergyStream().getDuty() / 1.0e3);
-        System.out.println("richGlycolHeaterCondenser temperature out  "
-                + richGlycolHeaterCondenser.getOutStream().getTemperature("C"));
-        richGlycolHeaterCondenser.run();
+        System.out.println("richGLycolHeaterCondenser duty  "
+                + richGLycolHeaterCondenser.getEnergyStream().getDuty() / 1.0e3);
+        System.out.println("richGLycolHeaterCondenser temperature out  "
+                + richGLycolHeaterCondenser.getOutStream().getTemperature("C"));
+        richGLycolHeaterCondenser.run();
 
         hotLeanTEGPump.getOutStream().displayResult();
         flashLiquid.displayResult();
