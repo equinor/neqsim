@@ -127,7 +127,7 @@ public class FreezeOut extends constantDutyTemperatureFlash
                             * testSystem.getPressure());
 
                     SolidFug = Pvapsolid
-                            * testSystem2.getPhase(0).getComponent(0).getFugasityCoeffisient()
+                            * testSystem2.getPhase(0).getComponent(0).getFugacityCoefficient()
                             * Math.exp(solvol / (R * temp) * (pres - Pvapsolid));
                     FluidFug = testSystem.getPhase(0).getFugacity(k);
 

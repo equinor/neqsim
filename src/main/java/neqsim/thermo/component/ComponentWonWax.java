@@ -57,30 +57,30 @@ public class ComponentWonWax extends ComponentSolid {
         refPhase.getComponent(0).fugcoef(refPhase);
 
         double liquidPhaseFugacity =
-                refPhase.getComponent(0).getFugasityCoefficient() * refPhase.getPressure();
+                refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
-        double solidActivityCoefficient = getWonActivityCoeficient(phase1);
+        double solidActivityCoefficient = getWonActivityCoefficient(phase1);
         logger.info("activity coef Won " + solidActivityCoefficient);
         SolidFug = getx() * liquidPhaseFugacity
                 * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
                         * (1.0 - phase1.getTemperature() / getTriplePointTemperature()));
 
-        fugasityCoeffisient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        fugacityCoefficient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     // public double fugcoef(PhaseInterface phase, int numberOfComps, double temp,
     // double pres){
     /**
      * <p>
-     * getWonActivityCoeficient.
+     * getWonActivityCoefficient.
      * </p>
      *
      * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
      */
-    public double getWonActivityCoeficient(PhaseInterface phase1) {
+    public double getWonActivityCoefficient(PhaseInterface phase1) {
         double TetaAvg = 0.0;
         // double SolidActivity = 0.0;
         double gamma = 0.0;

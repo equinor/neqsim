@@ -56,7 +56,7 @@ public class WATcalc extends constantDutyTemperatureFlash {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                 system.getPhases()[5].getComponent(i)
                         .setx(Ksolid[i] * system.getPhase(0).getComponent(i).getx());
-                Ksolid[i] = system.getPhase(0).getComponent(i).getFugasityCoefficient()
+                Ksolid[i] = system.getPhase(0).getComponent(i).getFugacityCoefficient()
                         / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
                 sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
             }

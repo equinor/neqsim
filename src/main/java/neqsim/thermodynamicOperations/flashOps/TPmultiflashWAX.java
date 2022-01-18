@@ -74,7 +74,7 @@ public class TPmultiflashWAX extends TPflash {
                 if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
                     system.getPhase(k).getComponents()[i].setx(system.getPhase(0).getComponents()[i]
                             .getz() / E[i]
-                            / system.getPhase(k).getComponents()[i].getFugasityCoeffisient());
+                            / system.getPhase(k).getComponents()[i].getFugacityCoefficient());
                 }
                 if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
                         && !system.getPhase(k).getPhaseTypeName().equals("aqueous")) {
@@ -105,7 +105,7 @@ public class TPmultiflashWAX extends TPflash {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             for (int k = 0; k < system.getNumberOfPhases(); k++) {
                 E[i] += system.getPhase(k).getBeta()
-                        / system.getPhase(k).getComponents()[i].getFugasityCoeffisient();
+                        / system.getPhase(k).getComponents()[i].getFugacityCoefficient();
             }
         }
     }
@@ -138,7 +138,7 @@ public class TPmultiflashWAX extends TPflash {
             dQdbeta[k] = 1.0;
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                 dQdbeta[k] -= system.getPhase(0).getComponents()[i].getz() * 1.0 / E[i]
-                        / system.getPhase(k).getComponents()[i].getFugasityCoeffisient();
+                        / system.getPhase(k).getComponents()[i].getFugacityCoefficient();
             }
         }
 
@@ -147,8 +147,8 @@ public class TPmultiflashWAX extends TPflash {
                 Qmatrix[i][j] = 0;
                 for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
                     Qmatrix[i][j] += system.getPhase(0).getComponents()[k].getz() / (E[k] * E[k]
-                            * system.getPhase(j).getComponents()[k].getFugasityCoeffisient()
-                            * system.getPhase(i).getComponents()[k].getFugasityCoeffisient());
+                            * system.getPhase(j).getComponents()[k].getFugacityCoefficient()
+                            * system.getPhase(i).getComponents()[k].getFugacityCoefficient());
                 }
                 if (i == j) {
                     Qmatrix[i][j] += 1e-10;
@@ -284,7 +284,7 @@ public class TPmultiflashWAX extends TPflash {
                         .log(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase]
                                 .getComponents()[k].getx())
                         + minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase]
-                                .getComponents()[k].getLogFugasityCoeffisient();
+                                .getComponents()[k].getLogFugacityCoefficient();
             }
         }
 
@@ -346,11 +346,11 @@ public class TPmultiflashWAX extends TPflash {
                     oldlogw[i] = logWi[i];
                     if (!Double.isInfinite(Math
                             .log((clonedSystem.get(j)).getPhase(waxphasenumber).getComponents()[i]
-                                    .getLogFugasityCoeffisient()))
+                                    .getLogFugacityCoefficient()))
                             && system.getPhase(0).getComponent(i).getx() > 1e-100) {
                         logWi[i] = d[i] - Math.log(
                                 (clonedSystem.get(j)).getPhase(waxphasenumber).getComponents()[i]
-                                        .getFugasityCoeffisient());
+                                        .getFugacityCoefficient());
                         if ((clonedSystem.get(j)).getPhase(1).getComponents()[i]
                                 .getIonicCharge() != 0) {
                             logWi[i] = -1000.0;

@@ -8,7 +8,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TestCharacterizationCondensate1 class.</p>
+ * <p>
+ * TestCharacterizationCondensate1 class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -18,7 +20,9 @@ public class TestCharacterizationCondensate1 {
     static Logger logger = LogManager.getLogger(TestCharacterizationCondensate1.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -78,7 +82,7 @@ public class TestCharacterizationCondensate1 {
             logger.error(e.toString());
         }
         System.out.println(
-                "activity coeffisient " + testSystem.getPhase(1).getActivityCoefficient(1));
+                "activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
         testSystem.display();
         ((PhaseEosInterface) testSystem.getPhase(0)).displayInteractionCoefficients("");
         testSystem.getPhase(0).getComponent(1).getAcentricFactor();

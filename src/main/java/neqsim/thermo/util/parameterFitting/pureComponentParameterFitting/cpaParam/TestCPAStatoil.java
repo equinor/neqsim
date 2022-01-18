@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestCPAStatoil class.</p>
+ * <p>
+ * TestCPAStatoil class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,7 +23,9 @@ public class TestCPAStatoil {
     static Logger logger = LogManager.getLogger(TestCPAStatoil.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -47,9 +51,8 @@ public class TestCPAStatoil {
                 // SystemInterface testSystem = new SystemSrkEos(280, 0.001);
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 testSystem.createDatabase(true);
-                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
+                double standardDeviation1[] = {0.1};
                 double val = Double.parseDouble(dataSet.getString("VapourPressure"));
                 testSystem.setPressure(val);
                 double stddev = val / 10.0;

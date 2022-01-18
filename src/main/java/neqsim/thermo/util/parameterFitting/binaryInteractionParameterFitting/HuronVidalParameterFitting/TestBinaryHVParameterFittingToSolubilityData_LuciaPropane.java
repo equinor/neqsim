@@ -78,9 +78,8 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane {
                 testSystem.setMixingRule("HV");
 
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
-                                                      // pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
+                double standardDeviation1[] = {0.01};
                 double val = Double.parseDouble(dataSet.getString("L2"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -136,9 +135,8 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane {
                 testSystem.addComponent("water", 1000.0);
                 testSystem.setMixingRule("HV");
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
-                                                      // pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
+                double standardDeviation1[] = {0.01};
                 double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -172,10 +170,9 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane {
          * //testSystem.createDatabase(true); testSystem.setMixingRule("HV");
          * 
          * testSystem.init(0); double sample1[] = {testSystem.getPressure(),
-         * testSystem.getTemperature()}; // temperature double standardDeviation1[] = {0.01}; //
-         * std.dev temperature // presure std.dev pressure double val =
-         * 1.0-Double.parseDouble(dataSet.getString("L1")); double sdev = val/100.0; SampleValue
-         * sample = new SampleValue(val, sdev, sample1, standardDeviation1);
+         * testSystem.getTemperature()}; double standardDeviation1[] = {0.01}; // std.dev
+         * temperature double val = 1.0-Double.parseDouble(dataSet.getString("L1")); double sdev =
+         * val/100.0; SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
          * sample.setFunction(function); sample.setThermodynamicSystem(testSystem);
          * sample.setReference(Double.toString(testSystem.getTemperature())); double
          * parameterGuess[] ={3517,-1584, -0.1, -0.44, 0.07};//propane

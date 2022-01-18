@@ -13,8 +13,6 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 public class PumpTest {
     @Test
     void testRun() {
-        // Create the input fluid to the TEG process and saturate it with water at
-        // scrubber conditions
         neqsim.thermo.system.SystemInterface feedGas =
                 new neqsim.thermo.system.SystemSrkEos(273.15 + 20.0, 10.00);
         feedGas.addComponent("water", 1.0);
@@ -30,11 +28,6 @@ public class PumpTest {
         pump1.calculateAsCompressor(false);
 
         pump1.run();
-
-        System.out.println("Pump duty " + pump1.getDuty() / 1E3 + " kW");
-        System.out.println(
-                "Pump outlet temperature " + pump1.getOutStream().getTemperature("C") + " C");
-
         double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
         double[] speed = new double[] {350.0, 1000.0};
         double[][] flow = new double[][] {
@@ -67,21 +60,11 @@ public class PumpTest {
                 {77.8175271586685, 80.065165942218, 81.0631362122632, 79.8955051771299,
                         76.1983240929369, 69.289982774309, 60.8567149372229},
                 {78.0924334304045, 80.9353551568667, 80.7904437766234, 78.8639325223295,
-                        75.2170936751143, 70.3105081673411, 65.5507568533569, 61.0391468300337}};
-
-        // double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 };
-        // double[] speed = new double[] { 13402.0 };
-        // double[][] flow = new double[][] { { 1050.0, 1260.0, 1650.0, 1950.0 } };
-        // double[][] head = new double[][] { { 8555.0, 8227.0, 6918.0, 5223.0 } };
-        // double[][] head = new double[][] { { 85.0, 82.0, 69.0, 52.0 } };
-        // double[][] polyEff = new double[][] { { 66.8, 69.0, 66.4, 55.6 } };
+                                        75.2170936751143, 70.3105081673411, 65.5507568533569,
+                                        61.0391468300337}};
         pump1.getPumpChart().setCurves(chartConditions, speed, flow, head, polyEff);
         pump1.getPumpChart().setHeadUnit("meter");
         pump1.setSpeed(500);
         pump1.run();
-        System.out.println("Pressure out " + pump1.getOutStream().getPressure("bara") + " bara");
-        System.out.println("Pump duty " + pump1.getDuty() / 1E3 + " kW");
-        System.out.println(
-                "Pump outlet temperature " + pump1.getOutStream().getTemperature("C") + " C");
     }
 }

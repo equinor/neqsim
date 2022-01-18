@@ -112,9 +112,9 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
                         system.getPhases()[0].getComponents()[i].setK(1e-40);
                     } else {
                         system.getPhases()[0].getComponents()[i].setK(Math.exp(Math.log(
-                                system.getPhases()[1].getComponents()[i].getFugasityCoeffisient())
+                                system.getPhases()[1].getComponents()[i].getFugacityCoefficient())
                                 - Math.log(system.getPhases()[0].getComponents()[i]
-                                        .getFugasityCoeffisient())));
+                                        .getFugacityCoefficient())));
                     }
                     system.getPhases()[1].getComponents()[i]
                             .setK(system.getPhases()[0].getComponents()[i].getK());
@@ -156,8 +156,8 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
             setSuperCritical(true);
         }
         if (system.getPhase(0).getNumberOfComponents() == 1
-                && Math.abs(system.getPhases()[1].getComponents()[0].getFugasityCoeffisient()
-                        / system.getPhases()[0].getComponents()[0].getFugasityCoeffisient()
+                && Math.abs(system.getPhases()[1].getComponents()[0].getFugacityCoefficient()
+                        / system.getPhases()[0].getComponents()[0].getFugacityCoefficient()
                         - 1.0) < 1e-20) {
             setSuperCritical(true);
             return;

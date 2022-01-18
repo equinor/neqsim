@@ -22,6 +22,7 @@ public class PHflashGERG2008 extends Flash {
     Flash tpFlash;
     double enthalpy_GERG2008 = 0.0;
     double cP_GERG2008 = 0.0;
+
     /**
      * <p>
      * Constructor for PHflashGERG2008.
@@ -64,7 +65,7 @@ public class PHflashGERG2008 extends Flash {
      * @return a double
      */
     public double calcdQdT() {
-    	double dQ = (enthalpy_GERG2008 - Hspec) / Math.abs(Hspec);
+        double dQ = (enthalpy_GERG2008 - Hspec) / Math.abs(Hspec);
         return dQ;
     }
 
@@ -95,8 +96,9 @@ public class PHflashGERG2008 extends Flash {
             iterations++;
             oldTemp = nyTemp;
             double[] gergProps = system.getPhase(0).getProperties_GERG2008();
-            cP_GERG2008 = gergProps[10]*system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
-            enthalpy_GERG2008 = gergProps[7]*system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
+            cP_GERG2008 = gergProps[10] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
+            enthalpy_GERG2008 = gergProps[7] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol
+                                                                                             // K
             newCorr = factor * calcdQdT() / calcdQdTT();
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
@@ -127,18 +129,16 @@ public class PHflashGERG2008 extends Flash {
                 minTemperature = system.getTemperature();
             }
 
-            if (false && error * erorOld < 0) {
-                system.setTemperature(
-                        (Math.abs(erorOld) * 1.0 / oldTemp + Math.abs(error) * 1.0 / nyTemp)
-                                / (Math.abs(erorOld) + Math.abs(error)));
-               erorOld = error;
-                error = calcdQdT();
-                System.out.println("reset temperature -- new temp " + system.getTemperature()
-                        + " error " + error + " iter " + iterations);
-            }
-            // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
-            // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
-            // " error "+ error + " correction " + newCorr + " factor "+ factor);
+            /*
+             * if (false && error * erorOld < 0) { system.setTemperature( (Math.abs(erorOld) * 1.0 /
+             * oldTemp + Math.abs(error) * 1.0 / nyTemp) / (Math.abs(erorOld) + Math.abs(error)));
+             * erorOld = error; error = calcdQdT();
+             * System.out.println("reset temperature -- new temp " + system.getTemperature() +
+             * " error " + error + " iter " + iterations); } // error = Math.abs((1.0 / nyTemp - 1.0
+             * / oldTemp) / (1.0 / oldTemp)); // System.out.println("temp " +
+             * system.getTemperature() + " iter "+ iterations + // " error "+ error + " correction "
+             * + newCorr + " factor "+ factor);
+             */
         } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3)
                 && iterations < 200);
         // System.out.println("temp " + system.getTemperature() + " iter " + iterations
@@ -171,9 +171,10 @@ public class PHflashGERG2008 extends Flash {
             iterations++;
             oldTemp = nyTemp;
             double[] gergProps = system.getPhase(0).getProperties_GERG2008();
-            cP_GERG2008 = gergProps[10]*system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
-            enthalpy_GERG2008 = gergProps[7]*system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
-            
+            cP_GERG2008 = gergProps[10] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
+            enthalpy_GERG2008 = gergProps[7] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol
+                                                                                             // K
+
             newCorr = factor * calcdQdT() / calcdQdTT();
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
@@ -206,12 +207,12 @@ public class PHflashGERG2008 extends Flash {
     @Override
     public void run() {
         tpFlash.run();
-        if(system.getNumberOfPhases()>1) {
-        	logger.error("PSFlashGERG2008 only supprt single phase gas calculations");
-        	return;
+        if (system.getNumberOfPhases() > 1) {
+            logger.error("PSFlashGERG2008 only support single phase gas calculations");
+            return;
         }
-	    solveQ();
-	    system.init(3);
+        solveQ();
+        system.init(3);
     }
 
     /** {@inheritDoc} */

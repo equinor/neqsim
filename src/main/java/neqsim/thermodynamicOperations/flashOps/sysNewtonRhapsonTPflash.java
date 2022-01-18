@@ -68,9 +68,9 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0, Math
-                    .log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
+                    .log(system.getPhase(0).getComponents()[i].getFugacityCoefficient()
                             * system.getPhase(0).getComponents()[i].getx() * system.getPressure())
-                    - Math.log(system.getPhase(1).getComponents()[i].getFugasityCoeffisient()
+                    - Math.log(system.getPhase(1).getComponents()[i].getFugacityCoefficient()
                             * system.getPhase(1).getComponents()[i].getx() * system.getPressure()));
         }
     }

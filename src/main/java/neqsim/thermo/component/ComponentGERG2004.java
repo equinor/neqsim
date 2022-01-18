@@ -103,7 +103,7 @@ public class ComponentGERG2004 extends ComponentEos {
     /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase) {
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */

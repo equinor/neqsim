@@ -53,7 +53,7 @@ public class TestConductivityFit {
                 testSystem.init(0);
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(2);
-                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
                 double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(Double.parseDouble(dataSet.getString("Conductivity")),

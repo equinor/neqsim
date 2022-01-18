@@ -50,10 +50,10 @@ public class ComponentGEWilson extends ComponentGE {
      */
     public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
-        fugasityCoeffisient =
+        fugacityCoefficient =
                 (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
                         * this.getAntoineVaporPressure(temperature) / pressure);
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /**
@@ -70,7 +70,7 @@ public class ComponentGEWilson extends ComponentGE {
      */
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
-        return getWilsonActivityCoeffisient(phase);
+        return getWilsonActivityCoefficient(phase);
     }
 
     /** {@inheritDoc} */
@@ -83,13 +83,13 @@ public class ComponentGEWilson extends ComponentGE {
 
     /**
      * <p>
-     * getWilsonActivityCoeffisient.
+     * getWilsonActivityCoefficient.
      * </p>
      *
      * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
      */
-    public double getWilsonActivityCoeffisient(PhaseInterface phase1) {
+    public double getWilsonActivityCoefficient(PhaseInterface phase1) {
         double sum1 = 0.0;
         double sum2 = 0.0;
         double tempSum = 0.0;

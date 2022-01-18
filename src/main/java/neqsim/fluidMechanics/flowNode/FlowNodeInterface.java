@@ -658,9 +658,9 @@ public interface FlowNodeInterface extends Cloneable {
      */
     public DoubleCloneable getVelocityIn(int i);
 
-    // public double calcWallHeatTransferCoeffisient(int phase);
+    // public double calcWallHeatTransferCoefficient(int phase);
 
-    // public double calcWallMassTransferCoeffisient(double schmidtNumber, int phase);
+    // public double calcWallMassTransferCoefficient(double schmidtNumber, int phase);
 
     /**
      * <p>
@@ -673,9 +673,9 @@ public interface FlowNodeInterface extends Cloneable {
     public double calcTotalHeatTransferCoefficient(int phase);
 
     // public double initVelocity();
-    // public double calcInterphaseMassTransferCoeffisient(double schmidtNumber, int
+    // public double calcInterphaseMassTransferCoefficient(double schmidtNumber, int
     // phase);
-    // public double calcInterphaseHeatTransferCoeffisient(int phase);
+    // public double calcInterphaseHeatTransferCoefficient(int phase);
     // public double calcdPdz();
     // public double calcdTdz();
     // public double calcdVoiddz();

@@ -76,12 +76,12 @@ public class TestMathiasCopemanToDewPoint {
                             + "' AND VapourPressure>0 ORDER BY Temperature ASC");
 
             try {
-                long numerOfPoint = 3;
-                logger.error("point " + numerOfPoint);
+                long numberOfPoint = 3;
+                logger.error("point " + numberOfPoint);
                 int i = 0;
                 while (dataSet.next()) {
                     i++;
-                    if (i % numerOfPoint == 0) {
+                    if (i % numberOfPoint == 0) {
                         MathiasCopemanToDewPoint function = new MathiasCopemanToDewPoint();
                         function.setInitialGuess(guess);
 
@@ -90,7 +90,7 @@ public class TestMathiasCopemanToDewPoint {
                                 Double.parseDouble(dataSet.getString("VapourPressure")));
                         testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                         // testSystem.createDatabase(true);
-                        double sample1[] = {testSystem.getPressure()}; // temperature
+                        double sample1[] = {testSystem.getPressure()};
                         double standardDeviation1[] = {0.1, 0.1, 0.1};
                         double val = testSystem.getTemperature();
                         double stdErr = 1.0;
@@ -113,12 +113,12 @@ public class TestMathiasCopemanToDewPoint {
                                                                                               // reference='Morch2004gas1'");
 
         try {
-            long numerOfPoint = 1;
-            logger.info("point " + numerOfPoint);
+            long numberOfPoint = 1;
+            logger.info("point " + numberOfPoint);
             int i = 0;
             while (dataSet.next() && i < 100) {
                 i++;
-                if (i % numerOfPoint == 0) {
+                if (i % numberOfPoint == 0) {
                     MathiasCopemanToDewPoint function = new MathiasCopemanToDewPoint();
                     function.setInitialGuess(guess);
 
@@ -148,12 +148,8 @@ public class TestMathiasCopemanToDewPoint {
                     // testSystem.addComponent(dataSet.getString("comp10"),
                     // Double.parseDouble(dataSet.getString("x10")));
                     // testSystem.createDatabase(true);
-                    double sample1[] = {testSystem.getPressure()}; // temperature
-                    double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev
-                                                                   // temperature
-                                                                   // // presure
-                                                                   // std.dev
-                                                                   // pressure
+                    double sample1[] = {testSystem.getPressure()};
+                    double standardDeviation1[] = {0.1, 0.1, 0.1};
                     double val = testSystem.getTemperature();
                     double stdErr = 1.0;
                     SampleValue sample = new SampleValue(val, stdErr, sample1, standardDeviation1);

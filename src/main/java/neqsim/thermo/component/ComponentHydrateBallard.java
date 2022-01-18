@@ -73,7 +73,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
             double alphaWater = reffug[getComponentNumber()];
             double wateralphaRef = Math.log(refWaterFugacity / alphaWater);
 
-            fugasityCoeffisient = -1e50;
+            fugacityCoefficient = -1e50;
             double val = 0.0;
             double tempy = 1.0;
 
@@ -90,7 +90,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
                     + " calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) "
                     + calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) + " "
                     + calcChemPotIdealWater(phase, numberOfComps, temp, pres, hydrateStructure));
-            fugasityCoeffisient = alphaWater * Math.exp(wateralphaRef + val
+            fugacityCoefficient = alphaWater * Math.exp(wateralphaRef + val
                     + calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure)
                     - calcChemPotIdealWater(phase, numberOfComps, temp, pres, hydrateStructure))
                     / (pres);
@@ -99,11 +99,11 @@ public class ComponentHydrateBallard extends ComponentHydrate {
 
             logger.info("structure " + (hydrateStructure + 1));
         } else {
-            fugasityCoeffisient = 1e50;
+            fugacityCoefficient = 1e50;
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
 
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */

@@ -52,9 +52,9 @@ public class constantDutyPressureFlash extends constantDutyFlash {
             iterations++;
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 system.getPhases()[0].getComponents()[i]
-                        .setK(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
+                        .setK(system.getPhases()[1].getComponents()[i].getFugacityCoefficient()
                                 / system.getPhases()[0].getComponents()[i]
-                                        .getFugasityCoeffisient());
+                                        .getFugacityCoefficient());
                 system.getPhases()[1].getComponents()[i]
                         .setK(system.getPhases()[0].getComponents()[i].getK());
             }

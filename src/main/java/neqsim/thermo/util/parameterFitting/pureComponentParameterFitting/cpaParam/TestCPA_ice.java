@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestCPA_ice class.</p>
+ * <p>
+ * TestCPA_ice class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,7 +23,9 @@ public class TestCPA_ice {
     static Logger logger = LogManager.getLogger(TestCPA_ice.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -55,9 +59,8 @@ public class TestCPA_ice {
                 double temp = testSystem.getTemperature();
                 double val = testSystem.getPressure();
 
-                double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double sample1[] = {temp};
+                double standardDeviation1[] = {0.1};
 
                 double stddev = val / 100.0;
                 double logVal = Math.log(val);
@@ -92,9 +95,8 @@ public class TestCPA_ice {
                 // testSystem.init(0);
                 // double dens = Double.parseDouble(dataSet.getString("liquiddensity"));
                 double dens = Double.parseDouble(dataSet.getString("soliddensity"));
-                double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double sample1[] = {temp};
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 // double guess[] = {46939.4738048507, 1.5971863018, 0.7623134978,
@@ -127,9 +129,8 @@ public class TestCPA_ice {
                 testSystem.setMixingRule(2);
                 testSystem.init(0);
                 double dens = Double.parseDouble(dataSet.getString("gasdensity"));
-                double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double sample1[] = {temp};
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 // double guess[] = {46939.4738048507, 1.5971863018, 0.7623134978,
@@ -162,9 +163,8 @@ public class TestCPA_ice {
                 testSystem.setMixingRule(2);
                 testSystem.init(0);
                 double dens = Double.parseDouble(dataSet.getString("gasdensity"));
-                double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double sample1[] = {temp};
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 // double guess[] = {46939.4738048507, 1.5971863018, 0.7623134978,

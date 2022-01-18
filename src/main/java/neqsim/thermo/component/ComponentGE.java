@@ -50,7 +50,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         logger.info("fug coef "
                 + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
         if (referenceStateType.equals("solvent")) {
-            fugasityCoeffisient =
+            fugacityCoefficient =
                     gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
             gammaRefCor = gamma;
         } else {
@@ -62,15 +62,15 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
             } else {
                 activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
             }
-            fugasityCoeffisient =
+            fugacityCoefficient =
                     activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();// gamma*
                                                                                           // benyttes
                                                                                           // ikke
             gammaRefCor = activinf;
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
 
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /**

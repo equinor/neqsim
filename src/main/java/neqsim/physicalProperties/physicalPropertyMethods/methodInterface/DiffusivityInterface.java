@@ -3,7 +3,9 @@ package neqsim.physicalProperties.physicalPropertyMethods.methodInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
- * <p>DiffusivityInterface interface.</p>
+ * <p>
+ * DiffusivityInterface interface.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -11,7 +13,9 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 public interface DiffusivityInterface extends ThermodynamicConstantsInterface,
         neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface {
     /**
-     * <p>calcBinaryDiffusionCoefficient.</p>
+     * <p>
+     * calcBinaryDiffusionCoefficient.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -21,17 +25,21 @@ public interface DiffusivityInterface extends ThermodynamicConstantsInterface,
     public double calcBinaryDiffusionCoefficient(int i, int j, int method);
 
     /**
-     * <p>calcDiffusionCoeffisients.</p>
+     * <p>
+     * calcDiffusionCoefficients.
+     * </p>
      *
      * @param binaryDiffusionCoefficientMethod a int
      * @param multicomponentDiffusionMethod a int
      * @return an array of {@link double} objects
      */
-    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod);
 
     /**
-     * <p>getFickBinaryDiffusionCoefficient.</p>
+     * <p>
+     * getFickBinaryDiffusionCoefficient.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -40,7 +48,9 @@ public interface DiffusivityInterface extends ThermodynamicConstantsInterface,
     public double getFickBinaryDiffusionCoefficient(int i, int j);
 
     /**
-     * <p>getMaxwellStefanBinaryDiffusionCoefficient.</p>
+     * <p>
+     * getMaxwellStefanBinaryDiffusionCoefficient.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -49,7 +59,9 @@ public interface DiffusivityInterface extends ThermodynamicConstantsInterface,
     public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j);
 
     /**
-     * <p>getEffectiveDiffusionCoefficient.</p>
+     * <p>
+     * getEffectiveDiffusionCoefficient.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -57,9 +69,11 @@ public interface DiffusivityInterface extends ThermodynamicConstantsInterface,
     public double getEffectiveDiffusionCoefficient(int i);
 
     /**
-     * <p>calcEffectiveDiffusionCoeffisients.</p>
+     * <p>
+     * calcEffectiveDiffusionCoefficients.
+     * </p>
      */
-    public void calcEffectiveDiffusionCoeffisients();
+    public void calcEffectiveDiffusionCoefficients();
 
     /** {@inheritDoc} */
     @Override

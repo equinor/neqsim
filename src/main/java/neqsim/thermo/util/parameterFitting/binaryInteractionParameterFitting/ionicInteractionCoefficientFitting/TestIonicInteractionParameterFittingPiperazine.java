@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestIonicInteractionParameterFittingPiperazine class.</p>
+ * <p>
+ * TestIonicInteractionParameterFittingPiperazine class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -22,7 +24,9 @@ public class TestIonicInteractionParameterFittingPiperazine {
             LogManager.getLogger(TestIonicInteractionParameterFittingPiperazine.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -59,9 +63,8 @@ public class TestIonicInteractionParameterFittingPiperazine {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
-                        / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
-                                                      // pressure
+                        / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()};
+                double standardDeviation1[] = {0.01};
                 double stddev = pressure;// Double.parseDouble(dataSet.getString("StandardDeviation"))
                 SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
                 function.setInitialGuess(guess);

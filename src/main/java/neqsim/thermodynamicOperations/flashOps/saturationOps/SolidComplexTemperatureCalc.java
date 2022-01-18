@@ -111,7 +111,7 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
                 // system.getPhases()[5].getComponent(i).setx(Ksolid[i] *
                 // system.getPhase(0).getComponent(i).getx());
                 // if (system.getPhases()[5].getComponent(i).getx() > 0.000001) {
-                Ksolid[i] = system.getPhase(0).getComponent(i).getFugasityCoefficient()
+                Ksolid[i] = system.getPhase(0).getComponent(i).getFugacityCoefficient()
                         / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
                 sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
                 // }

@@ -505,8 +505,9 @@ public class OLGApropertyTableGeneratorWaterStudents
                         k++;
                     } while (k < 9);// names[k] = "GAS DENSITY";
                     // units[k] = "KG/M3";
-                } else if (false && !hasGasValues) {
-                    // startGasTemperatures = j;
+                    /*
+                     * } else if (false && !hasGasValues) { startGasTemperatures = j;
+                     */
                 } else {
                     gasSystem.setTemperature(temperatures[j]);
                     gasSystem.setPressure(pressures[i]);

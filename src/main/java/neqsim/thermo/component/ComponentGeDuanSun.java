@@ -289,7 +289,7 @@ public class ComponentGeDuanSun extends ComponentGE {
         logger.info("fug coef "
                 + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
         if (referenceStateType.equals("solvent")) {
-            fugasityCoeffisient =
+            fugacityCoefficient =
                     gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
             gammaRefCor = gamma;
         } else {
@@ -417,28 +417,28 @@ public class ComponentGeDuanSun extends ComponentGE {
                             / (1000.0 * (R / 100.0) * phase.getTemperature()));
 
             if (componentName.equals("CO2")) {
-                fugasityCoeffisient =
+                fugacityCoefficient =
                         activinf * K[0] * gamma * (1000 / 18.02) / phase.getPressure();// +25.689/(gamma*K[0]))/
                                                                                        // phase.getPressure();
             } else if (componentName.equals("nitrogen")) {
-                fugasityCoeffisient =
+                fugacityCoefficient =
                         activinf * K[1] * gamma * (1000 / 18.02) / phase.getPressure();// +50.585/(gamma*K[1]))/
                                                                                        // phase.getPressure();
             } else if (componentName.equals("oxygen")) {
-                fugasityCoeffisient =
+                fugacityCoefficient =
                         activinf * K[2] * gamma * (1000 / 18.02) / phase.getPressure();// +46.9157/(gamma*K[2]))/
                                                                                        // phase.getPressure();
             } else if (componentName.contentEquals("water")) {
-                fugasityCoeffisient = activinf * K[3] * (1000 / 18.02) / phase.getPressure();
+                fugacityCoefficient = activinf * K[3] * (1000 / 18.02) / phase.getPressure();
             } else {
-                fugasityCoeffisient = activinf * K[3] / phase.getPressure();
+                fugacityCoefficient = activinf * K[3] / phase.getPressure();
             }
-            // fugasityCoeffisient = activinf * getHenryCoef(phase.getTemperature()) /
+            // fugacityCoefficient = activinf * getHenryCoef(phase.getTemperature()) /
             // phase.getPressure();//gamma* benyttes ikke
             gammaRefCor = activinf;
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /////////////////////////////////////////////////////

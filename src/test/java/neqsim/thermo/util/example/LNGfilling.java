@@ -63,7 +63,7 @@ public class LNGfilling {
         // System.out.println("wt%MEG " +
         // testSystem.getPhase(1).getComponent("MEG").getMolarMass()*testSystem.getPhase(1).getComponent("MEG").getx()/testSystem.getPhase(1).getMolarMass());
         // System.out.println("fug"
-        // +testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getPressure()*testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
+        // +testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getPressure()*testSystem.getPhase(0).getComponent(0).getFugacityCoefficient());
     }
 }
 // testSystem = testSystem.setModel("GERG-water");

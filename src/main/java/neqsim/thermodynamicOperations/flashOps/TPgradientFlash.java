@@ -61,10 +61,10 @@ public class TPgradientFlash extends Flash {
     public void setfvec() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             fvec.set(i, 0, Math
-                    .log(localSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                    .log(localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                             * localSystem.getPhases()[0].getComponents()[i].getx()
                             * localSystem.getPressure())
-                    - Math.log(tempSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                    - Math.log(tempSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                             * tempSystem.getPhases()[0].getComponents()[i].getx()
                             * tempSystem.getPressure())
                     - tempSystem.getPhases()[0].getComponents()[i].getMolarMass()
@@ -101,10 +101,10 @@ public class TPgradientFlash extends Flash {
             for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
                 dij = i == j ? 1.0 : 0.0;// Kroneckers delta
                 tempJ = 1.0
-                        / (localSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                        / (localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                                 * localSystem.getPhases()[0].getComponents()[i].getx()
                                 * localSystem.getPressure())
-                        * (localSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                        * (localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                                 * dij * localSystem.getPressure()
                                 + localSystem.getPhases()[0].getComponents()[i].getdfugdx(j)
                                         * localSystem.getPhases()[0].getComponents()[i].getx()

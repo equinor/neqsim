@@ -11,7 +11,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalPro
 public class CorrespondingStatesDiffusivity extends Diffusivity {
     private static final long serialVersionUID = 1000;
 
-    double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
+    double[][] binaryDiffusionCoefficients, binaryLennardJonesOmega;
 
     /**
      * <p>
@@ -32,7 +32,7 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
     public CorrespondingStatesDiffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
-        binaryDiffusionCoeffisients = new double[phase.getPhase().getNumberOfComponents()][phase
+        binaryDiffusionCoefficients = new double[phase.getPhase().getNumberOfComponents()][phase
                 .getPhase().getNumberOfComponents()];
     }
 
@@ -40,7 +40,7 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         if (phase.getPhase().getPhaseType() == 0) {
-            binaryDiffusionCoeffisients[i][j] = 1.0e-4 * 9.89e-8
+            binaryDiffusionCoefficients[i][j] = 1.0e-4 * 9.89e-8
                     * Math.pow(phase.getViscosity() * 1e3, -0.907)
                     * Math.pow(
                             1.0 / phase.getPhase().getComponents()[i].getNormalLiquidDensity()
@@ -51,14 +51,14 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
                                     * phase.getPhase().getComponents()[j].getMolarMass() * 1000,
                             0.265)
                     * phase.getPhase().getTemperature();
-            // System.out.println("liq diffusivity " +binaryDiffusionCoeffisients[i][j]
+            // System.out.println("liq diffusivity " +binaryDiffusionCoefficients[i][j]
             // );
-            return binaryDiffusionCoeffisients[i][j];
+            return binaryDiffusionCoefficients[i][j];
         } else {
-            binaryDiffusionCoeffisients[i][j] = 1.8e-5 / phase.getPhase().getPressure();
-            // System.out.println("gas diffusivity " +binaryDiffusionCoeffisients[i][j]
+            binaryDiffusionCoefficients[i][j] = 1.8e-5 / phase.getPhase().getPressure();
+            // System.out.println("gas diffusivity " +binaryDiffusionCoefficients[i][j]
             // );
-            return binaryDiffusionCoeffisients[i][j];
+            return binaryDiffusionCoefficients[i][j];
         }
     }
 }

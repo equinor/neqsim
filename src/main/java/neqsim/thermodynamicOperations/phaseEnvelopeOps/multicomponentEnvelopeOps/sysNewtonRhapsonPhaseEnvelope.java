@@ -95,9 +95,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     public void setfvec22() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0, Math
-                    .log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
+                    .log(system.getPhase(0).getComponents()[i].getFugacityCoefficient()
                             * system.getPhase(0).getComponents()[i].getx())
-                    - Math.log(system.getPhase(1).getComponents()[i].getFugasityCoeffisient()
+                    - Math.log(system.getPhase(1).getComponents()[i].getFugacityCoefficient()
                             * system.getPhase(1).getComponents()[i].getx()));
         }
         double fsum = 0.0;
@@ -118,8 +118,8 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0,
-                    u.get(i, 0) + system.getPhase(0).getComponents()[i].getLogFugasityCoeffisient()
-                            - system.getPhase(1).getComponents()[i].getLogFugasityCoeffisient());
+                    u.get(i, 0) + system.getPhase(0).getComponents()[i].getLogFugacityCoefficient()
+                            - system.getPhase(1).getComponents()[i].getLogFugacityCoefficient());
         }
         fvec.set(numberOfComponents, 0, sumy - sumx);
         fvec.set(numberOfComponents + 1, 0, u.get(speceq, 0) - specVal);
