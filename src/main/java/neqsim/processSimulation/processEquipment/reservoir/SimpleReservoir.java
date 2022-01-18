@@ -234,6 +234,30 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     public Well getOilProducer(int i) {
         return oilProducer.get(i);
     }
+    
+    /**
+     * <p>
+     * Getter for the field <code>waterInjector</code>.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
+     */
+    public Well getWaterInjector(int i) {
+        return waterInjector.get(i);
+    }
+    
+    /**
+     * <p>
+     * Getter for the field <code>gasInjector</code>.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
+     */
+    public Well getGasInjector(int i) {
+        return gasInjector.get(i);
+    }
 
     /**
      * <p>
