@@ -78,7 +78,7 @@ public class PhaseGEWilson extends PhaseGE {
         GE = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             GE += phase.getComponents()[i].getx() * Math.log(
-                    ((ComponentGEWilson) componentArray[i]).getWilsonActivityCoeffisient(phase));
+                    ((ComponentGEWilson) componentArray[i]).getWilsonActivityCoefficient(phase));
         }
 
         return R * temperature * numberOfMolesInPhase * GE;

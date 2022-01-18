@@ -575,15 +575,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getFugasityCoefficient.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getFugasityCoefficient();
-
-    /**
-     * <p>
      * setLennardJonesMolecularDiameter.
      * </p>
      *
@@ -944,12 +935,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getLogFugasityCoeffisient.
+     * getLogFugacityCoefficient.
      * </p>
      *
      * @return a double
      */
-    public double getLogFugasityCoeffisient();
+    public double getLogFugacityCoefficient();
 
     /**
      * <p>
@@ -1192,12 +1183,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getFugasityCoeffisient.
+     * getFugacityCoefficient.
      * </p>
      *
      * @return a double
      */
-    public double getFugasityCoeffisient();
+    public double getFugacityCoefficient();
 
     /**
      * <p>

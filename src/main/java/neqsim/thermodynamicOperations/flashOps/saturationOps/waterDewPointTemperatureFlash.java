@@ -68,17 +68,17 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
                     funk = system.getPhases()[0].getComponents()[k].getz();
 
                     funk -= system.getPhases()[0].getBeta()
-                            * system.getPhases()[1].getComponents()[k].getFugasityCoeffisient()
-                            / system.getPhases()[0].getComponents()[k].getFugasityCoeffisient();
+                            * system.getPhases()[1].getComponents()[k].getFugacityCoefficient()
+                            / system.getPhases()[0].getComponents()[k].getFugacityCoefficient();
 
                     // logger.info("funk " + funk);
                     /*
                      * deriv -= system.getPhases()[0].getBeta()
-                     * (system.getPhases()[1].getComponents()[k].getFugasityCoeffisient()
+                     * (system.getPhases()[1].getComponents()[k].getFugacityCoefficient()
                      * system.getPhases()[0].getComponents()[k].getdfugdt() * -1.0 /
-                     * Math.pow(system.getPhases()[0].getComponents()[k] .getFugasityCoeffisient(),
+                     * Math.pow(system.getPhases()[0].getComponents()[k] .getFugacityCoefficient(),
                      * 2.0) + system.getPhases()[1].getComponents()[k].getdfugdt() /
-                     * system.getPhases()[i].getComponents()[k] .getFugasityCoeffisient());
+                     * system.getPhases()[i].getComponents()[k] .getFugacityCoefficient());
                      * 
                      * system.setTemperature(system.getTemperature() - funk/deriv);
                      */

@@ -73,7 +73,7 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
         if (componentName.equals("water")) {
             double solvol = getMolarVolumeHydrate(hydrateStructure, temp);
             if (hydrateStructure == -1) {
-                fugasityCoeffisient = getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
+                fugacityCoefficient = getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
                         * Math.exp(solvol / (R * temp) * (pres
                                 - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp))
                                 * 1e5)
@@ -95,7 +95,7 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
 
                 // System.out.println("pointing "
                 // +(Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStruct,temp))*1e5))));
-                fugasityCoeffisient = Math.exp(val)
+                fugacityCoefficient = Math.exp(val)
                         * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
                         * Math.exp(solvol / (R * temp) * (pres
                                 - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp))
@@ -107,12 +107,12 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
                 // System.out.println("structure " + (hydrateStructure+1));
             }
         } else {
-            fugasityCoeffisient = 1e50;
+            fugacityCoefficient = 1e50;
         }
 
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
 
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */

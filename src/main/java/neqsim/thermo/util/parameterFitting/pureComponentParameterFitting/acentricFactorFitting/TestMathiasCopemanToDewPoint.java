@@ -76,12 +76,12 @@ public class TestMathiasCopemanToDewPoint {
                             + "' AND VapourPressure>0 ORDER BY Temperature ASC");
 
             try {
-                long numerOfPoint = 3;
-                logger.error("point " + numerOfPoint);
+                long numberOfPoint = 3;
+                logger.error("point " + numberOfPoint);
                 int i = 0;
                 while (dataSet.next()) {
                     i++;
-                    if (i % numerOfPoint == 0) {
+                    if (i % numberOfPoint == 0) {
                         MathiasCopemanToDewPoint function = new MathiasCopemanToDewPoint();
                         function.setInitialGuess(guess);
 
@@ -113,12 +113,12 @@ public class TestMathiasCopemanToDewPoint {
                                                                                               // reference='Morch2004gas1'");
 
         try {
-            long numerOfPoint = 1;
-            logger.info("point " + numerOfPoint);
+            long numberOfPoint = 1;
+            logger.info("point " + numberOfPoint);
             int i = 0;
             while (dataSet.next() && i < 100) {
                 i++;
-                if (i % numerOfPoint == 0) {
+                if (i % numberOfPoint == 0) {
                     MathiasCopemanToDewPoint function = new MathiasCopemanToDewPoint();
                     function.setInitialGuess(guess);
 

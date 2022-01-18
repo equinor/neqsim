@@ -123,24 +123,24 @@ public interface FlowLegInterface {
 
     /**
      * <p>
-     * setOuterHeatTransferCOefficients.
+     * setOuterHeatTransferCoefficients.
      * </p>
      *
      * @param startHeatTransferCoefficient a double
      * @param endHeatTransferCoefficient a double
      */
-    public void setOuterHeatTransferCOefficients(double startHeatTransferCoefficient,
+    public void setOuterHeatTransferCoefficients(double startHeatTransferCoefficient,
             double endHeatTransferCoefficient);
 
     /**
      * <p>
-     * setWallHeatTransferCOefficients.
+     * setWallHeatTransferCoefficients.
      * </p>
      *
      * @param startHeatTransferCoefficient a double
      * @param endHeatTransferCoefficient a double
      */
-    public void setWallHeatTransferCOefficients(double startHeatTransferCoefficient,
+    public void setWallHeatTransferCoefficients(double startHeatTransferCoefficient,
             double endHeatTransferCoefficient);
 
     /**

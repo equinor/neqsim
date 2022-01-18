@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>MEGwaterComplexFlash class.</p>
+ * <p>
+ * MEGwaterComplexFlash class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -17,7 +19,9 @@ public class MEGwaterComplexFlash {
     static Logger logger = LogManager.getLogger(MEGwaterComplexFlash.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -34,7 +38,7 @@ public class MEGwaterComplexFlash {
         testSystem.setMixingRule(10);
         testSystem.init(0);
         // logger.info("fug "
-        // +Math.log(testSystem.getPhase(1).getComponent("TEG").getFugasityCoefficient()));
+        // +Math.log(testSystem.getPhase(1).getComponent("TEG").getFugacityCoefficient()));
         testSystem.setSolidPhaseCheck("water");
         // testSystem.setMultiPhaseCheck(true);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

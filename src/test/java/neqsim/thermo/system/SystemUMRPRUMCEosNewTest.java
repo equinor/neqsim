@@ -14,7 +14,9 @@ class SystemUMRPRUMCEosNewTest {
     static neqsim.thermo.ThermodynamicModelTest testModel = null;
 
     /**
-     * <p>setUp.</p>
+     * <p>
+     * setUp.
+     * </p>
      */
     @BeforeAll
     public static void setUp() {
@@ -35,7 +37,9 @@ class SystemUMRPRUMCEosNewTest {
     }
 
     /**
-     * <p>testTPflash2.</p>
+     * <p>
+     * testTPflash2.
+     * </p>
      */
     @Test
     @DisplayName("test a TPflash2")
@@ -44,7 +48,9 @@ class SystemUMRPRUMCEosNewTest {
     }
 
     /**
-     * <p>testTPflash.</p>
+     * <p>
+     * testTPflash.
+     * </p>
      */
     @Test
     @DisplayName("test a TPflash of the fluid (should return two phases)")
@@ -53,52 +59,64 @@ class SystemUMRPRUMCEosNewTest {
     }
 
     /**
-     * <p>testFugacityCoefficients.</p>
+     * <p>
+     * testFugacityCoefficients.
+     * </p>
      */
     @Test
-    @DisplayName("test the fugacity coeficients calcutated")
+    @DisplayName("test the fugacity coefficients calculated")
     public void testFugacityCoefficients() {
-        assertTrue(testModel.checkFugasityCoeffisients());
+        assertTrue(testModel.checkFugacityCoefficients());
     }
 
     /**
-     * <p>checkFugasityCoeffisientsDP.</p>
+     * <p>
+     * checkFugacityCoefficientsDP.
+     * </p>
      */
     @Test
-    @DisplayName("test derivative of fugacity coeficients with respect to pressure")
-    public void checkFugasityCoeffisientsDP() {
-        assertTrue(testModel.checkFugasityCoeffisientsDP());
+    @DisplayName("test derivative of fugacity coefficients with respect to pressure")
+    public void checkFugacityCoefficientsDP() {
+        assertTrue(testModel.checkFugacityCoefficientsDP());
     }
 
     /**
-     * <p>checkFugasityCoeffisientsDT.</p>
+     * <p>
+     * checkFugacityCoefficientsDT.
+     * </p>
      */
     @Test
-    @DisplayName("test derivative of fugacity coeficients with respect to temperature")
-    public void checkFugasityCoeffisientsDT() {
-        assertTrue(testModel.checkFugasityCoeffisientsDT());
+    @DisplayName("test derivative of fugacity coefficients with respect to temperature")
+    public void checkFugacityCoefficientsDT() {
+        assertTrue(testModel.checkFugacityCoefficientsDT());
     }
 
     /**
-     * <p>checkFugasityCoeffisientsDn.</p>
+     * <p>
+     * checkFugacityCoefficientsDn.
+     * </p>
      */
     @Test
-    @DisplayName("test derivative of fugacity coeficients with respect to composition")
-    public void checkFugasityCoeffisientsDn() {
-        assertTrue(testModel.checkFugasityCoeffisientsDn());
+    @DisplayName("test derivative of fugacity coefficients with respect to composition")
+    public void checkFugacityCoefficientsDn() {
+        assertTrue(testModel.checkFugacityCoefficientsDn());
     }
 
     /**
-     * <p>checkFugasityCoeffisientsDn2.</p>
+     * <p>
+     * checkFugacityCoefficientsDn2.
+     * </p>
      */
     @Test
-    @DisplayName("test derivative of fugacity coeficients with respect to composition (2nd method)")
-    public void checkFugasityCoeffisientsDn2() {
-        assertTrue(testModel.checkFugasityCoeffisientsDn2());
+    @DisplayName("test derivative of fugacity coefficients with respect to composition (2nd method)")
+    public void checkFugacityCoefficientsDn2() {
+        assertTrue(testModel.checkFugacityCoefficientsDn2());
     }
 
     /**
-     * <p>checkCompressibility.</p>
+     * <p>
+     * checkCompressibility.
+     * </p>
      */
     @Test
     @DisplayName("calculate compressibility of gas phase")

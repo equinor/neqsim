@@ -517,7 +517,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     @Override
     public double getSchmidtNumber(int phase, int component1, int component2) {
         return getBulkSystem().getPhase(phase).getPhysicalProperties()
-                .getDiffusionCoeffisient(component1, component2)
+                .getDiffusionCoefficient(component1, component2)
                 / getBulkSystem().getPhase(phase).getPhysicalProperties().getKinematicViscosity();
     }
 

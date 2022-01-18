@@ -112,10 +112,10 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0,
-                    Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient())
+                    Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient())
                             + Math.log(system.getPhases()[0].getComponents()[i].getx())
                             - Math.log(system.getPhases()[1].getComponents()[i]
-                                    .getFugasityCoeffisient())
+                                    .getFugacityCoefficient())
                             - Math.log(system.getPhases()[1].getComponents()[i].getx()));
         }
         double rP = 0.0, rT = 0.0;

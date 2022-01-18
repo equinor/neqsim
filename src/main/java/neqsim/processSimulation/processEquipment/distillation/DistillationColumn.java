@@ -25,7 +25,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     protected ArrayList<SimpleTray> trays = new ArrayList<SimpleTray>(0);
     double condenserCoolingDuty = 10.0;
     private double reboilerTemperature = 273.15;
-    private double condeserTemperature = 270.15;
+    private double condenserTemperature = 270.15;
     double topTrayPressure = -1.0, bottomTrayPressure = -1.0;
     int numberOfTrays = 1;
     private int feedTrayNumber = 1;
@@ -123,22 +123,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         // ((Runnable) trays.get(numberOfTrays - 1)).run();
         ((Runnable) trays.get(0)).run();
 
-        condeserTemperature =
+        condenserTemperature =
                 ((MixerInterface) trays.get(numberOfTrays - 1)).getThermoSystem().getTemperature();
         reboilerTemperature = ((MixerInterface) trays.get(0)).getThermoSystem().getTemperature();
 
-        // double deltaTemp = (reboilerTemperature - condeserTemperature) / (numberOfTrays * 1.0);
+        // double deltaTemp = (reboilerTemperature - condenserTemperature) / (numberOfTrays * 1.0);
         double feedTrayTemperature =
                 getTray(getFeedTrayNumber()).getThermoSystem().getTemperature();
 
-        double deltaTempCondeser = (feedTrayTemperature - condeserTemperature)
+        double deltaTempCondenser = (feedTrayTemperature - condenserTemperature)
                 / (numberOfTrays * 1.0 - feedTrayNumber - 1);
         double deltaTempReboiler =
                 (reboilerTemperature - feedTrayTemperature) / (feedTrayNumber * 1.0);
 
         double delta = 0;
         for (int i = feedTrayNumber + 1; i < numberOfTrays; i++) {
-            delta += deltaTempCondeser;
+            delta += deltaTempCondenser;
             ((Mixer) trays.get(i)).setTemperature(
                     getTray(getFeedTrayNumber()).getThermoSystem().getTemperature() - delta);
         }
@@ -239,12 +239,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     /**
      * <p>
-     * setTopCondeserDuty.
+     * setTopCondenserDuty.
      * </p>
      *
      * @param duty a double
      */
-    public void setTopCondeserDuty(double duty) {
+    public void setTopCondenserDuty(double duty) {
         condenserCoolingDuty = duty;
     }
 
@@ -483,7 +483,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
         column.displayResult();
         System.out.println("reboiler duty" + ((Reboiler) column.getReboiler()).getDuty());
-        System.out.println("condeser duty" + ((Condenser) column.getCondenser()).getDuty());
+        System.out.println("condenser duty" + ((Condenser) column.getCondenser()).getDuty());
     }
 
     /**
@@ -535,10 +535,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * getCondenserTemperature.
      * </p>
      *
-     * @return the condeserTemperature
+     * @return the condenserTemperature
      */
     public double getCondenserTemperature() {
-        return condeserTemperature;
+        return condenserTemperature;
     }
 
     /**
@@ -546,10 +546,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * setCondenserTemperature.
      * </p>
      *
-     * @param condeserTemperature the condeserTemperature to set
+     * @param condenserTemperature the condenserTemperature to set
      */
-    public void setCondenserTemperature(double condeserTemperature) {
-        this.condeserTemperature = condeserTemperature;
+    public void setCondenserTemperature(double condenserTemperature) {
+        this.condenserTemperature = condenserTemperature;
     }
 
     /**

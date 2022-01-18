@@ -180,14 +180,14 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
     /**
      * <p>
-     * getDiffusionCoeffisient.
+     * getDiffusionCoefficient.
      * </p>
      *
      * @param i a int
      * @param j a int
      * @return a double
      */
-    public double getDiffusionCoeffisient(int i, int j);
+    public double getDiffusionCoefficient(int i, int j);
 
     /**
      * <p>
@@ -208,14 +208,14 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
     /**
      * <p>
-     * getFickDiffusionCoeffisient.
+     * getFickDiffusionCoefficient.
      * </p>
      *
      * @param i a int
      * @param j a int
      * @return a double
      */
-    public double getFickDiffusionCoeffisient(int i, int j);
+    public double getFickDiffusionCoefficient(int i, int j);
 
     /**
      * <p>

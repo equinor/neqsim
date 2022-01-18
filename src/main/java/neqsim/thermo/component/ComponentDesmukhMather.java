@@ -135,24 +135,24 @@ public class ComponentDesmukhMather extends ComponentGE {
         if (componentName.equals("water")) {
             double watervol = 1.0 / 1000.0 * getMolarMass();
             double watervappres = getAntoineVaporPressure(phase.getTemperature());
-            fugasityCoeffisient =
+            fugacityCoefficient =
                     gamma * watervappres
                             * Math.exp(watervol / (R * phase.getTemperature())
                                     * (phase.getPressure() - watervappres) * 1e5)
                             / phase.getPressure();
         } else if (ionicCharge == 0 && referenceStateType.equals("solvent")) {
-            fugasityCoeffisient =
+            fugacityCoefficient =
                     gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
         } else if (ionicCharge == 0 && referenceStateType.equals("solute")) {
-            fugasityCoeffisient =
+            fugacityCoefficient =
                     gamma * getHenryCoef(phase.getTemperature()) / phase.getPressure(); // sjekke
                                                                                         // denne
         } else {
-            fugasityCoeffisient = 1e-15;
-            // System.out.println("fug " + fugasityCoeffisient);
+            fugacityCoefficient = 1e-15;
+            // System.out.println("fug " + fugacityCoefficient);
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /**

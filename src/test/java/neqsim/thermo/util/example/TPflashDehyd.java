@@ -187,7 +187,7 @@ public class TPflashDehyd {
          * testSystem.getPhase(1).getActivityCoefficient(1)); // System.out.println("TEG activity "
          * + testSystem.getPhase(1).getActivityCoefficient(0)); // testSystem.display();
          * //System.out.println("fugacitycoefficient " +
-         * testSystem.getPhase(1).getComponent("water").getLogFugasityCoeffisient()); /*
+         * testSystem.getPhase(1).getComponent("water").getLogFugacityCoefficient()); /*
          * System.out.println("fugacitycoefficientdp " +
          * testSystem.getPhase(0).getComponent("MEG").getdfugdp());
          * System.out.println("fugacitycoefficientdp " +

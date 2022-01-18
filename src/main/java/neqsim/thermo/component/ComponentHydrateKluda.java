@@ -111,7 +111,7 @@ public class ComponentHydrateKluda extends Component {
             do {
                 val = 0.0;
                 tempy = 0.0;
-                fugold = fugasityCoeffisient;
+                fugold = fugacityCoefficient;
                 for (int cavType = 0; cavType < 2; cavType++) {
                     tempy = 0.0;
                     for (int j = 0; j < phase.getNumberOfComponents(); j++) {
@@ -124,26 +124,26 @@ public class ComponentHydrateKluda extends Component {
                     val += cavprwat[hydrateStructure][cavType] * Math.log(1.0 - tempy);
                 }
                 logger.info("val " + (val));
-                logger.info("fugasityCoeffisient bef " + fugasityCoeffisient);
+                logger.info("fugacityCoefficient bef " + fugacityCoefficient);
                 double solvol = 1.0 / 906.0 * getMolarMass();
-                fugasityCoeffisient = Math.exp(val)
+                fugacityCoefficient = Math.exp(val)
                         * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
                         * Math.exp(solvol / (R * temp) * ((pres
                                 - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)))
                                 * 1e5)
                         / pres;
-                // fugasityCoeffisient = getAntoineVaporPressure(temp)/pres;
-                // logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-                // logFugasityCoeffisient += val*boltzmannConstant/R;
+                // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
+                // logFugacityCoefficient = Math.log(fugacityCoefficient);
+                // logFugacityCoefficient += val*boltzmannConstant/R;
 
-                // fugasityCoeffisient = Math.exp(logFugasityCoeffisient);
-                logger.info("fugasityCoeffisient " + fugasityCoeffisient);
-            } while (Math.abs((fugasityCoeffisient - fugold) / fugold) > 1e-8);
+                // fugacityCoefficient = Math.exp(logFugacityCoefficient);
+                logger.info("fugacityCoefficient " + fugacityCoefficient);
+            } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-8);
         } else {
-            fugasityCoeffisient = 1e5;
+            fugacityCoefficient = 1e5;
         }
-        // System.out.println("fug " + fugasityCoeffisient);
-        return fugasityCoeffisient;
+        // System.out.println("fug " + fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /**

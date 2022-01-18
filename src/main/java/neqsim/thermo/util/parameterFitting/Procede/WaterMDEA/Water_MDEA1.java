@@ -3,10 +3,8 @@ package neqsim.thermo.util.parameterFitting.Procede.WaterMDEA;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -78,7 +76,7 @@ public class Water_MDEA1 {
                 // "+testSystem.getPhase(0).getComponent(1).getx());
                 p.println(x + " " + testSystem.getPhase(0).getComponent(1).getx() + " "
                         + testSystem.getPressure() + " "
-                        + testSystem.getPhase(0).getComponent(1).getFugasityCoeffisient());
+                        + testSystem.getPhase(0).getComponent(1).getFugacityCoefficient());
                 // p.println(x+" "+aMDEA+" "+awater);
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file" + e.getMessage());

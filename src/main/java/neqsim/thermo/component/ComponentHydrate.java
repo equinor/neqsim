@@ -176,7 +176,7 @@ public class ComponentHydrate extends Component {
      */
     public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         if (componentName.equals("water")) {
-            fugasityCoeffisient = -1e50;
+            fugacityCoefficient = -1e50;
             double val = 1.0;
             double tempy = 1.0;
             double fugold = 0.0;
@@ -184,7 +184,7 @@ public class ComponentHydrate extends Component {
             do {
                 val = 0;
                 tempy = 0.0;
-                fugold = fugasityCoeffisient;
+                fugold = fugacityCoefficient;
                 if (hydrateStructure >= 0) {
                     for (int cavType = 0; cavType < 2; cavType++) {
                         tempy = 0.0;
@@ -199,9 +199,9 @@ public class ComponentHydrate extends Component {
                     }
                 }
                 // System.out.println("val " +(val));
-                // System.out.println("fugasityCoeffisient bef " + fugasityCoeffisient);
+                // System.out.println("fugacityCoefficient bef " + fugacityCoefficient);
                 double solvol = 1.0 / 906.0 * getMolarMass();
-                fugasityCoeffisient = Math.exp(val)
+                fugacityCoefficient = Math.exp(val)
                         * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
                         * Math.exp(solvol / (R * temp) * ((pres
                                 - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)))
@@ -210,20 +210,20 @@ public class ComponentHydrate extends Component {
                 // System.out.println("struct " + hydrateStruct + " fug " + tempfugcoef + " val
                 // "+ val);
 
-                // fugasityCoeffisient =
+                // fugacityCoefficient =
                 // Math.exp(val)*getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)*Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)))*1e5)/pres;
-                // fugasityCoeffisient = getAntoineVaporPressure(temp)/pres;
-                // logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-                // logFugasityCoeffisient += val*boltzmannConstant/R;
-                // fugasityCoeffisient = Math.exp(logFugasityCoeffisient);
-                // System.out.println("fugasityCoeffisient " + fugasityCoeffisient);
-            } while (Math.abs((fugasityCoeffisient - fugold) / fugold) > 1e-6);
+                // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
+                // logFugacityCoefficient = Math.log(fugacityCoefficient);
+                // logFugacityCoefficient += val*boltzmannConstant/R;
+                // fugacityCoefficient = Math.exp(logFugacityCoefficient);
+                // System.out.println("fugacityCoefficient " + fugacityCoefficient);
+            } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-6);
         } else {
-            fugasityCoeffisient = 1e5;
+            fugacityCoefficient = 1e5;
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        // System.out.println("fug " + fugasityCoeffisient);
-        return fugasityCoeffisient;
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        // System.out.println("fug " + fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /**

@@ -76,7 +76,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
 
         for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
             bulkFug[comp] = system.getPhase(phase).getComponent(comp).getx()
-                    * system.getPhase(phase).getComponent(comp).getFugasityCoefficient()
+                    * system.getPhase(phase).getComponent(comp).getFugacityCoefficient()
                     * system.getPhase(phase).getPressure();
             deltaz[comp] = z0[comp] / (integrationSteps * 1.0);
             zField[comp][0] = z0[comp];
@@ -98,11 +98,11 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
                             .exp(epsField[comp][i] / R / system.getPhase(phase).getTemperature());
                     fugacityField[comp][i] = correction * bulkFug[comp];
                     double fugComp =
-                            tempSystem.getPhase(phase).getComponent(comp).getFugasityCoefficient()
+                            tempSystem.getPhase(phase).getComponent(comp).getFugacityCoefficient()
                                     * tempSystem.getPhase(phase).getPressure();
                     corrx[comp] = fugacityField[comp][i] / fugComp;
                     pressure += fugacityField[comp][i] / tempSystem.getPhase(phase)
-                            .getComponent(comp).getFugasityCoefficient();
+                            .getComponent(comp).getFugacityCoefficient();
                 }
                 for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
                     tempSystem.getPhase(phase).getComponent(comp).setx(corrx[comp]);
