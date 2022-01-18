@@ -1,4 +1,3 @@
-
 package neqsim.api.ioc;
 
 import org.apache.logging.log4j.LogManager;
@@ -7,7 +6,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-
 
 
 /**
