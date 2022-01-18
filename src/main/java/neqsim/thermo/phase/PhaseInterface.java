@@ -24,11 +24,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * </p>
 	 *
 	 * @param componentName a {@link java.lang.String} object
-	 * @param molesInPhase  a double
-	 * @param moles         a double
-	 * @param compNumber    a int
+	 * @param molesInPhase a double
+	 * @param moles a double
+	 * @param compNumber a int
 	 */
-	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber);
+	public void addcomponent(String componentName, double molesInPhase, double moles,
+			int compNumber);
 
 	/**
 	 * <p>
@@ -53,8 +54,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * getComposition.
 	 * </p>
 	 *
-	 * @param unit The unit as a string -
-	 *             molefraction/wtfraction/molespersec/volumefraction
+	 * @param unit The unit as a string - molefraction/wtfraction/molespersec/volumefraction
 	 * @return composition array with unit
 	 */
 	public double[] getComposition(String unit);
@@ -76,8 +76,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getDensity_AGA8();
 
 	/**
-	 * method to get the Joule Thomson Coefficient of a phase note: implemented in
-	 * phaseEos
+	 * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
 	 *
 	 * @param unit The unit as a string. Supported units are K/bar, C/bar
 	 * @return Joule Thomson coefficient in given unit
@@ -114,8 +113,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getGamma2();
 
 	/**
-	 * method to return heat capacity ratio/adiabatic index/Poisson constant. The
-	 * method calculates it as Cp (real) /Cv (real)
+	 * method to return heat capacity ratio/adiabatic index/Poisson constant. The method calculates
+	 * it as Cp (real) /Cv (real)
 	 *
 	 * @return gamma
 	 */
@@ -235,11 +234,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 *
 	 * @param totalNumberOfMoles a double
 	 * @param numberOfComponents a int
-	 * @param type               a int. Use 0 to init, and 1 to reset.
-	 * @param phase              a int
-	 * @param beta               a double
+	 * @param type a int. Use 0 to init, and 1 to reset.
+	 * @param phase a int
+	 * @param beta a double
 	 */
-	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta);
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+			double beta);
 
 	/**
 	 * <p>
@@ -262,8 +262,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * getcomponentArray.
 	 * </p>
 	 *
-	 * @return an array of {@link neqsim.thermo.component.ComponentInterface}
-	 *         objects
+	 * @return an array of {@link neqsim.thermo.component.ComponentInterface} objects
 	 */
 	public ComponentInterface[] getcomponentArray();
 
@@ -287,8 +286,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getWtFraction(SystemInterface system);
 
 	/**
-	 * method to return molar volume of the phase note: without Peneloux volume
-	 * correction
+	 * method to return molar volume of the phase note: without Peneloux volume correction
 	 *
 	 * @return molar volume volume in unit m3/mol*1e5
 	 */
@@ -297,8 +295,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	/**
 	 * method to return flow rate of a phase
 	 *
-	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
-	 *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
+	 *        m3/hr, mole/sec, mole/min, mole/hr
 	 * @return flow rate in specified unit
 	 */
 	public double getFlowRate(String flowunit);
@@ -308,8 +306,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * setComponentArray.
 	 * </p>
 	 *
-	 * @param components an array of
-	 *                   {@link neqsim.thermo.component.ComponentInterface} objects
+	 * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
 	 */
 	public void setComponentArray(ComponentInterface[] components);
 
@@ -325,19 +322,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * getProperties_GERG2008.
 	 * </p>
 	 *
-	 * @return a double array of properties calculated by GERG in the order and
-	 *         unit: Pressure [kPa], Compressibility factor[-], d(P)/d(rho)
-	 *         [kPa/(mol/l)], d^2(P)/d(rho)^2 [kPa/(mol/l)^2, d2(P)/d2(T) [kPa/K],
-	 *         d(P)/d(T) [kPa/K], Energy [J/mol], Enthalpy [J/mol], Entropy
-	 *         [J/mol-K], Isochoric heat capacity [J/mol-K], Isobaric heat capacity
-	 *         [J/mol-K], Speed of sound [m/s], Gibbs energy [J/mol], Joule-Thomson
-	 *         coefficient [K/kPa], Isentropic exponent[-]
+	 * @return an array of {@link double} objects
 	 */
 	public double[] getProperties_GERG2008();
 
 	/**
-	 * method to get density of a phase note: does not use Peneloux volume
-	 * correction
+	 * method to get density of a phase note: does not use Peneloux volume correction
 	 *
 	 * @return density with unit kg/m3
 	 */
@@ -357,11 +347,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * </p>
 	 *
 	 * @param componentName a {@link java.lang.String} object
-	 * @param moles         a double
-	 * @param molesInPhase  a double
-	 * @param compNumber    a int
+	 * @param moles a double
+	 * @param molesInPhase a double
+	 * @param compNumber a int
 	 */
-	public void removeComponent(String componentName, double moles, double molesInPhase, int compNumber);
+	public void removeComponent(String componentName, double moles, double molesInPhase,
+			int compNumber);
 
 	/**
 	 * <p>
@@ -595,7 +586,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * getPureComponentFugacity.
 	 * </p>
 	 *
-	 * @param k    a int
+	 * @param k a int
 	 * @param pure a boolean
 	 * @return a double
 	 */
@@ -607,8 +598,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * </p>
 	 *
 	 * @param component a int
-	 * @param dn        a double
-	 * @param totdn     a double
+	 * @param dn a double
+	 * @param totdn a double
 	 */
 	public void addMolesChemReac(int component, double dn, double totdn);
 
@@ -647,12 +638,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
 	/**
 	 * <p>
-	 * setAtractiveTerm.
+	 * setAttractiveTerm.
 	 * </p>
 	 *
 	 * @param i a int
 	 */
-	public void setAtractiveTerm(int i);
+	public void setAttractiveTerm(int i);
 
 	/**
 	 * <p>
@@ -676,7 +667,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * </p>
 	 *
 	 * @param component a int
-	 * @param dn        a double
+	 * @param dn a double
 	 */
 	public void addMolesChemReac(int component, double dn);
 
@@ -696,27 +687,28 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * molarVolume.
 	 * </p>
 	 *
-	 * @param pressure    a double
+	 * @param pressure a double
 	 * @param temperature a double
-	 * @param A           a double
-	 * @param B           a double
-	 * @param phase       a int
+	 * @param A a double
+	 * @param B a double
+	 * @param phase a int
 	 * @return a double
-	 * @throws neqsim.util.exception.IsNaNException             if any.
+	 * @throws neqsim.util.exception.IsNaNException if any.
 	 * @throws neqsim.util.exception.TooManyIterationsException if any.
 	 */
 	double molarVolume(double pressure, double temperature, double A, double B, int phase)
-			throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException;
+			throws neqsim.util.exception.IsNaNException,
+			neqsim.util.exception.TooManyIterationsException;
 
 	/**
 	 * <p>
 	 * geta.
 	 * </p>
 	 *
-	 * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 * @param temperature a double
-	 * @param pressure    a double
-	 * @param numbcomp    a int
+	 * @param pressure a double
+	 * @param numbcomp a int
 	 * @return a double
 	 */
 	public double geta(PhaseInterface phase, double temperature, double pressure, int numbcomp);
@@ -726,10 +718,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * getb.
 	 * </p>
 	 *
-	 * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 * @param temperature a double
-	 * @param pressure    a double
-	 * @param numbcomp    a int
+	 * @param pressure a double
+	 * @param numbcomp a int
 	 * @return a double
 	 */
 	public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp);
@@ -749,10 +741,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * calcA.
 	 * </p>
 	 *
-	 * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 * @param temperature a double
-	 * @param pressure    a double
-	 * @param numbcomp    a int
+	 * @param pressure a double
+	 * @param numbcomp a int
 	 * @return a double
 	 */
 	double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp);
@@ -762,10 +754,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * calcB.
 	 * </p>
 	 *
-	 * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 * @param temperature a double
-	 * @param pressure    a double
-	 * @param numbcomp    a int
+	 * @param pressure a double
+	 * @param numbcomp a int
 	 * @return a double
 	 */
 	double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp);
@@ -775,86 +767,92 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * calcAi.
 	 * </p>
 	 *
-	 * @param compNumb    a int
-	 * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param compNumb a int
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 * @param temperature a double
-	 * @param pressure    a double
-	 * @param numbcomp    a int
+	 * @param pressure a double
+	 * @param numbcomp a int
 	 * @return a double
 	 */
-	double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+	double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
+			int numbcomp);
 
 	/**
 	 * <p>
 	 * calcAiT.
 	 * </p>
 	 *
-	 * @param compNumb    a int
-	 * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param compNumb a int
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 * @param temperature a double
-	 * @param pressure    a double
-	 * @param numbcomp    a int
+	 * @param pressure a double
+	 * @param numbcomp a int
 	 * @return a double
 	 */
-	double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+	double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
+			int numbcomp);
 
 	/**
 	 * <p>
 	 * calcAij.
 	 * </p>
 	 *
-	 * @param compNumb    a int
-	 * @param j           a int
-	 * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param compNumb a int
+	 * @param j a int
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 * @param temperature a double
-	 * @param pressure    a double
-	 * @param numbcomp    a int
+	 * @param pressure a double
+	 * @param numbcomp a int
 	 * @return a double
 	 */
-	double calcAij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+	double calcAij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure,
+			int numbcomp);
 
 	/**
 	 * <p>
 	 * calcBij.
 	 * </p>
 	 *
-	 * @param compNumb    a int
-	 * @param j           a int
-	 * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param compNumb a int
+	 * @param j a int
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 * @param temperature a double
-	 * @param pressure    a double
-	 * @param numbcomp    a int
+	 * @param pressure a double
+	 * @param numbcomp a int
 	 * @return a double
 	 */
-	double calcBij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+	double calcBij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure,
+			int numbcomp);
 
 	/**
 	 * <p>
 	 * calcAT.
 	 * </p>
 	 *
-	 * @param compNumb    a int
-	 * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param compNumb a int
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 * @param temperature a double
-	 * @param pressure    a double
-	 * @param numbcomp    a int
+	 * @param pressure a double
+	 * @param numbcomp a int
 	 * @return a double
 	 */
-	double calcAT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+	double calcAT(int compNumb, PhaseInterface phase, double temperature, double pressure,
+			int numbcomp);
 
 	/**
 	 * <p>
 	 * calcBi.
 	 * </p>
 	 *
-	 * @param compNumb    a int
-	 * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param compNumb a int
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 * @param temperature a double
-	 * @param pressure    a double
-	 * @param numbcomp    a int
+	 * @param pressure a double
+	 * @param numbcomp a int
 	 * @return a double
 	 */
-	double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+	double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure,
+			int numbcomp);
 
 	/**
 	 * <p>
@@ -882,7 +880,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * </p>
 	 *
 	 * @param component a int
-	 * @param dn        a double
+	 * @param dn a double
 	 */
 	public void addMoles(int component, double dn);
 
@@ -896,8 +894,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	/**
 	 * method to return phase enthalpy in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are J, J/mol, J/kg and
-	 *             kJ/kg
+	 * @param unit The unit as a string. Supported units are J, J/mol, J/kg and kJ/kg
 	 * @return enthalpy in specified unit
 	 */
 	public double getEnthalpy(String unit);
@@ -912,8 +909,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	/**
 	 * method to return entropy of the phase
 	 *
-	 * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and
-	 *             kJ/kgK
+	 * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and kJ/kgK
 	 * @return entropy in specified unit
 	 */
 	public double getEntropy(String unit);
@@ -928,8 +924,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	/**
 	 * method to return viscosity og the phase in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are kg/msec, cP
-	 *             (centipoise)
+	 * @param unit The unit as a string. Supported units are kg/msec, cP (centipoise)
 	 * @return viscosity in specified unit
 	 */
 	public double getViscosity(String unit);
@@ -974,8 +969,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	/**
 	 * method to return specific heat capacity (Cp) in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
-	 *             kJ/kgK
+	 * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and kJ/kgK
 	 * @return Cp in specified unit
 	 */
 	public double getCp(String unit);
@@ -1008,8 +1002,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	/**
 	 * method to return specific heat capacity (Cv) in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
-	 *             kJ/kgK
+	 * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and kJ/kgK
 	 * @return Cv in specified unit
 	 */
 	public double getCv(String unit);
@@ -1094,8 +1087,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public void setNumberOfComponents(int k);
 
 	/**
-	 * method to get the Joule Thomson Coefficient of a phase note: implemented in
-	 * phaseEos
+	 * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
 	 *
 	 * @return Joule Thomson coefficient in K/bar
 	 */
@@ -1115,8 +1107,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * getComponents.
 	 * </p>
 	 *
-	 * @return an array of {@link neqsim.thermo.component.ComponentInterface}
-	 *         objects
+	 * @return an array of {@link neqsim.thermo.component.ComponentInterface} objects
 	 */
 	ComponentInterface[] getComponents();
 
@@ -1731,7 +1722,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * setRefPhase.
 	 * </p>
 	 *
-	 * @param index    a int
+	 * @param index a int
 	 * @param refPhase a {@link neqsim.thermo.phase.PhaseInterface} object
 	 */
 	public void setRefPhase(int index, neqsim.thermo.phase.PhaseInterface refPhase);
@@ -1741,8 +1732,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * setRefPhase.
 	 * </p>
 	 *
-	 * @param refPhase an array of {@link neqsim.thermo.phase.PhaseInterface}
-	 *                 objects
+	 * @param refPhase an array of {@link neqsim.thermo.phase.PhaseInterface} objects
 	 */
 	public void setRefPhase(neqsim.thermo.phase.PhaseInterface[] refPhase);
 
@@ -1769,15 +1759,15 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 * setParams.
 	 * </p>
 	 *
-	 * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
-	 * @param alpha    an array of {@link double} objects
-	 * @param Dij      an array of {@link double} objects
-	 * @param DijT     an array of {@link double} objects
-	 * @param mixRule  an array of {@link java.lang.String} objects
+	 * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+	 * @param alpha an array of {@link double} objects
+	 * @param Dij an array of {@link double} objects
+	 * @param DijT an array of {@link double} objects
+	 * @param mixRule an array of {@link java.lang.String} objects
 	 * @param intparam an array of {@link double} objects
 	 */
-	public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT, String[][] mixRule,
-			double[][] intparam);
+	public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
+			String[][] mixRule, double[][] intparam);
 
 	/**
 	 * <p>

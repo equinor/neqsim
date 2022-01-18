@@ -123,9 +123,9 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
                     system.getPhases()[0].getComponents()[i].setK(1e-40);
                 } else {
                     system.getPhases()[0].getComponents()[i].setK(Math.exp(
-                            system.getPhases()[1].getComponents()[i].getLogFugasityCoeffisient()
+                            system.getPhases()[1].getComponents()[i].getLogFugacityCoefficient()
                                     - system.getPhases()[0].getComponents()[i]
-                                            .getLogFugasityCoeffisient()));
+                                            .getLogFugacityCoefficient()));
                 }
                 system.getPhases()[1].getComponents()[i]
                         .setK(system.getPhases()[0].getComponents()[i].getK());

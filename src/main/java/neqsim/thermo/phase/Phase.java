@@ -566,9 +566,9 @@ abstract class Phase implements PhaseInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
+    public void setAttractiveTerm(int i) {
         for (int k = 0; k < numberOfComponents; k++) {
-            componentArray[k].setAtractiveTerm(i);
+            componentArray[k].setAttractiveTerm(i);
         }
     }
 
@@ -1325,7 +1325,7 @@ abstract class Phase implements PhaseInterface {
                 } else {
                     refPhase[i].addcomponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
                 }
-                refPhase[i].setAtractiveTerm(this.getComponent(i).getAtractiveTermNumber());
+                refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
                 refPhase[i].setMixingRule(this.getMixingRuleNumber());
                 refPhase[i].setPhaseType(this.getPhaseType());
                 refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getPhaseType(),
@@ -1346,7 +1346,7 @@ abstract class Phase implements PhaseInterface {
                             0);
                 }
                 refPhase[i].addcomponent(name, 10.0, 10.0, 1);
-                refPhase[i].setAtractiveTerm(this.getComponent(i).getAtractiveTermNumber());
+                refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
                 refPhase[i].setMixingRule(this.getMixingRuleNumber());
                 refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getPhaseType(),
                         1.0);
@@ -1371,7 +1371,7 @@ abstract class Phase implements PhaseInterface {
         refPhase[k].setPressure(pressure);
         refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 1, 1, this.getPhaseType(), 1.0);
         refPhase[k].getComponent(0).fugcoef(refPhase[k]);
-        return refPhase[k].getComponent(0).getLogFugasityCoeffisient();
+        return refPhase[k].getComponent(0).getLogFugacityCoefficient();
     }
 
     /** {@inheritDoc} */
@@ -1402,7 +1402,7 @@ abstract class Phase implements PhaseInterface {
         refPhase[k].setPressure(pressure);
         refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getPhaseType(), 1.0);
         refPhase[k].getComponent(0).fugcoef(refPhase[k]);
-        return refPhase[k].getComponent(0).getLogFugasityCoeffisient();
+        return refPhase[k].getComponent(0).getLogFugacityCoefficient();
     }
 
     /** {@inheritDoc} */
@@ -1414,7 +1414,7 @@ abstract class Phase implements PhaseInterface {
         dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1,
                 dilphase.getPhaseType(), 1.0);
         dilphase.getComponent(k).fugcoef(dilphase);
-        return dilphase.getComponent(k).getLogFugasityCoeffisient();
+        return dilphase.getComponent(k).getLogFugacityCoefficient();
     }
 
     /** {@inheritDoc} */
@@ -1439,7 +1439,7 @@ abstract class Phase implements PhaseInterface {
     @Override
     public double getLogActivityCoefficient(int k, int p) {
         double fug = 0.0;
-        double oldFug = getComponent(k).getLogFugasityCoeffisient();
+        double oldFug = getComponent(k).getLogFugacityCoefficient();
         if (getComponent(k).getReferenceStateType().equals("solvent")) {
             fug = getLogPureComponentFugacity(k);
         } else {
@@ -1452,7 +1452,7 @@ abstract class Phase implements PhaseInterface {
     @Override
     public double getActivityCoefficient(int k, int p) {
         double fug = 0.0;
-        double oldFug = getComponent(k).getLogFugasityCoeffisient();
+        double oldFug = getComponent(k).getLogFugacityCoefficient();
         if (getComponent(k).getReferenceStateType().equals("solvent")) {
             fug = getLogPureComponentFugacity(k);
         } else {
@@ -1466,7 +1466,7 @@ abstract class Phase implements PhaseInterface {
     public double getActivityCoefficient(int k) {
         double fug = 0.0;
 
-        double oldFug = getComponent(k).getLogFugasityCoeffisient();
+        double oldFug = getComponent(k).getLogFugacityCoefficient();
         if (getComponent(k).getReferenceStateType().equals("solvent")) {
             fug = getLogPureComponentFugacity(k);
         } else {
@@ -1482,7 +1482,7 @@ abstract class Phase implements PhaseInterface {
             initRefPhases(true);
         }
         double fug = 0.0;
-        double oldFug = getComponent(k).getLogFugasityCoeffisient();
+        double oldFug = getComponent(k).getLogFugacityCoefficient();
         fug = getLogPureComponentFugacity(k);
         return Math.exp(oldFug - fug);
     }
@@ -1491,7 +1491,7 @@ abstract class Phase implements PhaseInterface {
     @Override
     public double getActivityCoefficientUnSymetric(int k) {
         double fug = 0.0;
-        double oldFug = getComponent(k).getLogFugasityCoeffisient();
+        double oldFug = getComponent(k).getLogFugacityCoefficient();
         fug = getLogInfiniteDiluteFugacity(k);
         return Math.exp(oldFug - fug);
     }
@@ -1544,7 +1544,7 @@ abstract class Phase implements PhaseInterface {
     /** {@inheritDoc} */
     @Override
     public double getOsmoticCoefficient(int watNumb) {
-        double oldFug = getComponent(watNumb).getFugasityCoeffisient();
+        double oldFug = getComponent(watNumb).getFugacityCoefficient();
         double pureFug = getPureComponentFugacity(watNumb);
         double ions = 0.0;
         for (int j = 0; j < this.numberOfComponents; j++) {
@@ -1559,7 +1559,7 @@ abstract class Phase implements PhaseInterface {
 
     // public double getOsmoticCoefficient(int watNumb, String refState){
     // if(refState.equals("molality")){
-    // double oldFug = getComponent(watNumb).getFugasityCoeffisient();
+    // double oldFug = getComponent(watNumb).getFugacityCoefficient();
     // double pureFug = getPureComponentFugacity(watNumb);system.getPhase(i).
     // double ions=0.0;
     // for(int j=0;j<this.numberOfComponents;j++){
@@ -1982,16 +1982,16 @@ abstract class Phase implements PhaseInterface {
     @Override
     public double getFugacity(int compNumb) {
         // System.out.println("fugcoef" +
-        // this.getComponent(compNumb).getFugasityCoefficient());
+        // this.getComponent(compNumb).getFugacityCoefficient());
         return this.getComponent(compNumb).getx()
-                * this.getComponent(compNumb).getFugasityCoefficient() * pressure;
+                * this.getComponent(compNumb).getFugacityCoefficient() * pressure;
     }
 
     /** {@inheritDoc} */
     @Override
     public double getFugacity(String compName) {
         return this.getComponent(compName).getx()
-                * this.getComponent(compName).getFugasityCoefficient() * pressure;
+                * this.getComponent(compName).getFugacityCoefficient() * pressure;
     }
 
     /**

@@ -48,45 +48,45 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
     public void runTest() {
         // system.init(0);
         system.init(3);
-        logger.info("testing fugasitycoefs..." + checkFugasityCoeffisients());
-        logger.info("testing fugasity der composition..." + checkFugasityCoeffisientsDn());
-        logger.info("testing fugasity der composition2..." + checkFugasityCoeffisientsDn2());
-        logger.info("testing fugasity der pressure..." + checkFugasityCoeffisientsDP());
-        logger.info("testing fugasity der temperature..." + checkFugasityCoeffisientsDT());
+        logger.info("testing fugacitycoefs..." + checkFugacityCoefficients());
+        logger.info("testing fugacity der composition..." + checkFugacityCoefficientsDn());
+        logger.info("testing fugacity der composition2..." + checkFugacityCoefficientsDn2());
+        logger.info("testing fugacity der pressure..." + checkFugacityCoefficientsDP());
+        logger.info("testing fugacity der temperature..." + checkFugacityCoefficientsDT());
         logger.info("comparing to numerical derivatives..." + checkNumerically());
-        // System.out.println("testing fugasitycoefs..." + checkFugasityCoeffisients());
-        // System.out.println("testing fugasity der composition..." +
-        // checkFugasityCoeffisientsDn());
-        // System.out.println("testing fugasity der composition2..." +
-        // checkFugasityCoeffisientsDn2());
-        // System.out.println("testing fugasity der pressure..." +
-        // checkFugasityCoeffisientsDP());
-        // System.out.println("testing fugasity der temperature..." +
-        // checkFugasityCoeffisientsDT());
+        // System.out.println("testing fugacitycoefs..." + checkFugacityCoefficients());
+        // System.out.println("testing fugacity der composition..." +
+        // checkFugacityCoefficientsDn());
+        // System.out.println("testing fugacity der composition2..." +
+        // checkFugacityCoefficientsDn2());
+        // System.out.println("testing fugacity der pressure..." +
+        // checkFugacityCoefficientsDP());
+        // System.out.println("testing fugacity der temperature..." +
+        // checkFugacityCoefficientsDT());
         // System.out.println("comparing to numerical derivatives..." +
         // checkNumerically());
     }
 
     /**
      * <p>
-     * checkFugasityCoeffisients.
+     * checkFugacityCoefficients.
      * </p>
      *
      * @return a boolean
      */
-    public boolean checkFugasityCoeffisients() {
+    public boolean checkFugacityCoefficients() {
         double temp1 = 0, temp2 = 0;
 
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
             temp1 += system.getPhases()[0].getComponents()[i].getNumberOfMolesInPhase()
-                    * Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient());
+                    * Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient());
             temp2 += system.getPhases()[1].getComponents()[i].getNumberOfMolesInPhase()
-                    * Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient());
+                    * Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient());
         }
-        logger.info("Testing fugasity coefficients...................");
+        logger.info("Testing fugacity coefficients...................");
         logger.info("Total fug gas : " + temp1);
         logger.info("Total fug liq : " + temp2);
-        // System.out.println("Testing fugasity coefficients...................");
+        // System.out.println("Testing fugacity coefficients...................");
         // System.out.println("Total fug gas : " + temp1);
         // System.out.println("Total fug liq : " + temp2);
         temp1 -= system.getPhases()[0].getGresTP() / (R * system.getTemperature());
@@ -101,12 +101,12 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
     /**
      * <p>
-     * checkFugasityCoeffisientsDn.
+     * checkFugacityCoefficientsDn.
      * </p>
      *
      * @return a boolean
      */
-    public boolean checkFugasityCoeffisientsDn() {
+    public boolean checkFugacityCoefficientsDn() {
         double temp1 = 0, temp2 = 0;
         double sum = 0;
 
@@ -114,9 +114,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
             temp1 = 0;
             temp2 = 0;
             // temp1 +=
-            // Math.log(system.getPhases()[0].getComponents()[j].getFugasityCoeffisient());
+            // Math.log(system.getPhases()[0].getComponents()[j].getFugacityCoefficient());
             // temp2 +=
-            // Math.log(system.getPhases()[1].getComponents()[j].getFugasityCoeffisient());
+            // Math.log(system.getPhases()[1].getComponents()[j].getFugacityCoefficient());
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 temp1 += system.getPhases()[0].getComponents()[i].getNumberOfMolesInPhase()
                         * system.getPhases()[0].getComponents()[i].getdfugdn(j);
@@ -131,9 +131,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
             // system.getPhases()[0].getComponents()[j].getComponentName());
             // System.out.println("test fugdn liq : " + j + " " + temp2);
         }
-        logger.info("Testing composition derivatives of fugasity coefficients...................");
+        logger.info("Testing composition derivatives of fugacity coefficients...................");
         logger.info("Diffference : " + sum);
-        // System.out.println("Testing composition derivatives of fugasity
+        // System.out.println("Testing composition derivatives of fugacity
         // coefficients...................");
         // System.out.println("Diffference : " + sum);
         return Math.abs(sum) < 1e-10;
@@ -141,12 +141,12 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
     /**
      * <p>
-     * checkFugasityCoeffisientsDn2.
+     * checkFugacityCoefficientsDn2.
      * </p>
      *
      * @return a boolean
      */
-    public boolean checkFugasityCoeffisientsDn2() {
+    public boolean checkFugacityCoefficientsDn2() {
         // boolean test1 = false, test2 = false;
         double temp1 = 0, temp2 = 0;
         double sum = 0;
@@ -155,9 +155,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
             temp1 = 0;
             temp2 = 0;
             // temp1 +=
-            // Math.log(system.getPhases()[0].getComponents()[j].getFugasityCoeffisient());
+            // Math.log(system.getPhases()[0].getComponents()[j].getFugacityCoefficient());
             // temp2 +=
-            // Math.log(system.getPhases()[1].getComponents()[j].getFugasityCoeffisient());
+            // Math.log(system.getPhases()[1].getComponents()[j].getFugacityCoefficient());
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 temp1 += system.getPhases()[0].getComponents()[i].getdfugdn(j)
                         - system.getPhases()[0].getComponents()[j].getdfugdn(i);
@@ -168,9 +168,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
             // System.out.println("test fugdn gas : " + j + " " + temp1);
             // System.out.println("test fugdn liq : " + j + " " + temp2);
         }
-        logger.info("Testing composition derivatives2 of fugasity coefficients...................");
+        logger.info("Testing composition derivatives2 of fugacity coefficients...................");
         logger.info("Diffference : " + sum);
-        // System.out.println("Testing composition derivatives2 of fugasity
+        // System.out.println("Testing composition derivatives2 of fugacity
         // coefficients...................");
         // System.out.println("Diffference : " + sum);
 
@@ -179,12 +179,12 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
     /**
      * <p>
-     * checkFugasityCoeffisientsDP.
+     * checkFugacityCoefficientsDP.
      * </p>
      *
      * @return a boolean
      */
-    public boolean checkFugasityCoeffisientsDP() {
+    public boolean checkFugacityCoefficientsDP() {
         // boolean test1 = false, test2 = false;
         double temp1 = 0, temp2 = 0;
         double sum = 0;
@@ -204,9 +204,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         sum = Math.abs(temp1) + Math.abs(temp2);
         // System.out.println("test fugdp gas : " + temp1);
         // System.out.println("test fugdp liq : " + temp2);
-        logger.info("Testing pressure derivatives of fugasity coefficients...................");
+        logger.info("Testing pressure derivatives of fugacity coefficients...................");
         logger.info("Error : " + sum);
-        // System.out.println("Testing pressure derivatives of fugasity
+        // System.out.println("Testing pressure derivatives of fugacity
         // coefficients...................");
         // System.out.println("Error : " + sum);
 
@@ -215,12 +215,12 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
     /**
      * <p>
-     * checkFugasityCoeffisientsDT.
+     * checkFugacityCoefficientsDT.
      * </p>
      *
      * @return a boolean
      */
-    public boolean checkFugasityCoeffisientsDT() {
+    public boolean checkFugacityCoefficientsDT() {
         // boolean test1 = false, test2 = false;
         double temp1 = 0, temp2 = 0;
         double sum = 0;
@@ -236,9 +236,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         sum = Math.abs(temp1) + Math.abs(temp2);
         // System.out.println("test fugdp gas : " + system.getPhases()[0].getHresTP());
         // System.out.println("test fugdp liq : " + temp2);
-        logger.info("Testing temperature derivatives of fugasity coefficients...................");
+        logger.info("Testing temperature derivatives of fugacity coefficients...................");
         logger.info("Error : " + sum);
-        // System.out.println("Testing temperature derivatives of fugasity
+        // System.out.println("Testing temperature derivatives of fugacity
         // coefficients...................");
         // System.out.println("Error : " + sum);
         return Math.abs(sum) < 1e-10;
@@ -281,9 +281,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
             gasfug[0][i] =
-                    Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient());
+                    Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient());
             liqfug[0][i] =
-                    Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient());
+                    Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient());
         }
 
         system.setTemperature(system.getTemperature() - 2 * dt);
@@ -291,9 +291,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
             gasfug[1][i] =
-                    Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient());
+                    Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient());
             liqfug[1][i] =
-                    Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient());
+                    Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient());
         }
 
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -318,9 +318,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
             gasfug[0][i] =
-                    Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient());
+                    Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient());
             liqfug[0][i] =
-                    Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient());
+                    Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient());
         }
 
         system.setPressure(system.getPressure() - 2 * dp);
@@ -328,9 +328,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
             gasfug[1][i] =
-                    Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient());
+                    Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient());
             liqfug[1][i] =
-                    Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient());
+                    Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient());
         }
 
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -369,9 +369,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
                 for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                     // gasfug[0][i] =
-                    // Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient());
+                    // Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient());
                     liqfug[0][i] = Math.log(
-                            system.getPhases()[phase].getComponents()[i].getFugasityCoeffisient());
+                            system.getPhases()[phase].getComponents()[i].getFugacityCoefficient());
                 }
 
                 system.addComponent(k, -2.0 * dn, phase);
@@ -381,9 +381,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
                 for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                     // gasfug[1][i] =
-                    // Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient());
+                    // Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient());
                     liqfug[1][i] = Math.log(
-                            system.getPhases()[phase].getComponents()[i].getFugasityCoeffisient());
+                            system.getPhases()[phase].getComponents()[i].getFugacityCoefficient());
                 }
 
                 for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {

@@ -353,9 +353,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         double yN = gasStreamToAbsorber.getThermoSystem().getPhase(0).getComponent("water").getx();
 
         // Estimates K value
-        double K = calcKglycol();// gasStreamToAbsorber.getThermoSystem().getPhase(1).getComponent("water").getFugasityCoefficient()
+        double K = calcKglycol();// gasStreamToAbsorber.getThermoSystem().getPhase(1).getComponent("water").getFugacityCoefficient()
                                  // /
-                                 // gasStreamToAbsorber.getThermoSystem().getPhase(0).getComponent("water").getFugasityCoefficient();
+                                 // gasStreamToAbsorber.getThermoSystem().getPhase(0).getComponent("water").getFugacityCoefficient();
         gasStreamFromAbsorber = gasStreamToAbsorber.clone();
         // gasStreamFromAbsorber.getThermoSystem().addComponent("water", 1.0);
         gasStreamFromAbsorber.getThermoSystem().setTemperature(waterDewPontSpecification);

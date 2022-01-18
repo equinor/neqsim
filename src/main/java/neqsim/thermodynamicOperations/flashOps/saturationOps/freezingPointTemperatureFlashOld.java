@@ -2,7 +2,6 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -69,21 +68,21 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
 
                     for (int i = 0; i < system.getNumberOfPhases(); i++) {
                         funk -= system.getPhases()[i].getBeta()
-                                * system.getPhases()[3].getComponents()[k].getFugasityCoeffisient()
-                                / system.getPhases()[i].getComponents()[k].getFugasityCoeffisient();
+                                * system.getPhases()[3].getComponents()[k].getFugacityCoefficient()
+                                / system.getPhases()[i].getComponents()[k].getFugacityCoefficient();
                         deriv -= 0.01 * system.getPhases()[i].getBeta()
-                                * (system.getPhases()[3].getComponents()[k].getFugasityCoeffisient()
+                                * (system.getPhases()[3].getComponents()[k].getFugacityCoefficient()
                                         * Math.exp(system.getPhases()[i].getComponents()[k]
                                                 .getdfugdt())
                                         * -1.0
                                         / Math.pow(
                                                 system.getPhases()[i].getComponents()[k]
-                                                        .getFugasityCoeffisient(),
+                                                        .getFugacityCoefficient(),
                                                 2.0)
                                         + Math.exp(system.getPhases()[3].getComponents()[k]
                                                 .getdfugdt())
                                                 / system.getPhases()[i].getComponents()[k]
-                                                        .getFugasityCoeffisient());
+                                                        .getFugacityCoefficient());
                     }
                     if (iterations >= 2) {
                         deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);

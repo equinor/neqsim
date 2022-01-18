@@ -84,7 +84,7 @@ public class ComponentSolid extends ComponentSrk {
         refPhase.getComponent(0).fugcoef(refPhase);
 
         double liquidPhaseFugacity =
-                refPhase.getComponent(0).getFugasityCoefficient() * refPhase.getPressure();
+                refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
         // Calculates delta Cp solid-liquid
         double deltaCpSL = -(getPureComponentCpSolid(getTriplePointTemperature())
@@ -124,9 +124,9 @@ public class ComponentSolid extends ComponentSrk {
                                 / (R * phase1.getTemperature()));
 
         // System.out.println("solidfug " + SolidFug);
-        fugasityCoeffisient = SolidFug / (phase1.getPressure() * getx());
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        fugacityCoefficient = SolidFug / (phase1.getPressure() * getx());
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /**
@@ -173,18 +173,18 @@ public class ComponentSolid extends ComponentSrk {
         refPhase.getComponent(0).fugcoef(refPhase);
 
         // System.out.println("ref co2 fugcoef " +
-        // refPhase.getComponent(0).getFugasityCoefficient());
+        // refPhase.getComponent(0).getFugacityCoefficient());
         SolidFug = PvapSolid * Math.exp(solvol / (R * temp) * (pres - PvapSolid) * 1e5)
-                * refPhase.getComponent(0).getFugasityCoefficient();
+                * refPhase.getComponent(0).getFugacityCoefficient();
         // System.out.println("Pvap solid " + SolidFug);
         dfugdt = Math.log(PvapSoliddT * Math.exp(solvol / (R * temp) * (pres - PvapSolid))) / pres;
-        fugasityCoeffisient = SolidFug / pres;
+        fugacityCoefficient = SolidFug / pres;
         // } else{
-        // fugasityCoeffisient = 1e5;
+        // fugacityCoefficient = 1e5;
         // dfugdt=0;
         // }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     // public double dfugdt(PhaseInterface phase, int numberOfComps, double temp, double pres){
@@ -242,8 +242,8 @@ public class ComponentSolid extends ComponentSrk {
                     refPhase.addcomponent("methane", 10.0, 10.0, 0);
                     refPhase.getComponent("methane").setComponentName(componentName);
                 }
-                refPhase.getComponent(componentName).setAtractiveTerm(
-                        phase.getComponent(componentName).getAtractiveTermNumber());
+                refPhase.getComponent(componentName).setAttractiveTerm(
+                        phase.getComponent(componentName).getAttractiveTermNumber());
                 refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
             }
         } catch (Exception e) {

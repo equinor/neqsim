@@ -118,7 +118,7 @@ public class SeparatorSection implements Serializable {
      * @return a double
      */
     public double getMinimumLiquidSealHeight() {
-        return getPresureDrop() * 1e5 / neqsim.thermo.ThermodynamicConstantsInterface.gravity
+        return getPressureDrop() * 1e5 / neqsim.thermo.ThermodynamicConstantsInterface.gravity
                 / (getSeparator().getThermoSystem().getPhase(1).getPhysicalProperties().getDensity()
                         - getSeparator().getThermoSystem().getPhase(0).getPhysicalProperties()
                                 .getDensity());
@@ -126,24 +126,24 @@ public class SeparatorSection implements Serializable {
 
     /**
      * <p>
-     * getPresureDrop.
+     * getPressureDrop.
      * </p>
      *
-     * @return the presureDrop
+     * @return the pressureDrop
      */
-    public double getPresureDrop() {
+    public double getPressureDrop() {
         return pressureDrop;
     }
 
     /**
      * <p>
-     * setPresureDrop.
+     * setPressureDrop.
      * </p>
      *
-     * @param presureDrop the presureDrop to set
+     * @param pressureDrop the pressureDrop to set
      */
-    public void setPresureDrop(double presureDrop) {
-        this.pressureDrop = presureDrop;
+    public void setPressureDrop(double pressureDrop) {
+        this.pressureDrop = pressureDrop;
     }
 
     /**

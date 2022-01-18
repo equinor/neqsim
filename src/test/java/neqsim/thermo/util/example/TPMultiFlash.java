@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TPMultiFlash class.</p>
+ * <p>
+ * TPMultiFlash class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -17,7 +19,9 @@ public class TPMultiFlash {
     static Logger logger = LogManager.getLogger(TPMultiFlash.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -116,7 +120,7 @@ public class TPMultiFlash {
         // System.out.println("Henrys Constant " +
         // 1.0/testSystem.getPhase(1).getComponent("CO2").getx()*testSystem.getPressure());
         // System.out.println("water fugacity " +
-        // testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getComponent("water").getFugasityCoefficient()*testSystem.getPressure());
+        // testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getComponent("water").getFugacityCoefficient()*testSystem.getPressure());
         // System.out.println("partial pressure water " +
         // testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPressure());
         // System.out.println("activity water " +

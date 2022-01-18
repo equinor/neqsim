@@ -14,7 +14,7 @@ abstract class Diffusivity extends
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
 
-    double[][] binaryDiffusionCoeffisients;
+    double[][] binaryDiffusionCoefficients;
     double[] effectiveDiffusionCoefficient;
 
     /**
@@ -36,7 +36,7 @@ abstract class Diffusivity extends
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
-        binaryDiffusionCoeffisients = new double[liquidPhase.getPhase()
+        binaryDiffusionCoefficients = new double[liquidPhase.getPhase()
                 .getNumberOfComponents()][liquidPhase.getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[liquidPhase.getPhase().getNumberOfComponents()];
     }
@@ -52,10 +52,10 @@ abstract class Diffusivity extends
             logger.error("Cloning failed.", e);
         }
 
-        properties.binaryDiffusionCoeffisients = this.binaryDiffusionCoeffisients.clone();
+        properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-            System.arraycopy(this.binaryDiffusionCoeffisients[i], 0,
-                    properties.binaryDiffusionCoeffisients[i], 0,
+            System.arraycopy(this.binaryDiffusionCoefficients[i], 0,
+                    properties.binaryDiffusionCoefficients[i], 0,
                     liquidPhase.getPhase().getNumberOfComponents());
         }
         return properties;
@@ -63,11 +63,11 @@ abstract class Diffusivity extends
 
     /** {@inheritDoc} */
     @Override
-    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
             for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-                binaryDiffusionCoeffisients[i][j] =
+                binaryDiffusionCoefficients[i][j] =
                         calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
             }
         }
@@ -76,20 +76,20 @@ abstract class Diffusivity extends
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
             for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
                 if (i != j) {
-                    binaryDiffusionCoeffisients[i][j] = Math.pow(binaryDiffusionCoeffisients[i][j],
+                    binaryDiffusionCoefficients[i][j] = Math.pow(binaryDiffusionCoefficients[i][j],
                             liquidPhase.getPhase().getComponents()[j].getx())
-                            * Math.pow(binaryDiffusionCoeffisients[j][i],
+                            * Math.pow(binaryDiffusionCoefficients[j][i],
                                     liquidPhase.getPhase().getComponents()[i].getx());
                 }
-                // System.out.println("diff liq " + binaryDiffusionCoeffisients[i][j] );
+                // System.out.println("diff liq " + binaryDiffusionCoefficients[i][j] );
             }
         }
-        return binaryDiffusionCoeffisients;
+        return binaryDiffusionCoefficients;
     }
 
     /** {@inheritDoc} */
     @Override
-    public void calcEffectiveDiffusionCoeffisients() {
+    public void calcEffectiveDiffusionCoefficients() {
         double sum = 0;
 
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
@@ -98,7 +98,7 @@ abstract class Diffusivity extends
                 if (i == j) {
                 } else {
                     sum += liquidPhase.getPhase().getComponents()[j].getx()
-                            / binaryDiffusionCoeffisients[i][j];
+                            / binaryDiffusionCoefficients[i][j];
                 }
             }
             effectiveDiffusionCoefficient[i] =
@@ -109,7 +109,7 @@ abstract class Diffusivity extends
     /** {@inheritDoc} */
     @Override
     public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
-        return binaryDiffusionCoeffisients[i][j];
+        return binaryDiffusionCoefficients[i][j];
     }
 
     /** {@inheritDoc} */
@@ -128,7 +128,7 @@ abstract class Diffusivity extends
         if (Double.isNaN(nonIdealCorrection)) {
             nonIdealCorrection = 1.0;
         }
-        return binaryDiffusionCoeffisients[i][j] * nonIdealCorrection; // shuld be divided by non
+        return binaryDiffusionCoefficients[i][j] * nonIdealCorrection; // shuld be divided by non
                                                                        // ideality factor
     }
 }

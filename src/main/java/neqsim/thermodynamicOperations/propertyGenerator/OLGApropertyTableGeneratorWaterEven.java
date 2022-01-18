@@ -219,8 +219,10 @@ public class OLGApropertyTableGeneratorWaterEven
 
         thermoOps.TPflash();
 
-        // GOR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
-        // GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
+        // GOR = thermoSystem.getPhase(0).getTotalVolume() /
+        // thermoSystem.getPhase(1).getTotalVolume();
+        // GLR = thermoSystem.getPhase(0).getTotalVolume() /
+        // thermoSystem.getPhase(1).getTotalVolume();
     }
 
     /**
@@ -250,7 +252,7 @@ public class OLGApropertyTableGeneratorWaterEven
         units = new String[nProps];
         names = new String[nProps];
 
-        int startGasTemperatures = 0;
+        // int startGasTemperatures = 0;
         boolean acceptedFlash = true;
         for (int j = 0; j < temperatures.length; j++) {
             thermoSystem.setTemperature(temperatures[j]);
@@ -395,9 +397,10 @@ public class OLGApropertyTableGeneratorWaterEven
                             k++;
                         } while (k < 9);// names[k] = "GAS DENSITY";
                         // units[k] = "KG/M3";
-                    } else if (false && !hasGasValues) {
-                        startGasTemperatures = j;
                     }
+                    /*
+                     * else if (false && !hasGasValues) { startGasTemperatures = j; }
+                     */
                 }
                 /*
                  * double[] gasVals = new double[9]; for (int kk = 0; kk < 9; kk++) { gasVals[kk] =

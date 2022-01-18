@@ -286,12 +286,12 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
         // double xrel =
         // mixedStream.getFluid().getPhase(0).getComponent("water").getx()/solventInStream.getFluid().getPhase(0).getComponent("water").getx();
         // double y0 =
-        // xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugasityCoefficient()*mixedStream.getFluid().getPressure());
+        // xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugacityCoefficient()*mixedStream.getFluid().getPressure());
         double fugCoefRef = mixedStream.getThermoSystem().getPhase(1).getComponent("water")
-                .getFugasityCoefficient();
+                .getFugacityCoefficient();
         double y0 = solventInStream.getFluid().getPhase(0).getComponent("water").getx() * fugCoefRef
                 / (mixedStream.getThermoSystem().getPhase(0).getComponent("water")
-                        .getFugasityCoefficient());
+                        .getFugacityCoefficient());
         return y0;
     }
 

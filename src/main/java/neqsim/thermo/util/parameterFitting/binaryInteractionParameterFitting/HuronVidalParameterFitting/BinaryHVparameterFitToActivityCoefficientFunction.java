@@ -22,7 +22,7 @@ public class BinaryHVparameterFitToActivityCoefficientFunction extends HuronVida
         system.init(0);
         system.init(1);
 
-        // double fug = system.getPhases()[1].getComponents()[0].getFugasityCoeffisient();
+        // double fug = system.getPhases()[1].getComponents()[0].getFugacityCoefficient();
         // double pureFug = system.getPhases()[1].getPureComponentFugacity(0);
         double val = system.getPhase(1).getActivityCoefficient(0);
         // System.out.println("activity: " + val);

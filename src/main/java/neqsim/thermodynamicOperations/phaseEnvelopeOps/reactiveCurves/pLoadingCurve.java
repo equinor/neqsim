@@ -101,7 +101,7 @@ public class pLoadingCurve implements OperationInterface {
             system.getChemicalReactionOperations().solveChemEq(1);
 
             points[0][i] = (inscr * (i - 1)) / molMDEA;
-            points[1][i] = (system.getPhases()[1].getComponents()[0].getFugasityCoeffisient()
+            points[1][i] = (system.getPhases()[1].getComponents()[0].getFugacityCoefficient()
                     * system.getPhases()[1].getComponents()[0].getx() * system.getPressure());
 
             for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {

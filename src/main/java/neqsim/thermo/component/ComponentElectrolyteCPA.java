@@ -74,7 +74,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
                 a = aCPA;
                 b = bCPA;
             }
-            setAtractiveTerm(0);
+            setAttractiveTerm(0);
         }
         // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
         // -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
@@ -113,7 +113,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
                 a = aCPA;
                 b = bCPA;
             }
-            setAtractiveTerm(0);
+            setAttractiveTerm(0);
         }
         // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
         // -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
@@ -166,10 +166,10 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
-        super.setAtractiveTerm(i);
+    public void setAttractiveTerm(int i) {
+        super.setAttractiveTerm(i);
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-            getAtractiveTerm().setm(mCPA);
+            getAttractiveTerm().setm(mCPA);
         }
     }
 

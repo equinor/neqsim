@@ -9,7 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.atomElement.Element;
-import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
+import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
@@ -17,8 +17,8 @@ abstract class Component implements ComponentInterface {
     private static final long serialVersionUID = 1000;
 
     double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
-    protected int index, componentNumber, atractiveTermNumber = 0, numberOfAssociationSites = 0;
-    protected double logFugasityCoeffisient = 0.0, associationVolume = 0.0, associationEnergy = 0.0,
+    protected int index, componentNumber, attractiveTermNumber = 0, numberOfAssociationSites = 0;
+    protected double logFugacityCoefficient = 0.0, associationVolume = 0.0, associationEnergy = 0.0,
             aCPA = 0.0, bCPA = 0.0, mCPA = 0.0, srkacentricFactor = 0.0;
     protected String componentName = "default", referenceStateType = "solvent",
             associationScheme = "0", antoineLiqVapPresType = null;
@@ -39,7 +39,7 @@ abstract class Component implements ComponentInterface {
             volumeCorrectionT_CPA = 0.0;
     protected double criticalPressure, criticalTemperature, molarMass, acentricFactor,
             numberOfMoles = 0.0, numberOfMolesInPhase = 0.0, normalLiquidDensity = 0;
-    protected double reducedPressure, reducedTemperature, fugasityCoeffisient,
+    protected double reducedPressure, reducedTemperature, fugacityCoefficient,
             debyeDipoleMoment = 0, viscosityCorrectionFactor = 0, criticalVolume = 0, racketZ = 0;
     protected double gibbsEnergyOfFormation = 0, criticalViscosity = 0.0;
     protected double referencePotential = 0, viscosityFrictionK = 1.0;
@@ -972,24 +972,18 @@ abstract class Component implements ComponentInterface {
 
     /** {@inheritDoc} */
     @Override
-    public final double getFugasityCoeffisient() {
-        return fugasityCoeffisient;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public final double getFugasityCoefficient() {
-        return getFugasityCoeffisient();
+    public final double getFugacityCoefficient() {
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase) {
-        fugasityCoeffisient = 1.0;// this.fugcoef(phase, phase.getNumberOfComponents(),
+        fugacityCoefficient = 1.0;// this.fugcoef(phase, phase.getNumberOfComponents(),
                                   // phase.getTemperature(),
                                   // phase.getPressure());
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */
@@ -1256,7 +1250,7 @@ abstract class Component implements ComponentInterface {
     /** {@inheritDoc} */
     @Override
     public final double getGresTP(double temperature) {
-        return R * temperature * (Math.log(getFugasityCoeffisient()));
+        return R * temperature * (Math.log(getFugacityCoefficient()));
     }
 
     /** {@inheritDoc} */
@@ -1341,7 +1335,7 @@ abstract class Component implements ComponentInterface {
     @Override
     public void setAcentricFactor(double val) {
         acentricFactor = val;
-        getAtractiveTerm().init();
+        getAttractiveTerm().init();
     }
 
     /** {@inheritDoc} */
@@ -1352,13 +1346,13 @@ abstract class Component implements ComponentInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
-        atractiveTermNumber = i;
+    public void setAttractiveTerm(int i) {
+        attractiveTermNumber = i;
     }
 
     /** {@inheritDoc} */
     @Override
-    public AtractiveTermInterface getAtractiveTerm() {
+    public AttractiveTermInterface getAttractiveTerm() {
         return null;
     }
 
@@ -1392,12 +1386,12 @@ abstract class Component implements ComponentInterface {
             double temperature, double pressure) {
         double temp1 = 0.0, temp2 = 0.0;
         double dp = phase.getPressure() / 1.0e5;
-        temp1 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
+        temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
         phase.setPressure(phase.getPressure() - dp);
         phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(),
                 phase.getBeta());
         phase.getComponents()[componentNumber].fugcoef(phase);
-        temp2 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
+        temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
         phase.setPressure(phase.getPressure() + dp);
         phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(),
                 phase.getBeta());
@@ -1412,12 +1406,12 @@ abstract class Component implements ComponentInterface {
             double temperature, double pressure) {
         double temp1 = 0.0, temp2 = 0.0;
         double dt = phase.getTemperature() / 1.0e6;
-        temp1 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
+        temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
         phase.setTemperature(phase.getTemperature() - dt);
         phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(),
                 phase.getBeta());
         phase.getComponents()[componentNumber].fugcoef(phase);
-        temp2 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
+        temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
         // phase.setTemperature(phase.getTemperature()+dt);
         // System.out.println("temp " + phase.getTemperature());
         // phase.init(numberOfMolesInPhase, numberOfComponents, 1,phase.getPhaseType(),
@@ -1487,21 +1481,21 @@ abstract class Component implements ComponentInterface {
     /**
      * {@inheritDoc}
      *
-     * Getter for property logFugasityCoeffisient.
+     * Getter for property logFugacityCoefficient.
      */
     @Override
-    public final double getLogFugasityCoeffisient() {
-        return logFugasityCoeffisient;
+    public final double getLogFugacityCoefficient() {
+        return logFugacityCoefficient;
     }
 
     /**
      * {@inheritDoc}
      *
-     * Getter for property atractiveTermNumber.
+     * Getter for property attractiveTermNumber.
      */
     @Override
-    public final int getAtractiveTermNumber() {
-        return atractiveTermNumber;
+    public final int getAttractiveTermNumber() {
+        return attractiveTermNumber;
     }
 
     /** {@inheritDoc} */
@@ -1587,8 +1581,8 @@ abstract class Component implements ComponentInterface {
     /** {@inheritDoc} */
     @Override
     public void setFugacityCoefficient(double val) {
-        fugasityCoeffisient = val;
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        fugacityCoefficient = val;
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
     }
 
     /**
@@ -2033,7 +2027,7 @@ abstract class Component implements ComponentInterface {
     /**
      * {@inheritDoc}
      *
-     * Getter for property Henrys Coeffisient. Unit is bar. ln H = C1 + C2/T + C3lnT + C4*T
+     * Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT + C4*T
      */
     @Override
     public double getHenryCoef(double temperature) {

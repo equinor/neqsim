@@ -19,7 +19,9 @@ public class TestUMRPRUMC {
     static Logger logger = LogManager.getLogger(TestUMRPRUMC.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -93,7 +95,7 @@ public class TestUMRPRUMC {
         testSystem.init(0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-        // testSystem.setAtractiveTerm(13);
+        // testSystem.setAttractiveTerm(13);
         try {
             testOps.TPflash();
             testSystem.display();

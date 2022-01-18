@@ -7,7 +7,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.atomElement.Element;
-import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
+import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -575,15 +575,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getFugasityCoefficient.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getFugasityCoefficient();
-
-    /**
-     * <p>
      * setLennardJonesMolecularDiameter.
      * </p>
      *
@@ -944,12 +935,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getLogFugasityCoeffisient.
+     * getLogFugacityCoefficient.
      * </p>
      *
      * @return a double
      */
-    public double getLogFugasityCoeffisient();
+    public double getLogFugacityCoefficient();
 
     /**
      * <p>
@@ -1192,12 +1183,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getFugasityCoeffisient.
+     * getFugacityCoefficient.
      * </p>
      *
      * @return a double
      */
-    public double getFugasityCoeffisient();
+    public double getFugacityCoefficient();
 
     /**
      * <p>
@@ -1210,21 +1201,21 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * setAtractiveTerm.
+     * setAttractiveTerm.
      * </p>
      *
      * @param i a int
      */
-    public void setAtractiveTerm(int i);
+    public void setAttractiveTerm(int i);
 
     /**
      * <p>
-     * getAtractiveTerm.
+     * getAttractiveTerm.
      * </p>
      *
-     * @return a {@link neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface} object
+     * @return a {@link neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface} object
      */
-    public AtractiveTermInterface getAtractiveTerm();
+    public AttractiveTermInterface getAttractiveTerm();
 
     /**
      * <p>
@@ -1605,12 +1596,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getAtractiveTermNumber.
+     * getAttractiveTermNumber.
      * </p>
      *
      * @return a int
      */
-    public int getAtractiveTermNumber();
+    public int getAttractiveTermNumber();
 
     /**
      * <p>

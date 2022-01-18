@@ -125,7 +125,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                     + K3 * Math.pow((temp - tmi), 3));
 
             double LNFUG_ICE = LNFUG_ICEREF + (VM * 100000 * (pres - 1.0) / (R * temp));
-            fugasityCoeffisient = Math.exp(LNFUG_ICE);
+            fugacityCoefficient = Math.exp(LNFUG_ICE);
         } else {
             for (int structure = 0; structure < 2; structure++) {
                 hydrateStructure = structure;
@@ -163,25 +163,25 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                             + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure));
                     // tempfugcoef = refWaterFugacity * Math.exp(val + calcDeltaChemPot(phase,
                     // numberOfComps, temp, pres, hydrateStruct) + wateralphaRef) / (pres);
-                    fugasityCoeffisient = alphaWater * Math.exp(val
+                    fugacityCoefficient = alphaWater * Math.exp(val
                             + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure)
                             + wateralphaRef) / pres;
 
-                    if (fugasityCoeffisient < maxFug) {
-                        maxFug = fugasityCoeffisient;
+                    if (fugacityCoefficient < maxFug) {
+                        maxFug = fugacityCoefficient;
 
                         stableStructure = hydrateStructure;
                     }
                 } else {
-                    fugasityCoeffisient = 1e50;
+                    fugacityCoefficient = 1e50;
                 }
             }
-            fugasityCoeffisient = maxFug;
+            fugacityCoefficient = maxFug;
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
         hydrateStructure = stableStructure;
 
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */

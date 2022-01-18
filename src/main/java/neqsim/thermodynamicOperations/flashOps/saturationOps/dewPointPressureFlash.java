@@ -86,9 +86,9 @@ public class dewPointPressureFlash extends constantDutyTemperatureFlash {
                         system.getPhases()[0].getComponents()[i].setK(1e-40);
                     } else {
                         system.getPhases()[0].getComponents()[i].setK(Math.exp(Math.log(
-                                system.getPhases()[1].getComponents()[i].getFugasityCoeffisient())
+                                system.getPhases()[1].getComponents()[i].getFugacityCoefficient())
                                 - Math.log(system.getPhases()[0].getComponents()[i]
-                                        .getFugasityCoeffisient())));
+                                        .getFugacityCoefficient())));
                     }
                     system.getPhases()[1].getComponents()[i]
                             .setK(system.getPhases()[0].getComponents()[i].getK());

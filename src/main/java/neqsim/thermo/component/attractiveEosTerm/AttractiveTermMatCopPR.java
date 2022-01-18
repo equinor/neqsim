@@ -1,16 +1,16 @@
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  * <p>
- * AtractiveTermMatCopPR class.
+ * AttractiveTermMatCopPR class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class AtractiveTermMatCopPR extends AtractiveTermPr {
+public class AttractiveTermMatCopPR extends AttractiveTermPr {
     private static final long serialVersionUID = 1000;
 
     double orgpar = 0.0;
@@ -18,12 +18,12 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
 
     /**
      * <p>
-     * Constructor for AtractiveTermMatCopPR.
+     * Constructor for AttractiveTermMatCopPR.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
-    public AtractiveTermMatCopPR(ComponentEosInterface component) {
+    public AttractiveTermMatCopPR(ComponentEosInterface component) {
         super(component);
         m = (0.37464 + 1.54226 * component.getAcentricFactor()
                 - 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
@@ -42,13 +42,13 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
 
     /**
      * <p>
-     * Constructor for AtractiveTermMatCopPR.
+     * Constructor for AttractiveTermMatCopPR.
      * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
      */
-    public AtractiveTermMatCopPR(ComponentEosInterface component, double[] params) {
+    public AttractiveTermMatCopPR(ComponentEosInterface component, double[] params) {
         this(component);
         System.arraycopy(params, 0, this.parameters, 0, params.length);
         orgpar = parameters[0];
@@ -70,15 +70,15 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
 
     /** {@inheritDoc} */
     @Override
-    public AtractiveTermMatCopPR clone() {
-        AtractiveTermMatCopPR atractiveTerm = null;
+    public AttractiveTermMatCopPR clone() {
+        AttractiveTermMatCopPR attractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermMatCopPR) super.clone();
+            attractiveTerm = (AttractiveTermMatCopPR) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
 
-        return atractiveTerm;
+        return attractiveTerm;
     }
 
     /** {@inheritDoc} */

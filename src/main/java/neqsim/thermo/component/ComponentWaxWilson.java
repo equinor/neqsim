@@ -49,8 +49,8 @@ public class ComponentWaxWilson extends ComponentSolid {
     @Override
     public double fugcoef(PhaseInterface phase1) {
         if (!isWaxFormer()) {
-            // fugasityCoeffisient = 1.0e30;
-            // logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+            // fugacityCoefficient = 1.0e30;
+            // logFugacityCoefficient = Math.log(fugacityCoefficient);
             return 1.0e30;
         }
         return fugcoef2(phase1);
@@ -65,7 +65,7 @@ public class ComponentWaxWilson extends ComponentSolid {
         refPhase.getComponent(0).fugcoef(refPhase);
 
         double liquidPhaseFugacity =
-                refPhase.getComponent(0).getFugasityCoefficient() * refPhase.getPressure();
+                refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
         // calculating and setting heat of fusion
         double Tf = 374.5 + 0.2617 * getMolarMass() - 20.172 / getMolarMass();
@@ -84,7 +84,7 @@ public class ComponentWaxWilson extends ComponentSolid {
         double deltaSolVol = (solMolVol - liqMolVol);
 
         // calculating activity coefficient according to Wilson
-        double solidActivityCoefficient = getWilsonActivityCoeffisient(phase1);
+        double solidActivityCoefficient = getWilsonActivityCoefficient(phase1);
         // SolidFug = getx() * liquidPhaseFugacity * Math.exp((-getHeatOfFusion() / (R *
         // phase1.getTemperature()) * (1.0 - phase1.getTemperature() /
         // getTriplePointTemperature())) );
@@ -99,20 +99,20 @@ public class ComponentWaxWilson extends ComponentSolid {
                         - deltaSolVol * (1.0 - phase1.getPressure())
                                 / (R * phase1.getTemperature()));
 
-        fugasityCoeffisient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        fugacityCoefficient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /**
      * <p>
-     * getWilsonActivityCoeffisient.
+     * getWilsonActivityCoefficient.
      * </p>
      *
      * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
      */
-    public double getWilsonActivityCoeffisient(PhaseInterface phase1) {
+    public double getWilsonActivityCoefficient(PhaseInterface phase1) {
         double sum1 = 0.0;
         double sum2 = 0.0;
         double tempSum = 0.0;

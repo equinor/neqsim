@@ -221,7 +221,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         double val = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             val += getComponent(i).getNumberOfMolesInPhase()
-                    * (getComponent(i).getLogFugasityCoeffisient());
+                    * (getComponent(i).getLogFugacityCoefficient());
         }
         return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
     }

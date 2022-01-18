@@ -144,10 +144,10 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     @Override
     public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
-        fugasityCoeffisient =
+        fugacityCoefficient =
                 (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
                         * this.getAntoineVaporPressure(temperature) / pressure);
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /**
