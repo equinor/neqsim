@@ -56,7 +56,7 @@ public class SystemDefault extends SystemThermo {
     }
 
     /** {@inheritDoc} */
-    public Double[] getFluidProperties() {
+    public SystemProperties getProperties() {
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
 }
