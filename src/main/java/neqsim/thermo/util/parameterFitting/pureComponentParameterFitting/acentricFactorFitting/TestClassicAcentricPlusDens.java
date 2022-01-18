@@ -58,9 +58,8 @@ public class TestClassicAcentricPlusDens {
                 // testSystem.useVolumeCorrection(false);
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 // testSystem.createDatabase(true);
-                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
+                double standardDeviation1[] = {0.1};
                 double val = Double.parseDouble(dataSet.getString("VapourPressure"));
                 double stddev = val / 100.0;
                 double logVal = Math.log(val);
@@ -101,9 +100,8 @@ public class TestClassicAcentricPlusDens {
                 testSystem.setMixingRule(1);
                 logger.info("adding2....");
                 double dens = Double.parseDouble(dataSet.getString("liquiddensity"));
-                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 function.setInitialGuess(guess);
@@ -139,9 +137,8 @@ public class TestClassicAcentricPlusDens {
                 testSystem.init(0);
                 testSystem.setMixingRule(1);
                 double dens = Double.parseDouble(dataSet.getString("gasdensity"));
-                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
-                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
-                                                     // pressure
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 function.setInitialGuess(guess);

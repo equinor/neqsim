@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 /**
- * <p>TestViscosityFit class.</p>
+ * <p>
+ * TestViscosityFit class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,7 +23,9 @@ public class TestViscosityFit {
     static Logger logger = LogManager.getLogger(TestViscosityFit.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -53,7 +57,7 @@ public class TestViscosityFit {
                 double temp = Double.parseDouble(dataSet.getString("Temperature"));
                 testSystem.setTemperature(temp);
                 testSystem.init(0);
-                double sample1[] = {temp}; // temperature
+                double sample1[] = {temp};
                 double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(Double.parseDouble(dataSet.getString("Viscosity")),

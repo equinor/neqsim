@@ -77,8 +77,8 @@ public class TestBinaryHVParameterFittingToDewPointData {
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("pressure")));
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; 
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
+                double standardDeviation1[] = {0.01};
                 SampleValue sample = new SampleValue(testSystem.getTemperature(),
                         testSystem.getTemperature() / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);

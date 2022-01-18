@@ -73,7 +73,7 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
                 // testSystem.setMixingRule(7);
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
-                double sample1[] = {testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getTemperature()};
                 double standardDeviation1[] = {0.01};
                 double val = Double.parseDouble(dataSet.getString("x-glyinhc"));
                 double sdev = val / 100.0;
@@ -110,8 +110,8 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
                 testSystem.addComponent("MEG", 10.0);
                 testSystem.init(0);
                 testSystem.setMixingRule(4);
-                double sample1[] = {testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; 
+                double sample1[] = {testSystem.getTemperature()};
+                double standardDeviation1[] = {0.01};
                 double val = Double.parseDouble(dataSet.getString("x-hcinglyc"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);

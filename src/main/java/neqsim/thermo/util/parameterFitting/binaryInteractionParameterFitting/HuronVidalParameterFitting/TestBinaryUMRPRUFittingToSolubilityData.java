@@ -56,7 +56,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] = {0.01};
 
                 SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),
@@ -92,7 +92,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] = {0.01};
 
                 SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),
@@ -128,7 +128,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] = {0.01};
 
                 SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),
@@ -164,7 +164,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] = {0.01};
 
                 SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),
@@ -200,7 +200,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] = {0.01};
 
                 SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),
@@ -236,7 +236,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] = {0.01};
 
                 SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),
@@ -272,7 +272,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] = {0.01};
 
                 SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("x1")),

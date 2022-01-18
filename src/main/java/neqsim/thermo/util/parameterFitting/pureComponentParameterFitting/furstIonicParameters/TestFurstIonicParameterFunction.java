@@ -73,7 +73,7 @@ public class TestFurstIonicParameterFunction {
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.init(0);
-                double sample1[] = {x2 / 0.01802}; // temperature
+                double sample1[] = {x2 / 0.01802};
                 double standardDeviation1[] = {0.01};
                 double osmcoef = Double.parseDouble(dataSet.getString("OsmoticCoefficient"));
 
@@ -118,7 +118,7 @@ public class TestFurstIonicParameterFunction {
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.init(0);
-                double sample1[] = {x2 / 0.01802}; // temperature
+                double sample1[] = {x2 / 0.01802};
                 double standardDeviation1[] = {0.01};
                 // SampleValue sample = new
                 // SampleValue(Double.parseDouble(dataSet.getString("OsmoticCoefficient")),
@@ -153,7 +153,7 @@ public class TestFurstIonicParameterFunction {
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(7);
                 testSystem.init(0);
-                double sample1[] = {x2 / 0.01802}; // temperature
+                double sample1[] = {x2 / 0.01802};
                 double standardDeviation1[] = {0.01};
                 // SampleValue sample = new
                 // SampleValue(Double.parseDouble(dataSet.getString("OsmoticCoefficient")),
