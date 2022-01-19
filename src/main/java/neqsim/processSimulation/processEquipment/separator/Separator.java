@@ -49,9 +49,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
     /**
-     * <p>
      * Constructor for Separator.
-     * </p>
      */
     public Separator() {
         super();
@@ -59,9 +57,17 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>
+     * Constructur for Separator.
+     * 
+     * @param name Name of separator
+     */
+    public Separator(String name) {
+        this();
+        this.setName(name);
+    }
+
+    /**
      * Constructor for Separator.
-     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
@@ -72,9 +78,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * <p>
      * Constructor for Separator.
-     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
