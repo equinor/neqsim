@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestCPA class.</p>
+ * <p>
+ * TestCPA class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,7 +23,9 @@ public class TestCPA {
     static Logger logger = LogManager.getLogger(TestCPA.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -45,7 +49,7 @@ public class TestCPA {
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
 
                 // testSystem.createDatabase(true);
-                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
                 testSystem.setTemperature(sample1[0]);
                 double standardDeviation1[] = {0.1};
                 double val = Double.parseDouble(dataSet.getString("VapourPressure"));
@@ -87,7 +91,7 @@ public class TestCPA {
                 // SystemInterface testSystem = new SystemSrkEos(280, 0.001);
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
-                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
                 testSystem.setTemperature(sample1[0]);
                 testSystem.init(0);
                 testSystem.setMixingRule(1);

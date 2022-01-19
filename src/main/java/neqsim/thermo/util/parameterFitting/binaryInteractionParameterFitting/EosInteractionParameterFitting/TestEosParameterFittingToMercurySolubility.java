@@ -64,7 +64,7 @@ public class TestEosParameterFittingToMercurySolubility {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")) + 2);
                 testSystem.setMixingRule(2);
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] = {0.13};
                 double x1 = Double.parseDouble(dataSet.getString("x1"));
                 SampleValue sample = new SampleValue(x1, x1 / 100.0, sample1, standardDeviation1);

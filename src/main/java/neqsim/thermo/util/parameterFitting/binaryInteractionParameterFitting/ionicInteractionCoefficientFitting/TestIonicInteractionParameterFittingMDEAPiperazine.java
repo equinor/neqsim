@@ -63,9 +63,8 @@ public class TestIonicInteractionParameterFittingMDEAPiperazine {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
-                        / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
-                                                      // pressure
+                        / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()};
+                double standardDeviation1[] = {0.01};
                 double stddev = pressure;// Double.parseDouble(dataSet.getString("StandardDeviation"))
                 SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
                 function.setInitialGuess(guess);

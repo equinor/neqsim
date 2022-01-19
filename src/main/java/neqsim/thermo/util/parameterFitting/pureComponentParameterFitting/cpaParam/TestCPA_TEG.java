@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 /**
- * <p>TestCPA_TEG class.</p>
+ * <p>
+ * TestCPA_TEG class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,7 +23,9 @@ public class TestCPA_TEG {
     static Logger logger = LogManager.getLogger(TestCPA_TEG.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -61,8 +65,8 @@ public class TestCPA_TEG {
                 double temp = testSystem.getTemperature();
                 double val = testSystem.getPressure();
 
-                double sample1[] = {temp}; // temperature
-                double standardDeviation1[] = {0.1};                                                    
+                double sample1[] = {temp};
+                double standardDeviation1[] = {0.1};
                 double stddev = val / 50.0;
                 double logVal = Math.log(val);
                 SampleValue sample = new SampleValue(val, stddev, sample1, standardDeviation1);
@@ -96,7 +100,7 @@ public class TestCPA_TEG {
                 // testSystem.init(0);
                 double dens = Double.parseDouble(dataSet.getString("Density"));
                 // double dens = Double.parseDouble(dataSet.getString("Density"));
-                double sample1[] = {temp}; // temperature
+                double sample1[] = {temp};
                 double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
@@ -132,7 +136,7 @@ public class TestCPA_TEG {
                 // testSystem.init(0);
                 double dens = Double.parseDouble(dataSet.getString("HeatCapacityCp"));
                 // double dens = Double.parseDouble(dataSet.getString("Density"));
-                double sample1[] = {temp}; // temperature
+                double sample1[] = {temp};
                 double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);

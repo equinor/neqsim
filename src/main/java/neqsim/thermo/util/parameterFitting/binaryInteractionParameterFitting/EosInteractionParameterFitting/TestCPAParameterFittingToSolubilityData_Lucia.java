@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestCPAParameterFittingToSolubilityData_Lucia class.</p>
+ * <p>
+ * TestCPAParameterFittingToSolubilityData_Lucia class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -22,7 +24,9 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
             LogManager.getLogger(TestCPAParameterFittingToSolubilityData_Lucia.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -79,7 +83,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
                 // testSystem.createDatabase(true);
                 testSystem.setMixingRule(7);
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] = {0.01};
                 double val = Double.parseDouble(dataSet.getString("L2"));
                 double sdev = val / 100.0;
@@ -150,8 +154,8 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
                 testSystem.init(0);
                 testSystem.setMixingRule(7);
 
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.01}; 
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
+                double standardDeviation1[] = {0.01};
                 double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
