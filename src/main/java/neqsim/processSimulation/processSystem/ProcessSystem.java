@@ -66,6 +66,25 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      */
     public void add(ProcessEquipmentInterface operation) {
+        ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
+
+        for (ProcessEquipmentInterface unit : units) {
+            if (unit == operation) {
+                return;
+            }
+        }
+
+        if (getAllUnitNames().contains(operation.getName())) {
+            String currClass = operation.getClass().getSimpleName();
+            int num = 1;
+            for (ProcessEquipmentInterface unit : units) {
+                if (unit.getClass().getSimpleName().equals(currClass)) {
+                    num++;
+                }
+            }
+            operation.setName(currClass + Integer.toString(num));
+        }
+
         getUnitOperations().add(operation);
         if (operation instanceof ModuleInterface) {
             ((ModuleInterface) operation).initializeModule();
@@ -594,16 +613,15 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
      */
     public static ProcessSystem open(String filePath) {
-        ProcessSystem tempSystem = null;
         try (ObjectInputStream objectinputstream =
                 new ObjectInputStream(new FileInputStream(filePath))) {
-            tempSystem = (ProcessSystem) objectinputstream.readObject();
+            return (ProcessSystem) objectinputstream.readObject();
             // logger.info("process file open ok: " + filePath);
         } catch (Exception e) {
             // logger.error(e.toString());
             e.printStackTrace();
         }
-        return tempSystem;
+        return null;
     }
 
     /**
