@@ -2,6 +2,7 @@ package neqsim.processSimulation.util.monitor;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.jfree.ui.about.SystemProperties;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -24,6 +25,8 @@ public class Fluid {
 
     public Map<String, Map<String, Double>> definedComponent;
     public Map<String, Map<String, Double>> oilComponent;
+
+    public SystemProperties properties;
 
     /**
      * <p>
@@ -72,6 +75,8 @@ public class Fluid {
         massDensity = inputFluid.getDensity("kg/m3");
         massflow = inputFluid.getFlowRate("kg/hr");
         volumeFlow = inputFluid.getFlowRate("m3/hr");
+
+        // properties = inputFluid.getProperties();
     }
 
     /**
@@ -101,4 +106,6 @@ public class Fluid {
      * </p>
      */
     public void print() {}
+
+
 }
