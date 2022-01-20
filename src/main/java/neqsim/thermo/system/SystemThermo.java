@@ -5453,4 +5453,11 @@ abstract class SystemThermo implements SystemInterface {
     public void setForcePhaseTypes(boolean forcePhaseTypes) {
         this.forcePhaseTypes = forcePhaseTypes;
     }
+
+    /** @{inheritDoc} */
+    public SystemProperties getProperties() {
+        SystemProperties prop = new SystemProperties(this);
+
+        return prop;
+    }
 }

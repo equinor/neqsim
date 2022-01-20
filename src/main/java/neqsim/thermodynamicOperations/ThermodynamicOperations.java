@@ -1917,9 +1917,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
     }
 
-    public CalculationResult propertyFlash(List<Double> Spec1, List<Double> Spec2,
-            SystemInterface fluid, int FlashMode, List<String> components,
-            List<List<Double>> onlineFractions) {
+    public CalculationResult propertyFlash(List<Double> Spec1, List<Double> Spec2, int FlashMode,
+            List<String> components, List<List<Double>> onlineFractions) {
 
         Double[][] fluidProperties = new Double[Spec1.size()][SystemProperties.nCols]; // 70 cols
         String[] calculationError = new String[Spec1.size()];
@@ -1960,33 +1959,33 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                 }
 
                 double pressureInPa = Sp1 / 1e5;
-                fluid.setPressure(pressureInPa);
+                this.system.setPressure(pressureInPa);
 
                 if (FlashMode == 1) {
-                    fluid.setTemperature(Sp2);
+                    this.system.setTemperature(Sp2);
                     this.TPflash();
-                    fluid.init(2);
-                    fluid.initPhysicalProperties();
+                    this.system.init(2);
+                    this.system.initPhysicalProperties();
                 } else if (FlashMode == 2) {
                     this.PHflash(Sp2, "J/mol");
-                    fluid.init(2);
-                    fluid.initPhysicalProperties();
+                    this.system.init(2);
+                    this.system.initPhysicalProperties();
                 } else if (FlashMode == 3) {
                     this.PSflash(Sp2, "J/molK");
-                    fluid.init(2);
-                    fluid.initPhysicalProperties();
+                    this.system.init(2);
+                    this.system.initPhysicalProperties();
                 }
 
-                int numberOfMole = Math.round((float) fluid.getNumberOfMoles());
+                int numberOfMole = Math.round((float) this.system.getNumberOfMoles());
 
                 if (numberOfMole != 1) {
-                    calculationError[t] = "Number of moles is " + fluid.getNumberOfMoles()
+                    calculationError[t] = "Number of moles is " + this.system.getNumberOfMoles()
                             + " and not 1. Check input fragments.";
-                    logger.info("Number of moles is " + fluid.getNumberOfMoles()
+                    logger.info("Number of moles is " + this.system.getNumberOfMoles()
                             + " and not 1. Check input fragments.", t);
                     continue;
                 }
-                SystemProperties a = fluid.getProperties();
+                SystemProperties a = this.system.getProperties();
 
                 fluidProperties[t] = a.values;
             } catch (Exception ex) {

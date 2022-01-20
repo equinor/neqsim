@@ -1,8 +1,6 @@
 package neqsim.api.ioc;
 
 import neqsim.api.ioc.exceptions.NeqSimUnsupportedFluid;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 
@@ -16,25 +14,12 @@ public class FluidProperties {
 
     public CalculationResult doCalculation(CalcRequest req)
             throws NeqSimException, NeqSimUnsupportedFluid {
-        SystemInterface fluid;
 
-        if (req.fluid == null) {
-            fluid = new SystemSrkEos();
-            NeqSimFluidManager.addComponents(req.fn, fluid);
-            if (req.isStaticFractions() && req.fractions != null && !req.fractions.isEmpty()) {
-                fluid.setMolarComposition(NeqSimFluidManager.getPreparedFractions(req.fn,
-                        req.components != null ? req.components.toArray(new String[0]) : null,
-                        req.getFractionsAsArray(), false));
-            }
-        } else {
-            fluid = req.fluid;
-        }
-
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+        ThermodynamicOperations ops = new ThermodynamicOperations(req.fluid);
         if (req.isStaticFractions()) {
-            return ops.propertyFlash(req.Sp1, req.Sp2, fluid, req.FlashMode, null, null);
+            return ops.propertyFlash(req.Sp1, req.Sp2, req.FlashMode, null, null);
         } else {
-            return ops.propertyFlash(req.Sp1, req.Sp2, fluid, req.FlashMode, req.components,
+            return ops.propertyFlash(req.Sp1, req.Sp2, req.FlashMode, req.components,
                     req.onlineFractions);
         }
     }

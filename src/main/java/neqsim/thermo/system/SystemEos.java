@@ -28,11 +28,4 @@ abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
     public SystemEos(double T, double P) {
         super(T, P);
     }
-
-    /** @{inheritDoc} */
-    public SystemProperties getProperties() {
-        SystemProperties prop = new SystemProperties(this);
-
-        return prop;
-    }
 }
