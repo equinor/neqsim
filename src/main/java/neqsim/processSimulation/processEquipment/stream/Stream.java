@@ -7,6 +7,7 @@ package neqsim.processSimulation.processEquipment.stream;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.standards.gasQuality.Standard_ISO6976;
+import neqsim.standards.gasQuality.Standard_ISO6976_2016;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -489,9 +490,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public double GCV() {
         Standard_ISO6976 standard = new Standard_ISO6976(thermoSystem.clone(), 0, 15.55, "volume");
         standard.setReferenceState("real");
-        standard.setReferenceType("molar");
         standard.calculate();
-        return standard.getValue("GCV") * 1.0e3 / 42.2949;
+        return standard.getValue("GCV") * 1.0e3;
     }
 
     /** {@inheritDoc} */
@@ -499,9 +499,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public double LCV() {
         Standard_ISO6976 standard = new Standard_ISO6976(thermoSystem.clone(), 0, 15.55, "volume");
         standard.setReferenceState("real");
-        standard.setReferenceType("molar");
         standard.calculate();
-        return standard.getValue("LCV") * 1.0e3 / 42.2949;
+        return standard.getValue("InferiorCalorificValue") * 1.0e3;
     }
 
     /**

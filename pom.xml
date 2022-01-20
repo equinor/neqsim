@@ -48,6 +48,7 @@
 			<groupId>colt</groupId>
 			<artifactId>colt</artifactId>
 			<version>1.2.0</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-lang</groupId>
@@ -73,6 +74,7 @@
 			<groupId>com.lowagie</groupId>
 			<artifactId>itext</artifactId>
 			<version>1.4.8</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -88,6 +90,7 @@
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
 			<version>1.5.1</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.matrix-toolkits-java</groupId>
@@ -99,16 +102,19 @@
 			<groupId>edu.ucar</groupId>
 			<artifactId>netcdf4</artifactId>
 			<version>4.6.16.1</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.ojalgo</groupId>
 			<artifactId>ojalgo</artifactId>
 			<version>48.4.2</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>edu.wisc.ssec</groupId>
 			<artifactId>visad</artifactId>
 			<version>2.0-20130124</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	<build>
