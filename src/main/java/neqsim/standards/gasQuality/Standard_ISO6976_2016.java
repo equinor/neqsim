@@ -224,6 +224,9 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         if (returnParameter.equals("GCV")) {
             returnParameter = "SuperiorCalorificValue";
         }
+        if (returnParameter.equals("LCV")) {
+            returnParameter = "InferiorCalorificValue";
+        }
 
         double returnValue = 0.0;
 
