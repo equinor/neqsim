@@ -7,7 +7,7 @@ public class SystemProperties {
     public Double[] values;
     protected String[] names;
 
-    final int nCols = 70;
+    public static final int nCols = 70;
 
     public SystemProperties(Double[] values, String[] names) {
         this.names = names;
