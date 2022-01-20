@@ -1917,6 +1917,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
     }
 
+    /**
+     * 
+     * @param Spec1
+     * @param Spec2
+     * @param FlashMode 1 - TP 2 - PH 3 - PS
+     * @param components
+     * @param onlineFractions
+     * @return
+     */
     public CalculationResult propertyFlash(List<Double> Spec1, List<Double> Spec2, int FlashMode,
             List<String> components, List<List<Double>> onlineFractions) {
 
