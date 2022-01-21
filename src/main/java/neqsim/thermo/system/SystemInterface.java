@@ -89,7 +89,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void setComponentNameTag(String nameTag);
 
     /**
-     * add components to a fluid. If component already exists, it will be added to the component
+     * add components to a fluid. If component already exists, nothing changes.
      *
      * @param names Names of the components to be added. See NeqSim database for available
      *        components in the database.
@@ -97,6 +97,19 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     default public void addComponents(String[] names) {
         for (int i = 0; i < names.length; i++) {
             addComponent(names[i], 0.0);
+        }
+    }
+
+
+    /**
+     * add components to a fluid. If component already exists, it will be added to the component
+     * 
+     * @param names
+     * @param values
+     */
+    default public void addComponents(String[] names, double[] values) {
+        for (int i = 0; i < names.length; i++) {
+            addComponent(names[i], values[i]);
         }
     }
 
@@ -392,9 +405,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void setForcePhaseTypes(boolean forcePhaseTypes);
 
     /**
-     * <p>
-     * setEmptyFluid.
-     * </p>
+     * This method sets the flow rate of all components to zero.
+     * 
      */
     public void setEmptyFluid();
 

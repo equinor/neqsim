@@ -1936,9 +1936,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
         if (onlineFractions != null) {
             // Double tol = 5.0;
-            for (int index = 0; index < onlineFractions.size(); index++) {
+
+            for (int t = 0; t < sum.length; t++) {
                 // todo: calc sum and normalize fractions within tolerance
-                // sum[index] =
+                sum[t] = 0.0;
+                for (int comp = 0; comp < onlineFractions.size(); comp++) {
+                    sum[t] = sum[t] + onlineFractions.get(comp).get(t).doubleValue();
+                }
             }
         }
 
@@ -1952,9 +1956,16 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                         logger.info("Online fraction does not sum to 100% for datapoint {}", t);
                         continue;
                     } else {
-                        throw new java.lang.UnsupportedOperationException("Not supported yet.");
-                        // fluid.setMolarComposition(components.toArray(new String[0]),
-                        // req.getOnlineFractionsAsArray(t), true));
+                        double[] fraction = new double[onlineFractions.size()];
+
+                        for (int comp = 0; comp < onlineFractions.size(); comp++) {
+                            fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
+                        }
+                        // this.system.setTotalNumberOfMoles(100);tjhis
+                        this.system.setTotalFlowRate(100, "mole/sec");
+                        this.system.setMolarComposition(fraction);
+                        // this.system.setMolarComposition(components.toArray(new String[0]),
+                        // fraction, true);
                     }
                 }
 
@@ -1999,7 +2010,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                 fluidProperties[t] = a.values;
             } catch (Exception ex) {
                 calculationError[t] = ex.getMessage();
-                logger.warn("Single calculation failed", ex);
+                logger.error("Single calculation failed", ex);
             }
         }
 

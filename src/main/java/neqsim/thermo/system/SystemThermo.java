@@ -45,7 +45,7 @@ import neqsim.util.database.NeqSimDataBase;
  */
 
 abstract class SystemThermo implements SystemInterface {
-    private static final long serialVersionUID = 1000;// implements System_Interface{
+    private static final long serialVersionUID = 1000;
     // Class variables
 
     private boolean implementedTemperatureDeriativesofFugacity = true;
@@ -1155,21 +1155,13 @@ abstract class SystemThermo implements SystemInterface {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * add a component to a fluid. If component already exists, it will be added to the component
-     */
+    /** {@inheritDoc} */
     @Override
     public void addComponent(String name) {
         addComponent(name, 0.0);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * add a component to a fluid. If component already exists, it will be added to the component
-     */
+    /** {@inheritDoc} */
     @Override
     public void addComponent(String componentName, double moles) {
         int index = 0;
@@ -1179,11 +1171,12 @@ abstract class SystemThermo implements SystemInterface {
             if (componentNames.get(p).equals(componentName)) {
                 addForFirstTime = false;
                 index = p;
+                break;
             }
         }
 
         if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName) && addForFirstTime) {
-            // logger.error("No component with name: " + componentName + " in database");
+            logger.error("No component with name: " + componentName + " in database");
             return;
         }
 
@@ -1299,11 +1292,7 @@ abstract class SystemThermo implements SystemInterface {
         numberOfComponents--;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * This method set the flow rate of all components to zero.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setEmptyFluid() {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
@@ -1315,7 +1304,7 @@ abstract class SystemThermo implements SystemInterface {
     /**
      * {@inheritDoc}
      *
-     * This method set the flow rate of all components to zero. This method is depreciated - and the
+     * This method set the flow rate of all components to zero. This method is deprecated - and the
      * setEmptyFluid method should be used.
      */
     @Override
