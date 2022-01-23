@@ -4995,24 +4995,7 @@ abstract class SystemThermo implements SystemInterface {
      */
     @Override
     public void setMolarComposition(double[] molefractions) {
-        double totalFlow = getTotalNumberOfMoles();
-        if (totalFlow < 1e-100) {
-            logger.error("Total flow can not be 0 when setting molar composition ");
-            neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
-            throw new RuntimeException(e);
-        }
-        double sum = 0;
-        for (double value : molefractions) {
-            sum += value;
-        }
-        setEmptyFluid();
-        for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
-            addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
-        }
-        for (int i = 0; i < getNumberOfPhases(); i++) {
-            init(0, i);
-        }
+        setMolarComposition(molefractions, "");
     }
 
     /**
@@ -5023,34 +5006,7 @@ abstract class SystemThermo implements SystemInterface {
      */
     @Override
     public void setMolarCompositionPlus(double[] molefractions) {
-        double totalFlow = getTotalNumberOfMoles();
-        if (totalFlow < 1e-100) {
-            logger.error("Total flow can not be 0 when setting molar composition ");
-            neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
-            throw new RuntimeException(e);
-        }
-        double sum = 0;
-        for (double value : molefractions) {
-            sum += value;
-        }
-        setEmptyFluid();
-        for (int compNumb = 0; compNumb < numberOfComponents - getCharacterization()
-                .getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
-            addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
-        }
-        int ii = 0;
-        for (int compNumb = numberOfComponents - getCharacterization().getLumpingModel()
-                .getNumberOfLumpedComponents(); compNumb < numberOfComponents; compNumb++) {
-            addComponent(compNumb, totalFlow
-                    * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(ii++)
-                    * molefractions[numberOfComponents
-                            - getCharacterization().getLumpingModel().getNumberOfLumpedComponents()]
-                    / sum);
-        }
-        for (int i = 0; i < getNumberOfPhases(); i++) {
-            init(0, i);
-        }
+        setMolarComposition(molefractions, "Plus");
     }
 
     /**
@@ -5061,31 +5017,8 @@ abstract class SystemThermo implements SystemInterface {
      */
     @Override
     public void setMolarCompositionOfPlusFluid(double[] molefractions) {
-        double totalFlow = getTotalNumberOfMoles();
-        if (totalFlow < 1e-100) {
-            logger.error("Total flow can not be 0 when setting molar composition ");
-            neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
-            throw new RuntimeException(e);
-        }
-        double sum = 0;
-        for (double value : molefractions) {
-            sum += value;
-        }
-        setEmptyFluid();
-        int compNumb = 0;
-        for (compNumb = 0; compNumb < molefractions.length - 1; compNumb++) {
-            addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
-        }
-        for (int j = 0; j < getCharacterization().getLumpingModel().getNumberOfLumpedComponents()
-                - 1; j++) {
-            // addComponent(compNumb, totalFlow * molefractions[molefractions.length - 1]
-            // * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(j) / sum);
-            compNumb++;
-        }
-        for (int i = 0; i < getNumberOfPhases(); i++) {
-            init(0, i);
-        }
+
+        setMolarComposition(molefractions, "PlusFluid");
     }
 
     /**
@@ -5448,5 +5381,57 @@ abstract class SystemThermo implements SystemInterface {
         SystemProperties prop = new SystemProperties(this);
 
         return prop;
+    }
+
+    private void setMolarComposition(double[] molefractions, String type) {
+        double totalFlow = getTotalNumberOfMoles();
+        if (totalFlow < 1e-100) {
+            logger.error("Total flow can not be 0 when setting molar composition ");
+            neqsim.util.exception.InvalidInputException e =
+                    new neqsim.util.exception.InvalidInputException();
+            throw new RuntimeException(e);
+        }
+        double sum = 0;
+        for (double value : molefractions) {
+            sum += value;
+        }
+        setEmptyFluid();
+
+        switch (type) {
+            case "PlusFluid":
+                for (int compNumb = 0; compNumb < molefractions.length - 1; compNumb++) {
+                    addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
+                }
+                for (int j = 0; j < getCharacterization().getLumpingModel()
+                        .getNumberOfLumpedComponents() - 1; j++) {
+                    // addComponent(compNumb, totalFlow * molefractions[molefractions.length - 1]
+                    // * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(j) / sum);
+                }
+                break;
+            case "Plus":
+                for (int compNumb = 0; compNumb < numberOfComponents - getCharacterization()
+                        .getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
+                    addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
+                }
+                int ii = 0;
+                for (int compNumb = numberOfComponents - getCharacterization().getLumpingModel()
+                        .getNumberOfLumpedComponents(); compNumb < numberOfComponents; compNumb++) {
+                    addComponent(compNumb, totalFlow
+                            * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(ii++)
+                            * molefractions[numberOfComponents - getCharacterization()
+                                    .getLumpingModel().getNumberOfLumpedComponents()]
+                            / sum);
+                }
+                break;
+            default:
+                for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
+                    addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
+                }
+                break;
+        }
+
+        for (int i = 0; i < getNumberOfPhases(); i++) {
+            init(0, i);
+        }
     }
 }

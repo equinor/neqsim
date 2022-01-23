@@ -1944,6 +1944,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                     sum[t] = sum[t] + onlineFractions.get(comp).get(t).doubleValue();
                 }
             }
+
+            if (this.system.getNumberOfMoles() == 0) {
+                this.system.setTotalNumberOfMoles(100);
+            }
         }
 
         for (int t = 0; t < Spec1.size(); t++) {
@@ -1962,7 +1966,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                             fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
                         }
                         // this.system.setTotalNumberOfMoles(100);tjhis
-                        this.system.setTotalFlowRate(100, "mole/sec");
+                        // this.system.setTotalFlowRate(100, "mole/sec");
                         this.system.setMolarComposition(fraction);
                         // this.system.setMolarComposition(components.toArray(new String[0]),
                         // fraction, true);
