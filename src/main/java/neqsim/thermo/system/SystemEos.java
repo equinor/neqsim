@@ -12,20 +12,20 @@ abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
      * <p>
      * Constructor for SystemEos.
      * </p>
-     *
-     * @param T a double
-     * @param P a double
      */
-    public SystemEos(double T, double P) {
-        super(T, P);
+    public SystemEos() {
+        super();
     }
 
     /**
      * <p>
      * Constructor for SystemEos.
      * </p>
+     *
+     * @param T a double
+     * @param P a double
      */
-    public SystemEos() {
-        super();
+    public SystemEos(double T, double P) {
+        super(T, P);
     }
 }
