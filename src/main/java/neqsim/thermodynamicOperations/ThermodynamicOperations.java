@@ -1934,8 +1934,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         Double[] sum = new Double[Spec1.size()];
 
         if (onlineFractions != null) {
-            // Double tol = 5.0;
-
             for (int t = 0; t < sum.length; t++) {
                 // todo: calc sum and normalize fractions within tolerance
                 sum[t] = 0.0;
@@ -1952,7 +1950,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         for (int t = 0; t < Spec1.size(); t++) {
             try {
                 if (onlineFractions != null) {
-                    if (sum[t] != 1 && sum[t] != 100) {
+                    if (!((sum[t] >= 0.95 && sum[t] <= 1.05) || (sum[t] >= 95 && sum[t] <= 105))) {
                         calculationError[t] =
                                 "Sum of fractions must be equal to 1 or 100, currently ("
                                         + String.valueOf(sum[t]) + ")";
