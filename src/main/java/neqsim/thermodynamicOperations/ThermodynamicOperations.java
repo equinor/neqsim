@@ -1943,7 +1943,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             }
 
             if (this.system.getNumberOfMoles() == 0) {
-                this.system.setTotalNumberOfMoles(100);
+                this.system.setTotalNumberOfMoles(1);
             }
         }
 
@@ -2011,7 +2011,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                 fluidProperties[t] = a.values;
             } catch (Exception ex) {
                 calculationError[t] = ex.getMessage();
-                logger.error("Single calculation failed", ex);
+                logger.error(ex.getMessage());
             }
         }
 

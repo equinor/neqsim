@@ -500,6 +500,28 @@ public class ThermodynamicOperationsTest {
     }
 
     @Test
+    void testpropertyFlashOnlineSingle() {
+        String[] components = {"nitrogen"};
+        double[] fractions = {0.98};
+        int len = 10;
+        List<List<Double>> onlineFractions = createDummyRequest(fractions, len);
+
+        SystemInterface fluid = new SystemSrkEos(298, 1.0);
+        fluid.addComponents(components);
+        fluid.addComponent("oxygen");
+
+        Double[] pressure =
+                new Double[] {22.1, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 22.7};
+        Double[] temperature =
+                new Double[] {288.1, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7};
+
+        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+        CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature),
+                1, Arrays.asList(components), onlineFractions);
+        Assertions.assertEquals(s.fluidProperties.length, len);
+    }
+
+    @Test
     void testRun() {
 
     }
