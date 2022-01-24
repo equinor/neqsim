@@ -1299,11 +1299,7 @@ abstract class SystemThermo implements SystemInterface {
         numberOfComponents--;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * This method set the flow rate of all components to zero.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setEmptyFluid() {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
