@@ -19,7 +19,7 @@ public class IsNaNException extends neqsim.util.exception.ThermoException {
     public IsNaNException() {}
 
     /**
-     * Constructs an <code>VolumeIsNaNException</code> with the specified detail message.
+     * Constructs an <code>IsNaNException</code> with the specified detail message.
      *
      * @param msg the detail message.
      */

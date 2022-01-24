@@ -19,7 +19,7 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
     public InvalidInputException() {}
 
     /**
-     * Constructs an <code>VolumeIsNaNException</code> with the specified detail message.
+     * Constructs an <code>InvalidInputException</code> with the specified detail message.
      *
      * @param msg the detail message.
      */
