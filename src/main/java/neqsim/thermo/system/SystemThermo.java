@@ -5394,7 +5394,7 @@ abstract class SystemThermo implements SystemInterface {
 
         switch (type) {
             case "PlusFluid":
-                for (int compNumb = 0; compNumb < molefractions.length - 1; compNumb++) {
+                for (int compNumb = 0; compNumb <= molefractions.length - 1; compNumb++) {
                     addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
                 }
                 for (int j = 0; j < getCharacterization().getLumpingModel()
@@ -5404,22 +5404,24 @@ abstract class SystemThermo implements SystemInterface {
                 }
                 break;
             case "Plus":
-                for (int compNumb = 0; compNumb < numberOfComponents - getCharacterization()
+                for (int compNumb = 0; compNumb < this.numberOfComponents - getCharacterization()
                         .getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
                     addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
                 }
                 int ii = 0;
-                for (int compNumb = numberOfComponents - getCharacterization().getLumpingModel()
-                        .getNumberOfLumpedComponents(); compNumb < numberOfComponents; compNumb++) {
+                for (int compNumb = this.numberOfComponents - getCharacterization()
+                        .getLumpingModel()
+                        .getNumberOfLumpedComponents(); compNumb < this.numberOfComponents; compNumb++) {
                     addComponent(compNumb, totalFlow
                             * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(ii++)
-                            * molefractions[numberOfComponents - getCharacterization()
+                            * molefractions[this.numberOfComponents - getCharacterization()
                                     .getLumpingModel().getNumberOfLumpedComponents()]
                             / sum);
                 }
                 break;
             default:
-                for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
+                // NB! It will allow setting composition for only the first items.
+                for (int compNumb = 0; compNumb <= molefractions.length - 1; compNumb++) {
                     addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
                 }
                 break;
