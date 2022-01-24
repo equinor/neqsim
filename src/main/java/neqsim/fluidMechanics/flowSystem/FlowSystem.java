@@ -102,7 +102,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         }
 
         totalNumberOfNodes = this.calcTotalNumberOfNodes();
-        System.out.println("total number of nodes : " + totalNumberOfNodes);
+        // System.out.println("total number of nodes : " + totalNumberOfNodes);
     }
 
     /** {@inheritDoc} */
