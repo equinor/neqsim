@@ -392,9 +392,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void setForcePhaseTypes(boolean forcePhaseTypes);
 
     /**
-     * <p>
-     * setEmptyFluid.
-     * </p>
+     * Set the flow rate of all components to zero.
      */
     public void setEmptyFluid();
 
@@ -2143,9 +2141,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void setPhaseType(int phaseToChange, String phaseTypeName);
 
     /**
-     * <p>
-     * removeMoles.
-     * </p>
+     * Set the flow rate of all components to zero.
+     * 
+     * @deprecated use {@link #setEmptyFluid()} instead.
      */
     public void removeMoles();
 
