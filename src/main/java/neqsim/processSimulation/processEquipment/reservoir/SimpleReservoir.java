@@ -234,7 +234,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     public Well getOilProducer(int i) {
         return oilProducer.get(i);
     }
-    
+
     /**
      * <p>
      * Getter for the field <code>waterInjector</code>.
@@ -246,7 +246,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     public Well getWaterInjector(int i) {
         return waterInjector.get(i);
     }
-    
+
     /**
      * <p>
      * Getter for the field <code>gasInjector</code>.
@@ -298,7 +298,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         // thermoSystem.display();
         SystemInterface thermoSystem2 = thermoSystem.clone();
 
-        thermoSystem.removeMoles();// (1.0e-10);
+        thermoSystem.setEmptyFluid();// (1.0e-10);
         // thermoSystem.init(1);
         // thermoSystem.display();
         // System.out.println("number of phases " + thermoSystem.getNumberOfPhases());

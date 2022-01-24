@@ -19,7 +19,7 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
     public TooManyIterationsException() {}
 
     /**
-     * Constructs an <code>IterationException</code> with the specified detail message.
+     * Constructs an <code>TooManyIterationsException</code> with the specified detail message.
      *
      * @param msg the detail message.
      */
