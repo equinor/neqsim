@@ -346,9 +346,11 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     }
 
     /**
-     * Setter for property startPlus. NB! Deprecated and replaced by firstPlusFractionNumber?
+     * Setter for property firstPlusFractionNumber.
      *
-     * @param startPlus New value of property startPlus.
+     * @param startPlus New value of property firstPlusFractionNumber.
+     * @deprecated use {@link #setFirstPlusFractionNumber(int firstPlusFractionNumber)} instead.
+     * 
      */
     @Deprecated
     public void setStartPlus(int startPlus) {

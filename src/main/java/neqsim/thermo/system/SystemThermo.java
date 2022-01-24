@@ -1301,12 +1301,7 @@ abstract class SystemThermo implements SystemInterface {
         totalNumberOfMoles = 0.0;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * This method set the flow rate of all components to zero. This method is deprecated - and the
-     * setEmptyFluid method should be used.
-     */
+    /** {@inheritDoc} */
     @Override
     @Deprecated
     public void removeMoles() {
