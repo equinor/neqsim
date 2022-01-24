@@ -2146,6 +2146,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      * <p>
      * removeMoles.
      * </p>
+     * 
+     * @deprecated use {@link #setEmptyFluid()} instead.
+     * 
      */
     public void removeMoles();
 
