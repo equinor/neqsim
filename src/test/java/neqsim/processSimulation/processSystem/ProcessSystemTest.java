@@ -25,9 +25,13 @@ public class ProcessSystemTest {
 
     @Test
     public void testSetTimeStep() {
-        double timeStep = 10;
+        double timeStep = p.getTimeStep() * 2;
+        Assertions.assertEquals(p.getTimeStep(), timeStep / 2);
+        Assertions.assertNotEquals(p.getTimeStep(), timeStep);
+
         p.setTimeStep(timeStep);
         Assertions.assertEquals(p.getTimeStep(), timeStep);
+        Assertions.assertNotEquals(p.getTimeStep(), timeStep / 2);
     }
 
     @Test

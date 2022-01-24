@@ -90,7 +90,7 @@ public class GTSurfaceTensionFullGT {
         this.sys.setNumberOfPhases(1);
         this.sys.getPhase(0).setTotalVolume(1.0);
         this.sys.useVolumeCorrection(false);
-        this.sys.removeMoles();
+        this.sys.setEmptyFluid();
         double nv[] = new double[this.ncomp];
         for (i = 0; i < ncomp; i++) {
             nv[i] = this.rho_ph1[i] * Pa;

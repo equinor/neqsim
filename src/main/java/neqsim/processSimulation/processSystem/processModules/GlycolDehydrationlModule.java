@@ -137,7 +137,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
             this.leanTEGStreamToAbsorber = this.gasStreamToAbsorber.clone();
             this.leanTEGStreamToAbsorber.setName("lean TEG to absorber");
 
-            this.leanTEGStreamToAbsorber.getThermoSystem().removeMoles();
+            this.leanTEGStreamToAbsorber.getThermoSystem().setEmptyFluid();
             this.leanTEGStreamToAbsorber.getThermoSystem().addComponent("water",
                     leanGlycolMolarFlowRate * (1.0 - leanGlycolMolarFraction));
             this.leanTEGStreamToAbsorber.getThermoSystem().addComponent("TEG",
@@ -394,7 +394,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
          * absorbtionColumn.getMechanicalDesign().setMaxOperationPressure(
          * maxAbsorberDesignPressure); absorbtionColumn.getMechanicalDesign().calcDesign();
          */
-        this.leanTEGStreamToAbsorber.getThermoSystem().removeMoles();
+        this.leanTEGStreamToAbsorber.getThermoSystem().setEmptyFluid();
         this.leanTEGStreamToAbsorber.getThermoSystem().addComponent("methane", 1e-15);
         this.leanTEGStreamToAbsorber.getThermoSystem().addComponent("water",
                 leanGlycolMolarFlowRate * (1.0 - leanGlycolMolarFraction));
