@@ -288,7 +288,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * @param addNewComponents a boolean
      */
     public void setFluid(SystemInterface fluid1, SystemInterface fluid2, boolean addNewComponents) {
-        fluid1.removeMoles();
+        fluid1.setEmptyFluid();
         boolean addedComps = false;
         for (int i = 0; i < fluid2.getNumberOfComponents(); i++) {
             if (fluid1.getPhase(0).hasComponent(fluid2.getComponent(i).getName())) {
@@ -327,7 +327,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * @param fluid2 a {@link neqsim.thermo.system.SystemInterface} object
      */
     public void setFluid(SystemInterface fluid1, SystemInterface fluid2) {
-        fluid1.removeMoles();
+        fluid1.setEmptyFluid();
         boolean addedComps = false;
         for (int i = 0; i < fluid2.getNumberOfComponents(); i++) {
             if (fluid1.getPhase(0).hasComponent(fluid2.getComponent(i).getName())) {
