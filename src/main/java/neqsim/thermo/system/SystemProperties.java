@@ -21,7 +21,7 @@ public class SystemProperties {
         names = new String[nCols];
         int k = 0;
 
-        names[k++] = "Mix Number of Phases";
+        names[k] = "Mix Number of Phases";
         values[k] = (double) fluid.getNumberOfPhases();
         names[k++] = "Mix Pressure [Pa]";
         values[k] = fluid.getPressure("Pa");
@@ -49,9 +49,8 @@ public class SystemProperties {
         values[k] = fluid.getCp("J/molK");
         names[k++] = "Mix Heat Capacity-Cv [J/molK]";
         values[k] = fluid.getCv("J/molK");
-        // names[k++] = "Mix Gamma (Cp/Cv)";
-        // values[k] = getCp()/getCv();
         names[k++] = "Mix Gamma (Cp/Cv)";
+        // values[k] = getCp()/getCv();
         values[k] = fluid.getGamma();
         names[k++] = "Mix JT Coefficient [K/Pa]";
         values[k] = Double.NaN;
@@ -61,10 +60,6 @@ public class SystemProperties {
         values[k] = fluid.getViscosity("kg/msec");
         names[k++] = "Mix Thermal Conductivity [W/mK]";
         values[k] = fluid.getThermalConductivity("W/mK");
-        // names[k++] = "Surface Tension(N/m) between gas and oil phase** NOT USED";
-        // values[k] = getInterfacialTension("gas","oil");
-        // names[k++] = "Surface Tension(N/m) between gas and aqueous phase** NOT USED";
-        // values[k] = getInterfacialTension("gas","aqueous");
 
         // Phase properties (phase: gas=0, liquid=1, Aqueous=2)
         for (int j = 0; j < 3; j++) {
@@ -95,26 +90,21 @@ public class SystemProperties {
 
                 names[k++] = currPhaseName + "Molecular Weight [g/mol]";
                 values[k] = currPhase.getMolarMass() * 1000;
-                // names[k++] = currPhaseName + "Phase Enthalpy [J/mol]";
                 // values[k] = currPhase.getEnthalpy() /
                 // currPhase.getNumberOfMolesInPhase();
                 names[k++] = currPhaseName + "Enthalpy [J/mol]";
                 values[k] = currPhase.getEnthalpy("J/mol");
-                // names[k++] = currPhaseName + "Phase Entropy [J/molK]";
-                // values[k] = currPhase.getEntropy() / currPhase.getNumberOfMolesInPhase();
                 names[k++] = currPhaseName + "Entropy [J/molK]";
+                // values[k] = currPhase.getEntropy() / currPhase.getNumberOfMolesInPhase();
                 values[k] = currPhase.getEntropy("J/molK");
-                // names[k++] = currPhaseName + "Heat Capacity-Cp [J/molK]";
-                // values[k] = currPhase.getCp() / currPhase.getNumberOfMolesInPhase();
                 names[k++] = currPhaseName + "Heat Capacity-Cp [J/molK]";
+                // values[k] = currPhase.getCp() / currPhase.getNumberOfMolesInPhase();
                 values[k] = currPhase.getCp("J/molK");
-                // names[k++] = currPhaseName + "Phase Heat Capacity-Cv [J/molK]";
-                // values[k] = currPhase.getCv() / currPhase.getNumberOfMolesInPhase();
                 names[k++] = currPhaseName + " Heat Capacity-Cv [J/molK]";
+                // values[k] = currPhase.getCv() / currPhase.getNumberOfMolesInPhase();
                 values[k] = currPhase.getCv("J/molK");
-                // names[k++] = currPhaseName + " Phase Kappa (Cp/Cv)";
-                // values[k] = currPhase.getCp() / currPhase.getCv();
                 names[k++] = currPhaseName + " Gamma (Cp/Cv)";
+                // values[k] = currPhase.getCp() / currPhase.getCv();
                 values[k] = currPhase.getGamma();
 
                 names[k++] = currPhaseName + " JT Coefficient [K/Pa]";
@@ -125,8 +115,7 @@ public class SystemProperties {
                     names[k++] = currPhaseName + " Velocity of Sound [m/s]";
                     values[k] = Double.NaN;
                 } else {
-                    names[k++] = currPhaseName + " JT Coefficient [K/Pa]";
-                    values[k++] = currPhase.getJouleThomsonCoefficient() / 1e5;
+                    values[k] = currPhase.getJouleThomsonCoefficient() / 1e5;
                     names[k++] = currPhaseName + " Velocity of Sound [m/s]";
                     values[k] = currPhase.getSoundSpeed();
                 }
@@ -180,14 +169,14 @@ public class SystemProperties {
 
         names[k++] = "Interfacial Tension Gas/Aqueous [N/m]";
         if (fluid.hasPhaseType("gas") && fluid.hasPhaseType("aqueous")) {
-            values[k++] = fluid.getInterfacialTension("gas", "aqueous");
+            values[k] = fluid.getInterfacialTension("gas", "aqueous");
         } else {
             values[k] = Double.NaN;
         }
 
         names[k++] = "Interfacial Tension Oil/Aqueous [N/m]";
         if (fluid.hasPhaseType("oil") && fluid.hasPhaseType("aqueous")) {
-            values[k++] = fluid.getInterfacialTension("oil", "aqueous");
+            values[k] = fluid.getInterfacialTension("oil", "aqueous");
         } else {
             values[k] = Double.NaN;
         }
