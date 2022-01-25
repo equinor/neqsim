@@ -100,7 +100,7 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
         } else {
             outThermoSystem = inletStream.getFluid().clone();
         }
-        outThermoSystem.removeMoles();
+        outThermoSystem.setEmptyFluid();
 
         // SystemInterface fluid1 = outletStream.getFluid();
         // SystemInterface fluid2 = inletStream.getFluid();

@@ -125,7 +125,7 @@ public class OffshoreProcess3 {
         neqsim.thermo.system.SystemInterface coolingWaterSYstm = fluid3.clone();
         // coolingWaterSYstm.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0,
         // 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
-        coolingWaterSYstm.removeMoles();
+        coolingWaterSYstm.setEmptyFluid();
         coolingWaterSYstm.addComponent("water", 1.0);
 
         /*
