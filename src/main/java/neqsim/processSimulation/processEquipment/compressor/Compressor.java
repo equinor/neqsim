@@ -302,6 +302,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
             gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
             hinn = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
             entropy = gergProps[8] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+            densInn = getThermoSystem().getPhase(0).getDensity_GERG2008();
         }
 
         inletEnthalpy = hinn;
@@ -411,6 +412,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
                     gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
                     actualFlowRate *= gergProps[1] / z_inlet;
                     kappa = gergProps[14];
+                    z_inlet = gergProps[1];
                 }
 
                 double polytropEff =
@@ -444,8 +446,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
                     // thermoSystem.getFlowRate("m3/hr")));
                 }
                 if (surgeCheck && getAntiSurge().isActive()) {
-                    thermoSystem.setTotalNumberOfMoles(getAntiSurge().getSurgeControlFactor()
-                            * thermoSystem.getTotalNumberOfMoles());
+                	thermoSystem.setTotalFlowRate(getAntiSurge().getSurgeControlFactor()
+                    		* getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead), "Am3/hr");
                     thermoSystem.init(3);
                     fractionAntiSurge =
                             thermoSystem.getTotalNumberOfMoles() / orginalMolarFLow - 1.0;
@@ -804,13 +806,17 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * @return a double
      */
     public double getTotalWork() {
+    	double multi = 1.0;
+    	if(getAntiSurge().isActive()) {
+    		multi=1.0+getAntiSurge().getCurrentSurgeFraction();
+    	}
         if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
             double[] gergProps;
             gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
             double enth = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-            return enth - inletEnthalpy;
+            return (enth - inletEnthalpy)*multi;
         } else
-            return getThermoSystem().getEnthalpy() - inletEnthalpy;
+            return multi*(getThermoSystem().getEnthalpy() - inletEnthalpy);
     }
 
     /** {@inheritDoc} */
