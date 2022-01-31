@@ -56,8 +56,8 @@ public class TwoPhasePipeFlowVisualization extends
                 flowNodes[i][j] = new TwoPhaseFlowNodeVisualization();
             }
         }
-        System.out.println("nodes " + nodes);
-        System.out.println("times " + time);
+        // System.out.println("nodes " + nodes);
+        // System.out.println("times " + time);
     }
 
     /** {@inheritDoc} */

@@ -116,7 +116,6 @@ class SystemPrEoSTest {
     @Test
     @DisplayName("calculate compressibility of gas phase")
     public void checkCompressibility() {
-        System.out.println("gas compressibility " + testSystem.getPhase("gas").getZ());
         assertEquals(testSystem.getPhase("gas").getZ(), 0.9708455641951108, 1e-5);
     }
 
@@ -132,7 +131,6 @@ class SystemPrEoSTest {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testOps.TPflash();
         testSystem.initProperties();
-        System.out.print("enthalpy " + testSystem.getEnthalpy("kJ/kg"));
         assertEquals(testSystem.getEnthalpy("kJ/kg"), -165.60627184389855,
                 Math.abs(-165.60627184389855 / 1000.0));
     }

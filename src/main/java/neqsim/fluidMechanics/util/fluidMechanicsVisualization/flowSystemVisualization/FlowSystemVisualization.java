@@ -42,8 +42,8 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
                 flowNodes[i][j] = new FlowNodeVisualization();
             }
         }
-        System.out.println("nodes " + nodes);
-        System.out.println("times " + time);
+        // System.out.println("nodes " + nodes);
+        // System.out.println("times " + time);
     }
 
     /** {@inheritDoc} */

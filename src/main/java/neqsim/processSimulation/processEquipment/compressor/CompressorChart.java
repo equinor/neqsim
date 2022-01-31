@@ -288,13 +288,13 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
         testFluid.setTemperature(24.0, "C");
         testFluid.setPressure(48.0, "bara");
-        testFluid.setTotalFlowRate(4.5, "MSm3/day");
+        testFluid.setTotalFlowRate(1.0, "MSm3/day");
 
         Stream stream_1 = new Stream("Stream1", testFluid);
         Compressor comp1 = new Compressor(stream_1);
         comp1.setUsePolytropicCalc(true);
         // comp1.getAntiSurge().setActive(true);
-        comp1.setSpeed(12918);
+        comp1.setSpeed(11918);
 
         double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
         // double[] speed = new double[] { 1000.0, 2000.0, 3000.0, 4000.0 };
@@ -360,12 +360,19 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         // double[][] polyEff = new double[][] { { 66.8, 69.0, 66.4, 55.6 } };
         comp1.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
         comp1.getCompressorChart().setHeadUnit("kJ/kg");
+        
+         double[] surgeflow = new double[] {2789.0, 2550.0, 2500.0, 2200.0 }; 
+         double[] surgehead =
+                new double[] { 80.0, 72.0, 70.0, 65.0 };
+                comp1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeflow,
+                surgehead);
+                //comp1.getAntiSurge().setActive(true);
+                comp1.getAntiSurge().setSurgeControlFactor(1.0);
         /*
          * double[] surgeflow = new double[] { 453.2, 550.0, 700.0, 800.0 }; double[] surgehead =
          * new double[] { 6000.0, 7000.0, 8000.0, 10000.0 };
          * comp1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeflow,
-         * surgehead);
-         * 
+         * surgehead)
          * double[] stoneWallflow = new double[] { 923.2, 950.0, 980.0, 1000.0 }; double[]
          * stoneWallHead = new double[] { 6000.0, 7000.0, 8000.0, 10000.0 };
          * comp1.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallflow,
@@ -379,6 +386,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         // operations.displayResult();
 
         System.out.println("power " + comp1.getPower());
+        System.out.println("is surge " + comp1.getAntiSurge().isSurge());
         System.out.println(
                 "fraction in anti surge line " + comp1.getAntiSurge().getCurrentSurgeFraction());
         System.out.println("Polytropic head from curve:" + comp1.getPolytropicHead());
