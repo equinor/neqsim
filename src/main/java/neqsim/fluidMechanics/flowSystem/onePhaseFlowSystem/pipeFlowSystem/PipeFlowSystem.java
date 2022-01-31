@@ -35,7 +35,7 @@ public class PipeFlowSystem
 
         flowNode =
                 new neqsim.fluidMechanics.flowNode.onePhaseNode.onePhasePipeFlowNode.onePhasePipeFlowNode[totalNumberOfNodes];
-        System.out.println("nodes: " + totalNumberOfNodes);
+        // System.out.println("nodes: " + totalNumberOfNodes);
         flowNode[0] =
                 new neqsim.fluidMechanics.flowNode.onePhaseNode.onePhasePipeFlowNode.onePhasePipeFlowNode(
                         thermoSystem, this.equipmentGeometry[0]);

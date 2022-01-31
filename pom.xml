@@ -74,7 +74,6 @@
 			<groupId>com.lowagie</groupId>
 			<artifactId>itext</artifactId>
 			<version>1.4.8</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -90,7 +89,6 @@
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
 			<version>1.5.1</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.matrix-toolkits-java</groupId>
@@ -119,18 +117,18 @@
 	</dependencies>
 	<build>
 		<plugins>
-		<plugin>
-	<groupId>org.apache.maven.plugins</groupId>
-	<artifactId>maven-jar-plugin</artifactId>
-	<version>2.4</version>
-	<configuration>
-	  <archive>
-	    <manifest>
-		<mainClass>neqsim.thermo.util.benchmark.TPflash_benchmark</mainClass>
-	    </manifest>
-	  </archive>
-	</configuration>
-    </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+	  				<archive>
+	    					<manifest>
+							<mainClass>neqsim.thermo.util.benchmark.TPflash_benchmark</mainClass>
+	    					</manifest>
+	  				</archive>
+				</configuration>
+    			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>flatten-maven-plugin</artifactId>
@@ -181,7 +179,7 @@
 						<arg>-Xlint</arg>
 					</compilerArgs>
 					<showWarnings>true</showWarnings> 
-					Uncomment above to get compiler warnings -->>
+					Uncomment above to get compiler warnings -->
 				</configuration>
 			</plugin>
 			<plugin>
