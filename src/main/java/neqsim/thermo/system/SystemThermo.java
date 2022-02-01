@@ -251,6 +251,10 @@ abstract class SystemThermo implements SystemInterface {
             if (index != -1) {
                 addComponent(index, addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
             } else {
+            	if(addSystem.getPhase(0).getComponent(i).isIsTBPfraction()) {
+            		addTBPfraction(addSystem.getPhase(0).getComponent(i).getComponentName(), addSystem.getPhase(0).getComponent(i).getNumberOfmoles(), addSystem.getPhase(0).getComponent(i).getMolarMass(), addSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
+            		changeComponentName(addSystem.getPhase(0).getComponent(i).getComponentName()+"_PC", addSystem.getPhase(0).getComponent(i).getComponentName().replaceFirst("_PC", ""));
+            	}
                 addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
                         addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
             }
@@ -695,7 +699,11 @@ abstract class SystemThermo implements SystemInterface {
                     * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0 / 1.0e6;
         } else if (flowunit.equals("kg/hr")) {
             return totalNumberOfMoles * getMolarMass() * 3600.0;
-        } else if (flowunit.equals("m3/hr")) {
+        }
+        else if (flowunit.equals("kg/day")) {
+            return totalNumberOfMoles * getMolarMass() * 3600.0*24.0;
+        }
+        else if (flowunit.equals("m3/hr")) {
             // return getVolume() / 1.0e5 * 3600.0;
             initPhysicalProperties("density");
             return totalNumberOfMoles * getMolarMass() * 3600.0 / getDensity("kg/m3");
