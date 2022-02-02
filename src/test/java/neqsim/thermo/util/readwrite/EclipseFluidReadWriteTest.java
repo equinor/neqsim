@@ -88,8 +88,6 @@ class EclipseFluidReadWriteTest {
 		EclipseFluidReadWrite.setComposition(testSystem, fileA13);
 		ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 		testOps.TPflash();
-		testSystem.display();
-		testOps.TPflash();
 	}
 
 }
