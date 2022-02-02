@@ -251,12 +251,15 @@ abstract class SystemThermo implements SystemInterface {
             if (index != -1) {
                 addComponent(index, addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
             } else {
+            	/*
             	if(addSystem.getPhase(0).getComponent(i).isIsTBPfraction()) {
             		addTBPfraction(addSystem.getPhase(0).getComponent(i).getComponentName(), addSystem.getPhase(0).getComponent(i).getNumberOfmoles(), addSystem.getPhase(0).getComponent(i).getMolarMass(), addSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
             		changeComponentName(addSystem.getPhase(0).getComponent(i).getComponentName()+"_PC", addSystem.getPhase(0).getComponent(i).getComponentName().replaceFirst("_PC", ""));
             	}
                 addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
                         addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+                        */
+            	addComponent(addSystem.getComponent(i));
             }
         }
         if (addedNewComponent) {
@@ -1183,10 +1186,11 @@ abstract class SystemThermo implements SystemInterface {
     	if(inComponent.isIsTBPfraction()) {
     		addTBPfraction(inComponent.getComponentName(), inComponent.getNumberOfmoles(), inComponent.getMolarMass(), inComponent.getNormalLiquidDensity());
     		String componentName = inComponent.getComponentName();
+    		changeComponentName(componentName+"_PC", componentName.replaceFirst("_PC", ""));
     		for (int i = 0; i < numberOfPhases; i++) {
                 getPhase(i).getComponent(componentName).setAttractiveTerm(inComponent.getAttractiveTermNumber());
                 getPhase(i).getComponent(componentName).setTC(inComponent.getTC());
-                getPhase(i)..getComponent(componentName).setPC(inComponent.getPC());
+                getPhase(i).getComponent(componentName).setPC(inComponent.getPC());
                 getPhase(i).getComponent(componentName).setMolarMass(inComponent.getMolarMass());
                 getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
                 getPhase(i).getComponent(componentName).setNormalLiquidDensity(inComponent.getNormalLiquidDensity());
