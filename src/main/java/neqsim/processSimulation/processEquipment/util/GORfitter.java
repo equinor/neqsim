@@ -22,6 +22,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
     public StreamInterface inletStream = null;
     public StreamInterface outletStream = null;
     double pressure = 1.01325, temperature = 15.0;
+    private String referenceConditions = "standard"; //"actual";
 
     private double GOR = 120.0;
     String unitT = "C", unitP = "bara";
@@ -140,8 +141,10 @@ public class GORfitter extends ProcessEquipmentBaseClass {
     public void run() {
         SystemInterface tempFluid = inletStream.getThermoSystem().clone();
         double flow = tempFluid.getFlowRate("kg/sec");
-        tempFluid.setTemperature(15.0, "C");
-        tempFluid.setPressure(1.01325, "bara");
+        if(!getReferenceConditions().equals("actual")) {
+	        tempFluid.setTemperature(15.0, "C");
+	        tempFluid.setPressure(1.01325, "bara");
+	    }
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
         try {
             thermoOps.TPflash();
@@ -203,8 +206,8 @@ public class GORfitter extends ProcessEquipmentBaseClass {
         testFluid.setMixingRule(2);
         testFluid.setMultiPhaseCheck(true);
 
-        testFluid.setTemperature(24.0, "C");
-        testFluid.setPressure(48.0, "bara");
+        testFluid.setTemperature(90.0, "C");
+        testFluid.setPressure(60.0, "bara");
         testFluid.setTotalFlowRate(1e6, "kg/hr");
 
         Stream stream_1 = new Stream("Stream1", testFluid);
@@ -216,6 +219,8 @@ public class GORfitter extends ProcessEquipmentBaseClass {
         GORfitter gORFItter = new GORfitter("test", stream_1);
         gORFItter.setTemperature(15.0, "C");
         gORFItter.setPressure(1.01325, "bara");
+       // gORFItter.setReferenceConditions("actual");
+        gORFItter.setGOR(200.0);
 
         Stream stream_2 = new Stream(gORFItter.getOutStream());
 
@@ -259,4 +264,18 @@ public class GORfitter extends ProcessEquipmentBaseClass {
     public void setGOR(double gOR) {
         this.GOR = gOR;
     }
+
+	/**
+	 * @return the referenceConditions
+	 */
+	public String getReferenceConditions() {
+		return referenceConditions;
+	}
+
+	/**
+	 * @param referenceConditions the referenceConditions to set
+	 */
+	public void setReferenceConditions(String referenceConditions) {
+		this.referenceConditions = referenceConditions;
+	}
 }

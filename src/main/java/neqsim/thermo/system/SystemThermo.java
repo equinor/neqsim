@@ -234,7 +234,7 @@ abstract class SystemThermo implements SystemInterface {
      * add fluid to an existing fluid
      */
     @Override
-    public void addFluid(SystemInterface addSystem) {
+    public SystemInterface addFluid(SystemInterface addSystem) {
         boolean addedNewComponent = false;
         int index = -1;
         for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -267,6 +267,7 @@ abstract class SystemThermo implements SystemInterface {
             setMixingRule(getMixingRule());
             init(0);
         }
+        return this;
     }
 
     /** {@inheritDoc} */

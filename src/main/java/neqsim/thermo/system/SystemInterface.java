@@ -1357,7 +1357,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      *
      * @param addSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
-    public void addFluid(SystemInterface addSystem);
+    public SystemInterface addFluid(SystemInterface addSystem);
 
     /**
      * <p>
