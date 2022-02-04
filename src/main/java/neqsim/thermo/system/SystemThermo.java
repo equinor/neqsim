@@ -234,7 +234,7 @@ abstract class SystemThermo implements SystemInterface {
      * add fluid to an existing fluid
      */
     @Override
-    public void addFluid(SystemInterface addSystem) {
+    public SystemInterface addFluid(SystemInterface addSystem) {
         boolean addedNewComponent = false;
         int index = -1;
         for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -251,8 +251,15 @@ abstract class SystemThermo implements SystemInterface {
             if (index != -1) {
                 addComponent(index, addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
             } else {
+            	/*
+            	if(addSystem.getPhase(0).getComponent(i).isIsTBPfraction()) {
+            		addTBPfraction(addSystem.getPhase(0).getComponent(i).getComponentName(), addSystem.getPhase(0).getComponent(i).getNumberOfmoles(), addSystem.getPhase(0).getComponent(i).getMolarMass(), addSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
+            		changeComponentName(addSystem.getPhase(0).getComponent(i).getComponentName()+"_PC", addSystem.getPhase(0).getComponent(i).getComponentName().replaceFirst("_PC", ""));
+            	}
                 addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
                         addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+                        */
+            	addComponent(addSystem.getComponent(i));
             }
         }
         if (addedNewComponent) {
@@ -260,6 +267,7 @@ abstract class SystemThermo implements SystemInterface {
             setMixingRule(getMixingRule());
             init(0);
         }
+        return this;
     }
 
     /** {@inheritDoc} */
@@ -695,7 +703,11 @@ abstract class SystemThermo implements SystemInterface {
                     * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0 / 1.0e6;
         } else if (flowunit.equals("kg/hr")) {
             return totalNumberOfMoles * getMolarMass() * 3600.0;
-        } else if (flowunit.equals("m3/hr")) {
+        }
+        else if (flowunit.equals("kg/day")) {
+            return totalNumberOfMoles * getMolarMass() * 3600.0*24.0;
+        }
+        else if (flowunit.equals("m3/hr")) {
             // return getVolume() / 1.0e5 * 3600.0;
             initPhysicalProperties("density");
             return totalNumberOfMoles * getMolarMass() * 3600.0 / getDensity("kg/m3");
@@ -1163,6 +1175,46 @@ abstract class SystemThermo implements SystemInterface {
     @Override
     public void addComponent(String name) {
         addComponent(name, 0.0);
+    }
+    
+    /**
+     * {@inheritDoc}
+     *
+     * add a component to a fluid. If component already exists, it will be added to the component
+     */
+    @Override
+    public void addComponent(ComponentInterface inComponent) {
+    	if(inComponent.isIsTBPfraction()) {
+    		addTBPfraction(inComponent.getComponentName(), inComponent.getNumberOfmoles(), inComponent.getMolarMass(), inComponent.getNormalLiquidDensity());
+    		String componentName = inComponent.getComponentName();
+    		changeComponentName(componentName+"_PC", componentName.replaceFirst("_PC", ""));
+    		for (int i = 0; i < numberOfPhases; i++) {
+                getPhase(i).getComponent(componentName).setAttractiveTerm(inComponent.getAttractiveTermNumber());
+                getPhase(i).getComponent(componentName).setTC(inComponent.getTC());
+                getPhase(i).getComponent(componentName).setPC(inComponent.getPC());
+                getPhase(i).getComponent(componentName).setMolarMass(inComponent.getMolarMass());
+                getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
+                getPhase(i).getComponent(componentName).setNormalLiquidDensity(inComponent.getNormalLiquidDensity());
+                getPhase(i).getComponent(componentName).setNormalBoilingPoint(inComponent.getNormalBoilingPoint());
+                getPhase(i).getComponent(componentName).setAcentricFactor(inComponent.getAcentricFactor());
+                getPhase(i).getComponent(componentName).setCriticalVolume(inComponent.getCriticalVolume());
+                getPhase(i).getComponent(componentName).setRacketZ(inComponent.getRacketZ());
+                getPhase(i).getComponent(componentName).setRacketZCPA(inComponent.getRacketZCPA());
+                getPhase(i).getComponent(componentName).setIsTBPfraction(true);
+                getPhase(i).getComponent(componentName).setParachorParameter(inComponent.getParachorParameter());
+                getPhase(i).getComponent(componentName).setTriplePointTemperature(inComponent.getTriplePointTemperature());
+                getPhase(i).getComponent(componentName).setIdealGasEnthalpyOfFormation(inComponent.getIdealGasEnthalpyOfFormation());
+                getPhase(i).getComponent(componentName).setCpA(inComponent.getCpA());
+                getPhase(i).getComponent(componentName).setCpB(inComponent.getCpB());
+                getPhase(i).getComponent(componentName).setCpC(inComponent.getCpC());
+                getPhase(i).getComponent(componentName).setCpD(inComponent.getCpD());
+            }
+    	}
+    	else {
+    		addComponent(inComponent.getComponentName(), inComponent.getNumberOfmoles());
+    	}
+    	
+    	
     }
 
     /**

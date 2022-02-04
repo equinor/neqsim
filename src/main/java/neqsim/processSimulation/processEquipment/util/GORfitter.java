@@ -22,6 +22,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
     public StreamInterface inletStream = null;
     public StreamInterface outletStream = null;
     double pressure = 1.01325, temperature = 15.0;
+    private String referenceConditions = "standard"; // "actual";
 
     private double GOR = 120.0;
     String unitT = "C", unitP = "bara";
@@ -35,8 +36,9 @@ public class GORfitter extends ProcessEquipmentBaseClass {
      * Constructor for GORfitter.
      * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * @param stream a
+     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *               object
      */
     public GORfitter(StreamInterface stream) {
         this();
@@ -50,9 +52,10 @@ public class GORfitter extends ProcessEquipmentBaseClass {
      * Constructor for GORfitter.
      * </p>
      *
-     * @param name a {@link java.lang.String} object
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * @param name   a {@link java.lang.String} object
+     * @param stream a
+     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *               object
      */
     public GORfitter(String name, StreamInterface stream) {
         this(stream);
@@ -64,8 +67,9 @@ public class GORfitter extends ProcessEquipmentBaseClass {
      * Setter for the field <code>inletStream</code>.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * @param inletStream a
+     *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *                    object
      */
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
@@ -81,7 +85,9 @@ public class GORfitter extends ProcessEquipmentBaseClass {
      * getOutStream.
      * </p>
      *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @return a
+     *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *         object
      */
     public StreamInterface getOutStream() {
         return outletStream;
@@ -104,7 +110,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
      * </p>
      *
      * @param pressure a double
-     * @param unitP a {@link java.lang.String} object
+     * @param unitP    a {@link java.lang.String} object
      */
     public void setPressure(double pressure, String unitP) {
         this.pressure = pressure;
@@ -128,7 +134,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
      * </p>
      *
      * @param temperature a double
-     * @param unitT a {@link java.lang.String} object
+     * @param unitT       a {@link java.lang.String} object
      */
     public void setTemperature(double temperature, String unitT) {
         this.temperature = temperature;
@@ -140,8 +146,10 @@ public class GORfitter extends ProcessEquipmentBaseClass {
     public void run() {
         SystemInterface tempFluid = inletStream.getThermoSystem().clone();
         double flow = tempFluid.getFlowRate("kg/sec");
-        tempFluid.setTemperature(15.0, "C");
-        tempFluid.setPressure(1.01325, "bara");
+        if (!getReferenceConditions().equals("actual")) {
+            tempFluid.setTemperature(15.0, "C");
+            tempFluid.setPressure(1.01325, "bara");
+        }
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
         try {
             thermoOps.TPflash();
@@ -203,8 +211,8 @@ public class GORfitter extends ProcessEquipmentBaseClass {
         testFluid.setMixingRule(2);
         testFluid.setMultiPhaseCheck(true);
 
-        testFluid.setTemperature(24.0, "C");
-        testFluid.setPressure(48.0, "bara");
+        testFluid.setTemperature(90.0, "C");
+        testFluid.setPressure(60.0, "bara");
         testFluid.setTotalFlowRate(1e6, "kg/hr");
 
         Stream stream_1 = new Stream("Stream1", testFluid);
@@ -216,6 +224,8 @@ public class GORfitter extends ProcessEquipmentBaseClass {
         GORfitter gORFItter = new GORfitter("test", stream_1);
         gORFItter.setTemperature(15.0, "C");
         gORFItter.setPressure(1.01325, "bara");
+        // gORFItter.setReferenceConditions("actual");
+        gORFItter.setGOR(200.0);
 
         Stream stream_2 = new Stream(gORFItter.getOutStream());
 
@@ -223,8 +233,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
         multiPhaseMeter2.setTemperature(90.0, "C");
         multiPhaseMeter2.setPressure(60.0, "bara");
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(multiPhaseMeter);
         operations.add(gORFItter);
@@ -260,16 +269,17 @@ public class GORfitter extends ProcessEquipmentBaseClass {
         this.GOR = gOR;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        // TODO Auto-generated method stub
-        return false;
+    /**
+     * @return the referenceConditions
+     */
+    public String getReferenceConditions() {
+        return referenceConditions;
+    }
+
+    /**
+     * @param referenceConditions the referenceConditions to set
+     */
+    public void setReferenceConditions(String referenceConditions) {
+        this.referenceConditions = referenceConditions;
     }
 }
