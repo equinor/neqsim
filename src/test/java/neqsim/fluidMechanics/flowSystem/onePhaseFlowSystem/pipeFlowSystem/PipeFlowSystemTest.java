@@ -69,7 +69,7 @@ public class PipeFlowSystemTest {
     void testSolveSteadyState() {
         testInit();
         pipe.solveSteadyState(10);
-        pipe.print();
+        // pipe.print();
     }
 
     @Test

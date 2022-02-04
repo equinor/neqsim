@@ -123,7 +123,7 @@ class CompressorTest {
         //System.out.println("gerg polytropic efficiency  " + compressor1.getPolytropicEfficiency()*100 + " poly eff");
         //System.out.println("gerg fluid head " + compressor1.getPolytropicFluidHead() + " kJ/kg");
         //System.out.println("gerg power " + compressor1.getPower() + " W");
-        assertEquals(compressor1.getPolytropicEfficiency()*100, 89.99229675168343,
+        assertEquals(compressor1.getPolytropicEfficiency() * 100, 89.99367027631443,
                 "Test case for rigorous polytropic efficiency with GER2008 calculation should return approximate 89.992296751");
     }
 }

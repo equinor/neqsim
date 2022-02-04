@@ -49,8 +49,8 @@ public class PipeFlowVisualization extends
                         new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.onePhaseFlowNodeVisualization.onePhasePipeFlowNodeVisualization.OnePhasePipeFlowNodeVisualization();
             }
         }
-        System.out.println("nodes " + nodes);
-        System.out.println("times " + time);
+        // System.out.println("nodes " + nodes);
+        // System.out.println("times " + time);
     }
 
     /** {@inheritDoc} */
