@@ -6,6 +6,7 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+import neqsim.processSimulation.processEquipment.TwoPortInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
@@ -16,29 +17,10 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author esol
  * @version $Id: $Id
  */
-public interface CompressorInterface extends ProcessEquipmentInterface {
+public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortInterface {
     /** {@inheritDoc} */
     @Override
     public void run();
-
-    /**
-     * <p>
-     * setOutletPressure.
-     * </p>
-     *
-     * @param pressure a double
-     */
-    public void setOutletPressure(double pressure);
-
-    /**
-     * <p>
-     * setInletStream.
-     * </p>
-     *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public void setInletStream(StreamInterface inletStream);
 
     /**
      * <p>
@@ -49,10 +31,6 @@ public interface CompressorInterface extends ProcessEquipmentInterface {
      */
     public double getEnergy();
 
-    /** {@inheritDoc} */
-    @Override
-    public String getName();
-
     /**
      * <p>
      * getOutStream.
@@ -62,6 +40,7 @@ public interface CompressorInterface extends ProcessEquipmentInterface {
      */
     @Deprecated
     public StreamInterface getOutStream();
+
 
     /**
      * <p>

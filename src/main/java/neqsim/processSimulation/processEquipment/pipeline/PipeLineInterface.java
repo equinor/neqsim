@@ -6,6 +6,7 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
+import neqsim.processSimulation.processEquipment.TwoPortInterface;
 
 /**
  * <p>
@@ -15,7 +16,7 @@ import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
  * @author esol
  * @version $Id: $Id
  */
-public interface PipeLineInterface {
+public interface PipeLineInterface extends TwoPortInterface {
     /**
      * <p>
      * setNumberOfLegs.

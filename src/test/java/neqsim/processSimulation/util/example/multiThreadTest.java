@@ -48,7 +48,7 @@ public class multiThreadTest {
         comp1.setName("comp1");
         comp1.setOutletPressure(50.0);
 
-        Cooler cooler1 = new Cooler(comp1.getOutStream());
+        Cooler cooler1 = new Cooler(comp1.getOutletStream());
         cooler1.setOutTemperature(283.15 + 30);
 
         // mixer.addStream(stream_2);
@@ -89,7 +89,7 @@ public class multiThreadTest {
         comp12.setName("comp22");
         comp12.setOutletPressure(45.0);
 
-        Cooler cooler12 = new Cooler(comp12.getOutStream());
+        Cooler cooler12 = new Cooler(comp12.getOutletStream());
         cooler12.setOutTemperature(283.15 + 30);
 
         Separator separator3 = new Separator("Separator 122", cooler12.getOutStream());

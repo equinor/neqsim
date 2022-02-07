@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.subsea;
 
 import java.util.ArrayList;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.reservoir.SimpleReservoir;
@@ -125,7 +126,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         ThrottlingValve subseaChoke = new ThrottlingValve(well1.getOutStream());
         subseaChoke.setOutletPressure(90.0);
         subseaChoke.setAcceptNegativeDP(false);
-        SimpleFlowLine flowLine = new SimpleFlowLine(subseaChoke.getOutStream());
+        SimpleFlowLine flowLine = new SimpleFlowLine(subseaChoke.getOutletStream());
         flowLine.getPipeline().setDiameter(0.4);
         flowLine.getPipeline().setLength(2000.0);
         flowLine.getPipeline().setInletElevation(-100.0);
@@ -162,7 +163,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
 
         ProcessSystem GasOilProcess = ProcessSystem.open("c:/temp/offshorePro.neqsim");
         ((StreamInterface) GasOilProcess.getUnit("well stream"))
-                .setThermoSystem(topsideChoke.getOutStream().getFluid());
+                .setThermoSystem(topsideChoke.getOutletStream().getFluid());
         ((StreamInterface) GasOilProcess.getUnit("well stream")).setPressure(70.0, "bara");
         ((StreamInterface) GasOilProcess.getUnit("well stream")).setTemperature(65.0, "C");
         GasOilProcess.run();

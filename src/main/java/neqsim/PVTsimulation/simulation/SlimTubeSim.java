@@ -122,10 +122,10 @@ public class SlimTubeSim extends BasePVTsimulation {
                         removeMoles[k] += moles * liqfactor;
                     }
                 }
-                double sum = 0;
+                // double sum = 0;
                 for (int comp = 0; comp < slimTubeNodeSystem[0].getPhase(liquidPhaseNumber)
                         .getNumberOfComponents(); comp++) {
-                    sum += removeMoles[comp];
+                    // sum += removeMoles[comp];
                 }
 
                 for (int k = 0; k < slimTubeNodeSystem[i].getPhase(liquidPhaseNumber)

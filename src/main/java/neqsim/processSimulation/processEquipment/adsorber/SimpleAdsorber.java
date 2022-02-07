@@ -189,12 +189,6 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         outStream[1].displayResult();
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
-    }
-
     /**
      * <p>
      * runTransient.

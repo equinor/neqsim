@@ -69,8 +69,6 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     @Override
     public void displayResult() {}
 
-    ;
-
     /** {@inheritDoc} */
     @Override
     public String getName() {

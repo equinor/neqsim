@@ -78,13 +78,13 @@ public class OffshoreProcess {
         Compressor compressor1 = new Compressor(stream_2);
         compressor1.setOutletPressure(131.3);
 
-        StreamInterface stream_4 = compressor1.getOutStream();
+        StreamInterface stream_4 = compressor1.getOutletStream();
         stream_4.setName("gas compressor out stream");
 
         Compressor compressor2 = new Compressor(stream_3);
         compressor2.setOutletPressure(131.3);
 
-        StreamInterface stream_5 = compressor2.getOutStream();
+        StreamInterface stream_5 = compressor2.getOutletStream();
         stream_5.setName("liquid compressor out stream");
 
         Mixer mixer = new StaticPhaseMixer("Mixer 1");

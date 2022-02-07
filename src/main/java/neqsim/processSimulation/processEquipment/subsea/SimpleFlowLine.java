@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.subsea;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortInterface;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -13,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author asmund
  * @version $Id: $Id
  */
-public class SimpleFlowLine extends ProcessEquipmentBaseClass {
+public class SimpleFlowLine extends ProcessEquipmentBaseClass implements TwoPortInterface {
     private static final long serialVersionUID = 1000;
 
     protected StreamInterface inStream;

@@ -87,14 +87,14 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
         valve1.setOutletPressure(secondstagePressure);
 
         ThreePhaseSeparator secondStageSeparator =
-                new ThreePhaseSeparator("2nd stage Separator", valve1.getOutStream());
+                new ThreePhaseSeparator("2nd stage Separator", valve1.getOutletStream());
 
         ThrottlingValve thirdStageValve =
                 new ThrottlingValve("2-3stageOilValve", secondStageSeparator.getLiquidOutStream());
         thirdStageValve.setOutletPressure(thirdstagePressure);
 
         ThreePhaseSeparator thirdStageSeparator =
-                new ThreePhaseSeparator("3rd stage Separator", thirdStageValve.getOutStream());
+                new ThreePhaseSeparator("3rd stage Separator", thirdStageValve.getOutletStream());
 
         oilCooler = new Cooler("export oil cooler", thirdStageSeparator.getLiquidOutStream());
         oilCooler.setOutTemperature(exportOilTemperature);
@@ -104,7 +104,7 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
         thirdStageCompressor.setOutletPressure(secondstagePressure);
 
         Cooler thirdSstageCoooler =
-                new Cooler("3rd stage cooler", thirdStageCompressor.getOutStream());
+                new Cooler("3rd stage cooler", thirdStageCompressor.getOutletStream());
         thirdSstageCoooler.setOutTemperature(firstStageCompressorAfterCoolerTemperature);
 
         Mixer thirdStageMixer = new Mixer("1st and 2nd stage gas mixer");
@@ -121,7 +121,7 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
 
         Mixer HPgasMixer = new Mixer("HPgas mixer");
         HPgasMixer.addStream(firstStageSeparator.getGasOutStream());
-        HPgasMixer.addStream(secondStageCompressor.getOutStream());
+        HPgasMixer.addStream(secondStageCompressor.getOutletStream());
         HPgasMixer.addStream(inletSeparator.getGasOutStream());
 
         Cooler inletGasCooler = new Cooler("HP gas cooler", HPgasMixer.getOutStream());

@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.pump;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+import neqsim.processSimulation.processEquipment.TwoPortInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
@@ -11,7 +12,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author esol
  * @version $Id: $Id
  */
-public interface PumpInterface extends ProcessEquipmentInterface {
+public interface PumpInterface extends ProcessEquipmentInterface, TwoPortInterface {
     /** {@inheritDoc} */
     @Override
     public void run();

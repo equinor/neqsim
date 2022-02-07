@@ -48,7 +48,7 @@ public class HeatExchanger2 {
         valv1.setOutletPressure(5.0);
 
         Recycle resyc = new Recycle();
-        resyc.addStream(valv1.getOutStream());
+        resyc.addStream(valv1.getOutletStream());
         resyc.setOutletStream(stream_Cold);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =

@@ -80,7 +80,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
 
         ThrottlingValve JTvalve = new ThrottlingValve(refrigerantStream);
 
-        Cooler cooler = new Cooler("propane evaporator", JTvalve.getOutStream());
+        Cooler cooler = new Cooler("propane evaporator", JTvalve.getOutletStream());
         cooler.setPressureDrop(0.35);
         cooler.setSpecification("out stream");
 
@@ -97,7 +97,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         // compressor1.setPower(180000);
         compressor1.setOutletPressure(refrigerantStream.getPressure());
 
-        Heater condenser = new Heater("propane condenser", compressor1.getOutStream());
+        Heater condenser = new Heater("propane condenser", compressor1.getOutletStream());
         condenser.setPressureDrop(0.07);
         condenser.setSpecification("out stream");
         condenser.setOutStream((Stream) refrigerantStream);

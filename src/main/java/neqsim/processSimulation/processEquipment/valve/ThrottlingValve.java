@@ -417,4 +417,40 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     public void setAcceptNegativeDP(boolean acceptNegativeDP) {
         this.acceptNegativeDP = acceptNegativeDP;
     }
+
+    @Override
+    public double getInletTemperature() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public double getOutletTemperature() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public void setInletPressure() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setInletTemperature() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setOutletStream() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setOutletTemperature() {
+        // TODO Auto-generated method stub
+
+    }
 }

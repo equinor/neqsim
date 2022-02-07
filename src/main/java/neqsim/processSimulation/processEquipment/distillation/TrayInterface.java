@@ -30,10 +30,6 @@ public interface TrayInterface extends ProcessEquipmentInterface {
     @Override
     public void setName(String name);
 
-    /** {@inheritDoc} */
-    @Override
-    public String getName();
-
     /**
      * <p>
      * setHeatInput.

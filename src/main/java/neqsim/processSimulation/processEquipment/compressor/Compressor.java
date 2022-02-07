@@ -4,12 +4,15 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -119,6 +122,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         }
     }
 
+
     /**
      * <p>
      * solveAntiSurge.
@@ -145,7 +149,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * @param unit a {@link java.lang.String} object
      */
     public void setOutletPressure(double pressure, String unit) {
-        this.pressure = pressure;
+        setOutletPressure(pressure);
         this.pressureUnit = unit;
     }
 
@@ -209,7 +213,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
     /** {@inheritDoc} */
     @Override
+    @Deprecated
     public StreamInterface getOutStream() {
+        return outStream;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public StreamInterface getOutletStream() {
         return outStream;
     }
 
@@ -220,7 +231,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamInterface getInStream() {
+        return inletStream;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public StreamInterface getInletStream() {
         return inletStream;
     }
 
@@ -798,12 +816,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         return thermoSystem.getResultTable();
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
-    }
-
     /**
      * <p>
      * getTotalWork.
@@ -1052,7 +1064,20 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      *
      * @return a double
      */
+    @Deprecated
     public double getOutTemperature() {
+        return getOutletTemperature();
+    }
+
+    /**
+     * <p>
+     * Getter for the field <code>outTemperature</code>.
+     * </p>
+     *
+     * @return a double
+     */
+    @Override
+    public double getOutletTemperature() {
         if (useOutTemperature)
             return outTemperature;
         else
@@ -1069,6 +1094,18 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     public void setOutTemperature(double outTemperature) {
         useOutTemperature = true;
         this.outTemperature = outTemperature;
+    }
+
+    /**
+     * <p>
+     * Setter for the field <code>outTemperature</code>.
+     * </p>
+     *
+     * @param outTemperature a double
+     */
+    public void setOutletTemperature(double temperature) {
+        useOutTemperature = true;
+        this.outTemperature = temperature;
     }
 
     /**
@@ -1201,5 +1238,37 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      */
     public void setUseGERG2008(boolean useGERG2008) {
         this.useGERG2008 = useGERG2008;
+    }
+
+    @Override
+    public double getInletPressure() {
+        return getInletStream().getPressure();
+    }
+
+    @Override
+    public double getInletTemperature() {
+        return getInletStream().getTemperature();
+    }
+
+    @Override
+    public void setInletPressure() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setInletTemperature() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setOutletStream() {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void setOutletTemperature() {
+        // TODO Auto-generated method stub
     }
 }

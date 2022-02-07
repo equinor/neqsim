@@ -2,6 +2,7 @@ package neqsim.processSimulation.processEquipment.powerGeneration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -126,7 +127,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         airCompressor.setOutletPressure(combustionpressure);
         airCompressor.run();
         compressorPower = airCompressor.getPower();
-        StreamInterface outStreamAir = airCompressor.getOutStream().clone();
+        StreamInterface outStreamAir = airCompressor.getOutletStream().clone();
         outStreamAir.getFluid().addFluid(thermoSystem);
         // outStreamAir.getFluid().setTemperature(800.0);
         // outStreamAir.getFluid().createDatabase(true);
@@ -151,7 +152,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         expander.setOutletPressure(1.01325);
         expander.run();
 
-        Cooler cooler1 = new Cooler(expander.getOutStream());
+        Cooler cooler1 = new Cooler(expander.getOutletStream());
         cooler1.setOutTemperature(288.15);
         cooler1.run();
 

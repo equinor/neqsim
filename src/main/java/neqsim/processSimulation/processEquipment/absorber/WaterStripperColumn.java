@@ -5,10 +5,12 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -495,12 +497,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
         dialogContentPane.add(scrollpane);
         dialog.pack();
         dialog.setVisible(true);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
     }
 
     /**
