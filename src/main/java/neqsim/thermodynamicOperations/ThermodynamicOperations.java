@@ -2,11 +2,14 @@ package neqsim.thermodynamicOperations;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.flashOps.CriticalPointFlash;
@@ -1336,9 +1339,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 	 * @param spec          a double
 	 * @throws java.lang.Exception if any.
 	 */
-	public void dewPointMach(String componentName, String specification, double spec) throws Exception {
-		int componentNumber = system.getPhase(0).getComponent(componentName).getComponentNumber();
-
+    public void dewPointMach(String componentName, String specification, double spec) throws Exception {
 		double dn = 0;
 		if (system.getPhase(0).hasComponent(componentName)) {
 			dn = system.getNumberOfMoles() / 1.0e6;
@@ -1546,7 +1547,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 	 * </p>
 	 */
 	public void calcPTphaseEnvelopeNew() {
-		double phasefraction = 1.0 - 1e-10;
+        // double phasefraction = 1.0 - 1e-10;
 		// operation = new pTphaseEnvelope(system, fileName, phasefraction, 1.0);
 		getOperation().run();
 	}
