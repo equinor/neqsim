@@ -2,6 +2,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
@@ -46,6 +47,7 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
 
     /** {@inheritDoc} */
     @Override
+    @SuppressWarnings("unused")
     public void setFittingParams(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, methanenumb = 0, CO2Numb = 0, HCO3numb = 0,

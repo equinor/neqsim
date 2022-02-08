@@ -74,6 +74,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
      * @param mixRule an array of {@link java.lang.String} objects
      * @return a double
      */
+    @SuppressWarnings("unused")
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] WSalpha, double[][] WSgij, double[][] WSgijT,
             double[][] intparam, String[][] mixRule) {

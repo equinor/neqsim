@@ -10,6 +10,7 @@ import org.ejml.dense.row.SingularOps_DDRM;
 import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -106,7 +107,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         this.sys.setNumberOfPhases(1);
         this.sys.getPhase(0).setTotalVolume(1.0);
         this.sys.useVolumeCorrection(false);
-        this.sys.removeMoles();
+        this.sys.setEmptyFluid();
         double nv[] = new double[this.ncomp];
         for (i = 0; i < ncomp; i++) {
             nv[i] = this.rho_ph1[i] * Pa;
@@ -174,7 +175,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         double[][] jac = new double[this.ncomp][this.ncomp];
         double[] rho = new double[this.ncomp];
         double delta_omega, dsigma, cij;
-        double rho_ref, rho0;
+        double rho0;
 
         DMatrixRMaj df, dn_dnref, ms;
         SingularValueDecomposition<DMatrixRMaj> svd;
@@ -256,15 +257,14 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
      */
     private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f,
             double[][] jac) {
-        double normf, norm0, norm, rho_ref, s;
-        int i, j, k, iter;
+        double normf, norm0, norm, s;
+        int i, j, iter;
         DMatrixRMaj A = new DMatrixRMaj(this.ncomp - 1, this.ncomp - 1);
         DMatrixRMaj b = new DMatrixRMaj(this.ncomp - 1, 1);
         DMatrixRMaj x = new DMatrixRMaj(this.ncomp - 1, 1);
         DMatrixRMaj x0 = new DMatrixRMaj(this.ncomp - 1, 1);
         DMatrixRMaj c = new DMatrixRMaj(this.ncomp - 1, 1);
 
-        rho_ref = rho[this.refcomp];
         GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, rho, mu, dmu_drho, p);
         fjacfun(mu, dmu_drho, f, jac);
         for (i = 0; i < this.ncomp - 1; i++) {

@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -58,7 +59,6 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
     public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         int iter = 0;
-        double oldWt = 1.0, newWt = 2.0;
         double error = 1.0, oldError = 1.0,
                 oldC = system.getPhase(0).getComponent(inhibitor).getNumberOfmoles();
         double derrordC = 1.0;

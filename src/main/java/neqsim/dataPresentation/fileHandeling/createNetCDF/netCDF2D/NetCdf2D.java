@@ -2,6 +2,7 @@ package neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
 import ucar.ma2.Array;
 import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFileWriter;
@@ -101,8 +102,8 @@ public class NetCdf2D {
 
         for (int i = 0; i < yLength; i++) {
             lonD.add(ncfile.addDimension(null, yName2[i], yvalues2[i].length));
-            Variable u =
-                    ncfile.addVariable(null, lonD.get(i).getName(), ucar.ma2.DataType.DOUBLE, dim2);
+            // Variable u = ncfile.addVariable(null, lonD.get(i).getName(),
+            // ucar.ma2.DataType.DOUBLE, dim2);
             // u.addAttribute(new Attribute("units", "degrees_east"));
         }
 
