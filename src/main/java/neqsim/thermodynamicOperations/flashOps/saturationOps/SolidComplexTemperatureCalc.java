@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -140,11 +141,9 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        double sumx = 0.0;
         // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
-        int iter = 0;
-        double funkOld = 0.0, deltaT = 1.0;
+        double deltaT = 1.0;
 
         // logger.info("starting.... ");
         int compNumber_1 = system.getPhase(0).getComponent(comp1).getComponentNumber(),
