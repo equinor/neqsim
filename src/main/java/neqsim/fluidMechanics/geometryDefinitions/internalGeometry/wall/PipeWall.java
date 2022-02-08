@@ -14,5 +14,6 @@ public class PipeWall extends Wall {
      * PipeWall.
      * </p>
      */
-    public void PipeWall() {}
+    public PipeWall() {
+    }
 }

@@ -2,6 +2,7 @@ package neqsim.thermo.characterization;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -106,7 +107,6 @@ public class LumpingModel implements java.io.Serializable {
             // int firstPS = charac.getPlusFractionModel().getFirstTBPFractionNumber();
             double Maverage = 0.0, denstemp1 = 0.0, denstemp2 = 0.0;
             double totalNumberOfMoles = system.getNumberOfMoles();
-            int numbComp = system.getPhase(0).getNumberOfComponents();
             int i = 0;
             int added = 0;
             if (charac.getPlusFractionModel().hasPlusFraction()) {
@@ -246,7 +246,6 @@ public class LumpingModel implements java.io.Serializable {
             lumpedComponentNames = new String[numberOfLumpedComponents];
             fractionOfHeavyEnd = new double[numberOfLumpedComponents];
             double[] zPlus = new double[numberOfLumpedComponents];
-            double[] zPLus = new double[numberOfLumpedComponents];
 
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                 if ((system.getPhase(0).getComponent(i).isIsTBPfraction()
