@@ -169,12 +169,10 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         setHeat(cooler1.getDuty());
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
+    }
 
     /**
      * <p>

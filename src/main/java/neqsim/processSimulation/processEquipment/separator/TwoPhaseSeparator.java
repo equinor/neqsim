@@ -110,10 +110,8 @@ public class TwoPhaseSeparator extends Separator {
     @Override
     public void displayResult() {}
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
+    }
 }

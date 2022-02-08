@@ -5,7 +5,6 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -244,7 +243,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {
+    }
 
     /**
      * <p>

@@ -6,7 +6,6 @@
 package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
-
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -142,10 +141,8 @@ public class GasScrubber extends Separator {
     @Override
     public void displayResult() {}
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
+    }
 }

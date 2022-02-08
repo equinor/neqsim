@@ -275,7 +275,9 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * runTransient.
      * </p>
      */
-    public void runTransient() {}
+    @Override
+    public void runTransient(double dt) {
+    }
 
     /** {@inheritDoc} */
     @Override

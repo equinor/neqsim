@@ -111,7 +111,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-        getOperations().runTransient();
+        getOperations().runTransient(dt);
     }
 
     /** {@inheritDoc} */

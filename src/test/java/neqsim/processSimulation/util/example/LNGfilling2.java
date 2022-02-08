@@ -54,7 +54,7 @@ public class LNGfilling2 {
         tank.getGasOutStream().getThermoSystem().setTotalNumberOfMoles(1e-6);
         tank.getLiquidOutStream().getThermoSystem().setTotalNumberOfMoles(0.000001);
 
-        operations.runTransient();
+        operations.runTransient(1);
         // operations.displayResult();
     }
 }

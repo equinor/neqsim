@@ -93,7 +93,8 @@ public class SimpleTPoutPipeline extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {
+    }
 
     /** {@inheritDoc} */
     @Override
