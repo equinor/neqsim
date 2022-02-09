@@ -121,10 +121,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
     /**
      * <p>
-     * getNumberOfComponents.
+     * Get number of components added to System.
      * </p>
      *
-     * @return a int
+     * @return the number of components in System.
      */
     public int getNumberOfComponents();
 
