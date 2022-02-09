@@ -1,9 +1,13 @@
 package neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem;
 
+import java.util.Arrays;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.thermo.system.SystemInterface;
+
 
 public class PipeFlowSystemTest {
     FlowSystemInterface pipe;
@@ -21,7 +25,7 @@ public class PipeFlowSystemTest {
         testSystem.initPhysicalProperties();
         testSystem.setTotalFlowRate(60.0, "MSm3/day");
 
-        double[] height = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        double[] height = { 0, 0, 0 }; // , 0, 0, 0, 0, 0, 0, 0, 0};
         double[] diameter = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
         double[] roughness = {1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5,
                 1.0e-5, 1.0e-5, 1.0e-5};
@@ -34,28 +38,27 @@ public class PipeFlowSystemTest {
                 {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0};
 
         neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGeometry =
-                new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[10];
+                new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[height.length];
 
-        for (int i = 0; i < pipeGeometry.length; i++) {
+        for (int i = 0; i < height.length; i++) {
             pipeGeometry[i] = new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData();
             pipeGeometry[i].setDiameter(diameter[i]);
             pipeGeometry[i].setInnerSurfaceRoughness(roughness[i]);
         }
         pipe.setInletThermoSystem(testSystem);
-        pipe.setNumberOfLegs(10);
+        pipe.setNumberOfLegs(height.length - 1);
         pipe.setNumberOfNodesInLeg(20);
         pipe.setEquipmentGeometry(pipeGeometry);
         pipe.setLegHeights(height);
-        pipe.setLegPositions(length);
-        pipe.setLegOuterTemperatures(outerTemperature);
-        pipe.setLegWallHeatTransferCoefficients(wallHeacCoef);
-        pipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
+        pipe.setLegPositions(Arrays.copyOfRange(length, 0, height.length));
+        pipe.setLegOuterTemperatures(Arrays.copyOfRange(outerTemperature, 0, height.length));
+        pipe.setLegWallHeatTransferCoefficients(Arrays.copyOfRange(wallHeacCoef, 0, height.length));
+        pipe.setLegOuterHeatTransferCoefficients(Arrays.copyOfRange(outHeatCoef, 0, height.length));
     }
 
 
     @Test
     void testCreateSystem() {
-
         pipe.createSystem();
     }
 
