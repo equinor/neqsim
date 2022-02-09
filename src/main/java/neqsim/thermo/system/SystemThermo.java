@@ -15,11 +15,14 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
@@ -45,7 +48,7 @@ import neqsim.util.database.NeqSimDataBase;
  */
 
 abstract class SystemThermo implements SystemInterface {
-    private static final long serialVersionUID = 1000;// implements System_Interface{
+    private static final long serialVersionUID = 1000;
     // Class variables
 
     private boolean implementedTemperatureDeriativesofFugacity = true;
@@ -228,11 +231,7 @@ abstract class SystemThermo implements SystemInterface {
         return clonedSystem;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * add fluid to an existing fluid
-     */
+    /** {@inheritDoc} */
     @Override
     public SystemInterface addFluid(SystemInterface addSystem) {
         boolean addedNewComponent = false;
@@ -1167,21 +1166,13 @@ abstract class SystemThermo implements SystemInterface {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * add a component to a fluid. If component already exists, it will be added to the component
-     */
+    /** {@inheritDoc} */
     @Override
     public void addComponent(String name) {
         addComponent(name, 0.0);
     }
     
-    /**
-     * {@inheritDoc}
-     *
-     * add a component to a fluid. If component already exists, it will be added to the component
-     */
+    /** {@inheritDoc} */
     @Override
     public void addComponent(ComponentInterface inComponent) {
     	if(inComponent.isIsTBPfraction()) {
@@ -1217,11 +1208,7 @@ abstract class SystemThermo implements SystemInterface {
     	
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * add a component to a fluid. If component already exists, it will be added to the component
-     */
+    /** {@inheritDoc} */
     @Override
     public void addComponent(String componentName, double moles) {
         int index = 0;
@@ -1234,8 +1221,8 @@ abstract class SystemThermo implements SystemInterface {
             }
         }
 
-        if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName) && addForFirstTime) {
-            // logger.error("No component with name: " + componentName + " in database");
+        if (addForFirstTime && !neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
+            logger.error("No component with name: " + componentName + " in database");
             return;
         }
 
