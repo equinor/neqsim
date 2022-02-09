@@ -1124,7 +1124,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * Getter for the field <code>numberOfCompressorCalcSteps</code>.
      * </p>
      *
-     * @return a int
+     * @return the number of calculation steps in compressor
      */
     public int getNumberOfCompressorCalcSteps() {
         return numberOfCompressorCalcSteps;
