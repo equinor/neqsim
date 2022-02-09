@@ -132,8 +132,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     /**
      * method to return flow rate of a component
      *
-     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
-     *        m3/hr, mole/sec, mole/min, mole/hr
+     * @param flowunit Supported units are kg/sec, kg/min, m3/sec, m3/min,
+     *                 m3/hr, mole/sec, mole/min, mole/hr
      * @return flow rate in specified unit
      */
     public double getFlowRate(String flowunit);
@@ -141,8 +141,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     /**
      * method to return total flow rate of a component
      *
-     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, mole/sec, mole/min,
-     *        mole/hr
+     * @param flowunit Supported units are kg/sec, kg/min, mole/sec, mole/min,
+     *                 mole/hr
      * @return flow rate in specified unit
      */
     public double getTotalFlowRate(String flowunit);
