@@ -1068,13 +1068,13 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 */
 	PhaseInterface getPhase();
 
-	/**
-	 * <p>
-	 * getNumberOfComponents.
-	 * </p>
-	 *
-	 * @return a int
-	 */
+    /**
+     * <p>
+     * Get number of components added to Phase.
+     * </p>
+     *
+     * @return the number of components in Phase.
+     */
 	public int getNumberOfComponents();
 
 	/**
