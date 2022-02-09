@@ -34,8 +34,8 @@ public class LumpingModel implements java.io.Serializable {
     }
 
     /**
-     * StandardLumpingModel distributes the pseudo components into equal wwight frations starting
-     * with the first TBP fraction in the fluid
+     * StandardLumpingModel distributes the pseudo components into equal weight
+     * fractions starting with the first TBP fraction in the fluid
      * 
      * @author Even Solbraa
      * @version 1.0
@@ -200,7 +200,11 @@ public class LumpingModel implements java.io.Serializable {
 
         @Override
         public double getFractionOfHeavyEnd(int i) {
-            return fractionOfHeavyEnd[i];
+            if (fractionOfHeavyEnd == null) {
+                return 0;
+            } else {
+                return fractionOfHeavyEnd[i];
+            }
         }
     }
 

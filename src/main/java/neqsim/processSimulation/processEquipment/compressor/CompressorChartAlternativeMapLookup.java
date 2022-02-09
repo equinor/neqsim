@@ -2,12 +2,14 @@ package neqsim.processSimulation.processEquipment.compressor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -191,10 +193,10 @@ public class CompressorChartAlternativeMapLookup
                 return c;
             }
         }
-
-        logger.error("Input ref. speed does not match any speed in the chart.");
+        String msg = "Input ref. speed does not match any speed in the chart.";
+        logger.error(msg);
         neqsim.util.exception.InvalidInputException e =
-                new neqsim.util.exception.InvalidInputException();
+                new neqsim.util.exception.InvalidInputException(msg);
         throw new RuntimeException(e);
     }
 

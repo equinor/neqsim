@@ -134,9 +134,10 @@ abstract class SystemThermo implements SystemInterface {
     public SystemThermo(double T, double P) {
         this();
         if (T < 0.0 || P < 0.0) {
-            logger.error("Negative input temperature or pressure");
+            String msg = "Negative input temperature or pressure";
+            logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
+                    new neqsim.util.exception.InvalidInputException(msg);
             throw new RuntimeException(e);
         }
         beta[0] = 1.0;
@@ -721,7 +722,7 @@ abstract class SystemThermo implements SystemInterface {
         } else if (flowunit.equals("mole/hr")) {
             return totalNumberOfMoles * 3600.0;
         } else {
-            throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
+            throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
         }
     }
 
@@ -804,9 +805,10 @@ abstract class SystemThermo implements SystemInterface {
     public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
             double density) {
         if (density < 0.0 || molarMass < 0.0) {
-            logger.error("Negative input molar mass or density.");
+            String msg = "Negative input molar mass or density.";
+            logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
+                    new neqsim.util.exception.InvalidInputException(msg);
             throw new RuntimeException(e);
         }
 
@@ -942,9 +944,10 @@ abstract class SystemThermo implements SystemInterface {
             double density, double criticalTemperature, double criticalPressure,
             double acentricFactor) {
         if (density < 0.0 || molarMass < 0.0) {
-            logger.error("Negative input molar mass or density.");
+            String msg = "Negative input molar mass or density.";
+            logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
+                    new neqsim.util.exception.InvalidInputException(msg);
             throw new RuntimeException(e);
         }
 
@@ -1214,9 +1217,10 @@ abstract class SystemThermo implements SystemInterface {
                 return;
             }
             if (moles < 0.0) {
-                logger.error("Negative input number of moles of component: " + componentName);
+                String msg = "Negative input number of moles of component: " + componentName;
+                logger.error(msg);
                 neqsim.util.exception.InvalidInputException e =
-                        new neqsim.util.exception.InvalidInputException();
+                        new neqsim.util.exception.InvalidInputException(msg);
                 throw new RuntimeException(e);
             }
             setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
@@ -1261,8 +1265,9 @@ abstract class SystemThermo implements SystemInterface {
 
         // Add new component
         if (moles < 0.0) {
-            logger.error("Negative input number of moles.");
-            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+            String msg = "Negative input number of moles.";
+            logger.error(msg);
+            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException(msg);
             throw new RuntimeException(e);
         }
 
@@ -4720,9 +4725,10 @@ abstract class SystemThermo implements SystemInterface {
     public void setMolarComposition(double[] molefractions) {
         double totalFlow = getTotalNumberOfMoles();
         if (totalFlow < 1e-100) {
-            logger.error("Total flow can not be 0 when setting molar composition ");
+            String msg = "Total flow can not be 0 when setting molar composition";
+            logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
+                    new neqsim.util.exception.InvalidInputException(msg);
             throw new RuntimeException(e);
         }
         double sum = 0;
@@ -4743,9 +4749,10 @@ abstract class SystemThermo implements SystemInterface {
     public void setMolarCompositionPlus(double[] molefractions) {
         double totalFlow = getTotalNumberOfMoles();
         if (totalFlow < 1e-100) {
-            logger.error("Total flow can not be 0 when setting molar composition ");
+            String msg = "Total flow can not be 0 when setting molar composition";
+            logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
+                    new neqsim.util.exception.InvalidInputException(msg);
             throw new RuntimeException(e);
         }
         double sum = 0;
@@ -4758,6 +4765,7 @@ abstract class SystemThermo implements SystemInterface {
             addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
         }
         int ii = 0;
+        // TODO: compNumb can be negative
         for (int compNumb = numberOfComponents - getCharacterization().getLumpingModel()
                 .getNumberOfLumpedComponents(); compNumb < numberOfComponents; compNumb++) {
             addComponent(compNumb, totalFlow
@@ -4776,9 +4784,10 @@ abstract class SystemThermo implements SystemInterface {
     public void setMolarCompositionOfPlusFluid(double[] molefractions) {
         double totalFlow = getTotalNumberOfMoles();
         if (totalFlow < 1e-100) {
-            logger.error("Total flow can not be 0 when setting molar composition ");
+            String msg = "Total flow can not be 0 when setting molar composition";
+            logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
+                    new neqsim.util.exception.InvalidInputException(msg);
             throw new RuntimeException(e);
         }
         double sum = 0;

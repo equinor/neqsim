@@ -732,9 +732,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void saveObject(int ID, String text);
 
     /**
-     * <p>
-     * reset.
-     * </p>
+     * Set mole fractions of all components to 0.
      */
     public void reset();
 
@@ -766,9 +764,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public double[] getNormalBoilingPointTemperatures();
 
     /**
-     * <p>
-     * getCompNames.
-     * </p>
+     * Get names of all components in System.
      *
      * @return an array of {@link java.lang.String} objects
      */
