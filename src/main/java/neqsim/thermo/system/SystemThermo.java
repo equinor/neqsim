@@ -4579,12 +4579,6 @@ abstract class SystemThermo implements SystemInterface {
     /** {@inheritDoc} */
     @Override
     public int getPhaseNumberOfPhase(String phaseTypeName) {
-        // if(phaseTypeName.equals("gas")) return 0;
-        // else if(phaseTypeName.equals("oil")) return 1;
-        // else if(phaseTypeName.equals("water")) return 2;
-        // else if(phaseTypeName.equals("liquid")) return 1;
-        // else return 0;
-
         for (int i = 0; i < numberOfPhases; i++) {
             if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
                 return i;
@@ -4596,12 +4590,6 @@ abstract class SystemThermo implements SystemInterface {
     /** {@inheritDoc} */
     @Override
     public int getPhaseIndexOfPhase(String phaseTypeName) {
-        // if(phaseTypeName.equals("gas")) return 0;
-        // else if(phaseTypeName.equals("oil")) return 1;
-        // else if(phaseTypeName.equals("water")) return 2;
-        // else if(phaseTypeName.equals("liquid")) return 1;
-        // else return 0;
-
         for (int i = 0; i < numberOfPhases; i++) {
             if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
                 return phaseIndex[i];
@@ -4825,11 +4813,7 @@ abstract class SystemThermo implements SystemInterface {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Returns the molar rate vector in unit mole/sec
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getMolarRate() {
         double[] comp = new double[getPhase(0).getNumberOfComponents()];
