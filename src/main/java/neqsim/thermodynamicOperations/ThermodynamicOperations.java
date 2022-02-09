@@ -130,7 +130,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * moles in the system are changed to match the specified volume.
      *
      * @param volumeSpec is the specified volume
-     * @param unit       The unit as a string. units supported are m3, litre,
+     * @param unit       Supported units are m3, litre,
      */
     public void TPVflash(double volumeSpec, String unit) {
         unit = "m3";
@@ -251,7 +251,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * Method to perform a PH flash calculation
      *
      * @param Hspec        is the enthalpy in the specified unit
-     * @param enthalpyUnit The unit as a string. units supported are J, J/mol, J/kg
+     * @param enthalpyUnit Supported units are J, J/mol, J/kg
      *                     and kJ/kg
      */
     public void PHflash(double Hspec, String enthalpyUnit) {
@@ -385,7 +385,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * Method to perform a PS flash calculation for a specified entropy and pressure
      *
      * @param Sspec is the entropy in the specified unit
-     * @param unit  The unit as a string. units supported are J/K, J/molK, J/kgK and
+     * @param unit  Supported units are J/K, J/molK, J/kgK and
      *              kJ/kgK
      */
     public void PSflash(double Sspec, String unit) {
@@ -411,7 +411,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * Method to perform a TS flash calculation for a specified entropy and pressure
      *
      * @param Sspec is the entropy in the specified unit
-     * @param unit  The unit as a string. units supported are J/K, J/molK, J/kgK and
+     * @param unit  Supported units are J/K, J/molK, J/kgK and
      *              kJ/kgK
      */
     public void TSflash(double Sspec, String unit) {
