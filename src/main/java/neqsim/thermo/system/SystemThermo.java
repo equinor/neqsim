@@ -1252,17 +1252,18 @@ abstract class SystemThermo implements SystemInterface {
             return;
         }
 
-        if (moles < 0.0) {
-            logger.error("Negative input number of moles.");
-            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
-            throw new RuntimeException(e);
-        }
-
         for (int p = 0; p < componentNames.size(); p++) {
             if (componentNames.get(p).equals(componentName)) {
                 addComponent(p, moles, phaseNumber);
                 return;
             }
+        }
+
+        // Add new component
+        if (moles < 0.0) {
+            logger.error("Negative input number of moles.");
+            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+            throw new RuntimeException(e);
         }
 
         componentNames.add(componentName);
