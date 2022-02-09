@@ -425,11 +425,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         return iter < 3;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property hcpatot.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getHcpatot() {
         return hcpatot;

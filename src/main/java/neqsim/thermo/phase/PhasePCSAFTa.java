@@ -2,6 +2,7 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentPCSAFTa;
 import neqsim.thermo.mixingRule.CPAMixing;
@@ -336,11 +337,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return Math.abs(err) < 1e-10;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property hcpatot.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getHcpatot() {
         return hcpatot;

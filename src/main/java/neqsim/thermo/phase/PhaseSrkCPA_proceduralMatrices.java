@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
+
 // import org.ejml.simple.SimpleMatrix;
 // import org.ejml.data.DenseMatrix64F;
 import neqsim.thermo.component.ComponentCPAInterface;
@@ -946,11 +947,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return false;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property hcpatot.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getHcpatot() {
         return hcpatot;
