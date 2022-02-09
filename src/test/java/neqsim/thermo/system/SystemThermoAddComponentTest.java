@@ -20,36 +20,6 @@ public class SystemThermoAddComponentTest {
          */
     }
 
-    @Test
-    void testaddTBPFraction() {
-        // Assure that System contains no components
-        Assertions.assertEquals(0, sys.getNumberOfComponents());
-
-        // Add a component with no moles, assure number of system components is 1 and
-        // that number of moles is 0
-        sys.addTBPfraction("C7", 0, 92.2 / 1000.0, 0.7324);
-        Assertions.assertEquals(1, sys.getNumberOfComponents());
-        Assertions.assertEquals(0, sys.getTotalNumberOfMoles());
-
-        // Add a component with no moles, assure number of system components is 1 and
-        // that number of moles is 0
-        double moles = 1.06;
-        sys.addTBPfraction("C7", moles, 92.2 / 1000.0, 0.7324);
-        Assertions.assertEquals(1, sys.getNumberOfComponents());
-        Assertions.assertEquals(moles, sys.getTotalNumberOfMoles());
-
-        // Add same component with no moles, assure no change in number of components
-        // nor number of moles
-        sys.addTBPfraction("C7", 0, 92.2 / 1000.0, 0.7324);
-        Assertions.assertEquals(1, sys.getNumberOfComponents());
-        Assertions.assertEquals(moles, sys.getTotalNumberOfMoles());
-
-        // Add same component with moles, assure no change in number of components
-        // assure number of moles is doubled
-        sys.addTBPfraction("C7", moles, 92.2 / 1000.0, 0.7324);
-        Assertions.assertEquals(1, sys.getNumberOfComponents());
-        Assertions.assertEquals(2 * moles, sys.getTotalNumberOfMoles());
-    }
 
     @Test
     void testAddComponent() {
@@ -63,7 +33,7 @@ public class SystemThermoAddComponentTest {
         Assertions.assertEquals(0, sys.getTotalNumberOfMoles());
 
         // Add a component with no moles, assure number of system components is 1 and
-        // that number of moles is 0
+        // that number of moles is equal to input
         double moles = 0.64;
         sys.addComponent("nitrogen", moles);
         Assertions.assertEquals(1, sys.getNumberOfComponents());
@@ -120,9 +90,36 @@ public class SystemThermoAddComponentTest {
     }
 
     @Test
-    void testAddFluid() {
+    void testAddTBPFraction() {
+        // Assure that System contains no components
+        Assertions.assertEquals(0, sys.getNumberOfComponents());
 
+        // Add a component with no moles, assure number of system components is 1 and
+        // that number of moles is 0
+        sys.addTBPfraction("C7", 0, 92.2 / 1000.0, 0.7324);
+        Assertions.assertEquals(1, sys.getNumberOfComponents());
+        Assertions.assertEquals(0, sys.getTotalNumberOfMoles());
+
+        // Add a component with no moles, assure number of system components is 1 and
+        // that number of moles is equal to input
+        double moles = 1.06;
+        sys.addTBPfraction("C7", moles, 92.2 / 1000.0, 0.7324);
+        Assertions.assertEquals(1, sys.getNumberOfComponents());
+        Assertions.assertEquals(moles, sys.getTotalNumberOfMoles());
+
+        // Add same component with no moles, assure no change in number of components
+        // nor number of moles
+        sys.addTBPfraction("C7", 0, 92.2 / 1000.0, 0.7324);
+        Assertions.assertEquals(1, sys.getNumberOfComponents());
+        Assertions.assertEquals(moles, sys.getTotalNumberOfMoles());
+
+        // Add same component with moles, assure no change in number of components
+        // assure number of moles is doubled
+        sys.addTBPfraction("C7", moles, 92.2 / 1000.0, 0.7324);
+        Assertions.assertEquals(1, sys.getNumberOfComponents());
+        Assertions.assertEquals(2 * moles, sys.getTotalNumberOfMoles());
     }
+
 
     @Test
     void testClearAll() {
