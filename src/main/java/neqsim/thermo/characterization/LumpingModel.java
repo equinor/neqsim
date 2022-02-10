@@ -201,20 +201,21 @@ public class LumpingModel implements java.io.Serializable {
         @Override
         public double getFractionOfHeavyEnd(int i) {
             if (fractionOfHeavyEnd == null) {
-                return 0;
-            } else {
-                return fractionOfHeavyEnd[i];
+                neqsim.util.exception.ThermoException e = new neqsim.util.exception.NotInitializedException(
+                        "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
+                logger.error(e.getMessage());
+                throw new RuntimeException(e);
             }
+            return fractionOfHeavyEnd[i];
         }
     }
 
     /**
-     * PVTLumpingModel Model Object.
      * <P>
      * PVTLumpingModel
      * <P>
-     * PVTLumpingModel distributes the pseudo components into equal wwight frations starting with
-     * the plus fra
+     * PVTLumpingModel distributes the pseudo components into equal weight fractions
+     * starting with the plus fracations
      * 
      * @author Even Solbraa
      * @version 1.0
@@ -317,6 +318,12 @@ public class LumpingModel implements java.io.Serializable {
 
         @Override
         public double getFractionOfHeavyEnd(int i) {
+            if (fractionOfHeavyEnd == null) {
+                neqsim.util.exception.ThermoException e = new neqsim.util.exception.NotInitializedException(
+                        "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
+                logger.error(e.getMessage());
+                throw new RuntimeException(e);
+            }
             return fractionOfHeavyEnd[i];
         }
     }

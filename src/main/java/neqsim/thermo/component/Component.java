@@ -7,6 +7,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
@@ -2495,7 +2496,7 @@ abstract class Component implements ComponentInterface {
         } else if (flowunit.equals("mole/hr")) {
             return numberOfMolesInPhase * 3600.0;
         } else {
-            throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
+            throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
         }
     }
 
@@ -2519,7 +2520,7 @@ abstract class Component implements ComponentInterface {
         } else if (flowunit.equals("mole/hr")) {
             return numberOfMoles * 3600.0;
         } else {
-            throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
+            throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
         }
     }
 }

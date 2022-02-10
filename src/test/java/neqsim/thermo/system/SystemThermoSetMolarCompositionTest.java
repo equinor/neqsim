@@ -28,7 +28,6 @@ public class SystemThermoSetMolarCompositionTest {
 
     @Test
     void setMolarCompositionPlus() {
-        sys.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
         sys.getCharacterization().characterisePlusFraction();
         sys.setMolarCompositionPlus(new double[] { 1, 1.5, 1.75 });
         double[] molarComposition = sys.getMolarComposition();
@@ -41,8 +40,6 @@ public class SystemThermoSetMolarCompositionTest {
 
     @Test
     void testSetMolarCompositionOfPlusFluid() {
-        sys.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
-        sys.getCharacterization().characterisePlusFraction();
         sys.setMolarCompositionOfPlusFluid(new double[] { 1, 1.5, 1.75 });
         double[] molarComposition = sys.getMolarComposition();
 
