@@ -3,20 +3,11 @@
  */
 package neqsim.thermo.util.readwrite;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
-import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import com.google.common.io.Files;
 
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 

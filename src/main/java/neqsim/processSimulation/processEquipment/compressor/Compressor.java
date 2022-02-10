@@ -4,12 +4,15 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -1082,7 +1085,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * Getter for the field <code>numberOfCompressorCalcSteps</code>.
      * </p>
      *
-     * @return a int
+     * @return the number of calculation steps in compressor
      */
     public int getNumberOfCompressorCalcSteps() {
         return numberOfCompressorCalcSteps;

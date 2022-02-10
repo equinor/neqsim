@@ -227,9 +227,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -242,9 +240,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
         return result;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
