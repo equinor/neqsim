@@ -221,11 +221,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
                         * (4.0 * phase.getTotalVolume() - phase.getB()));
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property xsite.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getXsite() {
         return this.xsite;

@@ -7,6 +7,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
@@ -1441,9 +1442,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property stokesCationicDiameter.
-     */
+          */
     @Override
     public double getStokesCationicDiameter() {
         return stokesCationicDiameter;
@@ -1451,9 +1450,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property stokesCationicDiameter.
-     */
+          */
     @Override
     public void setStokesCationicDiameter(double stokesCationicDiameter) {
         this.stokesCationicDiameter = stokesCationicDiameter;
@@ -1461,9 +1458,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property paulingAnionicDiameter.
-     */
+          */
     @Override
     public final double getPaulingAnionicDiameter() {
         return paulingAnionicDiameter;
@@ -1480,9 +1475,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property logFugacityCoefficient.
-     */
+          */
     @Override
     public final double getLogFugacityCoefficient() {
         return logFugacityCoefficient;
@@ -1490,9 +1483,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property attractiveTermNumber.
-     */
+          */
     @Override
     public final int getAttractiveTermNumber() {
         return attractiveTermNumber;
@@ -1527,9 +1518,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property matiascopemanParams.
-     */
+          */
     @Override
     public final double[] getMatiascopemanParams() {
         return matiascopemanParams;
@@ -1560,9 +1549,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Indexed setter for property matiascopemanParams.
-     */
+          */
     @Override
     public void setMatiascopemanParams(int index, double matiascopemanParams) {
         this.matiascopemanParams[index] = matiascopemanParams;
@@ -1570,9 +1557,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property matiascopemanParams.
-     */
+          */
     @Override
     public void setMatiascopemanParams(double[] matiascopemanParams) {
         this.matiascopemanParams = matiascopemanParams;
@@ -1587,9 +1572,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property numberOfAssociationSites.
-     */
+          */
     @Override
     public final int getNumberOfAssociationSites() {
         return numberOfAssociationSites;
@@ -1597,9 +1580,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property numberOfAssociationSites.
-     */
+          */
     @Override
     public void setNumberOfAssociationSites(int numberOfAssociationSites) {
         this.numberOfAssociationSites = numberOfAssociationSites;
@@ -1619,9 +1600,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property associationVolume.
-     */
+          */
     @Override
     public final double getAssociationVolume() {
         return associationVolume;
@@ -1629,9 +1608,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property associationVolume.
-     */
+          */
     @Override
     public void setAssociationVolume(double associationVolume) {
         this.associationVolume = associationVolume;
@@ -1639,9 +1616,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property associationEnergy.
-     */
+          */
     @Override
     public final double getAssociationEnergy() {
         return associationEnergy;
@@ -1649,9 +1624,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property associationEnergy.
-     */
+          */
     @Override
     public void setAssociationEnergy(double associationEnergy) {
         this.associationEnergy = associationEnergy;
@@ -1659,9 +1632,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property normalBoilingPoint.
-     */
+          */
     @Override
     public double getNormalBoilingPoint() {
         return normalBoilingPoint;
@@ -1669,9 +1640,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property normalBoilingPoint.
-     */
+          */
     @Override
     public void setNormalBoilingPoint(double normalBoilingPoint) {
         this.normalBoilingPoint = normalBoilingPoint;
@@ -1697,9 +1666,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property AntoineASolid.
-     */
+          */
     @Override
     public double getAntoineASolid() {
         return AntoineASolid;
@@ -1707,9 +1674,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property AntoineASolid.
-     */
+          */
     @Override
     public void setAntoineASolid(double AntoineASolid) {
         this.AntoineASolid = AntoineASolid;
@@ -1717,9 +1682,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property AntoineBSolid.
-     */
+          */
     @Override
     public double getAntoineBSolid() {
         return AntoineBSolid;
@@ -1727,9 +1690,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property AntoineBSolid.
-     */
+          */
     @Override
     public void setAntoineBSolid(double AntoineBSolid) {
         this.AntoineBSolid = AntoineBSolid;
@@ -1737,9 +1698,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property AntoineBSolid.
-     */
+          */
     @Override
     public double getAntoineCSolid() {
         return AntoineBSolid;
@@ -1747,9 +1706,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property AntoineBSolid.
-     */
+          */
     @Override
     public void setAntoineCSolid(double AntoineCSolid) {
         this.AntoineCSolid = AntoineCSolid;
@@ -1787,9 +1744,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property componentName.
-     */
+          */
     @Override
     public void setComponentName(java.lang.String componentName) {
         this.componentName = componentName;
@@ -1797,9 +1752,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property lennardJonesEnergyParameter.
-     */
+          */
     @Override
     public void setLennardJonesEnergyParameter(double lennardJonesEnergyParameter) {
         this.lennardJonesEnergyParameter = lennardJonesEnergyParameter;
@@ -1807,9 +1760,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property lennardJonesMolecularDiameter.
-     */
+          */
     @Override
     public void setLennardJonesMolecularDiameter(double lennardJonesMolecularDiameter) {
         this.lennardJonesMolecularDiameter = lennardJonesMolecularDiameter;
@@ -1817,9 +1768,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property sphericalCoreRadius.
-     */
+          */
     @Override
     public void setSphericalCoreRadius(double sphericalCoreRadius) {
         this.sphericalCoreRadius = sphericalCoreRadius;
@@ -1827,9 +1776,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property calcActivity.
-     */
+          */
     @Override
     public boolean calcActivity() {
         return calcActivity != 0;
@@ -1837,9 +1784,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property isTBPfraction.
-     */
+          */
     @Override
     public boolean isIsTBPfraction() {
         return isTBPfraction;
@@ -1853,9 +1798,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property isTBPfraction.
-     */
+          */
     @Override
     public void setIsTBPfraction(boolean isTBPfraction) {
         setIsAllTypesFalse();
@@ -1876,9 +1819,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property isPlusFraction.
-     */
+          */
     @Override
     public boolean isIsPlusFraction() {
         return isPlusFraction;
@@ -1886,9 +1827,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property isPlusFraction.
-     */
+          */
     @Override
     public void setIsPlusFraction(boolean isPlusFraction) {
         setIsAllTypesFalse();
@@ -1897,9 +1836,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property isNormalComponent.
-     */
+          */
     @Override
     public boolean isIsNormalComponent() {
         return isNormalComponent;
@@ -1913,9 +1850,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property isNormalComponent.
-     */
+          */
     @Override
     public void setIsNormalComponent(boolean isNormalComponent) {
         setIsAllTypesFalse();
@@ -1924,9 +1859,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property isIon.
-     */
+          */
     @Override
     public boolean isIsIon() {
         if (componentType.equals("ion"))
@@ -1936,9 +1869,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property isIon.
-     */
+          */
     @Override
     public void setIsIon(boolean isIon) {
         setIsAllTypesFalse();
@@ -1947,9 +1878,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property normalLiquidDensity.
-     */
+          */
     @Override
     public void setNormalLiquidDensity(double normalLiquidDensity) {
         this.normalLiquidDensity = normalLiquidDensity;
@@ -1957,9 +1886,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property molarMass.
-     */
+          */
     @Override
     public void setMolarMass(double molarMass) {
         this.molarMass = molarMass;
@@ -1967,9 +1894,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property solidCheck.
-     */
+          */
     @Override
     public final boolean doSolidCheck() {
         return solidCheck;
@@ -1977,9 +1902,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property solidCheck.
-     */
+          */
     @Override
     public void setSolidCheck(boolean solidCheck) {
         this.solidCheck = solidCheck;
@@ -1987,9 +1910,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property associationScheme.
-     */
+          */
     @Override
     public java.lang.String getAssociationScheme() {
         return associationScheme;
@@ -1997,9 +1918,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property associationScheme.
-     */
+          */
     @Override
     public void setAssociationScheme(java.lang.String associationScheme) {
         this.associationScheme = associationScheme;
@@ -2007,9 +1926,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property componentType.
-     */
+          */
     @Override
     public java.lang.String getComponentType() {
         if (isTBPfraction) {
@@ -2047,9 +1964,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property henryCoefParameter.
-     */
+          */
     @Override
     public double[] getHenryCoefParameter() {
         return this.henryCoefParameter;
@@ -2057,9 +1972,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property henryCoefParameter.
-     */
+          */
     @Override
     public void setHenryCoefParameter(double[] henryCoefParameter) {
         this.henryCoefParameter = henryCoefParameter;
@@ -2067,9 +1980,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Getter for property matiascopemanSolidParams.
-     */
+          */
     @Override
     public double[] getMatiascopemanSolidParams() {
         return this.matiascopemanSolidParams;
@@ -2108,9 +2019,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property criticalVolume.
-     */
+          */
     @Override
     public void setCriticalVolume(double criticalVolume) {
         this.criticalVolume = criticalVolume;
@@ -2124,9 +2033,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * Setter for property criticalViscosity.
-     */
+          */
     @Override
     public void setCriticalViscosity(double criticalViscosity) {
         this.criticalViscosity = criticalViscosity;
@@ -2471,9 +2378,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * method to return flow rate of component
-     */
+          */
     @Override
     public double getFlowRate(String flowunit) {
         if (flowunit.equals("kg/sec")) {
@@ -2501,9 +2406,7 @@ abstract class Component implements ComponentInterface {
 
     /**
      * {@inheritDoc}
-     *
-     * method to return total flow rate of component
-     */
+          */
     @Override
     public double getTotalFlowRate(String flowunit) {
         if (flowunit.equals("kg/sec")) {

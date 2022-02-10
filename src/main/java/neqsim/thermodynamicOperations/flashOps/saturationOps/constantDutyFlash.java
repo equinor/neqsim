@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -130,11 +131,7 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
         system.display();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property superCritical.
-     */
+    /** {@inheritDoc} */
     @Override
     public boolean isSuperCritical() {
         return superCritical;

@@ -192,10 +192,11 @@ public interface FlowNodeInterface extends Cloneable {
 
     /**
      * <p>
-     * getOperations.
+     * Getter for property operations
      * </p>
      *
-     * @return a {@link neqsim.thermodynamicOperations.ThermodynamicOperations} object
+     * @return a {@link neqsim.thermodynamicOperations.ThermodynamicOperations}
+     *         object
      */
     public neqsim.thermodynamicOperations.ThermodynamicOperations getOperations();
 
@@ -584,7 +585,7 @@ public interface FlowNodeInterface extends Cloneable {
 
     /**
      * <p>
-     * getFlowDirection.
+     * Getter for property flowDirection.
      * </p>
      *
      * @param i a int
@@ -594,11 +595,11 @@ public interface FlowNodeInterface extends Cloneable {
 
     /**
      * <p>
-     * setFlowDirection.
+     * Setter for property flowDirection.
      * </p>
      *
      * @param flowDirection a int
-     * @param i a int
+     * @param i             a int
      */
     public void setFlowDirection(int flowDirection, int i);
 

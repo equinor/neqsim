@@ -7,6 +7,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -151,11 +152,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         dlngammadn[k] = val;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property gammaRefCor.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getGammaRefCor() {
         return gammaRefCor;

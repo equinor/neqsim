@@ -7,6 +7,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermCPAstatoil;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermGERG;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
@@ -563,21 +564,13 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
         return param;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property a.
-     */
+    /** {@inheritDoc} */
     @Override
     public void seta(double a) {
         this.a = a;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property b.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setb(double b) {
         this.b = b;

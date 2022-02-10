@@ -1,8 +1,10 @@
 package neqsim.thermo.characterization;
 
 import java.util.ArrayList;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -130,11 +132,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         // solver3.solve();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property coefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getCoefs() {
         return this.coefs;
@@ -146,11 +144,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         return this.coefs[i];
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property coefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setCoefs(double[] coefs) {
         System.arraycopy(coefs, 0, this.coefs, 0, coefs.length);
@@ -194,11 +188,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         } while (Math.abs(densPlus - densSum) > 1e-6 && iter < 1000);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property coefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setCoefs(double coef, int i) {
         this.coefs[i] = coef;
@@ -357,51 +347,31 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         setFirstPlusFractionNumber(startPlus);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property MPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getMPlus() {
         return MPlus;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property MPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setMPlus(double MPlus) {
         this.MPlus = MPlus;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property zPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getZPlus() {
         return zPlus;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property zPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setZPlus(double zPlus) {
         this.zPlus = zPlus;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property plusCoefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getPlusCoefs() {
         return this.plusCoefs;
@@ -413,21 +383,13 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         return this.plusCoefs[i];
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property plusCoefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setPlusCoefs(double[] plusCoefs) {
         this.plusCoefs = plusCoefs;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property densPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getDensPlus() {
         return densPlus;
@@ -457,31 +419,19 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         return numberOfPseudocomponents;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property numberOfPseudocomponents.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfPseudocomponents(int numberOfPseudocomponents) {
         this.numberOfPseudocomponents = numberOfPseudocomponents;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property pseudocomponents.
-     */
+    /** {@inheritDoc} */
     @Override
     public boolean isPseudocomponents() {
         return pseudocomponents;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property pseudocomponents.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setPseudocomponents(boolean pseudocomponents) {
         this.pseudocomponents = pseudocomponents;

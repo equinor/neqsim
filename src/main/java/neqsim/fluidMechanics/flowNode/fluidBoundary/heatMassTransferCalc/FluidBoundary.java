@@ -7,10 +7,12 @@ import java.awt.Font;
 import java.awt.Toolkit;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import Jama.Matrix;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.enhancementFactor.EnhancementFactor;
@@ -354,21 +356,14 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     @Override
     public void setEnhancementType(int type) {}
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property heatTransferCalc.
-     */
+    /** {@inheritDoc} */
     @Override
     public boolean isHeatTransferCalc() {
         return heatTransferCalc;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property heatTransferCalc.
-     */
+    /** {@inheritDoc} */
+
     @Override
     public void setHeatTransferCalc(boolean heatTransferCalc) {
         this.heatTransferCalc = heatTransferCalc;
@@ -380,21 +375,14 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
         this.massTransferCalc = massTransferCalc;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property thermodynamicCorrections.
-     */
+    /** {@inheritDoc} */
+
     @Override
     public boolean useThermodynamicCorrections(int phase) {
         return thermodynamicCorrections[phase];
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property thermodynamicCorrections.
-     */
+    /** {@inheritDoc} */
     @Override
     public void useThermodynamicCorrections(boolean thermodynamicCorrections) {
         this.thermodynamicCorrections[0] = thermodynamicCorrections;
@@ -407,21 +395,13 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
         this.thermodynamicCorrections[phase] = thermodynamicCorrections;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property finiteFluxCorrection.
-     */
+    /** {@inheritDoc} */
     @Override
     public boolean useFiniteFluxCorrection(int phase) {
         return finiteFluxCorrection[phase];
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property finiteFluxCorrection.
-     */
+    /** {@inheritDoc} */
     @Override
     public void useFiniteFluxCorrection(boolean finiteFluxCorrection) {
         this.finiteFluxCorrection[0] = finiteFluxCorrection;

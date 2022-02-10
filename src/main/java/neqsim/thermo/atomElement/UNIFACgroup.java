@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
@@ -228,9 +229,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
         }
     }
     
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
 	public int hashCode() {
 		final int prime = 31;
@@ -241,9 +240,8 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
 				lnGammaCompdTdT, lnGammaMix, lnGammaMixdT, lnGammaMixdTdT, mainGroup, n, subGroup, xComp);
 		return result;
 	}
-/**
- * {@inheritDoc}
- */
+
+    /** {@inheritDoc} */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
