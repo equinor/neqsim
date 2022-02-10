@@ -88,21 +88,13 @@ public class Packing implements PackingInterface {
         return surfaceAreaPrVolume;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property voidFractionPacking.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getVoidFractionPacking() {
         return voidFractionPacking;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property voidFractionPacking.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setVoidFractionPacking(double voidFractionPacking) {
         this.voidFractionPacking = voidFractionPacking;
@@ -117,11 +109,7 @@ public class Packing implements PackingInterface {
         this.size = size;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Get size in mm
-     */
+    /** {@inheritDoc} */
     @Override
     public double getSize() {
         return size;
