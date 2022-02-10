@@ -145,7 +145,7 @@ public class TestNeqSimBug {
                     fProp[t][k++] = fluid.getPhase(phaseNumber).getViscosity("kg/msec");
                     // Phase Thermal Conductivity [W/mK]
                     // Phase Thermal Conductivity [W/mK]
-                    fProp[t][k++] = fluid.getPhase(phaseNumber).getConductivity("W/mK");
+                    fProp[t][k++] = fluid.getPhase(phaseNumber).getThermalConductivity("W/mK");
                     // Phase Surface Tension(N/m) ** NOT USED
                 } else {
                     fProp[t][k++] = Double.NaN; // Phase Mole Percent
