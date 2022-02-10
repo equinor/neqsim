@@ -151,11 +151,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         dlngammadn[k] = val;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property gammaRefCor.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getGammaRefCor() {
         return gammaRefCor;
