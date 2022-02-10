@@ -563,21 +563,13 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
         return param;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property a.
-     */
+    /** {@inheritDoc} */
     @Override
     public void seta(double a) {
         this.a = a;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property b.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setb(double b) {
         this.b = b;

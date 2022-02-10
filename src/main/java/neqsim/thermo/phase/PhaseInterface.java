@@ -50,13 +50,15 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getPhaseFraction();
 
 	/**
-	 * <p>
-	 * getComposition.
-	 * </p>
-	 *
-	 * @param unit The unit as a string - molefraction/wtfraction/molespersec/volumefraction
-	 * @return composition array with unit
-	 */
+     * <p>
+     * Returns the composition vector in unit
+     * molefraction/wtfraction/molespersec/volumefraction
+     * </p>
+     *
+     * @param unit The unit as a string -
+     *             molefraction/wtfraction/molespersec/volumefraction
+     * @return composition array with unit
+     */
 	public double[] getComposition(String unit);
 
 	/**
@@ -76,11 +78,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getDensity_AGA8();
 
 	/**
-	 * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
-	 *
-	 * @param unit The unit as a string. Supported units are K/bar, C/bar
-	 * @return Joule Thomson coefficient in given unit
-	 */
+     * method to get the Joule Thomson Coefficient of a phase note: implemented in
+     * phaseEos
+     *
+     * @param unit Supported units are K/bar, C/bar
+     * @return Joule Thomson coefficient in specified unit
+     */
 	public double getJouleThomsonCoefficient(String unit);
 
 	/**
@@ -98,11 +101,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public void resetPhysicalProperties();
 
 	/**
-	 * method to return fluid volume
-	 *
-	 * @param unit The unit as a string. Supported units are m3, litre
-	 * @return volume in specified unit
-	 */
+     * method to return fluid volume
+     *
+     * @param unit Supported units are m3, litre
+     * @return volume in specified unit
+     */
 	public double getVolume(String unit);
 
 	/**
@@ -293,12 +296,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getMolarVolume();
 
 	/**
-	 * method to return flow rate of a phase
-	 *
-	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
-	 *        m3/hr, mole/sec, mole/min, mole/hr
-	 * @return flow rate in specified unit
-	 */
+     * method to return flow rate of a phase
+     *
+     * @param flowunit Supported units are kg/sec, kg/min, m3/sec, m3/min,
+     *                 m3/hr, mole/sec, mole/min, mole/hr
+     * @return flow rate in specified unit
+     */
 	public double getFlowRate(String flowunit);
 
 	/**
@@ -318,12 +321,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getDensity_GERG2008();
 
 	/**
-	 * <p>
-	 * getProperties_GERG2008.
-	 * </p>
-	 *
-	 * @return an array of {@link double} objects
-	 */
+     * <p>
+     * method to get GERG properties of a phase using the GERG-2008 EoS
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
 	public double[] getProperties_GERG2008();
 
 	/**
@@ -334,11 +337,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getDensity();
 
 	/**
-	 * method to get density of a fluid note: with Peneloux volume correction
-	 *
-	 * @param unit The unit as a string. Supported units are kg/m3, mol/m3
-	 * @return density in specified unit
-	 */
+     * method to get density of a fluid note: with Peneloux volume correction
+     *
+     * @param unit Supported units are kg/m3, mol/m3
+     * @return density in specified unit
+     */
 	public double getDensity(String unit);
 
 	/**
@@ -436,21 +439,21 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getSresTP();
 
 	/**
-	 * <p>
-	 * setPhaseType.
-	 * </p>
-	 *
-	 * @param phaseType a int
-	 */
+     * <p>
+     * Setter for property phaseType.
+     * </p>
+     *
+     * @param phaseType a int
+     */
 	public void setPhaseType(int phaseType);
 
 	/**
-	 * <p>
-	 * setBeta.
-	 * </p>
-	 *
-	 * @param beta a double
-	 */
+     * <p>
+     * Setter for property beta.
+     * </p>
+     *
+     * @param beta a double
+     */
 	public void setBeta(double beta);
 
 	/**
@@ -547,12 +550,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getActivityCoefficient(int k, int p);
 
 	/**
-	 * <p>
-	 * setPressure.
-	 * </p>
-	 *
-	 * @param pres a double
-	 */
+     * <p>
+     * Set the pressure
+     * </p>
+     *
+     * @param pres a double
+     */
 	public void setPressure(double pres);
 
 	/**
@@ -655,10 +658,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public void resetMixingRule(int type);
 
 	/**
-	 * method to set the temperature of a phase
-	 *
-	 * @param temperature in unit Kelvin
-	 */
+     * Set the temperature of a phase
+     *
+     * @param temperature in unit Kelvin
+     */
 	public void setTemperature(double temperature);
 
 	/**
@@ -892,11 +895,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getEnthalpy();
 
 	/**
-	 * method to return phase enthalpy in a given unit
-	 *
-	 * @param unit The unit as a string. Supported units are J, J/mol, J/kg and kJ/kg
-	 * @return enthalpy in specified unit
-	 */
+     * method to return phase enthalpy in a specified unit
+     *
+     * @param unit Supported units are J, J/mol, J/kg and kJ/kg
+     * @return enthalpy in specified unit
+     */
 	public double getEnthalpy(String unit);
 
 	/**
@@ -907,11 +910,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getEntropy();
 
 	/**
-	 * method to return entropy of the phase
-	 *
-	 * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and kJ/kgK
-	 * @return entropy in specified unit
-	 */
+     * method to return entropy of the phase
+     *
+     * @param unit Supported units are J/K, J/moleK, J/kgK and kJ/kgK
+     * @return entropy in specified unit
+     */
 	public double getEntropy(String unit);
 
 	/**
@@ -922,26 +925,32 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getViscosity();
 
 	/**
-	 * method to return viscosity og the phase in a given unit
-	 *
-	 * @param unit The unit as a string. Supported units are kg/msec, cP (centipoise)
-	 * @return viscosity in specified unit
-	 */
+     * method to return viscosity og the phase in a specified unit
+     *
+     * @param unit Supported units are kg/msec, cP (centipoise)
+     * @return viscosity in specified unit
+     */
 	public double getViscosity(String unit);
 
 	/**
-	 * method to return conductivity of a phase
-	 *
-	 * @return conductivity in unit W/m*K
-	 */
+     * method to return conductivity of a phase
+     *
+     * @deprecated use {@link #getThermalConductivity()} instead.
+     *
+     * @return conductivity in unit W/m*K
+     */
+    @Deprecated
 	public double getConductivity();
 
 	/**
-	 * method to return conductivity in a given unit
-	 *
-	 * @param unit The unit as a string. Supported units are W/mK, W/cmK
-	 * @return conductivity in specified unit
-	 */
+     * method to return conductivity in a specified unit
+     * 
+     * @deprecated use {@link #getThermalConductivity(String unit)} instead.
+     *
+     * @param unit Supported units are W/mK, W/cmK
+     * @return conductivity in specified unit
+     */
+    @Deprecated
 	public double getConductivity(String unit);
 
 	/**
@@ -952,11 +961,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getThermalConductivity();
 
 	/**
-	 * method to return conductivity in a given unit
-	 *
-	 * @param unit The unit as a string. Supported units are W/mK, W/cmK
-	 * @return conductivity in specified unit
-	 */
+     * method to return conductivity in a specified unit
+     *
+     * @param unit Supported units are W/mK, W/cmK
+     * @return conductivity in specified unit
+     */
 	public double getThermalConductivity(String unit);
 
 	/**
@@ -967,11 +976,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getCp();
 
 	/**
-	 * method to return specific heat capacity (Cp) in a given unit
-	 *
-	 * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and kJ/kgK
-	 * @return Cp in specified unit
-	 */
+     * method to return specific heat capacity (Cp) in a specified unit
+     *
+     * @param unit Supported units are J/K, J/molK, J/kgK and kJ/kgK
+     * @return Cp in specified unit
+     */
 	public double getCp(String unit);
 
 	/**
@@ -1000,18 +1009,19 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getCv();
 
 	/**
-	 * method to return specific heat capacity (Cv) in a given unit
-	 *
-	 * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and kJ/kgK
-	 * @return Cv in specified unit
-	 */
+     * method to return specific heat capacity (Cv) in a specified unit
+     *
+     * @param unit Supported units are J/K, J/molK, J/kgK and kJ/kgK
+     * @return Cv in specified unit
+     */
 	public double getCv(String unit);
 
 	/**
-	 * method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
-	 *
-	 * @return kappa
-	 */
+     * method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
+     * method to return heat capacity ratio/adiabatic index/Poisson constant
+     * 
+     * @return kappa
+     */
 	public double getKappa();
 
 	/**
@@ -1033,12 +1043,17 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getZ();
 
 	/**
-	 * <p>
-	 * setPhysicalProperties.
-	 * </p>
-	 *
-	 * @param type a int
-	 */
+     * <p>
+     * specify the type model for the physical properties you want to use.
+     * Type:
+     * 0 Orginal/default
+     * 1 Water
+     * 2 Glycol
+     * 3 Amine
+     * </p>
+     *
+     * @param type a int
+     */
 	public void setPhysicalProperties(int type);
 
 	/**
@@ -1276,25 +1291,25 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public PhaseInterface clone();
 
 	/**
-	 * method to get temperature
-	 *
-	 * @return temperature in unit K
-	 */
+     * Get temperature of phase
+     *
+     * @return temperature in unit K
+     */
 	public double getTemperature();
 
 	/**
-	 * method to get pressure
-	 *
-	 * @return pressure in unit bara
-	 */
+     * Get pressure of phase
+     *
+     * @return pressure in unit bara
+     */
 	public double getPressure();
 
 	/**
-	 * method to return pressure in a given unit
-	 *
-	 * @param unit The unit as a string. Supported units are bara, barg, Pa and MPa
-	 * @return pressure in specified unit
-	 */
+     * Get pressure of phase in a specified unit
+     *
+     * @param unit Supported units are bara, barg, Pa and MPa
+     * @return pressure in specified unit
+     */
 	public double getPressure(String unit);
 
 	/**
@@ -1681,12 +1696,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getActivityCoefficient(int k);
 
 	/**
-	 * <p>
-	 * getMixingRuleNumber.
-	 * </p>
-	 *
-	 * @return a int
-	 */
+     * <p>
+     * Getter for property mixingRuleNumber.
+     * </p>
+     *
+     * @return a int
+     */
 	public int getMixingRuleNumber();
 
 	/**
@@ -1699,59 +1714,60 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public void initRefPhases(boolean onlyPure);
 
 	/**
-	 * <p>
-	 * getRefPhase.
-	 * </p>
-	 *
-	 * @param index a int
-	 * @return a {@link neqsim.thermo.phase.PhaseInterface} object
-	 */
+     * <p>
+     * Indexed getter for property refPhase.
+     * </p>
+     *
+     * @param index a int
+     * @return a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
 	public neqsim.thermo.phase.PhaseInterface getRefPhase(int index);
 
 	/**
-	 * <p>
-	 * getRefPhase.
-	 * </p>
-	 *
-	 * @return an array of {@link neqsim.thermo.phase.PhaseInterface} objects
-	 */
+     * <p>
+     * Getter for property refPhase.
+     * </p>
+     *
+     * @return an array of {@link neqsim.thermo.phase.PhaseInterface} objects
+     */
 	public neqsim.thermo.phase.PhaseInterface[] getRefPhase();
 
 	/**
-	 * <p>
-	 * setRefPhase.
-	 * </p>
-	 *
-	 * @param index a int
-	 * @param refPhase a {@link neqsim.thermo.phase.PhaseInterface} object
-	 */
+     * <p>
+     * Indexed setter for property refPhase.
+     * </p>
+     *
+     * @param index    a int
+     * @param refPhase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
 	public void setRefPhase(int index, neqsim.thermo.phase.PhaseInterface refPhase);
 
 	/**
-	 * <p>
-	 * setRefPhase.
-	 * </p>
-	 *
-	 * @param refPhase an array of {@link neqsim.thermo.phase.PhaseInterface} objects
-	 */
+     * <p>
+     * Setter for property refPhase.
+     * </p>
+     *
+     * @param refPhase an array of {@link neqsim.thermo.phase.PhaseInterface}
+     *                 objects
+     */
 	public void setRefPhase(neqsim.thermo.phase.PhaseInterface[] refPhase);
 
 	/**
-	 * <p>
-	 * getPhysicalPropertyType.
-	 * </p>
-	 *
-	 * @return a int
-	 */
+     * <p>
+     * Getter for property physicalPropertyType.
+     * </p>
+     *
+     * @return a int
+     */
 	public int getPhysicalPropertyType();
 
 	/**
-	 * <p>
-	 * setPhysicalPropertyType.
-	 * </p>
-	 *
-	 * @param physicalPropertyType a int
-	 */
+     * <p>
+     * Setter for property physicalPropertyType.
+     * </p>
+     *
+     * @param physicalPropertyType a int
+     */
 	public void setPhysicalPropertyType(int physicalPropertyType);
 
 	/**
@@ -1770,39 +1786,39 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 			String[][] mixRule, double[][] intparam);
 
 	/**
-	 * <p>
-	 * getPhaseTypeName.
-	 * </p>
-	 *
-	 * @return a {@link java.lang.String} object
-	 */
+     * <p>
+     * Getter for property phaseTypeName.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
 	public java.lang.String getPhaseTypeName();
 
 	/**
-	 * <p>
-	 * setPhaseTypeName.
-	 * </p>
-	 *
-	 * @param phaseTypeName a {@link java.lang.String} object
-	 */
+     * <p>
+     * Setter for property phaseTypeName.
+     * </p>
+     *
+     * @param phaseTypeName a {@link java.lang.String} object
+     */
 	public void setPhaseTypeName(java.lang.String phaseTypeName);
 
 	/**
-	 * <p>
-	 * isMixingRuleDefined.
-	 * </p>
-	 *
-	 * @return a boolean
-	 */
+     * <p>
+     * Getter for property mixingRuleDefined.
+     * </p>
+     *
+     * @return a boolean
+     */
 	public boolean isMixingRuleDefined();
 
 	/**
-	 * <p>
-	 * setMixingRuleDefined.
-	 * </p>
-	 *
-	 * @param mixingRuleDefined a boolean
-	 */
+     * <p>
+     * Setter for property mixingRuleDefined.
+     * </p>
+     *
+     * @param mixingRuleDefined a boolean
+     */
 	public void setMixingRuleDefined(boolean mixingRuleDefined);
 
 	/**
