@@ -7,11 +7,9 @@ package neqsim.standards.salesContract;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
-
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import neqsim.standards.StandardInterface;
 import neqsim.standards.gasQuality.BestPracticeHydrocarbonDewPoint;
 import neqsim.standards.gasQuality.Draft_ISO18453;

@@ -599,7 +599,7 @@ public interface FlowNodeInterface extends Cloneable {
      * </p>
      *
      * @param flowDirection a int
-     * @param i             a int
+     * @param i a int
      */
     public void setFlowDirection(int flowDirection, int i);
 
