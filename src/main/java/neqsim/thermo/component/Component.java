@@ -1439,25 +1439,19 @@ abstract class Component implements ComponentInterface {
         }
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public double getStokesCationicDiameter() {
         return stokesCationicDiameter;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setStokesCationicDiameter(double stokesCationicDiameter) {
         this.stokesCationicDiameter = stokesCationicDiameter;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public final double getPaulingAnionicDiameter() {
         return paulingAnionicDiameter;
@@ -1472,17 +1466,13 @@ abstract class Component implements ComponentInterface {
         this.paulingAnionicDiameter = paulingAnionicDiameter;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public final double getLogFugacityCoefficient() {
         return logFugacityCoefficient;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public final int getAttractiveTermNumber() {
         return attractiveTermNumber;
@@ -1515,9 +1505,7 @@ abstract class Component implements ComponentInterface {
         return matiascopemanParams[index];
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public final double[] getMatiascopemanParams() {
         return matiascopemanParams;
@@ -1546,17 +1534,13 @@ abstract class Component implements ComponentInterface {
         this.matiascopemanParamsPR[index] = matiascopemanParams;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setMatiascopemanParams(int index, double matiascopemanParams) {
         this.matiascopemanParams[index] = matiascopemanParams;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setMatiascopemanParams(double[] matiascopemanParams) {
         this.matiascopemanParams = matiascopemanParams;
@@ -1569,17 +1553,13 @@ abstract class Component implements ComponentInterface {
         logFugacityCoefficient = Math.log(fugacityCoefficient);
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public final int getNumberOfAssociationSites() {
         return numberOfAssociationSites;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfAssociationSites(int numberOfAssociationSites) {
         this.numberOfAssociationSites = numberOfAssociationSites;
@@ -1597,49 +1577,37 @@ abstract class Component implements ComponentInterface {
         logger.error("no method set b");
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public final double getAssociationVolume() {
         return associationVolume;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setAssociationVolume(double associationVolume) {
         this.associationVolume = associationVolume;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public final double getAssociationEnergy() {
         return associationEnergy;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setAssociationEnergy(double associationEnergy) {
         this.associationEnergy = associationEnergy;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public double getNormalBoilingPoint() {
         return normalBoilingPoint;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setNormalBoilingPoint(double normalBoilingPoint) {
         this.normalBoilingPoint = normalBoilingPoint;
@@ -1663,49 +1631,37 @@ abstract class Component implements ComponentInterface {
         this.standardDensity = standardDensity;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public double getAntoineASolid() {
         return AntoineASolid;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setAntoineASolid(double AntoineASolid) {
         this.AntoineASolid = AntoineASolid;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public double getAntoineBSolid() {
         return AntoineBSolid;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setAntoineBSolid(double AntoineBSolid) {
         this.AntoineBSolid = AntoineBSolid;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public double getAntoineCSolid() {
         return AntoineBSolid;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setAntoineCSolid(double AntoineCSolid) {
         this.AntoineCSolid = AntoineCSolid;
@@ -1741,49 +1697,37 @@ abstract class Component implements ComponentInterface {
         return sphericalCoreRadius;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setComponentName(java.lang.String componentName) {
         this.componentName = componentName;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setLennardJonesEnergyParameter(double lennardJonesEnergyParameter) {
         this.lennardJonesEnergyParameter = lennardJonesEnergyParameter;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setLennardJonesMolecularDiameter(double lennardJonesMolecularDiameter) {
         this.lennardJonesMolecularDiameter = lennardJonesMolecularDiameter;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setSphericalCoreRadius(double sphericalCoreRadius) {
         this.sphericalCoreRadius = sphericalCoreRadius;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public boolean calcActivity() {
         return calcActivity != 0;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public boolean isIsTBPfraction() {
         return isTBPfraction;
@@ -1795,9 +1739,7 @@ abstract class Component implements ComponentInterface {
         return isIsTBPfraction() || isPlusFraction || componentType.equals("HC");
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setIsTBPfraction(boolean isTBPfraction) {
         setIsAllTypesFalse();
@@ -1816,26 +1758,20 @@ abstract class Component implements ComponentInterface {
         this.isIon = false;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public boolean isIsPlusFraction() {
         return isPlusFraction;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setIsPlusFraction(boolean isPlusFraction) {
         setIsAllTypesFalse();
         this.isPlusFraction = isPlusFraction;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public boolean isIsNormalComponent() {
         return isNormalComponent;
@@ -1847,18 +1783,14 @@ abstract class Component implements ComponentInterface {
         return componentType.equals("inert");
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setIsNormalComponent(boolean isNormalComponent) {
         setIsAllTypesFalse();
         this.isNormalComponent = isNormalComponent;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public boolean isIsIon() {
         if (componentType.equals("ion"))
@@ -1866,66 +1798,50 @@ abstract class Component implements ComponentInterface {
         return isIon;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setIsIon(boolean isIon) {
         setIsAllTypesFalse();
         this.isIon = isIon;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setNormalLiquidDensity(double normalLiquidDensity) {
         this.normalLiquidDensity = normalLiquidDensity;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setMolarMass(double molarMass) {
         this.molarMass = molarMass;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public final boolean doSolidCheck() {
         return solidCheck;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setSolidCheck(boolean solidCheck) {
         this.solidCheck = solidCheck;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public java.lang.String getAssociationScheme() {
         return associationScheme;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setAssociationScheme(java.lang.String associationScheme) {
         this.associationScheme = associationScheme;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public java.lang.String getComponentType() {
         if (isTBPfraction) {
@@ -1961,25 +1877,19 @@ abstract class Component implements ComponentInterface {
                 + henryCoefParameter[2] / temperature + henryCoefParameter[3]);
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public double[] getHenryCoefParameter() {
         return this.henryCoefParameter;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setHenryCoefParameter(double[] henryCoefParameter) {
         this.henryCoefParameter = henryCoefParameter;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public double[] getMatiascopemanSolidParams() {
         return this.matiascopemanSolidParams;
@@ -2016,9 +1926,7 @@ abstract class Component implements ComponentInterface {
                         + CpLiquid[4] * Math.pow(temperature, 4.0));
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setCriticalVolume(double criticalVolume) {
         this.criticalVolume = criticalVolume;
@@ -2030,9 +1938,7 @@ abstract class Component implements ComponentInterface {
         return criticalViscosity;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public void setCriticalViscosity(double criticalViscosity) {
         this.criticalViscosity = criticalViscosity;
@@ -2375,9 +2281,7 @@ abstract class Component implements ComponentInterface {
         this.idealGasEnthalpyOfFormation = idealGasEnthalpyOfFormation;
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public double getFlowRate(String flowunit) {
         if (flowunit.equals("kg/sec")) {
@@ -2403,9 +2307,7 @@ abstract class Component implements ComponentInterface {
         }
     }
 
-    /**
-     * {@inheritDoc}
-          */
+    /** {@inheritDoc} */
     @Override
     public double getTotalFlowRate(String flowunit) {
         if (flowunit.equals("kg/sec")) {
