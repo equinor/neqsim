@@ -160,7 +160,8 @@ public class PropertyGenerator {
                 gammaGas[i] = fluid.getPhase(phasenumb).getKappa();
                 joulethomsoncoefficientGas[i] =
                         fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
-                thermalconductivitygas[i] = fluid.getPhase(phasenumb).getConductivity("W/mK");
+                thermalconductivitygas[i] =
+                        fluid.getPhase(phasenumb).getThermalConductivity("W/mK");
             } else {
                 molarmassGas[i] = Double.NaN;
                 ZGas[i] = Double.NaN;
@@ -199,7 +200,8 @@ public class PropertyGenerator {
                 gammaOil[i] = fluid.getPhase(phasenumb).getKappa();
                 joulethomsoncoefficientOil[i] =
                         fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
-                thermalconductivityOil[i] = fluid.getPhase(phasenumb).getConductivity("W/mK");
+                thermalconductivityOil[i] =
+                        fluid.getPhase(phasenumb).getThermalConductivity("W/mK");
             } else {
                 molarmassOil[i] = Double.NaN;
                 ZOil[i] = Double.NaN;
@@ -238,7 +240,8 @@ public class PropertyGenerator {
                 gammaAqueous[i] = fluid.getPhase(phasenumb).getKappa();
                 joulethomsoncoefficientAqueous[i] =
                         fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
-                thermalconductivityAqueous[i] = fluid.getPhase(phasenumb).getConductivity("W/mK");
+                thermalconductivityAqueous[i] =
+                        fluid.getPhase(phasenumb).getThermalConductivity("W/mK");
             } else {
                 molarmassAqueous[i] = Double.NaN;
                 ZAqueous[i] = Double.NaN;
