@@ -21,7 +21,7 @@ Please note we have a code of conduct, please follow it in all your interactions
 This project uses Google Java style formatting rules. 
 
 For Visual Studio Code:  
-Install Language Support for Java(TM) by Red Hat and add following settings to settings.json
+Install Language Support for Java(TM) by Red Hat and add the following to settings.json.
  ```   
     "[java]": {
         "editor.defaultFormatter": "redhat.java",
@@ -30,3 +30,5 @@ Install Language Support for Java(TM) by Red Hat and add following settings to s
     "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
     "java.saveActions.organizeImports": true
 ```
+
+Note: workspace/project specific settings are located in folder .vscode.
