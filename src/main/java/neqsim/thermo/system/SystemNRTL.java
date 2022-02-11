@@ -8,7 +8,6 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * This class defines a thermodynamic system using the SRK EoS amd NRTL for liquids
  * 
  * @author Even Solbraa
- * @version
  */
 public class SystemNRTL extends SystemEos {
     private static final long serialVersionUID = 1000;

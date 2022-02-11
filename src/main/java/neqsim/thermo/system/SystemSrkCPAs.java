@@ -8,7 +8,6 @@ import neqsim.thermo.phase.PhaseSrkCPAsOld;
  * This class defines a thermodynamic system using the sCPA-EOS equation of state
  * 
  * @author Even Solbraa
- * @version
  */
 public class SystemSrkCPAs extends SystemSrkCPA {
     private static final long serialVersionUID = 1000;

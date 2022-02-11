@@ -4,7 +4,6 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the Predictive SRK-EoS equation of state
  * 
  * @author Even Solbraa
- * @version
  */
 public class SystemPsrkEos extends SystemSrkEos {
     private static final long serialVersionUID = 1000;

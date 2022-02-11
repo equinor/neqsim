@@ -123,12 +123,12 @@
 				<version>2.4</version>
 				<configuration>
 	  				<archive>
-	    					<manifest>
+						<manifest>
 							<mainClass>neqsim.thermo.util.benchmark.TPflash_benchmark</mainClass>
-	    					</manifest>
+						</manifest>
 	  				</archive>
 				</configuration>
-    			</plugin>
+			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>flatten-maven-plugin</artifactId>
