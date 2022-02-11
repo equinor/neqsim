@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseInterface;
 /**
  *
  * @author Even Solbraa
- * @version
  */
 abstract class ComponentGE extends Component implements ComponentGEInterface {
     private static final long serialVersionUID = 1000;

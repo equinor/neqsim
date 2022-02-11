@@ -31,7 +31,6 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * @author Even Solbraa
- * @version
  */
 abstract class ComponentEos extends Component implements ComponentEosInterface {
     private static final long serialVersionUID = 1000;

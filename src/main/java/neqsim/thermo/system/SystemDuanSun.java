@@ -9,7 +9,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * This class defines a thermodynamic system using the SRK EoS and Pitzer for liquids
  * 
  * @author Even Solbraa
- * @version
  */
 public class SystemDuanSun extends SystemEos {
     private static final long serialVersionUID = 1000;
