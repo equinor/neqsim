@@ -7,7 +7,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
 /**
  *
  * @author Even Solbraa
- * @version
  */
 abstract class WongSandlerFunction extends LevenbergMarquardtFunction {
     /**
