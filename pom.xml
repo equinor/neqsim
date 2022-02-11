@@ -187,8 +187,6 @@
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.3.1</version>
 				<configuration>
-					<show>private</show>
-					<nohelp>true</nohelp>
 					<source>1.8</source>
 					<target>1.8</target>
 				</configuration>
