@@ -9,7 +9,6 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * liquids
  * 
  * @author Even Solbraa
- * @version
  */
 public class SystemUNIFAC extends SystemEos {
     private static final long serialVersionUID = 1000;
