@@ -6,7 +6,6 @@ import org.apache.logging.log4j.Logger;
 /**
  *
  * @author Even Solbraa
- * @version
  */
 abstract class Conductivity extends
         neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod

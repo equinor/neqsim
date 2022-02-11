@@ -4,7 +4,6 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the SRK with Mathias Copeman equation of state
  * 
  * @author Even Solbraa
- * @version
  */
 public class SystemSrkMathiasCopeman extends SystemSrkEos {
     private static final long serialVersionUID = 1000;
