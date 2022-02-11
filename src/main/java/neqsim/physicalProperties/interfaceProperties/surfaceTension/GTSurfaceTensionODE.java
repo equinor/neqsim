@@ -10,7 +10,6 @@ import org.ejml.dense.row.SingularOps_DDRM;
 import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
-
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -248,12 +247,12 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
      *
      * Solves the equilibrium relations with the Newton-Raphson method.
      * 
-     * @param[in,out] rho Number density [mol/m3]
-     * @param[out] mu Chemical potential [J/mol]
-     * @param[out] dmu_drho Chemical potential derivative with respect to mole numbers [J/mol^2]
-     * @param[out] p Pressure [Pa]
-     * @param[out] f Residual of equilibrium relations.
-     * @param[out] jac Jacobian of the equilibrium relations.
+     * @param rho Number density [mol/m3]
+     * @param mu Chemical potential [J/mol]
+     * @param dmu_drho Chemical potential derivative with respect to mole numbers [J/mol^2]
+     * @param p Pressure [Pa]
+     * @param f Residual of equilibrium relations.
+     * @param jac Jacobian of the equilibrium relations.
      */
     private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f,
             double[][] jac) {

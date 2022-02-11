@@ -679,9 +679,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void addComponent(String name);
     
     /**
-     * add a component to a fluid. If component name already exists, it will be added to the component
+     * add a component to a fluid. If component name already exists, it will be added to the
+     * component
      *
-     * @param name a {@link neqsim.thermo.component.ComponentInterface} object
+     * @param inComponent a {@link neqsim.thermo.component.ComponentInterface} object
      */
     public void addComponent(ComponentInterface inComponent);
 
@@ -1361,6 +1362,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      * </p>
      *
      * @param addSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @return SystemInterface
      */
     public SystemInterface addFluid(SystemInterface addSystem);
 

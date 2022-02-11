@@ -6,10 +6,8 @@
 package neqsim.thermo.phase;
 
 import java.util.ArrayList;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -17,7 +15,6 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * @author Even Solbraa
- * @version
  */
 
 abstract class Phase implements PhaseInterface {
