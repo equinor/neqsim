@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * @author Even Solbraa
- * @version
  */
 abstract class Diffusivity extends
         neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
