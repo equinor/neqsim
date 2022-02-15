@@ -6,9 +6,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
@@ -27,7 +29,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ProcessSystem implements java.io.Serializable, Runnable, Cloneable {
+public class ProcessSystem implements java.io.Serializable, Runnable {
     private static final long serialVersionUID = 1000;
 
     Thread thisThread;
@@ -884,14 +886,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable, Cloneable 
      * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
      */
     public ProcessSystem copy() {
-        // TODO: Should be deprecated and replaced with clone?
-        return this.clone();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public ProcessSystem clone() {
-        // TODO: should be shallow clone?
         byte[] bytes = SerializationUtils.serialize(this);
         ProcessSystem copyOperation = (ProcessSystem) SerializationUtils.deserialize(bytes);
         return copyOperation;
@@ -906,27 +900,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable, Cloneable 
      */
     public ConditionMonitor getConditionMonitor() {
         return new ConditionMonitor(this);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null) {
-            return false;
-        }
-
-        ProcessSystem sys = (ProcessSystem) o;
-
-        if (this.name.compareTo(sys.name) != 0) {
-            return false;
-        }
-
-        // TODO: add checks
-
-        return true;
     }
 
     /*
