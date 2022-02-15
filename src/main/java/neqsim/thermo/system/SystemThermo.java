@@ -4626,7 +4626,7 @@ abstract class SystemThermo implements SystemInterface {
     @Override
     public double calcHenrysConstant(String component) {
         if (numberOfPhases != 2) {
-            logger.error("cant calculated Henrys constant - two phases must be present.");
+            logger.error("Can't calculate Henrys constant - two phases must be present.");
             return 0;
         } else {
             int compNumb = getPhase(getPhaseIndex(0)).getComponent(component).getComponentNumber();
@@ -5083,16 +5083,16 @@ abstract class SystemThermo implements SystemInterface {
     /** @{inheritDoc} */
     public SystemProperties getProperties() {
         SystemProperties prop = new SystemProperties(this);
-
         return prop;
     }
 
     private void setMolarComposition(double[] molefractions, String type) {
         double totalFlow = getTotalNumberOfMoles();
         if (totalFlow < 1e-100) {
-            logger.error("Total flow can not be 0 when setting molar composition ");
+            String msg = "Total flow can not be 0 when setting molar composition";
+            logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
+                    new neqsim.util.exception.InvalidInputException(msg);
             throw new RuntimeException(e);
         }
         double sum = 0;
@@ -5103,7 +5103,8 @@ abstract class SystemThermo implements SystemInterface {
 
         switch (type) {
             case "PlusFluid":
-                for (int compNumb = 0; compNumb <= molefractions.length - 1; compNumb++) {
+                // todo: really skip last component of molefraction?
+                for (int compNumb = 0; compNumb < molefractions.length - 1; compNumb++) {
                     addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
                 }
                 for (int j = 0; j < getCharacterization().getLumpingModel()
@@ -5113,6 +5114,7 @@ abstract class SystemThermo implements SystemInterface {
                 }
                 break;
             case "Plus":
+                // todo: compNumb can be negative
                 for (int compNumb = 0; compNumb < this.numberOfComponents - getCharacterization()
                         .getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
                     addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
@@ -5130,7 +5132,9 @@ abstract class SystemThermo implements SystemInterface {
                 break;
             default:
                 // NB! It will allow setting composition for only the first items.
-                for (int compNumb = 0; compNumb <= molefractions.length - 1; compNumb++) {
+                // for (int compNumb = 0; compNumb <= molefractions.length - 1; compNumb++) {
+                // NB! Can fail because len(molefractions) < this.numberOfComponents
+                for (int compNumb = 0; compNumb <= this.numberOfComponents - 1; compNumb++) {
                     addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
                 }
                 break;
