@@ -471,6 +471,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
                 }
             } else {
                 if (polytropicMethod.equals("detailed")) {
+                	//todo add detailed output of compressor calculations
                     int numbersteps = numberOfCompressorCalcSteps;
                     double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
                     for (int i = 0; i < numbersteps; i++) {
