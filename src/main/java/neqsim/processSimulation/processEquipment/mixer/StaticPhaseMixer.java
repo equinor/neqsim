@@ -119,10 +119,4 @@ public class StaticPhaseMixer extends StaticMixer {
 
         mixedStream.getThermoSystem().init(3);
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
-    }
 }
