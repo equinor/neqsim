@@ -42,12 +42,6 @@ public class SimpleTPoutPipeline extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public StreamInterface getOutStream() {
         return outStream;
     }
@@ -95,12 +89,6 @@ public class SimpleTPoutPipeline extends Pipeline {
         System.out.println("Superficial velocity out gas : " + getSuperficialVelocity(0, 1));
         System.out.println("Superficial velocity out condensate : " + getSuperficialVelocity(1, 1));
         System.out.println("Superficial velocity out MEG/water : " + getSuperficialVelocity(2, 1));
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
     }
 
     /** {@inheritDoc} */
