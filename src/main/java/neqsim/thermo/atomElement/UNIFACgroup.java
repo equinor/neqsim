@@ -226,7 +226,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
             return -1;
         }
     }
-
+    
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
@@ -288,7 +288,6 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
         // System.out.println("xcomp " + xComp);
         return xComp;
     }
-
     /*
      * public double calcXMix(PhaseGEUnifac phase) { double temp = 0.0, temp2 = 0.0, tempVal = 0.0;
      * 
@@ -407,7 +406,6 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     public double getQMixdN(int comp) {
         return QMixdN[comp];
     }
-
     /*
      * public double getXMixdN(int comp) { return xMixdN[comp]; }
      * 

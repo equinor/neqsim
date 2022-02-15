@@ -215,7 +215,6 @@ public class ComponentGEUniquac extends ComponentGE {
                 / 0.02;
         return dfugdt;
     }
-
     /*
      * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double
      * temperature, double pressure, int phasetype){ // NumericalDerivative deriv = new

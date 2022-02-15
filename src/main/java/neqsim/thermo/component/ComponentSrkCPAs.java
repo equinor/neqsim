@@ -74,7 +74,6 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
 
         return clonedComponent;
     }
-
     /*
      * public double calc_lngi2(PhaseInterface phase) { return 0.475 / (1.0 - 0.475 * phase.getB() /
      * phase.getTotalVolume()) * getBi() / phase.getTotalVolume(); }
@@ -85,7 +84,6 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
     public double calc_lngi(PhaseInterface phase) {
         return 0.475 * getBi() / (phase.getTotalVolume() - 0.475 * phase.getB());
     }
-
     /*
      * public double calc_lngi(PhaseInterface phase) { double nbet = phase.getB() / 4.0 /
      * phase.getVolume(); double dlngdb = 1.9 / (1.0 - 1.9 * nbet); double nbeti = nbet /
