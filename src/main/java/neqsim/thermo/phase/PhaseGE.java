@@ -7,7 +7,6 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
@@ -314,7 +313,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     /**
      * {@inheritDoc}
      *
-     * note: at the moment return density of water (997 kg/m3)
+     * method to get density of a phase note: at the moment return density of water (997 kg/m3)
      */
     @Override
     public double getDensity() {

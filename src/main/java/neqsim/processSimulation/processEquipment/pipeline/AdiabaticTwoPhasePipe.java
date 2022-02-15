@@ -77,6 +77,12 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public StreamInterface getOutStream() {
         return outStream;
     }
@@ -292,6 +298,12 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     @Override
     public void displayResult() {
         system.display();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+        return name;
     }
 
     /** {@inheritDoc} */

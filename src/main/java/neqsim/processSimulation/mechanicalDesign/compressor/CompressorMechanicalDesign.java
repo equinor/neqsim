@@ -2,11 +2,9 @@ package neqsim.processSimulation.mechanicalDesign.compressor;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
-
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import neqsim.processSimulation.costEstimation.compressor.CompressorCostEstimate;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.mechanicalDesign.designStandards.CompressorDesignStandard;
@@ -128,10 +126,10 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         // double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
         double materialsCost = 0.0;
 
-        // double molecularWeight = ((Compressor)
-        // getProcessEquipment()).getThermoSystem().getMolarMass() * 1000.0;
-        // double flowRate = ((Compressor)
-        // getProcessEquipment()).getThermoSystem().getVolume() / 1.0e5;
+        double molecularWeight =
+                ((Compressor) getProcessEquipment()).getThermoSystem().getMolarMass() * 1000.0;
+        double flowRate =
+                ((Compressor) getProcessEquipment()).getThermoSystem().getVolume() / 1.0e5;
         // double gasDensity = ((Compressor)
         // getProcessEquipment()).getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
         // double liqDensity = ((Compressor)
@@ -149,9 +147,12 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         System.out.println("inner Diameter " + innerDiameter);
 
         // alternative design
-        // double bubbleDiameter = 250.0e-6;
-        // double bubVelocity = 1;// 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity
-        double Ar = 1.0;// ((Separator) getProcessEquipment()).getThermoSystem().getPhase(1).getVolume()
+        double bubbleDiameter = 250.0e-6;
+        double bubVelocity = 1;// 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) /
+                               // 18.0 /
+                               // liqViscosity;
+        double Ar = 1.0;// ((Separator)
+                        // getProcessEquipment()).getThermoSystem().getPhase(1).getVolume()
                         // / 1e5 / bubVelocity;
         double Daim = Math.sqrt(Ar / 4.0);
         double Length2 = 4.0 * Daim;

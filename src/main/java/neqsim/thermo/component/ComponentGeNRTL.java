@@ -39,7 +39,6 @@ public class ComponentGeNRTL extends ComponentGE {
 
     /** {@inheritDoc} */
     @Override
-    @SuppressWarnings("unused")
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij,
             double[][] intparam, String[][] mixRule) {

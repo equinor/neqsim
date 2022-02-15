@@ -88,10 +88,10 @@ public interface FlowNodeVisualizationInterface {
 
     /**
      * <p>
-     * Get number of components added.
+     * getNumberOfComponents.
      * </p>
      *
-     * @return the number of components.
+     * @return a int
      */
     public int getNumberOfComponents();
 

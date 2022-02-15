@@ -8,6 +8,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the SRK equation of state
  *
  * @author Even Solbraa
+ * @version
  */
 public class SystemPrEosDelft1998 extends SystemPrEos {
     private static final long serialVersionUID = 1000;

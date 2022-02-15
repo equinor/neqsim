@@ -792,6 +792,12 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         return thermoSystem.getResultTable();
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+        return name;
+    }
+
     /**
      * <p>
      * getTotalWork.
@@ -1075,7 +1081,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * Getter for the field <code>numberOfCompressorCalcSteps</code>.
      * </p>
      *
-     * @return the number of calculation steps in compressor
+     * @return a int
      */
     public int getNumberOfCompressorCalcSteps() {
         return numberOfCompressorCalcSteps;

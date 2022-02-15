@@ -78,6 +78,12 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 
     /** {@inheritDoc} */
     @Override
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
@@ -221,6 +227,12 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     @Override
     public String[][] getResultTable() {
         return thermoSystem.getResultTable();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+        return name;
     }
 
     /** {@inheritDoc} */

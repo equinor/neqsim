@@ -66,6 +66,12 @@ public class GasScrubber extends Separator {
         this.setInletStream(inletStream);
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public void setName(String name) {
+        this.name = name;
+    }
+
     /**
      * <p>
      * Setter for the field <code>inletStream</code>.
@@ -137,6 +143,12 @@ public class GasScrubber extends Separator {
     /** {@inheritDoc} */
     @Override
     public void displayResult() {}
+
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+        return name;
+    }
 
     /**
      * <p>

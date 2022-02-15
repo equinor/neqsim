@@ -2,7 +2,6 @@ package neqsim.thermo.characterization;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
@@ -91,8 +90,10 @@ public class NewtonSolveABCD implements java.io.Serializable {
      */
     public void setJac() {
         Jac.timesEquals(0.0);
+        double dij = 0.0;
 
-        double tempJ = 0.0;
+        double tempJ = 0.0, sumdyidbeta = 0, sumdxidbeta = 0;
+        int nofc = numberOfComponents;
 
         for (int i = 0; i < characterizeClass.getLength(); i++) {
             for (int j = 0; j < 4; j++) {

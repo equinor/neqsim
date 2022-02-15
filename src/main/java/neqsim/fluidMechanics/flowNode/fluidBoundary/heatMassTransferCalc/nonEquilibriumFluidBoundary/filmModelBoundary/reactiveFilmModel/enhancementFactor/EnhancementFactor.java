@@ -82,7 +82,11 @@ public class EnhancementFactor implements EnhancementFactorInterface {
     @Override
     public void calcEnhancementVec(int phase) {}
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Indexed getter for property enhancementVec.
+     */
     @Override
     public double getEnhancementVec(int index) {
         return enhancementVec[index];

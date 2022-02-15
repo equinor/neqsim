@@ -41,6 +41,7 @@ public class dewPointTemperatureFlash extends constantDutyTemperatureFlash {
 
         int iterations = 0, maxNumberOfIterations = 1000;
         double xold = 0, xtotal = 1;
+        double deriv = 0, funk = 0;
         // System.out.println("starting");
         system.init(0);
         system.setBeta(0, 1.0 - 1e-15);

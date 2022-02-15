@@ -3,13 +3,18 @@
  */
 package neqsim.processSimulation.processEquipment.stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import neqsim.processSimulation.processSystem.ProcessSystem;
+import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processSystem.ProcessSystem;
 /**
  * @author ESOL
  *

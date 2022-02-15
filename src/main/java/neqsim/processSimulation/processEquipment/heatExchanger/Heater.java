@@ -202,6 +202,12 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         getOutStream().displayResult();
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+        return name;
+    }
+
     /**
      * <p>
      * runTransient.

@@ -528,7 +528,11 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
                         * (4.0 * phase.getTotalVolume() - phase.getB()));
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property xsite.
+     */
     @Override
     public double[] getXsite() {
         return this.xsite;

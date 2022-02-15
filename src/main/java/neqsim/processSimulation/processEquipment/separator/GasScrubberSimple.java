@@ -64,6 +64,12 @@ public class GasScrubberSimple extends Separator {
         this.setInletStream(inletStream);
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public void setName(String name) {
+        this.name = name;
+    }
+
     /**
      * <p>
      * Setter for the field <code>inletStream</code>.
@@ -128,6 +134,12 @@ public class GasScrubberSimple extends Separator {
         }
         liquidSystem.setNumberOfPhases(1);
         liquidOutStream.setThermoSystem(liquidSystem);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+        return name;
     }
 
     /**

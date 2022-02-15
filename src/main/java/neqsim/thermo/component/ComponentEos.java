@@ -31,6 +31,7 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * @author Even Solbraa
+ * @version
  */
 abstract class ComponentEos extends Component implements ComponentEosInterface {
     private static final long serialVersionUID = 1000;
@@ -562,13 +563,21 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
         return param;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Setter for property a.
+     */
     @Override
     public void seta(double a) {
         this.a = a;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Setter for property b.
+     */
     @Override
     public void setb(double b) {
         this.b = b;

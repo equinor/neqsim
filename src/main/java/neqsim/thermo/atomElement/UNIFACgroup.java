@@ -2,6 +2,7 @@ package neqsim.thermo.atomElement;
 
 import java.util.Arrays;
 import java.util.Objects;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -227,50 +228,45 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
         }
     }
     
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + Arrays.hashCode(QMixdN);
-        result = prime * result + Arrays.hashCode(lnGammaMixdn);
-        result = prime * result + Objects.hash(Q, QComp, QMix, R, groupIndex, groupName,
-                lnGammaComp, lnGammaCompdT, lnGammaCompdTdT, lnGammaMix, lnGammaMixdT,
-                lnGammaMixdTdT, mainGroup, n, subGroup, xComp);
-        return result;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        UNIFACgroup other = (UNIFACgroup) obj;
-        return Double.doubleToLongBits(Q) == Double.doubleToLongBits(other.Q)
-                && Double.doubleToLongBits(QComp) == Double.doubleToLongBits(other.QComp)
-                && Double.doubleToLongBits(QMix) == Double.doubleToLongBits(other.QMix)
-                && Arrays.equals(QMixdN, other.QMixdN)
-                && Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R)
-                && groupIndex == other.groupIndex && Objects.equals(groupName, other.groupName)
-                && Double.doubleToLongBits(lnGammaComp) == Double
-                        .doubleToLongBits(other.lnGammaComp)
-                && Double.doubleToLongBits(lnGammaCompdT) == Double
-                        .doubleToLongBits(other.lnGammaCompdT)
-                && Double.doubleToLongBits(lnGammaCompdTdT) == Double
-                        .doubleToLongBits(other.lnGammaCompdTdT)
-                && Double.doubleToLongBits(lnGammaMix) == Double.doubleToLongBits(other.lnGammaMix)
-                && Double.doubleToLongBits(lnGammaMixdT) == Double
-                        .doubleToLongBits(other.lnGammaMixdT)
-                && Double.doubleToLongBits(lnGammaMixdTdT) == Double
-                        .doubleToLongBits(other.lnGammaMixdTdT)
-                && Arrays.equals(lnGammaMixdn, other.lnGammaMixdn) && mainGroup == other.mainGroup
-                && n == other.n && subGroup == other.subGroup
-                && Double.doubleToLongBits(xComp) == Double.doubleToLongBits(other.xComp);
-    }
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(QMixdN);
+		result = prime * result + Arrays.hashCode(lnGammaMixdn);
+		result = prime * result + Objects.hash(Q, QComp, QMix, R, groupIndex, groupName, lnGammaComp, lnGammaCompdT,
+				lnGammaCompdTdT, lnGammaMix, lnGammaMixdT, lnGammaMixdTdT, mainGroup, n, subGroup, xComp);
+		return result;
+	}
+/**
+ * {@inheritDoc}
+ */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		UNIFACgroup other = (UNIFACgroup) obj;
+		return Double.doubleToLongBits(Q) == Double.doubleToLongBits(other.Q)
+				&& Double.doubleToLongBits(QComp) == Double.doubleToLongBits(other.QComp)
+				&& Double.doubleToLongBits(QMix) == Double.doubleToLongBits(other.QMix)
+				&& Arrays.equals(QMixdN, other.QMixdN) && Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R)
+				&& groupIndex == other.groupIndex && Objects.equals(groupName, other.groupName)
+				&& Double.doubleToLongBits(lnGammaComp) == Double.doubleToLongBits(other.lnGammaComp)
+				&& Double.doubleToLongBits(lnGammaCompdT) == Double.doubleToLongBits(other.lnGammaCompdT)
+				&& Double.doubleToLongBits(lnGammaCompdTdT) == Double.doubleToLongBits(other.lnGammaCompdTdT)
+				&& Double.doubleToLongBits(lnGammaMix) == Double.doubleToLongBits(other.lnGammaMix)
+				&& Double.doubleToLongBits(lnGammaMixdT) == Double.doubleToLongBits(other.lnGammaMixdT)
+				&& Double.doubleToLongBits(lnGammaMixdTdT) == Double.doubleToLongBits(other.lnGammaMixdTdT)
+				&& Arrays.equals(lnGammaMixdn, other.lnGammaMixdn) && mainGroup == other.mainGroup && n == other.n
+				&& subGroup == other.subGroup && Double.doubleToLongBits(xComp) == Double.doubleToLongBits(other.xComp);
+	}
 
 
     /**

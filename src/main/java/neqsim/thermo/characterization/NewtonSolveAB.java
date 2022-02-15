@@ -2,7 +2,6 @@ package neqsim.thermo.characterization;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
@@ -73,6 +72,7 @@ public class NewtonSolveAB implements java.io.Serializable {
      */
     public void setJac() {
         Jac.timesEquals(0.0);
+        double dij = 0.0;
 
         double f0 = 0.0;
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass

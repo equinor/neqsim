@@ -362,7 +362,11 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
                 / phase.getTotalVolume();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property xsite.
+     */
     @Override
     public double[] getXsite() {
         return this.xsite;

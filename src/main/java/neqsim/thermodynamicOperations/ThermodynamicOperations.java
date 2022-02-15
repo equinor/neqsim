@@ -2,14 +2,11 @@ package neqsim.thermodynamicOperations;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
-
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.flashOps.CriticalPointFlash;
@@ -122,12 +119,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 	}
 
 	/**
-     * Method to perform a flash at given temperature, pressure and specified volume
-     * The number of moles in the system are changed to match the specified volume.
-     *
-     * @param volumeSpec is the specified volume
-     * @param unit       Supported units are m3, litre,
-     */
+	 * Method to perform a flash at given temperature, pressure and specified volume
+	 * The number of moles in the system are changed to match the specified volume.
+	 *
+	 * @param volumeSpec is the specified volume
+	 * @param unit       The unit as a string. units supported are m3, litre,
+	 */
 	public void TPVflash(double volumeSpec, String unit) {
 		unit = "m3";
 		TPflash();
@@ -242,12 +239,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 	}
 
 	/**
-     * Method to perform a PH flash calculation
-     *
-     * @param Hspec        is the enthalpy in the specified unit
-     * @param enthalpyUnit Supported units are J, J/mol, J/kg
-     *                     and kJ/kg
-     */
+	 * Method to perform a PH flash calculation
+	 *
+	 * @param Hspec        is the enthalpy in the specified unit
+	 * @param enthalpyUnit The unit as a string. units supported are J, J/mol, J/kg
+	 *                     and kJ/kg
+	 */
 	public void PHflash(double Hspec, String enthalpyUnit) {
 		double conversionFactor = 1.0;
 		switch (enthalpyUnit) {
@@ -376,12 +373,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 	}
 
 	/**
-     * Method to perform a PS flash calculation for a specified entropy and pressure
-     *
-     * @param Sspec is the entropy in the specified unit
-     * @param unit  Supported units are J/K, J/molK, J/kgK and
-     *              kJ/kgK
-     */
+	 * Method to perform a PS flash calculation for a specified entropy and pressure
+	 *
+	 * @param Sspec is the entropy in the specified unit
+	 * @param unit  The unit as a string. units supported are J/K, J/molK, J/kgK and
+	 *              kJ/kgK
+	 */
 	public void PSflash(double Sspec, String unit) {
 		double conversionFactor = 1.0;
 		switch (unit) {
@@ -402,12 +399,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 	}
 
 	/**
-     * Method to perform a TS flash calculation for a specified entropy and pressure
-     *
-     * @param Sspec is the entropy in the specified unit
-     * @param unit  Supported units are J/K, J/molK, J/kgK and
-     *              kJ/kgK
-     */
+	 * Method to perform a TS flash calculation for a specified entropy and pressure
+	 *
+	 * @param Sspec is the entropy in the specified unit
+	 * @param unit  The unit as a string. units supported are J/K, J/molK, J/kgK and
+	 *              kJ/kgK
+	 */
 	public void TSflash(double Sspec, String unit) {
 		double conversionFactor = 1.0;
 		switch (unit) {
@@ -1339,7 +1336,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 	 * @param spec          a double
 	 * @throws java.lang.Exception if any.
 	 */
-    public void dewPointMach(String componentName, String specification, double spec) throws Exception {
+	public void dewPointMach(String componentName, String specification, double spec) throws Exception {
+		int componentNumber = system.getPhase(0).getComponent(componentName).getComponentNumber();
+
 		double dn = 0;
 		if (system.getPhase(0).hasComponent(componentName)) {
 			dn = system.getNumberOfMoles() / 1.0e6;
@@ -1547,7 +1546,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 	 * </p>
 	 */
 	public void calcPTphaseEnvelopeNew() {
-        // double phasefraction = 1.0 - 1e-10;
+		double phasefraction = 1.0 - 1e-10;
 		// operation = new pTphaseEnvelope(system, fileName, phasefraction, 1.0);
 		getOperation().run();
 	}

@@ -2,7 +2,6 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import Jama.Matrix;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -142,7 +141,7 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         Jac.timesEquals(0.0);
         double dij = 0.0;
 
-        double tempJ = 0.0;
+        double tempJ = 0.0, sumdyidbeta = 0, sumdxidbeta = 0;
         // int nofc = numberOfComponents;
 
         for (int i = 0; i < numberOfComponents; i++) {

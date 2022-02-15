@@ -2,7 +2,6 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -45,6 +44,7 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
 
         int iterations = 0, maxNumberOfIterations = 500;
         double xold = 0, xtotal = 1, xoldold = 0;
+        double deriv = 0, funk = 0;
         // logger.info("starting");
         system.init(0);
         system.setBeta(0, 1.0 - 1e-10);

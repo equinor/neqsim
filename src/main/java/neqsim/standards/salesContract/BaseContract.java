@@ -235,25 +235,41 @@ public class BaseContract implements ContractInterface {
         waterDewPointSpecPressure = 70.0;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property waterDewPointTemperature.
+     */
     @Override
     public double getWaterDewPointTemperature() {
         return waterDewPointTemperature;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Setter for property waterDewPointTemperature.
+     */
     @Override
     public void setWaterDewPointTemperature(double waterDewPointTemperature) {
         this.waterDewPointTemperature = waterDewPointTemperature;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property waterDewPointSpecPressure.
+     */
     @Override
     public double getWaterDewPointSpecPressure() {
         return waterDewPointSpecPressure;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Setter for property waterDewPointSpecPressure.
+     */
     @Override
     public void setWaterDewPointSpecPressure(double waterDewPointSpecPressure) {
         this.waterDewPointSpecPressure = waterDewPointSpecPressure;

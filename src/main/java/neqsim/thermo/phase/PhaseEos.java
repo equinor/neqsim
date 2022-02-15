@@ -14,6 +14,7 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
 /**
  *
  * @author Even Solbraa
+ * @version
  */
 abstract class PhaseEos extends Phase implements PhaseEosInterface {
     private static final long serialVersionUID = 1000;

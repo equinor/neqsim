@@ -56,6 +56,12 @@ public class TwoPhaseSeparator extends Separator {
 
     /** {@inheritDoc} */
     @Override
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
@@ -109,6 +115,12 @@ public class TwoPhaseSeparator extends Separator {
     /** {@inheritDoc} */
     @Override
     public void displayResult() {}
+
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+        return name;
+    }
 
     /**
      * <p>

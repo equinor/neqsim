@@ -7,6 +7,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
 /**
  *
  * @author Even Solbraa
+ * @version
  */
 abstract class HuronVidalFunction extends LevenbergMarquardtFunction {
     /**

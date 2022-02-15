@@ -11,7 +11,6 @@ import org.ojalgo.matrix.Primitive64Matrix;
 import org.ojalgo.matrix.Primitive64Matrix.Factory;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.SparseStore;
-
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
@@ -883,7 +882,11 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
         return false;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property hcpatot.
+     */
     @Override
     public double getHcpatot() {
         return hcpatot;

@@ -2,7 +2,6 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -41,6 +40,7 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
     public void run() {
         ThermodynamicOperations TPflashOps = new ThermodynamicOperations(system);
         system.setMultiPhaseCheck(true);
+        boolean hasAqueousPhase = false;
         double dT = 0.1;
         system.setTemperature(600.0);
         do {

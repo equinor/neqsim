@@ -361,6 +361,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     /** {@inheritDoc} */
     @Override
+    public String getName() {
+        return name;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void setPressure(double pres) {
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().setPressure(pres);

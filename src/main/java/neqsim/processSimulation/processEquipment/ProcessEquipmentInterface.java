@@ -13,12 +13,13 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface ProcessEquipmentInterface extends Runnable, java.io.Serializable {
-    /**
+    /** {@inheritDoc} 
+     *     /
      * <p>
      * run
      * </p>
-     * In this method all thermodynamic and unit the operation will be calculated in a steady state
-     * calculation.
+     * In this method all thermodynamic and unit the operation 
+     * will be calculated in a steady state calculation.
      *
      * @return void
      */
@@ -34,12 +35,14 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      */
     public String[][] reportResults();
 
-    /**
+    /** {@inheritDoc} 
+     *     /
      * <p>
      * runTransient
      * </p>
-     * In this method all thermodynamic and unit the operation will be calculated in a dynamic
-     * calculation. dt is the delta time step (seconds)
+     * In this method all thermodynamic and unit the operation 
+     * will be calculated in a dynamic calculation.
+     * dt is the delta time step (seconds)
      *
      * @return void
      */
@@ -202,7 +205,7 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
     /**
      * method to return entropy production of the unit operation
      *
-     * @param unit Supported units are J/K and kJ/K
+     * @param unit The unit as a string. Supported units are J/K and kJ/K
      * @return entropy in specified unit
      */
     public double getEntropyProduction(String unit);
@@ -211,7 +214,7 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      * method to return exergy change production of the unit operation * @param
      * sourrondingTemperature The surrounding temperature in Kelvin
      *
-     * @param unit Supported units are J and kJ
+     * @param unit The unit as a string. Supported units are J and kJ
      * @return change in exergy in specified unit
      * @param sourrondingTemperature a double
      */

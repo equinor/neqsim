@@ -264,7 +264,11 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return temp;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property xsite.
+     */
     @Override
     public double[] getXsite() {
         return this.xsite;

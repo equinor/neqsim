@@ -354,14 +354,21 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     @Override
     public void setEnhancementType(int type) {}
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property heatTransferCalc.
+     */
     @Override
     public boolean isHeatTransferCalc() {
         return heatTransferCalc;
     }
 
-    /** {@inheritDoc} */
-
+    /**
+     * {@inheritDoc}
+     *
+     * Setter for property heatTransferCalc.
+     */
     @Override
     public void setHeatTransferCalc(boolean heatTransferCalc) {
         this.heatTransferCalc = heatTransferCalc;
@@ -373,14 +380,21 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
         this.massTransferCalc = massTransferCalc;
     }
 
-    /** {@inheritDoc} */
-
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property thermodynamicCorrections.
+     */
     @Override
     public boolean useThermodynamicCorrections(int phase) {
         return thermodynamicCorrections[phase];
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Setter for property thermodynamicCorrections.
+     */
     @Override
     public void useThermodynamicCorrections(boolean thermodynamicCorrections) {
         this.thermodynamicCorrections[0] = thermodynamicCorrections;
@@ -393,13 +407,21 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
         this.thermodynamicCorrections[phase] = thermodynamicCorrections;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property finiteFluxCorrection.
+     */
     @Override
     public boolean useFiniteFluxCorrection(int phase) {
         return finiteFluxCorrection[phase];
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Setter for property finiteFluxCorrection.
+     */
     @Override
     public void useFiniteFluxCorrection(boolean finiteFluxCorrection) {
         this.finiteFluxCorrection[0] = finiteFluxCorrection;

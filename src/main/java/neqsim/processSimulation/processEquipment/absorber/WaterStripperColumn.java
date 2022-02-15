@@ -62,6 +62,12 @@ public class WaterStripperColumn extends SimpleAbsorber {
 
     /** {@inheritDoc} */
     @Override
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void addStream(StreamInterface newStream) {
         streams.add(newStream);
         if (numberOfInputStreams == 0) {
@@ -489,6 +495,12 @@ public class WaterStripperColumn extends SimpleAbsorber {
         dialogContentPane.add(scrollpane);
         dialog.pack();
         dialog.setVisible(true);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+        return name;
     }
 
     /**

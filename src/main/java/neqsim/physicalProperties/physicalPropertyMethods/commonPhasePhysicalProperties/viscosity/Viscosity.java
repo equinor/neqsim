@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 /**
  *
  * @author Even Solbraa
+ * @version
  */
 abstract class Viscosity extends
         neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod

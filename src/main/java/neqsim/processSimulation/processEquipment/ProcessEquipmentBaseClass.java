@@ -71,9 +71,13 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
         return getThermoSystem();
     }
 
+    ;
+
     /** {@inheritDoc} */
     @Override
     public void displayResult() {}
+
+    ;
 
     /** {@inheritDoc} */
     @Override

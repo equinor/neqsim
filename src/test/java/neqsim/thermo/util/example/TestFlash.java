@@ -396,8 +396,7 @@ public class TestFlash {
                     // fluid.getPhase(phaseNumber).getPhysicalProperties().getConductivity();
 
                     // Phase Thermal Conductivity [W/mK]
-                    fluidProperties[t][k++] =
-                            fluid.getPhase(phaseNumber).getThermalConductivity("W/mK"); // Phase
+                    fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getConductivity("W/mK"); // Phase
                                                                                                    // Thermal
                                                                                                    // Conductivity
                                                                                                    // [W/mK]

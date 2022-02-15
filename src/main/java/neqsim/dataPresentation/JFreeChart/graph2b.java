@@ -273,11 +273,7 @@ public class graph2b extends javax.swing.JFrame {
         // Add your handling code here:
     }// GEN-LAST:event_jButton1ActionPerformed
 
-    /**
-     * Exit the Application
-     * 
-     * @param evt
-     */
+    /** Exit the Application */
     private void exitForm(java.awt.event.WindowEvent evt) {// GEN-FIRST:event_exitForm
         this.removeAll();
     }// GEN-LAST:event_exitForm

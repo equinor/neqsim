@@ -13,7 +13,7 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
 public interface PhaseCPAInterface extends PhaseEosInterface {
     /**
      * <p>
-     * Getter for property hcpatot.
+     * getHcpatot.
      * </p>
      *
      * @return a double

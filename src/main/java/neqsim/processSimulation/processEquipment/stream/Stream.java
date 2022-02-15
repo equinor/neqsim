@@ -7,6 +7,7 @@ package neqsim.processSimulation.processEquipment.stream;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.standards.gasQuality.Standard_ISO6976;
+import neqsim.standards.gasQuality.Standard_ISO6976_2016;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 

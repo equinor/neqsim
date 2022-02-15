@@ -40,7 +40,7 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
         }
 
         int iterations = 0, maxNumberOfIterations = 1000;
-        double xtotal = 1;
+        double xold = 0, xtotal = 1;
         // double deriv = 0, funk = 0;
         // System.out.println("starting");
         system.init(0);
@@ -118,6 +118,7 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
 
             ktot = 0.0;
             for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
+                xold = system.getPhases()[1].getComponents()[i].getx();
                 if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
                     system.getPhases()[0].getComponents()[i].setK(1e-40);
                 } else {

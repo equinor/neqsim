@@ -80,7 +80,11 @@ public abstract class Standard implements StandardInterface {
         return salesContract;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property name.
+     */
     @Override
     public String getName() {
         return name;
@@ -95,7 +99,11 @@ public abstract class Standard implements StandardInterface {
         this.name = name;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property standardDescription.
+     */
     @Override
     public String getStandardDescription() {
         return standardDescription;
