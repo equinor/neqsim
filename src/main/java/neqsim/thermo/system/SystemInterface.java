@@ -89,14 +89,30 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void setComponentNameTag(String nameTag);
 
     /**
-     * add components to a fluid. If component already exists, it will be added to the component
+     * Add named components to a System. Does nothing if components already exist in
+     * System.
      *
-     * @param names Names of the components to be added. See NeqSim database for available
-     *        components in the database.
+     * @param names Names of the components to be added. See NeqSim database for
+     *              available components in the database.
      */
     default public void addComponents(String[] names) {
         for (int i = 0; i < names.length; i++) {
             addComponent(names[i], 0.0);
+        }
+    }
+
+
+    /**
+     * Add named components to a System with a number of moles.
+     * If component already exists, the moles will be added to the component.
+     * 
+     * @param names Names of the components to be added. See NeqSim database for
+     *              available components in the database.
+     * @param moles Number of moles to add per component.
+     */
+    default public void addComponents(String[] names, double[] moles) {
+        for (int i = 0; i < names.length; i++) {
+            addComponent(names[i], moles[i]);
         }
     }
 
