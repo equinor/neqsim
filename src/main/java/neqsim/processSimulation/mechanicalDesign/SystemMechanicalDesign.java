@@ -1,6 +1,8 @@
 package neqsim.processSimulation.mechanicalDesign;
 
 import java.util.ArrayList;
+import java.util.Objects;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
@@ -125,5 +127,26 @@ public class SystemMechanicalDesign implements java.io.Serializable {
      */
     public int getTotalNumberOfModules() {
         return numberOfModules;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(numberOfModules, processSystem, totalPlotSpace, totalVolume, totalWeight);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SystemMechanicalDesign other = (SystemMechanicalDesign) obj;
+        return numberOfModules == other.numberOfModules
+                && Objects.equals(processSystem, other.processSystem)
+                && Double.doubleToLongBits(totalPlotSpace) == Double.doubleToLongBits(other.totalPlotSpace)
+                && Double.doubleToLongBits(totalVolume) == Double.doubleToLongBits(other.totalVolume)
+                && Double.doubleToLongBits(totalWeight) == Double.doubleToLongBits(other.totalWeight);
     }
 }

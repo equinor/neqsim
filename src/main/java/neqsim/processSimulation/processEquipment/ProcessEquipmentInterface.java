@@ -229,4 +229,8 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o);
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode();
 }

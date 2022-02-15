@@ -1,5 +1,7 @@
 package neqsim.processSimulation.processEquipment.stream;
 
+import java.util.Objects;
+
 /**
  * <p>
  * EnergyStream class.
@@ -45,5 +47,22 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
      */
     public void setDuty(double duty) {
         this.duty = duty;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(duty);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        EnergyStream other = (EnergyStream) obj;
+        return Double.doubleToLongBits(duty) == Double.doubleToLongBits(other.duty);
     }
 }

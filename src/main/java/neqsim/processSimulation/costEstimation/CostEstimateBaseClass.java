@@ -1,6 +1,8 @@
 package neqsim.processSimulation.costEstimation;
 
 import java.util.ArrayList;
+import java.util.Objects;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
@@ -79,5 +81,24 @@ public class CostEstimateBaseClass implements java.io.Serializable {
      */
     public double getCAPEXperWeight() {
         return CAPEXperWeight;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(CAPEXperWeight, procesSystem);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        CostEstimateBaseClass other = (CostEstimateBaseClass) obj;
+        return Double.doubleToLongBits(CAPEXperWeight) == Double
+                .doubleToLongBits(other.CAPEXperWeight)
+                && Objects.equals(procesSystem, other.procesSystem);
     }
 }

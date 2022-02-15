@@ -5,7 +5,10 @@
  */
 package neqsim.processSimulation.processEquipment;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Objects;
+
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.EnergyStream;
@@ -267,5 +270,36 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
      */
     public String[][] getResultTable() {
         return null;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.deepHashCode(report);
+        result = prime * result
+                + Objects.hash(conditionAnalysisMessage, controller, energyStream, flowValveController,
+                        hasController, isSetEnergyStream, mechanicalDesign, name, properties, specification);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
+        return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
+                && Objects.equals(controller, other.controller)
+                && Objects.equals(energyStream, other.energyStream)
+                && Objects.equals(flowValveController, other.flowValveController)
+                && hasController == other.hasController && isSetEnergyStream == other.isSetEnergyStream
+                && Objects.equals(mechanicalDesign, other.mechanicalDesign)
+                && Objects.equals(name, other.name) && Objects.equals(properties, other.properties)
+                && Arrays.deepEquals(report, other.report)
+                && Objects.equals(specification, other.specification);
     }
 }

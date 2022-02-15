@@ -6,6 +6,8 @@
 package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
+import java.util.Objects;
+
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -57,7 +59,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * Constructur for Separator.
+     * Constructor for Separator.
      * 
      * @param name Name of separator
      */
@@ -723,6 +725,58 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         return getLiquidOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)
                 + getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)
                 - exergy;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(designLiquidLevelFraction, efficiency,
+                gasCarryunderFraction, gasOutStream, gasSystem, gasVolume, inletStreamMixer,
+                internalDiameter, liquidCarryoverFraction, liquidLevel, liquidOutStream, liquidSystem,
+                liquidVolume, numberOfInputStreams, orientation, pressureDrop, separatorLength,
+                separatorSection, thermoSystem, thermoSystem2, thermoSystemCloned, waterSystem);
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Separator other = (Separator) obj;
+        return Double.doubleToLongBits(designLiquidLevelFraction) == Double
+                .doubleToLongBits(other.designLiquidLevelFraction)
+                && Double.doubleToLongBits(efficiency) == Double.doubleToLongBits(other.efficiency)
+                && Double.doubleToLongBits(gasCarryunderFraction) == Double
+                        .doubleToLongBits(other.gasCarryunderFraction)
+                && Objects.equals(gasOutStream, other.gasOutStream)
+                && Objects.equals(gasSystem, other.gasSystem)
+                && Double.doubleToLongBits(gasVolume) == Double.doubleToLongBits(other.gasVolume)
+                && Objects.equals(inletStreamMixer, other.inletStreamMixer)
+                && Double.doubleToLongBits(internalDiameter) == Double
+                        .doubleToLongBits(other.internalDiameter)
+                && Double.doubleToLongBits(liquidCarryoverFraction) == Double
+                        .doubleToLongBits(other.liquidCarryoverFraction)
+                && Double.doubleToLongBits(liquidLevel) == Double.doubleToLongBits(other.liquidLevel)
+                && Objects.equals(liquidOutStream, other.liquidOutStream)
+                && Objects.equals(liquidSystem, other.liquidSystem)
+                && Double.doubleToLongBits(liquidVolume) == Double.doubleToLongBits(other.liquidVolume)
+                && numberOfInputStreams == other.numberOfInputStreams
+                && Objects.equals(orientation, other.orientation)
+                && Double.doubleToLongBits(pressureDrop) == Double.doubleToLongBits(other.pressureDrop)
+                && Double.doubleToLongBits(separatorLength) == Double
+                        .doubleToLongBits(other.separatorLength)
+                && Objects.equals(separatorSection, other.separatorSection)
+                && Objects.equals(thermoSystem, other.thermoSystem)
+                && Objects.equals(thermoSystem2, other.thermoSystem2)
+                && Objects.equals(thermoSystemCloned, other.thermoSystemCloned)
+                && Objects.equals(waterSystem, other.waterSystem);
     }
 
     /*

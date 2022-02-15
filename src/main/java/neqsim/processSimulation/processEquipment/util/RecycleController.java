@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * <p>
@@ -201,5 +202,27 @@ public class RecycleController implements java.io.Serializable {
      */
     public void setCurrentPriorityLevel(int currentPriorityLevel) {
         this.currentPriorityLevel = currentPriorityLevel;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(currentPriorityLevel, maximumPriorityLevel, minimumPriorityLevel,
+                priorityArray, recycleArray);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RecycleController other = (RecycleController) obj;
+        return currentPriorityLevel == other.currentPriorityLevel
+                && maximumPriorityLevel == other.maximumPriorityLevel
+                && minimumPriorityLevel == other.minimumPriorityLevel
+                && Objects.equals(priorityArray, other.priorityArray)
+                && Objects.equals(recycleArray, other.recycleArray);
     }
 }

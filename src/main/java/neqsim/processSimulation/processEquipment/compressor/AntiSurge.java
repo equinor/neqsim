@@ -1,5 +1,7 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
+import java.util.Objects;
+
 /**
  * <p>AntiSurge class.</p>
  *
@@ -83,5 +85,25 @@ public class AntiSurge implements java.io.Serializable {
      */
     public void setCurrentSurgeFraction(double currentSurgeFraction) {
         this.currentSurgeFraction = currentSurgeFraction;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(currentSurgeFraction, isActive, isSurge, surgeControlFactor);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        AntiSurge other = (AntiSurge) obj;
+        return Double.doubleToLongBits(currentSurgeFraction) == Double
+                .doubleToLongBits(other.currentSurgeFraction) && isActive == other.isActive
+                && isSurge == other.isSurge && Double.doubleToLongBits(surgeControlFactor) == Double
+                        .doubleToLongBits(other.surgeControlFactor);
     }
 }

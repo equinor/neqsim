@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import java.util.Objects;
+
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -90,5 +92,25 @@ public class DesignStandard implements java.io.Serializable {
      */
     public void setStandardName(String standardName) {
         this.standardName = standardName;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        return Objects.hash(equipment, standardName);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        DesignStandard other = (DesignStandard) obj;
+        return Objects.equals(equipment, other.equipment)
+                && Objects.equals(standardName, other.standardName);
     }
 }

@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
@@ -32,7 +33,7 @@ import neqsim.thermo.system.SystemInterface;
 public class ProcessSystem implements java.io.Serializable, Runnable {
     private static final long serialVersionUID = 1000;
 
-    Thread thisThread;
+    transient Thread thisThread;
     String[][] signalDB = new String[100][100];
     private double time = 0;
     private double surroundingTemperature = 288.15;
@@ -57,6 +58,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         systemMechanicalDesign = new SystemMechanicalDesign(this);
         costEstimator = new CostEstimateBaseClass(this);
     }
+
 
     /**
      * <p>
@@ -900,6 +902,42 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      */
     public ConditionMonitor getConditionMonitor() {
         return new ConditionMonitor(this);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.deepHashCode(signalDB);
+        result = prime * result + Objects.hash(costEstimator, measurementDevices, name,
+                recycleController, surroundingTemperature, systemMechanicalDesign, time, timeStep,
+                timeStepNumber, unitOperations);
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ProcessSystem other = (ProcessSystem) obj;
+        return Objects.equals(costEstimator, other.costEstimator)
+                && Objects.equals(measurementDevices, other.measurementDevices)
+                && Objects.equals(name, other.name)
+                && Objects.equals(recycleController, other.recycleController)
+                && Arrays.deepEquals(signalDB, other.signalDB)
+                && Double.doubleToLongBits(surroundingTemperature) == Double
+                        .doubleToLongBits(other.surroundingTemperature)
+                && Objects.equals(systemMechanicalDesign, other.systemMechanicalDesign)
+                && Double.doubleToLongBits(time) == Double.doubleToLongBits(other.time)
+                && Double.doubleToLongBits(timeStep) == Double.doubleToLongBits(other.timeStep)
+                && timeStepNumber == other.timeStepNumber
+                && Objects.equals(unitOperations, other.unitOperations);
     }
 
     /*

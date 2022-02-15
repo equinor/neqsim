@@ -2475,4 +2475,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o);
+    
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode();
 }

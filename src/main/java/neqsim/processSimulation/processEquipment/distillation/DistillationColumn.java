@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
 import java.util.ArrayList;
+import java.util.Objects;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -629,5 +631,50 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      */
     public void setInternalDiameter(double internalDiameter) {
         this.internalDiameter = internalDiameter;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result
+                + Objects.hash(bottomTrayPressure, condenserCoolingDuty, condenserTemperature,
+                        distoperations, doInitializion, feedStream, feedTrayNumber, gasOutStream,
+                        hasCondenser, hasReboiler, heater, internalDiameter, liquidOutStream, numberOfTrays,
+                        reboilerTemperature, separator2, stream_3, stream_3isset, topTrayPressure, trays);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        DistillationColumn other = (DistillationColumn) obj;
+        return Double.doubleToLongBits(bottomTrayPressure) == Double
+                .doubleToLongBits(other.bottomTrayPressure)
+                && Double.doubleToLongBits(condenserCoolingDuty) == Double
+                        .doubleToLongBits(other.condenserCoolingDuty)
+                && Double.doubleToLongBits(condenserTemperature) == Double
+                        .doubleToLongBits(other.condenserTemperature)
+                && Objects.equals(distoperations, other.distoperations)
+                && doInitializion == other.doInitializion && Objects.equals(feedStream, other.feedStream)
+                && feedTrayNumber == other.feedTrayNumber
+                && Objects.equals(gasOutStream, other.gasOutStream) && hasCondenser == other.hasCondenser
+                && hasReboiler == other.hasReboiler && Objects.equals(heater, other.heater)
+                && Double.doubleToLongBits(internalDiameter) == Double
+                        .doubleToLongBits(other.internalDiameter)
+                && Objects.equals(liquidOutStream, other.liquidOutStream)
+                && numberOfTrays == other.numberOfTrays
+                && Double.doubleToLongBits(reboilerTemperature) == Double
+                        .doubleToLongBits(other.reboilerTemperature)
+                && Objects.equals(separator2, other.separator2)
+                && Objects.equals(stream_3, other.stream_3) && stream_3isset == other.stream_3isset
+                && Double.doubleToLongBits(topTrayPressure) == Double
+                        .doubleToLongBits(other.topTrayPressure)
+                && Objects.equals(trays, other.trays);
     }
 }
