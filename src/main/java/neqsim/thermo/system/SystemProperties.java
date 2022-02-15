@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import java.util.HashMap;
 import java.util.Objects;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -123,7 +124,7 @@ public class SystemProperties {
                 names[k++] = currPhaseName + " Viscosity [Pa s] or [kg/msec]";
                 values[k] = currPhase.getViscosity("kg/msec");
                 names[k++] = currPhaseName + " Thermal Conductivity [W/mK]";
-                values[k] = currPhase.getConductivity("W/mK");
+                values[k] = currPhase.getThermalConductivity("W/mK");
             } else {
                 names[k++] = currPhaseName + " Mole Percent";
                 values[k] = Double.NaN;
@@ -180,5 +181,13 @@ public class SystemProperties {
         } else {
             values[k] = Double.NaN;
         }
+    }
+
+    public HashMap<String, Double> getProperties() {
+        HashMap<String, Double> propMap = new HashMap<String, Double>();
+        for (int i = 0; i < names.length; i++) {
+            propMap.put(this.names[i], this.values[i]);
+        }
+        return propMap;
     }
 }
