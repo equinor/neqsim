@@ -2,11 +2,14 @@ package neqsim.thermodynamicOperations;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.flashOps.CriticalPointFlash;
