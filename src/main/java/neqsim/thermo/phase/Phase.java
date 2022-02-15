@@ -151,15 +151,17 @@ abstract class Phase implements PhaseInterface {
         numberOfMolesInPhase += dn;
         componentArray[component].addMolesChemReac(dn, totdn);
         if (numberOfMolesInPhase < 0.0 || getComponent(component).getNumberOfMolesInPhase() < 0.0) {
-            logger.error("Negative number of moles in phase.");
+            String msg = "Negative number of moles in phase.";
+            logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
+                    new neqsim.util.exception.InvalidInputException(msg);
             throw new RuntimeException(e);
         }
         if (getComponent(component).getNumberOfMolesInPhase() < 0.0) {
-            logger.error("Negative number of moles of component " + component);
+            String msg = "Negative number of moles of component " + component;
+            logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException();
+                    new neqsim.util.exception.InvalidInputException(msg);
             throw new RuntimeException(e);
         }
     }
@@ -2123,7 +2125,7 @@ abstract class Phase implements PhaseInterface {
         } else if (flowunit.equals("mole/hr")) {
             return numberOfMolesInPhase * 3600.0;
         } else {
-            throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
+            throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
         }
     }
 
