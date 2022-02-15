@@ -1161,46 +1161,6 @@ abstract class SystemThermo implements SystemInterface {
     public void addComponent(String name) {
         addComponent(name, 0.0);
     }
-    
-    /**
-     * {@inheritDoc}
-     *
-     * add a component to a fluid. If component already exists, it will be added to the component
-     */
-    @Override
-    public void addComponent(ComponentInterface inComponent) {
-    	if(inComponent.isIsTBPfraction()) {
-    		addTBPfraction(inComponent.getComponentName(), inComponent.getNumberOfmoles(), inComponent.getMolarMass(), inComponent.getNormalLiquidDensity());
-    		String componentName = inComponent.getComponentName();
-    		changeComponentName(componentName+"_PC", componentName.replaceFirst("_PC", ""));
-    		for (int i = 0; i < numberOfPhases; i++) {
-                getPhase(i).getComponent(componentName).setAttractiveTerm(inComponent.getAttractiveTermNumber());
-                getPhase(i).getComponent(componentName).setTC(inComponent.getTC());
-                getPhase(i).getComponent(componentName).setPC(inComponent.getPC());
-                getPhase(i).getComponent(componentName).setMolarMass(inComponent.getMolarMass());
-                getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
-                getPhase(i).getComponent(componentName).setNormalLiquidDensity(inComponent.getNormalLiquidDensity());
-                getPhase(i).getComponent(componentName).setNormalBoilingPoint(inComponent.getNormalBoilingPoint());
-                getPhase(i).getComponent(componentName).setAcentricFactor(inComponent.getAcentricFactor());
-                getPhase(i).getComponent(componentName).setCriticalVolume(inComponent.getCriticalVolume());
-                getPhase(i).getComponent(componentName).setRacketZ(inComponent.getRacketZ());
-                getPhase(i).getComponent(componentName).setRacketZCPA(inComponent.getRacketZCPA());
-                getPhase(i).getComponent(componentName).setIsTBPfraction(true);
-                getPhase(i).getComponent(componentName).setParachorParameter(inComponent.getParachorParameter());
-                getPhase(i).getComponent(componentName).setTriplePointTemperature(inComponent.getTriplePointTemperature());
-                getPhase(i).getComponent(componentName).setIdealGasEnthalpyOfFormation(inComponent.getIdealGasEnthalpyOfFormation());
-                getPhase(i).getComponent(componentName).setCpA(inComponent.getCpA());
-                getPhase(i).getComponent(componentName).setCpB(inComponent.getCpB());
-                getPhase(i).getComponent(componentName).setCpC(inComponent.getCpC());
-                getPhase(i).getComponent(componentName).setCpD(inComponent.getCpD());
-            }
-    	}
-    	else {
-    		addComponent(inComponent.getComponentName(), inComponent.getNumberOfmoles());
-    	}
-    	
-    	
-    }
 
     /** {@inheritDoc} */
     @Override
