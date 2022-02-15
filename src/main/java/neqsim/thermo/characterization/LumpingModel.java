@@ -211,11 +211,8 @@ public class LumpingModel implements java.io.Serializable {
     }
 
     /**
-     * <P>
-     * PVTLumpingModel
-     * <P>
      * PVTLumpingModel distributes the pseudo components into equal weight fractions
-     * starting with the plus fracations
+     * starting with the plus fractions
      * 
      * @author Even Solbraa
      * @version 1.0
