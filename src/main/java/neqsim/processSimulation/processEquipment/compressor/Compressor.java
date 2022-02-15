@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -1176,61 +1175,5 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
     public void setUseGERG2008(boolean useGERG2008) {
         this.useGERG2008 = useGERG2008;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null) {
-            return false;
-        }
-        try {
-            Compressor cmp = (Compressor) o;
-
-            Stream inStream = (Stream) this.getInStream();
-            if (inStream == null) {
-                if (cmp.getInStream() != null) {
-                    return false;
-                }
-            } else {
-                if (!inStream.equals(cmp.getInStream())) {
-                    return false;
-                }
-            }
-
-            Stream outStream = (Stream) this.getOutStream();
-            if (outStream == null) {
-                if (cmp.getOutStream() != null) {
-                    return false;
-                }
-            } else {
-                if (!outStream.equals(cmp.getOutStream())) {
-                    return false;
-                }
-            }
-
-            SystemInterface sys = this.thermoSystem;
-            if (sys == null) {
-                if (cmp.getThermoSystem() != null) {
-                    return false;
-                }
-            } else {
-                if (!this.thermoSystem.equals(cmp.getThermoSystem())) {
-                    return false;
-                }
-            }
-            if (!this.compressorChart.equals(cmp.getCompressorChart())) {
-                return false;
-            }
-            return true;
-        } catch (
-
-        Exception ex) {
-            System.out.println(ex.getMessage());
-        }
-        return false;
     }
 }
