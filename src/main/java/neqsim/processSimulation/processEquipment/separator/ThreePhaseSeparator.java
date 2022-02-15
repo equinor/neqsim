@@ -227,12 +227,6 @@ public class ThreePhaseSeparator extends Separator {
         // }
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
-    }
-
     /**
      * <p>
      * runTransient.
