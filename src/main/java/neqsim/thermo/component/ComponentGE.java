@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseInterface;
 /**
  *
  * @author Even Solbraa
- * @version
  */
 abstract class ComponentGE extends Component implements ComponentGEInterface {
     private static final long serialVersionUID = 1000;
@@ -151,11 +150,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         dlngammadn[k] = val;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property gammaRefCor.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getGammaRefCor() {
         return gammaRefCor;

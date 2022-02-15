@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -49,7 +50,7 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
     @Override
     public void run() {
         double olfFug = 0.0;
-        double temp = 0.0, oldTemp = 0.0, oldDiff = 0.0, oldOldDiff = 0.0;
+        double temp = 0.0, oldTemp = 0.0, oldDiff = 0.0;
         // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         system.getPhase(4).getComponent("water").setx(1.0);

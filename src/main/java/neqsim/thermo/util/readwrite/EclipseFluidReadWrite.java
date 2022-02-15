@@ -4,11 +4,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.logging.LogManager;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -22,11 +20,12 @@ public class EclipseFluidReadWrite {
 	static Logger logger = LogManager.getLogger(EclipseFluidReadWrite.class);
 	public static String pseudoName = "";
 
-	public static void setComposition(SystemInterface fluid, String inputFile, String pseudoNameIn) {
+	public static void setComposition(SystemInterface fluid, String inputFile,
+			String pseudoNameIn) {
 		pseudoName = pseudoNameIn;
 		setComposition(fluid, inputFile);
 	}
-	
+
 	public static void setComposition(SystemInterface fluid, String inputFile) {
 		fluid.setEmptyFluid();
 		try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
@@ -34,21 +33,21 @@ public class EclipseFluidReadWrite {
 			ArrayList<String> names = new ArrayList<String>();
 			ArrayList<Double> ZI = new ArrayList<Double>();
 			while ((st = br.readLine()) != null) {
-					if (st.equals("CNAMES")) {
-						while ((st = br.readLine().replace("/", "")) != null) {
-							if (st.startsWith("--")) {
-								break;
-							}
-							names.add(st);
+				if (st.equals("CNAMES")) {
+					while ((st = br.readLine().replace("/", "")) != null) {
+						if (st.startsWith("--")) {
+							break;
 						}
+						names.add(st);
 					}
-					if (st.equals("ZI")) {
-						while ((st = br.readLine().replace("/", "")) != null) {
-							if (st.startsWith("--")) {
-								break;
-							}
-							ZI.add(Double.parseDouble(st));
+				}
+				if (st.equals("ZI")) {
+					while ((st = br.readLine().replace("/", "")) != null) {
+						if (st.startsWith("--")) {
+							break;
 						}
+						ZI.add(Double.parseDouble(st));
+					}
 				}
 			}
 			for (int counter = 0; counter < names.size(); counter++) {
@@ -77,15 +76,14 @@ public class EclipseFluidReadWrite {
 				} else if (name.equals("C6")) {
 					name = "n-hexane";
 					fluid.addComponent(name, ZI.get(counter));
-				} else if (name.equals("C3") ) {
+				} else if (name.equals("C3")) {
 					name = "propane";
 					fluid.addComponent(name, ZI.get(counter));
 				} else if (name.equals("CO2")) {
 					name = "CO2";
 					fluid.addComponent(name, ZI.get(counter));
-				}
-				else {
-					fluid.addComponent(name+pseudoName, ZI.get(counter));
+				} else {
+					fluid.addComponent(name + pseudoName, ZI.get(counter));
 				}
 			}
 		} catch (Exception e) {
@@ -98,6 +96,7 @@ public class EclipseFluidReadWrite {
 		pseudoName = pseudoNameIn;
 		return read(inputFile);
 	}
+
 	/**
 	 * <p>
 	 * read.
@@ -107,7 +106,8 @@ public class EclipseFluidReadWrite {
 	 * @return a {@link neqsim.thermo.system.SystemInterface} object
 	 */
 	public static SystemInterface read(String inputFile) {
-		neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15, 1.01325);
+		neqsim.thermo.system.SystemInterface fluid =
+				new neqsim.thermo.system.SystemSrkEos(288.15, 1.01325);
 
 		double[][] kij = null;
 		try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
@@ -309,11 +309,14 @@ public class EclipseFluidReadWrite {
 					fluid.getPhase(i).getComponent(name).setMolarMass(MW.get(counter) / 1000.0);
 					fluid.getPhase(i).getComponent(name).setNormalBoilingPoint(TBOIL.get(counter));
 					fluid.getPhase(i).getComponent(name).setCriticalVolume(VCRIT.get(counter));
-					fluid.getPhase(i).getComponent(name).setParachorParameter(PARACHOR.get(counter));
-					fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFT.get(counter));
+					fluid.getPhase(i).getComponent(name)
+							.setParachorParameter(PARACHOR.get(counter));
+					fluid.getPhase(i).getComponent(name)
+							.setVolumeCorrectionConst(SSHIFT.get(counter));
 				}
 				if (fluid.getPhase(0).getComponent(name).isIsTBPfraction()) {
-					fluid.changeComponentName(name, names.get(counter).replaceAll("_PC", "") + pseudoName);
+					fluid.changeComponentName(name,
+							names.get(counter).replaceAll("_PC", "") + pseudoName);
 				} else {
 					// fluid.changeComponentName(name, names.get(counter));
 				}
@@ -326,10 +329,10 @@ public class EclipseFluidReadWrite {
 			for (int i = 0; i < names.size(); i++) {
 				for (int j = i; j < names.size(); j++) {
 					for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
-						((PhaseEosInterface) fluid.getPhase(phase)).getMixingRule().setBinaryInteractionParameter(i, j,
-								kij[i][j]);
-						((PhaseEosInterface) fluid.getPhase(phase)).getMixingRule().setBinaryInteractionParameter(j, i,
-								kij[i][j]);
+						((PhaseEosInterface) fluid.getPhase(phase)).getMixingRule()
+								.setBinaryInteractionParameter(i, j, kij[i][j]);
+						((PhaseEosInterface) fluid.getPhase(phase)).getMixingRule()
+								.setBinaryInteractionParameter(j, i, kij[i][j]);
 					}
 				}
 			}

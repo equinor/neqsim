@@ -130,11 +130,7 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
         system.display();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property superCritical.
-     */
+    /** {@inheritDoc} */
     @Override
     public boolean isSuperCritical() {
         return superCritical;

@@ -641,11 +641,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     @Override
     public void update() {}
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property operations.
-     */
+    /** {@inheritDoc} */
     @Override
     public neqsim.thermodynamicOperations.ThermodynamicOperations getOperations() {
         return operations;
@@ -666,21 +662,13 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
         return getFluidBoundary().getInterphaseMolarFlux(componentNumber) * interphaseContactArea;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property flowDirection.
-     */
+    /** {@inheritDoc} */
     @Override
     public int getFlowDirection(int i) {
         return this.flowDirection[i];
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property flowDirection.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setFlowDirection(int flowDirection, int i) {
         this.flowDirection[i] = flowDirection;
