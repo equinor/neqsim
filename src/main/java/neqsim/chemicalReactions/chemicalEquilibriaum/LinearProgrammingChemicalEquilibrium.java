@@ -322,7 +322,6 @@ public class LinearProgrammingChemicalEquilibrium
          * { xEts[i] = 1.0; }
          */
     }
-
     // Method added by Neeraj
     /*
      * public double[] generateInitialEstimates(SystemInterface system, double[] bVector, double

@@ -290,12 +290,12 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		this.GOR = gvf;
 	}
 
-    /**
-     * @return the referenceConditions
-     */
-    public String getReferenceConditions() {
-        return referenceConditions;
-    }
+	/**
+	 * @return the referenceConditions
+	 */
+	public String getReferenceConditions() {
+		return referenceConditions;
+	}
 
 	/**
 	 * @param referenceConditions the referenceConditions to set

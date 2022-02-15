@@ -196,17 +196,4 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
     public void setOutStream(StreamInterface outStream) {
         this.outStream = outStream;
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        // TODO Auto-generated method stub
-        return false;
-    }
 }

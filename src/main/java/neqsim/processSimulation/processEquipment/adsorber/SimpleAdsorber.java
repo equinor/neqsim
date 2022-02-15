@@ -316,24 +316,4 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     public void setNTU(double NTU) {
         this.NTU = NTU;
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null) {
-            return false;
-        }
-        try {
-            // TODO: add checks
-            SimpleAdsorber ad = (SimpleAdsorber) o;
-
-            return true;
-        } catch (Exception ex) {
-        }
-
-        return false;
-    }
 }

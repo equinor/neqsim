@@ -210,17 +210,4 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
     /** {@inheritDoc} */
     @Override
     public void runTransient() {}
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        // TODO Auto-generated method stub
-        return false;
-    }
 }

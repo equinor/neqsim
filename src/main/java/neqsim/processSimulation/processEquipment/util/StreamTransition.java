@@ -14,6 +14,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class StreamTransition extends ProcessEquipmentBaseClass {
+    /**
+     * 
+     */
     private static final long serialVersionUID = 1L;
     private StreamInterface outletStream = null;
     private StreamInterface inletStream = null;
@@ -145,18 +148,5 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
         ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
 
         // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        // TODO Auto-generated method stub
-        return false;
     }
 }

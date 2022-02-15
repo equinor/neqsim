@@ -126,17 +126,4 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
     public void setHeight(double height) {
         this.height = height;
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        // TODO Auto-generated method stub
-        return false;
-    }
 }

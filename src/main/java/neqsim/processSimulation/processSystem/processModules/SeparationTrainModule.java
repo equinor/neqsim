@@ -14,9 +14,7 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
- * <p>
- * SeparationTrainModule class.
- * </p>
+ * <p>SeparationTrainModule class.</p>
  *
  * @author esol
  * @version $Id: $Id
@@ -207,9 +205,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     }
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -334,18 +330,5 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
          * System.out.println("Export oil cooler duty " + ((Cooler)
          * separationModule.getOperations().getUnit("export oil cooler")).getEnergyInput () + " W");
          */
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        // TODO Auto-generated method stub
-        return false;
     }
 }

@@ -450,17 +450,4 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         getOutStream().getThermoSystem().init(3);
         return getOutStream().getThermoSystem().getEntropy(unit) - entrop;
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        // TODO Auto-generated method stub
-        return false;
-    }
 }

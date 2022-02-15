@@ -473,25 +473,4 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
                         "red eff vs red dflow", "red flow", "red eff");
         graph4.setVisible(true);
     }
-
-    /**
-     * @param o
-     * @return boolean
-     */
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null) {
-            return false;
-        }
-        try {
-            CompressorChart chart = (CompressorChart) o;
-            return true;
-        } catch (Exception ex) {
-
-        }
-
-        return false;
-    }
 }

@@ -111,17 +111,4 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     public void setReboilerDuty(double reboilerDuty) {
         this.reboilerDuty = reboilerDuty;
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        // TODO Auto-generated method stub
-        return false;
-    }
 }
