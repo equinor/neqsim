@@ -32,7 +32,7 @@ public class Jamal {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        double temperature, x, pressure;
+        double temperature, x;
 
         for (temperature = 278; temperature <= 500; temperature += 5) {
             x = 1e-4;

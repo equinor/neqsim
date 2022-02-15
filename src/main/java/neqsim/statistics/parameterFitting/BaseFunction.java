@@ -98,11 +98,7 @@ public abstract class BaseFunction implements FunctionInterface {
     @Override
     public void setDatabaseParameters() {}
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property bounds.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getLowerBound(int i) {
         return this.bounds[i][0];
@@ -120,11 +116,7 @@ public abstract class BaseFunction implements FunctionInterface {
         return this.bounds;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property bounds.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setBounds(double[][] bounds) {
         this.bounds = bounds;

@@ -125,10 +125,4 @@ public class StaticNeqMixer extends StaticMixer {
         // System.out.println("temperature: " +
         // mixedStream.getThermoSystem().getTemperature());
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
-    }
 }

@@ -2,6 +2,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
@@ -45,6 +46,7 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
 
     /** {@inheritDoc} */
     @Override
+    @SuppressWarnings("unused")
     public void setFittingParams(int i, double value) {
         params[i] = value;
         int PiperazineplusNumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, PiperazineNumb = 0;
@@ -355,6 +357,7 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
      * @param i a int
      * @param value a double
      */
+    @SuppressWarnings("unused")
     public void setFittingParams3(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;

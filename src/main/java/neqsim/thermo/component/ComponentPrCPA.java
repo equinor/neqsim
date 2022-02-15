@@ -6,7 +6,6 @@ import neqsim.thermo.phase.PhaseInterface;
 /**
  *
  * @author Even Solbraa
- * @version
  */
 abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterface {
     private static final long serialVersionUID = 1000;
@@ -221,11 +220,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
                         * (4.0 * phase.getTotalVolume() - phase.getB()));
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property xsite.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getXsite() {
         return this.xsite;

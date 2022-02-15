@@ -335,11 +335,12 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
      * @return a double
      */
     public double calc_lngV() {
-        double gv = 0.0, gv2 = 0.0;
+        double gv = 0.0;
         gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume()
                 / ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
 
-        // gv2 = 1.0/(2.0-getB()/(4.0*getTotalVolume()))*getB()/(4.0*Math.pow(getTotalVolume()
+        // double gv2 =
+        // 1.0/(2.0-getB()/(4.0*getTotalVolume()))*getB()/(4.0*Math.pow(getTotalVolume()
         // ,2.0))
         // - 3.0/(1.0-getB()/(4.0*getTotalVolume()))*getB()/(4.0*Math.pow(getTotalVolume() ,2.0));
 
@@ -424,11 +425,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         return iter < 3;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property hcpatot.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getHcpatot() {
         return hcpatot;

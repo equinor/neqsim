@@ -13,7 +13,6 @@ import neqsim.thermodynamicOperations.BaseOperation;
 
 /**
  * @author Even Solbraa
- * @version
  */
 abstract class Flash extends BaseOperation {
     private static final long serialVersionUID = 1000;

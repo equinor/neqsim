@@ -6,6 +6,7 @@ import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
+
 // import org.ejml.data.DenseMatrix64F;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
@@ -1081,11 +1082,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property hcpatot.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getHcpatot() {
         return hcpatot;

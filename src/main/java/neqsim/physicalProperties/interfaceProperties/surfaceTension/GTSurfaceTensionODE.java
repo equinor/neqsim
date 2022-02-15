@@ -106,7 +106,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         this.sys.setNumberOfPhases(1);
         this.sys.getPhase(0).setTotalVolume(1.0);
         this.sys.useVolumeCorrection(false);
-        this.sys.removeMoles();
+        this.sys.setEmptyFluid();
         double nv[] = new double[this.ncomp];
         for (i = 0; i < ncomp; i++) {
             nv[i] = this.rho_ph1[i] * Pa;
@@ -174,7 +174,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         double[][] jac = new double[this.ncomp][this.ncomp];
         double[] rho = new double[this.ncomp];
         double delta_omega, dsigma, cij;
-        double rho_ref, rho0;
+        double rho0;
 
         DMatrixRMaj df, dn_dnref, ms;
         SingularValueDecomposition<DMatrixRMaj> svd;
@@ -247,24 +247,23 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
      *
      * Solves the equilibrium relations with the Newton-Raphson method.
      * 
-     * @param[in,out] rho Number density [mol/m3]
-     * @param[out] mu Chemical potential [J/mol]
-     * @param[out] dmu_drho Chemical potential derivative with respect to mole numbers [J/mol^2]
-     * @param[out] p Pressure [Pa]
-     * @param[out] f Residual of equilibrium relations.
-     * @param[out] jac Jacobian of the equilibrium relations.
+     * @param rho Number density [mol/m3]
+     * @param mu Chemical potential [J/mol]
+     * @param dmu_drho Chemical potential derivative with respect to mole numbers [J/mol^2]
+     * @param p Pressure [Pa]
+     * @param f Residual of equilibrium relations.
+     * @param jac Jacobian of the equilibrium relations.
      */
     private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f,
             double[][] jac) {
-        double normf, norm0, norm, rho_ref, s;
-        int i, j, k, iter;
+        double normf, norm0, norm, s;
+        int i, j, iter;
         DMatrixRMaj A = new DMatrixRMaj(this.ncomp - 1, this.ncomp - 1);
         DMatrixRMaj b = new DMatrixRMaj(this.ncomp - 1, 1);
         DMatrixRMaj x = new DMatrixRMaj(this.ncomp - 1, 1);
         DMatrixRMaj x0 = new DMatrixRMaj(this.ncomp - 1, 1);
         DMatrixRMaj c = new DMatrixRMaj(this.ncomp - 1, 1);
 
-        rho_ref = rho[this.refcomp];
         GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, rho, mu, dmu_drho, p);
         fjacfun(mu, dmu_drho, f, jac);
         for (i = 0; i < this.ncomp - 1; i++) {

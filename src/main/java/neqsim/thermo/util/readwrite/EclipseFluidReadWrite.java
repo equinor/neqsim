@@ -4,11 +4,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * <p>

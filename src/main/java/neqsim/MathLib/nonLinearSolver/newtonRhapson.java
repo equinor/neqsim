@@ -19,7 +19,7 @@ public class newtonRhapson implements java.io.Serializable {
     int order;
     double[] polyConstants;
     double funkVal = 0, derivVal = 0, dubDerivVal = 0;
-    private int maxIterations = 500, times = 0;
+    private int maxIterations = 500;
     double xNew = 0, xNew2, x = 0;
 
     /**
@@ -117,8 +117,6 @@ public class newtonRhapson implements java.io.Serializable {
     public double solve(double xin) {
         int iterations = 0;
 
-        times++;
-
         x = xin;
         xNew = x;
         xNew2 = x;
@@ -176,8 +174,6 @@ public class newtonRhapson implements java.io.Serializable {
      */
     public double solve1order(double xin) {
         int iterations = 0;
-
-        times++;
 
         x = xin;
         xNew = x;

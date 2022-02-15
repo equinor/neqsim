@@ -10,7 +10,6 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the PC-SAFT EoS equation of state
  * 
  * @author Even Solbraa
- * @version
  */
 public class SystemPCSAFT extends SystemSrkEos {
     private static final long serialVersionUID = 1000;

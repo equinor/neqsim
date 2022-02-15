@@ -37,9 +37,8 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 * Constructor for GORfitter.
 	 * </p>
 	 *
-	 * @param stream a
-	 *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-	 *               object
+	 * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+	 *        object
 	 */
 	public GORfitter(StreamInterface stream) {
 		this();
@@ -57,10 +56,9 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 * Constructor for GORfitter.
 	 * </p>
 	 *
-	 * @param name   a {@link java.lang.String} object
-	 * @param stream a
-	 *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-	 *               object
+	 * @param name a {@link java.lang.String} object
+	 * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+	 *        object
 	 */
 	public GORfitter(String name, StreamInterface stream) {
 		this(stream);
@@ -72,9 +70,8 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 * Setter for the field <code>inletStream</code>.
 	 * </p>
 	 *
-	 * @param inletStream a
-	 *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-	 *                    object
+	 * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+	 *        object
 	 */
 	public void setInletStream(StreamInterface inletStream) {
 		this.inletStream = inletStream;
@@ -90,9 +87,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 * getOutStream.
 	 * </p>
 	 *
-	 * @return a
-	 *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-	 *         object
+	 * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
 	 */
 	public StreamInterface getOutStream() {
 		return outletStream;
@@ -115,7 +110,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 * </p>
 	 *
 	 * @param pressure a double
-	 * @param unitP    a {@link java.lang.String} object
+	 * @param unitP a {@link java.lang.String} object
 	 */
 	public void setPressure(double pressure, String unitP) {
 		this.pressure = pressure;
@@ -139,7 +134,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 * </p>
 	 *
 	 * @param temperature a double
-	 * @param unitT       a {@link java.lang.String} object
+	 * @param unitT a {@link java.lang.String} object
 	 */
 	public void setTemperature(double temperature, String unitT) {
 		this.temperature = temperature;
@@ -170,10 +165,13 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 				/ tempFluid.getPhase("oil").getCorrectedVolume();
 
 		if (fitAsGVF) {
-			GOR = tempFluid.getPhase("oil").getCorrectedVolume()*getGOR()/(tempFluid.getPhase("oil").getCorrectedVolume()-tempFluid.getPhase("oil").getCorrectedVolume()*getGOR());
-			//GVF*Vo/(Vo-GVF*Vo)
-			//currGOR = tempFluid.getPhase("gas").getCorrectedVolume()
-			//		/ (tempFluid.getPhase("oil").getCorrectedVolume() + tempFluid.getPhase("gas").getCorrectedVolume());
+			GOR = tempFluid.getPhase("oil").getCorrectedVolume() * getGOR()
+					/ (tempFluid.getPhase("oil").getCorrectedVolume()
+							- tempFluid.getPhase("oil").getCorrectedVolume() * getGOR());
+			// GVF*Vo/(Vo-GVF*Vo)
+			// currGOR = tempFluid.getPhase("gas").getCorrectedVolume()
+			// / (tempFluid.getPhase("oil").getCorrectedVolume() +
+			// tempFluid.getPhase("gas").getCorrectedVolume());
 		}
 
 		double dev = getGOR() / currGOR;
@@ -181,7 +179,8 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 
 		double[] moleChange = new double[tempFluid.getNumberOfComponents()];
 		for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-			moleChange[i] = (dev - 1.0) * tempFluid.getPhase("gas").getComponent(i).getNumberOfMolesInPhase();
+			moleChange[i] = (dev - 1.0)
+					* tempFluid.getPhase("gas").getComponent(i).getNumberOfMolesInPhase();
 		}
 		tempFluid.init(0);
 		for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
@@ -197,12 +196,13 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		}
 		outletStream.setThermoSystem(tempFluid);
 		GVF = tempFluid.getPhase("gas").getCorrectedVolume()
-				/ (tempFluid.getPhase("oil").getCorrectedVolume() + tempFluid.getPhase("gas").getCorrectedVolume());
+				/ (tempFluid.getPhase("oil").getCorrectedVolume()
+						+ tempFluid.getPhase("gas").getCorrectedVolume());
 		return;
 	}
 
-			  
-			  /**
+
+	/**
 	 * <p>
 	 * main.
 	 * </p>
@@ -238,7 +238,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		gORFItter.setTemperature(15.0, "C");
 		gORFItter.setPressure(1.01325, "bara");
 		gORFItter.setReferenceConditions("actual");
-		//gORFItter.setGVF(0.1);
+		// gORFItter.setGVF(0.1);
 		gORFItter.setGOR(10.1);
 
 		Stream stream_2 = new Stream(gORFItter.getOutStream());
@@ -247,7 +247,8 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		multiPhaseMeter2.setTemperature(90.0, "C");
 		multiPhaseMeter2.setPressure(60.0, "bara");
 
-		neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+		neqsim.processSimulation.processSystem.ProcessSystem operations =
+				new neqsim.processSimulation.processSystem.ProcessSystem();
 		operations.add(stream_1);
 		operations.add(multiPhaseMeter);
 		operations.add(gORFItter);
@@ -280,12 +281,12 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 * @param gOR a double
 	 */
 	public void setGOR(double gOR) {
-		fitAsGVF=false;
+		fitAsGVF = false;
 		this.GOR = gOR;
 	}
-	
+
 	public void setGVF(double gvf) {
-		fitAsGVF=true;
+		fitAsGVF = true;
 		this.GOR = gvf;
 	}
 

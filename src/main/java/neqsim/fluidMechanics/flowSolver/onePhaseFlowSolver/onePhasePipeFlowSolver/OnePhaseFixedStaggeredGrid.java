@@ -90,7 +90,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
      * </p>
      */
     public void initProfiles() {
-        double err = 0, oldPres = 0, oldTemp = 0, dpdx = 0;
+        double err = 0, oldPres = 0, dpdx = 0;
 
         do {
             // pipe.getNode(0).setVelocityIn(pipe.getNode(0).getVelocity());
@@ -101,7 +101,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
             for (int i = 0; i < numberOfNodes - 1; i++) {
                 // setting temperatures
                 pipe.getNode(i).init();
-                oldTemp = pipe.getNode(i + 1).getBulkSystem().getTemperature();
                 pipe.getNode(i + 1).getBulkSystem().setTemperature((4.0
                         * pipe.getNode(i).calcTotalHeatTransferCoefficient(0)
                         * (pipe.getNode(i).getGeometry().getSurroundingEnvironment()
@@ -706,7 +705,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     public void solveTDMA() {
         double d[];
         int iter = 0, iterTop = 0;
-        double maxDiff = 1.0, maxDiffOld = 0;
+        double maxDiff = 1.0;
         double diff = 0;
         xNew = new double[pipe.getNode(0).getBulkSystem().getPhases()[0]
                 .getNumberOfComponents()][numberOfNodes];
@@ -716,7 +715,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         initMatrix();
 
         do {
-            maxDiffOld = maxDiff;
             maxDiff = 0;
             iterTop++;
 
