@@ -17,8 +17,8 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      * <p>
      * run
      * </p>
-     * In this method all thermodynamic and unit the operation
-     * will be calculated in a steady state calculation.
+     * In this method all thermodynamic and unit the operation will be calculated in a steady state
+     * calculation.
      *
      * @return void
      */
@@ -38,9 +38,8 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      * <p>
      * runTransient
      * </p>
-     * In this method all thermodynamic and unit the operation
-     * will be calculated in a dynamic calculation.
-     * dt is the delta time step (seconds)
+     * In this method all thermodynamic and unit the operation will be calculated in a dynamic
+     * calculation. dt is the delta time step (seconds)
      *
      * @return void
      */

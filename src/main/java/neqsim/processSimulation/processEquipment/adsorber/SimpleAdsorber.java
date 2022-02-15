@@ -77,9 +77,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public void setName(String name) {
+        super.setName(name);
         outStream[0].setName(name + "_Sout1");
         outStream[1].setName(name + "_Sout2");
-        this.name = name;
     }
 
     /**

@@ -6,7 +6,6 @@
 package neqsim.processSimulation.processEquipment;
 
 import java.util.HashMap;
-
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.EnergyStream;
@@ -74,8 +73,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-    };
+    public void displayResult() {}
 
     /** {@inheritDoc} */
     @Override

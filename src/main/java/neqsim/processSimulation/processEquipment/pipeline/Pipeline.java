@@ -291,18 +291,6 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         this.flowPattern = flowPattern;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name) {
-        this.name = name;
-    }
-
     /**
      * Getter for property times.
      *
