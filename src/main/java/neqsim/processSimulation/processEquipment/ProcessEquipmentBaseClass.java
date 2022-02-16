@@ -29,7 +29,6 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     ControllerDeviceInterface flowValveController = null;
     public boolean hasController = false;
     public String name = new String();
-    public MechanicalDesign mechanicalDesign = new MechanicalDesign(this);
     private String specification = "TP";
     public String[][] report = new String[0][0];
     public HashMap<String, String> properties = new HashMap<String, String>();
@@ -37,7 +36,6 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     private boolean isSetEnergyStream = false;
 
     public ProcessEquipmentBaseClass() {
-        mechanicalDesign = new MechanicalDesign(this);
     }
 
     /**
@@ -137,18 +135,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     /** {@inheritDoc} */
     @Override
     public MechanicalDesign getMechanicalDesign() {
-        return mechanicalDesign;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>mechanicalDesign</code>.
-     * </p>
-     *
-     * @param mechanicalDesign the mechanicalDesign to set
-     */
-    public void setMechanicalDesign(MechanicalDesign mechanicalDesign) {
-        this.mechanicalDesign = mechanicalDesign;
+        return new MechanicalDesign(this);
     }
 
     /** {@inheritDoc} */
@@ -279,7 +266,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
         result = prime * result + Arrays.deepHashCode(report);
         result = prime * result
                 + Objects.hash(conditionAnalysisMessage, controller, energyStream, flowValveController,
-                        hasController, isSetEnergyStream, mechanicalDesign, name, properties, specification);
+                        hasController, isSetEnergyStream, name, properties, specification);
         return result;
     }
 
@@ -297,7 +284,6 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
                 && Objects.equals(energyStream, other.energyStream)
                 && Objects.equals(flowValveController, other.flowValveController)
                 && hasController == other.hasController && isSetEnergyStream == other.isSetEnergyStream
-                && Objects.equals(mechanicalDesign, other.mechanicalDesign)
                 && Objects.equals(name, other.name) && Objects.equals(properties, other.properties)
                 && Arrays.deepEquals(report, other.report)
                 && Objects.equals(specification, other.specification);

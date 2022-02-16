@@ -40,8 +40,8 @@ public class SystemMechanicalDesign implements java.io.Serializable {
      * @param name a {@link java.lang.String} object
      */
     public void setCompanySpecificDesignStandards(String name) {
-        for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-            processSystem.getUnitOperations().get(i).getMechanicalDesign()
+        for (int i = 0; i < this.processSystem.getUnitOperations().size(); i++) {
+            this.processSystem.getUnitOperations().get(i).getMechanicalDesign()
                     .setCompanySpecificDesignStandards(name);
         }
     }
@@ -52,19 +52,19 @@ public class SystemMechanicalDesign implements java.io.Serializable {
      * </p>
      */
     public void runDesignCalculation() {
-        ArrayList<String> names = processSystem.getAllUnitNames();
+        ArrayList<String> names = this.processSystem.getAllUnitNames();
         for (int i = 0; i < names.size(); i++) {
             try {
-                if (!((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)) == null)) {
-                    ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                if (!((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)) == null)) {
+                    ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
                             .getMechanicalDesign().calcDesign();
-                    totalPlotSpace += ((ProcessEquipmentInterface) processSystem
+                    totalPlotSpace += ((ProcessEquipmentInterface) this.processSystem
                             .getUnit(names.get(i))).getMechanicalDesign().getModuleHeight()
-                            * ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                            * ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
                                     .getMechanicalDesign().getModuleLength();
-                    totalVolume += ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                    totalVolume += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
                             .getMechanicalDesign().getVolumeTotal();
-                    totalWeight += ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                    totalWeight += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
                             .getMechanicalDesign().getWeightTotal();
                     numberOfModules++;
                 }
@@ -80,8 +80,8 @@ public class SystemMechanicalDesign implements java.io.Serializable {
      * </p>
      */
     public void setDesign() {
-        for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-            processSystem.getUnitOperations().get(i).getMechanicalDesign().setDesign();
+        for (int i = 0; i < this.processSystem.getUnitOperations().size(); i++) {
+            this.processSystem.getUnitOperations().get(i).getMechanicalDesign().setDesign();
         }
     }
 

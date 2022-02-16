@@ -61,7 +61,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * </p>
      */
     public Compressor() {
-        mechanicalDesign = new CompressorMechanicalDesign(this);
     }
 
     /**
@@ -90,6 +89,10 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         this();
         this.name = name;
         setInletStream(inletStream);
+    }
+
+    public CompressorMechanicalDesign getMechanicalDesign() {
+        return new CompressorMechanicalDesign(this);
     }
 
     /**

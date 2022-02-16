@@ -55,7 +55,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
      */
     public Separator() {
         super();
-        mechanicalDesign = new SeparatorMechanicalDesign(this);
     }
 
     /**
@@ -89,6 +88,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     public Separator(String name, StreamInterface inletStream) {
         this(inletStream);
         this.name = name;
+    }
+
+    public SeparatorMechanicalDesign gMechanicalDesign() {
+        return new SeparatorMechanicalDesign(this);
     }
 
     /**
