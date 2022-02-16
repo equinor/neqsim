@@ -5,11 +5,12 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -45,7 +46,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      * </p>
      */
     public SimpleTEGAbsorber() {
-        mechanicalDesign = new AbsorberMechanicalDesign(this);
     }
 
     /**
@@ -58,7 +58,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     public SimpleTEGAbsorber(String name) {
         super();
         setName(name);
-        mechanicalDesign = new AbsorberMechanicalDesign(this);
     }
 
     /** {@inheritDoc} */

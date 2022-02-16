@@ -6,9 +6,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
+
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
@@ -30,8 +33,7 @@ import neqsim.thermo.system.SystemInterface;
 public class ProcessSystem implements java.io.Serializable, Runnable {
     private static final long serialVersionUID = 1000;
 
-    Thread thisThread;
-    // ProcessEquipmentInterface[]
+    transient Thread thisThread;
     String[][] signalDB = new String[100][100];
     private double time = 0;
     private double surroundingTemperature = 288.15;
@@ -43,8 +45,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     RecycleController recycleController = new RecycleController();
     private double timeStep = 1.0;
     private String name = "process name";
-    private SystemMechanicalDesign systemMechanicalDesign = null;
-    private CostEstimateBaseClass costEstimator = null;
     static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
     /**
@@ -53,9 +53,8 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * </p>
      */
     public ProcessSystem() {
-        systemMechanicalDesign = new SystemMechanicalDesign(this);
-        costEstimator = new CostEstimateBaseClass(this);
     }
+
 
     /**
      * <p>
@@ -704,35 +703,24 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
 
     /**
      * <p>
-     * Getter for the field <code>systemMechanicalDesign</code>.
+     * Get a SystemMechanicalDesign object from processSystem.
      * </p>
      *
-     * @return the systemMechanicalDesign
+     * @return a new SystemMechanicalDesign object
      */
     public SystemMechanicalDesign getSystemMechanicalDesign() {
-        return systemMechanicalDesign;
+        return new SystemMechanicalDesign(this);
     }
 
     /**
      * <p>
-     * Setter for the field <code>systemMechanicalDesign</code>.
+     * Get a CostEstimateBaseClass object from processSystem.
      * </p>
      *
-     * @param systemMechanicalDesign the systemMechanicalDesign to set
-     */
-    public void setSystemMechanicalDesign(SystemMechanicalDesign systemMechanicalDesign) {
-        this.systemMechanicalDesign = systemMechanicalDesign;
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>costEstimator</code>.
-     * </p>
-     *
-     * @return the costEstimator
+     * @return a new CostEstimateBaseClass object
      */
     public CostEstimateBaseClass getCostEstimator() {
-        return costEstimator;
+        return new CostEstimateBaseClass(this);
     }
 
     /**
@@ -879,7 +867,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
 
     /**
      * <p>
-     * copy.
+     * Create deep copy.
      * </p>
      *
      * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
@@ -900,6 +888,41 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     public ConditionMonitor getConditionMonitor() {
         return new ConditionMonitor(this);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.deepHashCode(signalDB);
+        result = prime * result + Objects.hash(measurementDevices, name,
+                recycleController, surroundingTemperature, time, timeStep,
+                timeStepNumber, unitOperations);
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ProcessSystem other = (ProcessSystem) obj;
+        return Objects.equals(measurementDevices, other.measurementDevices)
+                && Objects.equals(name, other.name)
+                && Objects.equals(recycleController, other.recycleController)
+                && Arrays.deepEquals(signalDB, other.signalDB)
+                && Double.doubleToLongBits(surroundingTemperature) == Double
+                        .doubleToLongBits(other.surroundingTemperature)
+                && Double.doubleToLongBits(time) == Double.doubleToLongBits(other.time)
+                && Double.doubleToLongBits(timeStep) == Double.doubleToLongBits(other.timeStep)
+                && timeStepNumber == other.timeStepNumber
+                && Objects.equals(unitOperations, other.unitOperations);
+    }
+
     /*
      * @XmlRootElement private class Report extends Object{ public Double name; public
      * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();

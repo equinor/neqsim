@@ -1,5 +1,8 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * <p>CompressorCurve class.</p>
  *
@@ -36,5 +39,32 @@ public class CompressorCurve implements java.io.Serializable {
         this.flow = flow;
         this.head = head;
         this.polytropicEfficiency = polytropicEfficiency;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(flow);
+        result = prime * result + Arrays.hashCode(head);
+        result = prime * result + Arrays.hashCode(polytropicEfficiency);
+        result = prime * result + Objects.hash(speed);
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        CompressorCurve other = (CompressorCurve) obj;
+        return Arrays.equals(flow, other.flow) && Arrays.equals(head, other.head)
+                && Arrays.equals(polytropicEfficiency, other.polytropicEfficiency)
+                && Double.doubleToLongBits(speed) == Double.doubleToLongBits(other.speed);
     }
 }

@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
-import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDeisgn;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -40,7 +39,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
      * </p>
      */
     public AdiabaticTwoPhasePipe() {
-        mechanicalDesign = new PipelineMechanicalDeisgn(this);
     }
 
     /**

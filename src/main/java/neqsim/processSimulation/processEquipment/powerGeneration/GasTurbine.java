@@ -46,7 +46,6 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      */
     public GasTurbine() {
         // needs to be changed to gas tubing mechanical design
-        mechanicalDesign = new CompressorMechanicalDesign(this);
         SystemInterface airThermoSystem = neqsim.thermo.Fluid.create("air");
         airThermoSystem.addComponent("CO2", 0.0);
         airThermoSystem.addComponent("water", 0.0);
@@ -84,6 +83,10 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         this();
         this.name = name;
         setInletStream(inletStream);
+    }
+
+    public CompressorMechanicalDesign getMechanicalDesign() {
+        return new CompressorMechanicalDesign(this);
     }
 
     /**

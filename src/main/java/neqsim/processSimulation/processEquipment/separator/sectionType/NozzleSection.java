@@ -24,7 +24,6 @@ public class NozzleSection extends SeparatorSection {
      */
     public NozzleSection(String type, Separator sep) {
         super(type, sep);
-        mechanicalDesign = new MechNozzleSection(this);
     }
 
     /**
@@ -39,6 +38,10 @@ public class NozzleSection extends SeparatorSection {
     public NozzleSection(String name, String type, Separator sep) {
         this(type, sep);
         setName(name);
+    }
+
+    public MechNozzleSection getMechanicalDesign() {
+        return new MechNozzleSection(this);
     }
 
     /** {@inheritDoc} */

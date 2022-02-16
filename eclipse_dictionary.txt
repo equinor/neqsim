@@ -1,0 +1,7 @@
+exergy
+kelvin
+enthalpy
+reboiler
+polytropic
+rpm
+kappa

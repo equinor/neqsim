@@ -225,4 +225,12 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      * @return an array of {@link java.lang.String} objects
      */
     public String[][] getResultTable();
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o);
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode();
 }

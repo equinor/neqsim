@@ -24,7 +24,6 @@ public class ManwaySection extends SeparatorSection {
      */
     public ManwaySection(String type, Separator sep) {
         super(type, sep);
-        mechanicalDesign = new MechManwaySection(this);
     }
 
     /**
@@ -39,6 +38,10 @@ public class ManwaySection extends SeparatorSection {
     public ManwaySection(String name, String type, Separator sep) {
         this(type, sep);
         setName(name);
+    }
+
+    public MechManwaySection getMechanicalDesign() {
+        return new MechManwaySection(this);
     }
 
     /** {@inheritDoc} */

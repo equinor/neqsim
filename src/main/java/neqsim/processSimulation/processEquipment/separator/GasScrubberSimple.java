@@ -34,7 +34,6 @@ public class GasScrubberSimple extends Separator {
      */
     public GasScrubberSimple() {
         super();
-        mechanicalDesign = new GasScrubberMechanicalDesign(this);
         this.setOrientation("vertical");
     }
 
@@ -62,6 +61,10 @@ public class GasScrubberSimple extends Separator {
         this();
         this.name = name;
         this.setInletStream(inletStream);
+    }
+
+    public GasScrubberMechanicalDesign getMechanicalDesign() {
+        return new GasScrubberMechanicalDesign(this);
     }
 
     /**
