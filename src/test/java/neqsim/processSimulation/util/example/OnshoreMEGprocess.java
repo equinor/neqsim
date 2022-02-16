@@ -66,12 +66,12 @@ public class OnshoreMEGprocess {
                 new Compressor("Compressor 1 - first stage", waterSaturatedFeedGas);
         inletCompressor.setOutletPressure(70.0, "bara");
 
-        Cooler interstageGasCooler = new Cooler(inletCompressor.getOutStream());
+        Cooler interstageGasCooler = new Cooler("interstageGasCooler", inletCompressor.getOutletStream());
         interstageGasCooler.setOutTemperature(40.0, "C");
         interstageGasCooler.setName("Compressor 1 - interstage cooler");
 
         Compressor inletCompressor2ndstage =
-                new Compressor("Compressor 1 - second stage", interstageGasCooler.getOutStream());
+                new Compressor("Compressor 1 - second stage", interstageGasCooler.getOutletStream());
         inletCompressor2ndstage.setOutletPressure(105.0, "bara");
 
         neqsim.thermo.system.SystemInterface feedMEG = feedGas.clone();

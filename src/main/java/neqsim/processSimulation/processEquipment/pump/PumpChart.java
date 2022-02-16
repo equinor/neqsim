@@ -2,11 +2,13 @@ package neqsim.processSimulation.processEquipment.pump;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -229,7 +231,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
 
         Stream stream_1 = new Stream("Stream1", testFluid);
 
-        Pump pump1 = new Pump(stream_1);
+        Pump pump1 = new Pump("pump1", stream_1);
         pump1.setOutletPressure(100.0);
         // comp1.getAntiSurge().setActive(true);
         pump1.setSpeed(12918);

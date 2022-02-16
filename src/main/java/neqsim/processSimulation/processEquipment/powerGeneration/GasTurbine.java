@@ -54,7 +54,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         airStream = new Stream(airThermoSystem);
         airStream.setPressure(1.01325);
         airStream.setTemperature(288.15, "K");
-        airCompressor = new Compressor(airStream);
+        airCompressor = new Compressor("aircompressor", airStream);
     }
 
     /**
@@ -139,23 +139,23 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         // double molePropane = outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
 
         outStreamAir.run();
-        Heater locHeater = new Heater(outStreamAir);
+        Heater locHeater = new Heater("locHeater", outStreamAir);
         locHeater.setEnergyInput(heatOfCombustion);
         locHeater.run();
 
-        locHeater.getOutStream().getFluid().addComponent("CO2", moleMethane);
-        locHeater.getOutStream().getFluid().addComponent("water", moleMethane * 2.0);
-        locHeater.getOutStream().getFluid().addComponent("methane", -moleMethane);
-        locHeater.getOutStream().getFluid().addComponent("oxygen", -moleMethane * 2.0);
-        locHeater.getOutStream().getFluid().init(3);
+        locHeater.getOutletStream().getFluid().addComponent("CO2", moleMethane);
+        locHeater.getOutletStream().getFluid().addComponent("water", moleMethane * 2.0);
+        locHeater.getOutletStream().getFluid().addComponent("methane", -moleMethane);
+        locHeater.getOutletStream().getFluid().addComponent("oxygen", -moleMethane * 2.0);
+        locHeater.getOutletStream().getFluid().init(3);
         // locHeater.getOutStream().run();
         locHeater.displayResult();
 
-        Expander expander = new Expander(locHeater.getOutStream());
+        Expander expander = new Expander("expander", locHeater.getOutletStream());
         expander.setOutletPressure(1.01325);
         expander.run();
 
-        Cooler cooler1 = new Cooler(expander.getOutletStream());
+        Cooler cooler1 = new Cooler("cooler1", expander.getOutletStream());
         cooler1.setOutTemperature(288.15);
         cooler1.run();
 

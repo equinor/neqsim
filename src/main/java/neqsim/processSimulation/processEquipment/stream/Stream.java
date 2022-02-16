@@ -19,6 +19,16 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
+    private static final long serialVersionUID = 1000;
+
+    protected SystemInterface thermoSystem;
+
+    protected int streamNumber = 0;
+    /** Constant <code>numberOfStreams=0</code> */
+    protected static int numberOfStreams = 0;
+    private double gasQuality = 0.5;
+    protected StreamInterface stream = null;
+
     /**
      * <p>
      * Getter for the field <code>gasQuality</code>.
@@ -40,16 +50,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public void setGasQuality(double gasQuality) {
         this.gasQuality = gasQuality;
     }
-
-    private static final long serialVersionUID = 1000;
-
-    protected SystemInterface thermoSystem;
-
-    protected int streamNumber = 0;
-    /** Constant <code>numberOfStreams=0</code> */
-    protected static int numberOfStreams = 0;
-    private double gasQuality = 0.5;
-    protected StreamInterface stream = null;
 
     /**
      * <p>
@@ -261,7 +261,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     /** {@inheritDoc} */
     @Override
     public double getFlowRate(String unit) {
-        return this.getFluid().getFlowRate(unit);
+        return getFluid().getFlowRate(unit);
     }
 
     /** {@inheritDoc} */

@@ -9,7 +9,7 @@ import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDesign;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -22,12 +22,10 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInterface {
+public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
     private static final long serialVersionUID = 1000;
 
     protected String fileName = "c:/test5.nc";
-    protected StreamInterface outStream;
-    protected StreamInterface inStream;
     protected FlowSystemInterface pipe;
     protected SystemInterface system;
     String flowPattern = "stratified";
@@ -98,7 +96,14 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamInterface getOutStream() {
+        return outStream;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public StreamInterface getOutletStream() {
         return outStream;
     }
 

@@ -1,6 +1,6 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -13,7 +13,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ReBoiler extends ProcessEquipmentBaseClass {
+public class ReBoiler extends TwoPortEquipment {
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
@@ -26,20 +26,14 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
      * <p>
      * Constructor for ReBoiler.
      * </p>
+     * 
+     * @param name
+     * @param stream a
+     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *               object
      */
-    public ReBoiler() {}
-
-    /**
-     * <p>
-     * Constructor for ReBoiler.
-     * </p>
-     *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public ReBoiler(StreamInterface inStream) {
-        this.inStream = inStream;
-        outStream = inStream.clone();
+    public ReBoiler(String name, StreamInterface stream) {
+        super(name, stream);
     }
 
     /**
@@ -49,6 +43,7 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamInterface getOutStream() {
         return outStream;
     }

@@ -3,7 +3,6 @@ package neqsim.processSimulation.processEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 public interface TwoPortInterface {
-
     public double getInletPressure();
 
     public StreamInterface getInletStream();
@@ -16,7 +15,7 @@ public interface TwoPortInterface {
 
     public double getOutletTemperature();
 
-    public void setInletPressure();
+    public void setInletPressure(double pressure);
 
     /**
      * <p>
@@ -29,7 +28,7 @@ public interface TwoPortInterface {
      */
     public void setInletStream(StreamInterface inletStream);
 
-    public void setInletTemperature();
+    public void setInletTemperature(double temperature);
 
     /**
      * <p>
@@ -40,7 +39,7 @@ public interface TwoPortInterface {
      */
     public void setOutletPressure(double pressure);
 
-    public void setOutletStream();
+    public void setOutletStream(StreamInterface stream);
 
-    public void setOutletTemperature();
+    public void setOutletTemperature(double temperature);
 }

@@ -294,7 +294,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         testFluid.setTotalFlowRate(1.0, "MSm3/day");
 
         Stream stream_1 = new Stream("Stream1", testFluid);
-        Compressor comp1 = new Compressor(stream_1);
+        Compressor comp1 = new Compressor("comp", stream_1);
         comp1.setUsePolytropicCalc(true);
         // comp1.getAntiSurge().setActive(true);
         comp1.setSpeed(11918);

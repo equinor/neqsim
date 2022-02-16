@@ -364,7 +364,7 @@ public class CompressorChartAlternativeMapLookup
         testFluid.setTotalFlowRate(5.4, "MSm3/day");
 
         Stream stream_1 = new Stream("Stream1", testFluid);
-        Compressor comp1 = new Compressor(true);
+        Compressor comp1 = new Compressor("comp1", true);
         comp1.setInletStream(stream_1);
         comp1.setUsePolytropicCalc(true);
         // comp1.getAntiSurge().setActive(true);

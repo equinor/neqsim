@@ -52,19 +52,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
     /**
      * Constructor for Separator.
-     */
-    public Separator() {
-        super();
-    }
-
-    /**
-     * Constructor for Separator.
      * 
      * @param name Name of separator
      */
     public Separator(String name) {
-        this();
-        this.setName(name);
+        super(name);
     }
 
     /**

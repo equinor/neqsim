@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.subsea;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.TwoPortInterface;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -14,11 +13,9 @@ import neqsim.thermo.system.SystemInterface;
  * @author asmund
  * @version $Id: $Id
  */
-public class SimpleFlowLine extends ProcessEquipmentBaseClass implements TwoPortInterface {
+public class SimpleFlowLine extends TwoPortEquipment {
     private static final long serialVersionUID = 1000;
 
-    protected StreamInterface inStream;
-    private StreamInterface outStream;
     private double height = 100.0;
     public double length = 520.0;
     double outletTemperature = 313.15;
@@ -29,13 +26,13 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass implements TwoPort
      * Constructor for SimpleFlowLine.
      * </p>
      *
-     * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * @param stream a
+     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *               object
      */
-    public SimpleFlowLine(StreamInterface instream) {
-        this.inStream = instream;
-        setOutStream(instream.clone());
-        pipeline = new AdiabaticTwoPhasePipe(instream);
+    public SimpleFlowLine(String name, StreamInterface stream) {
+        super(name, stream);
+        pipeline = new AdiabaticTwoPhasePipe(stream);
     }
 
     /**

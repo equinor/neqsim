@@ -17,11 +17,13 @@ public class CharCoalFilter extends Filter {
      * <p>
      * Constructor for CharCoalFilter.
      * </p>
-     *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * 
+     * @param name
+     * @param inStream a
+     *                 {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *                 object
      */
-    public CharCoalFilter(StreamInterface inStream) {
-        super(inStream);
+    public CharCoalFilter(String name, StreamInterface inStream) {
+        super(name, inStream);
     }
 }

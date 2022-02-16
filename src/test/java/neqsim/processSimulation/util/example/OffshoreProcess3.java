@@ -64,7 +64,7 @@ public class OffshoreProcess3 {
         inletTempControl.setOutPressure(55.21, "bara");
 
         ThrottlingValve valve =
-                new ThrottlingValve("inlet choke valve", inletTempControl.getOutStream());
+                new ThrottlingValve("inlet choke valve", inletTempControl.getOutletStream());
         valve.setOutletPressure(35.21);
 
         Stream oilToInletSep = new Stream(fluid3.clone());
@@ -79,7 +79,7 @@ public class OffshoreProcess3 {
         heater1.setName("oil cooler/heater to 2nd stage");
         heater1.setOutTemperature(85.0, "C");
 
-        ThrottlingValve valve2 = new ThrottlingValve(heater1.getOutStream());
+        ThrottlingValve valve2 = new ThrottlingValve(heater1.getOutletStream());
         valve2.setName("oil HP to MP valve");
         valve2.setOutletPressure(7.0);
 
@@ -143,7 +143,7 @@ public class OffshoreProcess3 {
         lpgasheater.setName("1st stage gas heat exchanger");
         lpgasheater.setOutTemperature(35.0, "C");
 
-        Separator lpscrubber = new Separator("2nd stage scrubber", lpgasheater.getOutStream());
+        Separator lpscrubber = new Separator("2nd stage scrubber", lpgasheater.getOutletStream());
         Stream liqFromlpscrubber = (Stream) lpscrubber.getLiquidOutStream();
 
         Recycle lpscrubberResyc = new Recycle("mpscrubberRes");
@@ -162,12 +162,12 @@ public class OffshoreProcess3 {
         SetPoint compressorPresSet =
                 new SetPoint("comp pres set", compressor2stage, "pressure", inletSeparator);
 
-        Heater secondndstagecooler = new Heater(compressor2stage.getOutStream());
+        Heater secondndstagecooler = new Heater(compressor2stage.getOutletStream());
         secondndstagecooler.setName("2nd stage cooler");
         secondndstagecooler.setOutTemperature(290.0);
 
         Separator scrubbberfrom2ndstage =
-                new Separator("scrubber of mix gas HP", secondndstagecooler.getOutStream());
+                new Separator("scrubber of mix gas HP", secondndstagecooler.getOutletStream());
 
         Mixer mixer = new Mixer("HP rich gas mixer");
         mixer.addStream(inletSeparator.getGasOutStream());
@@ -178,7 +178,7 @@ public class OffshoreProcess3 {
         dewPointScrubberCooler.setOutTemperature(273.15 + 32.3);
 
         Separator mpscrubber =
-                new Separator("dew point control scrubber", dewPointScrubberCooler.getOutStream());
+                new Separator("dew point control scrubber", dewPointScrubberCooler.getOutletStream());
 
         Stream liqFrommpscrubber = (Stream) mpscrubber.getLiquidOutStream();
 
@@ -199,21 +199,21 @@ public class OffshoreProcess3 {
         exportGasCompressor.setIsentropicEfficiency(0.75);
         exportGasCompressor.setOutletPressure(richGas.getPressure() * 2.5);
 
-        Cooler exportGasCompressorCooler = new Cooler(exportGasCompressor.getOutStream());
+        Cooler exportGasCompressorCooler = new Cooler(exportGasCompressor.getOutletStream());
         exportGasCompressorCooler.setName("1st stage export gas cooler");
         exportGasCompressorCooler.setOutTemperature(35.0, "C");
 
-        Compressor exportGasCompressor2 = new Compressor(exportGasCompressorCooler.getOutStream());
+        Compressor exportGasCompressor2 = new Compressor(exportGasCompressorCooler.getOutletStream());
         exportGasCompressor2.setName("2nd stage export compressor");
         exportGasCompressor2.setIsentropicEfficiency(0.75);
         exportGasCompressor2.setOutletPressure(
-                exportGasCompressorCooler.getOutStream().getPressure() * 2.5 * 2.5);
+                exportGasCompressorCooler.getOutletStream().getPressure() * 2.5 * 2.5);
 
-        Cooler exportGasCompressorCooler2 = new Cooler(exportGasCompressor2.getOutStream());
+        Cooler exportGasCompressorCooler2 = new Cooler(exportGasCompressor2.getOutletStream());
         exportGasCompressorCooler2.setName("2nd stage export gas cooler");
         exportGasCompressorCooler2.setOutTemperature(35.0, "C");
 
-        Stream exportGas = new Stream(exportGasCompressorCooler2.getOutStream());
+        Stream exportGas = new Stream(exportGasCompressorCooler2.getOutletStream());
         exportGas.setName("export gas");
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =

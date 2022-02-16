@@ -6,6 +6,7 @@
 package neqsim.processSimulation.processEquipment.reservoir;
 
 import java.util.ArrayList;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -42,15 +43,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     double reservoirVolume = 0.0;
     double lowPressureLimit = 50.0;
     double time = 0.0;
-
-    /**
-     * <p>
-     * Constructor for SimpleReservoir.
-     * </p>
-     */
-    public SimpleReservoir() {
-        super();
-    }
 
     /**
      * <p>

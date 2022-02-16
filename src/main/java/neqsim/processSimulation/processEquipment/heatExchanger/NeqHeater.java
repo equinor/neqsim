@@ -1,6 +1,5 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -15,32 +14,27 @@ import neqsim.thermo.system.SystemInterface;
 public class NeqHeater extends Heater {
     private static final long serialVersionUID = 1000;
 
-    StreamInterface outStream;
-    StreamInterface inStream;
     SystemInterface system;
     double dH = 0.0;
 
-    /**
-     * <p>
-     * Constructor for NeqHeater.
-     * </p>
-     */
-    public NeqHeater() {}
 
     /**
      * <p>
      * Constructor for NeqHeater.
      * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param name
+     * @param inStream a
+     *                 {@link neqsim.processSimulation.processEquipment.stream.Stream}
+     *                 object
      */
-    public NeqHeater(Stream inStream) {
-        this.inStream = inStream;
-        outStream = inStream.clone();
+    public NeqHeater(String name, StreamInterface stream) {
+        super(name, stream);
     }
 
     /** {@inheritDoc} */
     @Override
+    @Deprecated
     public StreamInterface getOutStream() {
         return outStream;
     }

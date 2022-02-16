@@ -4,11 +4,13 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -22,12 +24,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author esol
  * @version $Id: $Id
  */
-public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
+public class Pump extends TwoPortEquipment implements PumpInterface {
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
-    private StreamInterface inStream;
-    StreamInterface outStream;
     double dH = 0.0;
     double pressure = 0.0;
     private double molarFlow = 10.0;
@@ -45,41 +45,21 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
      * <p>
      * Constructor for Pump.
      * </p>
-     */
-    public Pump() {}
-
-    /**
-     * <p>
-     * Constructor for Pump.
-     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * @param name   a {@link java.lang.String} object
+     * @param stream a
+     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *               object
      */
-    public Pump(StreamInterface inletStream) {
-        setInletStream(inletStream);
-    }
-
-    /**
-     * <p>
-     * Constructor for Pump.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public Pump(String name, StreamInterface inletStream) {
-        super(name);
-        setInletStream(inletStream);
+    public Pump(String name, StreamInterface stream) {
+        super(name, stream);
     }
 
     /** {@inheritDoc} */
     @Override
-    public void setInletStream(StreamInterface inletStream) {
-        this.inStream = inletStream;
-
-        this.outStream = inletStream.clone();
+    public void setInletStream(StreamInterface stream) {
+        this.inStream = stream;
+        this.outStream = stream.clone();
     }
 
     /** {@inheritDoc} */
@@ -465,6 +445,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamInterface getInStream() {
         return inStream;
     }

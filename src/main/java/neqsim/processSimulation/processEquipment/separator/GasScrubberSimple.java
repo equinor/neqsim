@@ -7,6 +7,7 @@ package neqsim.processSimulation.processEquipment.separator;
 
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -25,28 +26,15 @@ public class GasScrubberSimple extends Separator {
     Stream inletStream;
     Stream gasOutStream;
     Stream liquidOutStream;
-    String name = new String();
 
     /**
      * <p>
      * Constructor for GasScrubberSimple.
      * </p>
      */
-    public GasScrubberSimple() {
-        super();
+    public GasScrubberSimple(String name) {
+        super(name);
         this.setOrientation("vertical");
-    }
-
-    /**
-     * <p>
-     * Constructor for GasScrubberSimple.
-     * </p>
-     *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-     */
-    public GasScrubberSimple(Stream inletStream) {
-        this();
-        this.setInletStream(inletStream);
     }
 
     /**
@@ -58,8 +46,7 @@ public class GasScrubberSimple extends Separator {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public GasScrubberSimple(String name, Stream inletStream) {
-        this();
-        this.name = name;
+        this(name);
         this.setInletStream(inletStream);
     }
 
@@ -74,7 +61,8 @@ public class GasScrubberSimple extends Separator {
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public void setInletStream(Stream inletStream) {
+    @Override
+    public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();

@@ -20,26 +20,6 @@ public class SafetyValve extends ThrottlingValve {
      * <p>
      * Constructor for SafetyValve.
      * </p>
-     */
-    public SafetyValve() {
-        super();
-    }
-
-    /**
-     * <p>
-     * Constructor for SafetyValve.
-     * </p>
-     *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-     */
-    public SafetyValve(Stream inletStream) {
-        super(inletStream);
-    }
-
-    /**
-     * <p>
-     * Constructor for SafetyValve.
-     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object

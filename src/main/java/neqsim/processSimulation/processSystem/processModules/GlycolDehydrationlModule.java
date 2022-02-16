@@ -161,12 +161,12 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         absorbtionColumn.addGasInStream(gasStreamToAbsorber);
         absorbtionColumn.addSolventInStream(leanTEGStreamToAbsorber);
 
-        valveHP = new ThrottlingValve(absorbtionColumn.getLiquidOutStream());
+        valveHP = new ThrottlingValve("valveHP", absorbtionColumn.getLiquidOutStream());
         valveHP.setOutletPressure(flashPressure);
 
         glycolFlashDrum = new Separator("flash drum", valveHP.getOutletStream());
 
-        valveMP = new ThrottlingValve(glycolFlashDrum.getLiquidOutStream());
+        valveMP = new ThrottlingValve("valveMP", glycolFlashDrum.getLiquidOutStream());
         valveMP.setOutletPressure(regenerationPressure);
 
         /*
@@ -177,29 +177,28 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
          * 
          */
 
-        Heater reboiler = new Heater(valveMP.getOutletStream());
+        Heater reboiler = new Heater("reboiler", valveMP.getOutletStream());
         reboiler.setName("reboiler");
         reboiler.setOutTemperature(reboilerTemperature);
 
         strippingGas.setTemperature(reboilerTemperature, "K");
         strippingGas.setPressure(regenerationPressure, "bara");
-        stripperColumn = new Separator(reboiler.getOutStream());
+        stripperColumn = new Separator(reboiler.getOutletStream());
         stripperColumn.addStream(strippingGas);
 
-        heatExchanger1 = new Cooler(stripperColumn.getLiquidOutStream());
+        heatExchanger1 = new Cooler("he1", stripperColumn.getLiquidOutStream());
         heatExchanger1.setOutTemperature(100.0);
 
-        HPpump = new Pump(heatExchanger1.getOutStream());
-        HPpump.setName("HP lean TEG pump");
+        HPpump = new Pump("HP lean TEG pump", heatExchanger1.getOutletStream());
         HPpump.setOutletPressure(gasStreamToAbsorber.getPressure());
 
-        heatExchanger2 = new Cooler(HPpump.getOutStream());
+        heatExchanger2 = new Cooler("heatexchanger2", HPpump.getOutStream());
         heatExchanger2.setOutTemperature(273.15 + 40.0);
 
-        heatExchanger3 = new Cooler(stripperColumn.getGasOutStream());
+        heatExchanger3 = new Cooler("heatexchanger 3", stripperColumn.getGasOutStream());
         heatExchanger3.setOutTemperature(273.15 + 30.0);
 
-        waterSeparator = new Separator("watersep", heatExchanger3.getOutStream());
+        waterSeparator = new Separator("watersep", heatExchanger3.getOutletStream());
 
         // leanTEGStreamToAbsorber = heatExchanger2.getOutStream();
         // getOperations().add(gasStreamToAbsorber);

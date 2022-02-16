@@ -17,27 +17,6 @@ public class Cooler extends Heater {
      * <p>
      * Constructor for Cooler.
      * </p>
-     */
-    public Cooler() {
-        super();
-    }
-
-    /**
-     * <p>
-     * Constructor for Cooler.
-     * </p>
-     *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public Cooler(StreamInterface inStream) {
-        super(inStream);
-    }
-
-    /**
-     * <p>
-     * Constructor for Cooler.
-     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
@@ -54,12 +33,12 @@ public class Cooler extends Heater {
 
         inStream.run();
         inStream.getFluid().init(3);
-        getOutStream().run();
-        getOutStream().getFluid().init(3);
+        getOutletStream().run();
+        getOutletStream().getFluid().init(3);
 
         double heatTransferEntropyProd = coolingMediumTemperature * getDuty();
         System.out.println("heat entropy " + heatTransferEntropyProd);
-        entrop += getOutStream().getThermoSystem().getEntropy(unit)
+        entrop += getOutletStream().getThermoSystem().getEntropy(unit)
                 - inStream.getThermoSystem().getEntropy(unit);
 
         return entrop;

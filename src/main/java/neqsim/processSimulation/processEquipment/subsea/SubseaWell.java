@@ -123,7 +123,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         well1.getPipeline().setLength(5500.0);
         well1.getPipeline().setInletElevation(-1000.0);
         well1.getPipeline().setOutletElevation(-100.0);
-        ThrottlingValve subseaChoke = new ThrottlingValve(well1.getOutStream());
+        ThrottlingValve subseaChoke = new ThrottlingValve("subseachoke", well1.getOutStream());
         subseaChoke.setOutletPressure(90.0);
         subseaChoke.setAcceptNegativeDP(false);
         SimpleFlowLine flowLine = new SimpleFlowLine(subseaChoke.getOutletStream());
@@ -131,7 +131,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         flowLine.getPipeline().setLength(2000.0);
         flowLine.getPipeline().setInletElevation(-100.0);
         // flowLine.set
-        ThrottlingValve topsideChoke = new ThrottlingValve(flowLine.getOutStream());
+        ThrottlingValve topsideChoke = new ThrottlingValve("topsidechoke", flowLine.getOutStream());
         topsideChoke.setOutletPressure(50.0, "bara");
         topsideChoke.setAcceptNegativeDP(false);
 

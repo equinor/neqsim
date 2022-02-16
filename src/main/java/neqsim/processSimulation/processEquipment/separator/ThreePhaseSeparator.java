@@ -40,20 +40,11 @@ public class ThreePhaseSeparator extends Separator {
      * <p>
      * Constructor for ThreePhaseSeparator.
      * </p>
-     */
-    public ThreePhaseSeparator() {
-        super();
-    }
-
-    /**
-     * <p>
-     * Constructor for ThreePhaseSeparator.
-     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
-    public ThreePhaseSeparator(StreamInterface inletStream) {
+    public ThreePhaseSeparator(String name, StreamInterface inletStream) {
         this();
         addStream(inletStream);
     }

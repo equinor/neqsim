@@ -19,27 +19,6 @@ public class Expander extends Compressor implements ExpanderInterface {
      * <p>
      * Constructor for Expander.
      * </p>
-     */
-    public Expander() {
-        super();
-    }
-
-    /**
-     * <p>
-     * Constructor for Expander.
-     * </p>
-     *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public Expander(StreamInterface inletStream) {
-        super(inletStream);
-    }
-
-    /**
-     * <p>
-     * Constructor for Expander.
-     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}

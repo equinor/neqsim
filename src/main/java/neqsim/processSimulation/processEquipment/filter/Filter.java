@@ -1,8 +1,7 @@
 package neqsim.processSimulation.processEquipment.filter;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -15,12 +14,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author asmund
  * @version $Id: $Id
  */
-public class Filter extends ProcessEquipmentBaseClass {
+public class Filter extends TwoPortEquipment {
     private static final long serialVersionUID = 1000;
 
     private double deltaP = 0.01;
-    protected StreamInterface outStream;
-    protected StreamInterface inStream;
     private double Cv = 0.0;
 
     /**
@@ -28,12 +25,13 @@ public class Filter extends ProcessEquipmentBaseClass {
      * Constructor for Filter.
      * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * @param name
+     * @param stream a
+     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *               object
      */
-    public Filter(StreamInterface inStream) {
-        this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+    public Filter(String name, StreamInterface stream) {
+        super(name, stream);
     }
 
     /** {@inheritDoc} */
@@ -93,6 +91,7 @@ public class Filter extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamInterface getOutStream() {
         return outStream;
     }

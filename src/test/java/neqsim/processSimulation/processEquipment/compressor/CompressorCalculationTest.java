@@ -33,7 +33,7 @@ public class CompressorCalculationTest {
         testFluid.setTotalFlowRate(1.0, "MSm3/day");
 
         stream_1 = new Stream("Stream1", testFluid);
-        comp1 = new Compressor(stream_1);
+        comp1 = new Compressor("comp1", stream_1);
     }
 
     private void setCurves() {
@@ -125,7 +125,7 @@ public class CompressorCalculationTest {
         System.out.println("speed " + comp1.getCompressorChart().getSpeed(
                 stream_1.getThermoSystem().getFlowRate("m3/hr") + 10.0, comp1.getPolytropicHead()));
         System.out.println("pressure out " + comp1.getOutletPressure());
-        System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
+        System.out.println("temperature out " + (comp1.getOutletTemperature() - 273.15) + " C");
         /*
          * double temperatureOut = 273.15 + 84;
          * comp1.setOutletPressure(96.0);

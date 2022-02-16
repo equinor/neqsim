@@ -90,13 +90,13 @@ public class DPCUModule extends ProcessModuleBaseClass {
         heatExchanger1.setName("heatExchanger1");
         // heatExchanger1.addInStream(feedStream2);
 
-        Cooler heatExchanger2 = new Cooler(heatExchanger1.getOutStream(0));
+        Cooler heatExchanger2 = new Cooler("exchanger2", heatExchanger1.getOutStream(0));
         // heatExchanger2.setUAvalue(1000.0);
         heatExchanger1.setOutTemperature(273.15 - 21.0);
         heatExchanger2.setName("heatExchanger2");
         // heatExchanger1.addInStream(feedStream2);
 
-        expander = new Expander("expander", heatExchanger2.getOutStream());
+        expander = new Expander("expander", heatExchanger2.getOutletStream());
         expander.setOutletPressure(46.0);
 
         LTseparator = new Separator("LTseparator", expander.getOutletStream());
@@ -116,7 +116,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         Recycle recycl = new Recycle("recycler");
         recycl.addStream(compressor1.getOutletStream());
 
-        valve1 = new ThrottlingValve(LTseparator.getLiquidOutStream());
+        valve1 = new ThrottlingValve("valve1", LTseparator.getLiquidOutStream());
         valve1.setOutletPressure(30.0);
 
         distColumn = new DistillationColumn(10, true, true);

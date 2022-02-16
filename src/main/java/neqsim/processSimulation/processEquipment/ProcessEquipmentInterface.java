@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment;
 
+import neqsim.processSimulation.SimulationInterface;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
@@ -12,18 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface ProcessEquipmentInterface extends Runnable, java.io.Serializable {
-    /**
-     * <p>
-     * run
-     * </p>
-     * In this method all thermodynamic and unit the operation will be calculated in a steady state
-     * calculation.
-     *
-     * @return void
-     */
-    @Override
-    public void run();
+public interface ProcessEquipmentInterface extends SimulationInterface, java.io.Serializable {
 
     /**
      * <p>
@@ -33,17 +23,6 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      * @return an array of {@link java.lang.String} objects
      */
     public String[][] reportResults();
-
-    /**
-     * <p>
-     * runTransient
-     * </p>
-     * In this method all thermodynamic and unit the operation will be calculated in a dynamic
-     * calculation. dt is the delta time step (seconds)
-     *
-     * @return void
-     */
-    public void runTransient(double dt);
 
     /**
      * <p>
@@ -81,24 +60,6 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
 
     /**
      * <p>
-     * getName.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getName();
-
-    /**
-     * <p>
-     * setName.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void setName(String name);
-
-    /**
-     * <p>
      * setRegulatorOutSignal.
      * </p>
      *
@@ -124,15 +85,6 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      * @return a {@link neqsim.processSimulation.controllerDevice.ControllerDeviceInterface} object
      */
     public ControllerDeviceInterface getController();
-
-    /**
-     * <p>
-     * solved.
-     * </p>
-     *
-     * @return a boolean
-     */
-    public boolean solved();
 
     /**
      * <p>

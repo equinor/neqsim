@@ -15,7 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -29,7 +29,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author esol
  * @version $Id: $Id
  */
-public class Compressor extends ProcessEquipmentBaseClass implements CompressorInterface {
+public class Compressor extends TwoPortEquipment implements CompressorInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Compressor.class);
     public SystemInterface thermoSystem;
@@ -65,38 +65,13 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * <p>
      * Constructor for Compressor.
      * </p>
-     */
-    public Compressor() {
-    }
-
-    /**
-     * <p>
-     * Constructor for Compressor.
-     * </p>
      *
-     * @param inletStream a
-     *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *                    object
+     * @param stream a
+     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *               object
      */
-    public Compressor(StreamInterface inletStream) {
-        this();
-        setInletStream(inletStream);
-    }
-
-    /**
-     * <p>
-     * Constructor for Compressor.
-     * </p>
-     *
-     * @param name        a {@link java.lang.String} object
-     * @param inletStream a
-     *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *                    object
-     */
-    public Compressor(String name, StreamInterface inletStream) {
-        this();
-        this.name = name;
-        setInletStream(inletStream);
+    public Compressor(String name, StreamInterface stream) {
+        super(name, stream);
     }
 
     /**
@@ -106,8 +81,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      *
      * @param interpolateMapLookup a boolean
      */
-    public Compressor(boolean interpolateMapLookup) {
-        this();
+    public Compressor(String name, boolean interpolateMapLookup) {
+        super(name);
         if (interpolateMapLookup) {
             compressorChart = new CompressorChartAlternativeMapLookup();
         }
@@ -235,12 +210,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         return outStream;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getOutletStream() {
-        return outStream;
-    }
-
     /**
      * <p>
      * getInStream.
@@ -252,12 +221,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      */
     @Deprecated
     public StreamInterface getInStream() {
-        return inletStream;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getInletStream() {
         return inletStream;
     }
 
@@ -1252,37 +1215,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         this.useGERG2008 = useGERG2008;
     }
 
-    @Override
-    public double getInletPressure() {
-        return getInletStream().getPressure();
-    }
-
-    @Override
-    public double getInletTemperature() {
-        return getInletStream().getTemperature();
-    }
-
-    @Override
-    public void setInletPressure() {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void setInletTemperature() {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void setOutletStream() {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void setOutletTemperature() {
-
-    // TODO Auto-generated method stub
     /** {@inheritDoc} */
     @Override
     public int hashCode() {

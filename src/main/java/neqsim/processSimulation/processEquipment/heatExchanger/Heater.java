@@ -5,7 +5,7 @@
  */
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -19,12 +19,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface {
+public class Heater extends TwoPortEquipment implements HeaterInterface {
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false, setOutPressure = false;
-    private StreamInterface outStream;
-    StreamInterface inStream;
     SystemInterface system;
     protected double temperatureOut = 0, dT = 0.0, pressureOut = 0;
     private boolean setEnergyInput = false;
@@ -34,25 +32,8 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     private String pressureUnit = "bara";
     double coolingMediumTemperature = 278.15;
 
-    /**
-     * <p>
-     * Constructor for Heater.
-     * </p>
-     */
-    public Heater() {}
-
-    /**
-     * <p>
-     * Constructor for Heater.
-     * </p>
-     *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public Heater(StreamInterface inStream) {
-        this.inStream = inStream;
-        system = inStream.getThermoSystem().clone();
-        outStream = new Stream(system);
+    public Heater(String name) {
+        super(name);
     }
 
     /**
@@ -60,24 +41,26 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
      * Constructor for Heater.
      * </p>
      *
-     * @param name a {@link java.lang.String} object
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * @param name   a {@link java.lang.String} object
+     * @param stream a
+     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *               object
      */
-    public Heater(String name, StreamInterface inStream) {
-        super(name);
-        this.inStream = inStream;
-        system = inStream.getThermoSystem().clone();
-        outStream = new Stream(system);
+    public Heater(String name, StreamInterface stream) {
+        super(name, stream);
     }
 
     /**
      * <p>
      * Getter for the field <code>inStream</code>.
      * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * 
+     * @deprecated getInletStream
+     * @return a
+     *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *         object
      */
+    @Deprecated
     public StreamInterface getInStream() {
         return inStream;
     }
@@ -95,6 +78,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamInterface getOutStream() {
         return outStream;
     }
@@ -207,6 +191,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
      * runTransient.
      * </p>
      */
+    @Override
     public void runTransient() {
         run();
     }
@@ -308,6 +293,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
      *
      * @param outStream the outStream to set
      */
+    @Deprecated
     public void setOutStream(Stream outStream) {
         this.outStream = outStream;
     }
