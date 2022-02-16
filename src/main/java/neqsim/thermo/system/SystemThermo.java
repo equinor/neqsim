@@ -5086,8 +5086,7 @@ abstract class SystemThermo implements SystemInterface {
     /** @{inheritDoc} */
     @Override
     public SystemProperties getProperties() {
-        SystemProperties prop = new SystemProperties(this);
-        return prop;
+        return new SystemProperties(this);
     }
 
     private void setMolarComposition(double[] molefractions, String type) {

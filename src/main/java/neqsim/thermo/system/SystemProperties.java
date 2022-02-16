@@ -2,19 +2,19 @@ package neqsim.thermo.system;
 
 import java.util.HashMap;
 import java.util.Objects;
+
 import neqsim.thermo.phase.PhaseInterface;
 
 public class SystemProperties {
-    public Double[] values;
-    protected String[] names;
-
+    private Double[] values;
+    private String[] names;
     public static final int nCols = 70;
 
-    public SystemProperties(Double[] values, String[] names) {
-        this.names = names;
-        this.values = values;
-    }
-
+    /**
+     * Constructur for SystemProperties.
+     * 
+     * @param fluid
+     */
     public SystemProperties(SystemInterface fluid) {
         final String[] phaseName = {"gas", "oil", "aqueous"};
 
@@ -183,11 +183,25 @@ public class SystemProperties {
         }
     }
 
+    /**
+     * Get property names and values as a map
+     * 
+     * @return map of property name and values
+     */
     public HashMap<String, Double> getProperties() {
         HashMap<String, Double> propMap = new HashMap<String, Double>();
         for (int i = 0; i < names.length; i++) {
             propMap.put(this.names[i], this.values[i]);
         }
         return propMap;
+    }
+
+    /**
+     * Getter for property values
+     * 
+     * @return Systemproperty values
+     */
+    public Double[] getValues() {
+        return this.values;
     }
 }
