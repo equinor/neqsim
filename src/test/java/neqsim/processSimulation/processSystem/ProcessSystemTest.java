@@ -1,9 +1,11 @@
 package neqsim.processSimulation.processSystem;
 
 import java.util.ArrayList;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
@@ -135,22 +137,14 @@ public class ProcessSystemTest {
     }
 
     @Test
-    void testAdd2() {
-
-    }
-
-    @Test
-    void testAdd3() {
-
-    }
-
-    @Test
     void testClear() {
-
+        p.clear();
     }
 
     @Test
-    void testClearAll() {}
+    void testClearAll() {
+        p.clearAll();
+    }
 
     @Test
     void testCopy() {

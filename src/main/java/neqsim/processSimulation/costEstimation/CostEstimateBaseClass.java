@@ -76,11 +76,13 @@ public class CostEstimateBaseClass implements java.io.Serializable {
         return cost;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         return Objects.hash(CAPEXperWeight);
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

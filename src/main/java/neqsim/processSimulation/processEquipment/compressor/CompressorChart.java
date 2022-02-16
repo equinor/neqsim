@@ -2,11 +2,14 @@ package neqsim.processSimulation.processEquipment.compressor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
+
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -472,5 +475,68 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
                         Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
                         "red eff vs red dflow", "red flow", "red eff");
         graph4.setVisible(true);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(chartConditions);
+        result = prime * result + Arrays.deepHashCode(flow);
+        result = prime * result + Arrays.deepHashCode(head);
+        result = prime * result + Arrays.deepHashCode(polytropicEfficiency);
+        result = prime * result + Arrays.deepHashCode(redflow);
+        result = prime * result + Arrays.deepHashCode(redhead);
+        result = prime * result + Arrays.deepHashCode(redpolytropicEfficiency);
+        result = prime * result + Arrays.hashCode(speed);
+        result = prime * result + Objects.hash(chartValues, fanLawCorrectionFunc, headUnit, isStoneWall, isSurge,
+                maxSpeedCurve, minSpeedCurve, reducedHeadFitterFunc, reducedPolytropicEfficiencyFunc, refMW,
+                refPressure, refTemperature, refZ, referenceSpeed, stoneWallCurve, surgeCurve, useCompressorChart,
+                useRealKappa);
+        // result = prime * result + Objects.hash(fanLawCorrectionFitter,
+        // reducedFlowFitter,reducedHeadFitter,reducedPolytropicEfficiencyFitter )
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        CompressorChart other = (CompressorChart) obj;
+        return Arrays.equals(chartConditions, other.chartConditions)
+                && Objects.equals(chartValues, other.chartValues)
+                && Objects.equals(fanLawCorrectionFunc, other.fanLawCorrectionFunc)
+                && Arrays.deepEquals(flow, other.flow) && Arrays.deepEquals(head, other.head)
+                && Objects.equals(headUnit, other.headUnit) && isStoneWall == other.isStoneWall
+                && isSurge == other.isSurge
+                && Double.doubleToLongBits(maxSpeedCurve) == Double.doubleToLongBits(other.maxSpeedCurve)
+                && Double.doubleToLongBits(minSpeedCurve) == Double.doubleToLongBits(other.minSpeedCurve)
+                && Arrays.deepEquals(polytropicEfficiency, other.polytropicEfficiency)
+                && Arrays.deepEquals(redflow, other.redflow) && Arrays.deepEquals(redhead, other.redhead)
+                && Arrays.deepEquals(redpolytropicEfficiency, other.redpolytropicEfficiency)
+                && Objects.equals(reducedHeadFitterFunc, other.reducedHeadFitterFunc)
+                && Objects.equals(reducedPolytropicEfficiencyFunc, other.reducedPolytropicEfficiencyFunc)
+                && Double.doubleToLongBits(refMW) == Double.doubleToLongBits(other.refMW)
+                && Double.doubleToLongBits(refPressure) == Double.doubleToLongBits(other.refPressure)
+                && Double.doubleToLongBits(refTemperature) == Double
+                        .doubleToLongBits(other.refTemperature)
+                && Double.doubleToLongBits(refZ) == Double.doubleToLongBits(other.refZ)
+                && Double.doubleToLongBits(referenceSpeed) == Double
+                        .doubleToLongBits(other.referenceSpeed)
+                && Arrays.equals(speed, other.speed)
+                && Objects.equals(stoneWallCurve, other.stoneWallCurve)
+                && Objects.equals(surgeCurve, other.surgeCurve)
+                && useCompressorChart == other.useCompressorChart && useRealKappa == other.useRealKappa;
+        // && Objects.equals(fanLawCorrectionFitter, other.fanLawCorrectionFitter)
+        // && Objects.equals(reducedFlowFitter, other.reducedFlowFitter)
+        // && Objects.equals(reducedHeadFitter, other.reducedHeadFitter)
+        // && Objects.equals(reducedPolytropicEfficiencyFitter,
+        // other.reducedPolytropicEfficiencyFitter)
     }
 }

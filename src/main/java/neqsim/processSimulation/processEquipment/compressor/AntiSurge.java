@@ -87,11 +87,13 @@ public class AntiSurge implements java.io.Serializable {
         this.currentSurgeFraction = currentSurgeFraction;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         return Objects.hash(currentSurgeFraction, isActive, isSurge, surgeControlFactor);
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

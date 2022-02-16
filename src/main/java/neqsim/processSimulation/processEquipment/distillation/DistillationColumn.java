@@ -633,6 +633,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         this.internalDiameter = internalDiameter;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -645,6 +646,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         return result;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

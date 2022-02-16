@@ -91,10 +91,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         setInletStream(inletStream);
     }
 
-    public CompressorMechanicalDesign getMechanicalDesign() {
-        return new CompressorMechanicalDesign(this);
-    }
-
     /**
      * <p>
      * Constructor for Compressor.
@@ -107,6 +103,22 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         if (interpolateMapLookup) {
             compressorChart = new CompressorChartAlternativeMapLookup();
         }
+    }
+
+    /** {@inheritDoc} */
+    public CompressorMechanicalDesign getMechanicalDesign() {
+        return new CompressorMechanicalDesign(this);
+    }
+
+    /**
+     * <p>
+     * Create deep copy.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+     */
+    public Compressor copy() {
+        return (Compressor) super.copy();
     }
 
     /** {@inheritDoc} */
@@ -1194,7 +1206,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         this.useGERG2008 = useGERG2008;
     }
 
-    @Override
+    /** {@inheritDoc} */
+        @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
@@ -1207,7 +1220,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         return result;
     }
 
-    @Override
+    /** {@inheritDoc} */
+        @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;

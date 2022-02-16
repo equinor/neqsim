@@ -49,11 +49,13 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
         this.duty = duty;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         return Objects.hashCode(duty);
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

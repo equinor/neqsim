@@ -129,11 +129,13 @@ public class SystemMechanicalDesign implements java.io.Serializable {
         return numberOfModules;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         return Objects.hash(numberOfModules, processSystem, totalPlotSpace, totalVolume, totalWeight);
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

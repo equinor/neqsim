@@ -204,12 +204,14 @@ public class RecycleController implements java.io.Serializable {
         this.currentPriorityLevel = currentPriorityLevel;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         return Objects.hash(currentPriorityLevel, maximumPriorityLevel, minimumPriorityLevel,
                 priorityArray, recycleArray);
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

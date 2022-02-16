@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 
+import org.apache.commons.lang.SerializationUtils;
+
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.EnergyStream;
@@ -86,6 +88,16 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     @Override
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * Create deep copy.
+     * 
+     * @return
+     */
+    public ProcessEquipmentInterface copy() {
+        byte[] bytes = SerializationUtils.serialize(this);
+        return (ProcessEquipmentInterface) SerializationUtils.deserialize(bytes);
     }
 
     /**
@@ -259,6 +271,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -270,6 +283,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
         return result;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
