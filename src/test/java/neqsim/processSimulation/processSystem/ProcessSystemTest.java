@@ -1,25 +1,28 @@
 package neqsim.processSimulation.processSystem;
 
 import java.util.ArrayList;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
 public class ProcessSystemTest {
     ProcessSystem p;
+    String _name = "TestProcess";
+
 
     @BeforeEach
     public void setUp() {
         p = new ProcessSystem();
+        p.setName(_name);
     }
 
     @Test
-    public void testGetName() {
-        String name = "TestProsess";
-        p.setName(name);
-        Assertions.assertEquals(p.getName(), name);
+    void testGetName() {
+        Assertions.assertEquals(_name, p.getName());
     }
 
     @Test
@@ -132,4 +135,188 @@ public class ProcessSystemTest {
         p.setSurroundingTemperature(temp);
         Assertions.assertEquals(p.getSurroundingTemperature(), temp);
     }
+
+    @Test
+    void testClear() {
+        p.clear();
+    }
+
+    @Test
+    void testClearAll() {
+        p.clearAll();
+    }
+
+    @Test
+    void testCopy() {
+        ProcessSystem sys2 = p.copy();
+        Assertions.assertTrue(p.equals(sys2));
+        Assertions.assertEquals(p, sys2);
+    }
+
+    @Test
+    void testDisplayResult() {}
+
+    @Test
+    void testGetAllUnitNames() {
+
+    }
+
+    @Test
+    void testGetConditionMonitor() {
+
+    }
+
+    @Test
+    void testGetCoolerDuty() {
+
+    }
+
+    @Test
+    void testGetCostEstimator() {
+
+    }
+
+    @Test
+    void testGetEntropyProduction() {
+
+    }
+
+    @Test
+    void testGetExergyChange() {
+
+    }
+
+    @Test
+    void testGetHeaterDuty() {
+
+    }
+
+    @Test
+    void testGetMeasurementDevice() {
+
+    }
+
+    @Test
+    void testGetMechanicalWeight() {
+
+    }
+
+
+
+    @Test
+    void testGetPower() {
+
+    }
+
+    @Test
+    void testGetSurroundingTemperature() {
+
+    }
+
+    @Test
+    void testGetSystemMechanicalDesign() {
+
+    }
+
+    @Test
+    void testGetTime() {
+
+    }
+
+    @Test
+    void testGetTime2() {
+
+    }
+
+    @Test
+    void testGetTimeStep() {
+
+    }
+
+    @Test
+    void testGetUnit() {
+
+    }
+
+
+    @Test
+    void testGetUnitOperations() {
+
+    }
+
+
+    @Test
+    void testOpen() {
+
+    }
+
+    @Test
+    void testPrintLogFile() {
+
+    }
+
+
+    @Test
+    void testReplaceObject() {
+
+    }
+
+    @Test
+    void testReportMeasuredValues() {
+
+    }
+
+    @Test
+    void testReportResults() {
+
+    }
+
+    @Test
+    void testRun() {
+
+    }
+
+    @Test
+    void testRunAsThread() {
+
+    }
+
+    @Test
+    void testRunTransient() {
+
+    }
+
+    @Test
+    void testRunTransient2() {
+
+    }
+
+    @Test
+    void testSave() {
+
+    }
+
+    @Test
+    void testSetFluid() {
+
+    }
+
+    @Test
+    void testSetFluid2() {}
+
+    @Test
+    void testSetName() {}
+
+    @Test
+    void testSetSystemMechanicalDesign() {
+
+    }
+
+    @Test
+    void testSize() {
+
+    }
+
+    @Test
+    void testView() {}
 }

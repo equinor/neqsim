@@ -8,7 +8,7 @@ package neqsim.processSimulation.processEquipment.pipeline;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
-import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDeisgn;
+import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -49,7 +49,6 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      * </p>
      */
     public Pipeline() {
-        mechanicalDesign = new PipelineMechanicalDeisgn(this);
     }
 
     /**
@@ -80,6 +79,10 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         this.name = name;
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
+    }
+
+    public PipelineMechanicalDesign getMechanicalDesign() {
+        return new PipelineMechanicalDesign(this);
     }
 
     /** {@inheritDoc} */

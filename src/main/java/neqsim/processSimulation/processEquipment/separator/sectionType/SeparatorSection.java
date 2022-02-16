@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.separator.sectionType;
 
 import java.io.Serializable;
+
 import neqsim.processSimulation.mechanicalDesign.separator.sectionType.SepDesignSection;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
@@ -22,7 +23,6 @@ public class SeparatorSection implements Serializable {
     protected String name = "1";
     String type;
     public double outerDiameter = 1.0;
-    public SepDesignSection mechanicalDesign = null;
 
     /**
      * <p>
@@ -35,7 +35,6 @@ public class SeparatorSection implements Serializable {
     public SeparatorSection(String type, Separator sep) {
         this.type = type;
         this.separator = sep;
-        mechanicalDesign = new SepDesignSection(this);
     }
 
     /**
@@ -176,18 +175,7 @@ public class SeparatorSection implements Serializable {
      * @return the mechanicalDesign
      */
     public SepDesignSection getMechanicalDesign() {
-        return mechanicalDesign;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>mechanicalDesign</code>.
-     * </p>
-     *
-     * @param mechanicalDesign the mechanicalDesign to set
-     */
-    public void setMechanicalDesign(SepDesignSection mechanicalDesign) {
-        this.mechanicalDesign = mechanicalDesign;
+        return new SepDesignSection(this);
     }
 
     /**
