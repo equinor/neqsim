@@ -1914,13 +1914,17 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     /**
-     * Do a flash and return list of System properties
+     * Perform flashes and return System properties per set of Spec1 and Spec2.
      * 
-     * @param Spec1
-     * @param Spec2
+     * Possible to specify fractions for each value of Spec1.
+     * 
+     * 
+     * @param Spec1           Flash specification. Depends on FlashMode
+     * @param Spec2           Flash specification. Depends on FlashMode
      * @param FlashMode       1 - TP 2 - PH 3 - PS
-     * @param components      Currently not used
-     * @param onlineFractions Optionally null
+     * @param components      Not in use.
+     * @param onlineFractions Specify fractions per sample instance or null to use
+     *                        static composition specified in fluid
      * @return
      */
     public CalculationResult propertyFlash(List<Double> Spec1, List<Double> Spec2, int FlashMode,
@@ -2000,9 +2004,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                             + " and not 1. Check input fragments.", t);
                     continue;
                 }
-                SystemProperties a = this.system.getProperties();
 
-                fluidProperties[t] = a.values;
+                fluidProperties[t] = this.system.getProperties().getValues();
             } catch (Exception ex) {
                 calculationError[t] = ex.getMessage();
                 logger.error(ex.getMessage());
