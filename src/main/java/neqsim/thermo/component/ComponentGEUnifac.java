@@ -289,7 +289,8 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     /**
      * Getter for property unifacGroups.
      *
-     * @return Value of property unifacGroups.
+     * @return an ArrayList of {@link neqsim.thermo.atomElement.UNIFACgroup} objects. Value of
+     *         property unifacGroups.
      */
     public ArrayList<UNIFACgroup> getUnifacGroups2() {
         return unifacGroups;

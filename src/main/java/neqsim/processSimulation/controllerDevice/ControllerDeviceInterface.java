@@ -122,4 +122,12 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
      * @param Td a double
      */
     public void setControllerParameters(double Ksp, double Ti, double Td);
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o);
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode();
 }

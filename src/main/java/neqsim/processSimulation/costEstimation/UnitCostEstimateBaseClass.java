@@ -1,5 +1,7 @@
 package neqsim.processSimulation.costEstimation;
 
+import java.util.Objects;
+
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -44,5 +46,26 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
      */
     public double getTotaltCost() {
         return this.mechanicalEquipment.getWeightTotal() * costPerWeightUnit;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        return Objects.hash(costPerWeightUnit, mechanicalEquipment);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        UnitCostEstimateBaseClass other = (UnitCostEstimateBaseClass) obj;
+        return Double.doubleToLongBits(costPerWeightUnit) == Double
+                .doubleToLongBits(other.costPerWeightUnit)
+                && Objects.equals(mechanicalEquipment, other.mechanicalEquipment);
     }
 }

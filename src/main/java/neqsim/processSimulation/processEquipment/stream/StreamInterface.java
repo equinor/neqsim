@@ -224,4 +224,12 @@ public interface StreamInterface extends ProcessEquipmentInterface {
      * @return a double
      */
     public double LCV();
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o);
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode();
 }

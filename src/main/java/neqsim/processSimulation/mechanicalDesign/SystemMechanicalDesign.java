@@ -1,6 +1,8 @@
 package neqsim.processSimulation.mechanicalDesign;
 
 import java.util.ArrayList;
+import java.util.Objects;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
@@ -38,8 +40,8 @@ public class SystemMechanicalDesign implements java.io.Serializable {
      * @param name a {@link java.lang.String} object
      */
     public void setCompanySpecificDesignStandards(String name) {
-        for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-            processSystem.getUnitOperations().get(i).getMechanicalDesign()
+        for (int i = 0; i < this.processSystem.getUnitOperations().size(); i++) {
+            this.processSystem.getUnitOperations().get(i).getMechanicalDesign()
                     .setCompanySpecificDesignStandards(name);
         }
     }
@@ -50,19 +52,19 @@ public class SystemMechanicalDesign implements java.io.Serializable {
      * </p>
      */
     public void runDesignCalculation() {
-        ArrayList<String> names = processSystem.getAllUnitNames();
+        ArrayList<String> names = this.processSystem.getAllUnitNames();
         for (int i = 0; i < names.size(); i++) {
             try {
-                if (!((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)) == null)) {
-                    ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                if (!((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)) == null)) {
+                    ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
                             .getMechanicalDesign().calcDesign();
-                    totalPlotSpace += ((ProcessEquipmentInterface) processSystem
+                    totalPlotSpace += ((ProcessEquipmentInterface) this.processSystem
                             .getUnit(names.get(i))).getMechanicalDesign().getModuleHeight()
-                            * ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                            * ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
                                     .getMechanicalDesign().getModuleLength();
-                    totalVolume += ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                    totalVolume += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
                             .getMechanicalDesign().getVolumeTotal();
-                    totalWeight += ((ProcessEquipmentInterface) processSystem.getUnit(names.get(i)))
+                    totalWeight += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
                             .getMechanicalDesign().getWeightTotal();
                     numberOfModules++;
                 }
@@ -78,8 +80,8 @@ public class SystemMechanicalDesign implements java.io.Serializable {
      * </p>
      */
     public void setDesign() {
-        for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-            processSystem.getUnitOperations().get(i).getMechanicalDesign().setDesign();
+        for (int i = 0; i < this.processSystem.getUnitOperations().size(); i++) {
+            this.processSystem.getUnitOperations().get(i).getMechanicalDesign().setDesign();
         }
     }
 
@@ -125,5 +127,28 @@ public class SystemMechanicalDesign implements java.io.Serializable {
      */
     public int getTotalNumberOfModules() {
         return numberOfModules;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        return Objects.hash(numberOfModules, processSystem, totalPlotSpace, totalVolume, totalWeight);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SystemMechanicalDesign other = (SystemMechanicalDesign) obj;
+        return numberOfModules == other.numberOfModules
+                && Objects.equals(processSystem, other.processSystem)
+                && Double.doubleToLongBits(totalPlotSpace) == Double.doubleToLongBits(other.totalPlotSpace)
+                && Double.doubleToLongBits(totalVolume) == Double.doubleToLongBits(other.totalVolume)
+                && Double.doubleToLongBits(totalWeight) == Double.doubleToLongBits(other.totalWeight);
     }
 }

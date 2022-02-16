@@ -36,7 +36,6 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
      * </p>
      */
     public SimpleAdsorber() {
-        mechanicalDesign = new AdsorberMechanicalDesign(this);
     }
 
     /**
@@ -48,8 +47,6 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
      *        object
      */
     public SimpleAdsorber(StreamInterface inStream1) {
-        mechanicalDesign = new AdsorberMechanicalDesign(this);
-
         outStream = new Stream[2];
         inStream = new Stream[2];
         this.inStream[0] = inStream1;
@@ -72,6 +69,10 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         systemOut0.setMixingRule(4);
         outStream[1].setThermoSystem(systemOut0);
         outStream[1].run();
+    }
+
+    public AdsorberMechanicalDesign getMechanicalDesign() {
+        return new AdsorberMechanicalDesign(this);
     }
 
     /** {@inheritDoc} */
