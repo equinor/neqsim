@@ -1,7 +1,8 @@
 package neqsim.util;
 
-public class NamedBaseClass implements NamedInterface {
-    protected String name;
+
+public abstract class NamedBaseClass implements NamedInterface, java.io.Serializable {
+    public String name;
 
     public NamedBaseClass(String name) {
         this.name = name;

@@ -53,9 +53,17 @@ public class ProcessSystem extends SimulationBaseClass implements java.io.Serial
      * </p>
      */
     public ProcessSystem() {
-        super("process name");
+        this("Process system");
     }
 
+    /**
+     * Constructor for ProcessSystem.
+     * 
+     * @param name
+     */
+    public ProcessSystem(String name) {
+        super(name);
+    }
 
     /**
      * <p>
