@@ -19,25 +19,12 @@ public class VaneSection extends SeparatorSection {
      * Constructor for VaneSection.
      * </p>
      *
-     * @param type a {@link java.lang.String} object
-     * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
-     */
-    public VaneSection(String type, Separator sep) {
-        super(type, sep);
-    }
-
-    /**
-     * <p>
-     * Constructor for VaneSection.
-     * </p>
-     *
      * @param name a {@link java.lang.String} object
      * @param type a {@link java.lang.String} object
      * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
      */
     public VaneSection(String name, String type, Separator sep) {
-        this(type, sep);
-        setName(name);
+        super(name, type, sep);
     }
 
     public MechVaneSection getMechanicalDesign() {

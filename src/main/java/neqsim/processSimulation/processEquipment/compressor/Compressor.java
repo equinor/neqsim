@@ -834,7 +834,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {
+    }
 
     /** {@inheritDoc} */
     @Override

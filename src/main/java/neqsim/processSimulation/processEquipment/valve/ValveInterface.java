@@ -18,9 +18,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface ValveInterface extends ProcessEquipmentInterface {
-    /** {@inheritDoc} */
-    @Override
-    public void run();
 
     /**
      * <p>
@@ -49,10 +46,6 @@ public interface ValveInterface extends ProcessEquipmentInterface {
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public StreamInterface getOutStream();
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName();
 
     /**
      * <p>

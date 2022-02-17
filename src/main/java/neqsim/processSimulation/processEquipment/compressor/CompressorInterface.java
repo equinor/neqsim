@@ -17,9 +17,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public interface CompressorInterface extends ProcessEquipmentInterface {
-    /** {@inheritDoc} */
-    @Override
-    public void run();
 
     /**
      * <p>
@@ -49,9 +46,6 @@ public interface CompressorInterface extends ProcessEquipmentInterface {
      */
     public double getEnergy();
 
-    /** {@inheritDoc} */
-    @Override
-    public String getName();
 
     /**
      * <p>
@@ -79,13 +73,6 @@ public interface CompressorInterface extends ProcessEquipmentInterface {
      * @param isentropicEfficientcy a double
      */
     public void setIsentropicEfficiency(double isentropicEfficientcy);
-
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient();
 
     /**
      * <p>

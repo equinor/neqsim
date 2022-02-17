@@ -5,6 +5,7 @@
  */
 package neqsim.processSimulation.processSystem;
 
+import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
@@ -18,16 +19,19 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public abstract class ProcessModuleBaseClass implements ModuleInterface {
+public abstract class ProcessModuleBaseClass extends SimulationBaseClass
+        implements ModuleInterface {
     private static final long serialVersionUID = 1000;
 
-    protected String preferedThermodynamicModel = "", moduleName = "";
+    protected String preferedThermodynamicModel = "";
     protected boolean isInitializedModule = false, isInitializedStreams = false;
     private boolean isCalcDesign = false;
     private neqsim.processSimulation.processSystem.ProcessSystem operations =
             new neqsim.processSimulation.processSystem.ProcessSystem();
 
-    public ProcessModuleBaseClass() {}
+    public ProcessModuleBaseClass(String name) {
+        super(name);
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -45,18 +49,6 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     @Override
     public void displayResult() {
         getOperations().displayResult();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return moduleName;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name) {
-        moduleName = name;
     }
 
     /** {@inheritDoc} */

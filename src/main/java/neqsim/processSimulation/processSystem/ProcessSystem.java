@@ -12,6 +12,7 @@ import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
@@ -30,7 +31,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ProcessSystem implements java.io.Serializable, Runnable {
+public class ProcessSystem extends SimulationBaseClass implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     transient Thread thisThread;
@@ -44,7 +45,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             new ArrayList<MeasurementDeviceInterface>(0);
     RecycleController recycleController = new RecycleController();
     private double timeStep = 1.0;
-    private String name = "process name";
     static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
     /**
@@ -53,6 +53,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * </p>
      */
     public ProcessSystem() {
+        super("process name");
     }
 
 
@@ -461,9 +462,26 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      *
      * @param deltat a double
      */
-    public void runTransient(double deltat) {
-        timeStep = deltat;
-        runTransient();
+    @Override
+    public void runTransient(double dt) {
+        time += dt;
+
+        for (int i = 0; i < unitOperations.size(); i++) {
+            unitOperations.get(i).runTransient(dt);
+        }
+        timeStepNumber++;
+        signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()];
+        for (int i = 0; i < measurementDevices.size(); i++) {
+            signalDB[timeStepNumber][0] = Double.toString(time);
+            signalDB[timeStepNumber][3 * i + 1] = measurementDevices.get(i).getName();
+            signalDB[timeStepNumber][3 * i + 2] = Double.toString(measurementDevices.get(i).getMeasuredValue());
+            signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
+        }
+    }
+
+    @Override
+    public boolean solved() {
+        return true;
     }
 
     /**
@@ -504,20 +522,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * </p>
      */
     public void runTransient() {
-        time += getTimeStep();
-
-        for (int i = 0; i < unitOperations.size(); i++) {
-            unitOperations.get(i).runTransient(getTimeStep());
-        }
-        timeStepNumber++;
-        signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()];
-        for (int i = 0; i < measurementDevices.size(); i++) {
-            signalDB[timeStepNumber][0] = Double.toString(time);
-            signalDB[timeStepNumber][3 * i + 1] = measurementDevices.get(i).getName();
-            signalDB[timeStepNumber][3 * i + 2] =
-                    Double.toString(measurementDevices.get(i).getMeasuredValue());
-            signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
-        }
+        runTransient(getTimeStep());
     }
 
     /**

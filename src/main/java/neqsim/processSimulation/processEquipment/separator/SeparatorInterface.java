@@ -5,6 +5,7 @@
  */
 package neqsim.processSimulation.processEquipment.separator;
 
+import neqsim.processSimulation.SimulationInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -15,25 +16,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author esol
  * @version $Id: $Id
  */
-public interface SeparatorInterface {
-    /**
-     * <p>
-     * setName.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void setName(String name);
-
-    /**
-     * <p>
-     * getName.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getName();
-
+public interface SeparatorInterface extends SimulationInterface {
     /**
      * <p>
      * getThermoSystem.

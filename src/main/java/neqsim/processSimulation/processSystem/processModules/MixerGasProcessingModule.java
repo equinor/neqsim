@@ -34,6 +34,10 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     Pump oilPump;
     Cooler secondStageAfterCooler;
 
+    public MixerGasProcessingModule(String name) {
+        super(name);
+    }
+
     /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
@@ -131,6 +135,12 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
 
     /** {@inheritDoc} */
     @Override
+    public void initializeStreams() {
+        isInitializedStreams = true;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void run() {
         if (!isInitializedModule) {
             initializeModule();
@@ -144,14 +154,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public void initializeStreams() {
-        isInitializedStreams = true;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public void runTransient(double dt) {
-        getOperations().runTransient();
+        getOperations().runTransient(dt);
     }
 
     /** {@inheritDoc} */
@@ -225,7 +229,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         Stream glycolFeedStream = new Stream("Glycol feed stream", glycolTestSystem);
         glycolFeedStream.getThermoSystem().setTotalFlowRate(4.0 * 1e3, "kg/hr");
 
-        MixerGasProcessingModule separationModule = new MixerGasProcessingModule();
+        MixerGasProcessingModule separationModule = new MixerGasProcessingModule("GasMixer");
         separationModule.addInputStream("feed stream", wellStream);
         separationModule.addInputStream("glycol feed stream", glycolFeedStream);
         separationModule.setSpecification("inlet separation temperature", 55.0);

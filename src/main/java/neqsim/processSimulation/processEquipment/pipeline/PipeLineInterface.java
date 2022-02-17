@@ -6,6 +6,7 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
+import neqsim.processSimulation.SimulationInterface;
 
 /**
  * <p>
@@ -15,7 +16,7 @@ import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
  * @author esol
  * @version $Id: $Id
  */
-public interface PipeLineInterface {
+public interface PipeLineInterface extends SimulationInterface {
     /**
      * <p>
      * setNumberOfLegs.
@@ -105,22 +106,4 @@ public interface PipeLineInterface {
      * @return a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
      */
     public FlowSystemInterface getPipe();
-
-    /**
-     * <p>
-     * getName.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getName();
-
-    /**
-     * <p>
-     * setName.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void setName(String name);
 }
