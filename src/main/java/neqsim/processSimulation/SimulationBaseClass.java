@@ -1,19 +1,15 @@
 package neqsim.processSimulation;
 
-public abstract class SimulationBaseClass implements SimulationInterface {
-    protected String name;
+import neqsim.util.NamedBaseClass;
+
+public abstract class SimulationBaseClass extends NamedBaseClass implements SimulationInterface {
+
+    @Deprecated
+    public SimulationBaseClass() {
+        super("");
+    }
 
     public SimulationBaseClass(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String getName() {
-        return this.name;
-    }
-
-    @Override
-    public void setName(String name) {
-        this.name = name;
+        super(name);
     }
 }

@@ -6,6 +6,7 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
+import neqsim.processSimulation.SimulationInterface;
 import neqsim.processSimulation.processEquipment.TwoPortInterface;
 
 /**
@@ -16,7 +17,7 @@ import neqsim.processSimulation.processEquipment.TwoPortInterface;
  * @author esol
  * @version $Id: $Id
  */
-public interface PipeLineInterface extends TwoPortInterface {
+public interface PipeLineInterface extends TwoPortInterface, SimulationInterface {
     /**
      * <p>
      * setNumberOfLegs.
@@ -106,22 +107,4 @@ public interface PipeLineInterface extends TwoPortInterface {
      * @return a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
      */
     public FlowSystemInterface getPipe();
-
-    /**
-     * <p>
-     * getName.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getName();
-
-    /**
-     * <p>
-     * setName.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void setName(String name);
 }

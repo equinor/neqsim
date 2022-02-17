@@ -13,7 +13,8 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface ProcessEquipmentInterface extends SimulationInterface, java.io.Serializable {
+public interface ProcessEquipmentInterface
+        extends SimulationInterface, java.io.Serializable {
 
     /**
      * <p>

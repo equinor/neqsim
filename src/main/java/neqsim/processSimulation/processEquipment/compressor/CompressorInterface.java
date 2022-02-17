@@ -18,10 +18,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortInterface {
-    /** {@inheritDoc} */
-    @Override
-    public void run();
-
     /**
      * <p>
      * getEnergy.
@@ -59,13 +55,6 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
      * @param isentropicEfficientcy a double
      */
     public void setIsentropicEfficiency(double isentropicEfficientcy);
-
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient();
 
     /**
      * <p>

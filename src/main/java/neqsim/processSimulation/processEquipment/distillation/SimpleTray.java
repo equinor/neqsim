@@ -155,7 +155,8 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {
+    }
 
     /**
      * <p>

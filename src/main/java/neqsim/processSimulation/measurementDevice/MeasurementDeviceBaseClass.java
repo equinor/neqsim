@@ -1,6 +1,7 @@
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.measurementDevice.online.OnlineSignal;
+import neqsim.util.NamedBaseClass;
 
 /**
  * <p>
@@ -10,7 +11,7 @@ import neqsim.processSimulation.measurementDevice.online.OnlineSignal;
  * @author ESOL
  * @version $Id: $Id
  */
-public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInterface {
+public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implements MeasurementDeviceInterface {
     private static final long serialVersionUID = 1000;
 
     /** {@inheritDoc} */
@@ -42,7 +43,7 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
      * </p>
      *
      * @param isOnlineSignal the isOnlineSignal to set
-     * @param plantName a {@link java.lang.String} object
+     * @param plantName      a {@link java.lang.String} object
      * @param transmitterame a {@link java.lang.String} object
      */
     public void setIsOnlineSignal(boolean isOnlineSignal, String plantName, String transmitterame) {
@@ -50,7 +51,6 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
         onlineSignal = new OnlineSignal(plantName, transmitterame);
     }
 
-    protected String name = "default";
     protected String unit = "-";
     private double maximumValue = 1.0;
     private double minimumValue = 0.0;
@@ -63,28 +63,19 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     private String conditionAnalysisMessage = "";
     private double conditionAnalysisMaxDeviation = 0.0;
 
-    public MeasurementDeviceBaseClass() {}
+    public MeasurementDeviceBaseClass() {
+        super("default");
+    }
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {}
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
+    public void displayResult() {
     }
 
     /** {@inheritDoc} */
     @Override
     public String getUnit() {
         return unit;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String nameset) {
-        name = nameset;
     }
 
     /** {@inheritDoc} */
@@ -159,7 +150,7 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
      * </p>
      *
      * @param value a double
-     * @param unit a {@link java.lang.String} object
+     * @param unit  a {@link java.lang.String} object
      */
     public void setOnlineMeasurementValue(double value, String unit) {
         onlineMeasurementValue = value;

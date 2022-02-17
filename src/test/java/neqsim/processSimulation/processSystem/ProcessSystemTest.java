@@ -219,21 +219,6 @@ public class ProcessSystemTest {
     }
 
     @Test
-    void testGetTime() {
-
-    }
-
-    @Test
-    void testGetTime2() {
-
-    }
-
-    @Test
-    void testGetTimeStep() {
-
-    }
-
-    @Test
     void testGetUnit() {
 
     }
@@ -282,16 +267,6 @@ public class ProcessSystemTest {
     }
 
     @Test
-    void testRunTransient() {
-
-    }
-
-    @Test
-    void testRunTransient2() {
-
-    }
-
-    @Test
     void testSave() {
 
     }
@@ -300,9 +275,6 @@ public class ProcessSystemTest {
     void testSetFluid() {
 
     }
-
-    @Test
-    void testSetFluid2() {}
 
     @Test
     void testSetName() {}

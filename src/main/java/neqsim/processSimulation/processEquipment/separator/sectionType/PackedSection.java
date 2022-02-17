@@ -18,18 +18,6 @@ public class PackedSection extends SeparatorSection {
      * Constructor for PackedSection.
      * </p>
      *
-     * @param type a {@link java.lang.String} object
-     * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
-     */
-    public PackedSection(String type, Separator sep) {
-        super(type, sep);
-    }
-
-    /**
-     * <p>
-     * Constructor for PackedSection.
-     * </p>
-     *
      * @param name a {@link java.lang.String} object
      * @param type a {@link java.lang.String} object
      * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object

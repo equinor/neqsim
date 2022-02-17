@@ -43,7 +43,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     String glycolTypeName = "TEG";
     double reboilerTemperature = 273.15 + 204.0, regenerationPressure = 1.4;
 
-    public GlycolDehydrationlModule() {}
+    public GlycolDehydrationlModule(String name) {
+        super(name);
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -458,7 +460,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         Separator separator = new Separator("Separator 1", saturator.getOutStream());
 
         neqsim.processSimulation.processSystem.processModules.GlycolDehydrationlModule TEGplant =
-                new neqsim.processSimulation.processSystem.processModules.GlycolDehydrationlModule();
+                new neqsim.processSimulation.processSystem.processModules.GlycolDehydrationlModule("TEGplant");
         TEGplant.addInputStream("gasStreamToAbsorber", saturator.getOutStream());
         TEGplant.addInputStream("strippingGas", strippingGasStream);
         TEGplant.setSpecification("water dew point specification", 273.15 - 10.0);

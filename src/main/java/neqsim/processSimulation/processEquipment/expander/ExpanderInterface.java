@@ -12,10 +12,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public interface ExpanderInterface extends ProcessEquipmentInterface {
-    /** {@inheritDoc} */
-    @Override
-    public void run();
-
     /**
      * <p>
      * setOutletPressure.
@@ -44,10 +40,6 @@ public interface ExpanderInterface extends ProcessEquipmentInterface {
      */
     public double getEnergy();
 
-    /** {@inheritDoc} */
-    @Override
-    public String getName();
-
     /**
      * <p>
      * getOutStream.
@@ -56,11 +48,4 @@ public interface ExpanderInterface extends ProcessEquipmentInterface {
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public StreamInterface getOutStream();
-
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient();
 }

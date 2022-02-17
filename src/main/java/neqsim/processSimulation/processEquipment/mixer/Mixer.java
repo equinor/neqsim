@@ -205,7 +205,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {
+    public void runTransient(double dt) {
         run();
     }
 

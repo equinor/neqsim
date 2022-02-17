@@ -25,7 +25,8 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass implements ProcessEquipmentInterface {
+public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
+        implements ProcessEquipmentInterface {
     private static final long serialVersionUID = 1000;
 
     private ControllerDeviceInterface controller = null;
@@ -73,18 +74,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     /** {@inheritDoc} */
     @Override
     public void displayResult() {}
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name) {
-        this.name = name;
-    }
 
     /**
      * Create deep copy.

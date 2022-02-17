@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import neqsim.processSimulation.mechanicalDesign.separator.sectionType.SepDesignSection;
 import neqsim.processSimulation.processEquipment.separator.Separator;
+import neqsim.util.NamedBaseClass;
 
 /**
  * <p>
@@ -13,14 +14,13 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
  * @author esol
  * @version $Id: $Id
  */
-public class SeparatorSection implements Serializable {
+public class SeparatorSection extends NamedBaseClass implements Serializable {
     private static final long serialVersionUID = 1000;
 
     private double efficiency = 0.95;
     public Separator separator = null;
     private boolean calcEfficiency = false;
     private double pressureDrop = 33 / 5.0 * 1e-3;// bar
-    protected String name = "1";
     String type;
     public double outerDiameter = 1.0;
 
@@ -29,26 +29,16 @@ public class SeparatorSection implements Serializable {
      * Constructor for SeparatorSection.
      * </p>
      *
-     * @param type a {@link java.lang.String} object
-     * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
-     */
-    public SeparatorSection(String type, Separator sep) {
-        this.type = type;
-        this.separator = sep;
-    }
-
-    /**
-     * <p>
-     * Constructor for SeparatorSection.
-     * </p>
-     *
      * @param name a {@link java.lang.String} object
      * @param type a {@link java.lang.String} object
-     * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
+     * @param sep  a
+     *             {@link neqsim.processSimulation.processEquipment.separator.Separator}
+     *             object
      */
     public SeparatorSection(String name, String type, Separator sep) {
-        this(type, sep);
-        this.name = name;
+        super(name);
+        this.type = type;
+        this.separator = sep;
     }
 
     /**
@@ -143,28 +133,6 @@ public class SeparatorSection implements Serializable {
      */
     public void setPressureDrop(double pressureDrop) {
         this.pressureDrop = pressureDrop;
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>name</code>.
-     * </p>
-     *
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>name</code>.
-     * </p>
-     *
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
     }
 
     /**

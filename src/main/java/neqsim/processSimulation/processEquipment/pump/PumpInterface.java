@@ -13,9 +13,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public interface PumpInterface extends ProcessEquipmentInterface, TwoPortInterface {
-    /** {@inheritDoc} */
-    @Override
-    public void run();
 
     /**
      * <p>
@@ -45,10 +42,6 @@ public interface PumpInterface extends ProcessEquipmentInterface, TwoPortInterfa
      */
     public double getEnergy();
 
-    /** {@inheritDoc} */
-    @Override
-    public String getName();
-
     /**
      * <p>
      * getOutStream.
@@ -66,11 +59,4 @@ public interface PumpInterface extends ProcessEquipmentInterface, TwoPortInterfa
      * @return a double
      */
     public double getPower();
-
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient();
 }

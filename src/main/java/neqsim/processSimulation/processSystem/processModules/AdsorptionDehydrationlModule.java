@@ -27,7 +27,9 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     double adsorberInternalDiameter = 1.0;
     double adsorbentFillingHeight = 3.0;
 
-    public AdsorptionDehydrationlModule() {}
+    public AdsorptionDehydrationlModule(String name) {
+        super(name);
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -204,7 +206,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         Separator separator = new Separator("Separator 1", inletStream);
 
         neqsim.processSimulation.processSystem.processModules.AdsorptionDehydrationlModule adsorptionPlant =
-                new neqsim.processSimulation.processSystem.processModules.AdsorptionDehydrationlModule();
+                new neqsim.processSimulation.processSystem.processModules.AdsorptionDehydrationlModule("absPlant");
         adsorptionPlant.addInputStream("gasStreamToAdsorber", separator.getGasOutStream());
         adsorptionPlant.setSpecification("water dew point temperature", 273.15 - 100.0);
         adsorptionPlant.setSpecification("designFlow", 20.0e6); // MSm^3/day
