@@ -810,8 +810,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-    }
+    public void runTransient(double dt) {}
 
     /** {@inheritDoc} */
     @Override

@@ -49,7 +49,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt, double percentSignal) {
+    public void runTransient(double percentSignal, double dt) {
         if (isReverseActing()) {
             propConstant = -1;
         }

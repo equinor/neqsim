@@ -4,12 +4,10 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -211,6 +209,5 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-    }
+    public void runTransient(double dt) {}
 }
