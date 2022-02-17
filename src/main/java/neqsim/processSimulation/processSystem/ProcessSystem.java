@@ -31,7 +31,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ProcessSystem extends SimulationBaseClass implements java.io.Serializable {
+public class ProcessSystem extends SimulationBaseClass {
     private static final long serialVersionUID = 1000;
 
     transient Thread thisThread;
