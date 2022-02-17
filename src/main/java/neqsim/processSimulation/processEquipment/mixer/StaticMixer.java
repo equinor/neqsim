@@ -126,6 +126,5 @@ public class StaticMixer extends Mixer {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-    }
+    public void runTransient() {}
 }
