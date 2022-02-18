@@ -24,7 +24,6 @@ public class ValveSection extends SeparatorSection {
      */
     public ValveSection(String type, Separator sep) {
         super(type, sep);
-        mechanicalDesign = new DistillationTraySection(this);
     }
 
     /**
@@ -39,6 +38,10 @@ public class ValveSection extends SeparatorSection {
     public ValveSection(String name, String type, Separator sep) {
         this(type, sep);
         this.name = name;
+    }
+
+    public DistillationTraySection getMechanicalDesign() {
+        return new DistillationTraySection(this);
     }
 
     /** {@inheritDoc} */

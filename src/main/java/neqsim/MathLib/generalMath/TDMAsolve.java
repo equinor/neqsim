@@ -1,5 +1,3 @@
-
-
 /*
  * TDMAsolve.java
  *
@@ -15,16 +13,7 @@ package neqsim.MathLib.generalMath;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class TDMAsolve implements java.io.Serializable {
-    private static final long serialVersionUID = 1000;
-
-    /**
-     * <p>
-     * Constructor for TDMAsolve.
-     * </p>
-     */
-    public TDMAsolve() {}
-
+public class TDMAsolve {
     /**
      * <p>
      * solve.

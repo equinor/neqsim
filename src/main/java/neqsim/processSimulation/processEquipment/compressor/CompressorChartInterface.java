@@ -158,4 +158,12 @@ public interface CompressorChartInterface extends Cloneable {
      * </p>
      */
     public void plot();
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o);
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode();
 }

@@ -3,9 +3,12 @@ package neqsim.processSimulation.mechanicalDesign;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.util.Hashtable;
+import java.util.Objects;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import neqsim.processSimulation.costEstimation.UnitCostEstimateBaseClass;
 import neqsim.processSimulation.mechanicalDesign.designStandards.AdsorptionDehydrationDesignStandard;
 import neqsim.processSimulation.mechanicalDesign.designStandards.CompressorDesignStandard;
@@ -1070,5 +1073,92 @@ public class MechanicalDesign implements java.io.Serializable {
      */
     public UnitCostEstimateBaseClass getCostEstimate() {
         return costEstimate;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        return Objects.hash(companySpecificDesignStandards, construtionMaterial, corrosionAllowanse,
+                costEstimate, designStandard, hasSetCompanySpecificDesignStandards, innerDiameter,
+                jointEfficiency, materialPipeDesignStandard, materialPlateDesignStandard,
+                maxDesignGassVolumeFlow, maxDesignOilVolumeFlow, maxDesignVolumeFlow,
+                maxDesignWaterVolumeFlow, maxOperationPressure, maxOperationTemperature,
+                minDesignGassVolumeFLow, minDesignOilFLow, minDesignVolumeFLow, minDesignWaterVolumeFLow,
+                minOperationPressure, minOperationTemperature, moduleHeight, moduleLength, moduleWidth,
+                outerDiameter, pressureMarginFactor, processEquipment, tantanLength, tensileStrength,
+                volumeTotal, wallThickness, weightElectroInstrument, weightNozzle, weightPiping,
+                weightStructualSteel, weightTotal, weightVessel, weigthInternals, weigthVesselShell);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        MechanicalDesign other = (MechanicalDesign) obj;
+        return Objects.equals(companySpecificDesignStandards, other.companySpecificDesignStandards)
+                && Objects.equals(construtionMaterial, other.construtionMaterial)
+                && Double.doubleToLongBits(corrosionAllowanse) == Double
+                        .doubleToLongBits(other.corrosionAllowanse)
+                && Objects.equals(costEstimate, other.costEstimate)
+                && Objects.equals(designStandard, other.designStandard)
+                && hasSetCompanySpecificDesignStandards == other.hasSetCompanySpecificDesignStandards
+                && Double.doubleToLongBits(innerDiameter) == Double.doubleToLongBits(other.innerDiameter)
+                && Double.doubleToLongBits(jointEfficiency) == Double
+                        .doubleToLongBits(other.jointEfficiency)
+                && Objects.equals(materialPipeDesignStandard, other.materialPipeDesignStandard)
+                && Objects.equals(materialPlateDesignStandard, other.materialPlateDesignStandard)
+                && Double.doubleToLongBits(maxDesignGassVolumeFlow) == Double
+                        .doubleToLongBits(other.maxDesignGassVolumeFlow)
+                && Double.doubleToLongBits(maxDesignOilVolumeFlow) == Double
+                        .doubleToLongBits(other.maxDesignOilVolumeFlow)
+                && Double.doubleToLongBits(maxDesignVolumeFlow) == Double
+                        .doubleToLongBits(other.maxDesignVolumeFlow)
+                && Double.doubleToLongBits(maxDesignWaterVolumeFlow) == Double
+                        .doubleToLongBits(other.maxDesignWaterVolumeFlow)
+                && Double.doubleToLongBits(maxOperationPressure) == Double
+                        .doubleToLongBits(other.maxOperationPressure)
+                && Double.doubleToLongBits(maxOperationTemperature) == Double
+                        .doubleToLongBits(other.maxOperationTemperature)
+                && Double.doubleToLongBits(minDesignGassVolumeFLow) == Double
+                        .doubleToLongBits(other.minDesignGassVolumeFLow)
+                && Double.doubleToLongBits(minDesignOilFLow) == Double
+                        .doubleToLongBits(other.minDesignOilFLow)
+                && Double.doubleToLongBits(minDesignVolumeFLow) == Double
+                        .doubleToLongBits(other.minDesignVolumeFLow)
+                && Double.doubleToLongBits(minDesignWaterVolumeFLow) == Double
+                        .doubleToLongBits(other.minDesignWaterVolumeFLow)
+                && Double.doubleToLongBits(minOperationPressure) == Double
+                        .doubleToLongBits(other.minOperationPressure)
+                && Double.doubleToLongBits(minOperationTemperature) == Double
+                        .doubleToLongBits(other.minOperationTemperature)
+                && Double.doubleToLongBits(moduleHeight) == Double.doubleToLongBits(other.moduleHeight)
+                && Double.doubleToLongBits(moduleLength) == Double.doubleToLongBits(other.moduleLength)
+                && Double.doubleToLongBits(moduleWidth) == Double.doubleToLongBits(other.moduleWidth)
+                && Double.doubleToLongBits(outerDiameter) == Double.doubleToLongBits(other.outerDiameter)
+                && Double.doubleToLongBits(pressureMarginFactor) == Double
+                        .doubleToLongBits(other.pressureMarginFactor)
+                && Objects.equals(processEquipment, other.processEquipment)
+                && Double.doubleToLongBits(tantanLength) == Double.doubleToLongBits(other.tantanLength)
+                && Double.doubleToLongBits(tensileStrength) == Double
+                        .doubleToLongBits(other.tensileStrength)
+                && Double.doubleToLongBits(volumeTotal) == Double.doubleToLongBits(other.volumeTotal)
+                && Double.doubleToLongBits(wallThickness) == Double.doubleToLongBits(other.wallThickness)
+                && Double.doubleToLongBits(weightElectroInstrument) == Double
+                        .doubleToLongBits(other.weightElectroInstrument)
+                && Double.doubleToLongBits(weightNozzle) == Double.doubleToLongBits(other.weightNozzle)
+                && Double.doubleToLongBits(weightPiping) == Double.doubleToLongBits(other.weightPiping)
+                && Double.doubleToLongBits(weightStructualSteel) == Double
+                        .doubleToLongBits(other.weightStructualSteel)
+                && Double.doubleToLongBits(weightTotal) == Double.doubleToLongBits(other.weightTotal)
+                && Double.doubleToLongBits(weightVessel) == Double.doubleToLongBits(other.weightVessel)
+                && Double.doubleToLongBits(weigthInternals) == Double
+                        .doubleToLongBits(other.weigthInternals)
+                && Double.doubleToLongBits(weigthVesselShell) == Double
+                        .doubleToLongBits(other.weigthVesselShell);
     }
 }
