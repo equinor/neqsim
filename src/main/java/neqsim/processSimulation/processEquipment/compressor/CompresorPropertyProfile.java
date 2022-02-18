@@ -2,6 +2,7 @@
  * 
  */
 package neqsim.processSimulation.processEquipment.compressor;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import neqsim.thermo.system.SystemInterface;
@@ -9,7 +10,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  *
  */
-public class CompresorPropertyProfile{
+public class CompresorPropertyProfile implements Serializable{
 
 	private ArrayList<SystemInterface> fluid = new ArrayList<SystemInterface>();
 	private boolean isActive = false;
