@@ -4,12 +4,16 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+import java.util.Objects;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -58,7 +62,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * </p>
      */
     public Compressor() {
-        mechanicalDesign = new CompressorMechanicalDesign(this);
     }
 
     /**
@@ -101,6 +104,22 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         if (interpolateMapLookup) {
             compressorChart = new CompressorChartAlternativeMapLookup();
         }
+    }
+
+    /** {@inheritDoc} */
+    public CompressorMechanicalDesign getMechanicalDesign() {
+        return new CompressorMechanicalDesign(this);
+    }
+
+    /**
+     * <p>
+     * Create deep copy.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+     */
+    public Compressor copy() {
+        return (Compressor) super.copy();
     }
 
     /** {@inheritDoc} */
@@ -1174,19 +1193,83 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         this.polytropicMethod = polytropicMethod;
     }
 
+    /**
+     * Getter for property useGERG2008
+     * 
+     * @return Value
+     */
     public boolean isUseGERG2008() {
         return useGERG2008;
     }
 
+    /**
+     * Setter for property useGERG2008
+     * 
+     * @param useGERG2008 Value to set
+     */
     public void setUseGERG2008(boolean useGERG2008) {
         this.useGERG2008 = useGERG2008;
     }
 
-	public CompresorPropertyProfile getPropertyProfile() {
-		return propertyProfile;
-	}
+    public CompresorPropertyProfile getPropertyProfile() {
+      return propertyProfile;
+    }
 
-	public void setPropertyProfile(CompresorPropertyProfile propertyProfile) {
-		this.propertyProfile = propertyProfile;
-	}
+    public void setPropertyProfile(CompresorPropertyProfile propertyProfile) {
+      this.propertyProfile = propertyProfile;
+    }
+  
+    /** {@inheritDoc} */
+        @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(antiSurge, compressorChart, dH, inletEnthalpy,
+                inletStream, isentropicEfficiency, numberOfCompressorCalcSteps, outStream, outTemperature,
+                polytropicEfficiency, polytropicExponent, polytropicFluidHead, polytropicHead,
+                polytropicHeadMeter, polytropicMethod, powerSet, pressure, pressureUnit, speed,
+                thermoSystem, useGERG2008, useOutTemperature, usePolytropicCalc,
+                useRigorousPolytropicMethod);
+        return result;
+    }
+
+    /** {@inheritDoc} */
+        @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Compressor other = (Compressor) obj;
+        return Objects.equals(antiSurge, other.antiSurge)
+                && Objects.equals(compressorChart, other.compressorChart)
+                && Double.doubleToLongBits(dH) == Double.doubleToLongBits(other.dH)
+                && Double.doubleToLongBits(inletEnthalpy) == Double.doubleToLongBits(other.inletEnthalpy)
+                && Objects.equals(inletStream, other.inletStream)
+                && Double.doubleToLongBits(isentropicEfficiency) == Double
+                        .doubleToLongBits(other.isentropicEfficiency)
+                && numberOfCompressorCalcSteps == other.numberOfCompressorCalcSteps
+                && Objects.equals(outStream, other.outStream)
+                && Double.doubleToLongBits(outTemperature) == Double
+                        .doubleToLongBits(other.outTemperature)
+                && Double.doubleToLongBits(polytropicEfficiency) == Double
+                        .doubleToLongBits(other.polytropicEfficiency)
+                && Double.doubleToLongBits(polytropicExponent) == Double
+                        .doubleToLongBits(other.polytropicExponent)
+                && Double.doubleToLongBits(polytropicFluidHead) == Double
+                        .doubleToLongBits(other.polytropicFluidHead)
+                && Double.doubleToLongBits(polytropicHead) == Double
+                        .doubleToLongBits(other.polytropicHead)
+                && Double.doubleToLongBits(polytropicHeadMeter) == Double
+                        .doubleToLongBits(other.polytropicHeadMeter)
+                && Objects.equals(polytropicMethod, other.polytropicMethod) && powerSet == other.powerSet
+                && Double.doubleToLongBits(pressure) == Double.doubleToLongBits(other.pressure)
+                && Objects.equals(pressureUnit, other.pressureUnit) && speed == other.speed
+                && Objects.equals(thermoSystem, other.thermoSystem) && useGERG2008 == other.useGERG2008
+                && useOutTemperature == other.useOutTemperature
+                && usePolytropicCalc == other.usePolytropicCalc
+                && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
+    }
 }

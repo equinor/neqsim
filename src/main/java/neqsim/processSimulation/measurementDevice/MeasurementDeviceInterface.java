@@ -162,4 +162,12 @@ public interface MeasurementDeviceInterface extends java.io.Serializable {
      * @return a boolean
      */
     public boolean isOnlineSignal();
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o);
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode();
 }

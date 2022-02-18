@@ -35,7 +35,6 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * </p>
      */
     public SimpleAbsorber() {
-        mechanicalDesign = new AbsorberMechanicalDesign(this);
     }
 
     /**
@@ -46,7 +45,6 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public SimpleAbsorber(Stream inStream1) {
-        mechanicalDesign = new AbsorberMechanicalDesign(this);
 
         outStream = new Stream[2];
         inStream = new Stream[2];
@@ -70,6 +68,11 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
         systemOut0.setMixingRule(4);
         outStream[1].setThermoSystem(systemOut0);
         outStream[1].run();
+    }
+
+    /** {@inheritDoc} */
+    public AbsorberMechanicalDesign getMechanicalDesign() {
+        return new AbsorberMechanicalDesign(this);
     }
 
     /** {@inheritDoc} */

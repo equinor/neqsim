@@ -24,7 +24,6 @@ public class VaneSection extends SeparatorSection {
      */
     public VaneSection(String type, Separator sep) {
         super(type, sep);
-        mechanicalDesign = new MechVaneSection(this);
     }
 
     /**
@@ -39,6 +38,10 @@ public class VaneSection extends SeparatorSection {
     public VaneSection(String name, String type, Separator sep) {
         this(type, sep);
         setName(name);
+    }
+
+    public MechVaneSection getMechanicalDesign() {
+        return new MechVaneSection(this);
     }
 
     /** {@inheritDoc} */

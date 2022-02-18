@@ -1,5 +1,8 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
@@ -112,5 +115,34 @@ public class SurgeCurve implements java.io.Serializable {
      */
     void setActive(boolean isActive) {
         this.isActive = isActive;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(chartConditions);
+        result = prime * result + Arrays.hashCode(flow);
+        result = prime * result + Arrays.hashCode(head);
+        result = prime * result + Objects.hash(flowFitterFunc, isActive);
+        // result = prime * result + Objects.hash(flowFitter);
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SurgeCurve other = (SurgeCurve) obj;
+        return Arrays.equals(chartConditions, other.chartConditions) && Arrays.equals(flow, other.flow)
+        // && Objects.equals(flowFitter, other.flowFitter)
+                && Objects.equals(flowFitterFunc, other.flowFitterFunc) && Arrays.equals(head, other.head)
+                && isActive == other.isActive;
     }
 }
