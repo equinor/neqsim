@@ -507,7 +507,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
                             thermoOps.PHflashGERG2008(hout);
                         }
                         if(propertyProfile.isActive()) {
-                        	propertyProfile.addFluid(getThermoSystem().clone());
+                        	propertyProfile.addFluid(thermoSystem.clone());
                         }
                     }
                 } else if (polytropicMethod.equals("schultz")) {

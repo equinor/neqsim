@@ -48,10 +48,9 @@ class CompresorPropertyProfileTest {
 		compressor1.setNumberOfCompressorCalcSteps(40);
 		compressor1.getPropertyProfile().setActive(true);
 		processOps.run();
-		compressor1.getPropertyProfile().getFluid().get(3);
-		compressor1.getPropertyProfile().getFluid().get(39);
-		double density = compressor1.getPropertyProfile().getFluid().get(39).getDensity("kg/m3");
-		assertEquals(59.465718447138336, density, 59.465718447138336 / 100.0);
+		double density3 = compressor1.getPropertyProfile().getFluid().get(3).getDensity("kg/m3");
+		double density39 = compressor1.getPropertyProfile().getFluid().get(39).getDensity("kg/m3");
+		assertEquals(85.4664664074326, density39, 59.465718447138336 / 100.0);
 	}
 
 	@Test

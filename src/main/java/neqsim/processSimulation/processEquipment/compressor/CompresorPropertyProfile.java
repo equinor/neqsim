@@ -19,6 +19,7 @@ public class CompresorPropertyProfile{
 	}
 
 	public void addFluid(SystemInterface inputFLuid) {
+		inputFLuid.initPhysicalProperties();
 		fluid.add(inputFLuid);
 	}
 	
