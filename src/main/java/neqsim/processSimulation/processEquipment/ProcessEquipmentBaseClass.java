@@ -38,6 +38,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     public EnergyStream energyStream = new EnergyStream();
     private boolean isSetEnergyStream = false;
 
+    public ProcessEquipmentBaseClass() {
+    }
+
     /**
      * <p>
      * Constructor for ProcessEquipmentBaseClass.

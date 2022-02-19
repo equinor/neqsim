@@ -79,9 +79,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * addGasInStream.
      * </p>
      *
-     * @param newStream a
-     *                  {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *                  object
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void addGasInStream(StreamInterface newStream) {
         gasInStream = (Stream) newStream;
@@ -94,9 +93,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * addSolventInStream.
      * </p>
      *
-     * @param newStream a
-     *                  {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *                  object
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void addSolventInStream(StreamInterface newStream) {
         solventInStream = (Stream) newStream;
@@ -110,9 +108,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * replaceSolventInStream.
      * </p>
      *
-     * @param newStream a
-     *                  {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *                  object
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void replaceSolventInStream(StreamInterface newStream) {
         solventInStream = (Stream) newStream;
@@ -137,8 +134,9 @@ public class WaterStripperColumn extends SimpleAbsorber {
             for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
                     .getNumberOfComponents(); i++) {
                 boolean gotComponent = false;
-                String componentName = streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i]
-                        .getName();
+                String componentName =
+                        streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i]
+                                .getName();
                 // System.out.println("adding: " + componentName);
 
                 double moles = streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i]
@@ -151,8 +149,9 @@ public class WaterStripperColumn extends SimpleAbsorber {
                             .equals(componentName)) {
                         gotComponent = true;
 
-                        compName = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
-                                .getComponentName();
+                        compName =
+                                streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
+                                        .getComponentName();
                     }
                 }
 
@@ -219,8 +218,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * getInStream.
      * </p>
      *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream}
-     *         object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public Stream getInStream() {
         return gasInStream;
@@ -246,8 +244,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {
-    }
+    public void runTransient() {}
 
     /**
      * <p>
@@ -292,9 +289,9 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * calcNTU.
      * </p>
      *
-     * @param y0   a double
-     * @param y1   a double
-     * @param yb   a double
+     * @param y0 a double
+     * @param y1 a double
+     * @param yb a double
      * @param ymix a double
      * @return a double
      */
@@ -318,7 +315,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
             double enthalpy = calcMixStreamEnthalpy();
             //// System.out.println("temp guess " + guessTemperature());
             mixedStream.getThermoSystem().setTemperature(guessTemperature());
-            ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
+            ThermodynamicOperations testOps =
+                    new ThermodynamicOperations(mixedStream.getThermoSystem());
             testOps.TPflash();
             testOps.PHflash(enthalpy, 0);
 
@@ -404,7 +402,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
 
         thermoSystem.initPhysicalProperties();
         String[][] table = new String[50][5];
-        String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+        String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
         table[0][0] = "";
         table[0][1] = "";
         table[0][2] = "";
@@ -416,31 +414,31 @@ public class WaterStripperColumn extends SimpleAbsorber {
             for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
                 table[j + 1][0] = thermoSystem.getPhases()[0].getComponents()[j].getName();
                 buf = new StringBuffer();
-                table[j + 1][i + 1] = nf.format(thermoSystem.getPhases()[i].getComponents()[j].getx(), buf, test)
-                        .toString();
+                table[j + 1][i + 1] =
+                        nf.format(thermoSystem.getPhases()[i].getComponents()[j].getx(), buf, test)
+                                .toString();
                 table[j + 1][4] = "[-]";
             }
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][0] = "Density";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] = nf
-                    .format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf,
-                            test)
-                    .toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] =
+                    nf.format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf,
+                            test).toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][4] = "[kg/m^3]";
 
             // Double.longValue(thermoSystem.getPhases()[i].getBeta());
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][0] = "PhaseFraction";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf
-                    .format(thermoSystem.getPhases()[i].getBeta(), buf, test).toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] =
+                    nf.format(thermoSystem.getPhases()[i].getBeta(), buf, test).toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][4] = "[-]";
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][0] = "MolarMass";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][i + 1] = nf
-                    .format(thermoSystem.getPhases()[i].getMolarMass() * 1000, buf, test)
-                    .toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][i + 1] =
+                    nf.format(thermoSystem.getPhases()[i].getMolarMass() * 1000, buf, test)
+                            .toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][4] = "[kg/kmol]";
 
             buf = new StringBuffer();
@@ -454,30 +452,28 @@ public class WaterStripperColumn extends SimpleAbsorber {
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][0] = "Viscosity";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] = nf
-                    .format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()),
-                            buf, test)
-                    .toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] =
+                    nf.format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()),
+                            buf, test).toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][4] = "[kg/m*sec]";
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][0] = "Conductivity";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] = nf
-                    .format(thermoSystem.getPhases()[i].getPhysicalProperties().getConductivity(),
-                            buf, test)
-                    .toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] =
+                    nf.format(thermoSystem.getPhases()[i].getPhysicalProperties().getConductivity(),
+                            buf, test).toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][4] = "[W/m*K]";
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][0] = "Pressure";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] = Double
-                    .toString(thermoSystem.getPhases()[i].getPressure());
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] =
+                    Double.toString(thermoSystem.getPhases()[i].getPressure());
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][4] = "[bar]";
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][0] = "Temperature";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] = Double
-                    .toString(thermoSystem.getPhases()[i].getTemperature());
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] =
+                    Double.toString(thermoSystem.getPhases()[i].getTemperature());
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "[K]";
             Double.toString(thermoSystem.getPhases()[i].getTemperature());
 
@@ -511,7 +507,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * </p>
      *
      * @param waterDewPointTemperature a double
-     * @param dewPressure              a double
+     * @param dewPressure a double
      */
     public void setWaterDewPointTemperature(double waterDewPointTemperature, double dewPressure) {
         this.waterDewPointTemperature = waterDewPointTemperature;
@@ -523,9 +519,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * Setter for the field <code>gasOutStream</code>.
      * </p>
      *
-     * @param gasOutStream a
-     *                     {@link neqsim.processSimulation.processEquipment.stream.Stream}
-     *                     object
+     * @param gasOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public void setGasOutStream(Stream gasOutStream) {
         this.gasOutStream = gasOutStream;
@@ -536,8 +530,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * Getter for the field <code>solventOutStream</code>.
      * </p>
      *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream}
-     *         object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public Stream getSolventOutStream() {
         return solventOutStream;
@@ -548,9 +541,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * Setter for the field <code>solventOutStream</code>.
      * </p>
      *
-     * @param solventOutStream a
-     *                         {@link neqsim.processSimulation.processEquipment.stream.Stream}
-     *                         object
+     * @param solventOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream}
+     *        object
      */
     public void setSolventOutStream(Stream solventOutStream) {
         this.solventOutStream = solventOutStream;
