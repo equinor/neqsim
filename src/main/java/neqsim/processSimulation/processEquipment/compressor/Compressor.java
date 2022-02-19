@@ -37,6 +37,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     public StreamInterface outStream;
     private double outTemperature = 298.15;
     private boolean useOutTemperature = false;
+    private CompresorPropertyProfile propertyProfile = new CompresorPropertyProfile();
     public double dH = 0.0;
     public double inletEnthalpy = 0;
     public double pressure = 0.0;
@@ -490,6 +491,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
                 }
             } else {
                 if (polytropicMethod.equals("detailed")) {
+                	//todo add detailed output of compressor calculations
                     int numbersteps = numberOfCompressorCalcSteps;
                     double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
                     for (int i = 0; i < numbersteps; i++) {
@@ -522,6 +524,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
                         thermoOps.PHflash(hout, 0);
                         if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
                             thermoOps.PHflashGERG2008(hout);
+                        }
+                        if(propertyProfile.isActive()) {
+                        	propertyProfile.addFluid(thermoSystem.clone());
                         }
                     }
                 } else if (polytropicMethod.equals("schultz")) {
@@ -1206,6 +1211,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         this.useGERG2008 = useGERG2008;
     }
 
+    public CompresorPropertyProfile getPropertyProfile() {
+      return propertyProfile;
+    }
+
+    public void setPropertyProfile(CompresorPropertyProfile propertyProfile) {
+      this.propertyProfile = propertyProfile;
+    }
+  
     /** {@inheritDoc} */
         @Override
     public int hashCode() {
