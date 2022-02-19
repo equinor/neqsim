@@ -6,7 +6,7 @@ public interface TwoPortInterface {
     /**
      * Get inlet pressure of twoport.
      * 
-     * @return inlet pressure of TwoPortEquipment
+     * @return inlet pressure of TwoPortEquipment in unit bara
      */
     public double getInletPressure();
 
@@ -20,14 +20,14 @@ public interface TwoPortInterface {
     /**
      * Get inlet temperature of twoport.
      * 
-     * @return inlet temperature of TwoPortEquipment
+     * @return inlet temperature of TwoPortEquipment in unit kelvin
      */
     public double getInletTemperature();
 
     /**
      * Get outlet pressure of twoport.
      * 
-     * @return outlet pressure of TwoPortEquipment
+     * @return outlet pressure of TwoPortEquipment in unit bara
      */
     public double getOutletPressure();
 
@@ -41,14 +41,14 @@ public interface TwoPortInterface {
     /**
      * Get outlet temperature of twoport.
      * 
-     * @return outlet temperature of TwoPortEquipment
+     * @return outlet temperature of TwoPortEquipment in unit kelvin
      */
     public double getOutletTemperature();
 
     /**
      * Set inlet pressure of twoport.
      * 
-     * @param pressure value to set
+     * @param pressure value to set in unit bara
      */
     public void setInletPressure(double pressure);
 
@@ -62,14 +62,14 @@ public interface TwoPortInterface {
     /**
      * Set inlet temperature of twoport.
      * 
-     * @param temperature value to set
+     * @param temperature value to set in unit kelvin
      */
     public void setInletTemperature(double temperature);
 
     /**
      * Set outlet pressure of twoport.
      * 
-     * @param pressure value to set
+     * @param pressure value to set in unit bara
      */
     public void setOutletPressure(double pressure);
 
@@ -83,7 +83,7 @@ public interface TwoPortInterface {
     /**
      * Set outlet temperature of twoport.
      * 
-     * @param temperature value to set
+     * @param temperature value to set in kelvin
      */
     public void setOutletTemperature(double temperature);
 }
