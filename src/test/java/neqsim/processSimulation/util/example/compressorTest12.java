@@ -1,7 +1,10 @@
 package neqsim.processSimulation.util.example;
 
+import org.junit.jupiter.api.Test;
+
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>compressorTest12 class.</p>
@@ -11,12 +14,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * @since 2.2.3
  */
 public class compressorTest12 {
-    /**
-     * This method is just meant to test the thermo package.
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String args[]) {
+    public static SystemInterface getSystem() {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos(265, 49.6);
         testSystem.addComponent("methane", 92);
@@ -42,12 +40,18 @@ public class compressorTest12 {
         testSystem.addComponent("m-Xylene", 1e-12);
         testSystem.addComponent("nC10", 1e-12);
         testSystem.createDatabase(true);
+        return testSystem;
+    }
+
+    @Test
+    public void testRun() {
+        SystemInterface testSystem = getSystem();
         // testSystem.setMixingRule(2);
         // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         // testOps.TPflash();
 
         Stream pre = new Stream(testSystem);
-        Compressor ka501 = new Compressor();
+        Compressor ka501 = new Compressor("KA501", pre);
         ka501.setInletStream(pre);
         double p = 64.5 + 1; // insert pressure after comp
         double t = 287; // insert temp after comp

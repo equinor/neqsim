@@ -13,6 +13,11 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 public class Cooler extends Heater {
     private static final long serialVersionUID = 1000;
 
+    @Deprecated
+    public Cooler(StreamInterface stream) {
+        setInletStream(stream);
+    }
+
     /**
      * <p>
      * Constructor for Cooler.

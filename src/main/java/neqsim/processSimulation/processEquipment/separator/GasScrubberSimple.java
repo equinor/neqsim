@@ -63,7 +63,7 @@ public class GasScrubberSimple extends Separator {
      */
     @Override
     public void setInletStream(StreamInterface inletStream) {
-        this.inletStream = inletStream;
+        super.setInletStream(inletStream);
 
         thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(0);

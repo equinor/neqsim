@@ -35,7 +35,7 @@ public class propaneCoolingCycle {
         Stream stream_1 = new Stream("Stream1", testSystem);
         stream_1.setSpecification("bubT");
 
-        ThrottlingValve JTvalve = new ThrottlingValve(stream_1);
+        ThrottlingValve JTvalve = new ThrottlingValve("JTvalve", stream_1);
         JTvalve.setOutletPressure(1.11325);
 
         Cooler cooler = new Cooler(JTvalve.getOutStream());

@@ -28,6 +28,10 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     private String pressureUnit = "bara";
     private boolean acceptNegativeDP = true;
 
+    @Deprecated
+    public ThrottlingValve(StreamInterface stream) {
+        setInletStream(stream);
+    }
     /**
      * <p>
      * Constructor for ThrottlingValve.

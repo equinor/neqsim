@@ -33,12 +33,12 @@ public class propaneTwoStageCoolingCycle {
         Stream stream_1 = new Stream("Stream1", testSystem);
         stream_1.setSpecification("bubT");
 
-        ThrottlingValve JTvalve1 = new ThrottlingValve(stream_1);
+        ThrottlingValve JTvalve1 = new ThrottlingValve("JTvalve1", stream_1);
         JTvalve1.setOutletPressure(3.0);
 
         Separator medPresSep = new Separator(JTvalve1.getOutStream());
 
-        ThrottlingValve JTvalve2 = new ThrottlingValve(medPresSep.getLiquidOutStream());
+        ThrottlingValve JTvalve2 = new ThrottlingValve("JTvalve2", medPresSep.getLiquidOutStream());
         JTvalve2.setOutletPressure(1.11325);
 
         StreamInterface lowHStream = new Stream(JTvalve2.getOutStream());
@@ -88,7 +88,7 @@ public class propaneTwoStageCoolingCycle {
 
         operations.run();
         operations.run();
-        ThrottlingValve JTvalve3 = new ThrottlingValve(medPresSep.getLiquidOutStream());
+        ThrottlingValve JTvalve3 = new ThrottlingValve("JTvalve3", medPresSep.getLiquidOutStream());
         JTvalve3.setOutletPressure(2.03981146);
         JTvalve3.run();
         JTvalve3.getOutStream().displayResult();

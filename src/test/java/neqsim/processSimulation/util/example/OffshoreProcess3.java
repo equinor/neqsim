@@ -79,12 +79,10 @@ public class OffshoreProcess3 {
         heater1.setName("oil cooler/heater to 2nd stage");
         heater1.setOutTemperature(85.0, "C");
 
-        ThrottlingValve valve2 = new ThrottlingValve(heater1.getOutletStream());
-        valve2.setName("oil HP to MP valve");
+        ThrottlingValve valve2 = new ThrottlingValve("oil HP to MP valve", heater1.getOutletStream());
         valve2.setOutletPressure(7.0);
 
-        ThrottlingValve waterDPvalve = new ThrottlingValve(inletSeparator.getWaterOutStream());
-        waterDPvalve.setName("Water HP to LP valve");
+        ThrottlingValve waterDPvalve = new ThrottlingValve("Water HP to LP valve", inletSeparator.getWaterOutStream());
         waterDPvalve.setOutletPressure(1.01325);
 
         Separator waterStabSep =
@@ -103,8 +101,7 @@ public class OffshoreProcess3 {
                 new ThreePhaseSeparator("2nd stage separator", valve2.getOutletStream());
         mpseparator.addStream(oilToSep);
 
-        ThrottlingValve valvempValve = new ThrottlingValve(mpseparator.getOilOutStream());
-        valvempValve.setName("oil MP to LP valve");
+        ThrottlingValve valvempValve = new ThrottlingValve("oil MP to LP valve", mpseparator.getOilOutStream());
         valvempValve.setOutletPressure(2.1);
 
         ThreePhaseSeparator lpseparator =

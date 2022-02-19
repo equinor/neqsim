@@ -47,8 +47,7 @@ public class ProcessSystemTest {
     @Test
     void testAdd() {
         String sepName = "TestSep";
-        Separator sep = new Separator();
-        sep.setName(sepName);
+        Separator sep = new Separator(sepName);
         p.add(sep);
 
         ArrayList<ProcessEquipmentInterface> list = p.getUnitOperations();
@@ -83,7 +82,7 @@ public class ProcessSystemTest {
 
     @Test
     public void testAddUnitTwice() {
-        Separator sep = new Separator();
+        Separator sep = new Separator("sep");
         p.add(sep);
         p.add(sep); // Won't add the copy
         Assertions.assertEquals(p.size(), 1);
@@ -91,10 +90,10 @@ public class ProcessSystemTest {
 
     @Test
     public void testRemoveUnit() {
-        Separator sep = new Separator();
+        Separator sep = new Separator("sep");
         p.add(sep);
         Assertions.assertEquals(p.size(), 1);
-        p.removeUnit("");
+        p.removeUnit("sep");
         Assertions.assertEquals(p.size(), 0);
     }
 
@@ -105,35 +104,35 @@ public class ProcessSystemTest {
         p.add(sep);
         sep = new Separator();
         p.add(sep);
-        Assertions.assertEquals(p.size(), 2);
+        Assertions.assertEquals(2, p.size());
         p.removeUnit("Separator2");
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, p.size());
         p.removeUnit("");
-        Assertions.assertEquals(p.size(), 0);
+        Assertions.assertEquals(0, p.size());
     }
 
     @Test
     public void testGetUnitNumber() {
-        Separator sep = new Separator();
+        Separator sep = new Separator("sep");
         p.add(sep);
-        Separator sep2 = new Separator();
+        Separator sep2 = new Separator("sep");
         p.add(sep2);
 
-        Assertions.assertEquals(p.getUnitNumber(""), 0);
-        Assertions.assertEquals(p.getUnitNumber("Separator2"), 1);
+        Assertions.assertEquals(0, p.getUnitNumber("sep"));
+        Assertions.assertEquals(1, p.getUnitNumber("sep2"));
 
         p.removeUnit("");
         p.add(sep);
 
-        Assertions.assertEquals(p.getUnitNumber("Separator2"), 0);
-        Assertions.assertEquals(p.getUnitNumber(""), 1);
+        Assertions.assertEquals(0, p.getUnitNumber("Separator2"));
+        Assertions.assertEquals(1, p.getUnitNumber(""));
     }
 
     @Test
     public void testSetSurroundingTemperature() {
         double temp = 200;
         p.setSurroundingTemperature(temp);
-        Assertions.assertEquals(p.getSurroundingTemperature(), temp);
+        Assertions.assertEquals(temp, p.getSurroundingTemperature());
     }
 
     @Test
