@@ -6,11 +6,24 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass impleme
     protected StreamInterface inStream;
     protected StreamInterface outStream;
 
+    /**
+     * Constructor for TwoPortEquipment
+     * 
+     * @param name Name of TwoPortEquipment
+     */
     public TwoPortEquipment(String name) {
         super(name);
     }
 
+    /**
+     * Constructor for TwoPortEquipment
+     * 
+     * @param name   Name of TwoPortEquipment
+     * @param stream Stream to set as inlet Stream. A clone of stream is set as
+     *               outlet stream.
+     */
     public TwoPortEquipment(String name, StreamInterface stream) {
+        this(name);
         this.inStream = stream;
         this.outStream = stream.clone();
     }
