@@ -50,6 +50,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     private double designLiquidLevelFraction = 0.8;
     ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
+    @Deprecated
+    public Separator() {
+    }
+
     /**
      * Constructor for Separator.
      * 

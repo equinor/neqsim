@@ -44,8 +44,8 @@ public class ThreePhaseSeparator extends Separator {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
-    public ThreePhaseSeparator(String name, StreamInterface inletStream) {
-        this();
+    @Deprecated
+    public ThreePhaseSeparator(StreamInterface inletStream) {
         addStream(inletStream);
     }
 
@@ -59,8 +59,7 @@ public class ThreePhaseSeparator extends Separator {
      *        object
      */
     public ThreePhaseSeparator(String name, StreamInterface inletStream) {
-        this();
-        setName(name);
+        super(name);
         addStream(inletStream);
     }
 

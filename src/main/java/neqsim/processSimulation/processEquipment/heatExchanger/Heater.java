@@ -32,8 +32,18 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     private String pressureUnit = "bara";
     double coolingMediumTemperature = 278.15;
 
+    @Deprecated
+    public Heater() {
+
+    }
+
     public Heater(String name) {
         super(name);
+    }
+
+    @Deprecated
+    public Heater(StreamInterface stream) {
+        setInletStream(stream);
     }
 
     /**

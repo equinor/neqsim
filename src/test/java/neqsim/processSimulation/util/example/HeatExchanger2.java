@@ -36,7 +36,7 @@ public class HeatExchanger2 {
         Stream stream_Hot = new Stream("Stream1", testSystem);
         Stream stream_Cold = new Stream("Stream1", testSystem.clone());
 
-        HeatExchanger heatEx = new HeatExchanger();
+        HeatExchanger heatEx = new HeatExchanger("heatex");
         heatEx.setFeedStream(0, stream_Hot);
         heatEx.setFeedStream(1, stream_Cold);// resyc.getOutStream());
 

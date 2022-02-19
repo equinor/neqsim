@@ -39,6 +39,16 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     public double thermalEffectiveness = 0.0;
     private String flowArrangement = "concentric tube counterflow";
 
+    @Deprecated
+    public HeatExchanger(StreamInterface inStream1) {
+        outStream = new Stream[2];
+        inStream = new Stream[2];
+        this.inStream[0] = inStream1;
+        this.inStream[1] = inStream1;
+        outStream[0] = inStream1.clone();
+        outStream[1] = inStream1.clone();
+    }
+
     /**
      * <p>
      * Constructor for HeatExchanger.

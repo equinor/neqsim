@@ -88,10 +88,9 @@ public class DPCUModule extends ProcessModuleBaseClass {
         ValveInterface inletValve = new ThrottlingValve("inlet valve", feedStream);
         inletValve.setOutletPressure(pressureAfterRedValve);
 
-        heatExchanger1 = new HeatExchanger(inletValve.getOutStream());
+        heatExchanger1 = new HeatExchanger("heatExchanger1", inletValve.getOutStream());
         // heatExchanger1.setOutTemperature(273.15 - 18);
         // heatExchanger1.setUAvalue(10000.0);
-        heatExchanger1.setName("heatExchanger1");
         // heatExchanger1.addInStream(feedStream2);
 
         Cooler heatExchanger2 = new Cooler("exchanger2", heatExchanger1.getOutStream(0));

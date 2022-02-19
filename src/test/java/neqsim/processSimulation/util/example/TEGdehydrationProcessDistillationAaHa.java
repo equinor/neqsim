@@ -108,15 +108,13 @@ public class TEGdehydrationProcessDistillationAaHa {
         waterDewPointAnalyser.setReferencePressure(70.0);
         waterDewPointAnalyser.setName("water dew point analyser");
 
-        ThrottlingValve glycol_flash_valve = new ThrottlingValve(richTEG);
-        glycol_flash_valve.setName("Rich TEG HP flash valve");
+        ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
         glycol_flash_valve.setOutletPressure(5.5);
 
-        Heater richGLycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
-        richGLycolHeaterCondenser.setName("rich TEG preheater");
+        Heater richGLycolHeaterCondenser = new Heater("rich TEG preheater", glycol_flash_valve.getOutStream());
 
-        HeatExchanger heatEx2 = new HeatExchanger(richGLycolHeaterCondenser.getOutStream());
-        heatEx2.setName("rich TEG heat exchanger 1");
+        HeatExchanger heatEx2 = new HeatExchanger("rich TEG heat exchanger 1",
+                richGLycolHeaterCondenser.getOutStream());
         heatEx2.setGuessOutTemperature(273.15 + 62.0);
         heatEx2.setUAvalue(200.0);
 
@@ -129,12 +127,10 @@ public class TEGdehydrationProcessDistillationAaHa {
         Stream flashLiquid = new Stream(flashSep.getLiquidOutStream());
         flashLiquid.setName("liquid from degasing separator");
 
-        Filter fineFilter = new Filter(flashLiquid);
-        fineFilter.setName("TEG fine filter");
+        Filter fineFilter = new Filter("TEG fine filter", flashLiquid);
         fineFilter.setDeltaP(0.05, "bara");
 
-        Filter carbonFilter = new Filter(fineFilter.getOutStream());
-        carbonFilter.setName("activated carbon filter");
+        Filter carbonFilter = new Filter("activated carbon filter", fineFilter.getOutStream());
         carbonFilter.setDeltaP(0.01, "bara");
 
         HeatExchanger heatEx = new HeatExchanger(carbonFilter.getOutStream());
@@ -207,12 +203,10 @@ public class TEGdehydrationProcessDistillationAaHa {
 
         heatEx2.setFeedStream(1, heatEx.getOutStream(1));
 
-        Heater coolerhOTteg3 = new Heater(heatEx2.getOutStream(1));
-        coolerhOTteg3.setName("lean TEG cooler");
+        Heater coolerhOTteg3 = new Heater("lean TEG cooler", heatEx2.getOutStream(1));
         coolerhOTteg3.setOutTemperature(273.15 + 35.41);
 
-        Pump hotLeanTEGPump2 = new Pump(coolerhOTteg3.getOutStream());
-        hotLeanTEGPump2.setName("lean TEG HP pump");
+        Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutStream());
         hotLeanTEGPump2.setOutletPressure(87.2);
         hotLeanTEGPump2.setIsentropicEfficiency(0.75);
 

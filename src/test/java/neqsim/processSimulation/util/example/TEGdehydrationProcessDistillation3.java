@@ -91,10 +91,10 @@ public class TEGdehydrationProcessDistillation3 {
         glycol_flash_valve.setName("Rich TEG HP flash valve");
         glycol_flash_valve.setOutletPressure(4.9);
 
-        Heater richGLycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
+        Heater richGLycolHeaterCondenser = new Heater("richGLycolHeaterCondenser", glycol_flash_valve.getOutStream());
         richGLycolHeaterCondenser.setName("rich TEG preheater");
 
-        Heater richGLycolHeater = new Heater(richGLycolHeaterCondenser.getOutStream());
+        Heater richGLycolHeater = new Heater("richGLycolHeater", richGLycolHeaterCondenser.getOutStream());
         richGLycolHeater.setName("rich TEG heater HP");
         richGLycolHeater.setOutTemperature(273.15 + 62.0);
 
@@ -107,7 +107,7 @@ public class TEGdehydrationProcessDistillation3 {
         Stream flashLiquid = new Stream(flashSep.getLiquidOutStream());
         flashLiquid.setName("liquid from degasing separator");
 
-        Heater richGLycolHeater2 = new Heater(flashLiquid);
+        Heater richGLycolHeater2 = new Heater("richGLycolHeater2", flashLiquid);
         richGLycolHeater2.setName("LP rich glycol heater");
         richGLycolHeater2.setOutTemperature(273.15 + 139.0);
         richGLycolHeater2.setOutPressure(1.23);
@@ -133,7 +133,7 @@ public class TEGdehydrationProcessDistillation3 {
         column.setTopPressure(1.2);
         column.setBottomPressure(1.23);
 
-        Heater coolerRegenGas = new Heater(column.getGasOutStream());
+        Heater coolerRegenGas = new Heater("coolerRegenGas", column.getGasOutStream());
         coolerRegenGas.setName("regen gas cooler");
         coolerRegenGas.setOutTemperature(273.15 + 35.5);
 
@@ -159,24 +159,24 @@ public class TEGdehydrationProcessDistillation3 {
         Heater bufferTank = new Heater("TEG buffer tank", stripper.getSolventOutStream());
         bufferTank.setOutTemperature(273.15 + 185.0);
 
-        Pump hotLeanTEGPump = new Pump(bufferTank.getOutStream());
+        Pump hotLeanTEGPump = new Pump("hotLeanTEGPump", bufferTank.getOutStream());
         hotLeanTEGPump.setName("hot lean TEG pump");
         hotLeanTEGPump.setOutletPressure(20.0);
         hotLeanTEGPump.setIsentropicEfficiency(0.75);
 
-        Heater coolerhOTteg = new Heater(hotLeanTEGPump.getOutStream());
+        Heater coolerhOTteg = new Heater("coolerhOTteg", hotLeanTEGPump.getOutStream());
         coolerhOTteg.setName("hot lean TEG cooler");
         coolerhOTteg.setOutTemperature(273.15 + 116.8);
 
-        Heater coolerhOTteg2 = new Heater(coolerhOTteg.getOutStream());
+        Heater coolerhOTteg2 = new Heater("coolerhOTteg2", coolerhOTteg.getOutStream());
         coolerhOTteg2.setName("medium hot lean TEG cooler");
         coolerhOTteg2.setOutTemperature(273.15 + 89.3);
 
-        Heater coolerhOTteg3 = new Heater(coolerhOTteg2.getOutStream());
+        Heater coolerhOTteg3 = new Heater("coolerhOTteg3", coolerhOTteg2.getOutStream());
         coolerhOTteg3.setName("lean TEG cooler");
         coolerhOTteg3.setOutTemperature(273.15 + 43.0);
 
-        Pump hotLeanTEGPump2 = new Pump(coolerhOTteg3.getOutStream());
+        Pump hotLeanTEGPump2 = new Pump("hotLeanTEGPump2", coolerhOTteg3.getOutStream());
         hotLeanTEGPump2.setName("lean TEG HP pump");
         hotLeanTEGPump2.setOutletPressure(52.21);
         hotLeanTEGPump2.setIsentropicEfficiency(0.75);
@@ -320,7 +320,7 @@ public class TEGdehydrationProcessDistillation3 {
         hotLeanTEGPump.getOutStream().displayResult();
         flashLiquid.displayResult();
 
-        HeatExchanger heatEx = new HeatExchanger(flashLiquid, hotLeanTEGPump.getOutStream());
+        HeatExchanger heatEx = new HeatExchanger("heatEx", flashLiquid, hotLeanTEGPump.getOutStream());
         heatEx.setUAvalue(350.0);
         heatEx.run();
         heatEx.displayResult();

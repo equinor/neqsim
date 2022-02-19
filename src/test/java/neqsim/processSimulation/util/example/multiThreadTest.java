@@ -85,8 +85,7 @@ public class multiThreadTest {
         StreamInterface stream_222 = separator2.getGasOutStream();
         stream_222.setName("stream222");
 
-        Compressor comp12 = new Compressor(stream_222);
-        comp12.setName("comp22");
+        Compressor comp12 = new Compressor("comp22", stream_222);
         comp12.setOutletPressure(45.0);
 
         Cooler cooler12 = new Cooler(comp12.getOutletStream());

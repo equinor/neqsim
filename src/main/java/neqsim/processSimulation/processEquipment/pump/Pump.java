@@ -41,6 +41,11 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     private String pressureUnit = "bara";
     private PumpChart pumpChart = new PumpChart();
 
+    @Deprecated
+    public Pump(StreamInterface stream) {
+        setInletStream(stream);
+    }
+
     /**
      * <p>
      * Constructor for Pump.

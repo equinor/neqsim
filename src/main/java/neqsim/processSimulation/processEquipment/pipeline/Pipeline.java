@@ -46,6 +46,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
      * Constructor for Pipeline.
      * </p>
      */
+    @Deprecated
     public Pipeline() {
     }
 

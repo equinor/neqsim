@@ -118,8 +118,7 @@ public class OffshoreProcess3 {
         SetPoint compressorPresSet2 =
                 new SetPoint("comp pres LP set", lpcompressor, "pressure", valve2.getOutletStream());
 
-        Cooler lpgasheater = new Cooler(lpcompressor.getOutletStream());
-        lpgasheater.setName("1st stage gas cooler");
+        Cooler lpgasheater = new Cooler("1st stage gas cooler", lpcompressor.getOutletStream());
         lpgasheater.setOutTemperature(35.0, "C");
 
         neqsim.thermo.system.SystemInterface coolingWaterSYstm = fluid3.clone();
@@ -139,8 +138,7 @@ public class OffshoreProcess3 {
          * 
          */
 
-        Cooler lpHeatExchanger = new Cooler(lpcompressor.getOutletStream());
-        lpgasheater.setName("1st stage gas heat exchanger");
+        Cooler lpHeatExchanger = new Cooler("1st stage gas heat exchanger", lpcompressor.getOutletStream());
         lpgasheater.setOutTemperature(35.0, "C");
 
         Separator lpscrubber = new Separator("2nd stage scrubber", lpgasheater.getOutletStream());

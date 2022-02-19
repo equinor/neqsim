@@ -296,7 +296,7 @@ public class OnshoreProcess1 {
             VolumeFlowTransmitter volumeTransmitter2 =
                     new VolumeFlowTransmitter(slugCatcher.getOilOutStream());
             volumeTransmitter2.setMeasuredPhaseNumber(0);
-            volumeTransmitter2.setName("Condesate Volume Flow From Slug Catcher");
+            volumeTransmitter2.setName("Condensate Volume Flow From Slug Catcher");
 
             VolumeFlowTransmitter volumeTransmitter1 =
                     new VolumeFlowTransmitter(slugCatcher.getWaterOutStream());

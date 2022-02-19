@@ -56,6 +56,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      * Constructor for Stream.
      * </p>
      */
+    @Deprecated
     public Stream() {}
 
     /**
@@ -65,6 +66,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
+    @Deprecated
     public Stream(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
         numberOfStreams++;
@@ -79,9 +81,43 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Stream(StreamInterface stream) {
         this.setStream(stream);
         thermoSystem = stream.getThermoSystem();
+        numberOfStreams++;
+        streamNumber = numberOfStreams;
+    }
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     *
+     * @param name   a {@link java.lang.String} object
+     * @param stream a
+     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *               object
+     */
+    public Stream(String name, StreamInterface stream) {
+        super(name);
+        this.setStream(stream);
+        thermoSystem = stream.getThermoSystem();
+        numberOfStreams++;
+        streamNumber = numberOfStreams;
+    }
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     *
+     * @param name         a {@link java.lang.String} object
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
+    public Stream(String name, SystemInterface thermoSystem) {
+        super(name);
+        this.thermoSystem = thermoSystem;
         numberOfStreams++;
         streamNumber = numberOfStreams;
     }
@@ -132,21 +168,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
             e.printStackTrace();
         }
         return 0.0;
-    }
-
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public Stream(String name, SystemInterface thermoSystem) {
-        this.thermoSystem = thermoSystem;
-        this.name = name;
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
     }
 
     /** {@inheritDoc} */

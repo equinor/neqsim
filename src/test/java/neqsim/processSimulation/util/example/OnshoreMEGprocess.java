@@ -98,8 +98,7 @@ public class OnshoreMEGprocess {
         MEGmixer2.addStream(inletGasCooler.getOutStream());
         MEGmixer2.addStream(MEGsplitter1.getSplitStream(1));
 
-        HeatExchanger heatEx = new HeatExchanger(MEGmixer2.getOutStream());
-        heatEx.setName("gas-gas heat exchanger");
+        HeatExchanger heatEx = new HeatExchanger("gas-gas heat exchanger", MEGmixer2.getOutStream());
         heatEx.setGuessOutTemperature(273.15 - 10.0);
         heatEx.setUAvalue(30000.0);
 
@@ -144,8 +143,7 @@ public class OnshoreMEGprocess {
         Stream flashLiquidStream = new Stream(flashDrumSep.getLiquidOutStream());
         flashLiquidStream.setName("rich TEG from flash drum");
 
-        HeatExchanger columnPreHeater = new HeatExchanger(flashLiquidStream);
-        columnPreHeater.setName("MEG/MEG heat exchanger");
+        HeatExchanger columnPreHeater = new HeatExchanger("MEG/MEG heat exchanger", flashLiquidStream);
         columnPreHeater.setGuessOutTemperature(273.15 + 120.0);
         columnPreHeater.setUAvalue(500.0);
 
