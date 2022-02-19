@@ -24,7 +24,7 @@ public class MolarMassAnalyser extends MeasurementDeviceBaseClass {
      * </p>
      */
     public MolarMassAnalyser() {
-        name = "molar mass analyser";
+        name = "molar mass analsyer";
         unit = "gr/mol";
     }
 
@@ -37,10 +37,11 @@ public class MolarMassAnalyser extends MeasurementDeviceBaseClass {
      *        object
      */
     public MolarMassAnalyser(StreamInterface stream) {
-        this();
         this.stream = stream;
         numberOfStreams++;
         streamNumber = numberOfStreams;
+        name = "molar mass analsyer";
+        unit = "gr/mol";
     }
 
     /** {@inheritDoc} */

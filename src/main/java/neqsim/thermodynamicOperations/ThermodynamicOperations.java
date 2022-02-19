@@ -1351,8 +1351,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      */
     public void dewPointMach(String componentName, String specification, double spec)
             throws Exception {
-        // int componentNumber =
-        // system.getPhase(0).getComponent(componentName).getComponentNumber();
+        int componentNumber = system.getPhase(0).getComponent(componentName).getComponentNumber();
 
         double dn = 0;
         if (system.getPhase(0).hasComponent(componentName)) {
@@ -1562,7 +1561,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * </p>
      */
     public void calcPTphaseEnvelopeNew() {
-        // double phasefraction = 1.0 - 1e-10;
+        double phasefraction = 1.0 - 1e-10;
         // operation = new pTphaseEnvelope(system, fileName, phasefraction, 1.0);
         getOperation().run();
     }
