@@ -302,8 +302,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-    }
+    public void runTransient(double dt) {}
 
     /**
      * <p>

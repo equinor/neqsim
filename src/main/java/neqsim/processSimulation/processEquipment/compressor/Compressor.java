@@ -37,6 +37,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     public StreamInterface outStream;
     private double outTemperature = 298.15;
     private boolean useOutTemperature = false;
+    private CompresorPropertyProfile propertyProfile = new CompresorPropertyProfile();
     public double dH = 0.0;
     public double inletEnthalpy = 0;
     public double pressure = 0.0;
@@ -469,7 +470,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
                 }
             } else {
                 if (polytropicMethod.equals("detailed")) {
-                    int numbersteps = this.numberOfCompressorCalcSteps;
+                	//todo add detailed output of compressor calculations
+                    int numbersteps = numberOfCompressorCalcSteps;
                     double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
                     for (int i = 0; i < numbersteps; i++) {
                         entropy = getThermoSystem().getEntropy();
@@ -501,6 +503,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
                         thermoOps.PHflash(hout, 0);
                         if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
                             thermoOps.PHflashGERG2008(hout);
+                        }
+                        if(propertyProfile.isActive()) {
+                        	propertyProfile.addFluid(thermoSystem.clone());
                         }
                     }
                 } else if (polytropicMethod.equals("schultz")) {
@@ -1214,6 +1219,14 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         this.useGERG2008 = useGERG2008;
     }
 
+    public CompresorPropertyProfile getPropertyProfile() {
+      return propertyProfile;
+    }
+
+    public void setPropertyProfile(CompresorPropertyProfile propertyProfile) {
+      this.propertyProfile = propertyProfile;
+    }
+  
     /** {@inheritDoc} */
     @Override
     public int hashCode() {

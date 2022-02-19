@@ -69,8 +69,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-    }
+    public void displayResult() {}
 
     /** {@inheritDoc} */
     @Override

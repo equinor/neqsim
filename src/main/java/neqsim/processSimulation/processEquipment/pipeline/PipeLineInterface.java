@@ -17,7 +17,7 @@ import neqsim.processSimulation.processEquipment.TwoPortInterface;
  * @author esol
  * @version $Id: $Id
  */
-public interface PipeLineInterface extends TwoPortInterface, SimulationInterface {
+public interface PipeLineInterface extends SimulationInterface, TwoPortInterface {
     /**
      * <p>
      * setNumberOfLegs.
