@@ -192,7 +192,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
      * </p>
      */
     @Override
-    public void runTransient() {
+    public void runTransient(double dt) {
         run();
     }
 
