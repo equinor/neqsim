@@ -43,7 +43,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
      * </p>
      *
      * @param isOnlineSignal the isOnlineSignal to set
-     * @param plantName      a {@link java.lang.String} object
+     * @param plantName a {@link java.lang.String} object
      * @param transmitterame a {@link java.lang.String} object
      */
     public void setIsOnlineSignal(boolean isOnlineSignal, String plantName, String transmitterame) {
@@ -149,7 +149,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
      * </p>
      *
      * @param value a double
-     * @param unit  a {@link java.lang.String} object
+     * @param unit a {@link java.lang.String} object
      */
     public void setOnlineMeasurementValue(double value, String unit) {
         onlineMeasurementValue = value;
