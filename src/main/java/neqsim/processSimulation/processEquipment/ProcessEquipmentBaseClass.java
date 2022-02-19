@@ -11,6 +11,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang.SerializationUtils;
 
+import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.EnergyStream;
@@ -24,13 +25,13 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
+public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
+        implements ProcessEquipmentInterface {
     private static final long serialVersionUID = 1000;
 
     private ControllerDeviceInterface controller = null;
     ControllerDeviceInterface flowValveController = null;
     public boolean hasController = false;
-    public String name = new String();
     private String specification = "TP";
     public String[][] report = new String[0][0];
     public HashMap<String, String> properties = new HashMap<String, String>();
@@ -48,8 +49,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
      * @param name a {@link java.lang.String} object
      */
     public ProcessEquipmentBaseClass(String name) {
-        this();
-        this.name = name;
+        super(name);
     }
 
     /** {@inheritDoc} */
@@ -77,18 +77,6 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     /** {@inheritDoc} */
     @Override
     public void displayResult() {}
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name) {
-        this.name = name;
-    }
 
     /**
      * Create deep copy.

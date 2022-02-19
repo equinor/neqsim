@@ -19,25 +19,12 @@ public class NozzleSection extends SeparatorSection {
      * Constructor for NozzleSection.
      * </p>
      *
-     * @param type a {@link java.lang.String} object
-     * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
-     */
-    public NozzleSection(String type, Separator sep) {
-        super(type, sep);
-    }
-
-    /**
-     * <p>
-     * Constructor for NozzleSection.
-     * </p>
-     *
      * @param name a {@link java.lang.String} object
      * @param type a {@link java.lang.String} object
      * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
      */
     public NozzleSection(String name, String type, Separator sep) {
-        this(type, sep);
-        setName(name);
+        super(name, type, sep);
     }
 
     public MechNozzleSection getMechanicalDesign() {

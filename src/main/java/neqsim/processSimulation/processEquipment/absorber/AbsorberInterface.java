@@ -11,18 +11,6 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
  * @version $Id: $Id
  */
 public interface AbsorberInterface extends ProcessEquipmentInterface {
-    /** {@inheritDoc} */
-    public void setName(String name);
-
-    /**
-     * <p>
-     * getName.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getName();
-
     /**
      * <p>
      * setAproachToEquilibrium.

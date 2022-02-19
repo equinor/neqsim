@@ -13,24 +13,6 @@ import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 public interface ControllerDeviceInterface extends java.io.Serializable {
     /**
      * <p>
-     * getName.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getName();
-
-    /**
-     * <p>
-     * setName.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void setName(String name);
-
-    /**
-     * <p>
      * getMeasuredValue.
      * </p>
      *
@@ -83,7 +65,7 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
      * @param signal a double
      * @param dt a double
      */
-    public void run(double signal, double dt);
+    public void runTransient(double signal, double dt);
 
     /**
      * <p>

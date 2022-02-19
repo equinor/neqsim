@@ -6,6 +6,7 @@
 package neqsim.processSimulation.controllerDevice;
 
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
+import neqsim.util.NamedBaseClass;
 
 /**
  * <p>
@@ -15,10 +16,10 @@ import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
+public class ControllerDeviceBaseClass extends NamedBaseClass implements ControllerDeviceInterface {
     private static final long serialVersionUID = 1000;
 
-    private String name = "controller", unit = "[?]";
+    private String unit = "[?]";
     private MeasurementDeviceInterface transmitter = null;
     private double controllerSetPoint = 0.0;
     private double oldError = 0.0, oldoldError = 0.0;
@@ -30,18 +31,8 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     private double Tint = 300.0, TintValue = 0.0;
     private double Tderiv = 300.0;
 
-    public ControllerDeviceBaseClass() {}
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name) {
-        this.name = name;
+    public ControllerDeviceBaseClass() {
+        super("controller");
     }
 
     /** {@inheritDoc} */
@@ -58,8 +49,8 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void run(double percentSignal, double dt) {
-        if (reverseActing) {
+    public void runTransient(double percentSignal, double dt) {
+        if (isReverseActing()) {
             propConstant = -1;
         }
         oldoldError = error;

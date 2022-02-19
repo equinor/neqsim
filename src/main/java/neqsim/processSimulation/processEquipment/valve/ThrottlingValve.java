@@ -280,7 +280,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
      */
     public void runController(double dt) {
         if (hasController) {
-            getController().run(this.percentValveOpening, dt);
+            getController().runTransient(this.percentValveOpening, dt);
             this.percentValveOpening = getController().getResponse();
             if (this.percentValveOpening > 100) {
                 this.percentValveOpening = 100;
