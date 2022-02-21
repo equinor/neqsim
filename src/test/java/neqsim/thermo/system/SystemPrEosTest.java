@@ -2,9 +2,11 @@ package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 class SystemPrEoSTest {
@@ -39,7 +41,7 @@ class SystemPrEoSTest {
     @Test
     @DisplayName("test a TPflash2")
     public void testTPflash2() {
-        assertEquals(testSystem.getNumberOfPhases(), 2);
+        assertEquals(2, testSystem.getNumberOfPhases());
     }
 
     /**
@@ -50,7 +52,7 @@ class SystemPrEoSTest {
     @Test
     @DisplayName("test a TPflash of the fluid (should return two phases)")
     public void testTPflash() {
-        assertEquals(testSystem.getNumberOfPhases(), 2);
+        assertEquals(2, testSystem.getNumberOfPhases());
     }
 
     /**
@@ -116,7 +118,7 @@ class SystemPrEoSTest {
     @Test
     @DisplayName("calculate compressibility of gas phase")
     public void checkCompressibility() {
-        assertEquals(testSystem.getPhase("gas").getZ(), 0.9708455641951108, 1e-5);
+        assertEquals(0.9708455641951108, testSystem.getPhase("gas").getZ(), 1e-5);
     }
 
     /**
@@ -131,7 +133,7 @@ class SystemPrEoSTest {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testOps.TPflash();
         testSystem.initProperties();
-        assertEquals(testSystem.getEnthalpy("kJ/kg"), -165.60627184389855,
+        assertEquals(-165.60627184389855, testSystem.getEnthalpy("kJ/kg"),
                 Math.abs(-165.60627184389855 / 1000.0));
     }
 }

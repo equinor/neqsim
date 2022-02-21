@@ -2,10 +2,12 @@ package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 @Disabled
@@ -44,7 +46,7 @@ class SystemUMRPRUMCEosNewTest {
     @Test
     @DisplayName("test a TPflash2")
     public void testTPflash2() {
-        assertEquals(testSystem.getNumberOfPhases(), 2);
+        assertEquals(2, testSystem.getNumberOfPhases());
     }
 
     /**
@@ -55,7 +57,7 @@ class SystemUMRPRUMCEosNewTest {
     @Test
     @DisplayName("test a TPflash of the fluid (should return two phases)")
     public void testTPflash() {
-        assertEquals(testSystem.getNumberOfPhases(), 2);
+        assertEquals(2, testSystem.getNumberOfPhases());
     }
 
     /**

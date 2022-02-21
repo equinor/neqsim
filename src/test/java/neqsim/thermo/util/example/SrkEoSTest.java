@@ -2,12 +2,14 @@ package neqsim.thermo.util.example;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.junit.jupiter.api.Disabled;
 
 /**
  * <p>
@@ -47,7 +49,7 @@ public class SrkEoSTest {
     public void testTPflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
         testOps.TPflash();
-        assertEquals(thermoSystem.getNumberOfPhases(), 2);
+        assertEquals(2, thermoSystem.getNumberOfPhases());
     }
 
     /**
@@ -89,9 +91,7 @@ public class SrkEoSTest {
         testOps.PHflash(enthalpy + 10.0);
         thermoSystem.init(3);
 
-        double enthalpy2 = thermoSystem.getEnthalpy();
-
-        assertEquals(Math.round(enthalpy + 10.0), Math.round(enthalpy2));
+        assertEquals(Math.round(enthalpy + 10.0), Math.round(thermoSystem.getEnthalpy()));
     }
 
     /**
@@ -108,8 +108,6 @@ public class SrkEoSTest {
         testOps.PSflash(entropy + 10.0);
         thermoSystem.init(3);
 
-        double entropy2 = thermoSystem.getEntropy();
-
-        assertEquals(Math.round(entropy + 10.0), Math.round(entropy2));
+        assertEquals(Math.round(entropy + 10.0), Math.round(thermoSystem.getEntropy()));
     }
 }
