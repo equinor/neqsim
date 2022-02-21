@@ -26,7 +26,7 @@ public class ProcessSystemRunTransientTest {
     public void testGetName() {
         String name = "TestProsess";
         p.setName(name);
-        Assertions.assertEquals(p.getName(), name);
+        Assertions.assertEquals(name, p.getName());
     }
 
     @Test
