@@ -321,7 +321,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {}
 
     /**
      * <p>

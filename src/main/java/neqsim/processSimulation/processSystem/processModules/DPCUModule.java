@@ -45,6 +45,10 @@ public class DPCUModule extends ProcessModuleBaseClass {
     Mixer mixer;
     DistillationColumn distColumn;
 
+    public DPCUModule(String name) {
+        super(name);
+    }
+
     /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
@@ -217,7 +221,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-        getOperations().runTransient();
+        getOperations().runTransient(dt);
     }
 
     /** {@inheritDoc} */
@@ -282,7 +286,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
 
         // feedStream.addAnalogMeasurement("Name", "type");
         // feedStream.addAlarm("type", );..
-        DPCUModule dpcuModule = new DPCUModule();
+        DPCUModule dpcuModule = new DPCUModule("dpcuModule");
         dpcuModule.addInputStream("feed stream", feedStream);
         dpcuModule.setSpecification("pressure after reduction valve", 108.0);
 

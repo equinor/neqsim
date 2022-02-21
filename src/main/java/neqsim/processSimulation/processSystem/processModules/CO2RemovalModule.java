@@ -21,7 +21,9 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
 
     protected Separator inletSeparator = null;
 
-    public CO2RemovalModule() {}
+    public CO2RemovalModule(String name) {
+        super(name);
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -89,7 +91,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-        getOperations().runTransient();
+        getOperations().runTransient(dt);
     }
 
     /** {@inheritDoc} */

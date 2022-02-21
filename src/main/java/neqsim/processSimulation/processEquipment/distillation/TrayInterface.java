@@ -12,9 +12,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public interface TrayInterface extends ProcessEquipmentInterface {
-    /** {@inheritDoc} */
-    @Override
-    public void run();
 
     /**
      * <p>
@@ -26,14 +23,6 @@ public interface TrayInterface extends ProcessEquipmentInterface {
      */
     public void addStream(StreamInterface newStream);
 
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name);
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName();
-
     /**
      * <p>
      * setHeatInput.
@@ -42,11 +31,4 @@ public interface TrayInterface extends ProcessEquipmentInterface {
      * @param heatinp a double
      */
     public void setHeatInput(double heatinp);
-
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient();
 }

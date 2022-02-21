@@ -33,7 +33,9 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
     double reclaimerPressure = 0.17;
 
-    public MEGReclaimerModule() {}
+    public MEGReclaimerModule(String name) {
+        super(name);
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -132,7 +134,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-        getOperations().runTransient();
+        getOperations().runTransient(dt);
     }
 
     /**
@@ -167,7 +169,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         Stream inletStream = new Stream(testSystem);
         inletStream.run();
         inletStream.displayResult();
-        MEGReclaimerModule reclaimer = new MEGReclaimerModule();
+        MEGReclaimerModule reclaimer = new MEGReclaimerModule("reclaimer");
         reclaimer.addInputStream("streamToReclaimer", inletStream);
         reclaimer.setOperationPressure(0.17);
 

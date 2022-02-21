@@ -2,6 +2,7 @@ package neqsim.processSimulation.processEquipment.powerGeneration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -45,7 +46,6 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      */
     public GasTurbine() {
         // needs to be changed to gas tubing mechanical design
-        mechanicalDesign = new CompressorMechanicalDesign(this);
         SystemInterface airThermoSystem = neqsim.thermo.Fluid.create("air");
         airThermoSystem.addComponent("CO2", 0.0);
         airThermoSystem.addComponent("water", 0.0);
@@ -83,6 +83,10 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         this();
         this.name = name;
         setInletStream(inletStream);
+    }
+
+    public CompressorMechanicalDesign getMechanicalDesign() {
+        return new CompressorMechanicalDesign(this);
     }
 
     /**

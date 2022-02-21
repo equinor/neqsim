@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
+
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -31,7 +32,6 @@ public class NeqGasScrubber extends Separator {
      */
     public NeqGasScrubber() {
         super();
-        mechanicalDesign = new GasScrubberMechanicalDesign(this);
         this.setOrientation("vertical");
     }
 
@@ -61,6 +61,10 @@ public class NeqGasScrubber extends Separator {
         this.setInletStream(inletStream);
     }
 
+    public GasScrubberMechanicalDesign getMechanicalDesign() {
+        return new GasScrubberMechanicalDesign(this);
+    }
+
     /**
      * <p>
      * Setter for the field <code>inletStream</code>.
@@ -88,7 +92,7 @@ public class NeqGasScrubber extends Separator {
      * @param type a {@link java.lang.String} object
      */
     public void addScrubberSection(String type) {
-        scrubberSection.add(new SeparatorSection(type, this));
+        scrubberSection.add(new SeparatorSection("section" + scrubberSection.size() + 1, type, this));
     }
 
     /** {@inheritDoc} */

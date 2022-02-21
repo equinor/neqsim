@@ -18,6 +18,10 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @version $Id: $Id
  */
 public class PropaneCoolingModule extends ProcessModuleBaseClass {
+
+    public PropaneCoolingModule(String name) {
+        super(name);
+    }
     /**
      * <p>
      * Setter for the field <code>condenserTemperature</code>.
@@ -172,7 +176,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         testSystem.createDatabase(true);
 
         Stream porpane = new Stream(testSystem);
-        PropaneCoolingModule propaneModule = new PropaneCoolingModule();
+        PropaneCoolingModule propaneModule = new PropaneCoolingModule("propaneModule");
         propaneModule.setCondenserTemperature(273.15 + 30);
         propaneModule.setVaporizerTemperature(273.15 - 40);
 

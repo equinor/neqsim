@@ -14,18 +14,6 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 public class MeshSection extends SeparatorSection {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for MeshSection.
-     * </p>
-     *
-     * @param type a {@link java.lang.String} object
-     * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
-     */
-    public MeshSection(String type, Separator sep) {
-        super(type, sep);
-        mechanicalDesign = new MecMeshSection(this);
-    }
 
     /**
      * <p>
@@ -37,8 +25,11 @@ public class MeshSection extends SeparatorSection {
      * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
      */
     public MeshSection(String name, String type, Separator sep) {
-        this(type, sep);
-        setName(name);
+        super(name, type, sep);
+    }
+
+    public MecMeshSection getMechanicalDesign() {
+        return new MecMeshSection(this);
     }
 
     /** {@inheritDoc} */

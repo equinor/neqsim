@@ -9,13 +9,13 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
  * <p>
- * PipelineMechanicalDeisgn class.
+ * PipelineMechanicalDesign class.
  * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
-public class PipelineMechanicalDeisgn extends MechanicalDesign {
+public class PipelineMechanicalDesign extends MechanicalDesign {
     private static final long serialVersionUID = 1000;
 
     double innerDiameter = 1.0;
@@ -23,13 +23,14 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
 
     /**
      * <p>
-     * Constructor for PipelineMechanicalDeisgn.
+     * Constructor for PipelineMechanicalDesign.
      * </p>
      *
      * @param equipment a
-     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     *                  {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+     *                  object
      */
-    public PipelineMechanicalDeisgn(ProcessEquipmentInterface equipment) {
+    public PipelineMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
     }
 
@@ -45,9 +46,8 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         if (getDesignStandard().containsKey("pipeline design codes")) {
             System.out.println("pressure vessel code standard: "
                     + getDesignStandard().get("pipeline design codes").getStandardName());
-            wallThickness =
-                    ((PipelineDesignStandard) getDesignStandard().get("pipeline design codes"))
-                            .calcPipelineWallThickness();
+            wallThickness = ((PipelineDesignStandard) getDesignStandard().get("pipeline design codes"))
+                    .calcPipelineWallThickness();
         } else {
             System.out.println("no pressure vessel code standard specified......");
         }
@@ -58,10 +58,12 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
     public void calcDesign() {
         super.calcDesign();
         /*
-         * Pipeline pipeline = (Pipeline) getProcessEquipment(); double flow = ((AdiabaticPipe)
+         * Pipeline pipeline = (Pipeline) getProcessEquipment(); double flow =
+         * ((AdiabaticPipe)
          * getProcessEquipment()).getOutStream().getThermoSystem().getVolume() / 1e5;
          * 
-         * double innerArea = Math.PI * innerDiameter * innerDiameter / 4.0; double gasVelocity =
+         * double innerArea = Math.PI * innerDiameter * innerDiameter / 4.0; double
+         * gasVelocity =
          * flow / innerArea; double wallThickness = 0.0;
          */
 
@@ -104,8 +106,7 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 90.00);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 90.00);
         testSystem.addComponent("methane", 600e3, "kg/hr");
         testSystem.addComponent("ethane", 7.00e3, "kg/hr");
         testSystem.addComponent("propane", 12.0e3, "kg/hr");
@@ -124,8 +125,7 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         pipe.getMechanicalDesign().setMinOperationPressure(50.0);
         pipe.getMechanicalDesign().setMaxDesignGassVolumeFlow(100.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(pipe);
 

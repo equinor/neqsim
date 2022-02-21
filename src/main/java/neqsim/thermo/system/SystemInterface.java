@@ -2471,4 +2471,19 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      * @param propertyName a {@link java.lang.String} object
      */
     public void addCapeOpenProperty(String propertyName);
+
+    /**
+     * Get physical properties of System.
+     * 
+     * @return System properties
+     */
+    public SystemProperties getProperties();
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o);
+    
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode();
 }

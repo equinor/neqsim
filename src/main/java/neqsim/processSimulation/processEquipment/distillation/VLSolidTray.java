@@ -103,7 +103,7 @@ public class VLSolidTray extends SimpleTray {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {}
 
     /** {@inheritDoc} */
     @Override

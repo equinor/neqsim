@@ -15,11 +15,14 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
@@ -5078,6 +5081,12 @@ abstract class SystemThermo implements SystemInterface {
     @Override
     public void setForcePhaseTypes(boolean forcePhaseTypes) {
         this.forcePhaseTypes = forcePhaseTypes;
+    }
+
+    /** @{inheritDoc} */
+    @Override
+    public SystemProperties getProperties() {
+        return new SystemProperties(this);
     }
 
     private void setMolarComposition(double[] molefractions, String type) {

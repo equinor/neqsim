@@ -209,5 +209,5 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {}
 }

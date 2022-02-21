@@ -240,6 +240,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         } else {
             thermoOps.PHflash(enthalpy, 0);
         }
+        thermoSystem.initPhysicalProperties("density");
         outStream.setThermoSystem(thermoSystem);
         // if(getPercentValveOpening()<99){
         molarFlow =
@@ -280,7 +281,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
      */
     public void runController(double dt) {
         if (hasController) {
-            getController().run(this.percentValveOpening, dt);
+            getController().runTransient(this.percentValveOpening, dt);
             this.percentValveOpening = getController().getResponse();
             if (this.percentValveOpening > 100) {
                 this.percentValveOpening = 100;
@@ -288,7 +289,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
             if (this.percentValveOpening < 0) {
                 this.percentValveOpening = 1e-10;
             }
-            System.out.println("valve opening " + this.percentValveOpening + " %");
+            //System.out.println("valve opening " + this.percentValveOpening + " %");
         }
     }
 
