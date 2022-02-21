@@ -52,60 +52,55 @@ public class ProcessSystemRunTransientTest {
     @Test
     public void testDynamicCalculation() {
         neqsim.thermo.system.SystemInterface testSystem = getTestSystem();
+        
         Stream stream_1 = new Stream("Stream1", testSystem);
+        stream_1.setFlowRate(50.0, "kg/hr");
+        stream_1.setPressure(10.0, "bara");
+        
         ThrottlingValve valve_1 = new ThrottlingValve(stream_1);
         valve_1.setOutletPressure(5.0);
         valve_1.setPercentValveOpening(50);
 
-        Separator separator_1 = new Separator();
+        Separator separator_1 = new Separator("sep 1");
         separator_1.addStream(valve_1.getOutStream());
 
         ThrottlingValve valve_2 = new ThrottlingValve(separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(1.0);
         valve_2.setPercentValveOpening(50);
-        // valve_2.setCv(10.0);
 
         ThrottlingValve valve_3 = new ThrottlingValve(separator_1.getGasOutStream());
         valve_3.setOutletPressure(1.0);
         valve_3.setPercentValveOpening(50);
 
         VolumeFlowTransmitter flowTransmitter = new VolumeFlowTransmitter(stream_1);
-        flowTransmitter.setUnit("m^3/hr");
-        flowTransmitter.setMaximumValue(10.0);
+        flowTransmitter.setUnit("kg/hr");
+        flowTransmitter.setMaximumValue(100.0);
         flowTransmitter.setMinimumValue(1.0);
 
         ControllerDeviceInterface flowController = new ControllerDeviceBaseClass();
         flowController.setTransmitter(flowTransmitter);
         flowController.setReverseActing(true);
-        flowController.setControllerSetPoint(1.0);
-        flowController.setControllerParameters(0.7, 300.0, 0.0);
+        flowController.setControllerSetPoint(63.5);
+        flowController.setControllerParameters(0.1, 0.10, 0.0);
 
         p.add(stream_1);
         p.add(valve_1);
         p.add(separator_1);
         p.add(valve_2);
         p.add(valve_3);
-
         p.add(flowTransmitter);
         valve_1.setController(flowController);
 
         p.run();
-        // p.displayResult();
-        valve_2.setPercentValveOpening(0.1);
-        valve_3.setPercentValveOpening(0.1);
 
         // transient behaviour
         p.setTimeStep(1.0);
-        for (int i = 0; i < 460; i++) {
-            System.out.println("volume flow " + flowTransmitter.getMeasuredValue()
-                    + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
-                    + separator_1.getGasOutStream().getPressure());
+        for (int i = 0; i < 5; i++) {
+          //  System.out.println("volume flow " + flowTransmitter.getMeasuredValue()
+          //          + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
+          //          + separator_1.getGasOutStream().getPressure());
             p.runTransient();
         }
-
-        // p.displayResult();
-        System.out.println("volume flow " + flowTransmitter.getMeasuredValue() + " valve opening "
-                + valve_1.getPercentValveOpening());
     }
 
     @Test
@@ -116,7 +111,7 @@ public class ProcessSystemRunTransientTest {
                 10.00);
         testSystem2.addComponent("methane", 1.1);
         testSystem2.addComponent("ethane", 0.10001);
-        testSystem2.addComponent("n-heptane", 0.001);
+        testSystem2.addComponent("n-heptane", 1.001);
         testSystem2.setMixingRule(2);
 
         Stream purgeStream = new Stream("Purge Stream", testSystem2);
@@ -184,8 +179,7 @@ public class ProcessSystemRunTransientTest {
 
         p.run();
         // p.displayResult();
-        p.setTimeStep(0.001);
-        p.runTransient();
+        p.setTimeStep(0.0001);
         p.runTransient();
     }
 }

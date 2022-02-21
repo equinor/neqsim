@@ -52,7 +52,10 @@ public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
     @Override
     public double getMeasuredValue() {
         stream.getThermoSystem().initPhysicalProperties();
-        if (unit.equals("m^3/hr")) {
+        if (unit.equals("kg/hr")) {
+        	return stream.getFlowRate(unit);
+        }
+        else if (unit.equals("m^3/hr")) {
             return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
                     * stream.getThermoSystem().getPhase(measuredPhaseNumber).getMolarMass()
                     / stream.getThermoSystem().getPhase(measuredPhaseNumber).getPhysicalProperties()
