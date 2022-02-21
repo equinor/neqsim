@@ -133,7 +133,7 @@ class SystemPrEoSTest {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testOps.TPflash();
         testSystem.initProperties();
-        assertEquals(-165.60627184389855,
-                Math.abs(-165.60627184389855 / 1000.0), testSystem.getEnthalpy("kJ/kg"));
+        assertEquals(-165.60627184389855, testSystem.getEnthalpy("kJ/kg"),
+                Math.abs(-165.60627184389855 / 1000.0));
     }
 }
