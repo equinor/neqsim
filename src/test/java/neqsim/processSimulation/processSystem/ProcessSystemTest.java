@@ -13,7 +13,6 @@ public class ProcessSystemTest {
     ProcessSystem p;
     String _name = "TestProcess";
 
-
     @BeforeEach
     public void setUp() {
         p = new ProcessSystem();
@@ -28,12 +27,12 @@ public class ProcessSystemTest {
     @Test
     public void testSetTimeStep() {
         double timeStep = p.getTimeStep() * 2;
-        Assertions.assertEquals(p.getTimeStep(), timeStep / 2);
-        Assertions.assertNotEquals(p.getTimeStep(), timeStep);
+        Assertions.assertEquals(timeStep / 2, p.getTimeStep());
+        Assertions.assertNotEquals(timeStep, p.getTimeStep());
 
         p.setTimeStep(timeStep);
-        Assertions.assertEquals(p.getTimeStep(), timeStep);
-        Assertions.assertNotEquals(p.getTimeStep(), timeStep / 2);
+        Assertions.assertEquals(timeStep, p.getTimeStep());
+        Assertions.assertNotEquals(timeStep / 2, p.getTimeStep());
     }
 
     @Test
@@ -54,30 +53,30 @@ public class ProcessSystemTest {
 
         Assertions.assertTrue(sep == p.getUnit(sepName));
 
-        Assertions.assertEquals(list.size(), 1);
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, list.size());
+        Assertions.assertEquals(1, p.size());
 
         Assertions.assertTrue((Separator) list.get(0) == sep);
 
         p.removeUnit(sepName);
         Assertions.assertNull(p.getUnit(sepName));
-        Assertions.assertEquals(p.size(), 0);
+        Assertions.assertEquals(0, p.size());
 
         list = p.getUnitOperations();
 
-        Assertions.assertEquals(list.size(), 0);
+        Assertions.assertEquals(0, list.size());
 
         p.add(sep);
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, p.size());
 
         p.clear();
-        Assertions.assertEquals(p.size(), 0);
+        Assertions.assertEquals(0, p.size());
 
         p.add(sep);
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, p.size());
 
         p.clearAll();
-        Assertions.assertEquals(p.size(), 0);
+        Assertions.assertEquals(0, p.size());
     }
 
     @Test
@@ -85,18 +84,17 @@ public class ProcessSystemTest {
         Separator sep = new Separator("sep");
         p.add(sep);
         p.add(sep); // Won't add the copy
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, p.size());
     }
 
     @Test
     public void testRemoveUnit() {
         Separator sep = new Separator("sep");
         p.add(sep);
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, p.size());
         p.removeUnit("sep");
-        Assertions.assertEquals(p.size(), 0);
+        Assertions.assertEquals(0, p.size());
     }
-
 
     @Test
     public void testAddUnitsWithNoName() {
@@ -153,7 +151,8 @@ public class ProcessSystemTest {
     }
 
     @Test
-    void testDisplayResult() {}
+    void testDisplayResult() {
+    }
 
     @Test
     void testGetAllUnitNames() {
@@ -200,8 +199,6 @@ public class ProcessSystemTest {
 
     }
 
-
-
     @Test
     void testGetPower() {
 
@@ -222,12 +219,10 @@ public class ProcessSystemTest {
 
     }
 
-
     @Test
     void testGetUnitOperations() {
 
     }
-
 
     @Test
     void testOpen() {
@@ -238,7 +233,6 @@ public class ProcessSystemTest {
     void testPrintLogFile() {
 
     }
-
 
     @Test
     void testReplaceObject() {
@@ -276,7 +270,8 @@ public class ProcessSystemTest {
     }
 
     @Test
-    void testSetName() {}
+    void testSetName() {
+    }
 
     @Test
     void testSetSystemMechanicalDesign() {
@@ -289,5 +284,6 @@ public class ProcessSystemTest {
     }
 
     @Test
-    void testView() {}
+    void testView() {
+    }
 }

@@ -1,9 +1,9 @@
 package neqsim.processSimulation.util.example;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 class process1Test {
@@ -48,6 +48,5 @@ class process1Test {
     @Test
     void runTest() {
         operations.run();
-        assertEquals(2, 2);
     }
 }
