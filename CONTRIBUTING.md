@@ -20,7 +20,8 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 This project uses Google Java style formatting rules. 
 
-For Visual Studio Code:  
+### Visual Studio Code:  
+
 Install Language Support for Java(TM) by Red Hat and add the following to settings.json.
  ```   
     "[java]": {
@@ -32,3 +33,7 @@ Install Language Support for Java(TM) by Red Hat and add the following to settin
 ```
 
 Note: workspace/project specific settings are located in folder .vscode.
+
+### Eclipse:
+
+Follow the instructions in http://www.practicesofmastery.com/post/eclipse-google-java-style-guide/
