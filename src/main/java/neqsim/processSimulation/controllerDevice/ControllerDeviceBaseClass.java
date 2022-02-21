@@ -62,7 +62,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         TintValue += Ksp / Tint * error * dt;
         double TderivValue = Ksp * Tderiv * (error - oldError) / dt;
         response = percentSignal + propConstant * (Ksp * error + TintValue + TderivValue);
-        System.out.println("error " + error + " %");
+        //System.out.println("error " + error + " %");
         // error = device.getMeasuredPercentValue()-controlValue;
         // double regulatorSignal = error*1.0;
     }
