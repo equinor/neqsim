@@ -103,7 +103,7 @@ public class ProcessSystemRunTransientTest {
         }
     }
 
-    //@Test
+    @Test
     public void testDynamicCalculation2() {
         neqsim.thermo.system.SystemInterface testSystem = getTestSystem();
 
@@ -111,7 +111,7 @@ public class ProcessSystemRunTransientTest {
                 10.00);
         testSystem2.addComponent("methane", 1.1);
         testSystem2.addComponent("ethane", 0.10001);
-        testSystem2.addComponent("n-heptane", 0.001);
+        testSystem2.addComponent("n-heptane", 1.001);
         testSystem2.setMixingRule(2);
 
         Stream purgeStream = new Stream("Purge Stream", testSystem2);
@@ -179,8 +179,7 @@ public class ProcessSystemRunTransientTest {
 
         p.run();
         // p.displayResult();
-        p.setTimeStep(0.001);
-        p.runTransient();
+        p.setTimeStep(0.0001);
         p.runTransient();
     }
 }
