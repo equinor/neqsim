@@ -262,7 +262,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     public void runTransient(double dt) {
         inletStreamMixer.run();
 
-        System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
+        //System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
         // double inMoles =
         // inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
         // double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
@@ -271,11 +271,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         gasOutStream.getThermoSystem().init(3);
         liquidOutStream.getThermoSystem().init(3);
         double volume1 = thermoSystem.getVolume();
-        System.out.println("volume1 " + volume1);
+        //System.out.println("volume1 " + volume1);
         double deltaEnergy = inletStreamMixer.getOutStream().getThermoSystem().getEnthalpy()
                 - gasOutStream.getThermoSystem().getEnthalpy()
                 - liquidOutStream.getThermoSystem().getEnthalpy();
-        System.out.println("enthalph delta " + deltaEnergy);
+        //System.out.println("enthalph delta " + deltaEnergy);
         double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
             double dn = inletStreamMixer.getOutStream().getThermoSystem().getPhase(0)
@@ -286,7 +286,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                             .getNumberOfMolesInPhase()
                     - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i)
                             .getNumberOfMolesInPhase();
-            System.out.println("dn " + dn);
+            //System.out.println("dn " + dn);
             thermoSystem.addComponent(inletStreamMixer.getOutStream().getThermoSystem().getPhase(0)
                     .getComponent(i).getComponentNumber(), dn * dt);
         }
@@ -296,7 +296,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
 
         liquidLevel = thermoSystem.getPhase(1).getVolume() * 1e-5 / (liquidVolume + gasVolume);
-        System.out.println("liquid level " + liquidLevel);
+        //System.out.println("liquid level " + liquidLevel);
         liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter()
                 * getSeparatorLength();
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()

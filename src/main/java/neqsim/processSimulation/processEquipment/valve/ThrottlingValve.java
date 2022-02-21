@@ -221,6 +221,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
         } else {
             thermoOps.PHflash(enthalpy, 0);
         }
+        thermoSystem.initPhysicalProperties("density");
         outStream.setThermoSystem(thermoSystem);
         // if(getPercentValveOpening()<99){
         molarFlow =
@@ -269,7 +270,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
             if (this.percentValveOpening < 0) {
                 this.percentValveOpening = 1e-10;
             }
-            System.out.println("valve opening " + this.percentValveOpening + " %");
+            //System.out.println("valve opening " + this.percentValveOpening + " %");
         }
     }
 
