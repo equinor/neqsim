@@ -1,10 +1,12 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -55,7 +57,7 @@ public class SystemElectrolyteCPATest {
 
         thermoSystem.init();
         testOps.TPflash();
-        assertEquals(thermoSystem.getNumberOfPhases(), 2);
+        assertEquals(2, thermoSystem.getNumberOfPhases());
     }
 
     /**

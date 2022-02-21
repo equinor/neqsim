@@ -3,8 +3,10 @@ package neqsim.thermodynamicOperations;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -61,7 +63,7 @@ public class ThermodynamicOperationsTest {
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature),
                 1, Arrays.asList(components), onlineFractions);
-        Assertions.assertEquals(s.fluidProperties.length, len);
+        Assertions.assertEquals(len, s.fluidProperties.length);
     }
 
     @Test
@@ -83,7 +85,7 @@ public class ThermodynamicOperationsTest {
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature),
                 1, Arrays.asList(components), onlineFractions);
-        Assertions.assertEquals(s.fluidProperties.length, len);
+        Assertions.assertEquals(len, s.fluidProperties.length);
     }
 
     private List<List<Double>> createDummyRequest(double[] fractions, int len) {

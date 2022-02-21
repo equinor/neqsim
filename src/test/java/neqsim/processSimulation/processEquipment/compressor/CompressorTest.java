@@ -99,7 +99,7 @@ class CompressorTest {
         processOps.run();
         // System.out.println("schultz compressor power " + compressor1.getPower() / 1e6
         // + " MW");
-        assertEquals(compressor1.getPower() / 1e6, 4.668373797540108,
+        assertEquals(4.668373797540108, compressor1.getPower() / 1e6,
                 "Test case for compressor Schultz method polytropic calculation should return approximate 4.67 MW");
     }
 
@@ -116,7 +116,7 @@ class CompressorTest {
         processOps.run();
         // System.out.println("rigorous compressor power " + compressor1.getPower() /
         // 1e6 + " MW");
-        assertEquals(compressor1.getPower() / 1e6, 4.655081035416562,
+        assertEquals(4.655081035416562, compressor1.getPower() / 1e6,
                 "Test case for rigorous polytropic compressor calculation should return approximate 4.66 MW");
     }
 
@@ -132,7 +132,7 @@ class CompressorTest {
         processOps.run();
         // System.out.println("compressor power " + compressor1.getPower() / 1e6 + "
         // MW");
-        assertEquals(compressor1.getPower() / 1e6, 4.5621157449685);
+        assertEquals(4.5621157449685, compressor1.getPower() / 1e6);
     }
 
     /**
@@ -159,7 +159,7 @@ class CompressorTest {
         // System.out.println("srk fluid head " + compressor1.getPolytropicFluidHead() +
         // " kJ/kg");
         // System.out.println("srk power " + compressor1.getPower() + " W");
-        assertEquals(compressor1.getPolytropicEfficiency() * 100, 88.94871563458828,
+        assertEquals(88.94871563458828, compressor1.getPolytropicEfficiency() * 100,
                 "Test case for rigorous polytropic efficiency with SRK calculation should return approximate 88.948715 ");
     }
 
@@ -189,7 +189,7 @@ class CompressorTest {
         // System.out.println("gerg fluid head " + compressor1.getPolytropicFluidHead()
         // + " kJ/kg");
         // System.out.println("gerg power " + compressor1.getPower() + " W");
-        assertEquals(compressor1.getPolytropicEfficiency() * 100, 89.99367027631443,
+        assertEquals(89.99367027631443, compressor1.getPolytropicEfficiency() * 100,
                 "Test case for rigorous polytropic efficiency with GER2008 calculation should return approximate 89.992296751");
     }
 }

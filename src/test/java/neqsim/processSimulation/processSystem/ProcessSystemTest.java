@@ -28,12 +28,12 @@ public class ProcessSystemTest {
     @Test
     public void testSetTimeStep() {
         double timeStep = p.getTimeStep() * 2;
-        Assertions.assertEquals(p.getTimeStep(), timeStep / 2);
-        Assertions.assertNotEquals(p.getTimeStep(), timeStep);
+        Assertions.assertEquals(timeStep / 2, p.getTimeStep());
+        Assertions.assertNotEquals(timeStep, p.getTimeStep());
 
         p.setTimeStep(timeStep);
-        Assertions.assertEquals(p.getTimeStep(), timeStep);
-        Assertions.assertNotEquals(p.getTimeStep(), timeStep / 2);
+        Assertions.assertEquals(timeStep, p.getTimeStep());
+        Assertions.assertNotEquals(timeStep / 2, p.getTimeStep());
     }
 
     @Test
@@ -55,30 +55,30 @@ public class ProcessSystemTest {
 
         Assertions.assertTrue(sep == p.getUnit(sepName));
 
-        Assertions.assertEquals(list.size(), 1);
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, list.size());
+        Assertions.assertEquals(1, p.size());
 
         Assertions.assertTrue((Separator) list.get(0) == sep);
 
         p.removeUnit(sepName);
         Assertions.assertNull(p.getUnit(sepName));
-        Assertions.assertEquals(p.size(), 0);
+        Assertions.assertEquals(0, p.size());
 
         list = p.getUnitOperations();
 
-        Assertions.assertEquals(list.size(), 0);
+        Assertions.assertEquals(0, list.size());
 
         p.add(sep);
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, p.size());
 
         p.clear();
-        Assertions.assertEquals(p.size(), 0);
+        Assertions.assertEquals(0, p.size());
 
         p.add(sep);
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, p.size());
 
         p.clearAll();
-        Assertions.assertEquals(p.size(), 0);
+        Assertions.assertEquals(0, p.size());
     }
 
     @Test
@@ -86,16 +86,16 @@ public class ProcessSystemTest {
         Separator sep = new Separator();
         p.add(sep);
         p.add(sep); // Won't add the copy
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, p.size());
     }
 
     @Test
     public void testRemoveUnit() {
         Separator sep = new Separator();
         p.add(sep);
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, p.size());
         p.removeUnit("");
-        Assertions.assertEquals(p.size(), 0);
+        Assertions.assertEquals(0, p.size());
     }
 
 
@@ -105,11 +105,11 @@ public class ProcessSystemTest {
         p.add(sep);
         sep = new Separator();
         p.add(sep);
-        Assertions.assertEquals(p.size(), 2);
+        Assertions.assertEquals(2, p.size());
         p.removeUnit("Separator2");
-        Assertions.assertEquals(p.size(), 1);
+        Assertions.assertEquals(1, p.size());
         p.removeUnit("");
-        Assertions.assertEquals(p.size(), 0);
+        Assertions.assertEquals(0, p.size());
     }
 
     @Test
@@ -119,21 +119,21 @@ public class ProcessSystemTest {
         Separator sep2 = new Separator();
         p.add(sep2);
 
-        Assertions.assertEquals(p.getUnitNumber(""), 0);
-        Assertions.assertEquals(p.getUnitNumber("Separator2"), 1);
+        Assertions.assertEquals(0, p.getUnitNumber(""));
+        Assertions.assertEquals(1, p.getUnitNumber("Separator2"));
 
         p.removeUnit("");
         p.add(sep);
 
-        Assertions.assertEquals(p.getUnitNumber("Separator2"), 0);
-        Assertions.assertEquals(p.getUnitNumber(""), 1);
+        Assertions.assertEquals(0, p.getUnitNumber("Separator2"));
+        Assertions.assertEquals(1, p.getUnitNumber(""));
     }
 
     @Test
     public void testSetSurroundingTemperature() {
         double temp = 200;
         p.setSurroundingTemperature(temp);
-        Assertions.assertEquals(p.getSurroundingTemperature(), temp);
+        Assertions.assertEquals(temp, p.getSurroundingTemperature());
     }
 
     @Test
