@@ -1,9 +1,11 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -43,7 +45,7 @@ public class SystemSrkCPAstatoilTest {
     public void testTPflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
         testOps.TPflash();
-        assertEquals(thermoSystem.getNumberOfPhases(), 2);
+        assertEquals(2, thermoSystem.getNumberOfPhases());
     }
 
     /**
@@ -72,9 +74,7 @@ public class SystemSrkCPAstatoilTest {
         testOps.PHflash(enthalpy + 10.0);
         thermoSystem.init(3);
 
-        double enthalpy2 = thermoSystem.getEnthalpy();
-
-        assertEquals(Math.round(enthalpy + 10.0), Math.round(enthalpy2));
+        assertEquals(Math.round(enthalpy + 10.0), Math.round(thermoSystem.getEnthalpy()));
     }
 
     /**
@@ -91,8 +91,6 @@ public class SystemSrkCPAstatoilTest {
         testOps.PSflash(entropy + 10.0);
         thermoSystem.init(3);
 
-        double entropy2 = thermoSystem.getEntropy();
-
-        assertEquals(Math.round(entropy + 10.0), Math.round(entropy2));
+        assertEquals(Math.round(entropy + 10.0), Math.round(thermoSystem.getEntropy()));
     }
 }
