@@ -37,7 +37,9 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
      * Constructor for ExpanderOld.
      * </p>
      */
-    public ExpanderOld() {}
+    public ExpanderOld() {
+        super("ExpanderOld");
+    }
 
     /**
      * <p>
@@ -47,6 +49,7 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public ExpanderOld(Stream inletStream) {
+        this();
         setInletStream(inletStream);
     }
 
@@ -60,7 +63,7 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
      *        object
      */
     public ExpanderOld(String name, StreamInterface inletStream) {
-        this.name = name;
+        super(name);
         setInletStream(inletStream);
     }
 

@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.distillation;
 
 import java.util.ArrayList;
 import java.util.Objects;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -39,6 +38,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     Heater heater;
     Separator separator2;
 
+
     /**
      * <p>
      * Constructor for DistillationColumn.
@@ -49,19 +49,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * @param hasCondenser a boolean
      */
     public DistillationColumn(int numberOfTraysLocal, boolean hasReboiler, boolean hasCondenser) {
+        super("DistillationColumn");
         this.hasReboiler = hasReboiler;
         this.hasCondenser = hasCondenser;
         distoperations = new neqsim.processSimulation.processSystem.ProcessSystem();
         this.numberOfTrays = numberOfTraysLocal;
         if (hasReboiler) {
-            trays.add(new Reboiler());
+            trays.add(new Reboiler("Reboiler"));
             this.numberOfTrays++;
         }
         for (int i = 0; i < numberOfTraysLocal; i++) {
-            trays.add(new SimpleTray());
+            trays.add(new SimpleTray("SimpleTray" + i + 1));
         }
         if (hasCondenser) {
-            trays.add(new Condenser());
+            trays.add(new Condenser("Condenser"));
             this.numberOfTrays++;
         }
         for (int i = 0; i < this.numberOfTrays; i++) {
@@ -226,7 +227,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
         if (change > 0) {
             for (int i = 0; i < change; i++) {
-                trays.add(1, new SimpleTray());
+                trays.add(1, new SimpleTray("SimpleTray" + oldNumberOfTrays + i + 1));
             }
         } else if (change < 0) {
             for (int i = 0; i > change; i--) {

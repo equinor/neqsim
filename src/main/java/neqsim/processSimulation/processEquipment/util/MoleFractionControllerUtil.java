@@ -34,6 +34,7 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
      *        object
      */
     public MoleFractionControllerUtil(StreamInterface inletStream) {
+        super("MoleFractionControllerUtil");
         setInletStream(inletStream);
     }
 

@@ -48,8 +48,20 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * Constructor for SimpleReservoir.
      * </p>
      */
+    @Deprecated
     public SimpleReservoir() {
-        super();
+        this("SimpleReservoir");
+    }
+
+    /**
+     * <p>
+     * Constructor for SimpleReservoir.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
+    public SimpleReservoir(String name) {
+        super(name);
     }
 
     /**
@@ -70,17 +82,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * 
      * public StreamInterface getOilOutStream() { return oilOutStream; }
      */
-
-    /**
-     * <p>
-     * Constructor for SimpleReservoir.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public SimpleReservoir(String name) {
-        super(name);
-    }
 
     /** {@inheritDoc} */
     @Override

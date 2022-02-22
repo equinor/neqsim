@@ -48,7 +48,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      * Constructor for Pipeline.
      * </p>
      */
+    @Deprecated
     public Pipeline() {
+        super("Pipeline");
     }
 
     /**
@@ -59,6 +61,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Pipeline(StreamInterface inStream) {
         this();
         this.inStream = inStream;

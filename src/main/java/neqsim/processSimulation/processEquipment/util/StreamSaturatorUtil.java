@@ -29,6 +29,7 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public StreamSaturatorUtil(Stream inletStream) {
+        super("StreamSaturatorUtil");
         setInletStream(inletStream);
     }
 

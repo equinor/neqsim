@@ -38,7 +38,9 @@ public class Tank extends ProcessEquipmentBaseClass {
      * Constructor for Tank.
      * </p>
      */
-    public Tank() {}
+    public Tank() {
+        super("Tank");
+    }
 
     /**
      * <p>
@@ -47,7 +49,9 @@ public class Tank extends ProcessEquipmentBaseClass {
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
+    @Deprecated
     public Tank(Stream inletStream) {
+        this();
         addStream(inletStream);
     }
 
@@ -60,7 +64,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public Tank(String name, Stream inletStream) {
-        this.name = name;
+        super(name);
         addStream(inletStream);
     }
 

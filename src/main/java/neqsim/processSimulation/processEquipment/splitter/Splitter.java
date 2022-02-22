@@ -28,7 +28,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      * Constructor for Splitter.
      * </p>
      */
-    public Splitter() {}
+    public Splitter() {
+        super("Splitter");
+    }
 
     /**
      * <p>
@@ -39,6 +41,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      *        object
      */
     public Splitter(StreamInterface inletStream) {
+        this();
         this.setInletStream(inletStream);
     }
 

@@ -36,6 +36,11 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
      * </p>
      */
     public SimpleAdsorber() {
+        this("SimpleAdsorber");
+    }
+
+    public SimpleAdsorber(String name) {
+        super(name);
     }
 
     /**
@@ -47,6 +52,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
      *        object
      */
     public SimpleAdsorber(StreamInterface inStream1) {
+        this();
         outStream = new Stream[2];
         inStream = new Stream[2];
         this.inStream[0] = inStream1;
