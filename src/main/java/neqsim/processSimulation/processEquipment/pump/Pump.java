@@ -39,9 +39,26 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     private String pressureUnit = "bara";
     private PumpChart pumpChart = new PumpChart();
 
+    /**
+     * <p>
+     * Constructor for Pump.
+     * </p>
+     */
+    public Pump() {
+        super("Pump");
+    }
+
+    /**
+     * <p>
+     * Constructor for Pump.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     @Deprecated
-    public Pump(StreamInterface stream) {
-        this("Pump", stream);
+    public Pump(StreamInterface inletStream) {
+        this("Pump", inletStream);
     }
 
     /**

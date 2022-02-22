@@ -30,8 +30,24 @@ public class Filter extends TwoPortEquipment {
      *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *               object
      */
-    public Filter(String name, StreamInterface stream) {
-        super(name, stream);
+    @Deprecated
+    public Filter(StreamInterface inStream) {
+        this("Filter", inStream);
+    }
+
+    /**
+     * <p>
+     * Constructor for Filter.
+     * </p>
+     *
+     * @param name
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    public Filter(String name, StreamInterface inStream) {
+        super(name);
+        this.inStream = inStream;
+        outStream = (Stream) inStream.clone();
     }
 
     /** {@inheritDoc} */

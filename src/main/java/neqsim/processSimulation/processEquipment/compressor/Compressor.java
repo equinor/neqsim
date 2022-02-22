@@ -59,9 +59,18 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     private String pressureUnit = "bara";
     private String polytropicMethod = "detailed";
 
+    /**
+     * <p>
+     * Constructor for Compressor.
+     * </p>
+     */
     @Deprecated
-    public Compressor(StreamInterface stream) {
-        this("Compressor", stream);
+    public Compressor() {
+        this("Compressor");
+    }
+
+    public Compressor(String name) {
+        super(name);
     }
 
     /**
@@ -74,8 +83,24 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
      *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *               object
      */
-    public Compressor(String name, StreamInterface stream) {
-        super(name, stream);
+    @Deprecated
+    public Compressor(StreamInterface inletStream) {
+        this();
+        setInletStream(inletStream);
+    }
+
+    /**
+     * <p>
+     * Constructor for Compressor.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    public Compressor(String name, StreamInterface inletStream) {
+        this(name);
+        setInletStream(inletStream);
     }
 
     /**

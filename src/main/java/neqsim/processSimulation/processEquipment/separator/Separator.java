@@ -49,9 +49,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     private double designLiquidLevelFraction = 0.8;
     ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
+    /**
+     * Constructor for Separator.
+     */
     @Deprecated
     public Separator() {
-        this("Separator");
+        super("Separator");
     }
 
     /**
@@ -69,6 +72,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Separator(StreamInterface inletStream) {
         this();
         addStream(inletStream);

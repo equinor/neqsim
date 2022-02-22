@@ -48,6 +48,7 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
+    @Deprecated
     public ExpanderOld(Stream inletStream) {
         this();
         setInletStream(inletStream);

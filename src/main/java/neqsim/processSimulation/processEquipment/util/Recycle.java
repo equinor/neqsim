@@ -37,6 +37,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
      * Constructor for Recycle.
      * </p>
      */
+    @Deprecated
     public Recycle() {
         this("Recycle");
     }

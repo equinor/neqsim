@@ -38,6 +38,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         this("SubseaWell", instream);
     }
 
+
     public SubseaWell(String name, StreamInterface instream) {
         super(name);
         this.inStream = instream;

@@ -45,6 +45,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Splitter(StreamInterface inletStream) {
         this();
         this.setInletStream(inletStream);

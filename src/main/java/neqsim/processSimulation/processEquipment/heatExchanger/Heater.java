@@ -32,18 +32,31 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     private String pressureUnit = "bara";
     double coolingMediumTemperature = 278.15;
 
+    /**
+     * <p>
+     * Constructor for Heater.
+     * </p>
+     */
     @Deprecated
     public Heater() {
-        this("Heater");
+        super("Heater");
     }
 
     public Heater(String name) {
         super(name);
     }
 
+    /**
+     * <p>
+     * Constructor for Heater.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     @Deprecated
-    public Heater(StreamInterface stream) {
-        this("Heater", stream);
+    public Heater(StreamInterface inStream) {
+        this("Heater", inStream);
     }
 
     /**

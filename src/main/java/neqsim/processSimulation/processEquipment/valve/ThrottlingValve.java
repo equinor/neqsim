@@ -28,22 +28,40 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     private String pressureUnit = "bara";
     private boolean acceptNegativeDP = true;
 
-    @Deprecated
-    public ThrottlingValve(StreamInterface stream) {
-        this("ThrottlingValve", stream);
+    /**
+     * <p>
+     * Constructor for ThrottlingValve.
+     * </p>
+     */
+    public ThrottlingValve() {
+        super("ThrottlingValve");
     }
+
     /**
      * <p>
      * Constructor for ThrottlingValve.
      * </p>
      *
-     * @param name        a {@link java.lang.String} object
-     * @param inletStream a
-     *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *                    object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public ThrottlingValve(String name, StreamInterface stream) {
-        super(name, stream);
+    @Deprecated
+    public ThrottlingValve(StreamInterface inletStream) {
+        this("ThrottlingValve", inletStream);
+    }
+
+    /**
+     * <p>
+     * Constructor for ThrottlingValve.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    public ThrottlingValve(String name, StreamInterface inletStream) {
+        super(name);
+        setInletStream(inletStream);
     }
 
     /**
@@ -270,7 +288,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
             if (this.percentValveOpening < 0) {
                 this.percentValveOpening = 1e-10;
             }
-            //System.out.println("valve opening " + this.percentValveOpening + " %");
+            // System.out.println("valve opening " + this.percentValveOpening + " %");
         }
     }
 

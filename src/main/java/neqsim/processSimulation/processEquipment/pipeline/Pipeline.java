@@ -70,6 +70,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Pipeline(StreamInterface inStream) {
         this();
         this.inStream = inStream;
@@ -86,8 +87,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
      *        object
      */
     public Pipeline(String name, StreamInterface inStream) {
-        this();
-        this.name = name;
+        this(name);
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
     }

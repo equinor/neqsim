@@ -110,6 +110,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      * Constructor for Stream.
      * </p>
      *
+<<<<<<< HEAD
      * @param name   a {@link java.lang.String} object
      * @param stream a
      *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
@@ -129,6 +130,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      * </p>
      *
      * @param name         a {@link java.lang.String} object
+=======
+     * @param name a {@link java.lang.String} object
+>>>>>>> pragmatic_naming
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public Stream(String name, SystemInterface thermoSystem) {
