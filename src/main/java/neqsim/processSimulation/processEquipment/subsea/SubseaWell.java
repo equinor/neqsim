@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.subsea;
 
 import java.util.ArrayList;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.reservoir.SimpleReservoir;
@@ -34,7 +33,13 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
      * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public SubseaWell(StreamInterface instream) {
+        this("SubseaWell", instream);
+    }
+
+    public SubseaWell(String name, StreamInterface instream) {
+        super(name);
         this.inStream = instream;
         setOutStream(instream.clone());
         pipeline = new AdiabaticTwoPhasePipe(instream);

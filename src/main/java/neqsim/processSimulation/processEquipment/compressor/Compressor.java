@@ -5,15 +5,12 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.Objects;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -64,7 +61,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
     @Deprecated
     public Compressor(StreamInterface stream) {
-        setInletStream(stream);
+        this("Compressor", stream);
     }
 
     /**

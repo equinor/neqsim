@@ -26,8 +26,9 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
      * Constructor for StreamTransition.
      * </p>
      */
+    @Deprecated
     public StreamTransition() {
-        super();
+        super("StreamTransition");
     }
 
     /**
@@ -41,6 +42,7 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
      *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public StreamTransition(StreamInterface inletStream, StreamInterface outletStream) {
+        this();
         this.inletStream = inletStream;
         this.outletStream = outletStream;
     }

@@ -22,8 +22,12 @@ public class VLSolidTray extends SimpleTray {
      * <p>
      * Constructor for VLSolidTray.
      * </p>
+     * 
+     * @param name
      */
-    public VLSolidTray() {}
+    public VLSolidTray(String name) {
+        super(name);
+    }
 
     /** {@inheritDoc} */
     @Override

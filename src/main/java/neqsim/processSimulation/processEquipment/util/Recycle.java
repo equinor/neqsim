@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -38,7 +37,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
      * Constructor for Recycle.
      * </p>
      */
-    public Recycle() {}
+    public Recycle() {
+        this("Recycle");
+    }
 
     /**
      * <p>

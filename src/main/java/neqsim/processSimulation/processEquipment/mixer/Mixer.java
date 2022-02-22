@@ -6,15 +6,12 @@ import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
 import java.util.Objects;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -44,7 +41,10 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
      * Constructor for Mixer.
      * </p>
      */
-    public Mixer() {}
+    @Deprecated
+    public Mixer() {
+        this("Mixer");
+    }
 
     /**
      * <p>

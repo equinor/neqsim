@@ -34,7 +34,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
     @Deprecated
     public Heater() {
-
+        this("Heater");
     }
 
     public Heater(String name) {
@@ -43,7 +43,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
     @Deprecated
     public Heater(StreamInterface stream) {
-        setInletStream(stream);
+        this("Heater", stream);
     }
 
     /**

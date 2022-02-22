@@ -30,7 +30,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
     @Deprecated
     public ThrottlingValve(StreamInterface stream) {
-        setInletStream(stream);
+        this("ThrottlingValve", stream);
     }
     /**
      * <p>

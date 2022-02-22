@@ -34,7 +34,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
      * Constructor for Adjuster.
      * </p>
      */
-    public Adjuster() {}
+    @Deprecated
+    public Adjuster() {
+        this("Adjuster");
+    }
 
     /**
      * <p>

@@ -6,10 +6,6 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass impleme
     protected StreamInterface inStream;
     protected StreamInterface outStream;
 
-    @Deprecated
-    public TwoPortEquipment() {
-    }
-
     /**
      * Constructor for TwoPortEquipment
      * 

@@ -57,7 +57,21 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      * </p>
      */
     @Deprecated
-    public Stream() {}
+    public Stream() {
+        this("Stream");
+    }
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
+    public Stream(String name) {
+        super(name);
+    }
+
 
     /**
      * <p>
@@ -68,6 +82,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      */
     @Deprecated
     public Stream(SystemInterface thermoSystem) {
+        this();
         this.thermoSystem = thermoSystem;
         numberOfStreams++;
         streamNumber = numberOfStreams;
@@ -83,6 +98,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      */
     @Deprecated
     public Stream(StreamInterface stream) {
+        this();
         this.setStream(stream);
         thermoSystem = stream.getThermoSystem();
         numberOfStreams++;

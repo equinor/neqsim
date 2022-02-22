@@ -4,12 +4,10 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -43,7 +41,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
     @Deprecated
     public Pump(StreamInterface stream) {
-        setInletStream(stream);
+        this("Pump", stream);
     }
 
     /**

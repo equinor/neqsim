@@ -48,6 +48,18 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
      */
     @Deprecated
     public Pipeline() {
+        this("Pipeline");
+    }
+
+    /**
+     * <p>
+     * Constructor for Pipeline.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
+    public Pipeline(String name) {
+        super(name);
     }
 
     /**
