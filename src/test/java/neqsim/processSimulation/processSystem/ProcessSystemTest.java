@@ -1,11 +1,9 @@
 package neqsim.processSimulation.processSystem;
 
 import java.util.ArrayList;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
@@ -94,7 +92,7 @@ public class ProcessSystemTest {
         Separator sep = new Separator();
         p.add(sep);
         Assertions.assertEquals(1, p.size());
-        p.removeUnit("");
+        p.removeUnit("Separator");
         Assertions.assertEquals(0, p.size());
     }
 
@@ -108,7 +106,7 @@ public class ProcessSystemTest {
         Assertions.assertEquals(2, p.size());
         p.removeUnit("Separator2");
         Assertions.assertEquals(1, p.size());
-        p.removeUnit("");
+        p.removeUnit("Separator");
         Assertions.assertEquals(0, p.size());
     }
 
@@ -119,14 +117,14 @@ public class ProcessSystemTest {
         Separator sep2 = new Separator();
         p.add(sep2);
 
-        Assertions.assertEquals(0, p.getUnitNumber(""));
+        Assertions.assertEquals(0, p.getUnitNumber("Separator"));
         Assertions.assertEquals(1, p.getUnitNumber("Separator2"));
 
-        p.removeUnit("");
+        p.removeUnit("Separator");
         p.add(sep);
 
         Assertions.assertEquals(0, p.getUnitNumber("Separator2"));
-        Assertions.assertEquals(1, p.getUnitNumber(""));
+        Assertions.assertEquals(1, p.getUnitNumber("Separator"));
     }
 
     @Test
