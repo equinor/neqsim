@@ -35,6 +35,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
      * Constructor for SimpleAdsorber.
      * </p>
      */
+    @Deprecated
     public SimpleAdsorber() {
         this("SimpleAdsorber");
     }

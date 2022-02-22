@@ -58,6 +58,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * Constructor for Compressor.
      * </p>
      */
+    @Deprecated
     public Compressor() {
         this("Compressor");
     }

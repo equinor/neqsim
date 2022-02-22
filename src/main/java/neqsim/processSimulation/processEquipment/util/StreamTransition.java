@@ -40,6 +40,7 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
      * @param outletStream a
      *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamTransition(StreamInterface inletStream, StreamInterface outletStream) {
         this("StreamTransition", inletStream, outletStream);
     }

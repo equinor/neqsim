@@ -65,6 +65,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public GasTurbine(StreamInterface inletStream) {
         this();
         setInletStream(inletStream);

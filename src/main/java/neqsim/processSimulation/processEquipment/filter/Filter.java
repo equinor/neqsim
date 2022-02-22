@@ -31,6 +31,7 @@ public class Filter extends ProcessEquipmentBaseClass {
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Filter(StreamInterface inStream) {
         this("Filter", inStream);
     }
