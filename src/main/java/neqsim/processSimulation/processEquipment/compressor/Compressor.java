@@ -72,7 +72,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
      * Constructor for Compressor.
      * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
     @Deprecated
