@@ -38,6 +38,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      * Constructor for Tank.
      * </p>
      */
+    @Deprecated
     public Tank() {
         super("Tank");
     }
@@ -53,6 +54,15 @@ public class Tank extends ProcessEquipmentBaseClass {
     public Tank(Stream inletStream) {
         this();
         addStream(inletStream);
+    }
+
+    /**
+     * Constructor for Tank.
+     * 
+     * @param name
+     */
+    public Tank(String name) {
+        super(name);
     }
 
     /**
