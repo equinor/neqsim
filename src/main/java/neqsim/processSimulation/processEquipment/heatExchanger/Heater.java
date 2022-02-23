@@ -56,36 +56,28 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     }
 
     /**
-     * Constructor for Heater.
-     * 
-     * @param name
-     */
-    public Heater(String name) {
-        super(name);
-    }
-
-    /**
      * <p>
      * Constructor for Heater.
      * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
-    public Heater(String name, StreamInterface stream) {
-        super(name, stream);
+    public Heater(String name, StreamInterface inStream) {
+        super(name);
+        this.inStream = inStream;
+        system = inStream.getThermoSystem().clone();
+        outStream = new Stream(system);
     }
 
     /**
      * <p>
      * Getter for the field <code>inStream</code>.
      * </p>
-     * 
-     * @deprecated getInletStream
+     *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
-    @Deprecated
     public StreamInterface getInStream() {
         return inStream;
     }

@@ -13,9 +13,25 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 public class Cooler extends Heater {
     private static final long serialVersionUID = 1000;
 
-    @Deprecated
-    public Cooler(StreamInterface stream) {
-        setInletStream(stream);
+    /**
+     * <p>
+     * Constructor for Cooler.
+     * </p>
+     */
+    public Cooler() {
+        super();
+    }
+
+    /**
+     * <p>
+     * Constructor for Cooler.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    public Cooler(StreamInterface inStream) {
+        super(inStream);
     }
 
     /**
@@ -38,12 +54,12 @@ public class Cooler extends Heater {
 
         inStream.run();
         inStream.getFluid().init(3);
-        getOutletStream().run();
-        getOutletStream().getFluid().init(3);
+        getOutStream().run();
+        getOutStream().getFluid().init(3);
 
         double heatTransferEntropyProd = coolingMediumTemperature * getDuty();
         System.out.println("heat entropy " + heatTransferEntropyProd);
-        entrop += getOutletStream().getThermoSystem().getEntropy(unit)
+        entrop += getOutStream().getThermoSystem().getEntropy(unit)
                 - inStream.getThermoSystem().getEntropy(unit);
 
         return entrop;
