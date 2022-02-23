@@ -52,8 +52,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      */
     @Deprecated
     public Tank(Stream inletStream) {
-        this();
-        addStream(inletStream);
+        this("Tank", inletStream);
     }
 
     /**
