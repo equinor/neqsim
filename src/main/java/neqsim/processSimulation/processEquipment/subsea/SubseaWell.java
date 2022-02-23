@@ -34,6 +34,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
      *        object
      */
     public SubseaWell(StreamInterface instream) {
+        super("SubseaWell");
         this.inStream = instream;
         setOutStream(instream.clone());
         pipeline = new AdiabaticTwoPhasePipe(instream);

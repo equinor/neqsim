@@ -7,7 +7,6 @@ package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
 import java.util.Objects;
-
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -53,18 +52,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     /**
      * Constructor for Separator.
      */
+    @Deprecated
     public Separator() {
-        super();
-    }
-
-    /**
-     * Constructor for Separator.
-     * 
-     * @param name Name of separator
-     */
-    public Separator(String name) {
-        this();
-        this.setName(name);
+        super("Separator");
     }
 
     /**
@@ -73,9 +63,19 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Separator(StreamInterface inletStream) {
         this();
         addStream(inletStream);
+    }
+
+    /**
+     * Constructor for Separator.
+     * 
+     * @param name Name of separator
+     */
+    public Separator(String name) {
+        super(name);
     }
 
     /**

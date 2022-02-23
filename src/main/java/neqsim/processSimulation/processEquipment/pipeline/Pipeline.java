@@ -48,7 +48,18 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      * Constructor for Pipeline.
      * </p>
      */
+    @Deprecated
     public Pipeline() {
+        super("Pipeline");
+    }
+
+    /**
+     * Constructor for Pipeline.
+     * 
+     * @param name
+     */
+    public Pipeline(String name) {
+        super(name);
     }
 
     /**
@@ -59,10 +70,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Pipeline(StreamInterface inStream) {
-        this();
-        this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+        this("Pipeline", inStream);
     }
 
     /**
@@ -75,8 +85,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      *        object
      */
     public Pipeline(String name, StreamInterface inStream) {
-        this();
-        this.name = name;
+        this(name);
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
     }

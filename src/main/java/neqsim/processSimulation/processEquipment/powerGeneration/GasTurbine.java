@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.powerGeneration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -45,6 +44,11 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      * </p>
      */
     public GasTurbine() {
+        this("GasTurbine");
+    }
+
+    public GasTurbine(String name) {
+        super(name);
         // needs to be changed to gas tubing mechanical design
         SystemInterface airThermoSystem = neqsim.thermo.Fluid.create("air");
         airThermoSystem.addComponent("CO2", 0.0);
@@ -54,7 +58,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         airStream = new Stream(airThermoSystem);
         airStream.setPressure(1.01325);
         airStream.setTemperature(288.15, "K");
-        airCompressor = new Compressor(airStream);
+        airCompressor = new Compressor("airCompressor", airStream);
     }
 
     /**
@@ -65,6 +69,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public GasTurbine(StreamInterface inletStream) {
         this();
         setInletStream(inletStream);
@@ -80,8 +85,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      *        object
      */
     public GasTurbine(String name, StreamInterface inletStream) {
-        this();
-        this.name = name;
+        this(name);
         setInletStream(inletStream);
     }
 

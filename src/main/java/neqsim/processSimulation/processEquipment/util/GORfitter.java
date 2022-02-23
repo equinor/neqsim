@@ -29,7 +29,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	String unitT = "C", unitP = "bara";
 
 	public GORfitter() {
-		this.name = "GOR fitter";
+		super("GOR fitter");
 	}
 
 	/**
@@ -42,7 +42,6 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 */
 	public GORfitter(StreamInterface stream) {
 		this();
-		name = "GOR fitter";
 		this.inletStream = stream;
 		this.outletStream = stream.clone();
 	}

@@ -36,7 +36,9 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
      * Constructor for ThrottlingValve.
      * </p>
      */
-    public ThrottlingValve() {}
+    public ThrottlingValve() {
+        this("ThrottlingValve");
+    }
 
     /**
      * <p>
@@ -46,7 +48,31 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public ThrottlingValve(StreamInterface inletStream) {
+        this("ThrottlingValve", inletStream);
+    }
+
+    /**
+     * * Constructor for ThrottlingValve.
+     * 
+     * @param name
+     */
+    public ThrottlingValve(String name) {
+        super(name);
+    }
+
+    /**
+     * <p>
+     * Constructor for ThrottlingValve.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    public ThrottlingValve(String name, StreamInterface inletStream) {
+        super(name);
         setInletStream(inletStream);
     }
 
@@ -60,20 +86,6 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
      */
     public double getDeltaPressure(String unit) {
         return inletStream.getFluid().getPressure(unit) - thermoSystem.getPressure(unit);
-    }
-
-    /**
-     * <p>
-     * Constructor for ThrottlingValve.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public ThrottlingValve(String name, StreamInterface inletStream) {
-        this.name = name;
-        setInletStream(inletStream);
     }
 
     /** {@inheritDoc} */

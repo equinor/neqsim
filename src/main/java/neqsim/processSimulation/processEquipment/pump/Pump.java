@@ -46,7 +46,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
      * Constructor for Pump.
      * </p>
      */
-    public Pump() {}
+    public Pump() {
+        super("Pump");
+    }
 
     /**
      * <p>
@@ -56,8 +58,19 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Pump(StreamInterface inletStream) {
+        this();
         setInletStream(inletStream);
+    }
+
+    /**
+     * Constructor for Pump.
+     * 
+     * @param name
+     */
+    public Pump(String name) {
+        super(name);
     }
 
     /**
@@ -70,7 +83,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
      *        object
      */
     public Pump(String name, StreamInterface inletStream) {
-        super(name);
+        this(name);
         setInletStream(inletStream);
     }
 
