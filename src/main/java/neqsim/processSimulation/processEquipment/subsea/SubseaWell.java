@@ -35,12 +35,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
      */
     @Deprecated
     public SubseaWell(StreamInterface instream) {
-        this("SubseaWell", instream);
-    }
-
-
-    public SubseaWell(String name, StreamInterface instream) {
-        super(name);
+        super("SubseaWell");
         this.inStream = instream;
         setOutStream(instream.clone());
         pipeline = new AdiabaticTwoPhasePipe(instream);
@@ -132,7 +127,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         ThrottlingValve subseaChoke = new ThrottlingValve("subseachoke", well1.getOutStream());
         subseaChoke.setOutletPressure(90.0);
         subseaChoke.setAcceptNegativeDP(false);
-        SimpleFlowLine flowLine = new SimpleFlowLine("flowLine", subseaChoke.getOutletStream());
+        SimpleFlowLine flowLine = new SimpleFlowLine(subseaChoke.getOutletStream());
         flowLine.getPipeline().setDiameter(0.4);
         flowLine.getPipeline().setLength(2000.0);
         flowLine.getPipeline().setInletElevation(-100.0);

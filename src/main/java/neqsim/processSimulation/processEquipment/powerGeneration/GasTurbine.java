@@ -42,7 +42,11 @@ public class GasTurbine extends TwoPortEquipment {
      * </p>
      */
     public GasTurbine() {
-        super("GasTurbine");
+        this("GasTurbine");
+    }
+
+    public GasTurbine(String name) {
+        super(name);
         // needs to be changed to gas tubing mechanical design
         SystemInterface airThermoSystem = neqsim.thermo.Fluid.create("air");
         airThermoSystem.addComponent("CO2", 0.0);
@@ -52,7 +56,7 @@ public class GasTurbine extends TwoPortEquipment {
         airStream = new Stream(airThermoSystem);
         airStream.setPressure(1.01325);
         airStream.setTemperature(288.15, "K");
-        airCompressor = new Compressor("aircompressor", airStream);
+        airCompressor = new Compressor("airCompressor", airStream);
     }
 
     /**

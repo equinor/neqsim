@@ -90,7 +90,7 @@ public class ProcessSystemTest {
         Separator sep = new Separator("sep");
         p.add(sep);
         Assertions.assertEquals(1, p.size());
-        p.removeUnit("sep");
+        p.removeUnit("Separator");
         Assertions.assertEquals(0, p.size());
     }
 

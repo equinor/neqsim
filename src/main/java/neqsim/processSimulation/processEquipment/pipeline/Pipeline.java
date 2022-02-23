@@ -10,7 +10,6 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDesign;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -61,9 +60,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
      */
     @Deprecated
     public Pipeline(StreamInterface inStream) {
-        this();
-        this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+        this("Pipeline", inStream);
     }
 
     /**

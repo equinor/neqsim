@@ -88,7 +88,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
      * <p>
      * Constructor for SimpleAdsorber.
      * </p>
-     *
+     * 
      * @param name
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object

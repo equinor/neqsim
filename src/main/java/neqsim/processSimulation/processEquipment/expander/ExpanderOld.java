@@ -37,8 +37,9 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
      * Constructor for ExpanderOld.
      * </p>
      */
+    @Deprecated
     public ExpanderOld() {
-        super("ExpanderOld");
+        this("ExpanderOld");
     }
 
     /**
@@ -50,8 +51,16 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
      */
     @Deprecated
     public ExpanderOld(Stream inletStream) {
-        this();
-        setInletStream(inletStream);
+        this("ExpanderOld", inletStream);
+    }
+
+    /**
+     * Constructor for ExpanderOld.
+     * 
+     * @param name
+     */
+    public ExpanderOld(String name) {
+        super(name);
     }
 
     /**

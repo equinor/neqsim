@@ -69,10 +69,9 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
      * Constructor for Heater.
      * </p>
      *
-     * @param name   a {@link java.lang.String} object
-     * @param stream a
-     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *               object
+     * @param name a {@link java.lang.String} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Heater(String name, StreamInterface stream) {
         super(name, stream);
@@ -84,9 +83,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
      * </p>
      * 
      * @deprecated getInletStream
-     * @return a
-     *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *         object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     @Deprecated
     public StreamInterface getInStream() {

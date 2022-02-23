@@ -34,7 +34,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
      * </p>
      */
     public ThrottlingValve() {
-        super("ThrottlingValve");
+        this("ThrottlingValve");
     }
 
     /**
@@ -48,6 +48,15 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     @Deprecated
     public ThrottlingValve(StreamInterface inletStream) {
         this("ThrottlingValve", inletStream);
+    }
+
+    /**
+     * * Constructor for ThrottlingValve.
+     * 
+     * @param name
+     */
+    public ThrottlingValve(String name) {
+        super(name);
     }
 
     /**
@@ -73,7 +82,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
      * @return a double
      */
     public double getDeltaPressure(String unit) {
-        return getInletStream().getFluid().getPressure(unit) - thermoSystem.getPressure(unit);
+        return inStream.getFluid().getPressure(unit) - thermoSystem.getPressure(unit);
     }
 
     /** {@inheritDoc} */

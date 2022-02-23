@@ -56,6 +56,15 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     /**
+     * Constructor for Tank.
+     * 
+     * @param name
+     */
+    public Tank(String name) {
+        super(name);
+    }
+
+    /**
      * <p>
      * Constructor for Tank.
      * </p>

@@ -59,6 +59,17 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
     /**
      * Constructor for Separator.
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    @Deprecated
+    public Separator(StreamInterface inletStream) {
+        this("Separator", inletStream);
+    }
+
+    /**
+     * Constructor for Separator.
      * 
      * @param name Name of separator
      */
@@ -69,25 +80,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     /**
      * Constructor for Separator.
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    @Deprecated
-    public Separator(StreamInterface inletStream) {
-        this();
-        addStream(inletStream);
-    }
-
-    /**
-     * Constructor for Separator.
-     *
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
     public Separator(String name, StreamInterface inletStream) {
-        this(inletStream);
-        this.name = name;
+        super(name);
+        addStream(inletStream);
     }
 
     public SeparatorMechanicalDesign gMechanicalDesign() {
@@ -266,7 +265,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     public void runTransient(double dt) {
         inletStreamMixer.run();
 
-        //System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
+        // System.out.println("moles out" +
+        // liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
         // double inMoles =
         // inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
         // double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
@@ -275,11 +275,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         gasOutStream.getThermoSystem().init(3);
         liquidOutStream.getThermoSystem().init(3);
         double volume1 = thermoSystem.getVolume();
-        //System.out.println("volume1 " + volume1);
+        // System.out.println("volume1 " + volume1);
         double deltaEnergy = inletStreamMixer.getOutStream().getThermoSystem().getEnthalpy()
                 - gasOutStream.getThermoSystem().getEnthalpy()
                 - liquidOutStream.getThermoSystem().getEnthalpy();
-        //System.out.println("enthalph delta " + deltaEnergy);
+        // System.out.println("enthalph delta " + deltaEnergy);
         double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
             double dn = inletStreamMixer.getOutStream().getThermoSystem().getPhase(0)
@@ -290,7 +290,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                             .getNumberOfMolesInPhase()
                     - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i)
                             .getNumberOfMolesInPhase();
-            //System.out.println("dn " + dn);
+            // System.out.println("dn " + dn);
             thermoSystem.addComponent(inletStreamMixer.getOutStream().getThermoSystem().getPhase(0)
                     .getComponent(i).getComponentNumber(), dn * dt);
         }
@@ -300,7 +300,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
 
         liquidLevel = thermoSystem.getPhase(1).getVolume() * 1e-5 / (liquidVolume + gasVolume);
-        //System.out.println("liquid level " + liquidLevel);
+        // System.out.println("liquid level " + liquidLevel);
         liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter()
                 * getSeparatorLength();
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
@@ -737,9 +737,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         int result = super.hashCode();
         result = prime * result + Objects.hash(designLiquidLevelFraction, efficiency,
                 gasCarryunderFraction, gasOutStream, gasSystem, gasVolume, inletStreamMixer,
-                internalDiameter, liquidCarryoverFraction, liquidLevel, liquidOutStream, liquidSystem,
-                liquidVolume, numberOfInputStreams, orientation, pressureDrop, separatorLength,
-                separatorSection, thermoSystem, thermoSystem2, thermoSystemCloned, waterSystem);
+                internalDiameter, liquidCarryoverFraction, liquidLevel, liquidOutStream,
+                liquidSystem, liquidVolume, numberOfInputStreams, orientation, pressureDrop,
+                separatorLength, separatorSection, thermoSystem, thermoSystem2, thermoSystemCloned,
+                waterSystem);
         return result;
     }
 
@@ -766,13 +767,16 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                         .doubleToLongBits(other.internalDiameter)
                 && Double.doubleToLongBits(liquidCarryoverFraction) == Double
                         .doubleToLongBits(other.liquidCarryoverFraction)
-                && Double.doubleToLongBits(liquidLevel) == Double.doubleToLongBits(other.liquidLevel)
+                && Double.doubleToLongBits(liquidLevel) == Double
+                        .doubleToLongBits(other.liquidLevel)
                 && Objects.equals(liquidOutStream, other.liquidOutStream)
                 && Objects.equals(liquidSystem, other.liquidSystem)
-                && Double.doubleToLongBits(liquidVolume) == Double.doubleToLongBits(other.liquidVolume)
+                && Double.doubleToLongBits(liquidVolume) == Double
+                        .doubleToLongBits(other.liquidVolume)
                 && numberOfInputStreams == other.numberOfInputStreams
                 && Objects.equals(orientation, other.orientation)
-                && Double.doubleToLongBits(pressureDrop) == Double.doubleToLongBits(other.pressureDrop)
+                && Double.doubleToLongBits(pressureDrop) == Double
+                        .doubleToLongBits(other.pressureDrop)
                 && Double.doubleToLongBits(separatorLength) == Double
                         .doubleToLongBits(other.separatorLength)
                 && Objects.equals(separatorSection, other.separatorSection)

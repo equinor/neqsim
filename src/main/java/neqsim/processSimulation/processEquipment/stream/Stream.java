@@ -31,6 +31,81 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
     /**
      * <p>
+     * Constructor for Stream.
+     * </p>
+     */
+    @Deprecated
+    public Stream() {
+        super("Stream");
+    }
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     *
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    @Deprecated
+    public Stream(StreamInterface stream) {
+        this("Stream", stream);
+    }
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
+    @Deprecated
+    public Stream(SystemInterface thermoSystem) {
+        this("Stream", thermoSystem);
+    }
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
+    public Stream(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for Stream.
+     * 
+     * @param name
+     * @param stream
+     */
+    public Stream(String name, StreamInterface stream) {
+        super(name);
+        this.setStream(stream);
+        thermoSystem = stream.getThermoSystem();
+        numberOfStreams++;
+        streamNumber = numberOfStreams;
+    }
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
+    public Stream(String name, SystemInterface thermoSystem) {
+        super(name);
+        this.thermoSystem = thermoSystem;
+        numberOfStreams++;
+        streamNumber = numberOfStreams;
+    }
+
+    /**
+     * <p>
      * Getter for the field <code>gasQuality</code>.
      * </p>
      *
@@ -49,97 +124,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      */
     public void setGasQuality(double gasQuality) {
         this.gasQuality = gasQuality;
-    }
-
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     */
-    @Deprecated
-    public Stream() {
-        this("Stream");
-    }
-
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public Stream(String name) {
-        super(name);
-    }
-
-
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     *
-     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    @Deprecated
-    public Stream(SystemInterface thermoSystem) {
-        this();
-        this.thermoSystem = thermoSystem;
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
-    }
-
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    @Deprecated
-    public Stream(StreamInterface stream) {
-        this();
-        this.setStream(stream);
-        thermoSystem = stream.getThermoSystem();
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
-    }
-
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     *
-<<<<<<< HEAD
-     * @param name   a {@link java.lang.String} object
-     * @param stream a
-     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *               object
-     */
-    public Stream(String name, StreamInterface stream) {
-        super(name);
-        this.setStream(stream);
-        thermoSystem = stream.getThermoSystem();
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
-    }
-
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     *
-     * @param name         a {@link java.lang.String} object
-=======
-     * @param name a {@link java.lang.String} object
->>>>>>> pragmatic_naming
-     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public Stream(String name, SystemInterface thermoSystem) {
-        super(name);
-        this.thermoSystem = thermoSystem;
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
     }
 
     /** {@inheritDoc} */

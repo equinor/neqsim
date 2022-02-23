@@ -22,9 +22,14 @@ public class ReBoiler extends TwoPortEquipment {
     SystemInterface system;
     private double reboilerDuty = 0.0;
 
+    /**
+     * <p>
+     * Constructor for ReBoiler.
+     * </p>
+     */
     @Deprecated
     public ReBoiler() {
-        super("Reboiler");
+        super("ReBoiler");
     }
 
     /**
@@ -37,9 +42,7 @@ public class ReBoiler extends TwoPortEquipment {
      */
     @Deprecated
     public ReBoiler(StreamInterface inStream) {
-        this();
-        this.inStream = inStream;
-        outStream = inStream.clone();
+        this("ReBoiler", inStream);
     }
 
     /**
@@ -48,14 +51,11 @@ public class ReBoiler extends TwoPortEquipment {
      * </p>
      * 
      * @param name
-     * @param stream a
-     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *               object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public ReBoiler(String name, StreamInterface inStream) {
-        super(name);
-        this.inStream = inStream;
-        outStream = inStream.clone();
+        super(name, inStream);
     }
 
     /**

@@ -20,15 +20,14 @@ public class Filter extends TwoPortEquipment {
     private double deltaP = 0.01;
     private double Cv = 0.0;
 
+
     /**
      * <p>
      * Constructor for Filter.
      * </p>
      *
-     * @param name
-     * @param stream a
-     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *               object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     @Deprecated
     public Filter(StreamInterface inStream) {
