@@ -37,7 +37,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
      * </p>
      */
     public ThrottlingValve() {
-        super("ThrottlingValve");
+        this("ThrottlingValve");
     }
 
     /**
@@ -51,6 +51,15 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     @Deprecated
     public ThrottlingValve(StreamInterface inletStream) {
         this("ThrottlingValve", inletStream);
+    }
+
+    /**
+     * * Constructor for ThrottlingValve.
+     * 
+     * @param name
+     */
+    public ThrottlingValve(String name) {
+        super(name);
     }
 
     /**
