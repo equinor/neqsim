@@ -3,7 +3,7 @@ package neqsim.processSimulation.processEquipment.powerGeneration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.expander.Expander;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
@@ -21,15 +21,13 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author asmund
  * @version $Id: $Id
  */
-public class GasTurbine extends ProcessEquipmentBaseClass {
+public class GasTurbine extends TwoPortEquipment {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Compressor.class);
 
     public SystemInterface thermoSystem;
     public StreamInterface airStream;
     public Compressor airCompressor;
-    public StreamInterface inletStream;
-    public StreamInterface outStream;
     public double combustionpressure = 2.5;
     double airGasRatio = 2.8;
     double expanderPower = 0.0;
@@ -81,9 +79,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      *        object
      */
     public GasTurbine(String name, StreamInterface inletStream) {
-        this();
-        this.name = name;
-        setInletStream(inletStream);
+        super(name, inletStream);
     }
 
     public CompressorMechanicalDesign getMechanicalDesign() {
@@ -110,7 +106,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      *        object
      */
     public void setInletStream(StreamInterface inletStream) {
-        this.inletStream = inletStream;
+        this.inStream = inletStream;
         try {
             this.outStream = inletStream.clone();
         } catch (Exception e) {
@@ -122,8 +118,8 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     @Override
     public void run() {
         // System.out.println("compressor running..");
-        double heatOfCombustion = inletStream.LCV() * inletStream.getFlowRate("mole/sec");
-        thermoSystem = inletStream.getThermoSystem().clone();
+        double heatOfCombustion = inStream.LCV() * inStream.getFlowRate("mole/sec");
+        thermoSystem = inStream.getThermoSystem().clone();
         airStream.setFlowRate(thermoSystem.getFlowRate("mole/sec") * airGasRatio, "mole/sec");
         airStream.setPressure(1.01325);
         airStream.run();

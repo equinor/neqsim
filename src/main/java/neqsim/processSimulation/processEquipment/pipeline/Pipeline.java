@@ -56,17 +56,6 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
      * Constructor for Pipeline.
      * </p>
      *
-     * @param name a {@link java.lang.String} object
-     */
-    public Pipeline(String name) {
-        super(name);
-    }
-
-    /**
-     * <p>
-     * Constructor for Pipeline.
-     * </p>
-     *
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
@@ -83,13 +72,22 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
      * </p>
      *
      * @param name a {@link java.lang.String} object
+     */
+    public Pipeline(String name) {
+        super(name);
+    }
+
+    /**
+     * <p>
+     * Constructor for Pipeline.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
     public Pipeline(String name, StreamInterface inStream) {
-        this(name);
-        this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+        super(name, inStream);
     }
 
     public PipelineMechanicalDesign getMechanicalDesign() {

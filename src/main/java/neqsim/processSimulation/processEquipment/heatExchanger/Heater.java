@@ -42,10 +42,6 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
         super("Heater");
     }
 
-    public Heater(String name) {
-        super(name);
-    }
-
     /**
      * <p>
      * Constructor for Heater.
@@ -57,6 +53,15 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     @Deprecated
     public Heater(StreamInterface inStream) {
         this("Heater", inStream);
+    }
+
+    /**
+     * Constructor for Heater.
+     * 
+     * @param name
+     */
+    public Heater(String name) {
+        super(name);
     }
 
     /**

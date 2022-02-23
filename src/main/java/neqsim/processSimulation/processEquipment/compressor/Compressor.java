@@ -69,24 +69,27 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         this("Compressor");
     }
 
-    public Compressor(String name) {
-        super(name);
-    }
-
     /**
      * <p>
      * Constructor for Compressor.
      * </p>
      *
-     * @param name
-     * @param stream a
-     *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *               object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     @Deprecated
     public Compressor(StreamInterface inletStream) {
         this();
         setInletStream(inletStream);
+    }
+
+    /**
+     * Constructor for Compressor.
+     * 
+     * @param name
+     */
+    public Compressor(String name) {
+        super(name);
     }
 
     /**
