@@ -29,7 +29,7 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
      */
     @Deprecated
     public ReBoiler() {
-        super("Reboiler");
+        super("ReBoiler");
     }
 
     /**
@@ -42,9 +42,7 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
      */
     @Deprecated
     public ReBoiler(StreamInterface inStream) {
-        this();
-        this.inStream = inStream;
-        outStream = inStream.clone();
+        this("ReBoiler", inStream);
     }
 
     /**

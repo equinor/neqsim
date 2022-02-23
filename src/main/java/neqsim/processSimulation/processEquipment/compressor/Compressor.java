@@ -63,10 +63,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         this("Compressor");
     }
 
-    public Compressor(String name) {
-        super(name);
-    }
-
     /**
      * <p>
      * Constructor for Compressor.
@@ -75,9 +71,31 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Compressor(StreamInterface inletStream) {
         this();
         setInletStream(inletStream);
+    }
+
+    /**
+     * <p>
+     * Constructor for Compressor.
+     * </p>
+     *
+     * @param interpolateMapLookup a boolean
+     */
+    @Deprecated
+    public Compressor(boolean interpolateMapLookup) {
+        this("Compressor", interpolateMapLookup);
+    }
+
+    /**
+     * Constructor for Compressor.
+     * 
+     * @param name
+     */
+    public Compressor(String name) {
+        super(name);
     }
 
     /**
@@ -99,10 +117,11 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * Constructor for Compressor.
      * </p>
      *
+     * @param name
      * @param interpolateMapLookup a boolean
      */
-    public Compressor(boolean interpolateMapLookup) {
-        this();
+    public Compressor(String name, boolean interpolateMapLookup) {
+        this(name);
         if (interpolateMapLookup) {
             compressorChart = new CompressorChartAlternativeMapLookup();
         }

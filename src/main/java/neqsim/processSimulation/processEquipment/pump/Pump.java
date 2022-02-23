@@ -65,6 +65,15 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
+     * Constructor for Pump.
+     * 
+     * @param name
+     */
+    public Pump(String name) {
+        super(name);
+    }
+
+    /**
      * <p>
      * Constructor for Pump.
      * </p>
@@ -74,7 +83,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
      *        object
      */
     public Pump(String name, StreamInterface inletStream) {
-        super(name);
+        this(name);
         setInletStream(inletStream);
     }
 
