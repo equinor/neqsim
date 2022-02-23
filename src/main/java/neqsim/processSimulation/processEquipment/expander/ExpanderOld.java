@@ -27,6 +27,8 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
 
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
+
+    // todo: neither subclass of Compressor nor TwoPortEquipment
     StreamInterface inletStream;
     StreamInterface outStream;
     double dH = 0.0;

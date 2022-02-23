@@ -1,7 +1,7 @@
 package neqsim.processSimulation.processEquipment.subsea;
 
 import java.util.ArrayList;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.reservoir.SimpleReservoir;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -17,11 +17,9 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  * @author asmund
  * @version $Id: $Id
  */
-public class SubseaWell extends ProcessEquipmentBaseClass {
+public class SubseaWell extends TwoPortEquipment {
     private static final long serialVersionUID = 1000;
 
-    protected StreamInterface inStream;
-    private StreamInterface outStream;
     public double height = 1000.0, length = 1200.0;
     AdiabaticTwoPhasePipe pipeline;
 
@@ -183,6 +181,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamInterface getOutStream() {
         return outStream;
     }
@@ -195,6 +194,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
      * @param outStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public void setOutStream(StreamInterface outStream) {
         this.outStream = outStream;
     }

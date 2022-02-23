@@ -1,6 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -13,13 +13,11 @@ import neqsim.thermo.system.SystemInterface;
  * @author asmund
  * @version $Id: $Id
  */
-public class StreamTransition extends ProcessEquipmentBaseClass {
+public class StreamTransition extends TwoPortEquipment {
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
-    private StreamInterface outletStream = null;
-    private StreamInterface inletStream = null;
 
     /**
      * <p>
@@ -60,8 +58,8 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
     public StreamTransition(String name, StreamInterface inletStream,
             StreamInterface outletStream) {
         super(name);
-        this.inletStream = inletStream;
-        this.outletStream = outletStream;
+        this.inStream = inletStream;
+        this.outStream = outletStream;
     }
 
     /**
@@ -72,7 +70,7 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public StreamInterface getInletStream() {
-        return inletStream;
+        return inStream;
     }
 
     /**
@@ -84,7 +82,7 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
      *        object
      */
     public void setInletStream(StreamInterface inletStream) {
-        this.inletStream = inletStream;
+        this.inStream = inletStream;
     }
 
     /**
@@ -95,7 +93,7 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public StreamInterface getOutletStream() {
-        return outletStream;
+        return outStream;
     }
 
     /**
@@ -107,41 +105,41 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
      *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public void setOutletStream(StreamInterface outletStream) {
-        this.outletStream = outletStream;
+        this.outStream = outletStream;
     }
 
     /** {@inheritDoc} */
     @Override
     public void run() {
         SystemInterface outThermoSystem = null;
-        if (outletStream != null) {
-            outThermoSystem = outletStream.getFluid().clone();
+        if (outStream != null) {
+            outThermoSystem = outStream.getFluid().clone();
         } else {
-            outThermoSystem = inletStream.getFluid().clone();
+            outThermoSystem = inStream.getFluid().clone();
         }
         outThermoSystem.setEmptyFluid();
 
         // SystemInterface fluid1 = outletStream.getFluid();
         // SystemInterface fluid2 = inletStream.getFluid();
 
-        for (int i = 0; i < inletStream.getFluid().getNumberOfComponents(); i++) {
+        for (int i = 0; i < inStream.getFluid().getNumberOfComponents(); i++) {
             if (outThermoSystem.getPhase(0)
-                    .hasComponent(inletStream.getFluid().getComponent(i).getName())) {
-                outThermoSystem.addComponent(inletStream.getFluid().getComponent(i).getName(),
-                        inletStream.getFluid().getComponent(i).getNumberOfmoles());
+                    .hasComponent(inStream.getFluid().getComponent(i).getName())) {
+                outThermoSystem.addComponent(inStream.getFluid().getComponent(i).getName(),
+                        inStream.getFluid().getComponent(i).getNumberOfmoles());
             }
         }
         // fluid1.init(0);
         // fluid1.setTemperature(fluid2.getTemperature());
         // fluid1.setPressure(fluid2.getPressure());
-        outletStream.setThermoSystem(outThermoSystem);
-        outletStream.run();
+        outStream.setThermoSystem(outThermoSystem);
+        outStream.run();
     }
 
     /** {@inheritDoc} */
     @Override
     public void displayResult() {
-        outletStream.getFluid().display();
+        outStream.getFluid().display();
     }
 
     /**

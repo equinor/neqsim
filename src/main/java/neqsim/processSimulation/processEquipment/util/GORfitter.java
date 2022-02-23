@@ -1,7 +1,7 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -16,11 +16,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author asmund
  * @version $Id: $Id
  */
-public class GORfitter extends ProcessEquipmentBaseClass {
+public class GORfitter extends TwoPortEquipment {
 	private static final long serialVersionUID = 1000;
 
-	public StreamInterface inletStream = null;
-	public StreamInterface outletStream = null;
 	double pressure = 1.01325, temperature = 15.0;
 	private String referenceConditions = "standard"; // "actual";
 	private boolean fitAsGVF = false;
@@ -28,6 +26,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	private double GOR = 120.0, GVF;
 	String unitT = "C", unitP = "bara";
 
+    @Deprecated
 	public GORfitter() {
 		super("GOR fitter");
 	}
@@ -40,14 +39,9 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
 	 *        object
 	 */
+    @Deprecated
 	public GORfitter(StreamInterface stream) {
-		this();
-		this.inletStream = stream;
-		this.outletStream = stream.clone();
-	}
-
-	public double getGFV() {
-		return GVF;
+        this("GORfitter", stream);
 	}
 
 	/**
@@ -60,8 +54,11 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 *        object
 	 */
 	public GORfitter(String name, StreamInterface stream) {
-		this(stream);
-		this.name = name;
+        super(name, stream);
+    }
+
+    public double getGFV() {
+        return GVF;
 	}
 
 	/**
@@ -73,9 +70,9 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 *        object
 	 */
 	public void setInletStream(StreamInterface inletStream) {
-		this.inletStream = inletStream;
+        this.inStream = inletStream;
 		try {
-			this.outletStream = inletStream.clone();
+            this.outStream = inletStream.clone();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -89,7 +86,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
 	 */
 	public StreamInterface getOutStream() {
-		return outletStream;
+        return outStream;
 	}
 
 	/**
@@ -143,7 +140,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	/** {@inheritDoc} */
 	@Override
 	public void run() {
-		SystemInterface tempFluid = inletStream.getThermoSystem().clone();
+        SystemInterface tempFluid = inStream.getThermoSystem().clone();
 		double flow = tempFluid.getFlowRate("kg/sec");
 		if (!getReferenceConditions().equals("actual")) {
 			tempFluid.setTemperature(15.0, "C");
@@ -156,7 +153,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 			e.printStackTrace();
 		}
 		if (!tempFluid.hasPhaseType("gas") || !tempFluid.hasPhaseType("oil")) {
-			outletStream = inletStream.clone();
+            outStream = inStream.clone();
 			return;
 		}
 		tempFluid.initPhysicalProperties("density");
@@ -185,15 +182,15 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
 			tempFluid.addComponent(i, moleChange[i]);
 		}
-		tempFluid.setPressure((inletStream.getThermoSystem()).getPressure());
-		tempFluid.setTemperature((inletStream.getThermoSystem()).getTemperature());
+        tempFluid.setPressure((inStream.getThermoSystem()).getPressure());
+        tempFluid.setTemperature((inStream.getThermoSystem()).getTemperature());
 		tempFluid.setTotalFlowRate(flow, "kg/sec");
 		try {
 			thermoOps.TPflash();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		outletStream.setThermoSystem(tempFluid);
+        outStream.setThermoSystem(tempFluid);
 		GVF = tempFluid.getPhase("gas").getCorrectedVolume()
 				/ (tempFluid.getPhase("oil").getCorrectedVolume()
 						+ tempFluid.getPhase("gas").getCorrectedVolume());

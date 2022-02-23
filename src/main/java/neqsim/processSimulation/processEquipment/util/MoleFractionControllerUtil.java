@@ -1,6 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -14,11 +14,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author esol
  * @version $Id: $Id
  */
-public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
+public class MoleFractionControllerUtil extends TwoPortEquipment {
     private static final long serialVersionUID = 1000;
 
-    StreamInterface inletStream;
-    StreamInterface outStream;
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
     String compName = null;
@@ -47,7 +45,7 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
      *        object
      */
     public void setInletStream(StreamInterface inletStream) {
-        this.inletStream = inletStream;
+        this.inStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();
         outStream = new Stream(thermoSystem);
@@ -60,6 +58,7 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamInterface getOutStream() {
         return outStream;
     }
@@ -131,7 +130,7 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
     @Override
     public void run() {
         // System.out.println("MoleFractionContollerUtil running..");
-        thermoSystem = inletStream.getThermoSystem().clone();
+        thermoSystem = inStream.getThermoSystem().clone();
         if (thermoSystem.getPhase(0).hasComponent(compName)) {
             thermoOps = new ThermodynamicOperations(thermoSystem);
             thermoSystem.init(1);

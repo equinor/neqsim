@@ -17,8 +17,6 @@ public class ReBoiler extends TwoPortEquipment {
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
-    StreamInterface outStream;
-    StreamInterface inStream;
     SystemInterface system;
     private double reboilerDuty = 0.0;
 
