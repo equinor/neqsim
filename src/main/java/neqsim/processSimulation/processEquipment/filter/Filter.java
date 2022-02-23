@@ -47,7 +47,7 @@ public class Filter extends TwoPortEquipment {
     public Filter(String name, StreamInterface inStream) {
         super(name);
         this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+        outStream = inStream.clone();
     }
 
     /** {@inheritDoc} */

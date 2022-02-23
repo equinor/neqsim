@@ -109,9 +109,9 @@ public class ProcessSystemTest {
 
     @Test
     public void testGetUnitNumber() {
-        Separator sep = new Separator("sep");
+        Separator sep = new Separator("Separator");
         p.add(sep);
-        Separator sep2 = new Separator("sep");
+        Separator sep2 = new Separator("Separator");
         p.add(sep2);
 
         Assertions.assertEquals(0, p.getUnitNumber("Separator"));
