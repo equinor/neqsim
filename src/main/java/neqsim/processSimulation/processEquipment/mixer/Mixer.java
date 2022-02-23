@@ -41,9 +41,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
      * Constructor for Mixer.
      * </p>
      */
-    @Deprecated
     public Mixer() {
-        this("Mixer");
+        super("Mixer");
     }
 
     /**
@@ -460,8 +459,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(isSetOutTemperature, mixedStream,
-                numberOfInputStreams, outTemperature, streams);
+        result = prime * result + Objects.hash(isSetOutTemperature, mixedStream, numberOfInputStreams,
+                outTemperature, streams);
         return result;
     }
 
@@ -477,9 +476,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         Mixer other = (Mixer) obj;
         return isSetOutTemperature == other.isSetOutTemperature
                 && Objects.equals(mixedStream, other.mixedStream)
-                && numberOfInputStreams == other.numberOfInputStreams
-                && Double.doubleToLongBits(outTemperature) == Double
-                        .doubleToLongBits(other.outTemperature)
+                && numberOfInputStreams == other.numberOfInputStreams && Double
+                        .doubleToLongBits(outTemperature) == Double.doubleToLongBits(other.outTemperature)
                 && Objects.equals(streams, other.streams);
     }
 }

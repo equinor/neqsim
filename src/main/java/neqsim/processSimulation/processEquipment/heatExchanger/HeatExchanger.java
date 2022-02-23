@@ -39,23 +39,12 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     public double thermalEffectiveness = 0.0;
     private String flowArrangement = "concentric tube counterflow";
 
-    @Deprecated
-    public HeatExchanger(StreamInterface inStream1) {
-        outStream = new Stream[2];
-        inStream = new Stream[2];
-        this.inStream[0] = inStream1;
-        this.inStream[1] = inStream1;
-        outStream[0] = inStream1.clone();
-        outStream[1] = inStream1.clone();
-    }
-
     /**
      * <p>
      * Constructor for HeatExchanger.
      * </p>
      */
-    public HeatExchanger(String name) {
-        super(name);
+    public HeatExchanger() {
         outStream = new Stream[2];
         inStream = new Stream[2];
     }
@@ -68,9 +57,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
-    public HeatExchanger(String name, StreamInterface inStream1) {
-        super(name);
-
+    public HeatExchanger(StreamInterface inStream1) {
         outStream = new Stream[2];
         inStream = new Stream[2];
         this.inStream[0] = inStream1;
@@ -89,14 +76,13 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * @param inStream2 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
-    public HeatExchanger(String name, StreamInterface stream1, StreamInterface stream2) {
-        super(name);
+    public HeatExchanger(StreamInterface inStream1, StreamInterface inStream2) {
         outStream = new Stream[2];
         inStream = new Stream[2];
-        this.inStream[0] = stream1;
-        this.inStream[1] = stream2;
-        outStream[0] = stream1.clone();
-        outStream[1] = stream2.clone();
+        this.inStream[0] = inStream1;
+        this.inStream[1] = inStream2;
+        outStream[0] = inStream1.clone();
+        outStream[1] = inStream2.clone();
     }
 
     /**
