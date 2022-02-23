@@ -30,8 +30,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Compressor.class);
     public SystemInterface thermoSystem;
-    public StreamInterface inletStream;
-    public StreamInterface outStream;
     private double outTemperature = 298.15;
     private boolean useOutTemperature = false;
     private CompresorPropertyProfile propertyProfile = new CompresorPropertyProfile();
@@ -152,7 +150,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     /** {@inheritDoc} */
     @Override
     public void setInletStream(StreamInterface inletStream) {
-        this.inletStream = inletStream;
+        this.inStream = inletStream;
         try {
             this.outStream = inletStream.clone();
         } catch (Exception e) {
@@ -264,7 +262,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
      */
     @Deprecated
     public StreamInterface getInStream() {
-        return inletStream;
+        return inStream;
     }
 
     /**
@@ -335,7 +333,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     /** {@inheritDoc} */
     @Override
     public void run() {
-        thermoSystem = inletStream.getThermoSystem().clone();
+        thermoSystem = inStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps = new ThermodynamicOperations(getThermoSystem());
         getThermoSystem().init(3);
@@ -1218,14 +1216,14 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     @Override
     public double getEntropyProduction(String unit) {
         return outStream.getThermoSystem().getEntropy(unit)
-                - inletStream.getThermoSystem().getEntropy(unit);
+                - inStream.getThermoSystem().getEntropy(unit);
     }
 
     /** {@inheritDoc} */
     @Override
     public double getExergyChange(String unit, double sourrondingTemperature) {
         return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)
-                - inletStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
+                - inStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
     }
 
     /**
@@ -1286,7 +1284,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + Objects.hash(antiSurge, compressorChart, dH, inletEnthalpy,
-                inletStream, isentropicEfficiency, numberOfCompressorCalcSteps, outStream,
+                inStream, isentropicEfficiency, numberOfCompressorCalcSteps, outStream,
                 outTemperature, polytropicEfficiency, polytropicExponent, polytropicFluidHead,
                 polytropicHead, polytropicHeadMeter, polytropicMethod, powerSet, pressure,
                 pressureUnit, speed, thermoSystem, useGERG2008, useOutTemperature,
@@ -1309,7 +1307,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
                 && Double.doubleToLongBits(dH) == Double.doubleToLongBits(other.dH)
                 && Double.doubleToLongBits(inletEnthalpy) == Double
                         .doubleToLongBits(other.inletEnthalpy)
-                && Objects.equals(inletStream, other.inletStream)
+                && Objects.equals(inStream, other.inStream)
                 && Double.doubleToLongBits(isentropicEfficiency) == Double
                         .doubleToLongBits(other.isentropicEfficiency)
                 && numberOfCompressorCalcSteps == other.numberOfCompressorCalcSteps
