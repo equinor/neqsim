@@ -36,6 +36,7 @@ public class TwoPhasePipeLine extends Pipeline {
      *
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
+    @Deprecated
     public TwoPhasePipeLine(Stream inStream) {
         this("TwoPhasePipeLine", inStream);
     }

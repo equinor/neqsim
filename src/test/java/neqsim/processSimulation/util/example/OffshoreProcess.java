@@ -93,7 +93,7 @@ public class OffshoreProcess {
 
         NeqStream stream_6 = new NeqStream("after mixer stream", mixer.getOutStream());
 
-        Pipeline pipe = new TwoPhasePipeLine(stream_6);
+        Pipeline pipe = new TwoPhasePipeLine("pipe", stream_6);
         pipe.setOutputFileName("c:/tempAsgard.nc");
         pipe.setInitialFlowPattern("annular");
         int numberOfLegs = 1, numberOfNodesInLeg = 120;

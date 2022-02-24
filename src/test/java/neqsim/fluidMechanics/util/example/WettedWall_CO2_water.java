@@ -31,7 +31,7 @@ public class WettedWall_CO2_water {
 
         Stream stream1 = new NeqStream("stream1", testSystem);
 
-        Pipeline pipe = new TwoPhasePipeLine(stream1);
+        Pipeline pipe = new TwoPhasePipeLine("pipe", stream1);
 
         pipe.setOutputFileName("c:/tempNew2.nc");
         pipe.setInitialFlowPattern("annular");
