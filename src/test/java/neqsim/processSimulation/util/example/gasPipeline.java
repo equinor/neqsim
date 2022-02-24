@@ -38,7 +38,7 @@ public class gasPipeline {
         pipeline.setOuterTemperatures(new double[] {277.0, 277.0, 277.0});
         pipeline.setPipeOuterHeatTransferCoefficients(new double[] {15.0, 15.0, 15.0});
         pipeline.setPipeWallHeatTransferCoefficients(new double[] {15.0, 15.0, 15.0});
-        AdiabaticPipe simplePipeline = new AdiabaticPipe(stream_1);
+        AdiabaticPipe simplePipeline = new AdiabaticPipe("simplePipeline", stream_1);
         simplePipeline.setDiameter(10.2);
         simplePipeline.setLength(100);
         simplePipeline.setInletElevation(0.0);

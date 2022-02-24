@@ -47,6 +47,7 @@ public class AdiabaticPipe extends Pipeline {
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public AdiabaticPipe(StreamInterface inStream) {
         this("AdiabaticPipe", inStream);
     }
@@ -60,6 +61,12 @@ public class AdiabaticPipe extends Pipeline {
         super(name);
     }
 
+    /**
+     * Constructor for AdiabaticPipe.
+     * 
+     * @param name
+     * @param inStream
+     */
     public AdiabaticPipe(String name, StreamInterface inStream) {
         this(name);
         this.inStream = inStream;

@@ -53,7 +53,7 @@ public class testGasScrubber {
 
         Stream stream_2 = new Stream("stream_2", scrubber.getGasOutStream());
 
-        AdiabaticPipe pipe = new AdiabaticPipe(stream_2);
+        AdiabaticPipe pipe = new AdiabaticPipe("pipe", stream_2);
         pipe.setDiameter(0.4);
         pipe.setLength(10);
 
