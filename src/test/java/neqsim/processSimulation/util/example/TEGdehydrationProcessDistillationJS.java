@@ -296,7 +296,6 @@ public class TEGdehydrationProcessDistillationJS {
 
         Stream liquidToTrreatment =
                 new Stream("water to treatment", sepregenGas.getLiquidOutStream());
-        liquidToTrreatment.setName();
 
         WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
         stripper.addSolventInStream(column.getLiquidOutStream());

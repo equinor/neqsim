@@ -7,7 +7,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
-class CompresorPropertyProfileTest {
+class CompressorPropertyProfileTest {
 	static neqsim.thermo.system.SystemInterface testSystem = null;
 
 	double pressure_inlet = 85.0;
