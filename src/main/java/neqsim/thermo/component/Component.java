@@ -7,7 +7,6 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
@@ -528,10 +527,15 @@ abstract class Component implements ComponentInterface {
     @Override
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
             int type) {
+
+        if (totalNumberOfMoles == 0) {
+            throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+                    "Component:init - Input totalNumberOfMoles must be larger than 0"));
+        }
         if (type == 0) {
-            z = numberOfMoles / totalNumberOfMoles;
             K = Math.exp(Math.log(criticalPressure / pressure) + 5.373 * (1.0 + srkacentricFactor)
                     * (1.0 - criticalTemperature / temperature));
+            z = numberOfMoles / totalNumberOfMoles;
             x = z;
             // System.out.println("K " + K);
         }

@@ -381,6 +381,10 @@ abstract class Phase implements PhaseInterface {
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
             double beta) {
+        if (totalNumberOfMoles <= 0) {
+            throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+                    "Phase:init - Input totalNumberOfMoles must be larger than zero."));
+        }
 
         this.beta = beta;
         numberOfMolesInPhase = beta * totalNumberOfMoles;
