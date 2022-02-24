@@ -64,6 +64,12 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         super(name);
     }
 
+    /**
+     * Constructor for AdiabaticTwoPhasePipe.
+     * 
+     * @param name
+     * @param inStream
+     */
     public AdiabaticTwoPhasePipe(String name, StreamInterface inStream) {
         super(name, inStream);
     }
