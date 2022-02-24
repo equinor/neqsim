@@ -33,7 +33,7 @@ public class testGasScrubber {
 
         Stream stream_1 = new Stream("Stream1", testSystem);
 
-        GasScrubberSimple scrubber = new GasScrubberSimple(stream_1);
+        GasScrubberSimple scrubber = new GasScrubberSimple("scrubber", stream_1);
         scrubber.setInternalDiameter(3.750);
         scrubber.setSeparatorLength(4.0);
         scrubber.getMechanicalDesign().setMaxOperationPressure(70.0);
