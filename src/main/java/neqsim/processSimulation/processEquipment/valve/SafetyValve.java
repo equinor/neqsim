@@ -38,6 +38,11 @@ public class SafetyValve extends ThrottlingValve {
         this("SafetyValve", inletStream);
     }
 
+    /**
+     * Constructor for SafetyValve.
+     * 
+     * @param name
+     */
     public SafetyValve(String name) {
         super(name);
     }
