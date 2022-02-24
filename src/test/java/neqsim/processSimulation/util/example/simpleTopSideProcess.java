@@ -44,19 +44,17 @@ public class simpleTopSideProcess {
 
         Separator LPseparator = new Separator("Separator 1", LP_valve.getOutStream());
 
-        Compressor LPcompressor = new Compressor(LPseparator.getGasOutStream());
+        Compressor LPcompressor = new Compressor("LPcompressor", LPseparator.getGasOutStream());
         LPcompressor.setOutletPressure(50.0);
 
-        Heater heaterLP = new Heater(LPcompressor.getOutStream());
+        Heater heaterLP = new Heater("heaterLP", LPcompressor.getOutStream());
         heaterLP.setOutTemperature(270.25);
 
-        Stream stream_2 = new Stream(heaterLP.getOutStream());
-        stream_2.setName("cooled gas");
+        Stream stream_2 = new Stream("cooled gas", heaterLP.getOutStream());
 
         GasScrubberSimple gasScrubber = new GasScrubberSimple("Scrubber", stream_2);
 
-        Stream stream_3 = new Stream(gasScrubber.getLiquidOutStream());
-        stream_2.setName("liq from scrubber gas");
+        Stream stream_3 = new Stream("liq from scrubber gas", gasScrubber.getLiquidOutStream());
 
         mixerHP.addStream(stream_3);
 
@@ -65,7 +63,7 @@ public class simpleTopSideProcess {
         mixer.addStream(separator.getGasOutStream());
         mixer.addStream(gasScrubber.getGasOutStream());
 
-        Compressor HPcompressor = new Compressor(mixer.getOutStream());
+        Compressor HPcompressor = new Compressor("HPcompressor", mixer.getOutStream());
         HPcompressor.setOutletPressure(200.0);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =

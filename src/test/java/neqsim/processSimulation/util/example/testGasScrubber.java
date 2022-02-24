@@ -51,7 +51,7 @@ public class testGasScrubber {
         scrubber.getSeparatorSection("top manway").getMechanicalDesign().setANSIclass(300);
         scrubber.getSeparatorSection("top manway").getMechanicalDesign().setNominalSize("DN 500");
 
-        Stream stream_2 = new Stream(scrubber.getGasOutStream());
+        Stream stream_2 = new Stream("stream_2", scrubber.getGasOutStream());
 
         AdiabaticPipe pipe = new AdiabaticPipe(stream_2);
         pipe.setDiameter(0.4);

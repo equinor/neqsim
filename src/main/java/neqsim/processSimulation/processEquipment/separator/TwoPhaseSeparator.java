@@ -26,6 +26,7 @@ public class TwoPhaseSeparator extends Separator {
      * Constructor for TwoPhaseSeparator.
      * </p>
      */
+    @Deprecated
     public TwoPhaseSeparator() {}
 
     /**
@@ -36,6 +37,7 @@ public class TwoPhaseSeparator extends Separator {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public TwoPhaseSeparator(StreamInterface inletStream) {
         this.setInletStream(inletStream);
     }
@@ -50,8 +52,7 @@ public class TwoPhaseSeparator extends Separator {
      *        object
      */
     public TwoPhaseSeparator(String name, StreamInterface inletStream) {
-        this.name = name;
-        this.setInletStream(inletStream);
+        super(name, inletStream);
     }
 
     /** {@inheritDoc} */
@@ -61,11 +62,11 @@ public class TwoPhaseSeparator extends Separator {
 
         thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
-        gasOutStream = new Stream(gasSystem);
+        gasOutStream = new Stream("gasOutStream", gasSystem);
 
         thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-        liquidOutStream = new Stream(liquidSystem);
+        liquidOutStream = new Stream("liquidOutStream", liquidSystem);
     }
 
     /** {@inheritDoc} */

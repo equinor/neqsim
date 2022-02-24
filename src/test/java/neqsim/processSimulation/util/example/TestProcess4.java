@@ -43,7 +43,7 @@ public class TestProcess4 {
         // Heater heater = new Heater(valve_1.getOutStream());
         // heater.setOutTemperature(273.15 + 46);
 
-        Stream liquidStream = new Stream(separator.getLiquidOutStream());
+        Stream liquidStream = new Stream("liquidStream", separator.getLiquidOutStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

@@ -44,7 +44,8 @@ public class gasPipeline {
         simplePipeline.setInletElevation(0.0);
         simplePipeline.setOutletElevation(-100.0);
 
-        AdiabaticTwoPhasePipe simplePipeline2phase = new AdiabaticTwoPhasePipe(stream_1);
+        AdiabaticTwoPhasePipe simplePipeline2phase =
+                new AdiabaticTwoPhasePipe("simplePipeline2phase", stream_1);
         simplePipeline2phase.setDiameter(10.2);
         simplePipeline2phase.setLength(100);
         simplePipeline2phase.setInletElevation(0.0);

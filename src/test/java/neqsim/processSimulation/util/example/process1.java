@@ -50,7 +50,8 @@ public class process1 {
         Stream stream_1 = new Stream("Stream1", testSystem);
 
         neqsim.processSimulation.processEquipment.compressor.Compressor compr =
-                new neqsim.processSimulation.processEquipment.compressor.Compressor(stream_1);
+                new neqsim.processSimulation.processEquipment.compressor.Compressor("compr",
+                        stream_1);
         compr.setOutletPressure(80.0);
         compr.setOutTemperature(345.0);
         compr.setUsePolytropicCalc(true);

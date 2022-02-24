@@ -4,10 +4,8 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 /**
@@ -28,7 +26,7 @@ class StreamTest {
 		  	testSystem = new SystemSrkEos(298.0, 10.0);
 	        testSystem.addComponent("methane", 100.0);
 	        processOps = new ProcessSystem();
-	        Stream inletStream = new Stream(testSystem);
+            Stream inletStream = new Stream("inletStream", testSystem);
 	        inletStream.setName("inlet stream");
 	        inletStream.setPressure(pressure_inlet, "bara");
 	        inletStream.setTemperature(temperature_inlet, "C");

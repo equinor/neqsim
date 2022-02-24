@@ -1,25 +1,11 @@
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
-import neqsim.processSimulation.measurementDevice.HydrateEquilibriumTemperatureAnalyser;
-import neqsim.processSimulation.measurementDevice.WaterDewPointAnalyser;
-import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
-import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
 import neqsim.processSimulation.processEquipment.distillation.Condenser;
 import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
 import neqsim.processSimulation.processEquipment.distillation.Reboiler;
-import neqsim.processSimulation.processEquipment.filter.Filter;
 import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
-import neqsim.processSimulation.processEquipment.pump.Pump;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Calculator;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.util.SetPoint;
-import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -192,8 +178,8 @@ public class TEGdehydrationProcessDistillationGFA {
         StreamSaturatorUtil saturatedFeedGas = new StreamSaturatorUtil(dryFeedGas);
         saturatedFeedGas.setName("water saturator");
 
-        Stream waterSaturatedFeedGas = new Stream(saturatedFeedGas.getOutStream());
-        waterSaturatedFeedGas.setName("water saturated feed gas");
+        Stream waterSaturatedFeedGas =
+                new Stream("water saturated feed gas", saturatedFeedGas.getOutStream());
 
         HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser =
                 new HydrateEquilibriumTemperatureAnalyser(waterSaturatedFeedGas);
@@ -207,9 +193,8 @@ public class TEGdehydrationProcessDistillationGFA {
         feedTPsetterToAbsorber.setOutPressure(absorberFeedGasPressure, "bara");
         feedTPsetterToAbsorber.setOutTemperature(absorberFeedGasTemperature, "C");
 
-        Stream feedToAbsorber = new Stream(feedTPsetterToAbsorber.getOutStream());
-        feedToAbsorber.setName("feed to TEG absorber");
-
+        Stream feedToAbsorber = new Stream("feed to TEG absorber","feedTPsetterToAbsorber.getOutStream());
+        
         Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
         TEGFeed.setFlowRate(leanTEGFlowRate, "kg/hr");
         TEGFeed.setTemperature(leanTEGTemperature, "C");

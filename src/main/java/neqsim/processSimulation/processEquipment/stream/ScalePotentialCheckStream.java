@@ -21,8 +21,9 @@ public class ScalePotentialCheckStream extends Stream {
      * Constructor for ScalePotentialCheckStream.
      * </p>
      */
+    @Deprecated
     public ScalePotentialCheckStream() {
-        super();
+        super("ScalePotentialCheckStream");
     }
 
     /**
@@ -33,7 +34,7 @@ public class ScalePotentialCheckStream extends Stream {
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public ScalePotentialCheckStream(SystemInterface thermoSystem) {
-        super(thermoSystem);
+        super("ScalePotentialCheckStream", thermoSystem);
     }
 
     /**
@@ -44,8 +45,28 @@ public class ScalePotentialCheckStream extends Stream {
      * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public ScalePotentialCheckStream(StreamInterface stream) {
-        super(stream);
+        super("ScalePotentialCheckStream", stream);
+    }
+
+    /**
+     * Constructor for ScalePotentialCheckStream.
+     * 
+     * @param name
+     */
+    public ScalePotentialCheckStream(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for ScalePotentialCheckStream.
+     * 
+     * @param name
+     * @param stream
+     */
+    public ScalePotentialCheckStream(String name, StreamInterface stream) {
+        super(name, stream);
     }
 
     /**

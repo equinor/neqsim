@@ -75,13 +75,13 @@ public class OffshoreProcess {
         StreamInterface stream_3 = separator.getLiquidOutStream();
         stream_2.setName("liquid out stream");
 
-        Compressor compressor1 = new Compressor(stream_2);
+        Compressor compressor1 = new Compressor("compressor1", stream_2);
         compressor1.setOutletPressure(131.3);
 
         StreamInterface stream_4 = compressor1.getOutStream();
         stream_4.setName("gas compressor out stream");
 
-        Compressor compressor2 = new Compressor(stream_3);
+        Compressor compressor2 = new Compressor("compressor2", stream_3);
         compressor2.setOutletPressure(131.3);
 
         StreamInterface stream_5 = compressor2.getOutStream();
@@ -91,8 +91,7 @@ public class OffshoreProcess {
         mixer.addStream(stream_4);
         mixer.addStream(stream_5);
 
-        NeqStream stream_6 = new NeqStream(mixer.getOutStream());
-        stream_6.setName("after mixer stream");
+        NeqStream stream_6 = new NeqStream("after mixer stream", mixer.getOutStream());
 
         Pipeline pipe = new TwoPhasePipeLine(stream_6);
         pipe.setOutputFileName("c:/tempAsgard.nc");

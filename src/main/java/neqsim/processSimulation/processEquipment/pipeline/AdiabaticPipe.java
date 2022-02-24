@@ -34,7 +34,36 @@ public class AdiabaticPipe extends Pipeline {
      * Constructor for AdiabaticPipe.
      * </p>
      */
+    @Deprecated
     public AdiabaticPipe() {
+        this("AdiabaticPipe");
+    }
+
+    /**
+     * <p>
+     * Constructor for AdiabaticPipe.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    public AdiabaticPipe(StreamInterface inStream) {
+        this("AdiabaticPipe", inStream);
+    }
+
+    /**
+     * Constructor for AdiabaticPipe.
+     * 
+     * @param name
+     */
+    public AdiabaticPipe(String name) {
+        super(name);
+    }
+
+    public AdiabaticPipe(String name, StreamInterface inStream) {
+        this(name);
+        this.inStream = inStream;
+        outStream = (Stream) inStream.clone();
     }
 
     /**
@@ -48,19 +77,6 @@ public class AdiabaticPipe extends Pipeline {
     public void setPipeSpecification(double nominalDiameter, String pipeSec) {
         pipeSpecification = pipeSec;
         insideDiameter = nominalDiameter / 1000.0;
-    }
-
-    /**
-     * <p>
-     * Constructor for AdiabaticPipe.
-     * </p>
-     *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public AdiabaticPipe(StreamInterface inStream) {
-        this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
     }
 
     /** {@inheritDoc} */

@@ -29,7 +29,7 @@ public class WettedWall_CO2_water {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
-        Stream stream1 = new NeqStream(testSystem);
+        Stream stream1 = new NeqStream("stream1", testSystem);
 
         Pipeline pipe = new TwoPhasePipeLine(stream1);
 

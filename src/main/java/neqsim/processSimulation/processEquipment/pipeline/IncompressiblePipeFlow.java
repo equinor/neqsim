@@ -24,7 +24,17 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
      * Constructor for IncompressiblePipeFlow.
      * </p>
      */
+    @Deprecated
     public IncompressiblePipeFlow() {}
+
+    /**
+     * Constructor for IncompressiblePipeFlow.
+     * 
+     * @param name
+     */
+    public IncompressiblePipeFlow(String name) {
+        super(name);
+    }
 
     /**
      * <p>

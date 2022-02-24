@@ -243,7 +243,8 @@ public class OnshoreProcess1 {
             stream_2.setName("Gas From Snohvit Reservoir");
 
             StreamInterface MEGstream_1 = new Stream("MEG Stream1", testSystem3);
-            StreamInterface snohvitFormationWaterStream = new Stream(snohvitFormationWater);
+            StreamInterface snohvitFormationWaterStream =
+                    new Stream("snohvitFormationWaterStream", snohvitFormationWater);
 
             Mixer MEGmixer1 = new Mixer("MEG Mixer 1");
             MEGmixer1.addStream(stream_2);
@@ -278,10 +279,10 @@ public class OnshoreProcess1 {
             waterAnalyser3.setName("Total Water Analyser");
 
             // Pipeline
-            SimpleTPoutPipeline pipeLine1 = new SimpleTPoutPipeline(mixer1.getOutStream());
+            SimpleTPoutPipeline pipeLine1 =
+                    new SimpleTPoutPipeline("snohvit pipeline", mixer1.getOutStream());
             pipeLine1.setOutPressure(55.0);
             pipeLine1.setOutTemperature(273.15 + 5.0);
-            pipeLine1.setName("snohvit pipeline");
             pipeLine1.setNumberOfLegs(1);
             pipeLine1.setPipeDiameters(new double[] {1.2, 1.2});
             pipeLine1.setLegPositions(new double[] {0, 150000.0});
@@ -291,7 +292,8 @@ public class OnshoreProcess1 {
             // IronIonSaturationStream(pipeLine1.getOutStream());
 
             // // Land plant
-            ThreePhaseSeparator slugCatcher = new ThreePhaseSeparator(pipeLine1.getOutStream());
+            ThreePhaseSeparator slugCatcher =
+                    new ThreePhaseSeparator("slugCatcher", pipeLine1.getOutStream());
 
             VolumeFlowTransmitter volumeTransmitter2 =
                     new VolumeFlowTransmitter(slugCatcher.getOilOutStream());
@@ -311,8 +313,8 @@ public class OnshoreProcess1 {
             // Stream stream_5 = new Stream(slugCatcher.getWaterOutStream());
             // stream_5.setName("MEG stream from slugcatcher");
 
-            Heater condesateheater1 = new Heater(slugCatcher.getOilOutStream());
-            condesateheater1.setName("Condesate heater1");
+            Heater condesateheater1 =
+                    new Heater("Condesate heater1", slugCatcher.getOilOutStream());
             condesateheater1.setdT(23.4);
 
             // Heater gasHeater = new Heater(slugCatcher.getGasOutStream());
@@ -320,7 +322,7 @@ public class OnshoreProcess1 {
             // gasHeater.setdT(30.0);
 
             ThreePhaseSeparator condensateSeparator =
-                    new ThreePhaseSeparator(condesateheater1.getOutStream());
+                    new ThreePhaseSeparator("condensateSeparator", condesateheater1.getOutStream());
 
             // Heater MEGheater1 = new Heater(stream_5);
             // MEGheater1.setName("MEG heater1");

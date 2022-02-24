@@ -3,7 +3,6 @@ package neqsim.processSimulation.util.example;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 class process1Test {
@@ -28,7 +27,8 @@ class process1Test {
         Stream stream_1 = new Stream("Stream1", testSystem);
 
         neqsim.processSimulation.processEquipment.compressor.Compressor compr =
-                new neqsim.processSimulation.processEquipment.compressor.Compressor(stream_1);
+                new neqsim.processSimulation.processEquipment.compressor.Compressor("compr",
+                        stream_1);
         compr.setOutletPressure(80.0);
         compr.setPolytropicEfficiency(0.9);
         compr.setIsentropicEfficiency(0.9);
