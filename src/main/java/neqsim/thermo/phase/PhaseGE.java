@@ -7,7 +7,6 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
@@ -56,6 +55,10 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
      */
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
             int numberOfComponents, int type, int phase) {
+        if (totalNumberOfMoles <= 0) {
+            throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+                    "PhaseGE:init - Input totalNumberOfMoles must be larger than zero."));
+        }
         for (int i = 0; i < numberOfComponents; i++) {
             componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type);
         }
