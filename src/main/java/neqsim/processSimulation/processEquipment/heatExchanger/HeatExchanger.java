@@ -117,8 +117,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         outStream[1] = inStream2.clone();
     }
 
-
-
     /**
      * <p>
      * addInStream.
