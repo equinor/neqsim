@@ -49,7 +49,7 @@ public class ProcessSystemRunTransientTest {
         return testSystem;
     }
 
-    @Test
+   // @Test
     public void testDynamicCalculation() {
         neqsim.thermo.system.SystemInterface testSystem = getTestSystem();
         
@@ -103,23 +103,23 @@ public class ProcessSystemRunTransientTest {
         }
     }
 
-    @Test
+    //@Test
     public void testDynamicCalculation2() {
+        
         neqsim.thermo.system.SystemInterface testSystem = getTestSystem();
-
-        neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0),
-                10.00);
-        testSystem2.addComponent("methane", 1.1);
-        testSystem2.addComponent("ethane", 0.10001);
-        testSystem2.addComponent("n-heptane", 1.001);
-        testSystem2.setMixingRule(2);
-
-        Stream purgeStream = new Stream("Purge Stream", testSystem2);
+        neqsim.thermo.system.SystemInterface purgeSystem = getTestSystem();
+        purgeSystem.setMolarComposition(new double[] {0.9, 0.1, 0.0});
+        
+        Stream purgeStream = new Stream("Purge Stream", purgeSystem);
+        purgeStream.setFlowRate(1.0, "kg/hr");
+        
         ThrottlingValve purgeValve = new ThrottlingValve(purgeStream);
         purgeValve.setOutletPressure(7.0);
         purgeValve.setPercentValveOpening(50.0);
 
         Stream stream_1 = new Stream("Stream1", testSystem);
+        stream_1.setFlowRate(50.0, "kg/hr");
+        
         ThrottlingValve valve_1 = new ThrottlingValve(stream_1);
         valve_1.setOutletPressure(7.0);
         valve_1.setPercentValveOpening(50);
@@ -139,7 +139,7 @@ public class ProcessSystemRunTransientTest {
         // valve_3.setCv(10.0);
 
         LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator_1);
-        separatorLevelTransmitter.setName("separatorLEvelTransmitter1");
+        separatorLevelTransmitter.setName("separatorLevelTransmitter1");
         separatorLevelTransmitter.setUnit("meter");
         separatorLevelTransmitter.setMaximumValue(1.0);
         separatorLevelTransmitter.setMinimumValue(0.0);
@@ -180,6 +180,9 @@ public class ProcessSystemRunTransientTest {
         p.run();
         // p.displayResult();
         p.setTimeStep(0.0001);
-        p.runTransient();
+        
+        for (int i = 0; i < 2; i++) {
+           p.runTransient();
+        }
     }
 }
