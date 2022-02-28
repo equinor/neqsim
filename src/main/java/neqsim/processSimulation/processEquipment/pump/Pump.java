@@ -141,6 +141,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
     /** {@inheritDoc} */
     @Override
+    @Deprecated
     public StreamInterface getOutStream() {
         return outStream;
     }

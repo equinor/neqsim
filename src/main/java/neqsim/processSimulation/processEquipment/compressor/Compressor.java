@@ -1091,6 +1091,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
      * Getter for the field <code>outTemperature</code>.
      * </p>
      *
+     * @deprecated use {@link #getOutletTemperature()} instead
      * @return a double
      */
     @Deprecated
@@ -1103,6 +1104,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
      * Setter for the field <code>outTemperature</code>.
      * </p>
      *
+     * @deprecated use {@link #setOutletTemperature(double)} instead
      * @param outTemperature a double
      */
     @Deprecated

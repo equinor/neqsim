@@ -23,9 +23,11 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
      * <p>
      * getOutStream.
      * </p>
-     *
+     * 
+     * @deprecated use {@link #getOutletStream()} instead
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamInterface getOutStream();
 
     /**

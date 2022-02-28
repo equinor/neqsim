@@ -62,16 +62,6 @@ public class GasScrubber extends Separator {
     }
 
     /**
-     * Constructor for GasScrubber.
-     * 
-     * @param name
-     */
-    public GasScrubber(String name) {
-        super(name);
-        this.setOrientation("vertical");
-    }
-
-    /**
      * <p>
      * Constructor for GasScrubber.
      * </p>

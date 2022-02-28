@@ -102,6 +102,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
      * <p>
      * Getter for the field <code>outStream</code>.
      * </p>
+     * 
+     * @deprecated use {@link #getOutletStream()} instead
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
