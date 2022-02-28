@@ -14,9 +14,12 @@ public class CharCoalFilter extends Filter {
     private static final long serialVersionUID = 1000;
 
     /**
+     * <p>
      * Constructor for CharCoalFilter.
-     * 
-     * @param inStream
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     @Deprecated
     public CharCoalFilter(StreamInterface inStream) {

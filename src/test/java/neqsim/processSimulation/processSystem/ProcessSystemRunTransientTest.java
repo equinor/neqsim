@@ -2,7 +2,6 @@ package neqsim.processSimulation.processSystem;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
@@ -49,11 +48,10 @@ public class ProcessSystemRunTransientTest {
         return testSystem;
     }
 
-    @Disabled
     @Test
     public void testDynamicCalculation() {
         neqsim.thermo.system.SystemInterface testSystem = getTestSystem();
-
+        
         Stream stream_1 = new Stream("Stream1", testSystem);
         stream_1.setFlowRate(50.0, "kg/hr");
         stream_1.setPressure(10.0, "bara");
@@ -97,14 +95,13 @@ public class ProcessSystemRunTransientTest {
         // transient behaviour
         p.setTimeStep(1.0);
         for (int i = 0; i < 5; i++) {
-            // System.out.println("volume flow " + flowTransmitter.getMeasuredValue()
-            // + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
-            // + separator_1.getGasOutStream().getPressure());
+          //  System.out.println("volume flow " + flowTransmitter.getMeasuredValue()
+          //          + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
+          //          + separator_1.getGasOutStream().getPressure());
             p.runTransient();
         }
     }
 
-    @Disabled
     @Test
     public void testDynamicCalculation2() {
         neqsim.thermo.system.SystemInterface testSystem = getTestSystem();

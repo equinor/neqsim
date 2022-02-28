@@ -209,7 +209,7 @@ public class TEGdehydrationProcessDistillationGFA {
 
         Stream feedToAbsorber =
                 new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutStream());
-
+        
         Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
         TEGFeed.setFlowRate(leanTEGFlowRate, "kg/hr");
         TEGFeed.setTemperature(leanTEGTemperature, "C");

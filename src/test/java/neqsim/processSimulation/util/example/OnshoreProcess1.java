@@ -16,9 +16,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>
- * OnshoreProcess1 class.
- * </p>
+ * <p>OnshoreProcess1 class.</p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -323,8 +321,9 @@ public class OnshoreProcess1 {
             // gasHeater.setName("Gas heater after slugcatcher");
             // gasHeater.setdT(30.0);
 
-            ThreePhaseSeparator condensateSeparator = new ThreePhaseSeparator("condensateSeparator",
-                    condensateheater1.getOutStream());
+            ThreePhaseSeparator condensateSeparator =
+                    new ThreePhaseSeparator("condensateSeparator",
+                            condensateheater1.getOutStream());
 
             // Heater MEGheater1 = new Heater(stream_5);
             // MEGheater1.setName("MEG heater1");
