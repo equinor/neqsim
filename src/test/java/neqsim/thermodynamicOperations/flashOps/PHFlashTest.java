@@ -45,12 +45,10 @@ class PHFlashTest {
         testOps = new ThermodynamicOperations(testSystem);
         testOps.TPflash();
         testSystem.initProperties();
-        //testSystem.display();
 		 double enthalpy  = testSystem.getEnthalpy();
 		 testSystem.setPressure(4.0);
 		 testOps.PHflash(enthalpy);
-		 //testSystem.display();
-		 assertEquals(enthalpy, testSystem.getEnthalpy(), 1e-6);
+		 assertEquals(enthalpy, testSystem.getEnthalpy(), 1e-2);
 	}
 
 }
