@@ -13,9 +13,6 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
      * @param name
      */
     public NamedBaseClass(String name) {
-        if (name.isEmpty()) {
-            throw new IllegalArgumentException("Input name must be set");
-        }
         this.name = name;
     }
 
