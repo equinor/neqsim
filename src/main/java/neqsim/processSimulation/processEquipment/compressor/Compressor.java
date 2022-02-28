@@ -240,12 +240,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         dH = p;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getOutStream() {
-        return outStream;
-    }
-
     /**
      * <p>
      * getInStream.

@@ -93,11 +93,11 @@ public class TestSeparationTrain {
         Cooler oilCooler = new Cooler("oilCooler", thirdStageSeparator.getLiquidOutStream());
         oilCooler.setOutTemperature(273.15 + 30.0);
 
-        Cooler inletGasCooler = new Cooler("inletGasCooler", HPgasMixer.getOutStream());
+        Cooler inletGasCooler = new Cooler("inletGasCooler", HPgasMixer.getOutletStream());
         inletGasCooler.setOutTemperature(273.15 + 30.0);
 
         Separator gasInletScrubber =
-                new Separator("Gas scrubber inlet", inletGasCooler.getOutStream());
+                new Separator("Gas scrubber inlet", inletGasCooler.getOutletStream());
 
         Recycle HPliquidRecycle = new Recycle("HPliquidRecycle");
         double tolerance = 1e-10;

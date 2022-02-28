@@ -7,6 +7,7 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.splitter.Splitter;
 import neqsim.processSimulation.processEquipment.splitter.SplitterInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -40,7 +41,7 @@ public class process2 {
         MixerInterface mixer = new StaticMixer("Mixer 1");
         mixer.addStream(heater.getOutStream());
 
-        Stream stream_3 = mixer.getOutStream();
+        StreamInterface stream_3 = mixer.getOutStream();
         stream_3.setName("stream3");
 
         Separator separator = new Separator("Separator 1", stream_3);

@@ -3,6 +3,7 @@ package neqsim.processSimulation.processEquipment.absorber;
 import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -17,8 +18,8 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
-    Stream[] outStream;
-    Stream[] inStream;
+    StreamInterface[] outStream;
+    StreamInterface[] inStream;
     SystemInterface system;
     protected double temperatureOut = 0, dT = 0.0;
     private int numberOfStages = 5;
@@ -47,7 +48,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     @Deprecated
-    public SimpleAbsorber(Stream inStream1) {
+    public SimpleAbsorber(StreamInterface inStream1) {
         this("SimpleAbsorber", inStream1);
     }
 
@@ -67,7 +68,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * @param name
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public SimpleAbsorber(String name, Stream inStream1) {
+    public SimpleAbsorber(String name, StreamInterface inStream1) {
         this(name);
         outStream = new Stream[2];
         inStream = new Stream[2];
@@ -125,7 +126,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream[0];
     }
 
@@ -137,7 +138,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * @param i a int
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getOutStream(int i) {
+    public StreamInterface getOutStream(int i) {
         return outStream[i];
     }
 
@@ -148,7 +149,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getSolventInStream() {
+    public StreamInterface getSolventInStream() {
         return inStream[0];
     }
 
@@ -160,7 +161,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * @param i a int
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getInStream(int i) {
+    public StreamInterface getInStream(int i) {
         return inStream[i];
     }
 

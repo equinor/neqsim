@@ -100,8 +100,7 @@ public class NeqGasScrubber extends Separator {
      * @param type a {@link java.lang.String} object
      */
     public void addScrubberSection(String type) {
-        scrubberSection
-                .add(new SeparatorSection("section" + scrubberSection.size() + 1, type, this));
+        scrubberSection.add(new SeparatorSection("section" + scrubberSection.size() + 1, type, this));
     }
 
     /** {@inheritDoc} */

@@ -157,7 +157,7 @@ public class ThreePhaseSeparator extends Separator {
     @Override
     public void run() {
         inletStreamMixer.run();
-        thermoSystem = inletStreamMixer.getOutStream().getThermoSystem().clone();
+        thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
         thermoSystem.setMultiPhaseCheck(true);
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);

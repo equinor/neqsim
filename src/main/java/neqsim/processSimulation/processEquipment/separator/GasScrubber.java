@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -47,7 +48,7 @@ public class GasScrubber extends Separator {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     @Deprecated
-    public GasScrubber(Stream inletStream) {
+    public GasScrubber(StreamInterface inletStream) {
         this("GasScrubber", inletStream);
     }
 
@@ -69,7 +70,7 @@ public class GasScrubber extends Separator {
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public GasScrubber(String name, Stream inletStream) {
+    public GasScrubber(String name, StreamInterface inletStream) {
         super(name, inletStream);
         this.setOrientation("vertical");
     }

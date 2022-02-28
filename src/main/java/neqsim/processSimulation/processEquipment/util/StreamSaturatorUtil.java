@@ -1,7 +1,8 @@
 package neqsim.processSimulation.processEquipment.util;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -13,11 +14,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author esol
  * @version $Id: $Id
  */
-public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
+public class StreamSaturatorUtil extends TwoPortEquipment {
     private static final long serialVersionUID = 1000;
 
-    Stream inletStream;
-    Stream outStream;
     SystemInterface thermoSystem;
     private boolean multiPhase = true;
 
@@ -39,7 +38,7 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
      * @param name
      * @param inStream
      */
-    public StreamSaturatorUtil(String name, Stream inStream) {
+    public StreamSaturatorUtil(String name, StreamInterface inStream) {
         super(name);
         setInletStream(inStream);
     }
@@ -51,29 +50,18 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public void setInletStream(Stream inletStream) {
-        this.inletStream = inletStream;
+    public void setInletStream(StreamInterface inletStream) {
+        this.inStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();
         outStream = new Stream("outStream", thermoSystem);
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>outStream</code>.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-     */
-    public Stream getOutStream() {
-        return outStream;
     }
 
     /** {@inheritDoc} */
     @Override
     public void run() {
         boolean changeBack = false;
-        thermoSystem = inletStream.getThermoSystem().clone();
+        thermoSystem = inStream.getThermoSystem().clone();
         if (multiPhase && !thermoSystem.doMultiPhaseCheck()) {
             thermoSystem.setMultiPhaseCheck(true);
             changeBack = true;

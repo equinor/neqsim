@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.valve;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  * <p>
@@ -55,7 +56,7 @@ public class SafetyValve extends ThrottlingValve {
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public SafetyValve(String name, Stream inletStream) {
+    public SafetyValve(String name, StreamInterface inletStream) {
         super(name, inletStream);
     }
 

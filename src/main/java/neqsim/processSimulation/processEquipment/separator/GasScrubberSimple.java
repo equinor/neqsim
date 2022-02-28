@@ -65,9 +65,10 @@ public class GasScrubberSimple extends Separator {
      * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public GasScrubberSimple(String name, Stream inletStream) {
+    public GasScrubberSimple(String name, StreamInterface inletStream) {
         super(name, inletStream);
         this.setOrientation("vertical");
     }
@@ -81,7 +82,8 @@ public class GasScrubberSimple extends Separator {
      * Setter for the field <code>inletStream</code>.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     @Override
     public void setInletStream(StreamInterface inletStream) {

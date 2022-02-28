@@ -6,7 +6,7 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhasePipeFlowSystem.TwoPhasePipeFlowSystem;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  * <p>
@@ -37,7 +37,7 @@ public class TwoPhasePipeLine extends Pipeline {
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     @Deprecated
-    public TwoPhasePipeLine(Stream inStream) {
+    public TwoPhasePipeLine(StreamInterface inStream) {
         this("TwoPhasePipeLine", inStream);
     }
 
@@ -58,7 +58,7 @@ public class TwoPhasePipeLine extends Pipeline {
      * @param name a {@link java.lang.String} object
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public TwoPhasePipeLine(String name, Stream inStream) {
+    public TwoPhasePipeLine(String name, StreamInterface inStream) {
         super(name, inStream);
         pipe = new TwoPhasePipeFlowSystem();
     }

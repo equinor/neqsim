@@ -196,7 +196,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     /** {@inheritDoc} */
     @Override
-    public Stream getOutStream() {
+    public StreamInterface getOutletStream() {
         return mixedStream;
     }
 
@@ -444,14 +444,14 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
-        getOutStream().run();
+        getOutletStream().run();
         double entrop = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
             getStream(i).getFluid().init(3);
             entrop += getStream(i).getFluid().getEntropy(unit);
         }
-        getOutStream().getThermoSystem().init(3);
-        return getOutStream().getThermoSystem().getEntropy(unit) - entrop;
+        getOutletStream().getThermoSystem().init(3);
+        return getOutletStream().getThermoSystem().getEntropy(unit) - entrop;
     }
 
     /** {@inheritDoc} */

@@ -52,7 +52,7 @@ public class TestSlugcatcher {
         valve1.setOutletPressure(1.4);
 
         ThreePhaseSeparator separator2 =
-                new ThreePhaseSeparator("Separator 1", valve1.getOutStream());
+                new ThreePhaseSeparator("Separator 1", valve1.getOutletStream());
         Stream stream_2 = new Stream("stream_2", separator2.getGasOutStream());
 
         VolumeFlowTransmitter volumeTransmitter3 =
