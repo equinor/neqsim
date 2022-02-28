@@ -79,7 +79,7 @@ public class OnePhasePipeLine extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {
-        super.runTransient();
+    public void runTransient(double dt) {
+        super.runTransient(dt);
     }
 }

@@ -7,11 +7,9 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
-
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
@@ -472,6 +470,7 @@ public class ProcessSystem extends SimulationBaseClass {
      */
     @Override
     public void runTransient(double dt) {
+        setTimeStep(dt);
         time += dt;
 
         for (int i = 0; i < unitOperations.size(); i++) {
@@ -482,7 +481,8 @@ public class ProcessSystem extends SimulationBaseClass {
         for (int i = 0; i < measurementDevices.size(); i++) {
             signalDB[timeStepNumber][0] = Double.toString(time);
             signalDB[timeStepNumber][3 * i + 1] = measurementDevices.get(i).getName();
-            signalDB[timeStepNumber][3 * i + 2] = Double.toString(measurementDevices.get(i).getMeasuredValue());
+            signalDB[timeStepNumber][3 * i + 2] =
+                    Double.toString(measurementDevices.get(i).getMeasuredValue());
             signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
         }
     }
@@ -908,9 +908,8 @@ public class ProcessSystem extends SimulationBaseClass {
         final int prime = 31;
         int result = 1;
         result = prime * result + Arrays.deepHashCode(signalDB);
-        result = prime * result + Objects.hash(measurementDevices, name,
-                recycleController, surroundingTemperature, time, timeStep,
-                timeStepNumber, unitOperations);
+        result = prime * result + Objects.hash(measurementDevices, name, recycleController,
+                surroundingTemperature, time, timeStep, timeStepNumber, unitOperations);
         return result;
     }
 

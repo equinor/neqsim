@@ -213,15 +213,9 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
         getOutStream().displayResult();
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
+    /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-        run();
-    }
+    public void runTransient(double dt) {}
 
     /**
      * <p>

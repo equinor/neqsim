@@ -281,12 +281,9 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
         pipe.init();
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
         pipe.solveTransient(2);
         pipe.getDisplay().createNetCdfFile(fileName);
     }

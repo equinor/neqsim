@@ -166,12 +166,10 @@ public class GasTurbine extends TwoPortEquipment {
         setHeat(cooler1.getDuty());
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
+    }
 
     /**
      * <p>

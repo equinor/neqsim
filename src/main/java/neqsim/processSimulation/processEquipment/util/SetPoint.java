@@ -172,12 +172,9 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         this.targetComponent = targetComponent;
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
         run();
     }
 

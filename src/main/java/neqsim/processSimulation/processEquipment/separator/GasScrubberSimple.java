@@ -164,10 +164,8 @@ public class GasScrubberSimple extends Separator {
         return gasVel;
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
+    }
 }

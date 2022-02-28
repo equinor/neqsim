@@ -98,12 +98,10 @@ public class ReBoiler extends TwoPortEquipment {
         System.out.println("out Temperature " + reboilerDuty);
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
+    }
 
     /**
      * <p>
