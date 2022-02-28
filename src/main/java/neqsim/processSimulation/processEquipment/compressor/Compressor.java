@@ -5,15 +5,12 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.Objects;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -37,7 +34,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     public StreamInterface outStream;
     private double outTemperature = 298.15;
     private boolean useOutTemperature = false;
-    private CompresorPropertyProfile propertyProfile = new CompresorPropertyProfile();
+    private CompressorPropertyProfile propertyProfile = new CompressorPropertyProfile();
     public double dH = 0.0;
     public double inletEnthalpy = 0;
     public double pressure = 0.0;
@@ -61,7 +58,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * Constructor for Compressor.
      * </p>
      */
+    @Deprecated
     public Compressor() {
+        this("Compressor");
     }
 
     /**
@@ -72,9 +71,31 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Compressor(StreamInterface inletStream) {
         this();
         setInletStream(inletStream);
+    }
+
+    /**
+     * <p>
+     * Constructor for Compressor.
+     * </p>
+     *
+     * @param interpolateMapLookup a boolean
+     */
+    @Deprecated
+    public Compressor(boolean interpolateMapLookup) {
+        this("Compressor", interpolateMapLookup);
+    }
+
+    /**
+     * Constructor for Compressor.
+     * 
+     * @param name
+     */
+    public Compressor(String name) {
+        super(name);
     }
 
     /**
@@ -87,8 +108,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      *        object
      */
     public Compressor(String name, StreamInterface inletStream) {
-        this();
-        this.name = name;
+        this(name);
         setInletStream(inletStream);
     }
 
@@ -97,10 +117,11 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
      * Constructor for Compressor.
      * </p>
      *
+     * @param name
      * @param interpolateMapLookup a boolean
      */
-    public Compressor(boolean interpolateMapLookup) {
-        this();
+    public Compressor(String name, boolean interpolateMapLookup) {
+        this(name);
         if (interpolateMapLookup) {
             compressorChart = new CompressorChartAlternativeMapLookup();
         }
@@ -1218,11 +1239,11 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         this.useGERG2008 = useGERG2008;
     }
 
-    public CompresorPropertyProfile getPropertyProfile() {
+    public CompressorPropertyProfile getPropertyProfile() {
       return propertyProfile;
     }
 
-    public void setPropertyProfile(CompresorPropertyProfile propertyProfile) {
+    public void setPropertyProfile(CompressorPropertyProfile propertyProfile) {
       this.propertyProfile = propertyProfile;
     }
   

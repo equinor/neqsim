@@ -39,7 +39,10 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
      * Constructor for Heater.
      * </p>
      */
-    public Heater() {}
+    @Deprecated
+    public Heater() {
+        super("Heater");
+    }
 
     /**
      * <p>
@@ -49,10 +52,18 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Heater(StreamInterface inStream) {
-        this.inStream = inStream;
-        system = inStream.getThermoSystem().clone();
-        outStream = new Stream(system);
+        this("Heater", inStream);
+    }
+
+    /**
+     * Constructor for Heater.
+     * 
+     * @param name
+     */
+    public Heater(String name) {
+        super(name);
     }
 
     /**
@@ -68,7 +79,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         super(name);
         this.inStream = inStream;
         system = inStream.getThermoSystem().clone();
-        outStream = new Stream(system);
+        outStream = new Stream("outStream", system);
     }
 
     /**

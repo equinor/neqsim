@@ -22,8 +22,12 @@ public class Condenser extends SimpleTray {
      * <p>
      * Constructor for Condenser.
      * </p>
+     * 
+     * @param name
      */
-    public Condenser() {}
+    public Condenser(String name) {
+        super(name);
+    }
 
     /**
      * <p>

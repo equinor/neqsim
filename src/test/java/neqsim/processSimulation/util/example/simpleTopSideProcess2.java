@@ -34,9 +34,10 @@ public class simpleTopSideProcess2 {
         ThreePhaseSeparator separator_inlet =
                 new ThreePhaseSeparator("Separator 1", mixer_inlet.getOutStream());
 
-        Stream stream_gasFromSep = new Stream(separator_inlet.getGasOutStream());
+        Stream stream_gasFromSep =
+                new Stream("stream_gasFromSep", separator_inlet.getGasOutStream());
 
-        Heater cooler1 = new Heater(stream_gasFromSep);
+        Heater cooler1 = new Heater("cooler1", stream_gasFromSep);
         cooler1.setOutTemperature(285.25);
 
         Separator scrubber = new Separator("Scrubber 1", cooler1.getOutStream());

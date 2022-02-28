@@ -18,7 +18,10 @@ public class NeqStream extends Stream {
      * Constructor for NeqStream.
      * </p>
      */
-    public NeqStream() {}
+    @Deprecated
+    public NeqStream() {
+        super("NeqStream");
+    }
 
     /**
      * <p>
@@ -27,8 +30,41 @@ public class NeqStream extends Stream {
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
+    @Deprecated
     public NeqStream(SystemInterface thermoSystem) {
         super(thermoSystem);
+    }
+
+    /**
+     * <p>
+     * Constructor for NeqStream.
+     * </p>
+     *
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    @Deprecated
+    public NeqStream(StreamInterface stream) {
+        super(stream);
+    }
+
+    /**
+     * Constructor for NeqStream.
+     * 
+     * @param name
+     */
+    public NeqStream(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for NeqStream.
+     * 
+     * @param name
+     * @param stream
+     */
+    public NeqStream(String name, StreamInterface stream) {
+        super(name, stream);
     }
 
     /**
@@ -41,18 +77,6 @@ public class NeqStream extends Stream {
      */
     public NeqStream(String name, SystemInterface thermoSystem) {
         super(name, thermoSystem);
-    }
-
-    /**
-     * <p>
-     * Constructor for NeqStream.
-     * </p>
-     *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public NeqStream(StreamInterface stream) {
-        super(stream);
     }
 
     /** {@inheritDoc} */

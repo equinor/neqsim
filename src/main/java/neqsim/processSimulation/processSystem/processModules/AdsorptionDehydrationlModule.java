@@ -91,7 +91,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         try {
             adsorber = new SimpleAdsorber[numberOfAdorptionBeds];
             for (int i = 0; i < numberOfAdorptionBeds; i++) {
-                adsorber[i] = new SimpleAdsorber(gasStreamToAdsorber);
+                adsorber[i] = new SimpleAdsorber("SimpleAdsorber_" + i + 1, gasStreamToAdsorber);
             }
             this.gasStreamFromAdsorber = (Stream) this.gasStreamToAdsorber.clone();
             this.gasStreamFromAdsorber.setName("Stream from Adsorber");
@@ -202,7 +202,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
-        Stream inletStream = new Stream(testSystem);
+        Stream inletStream = new Stream("inletStream", testSystem);
         Separator separator = new Separator("Separator 1", inletStream);
 
         neqsim.processSimulation.processSystem.processModules.AdsorptionDehydrationlModule adsorptionPlant =

@@ -29,7 +29,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	String unitT = "C", unitP = "bara";
 
 	public GORfitter() {
-		this.name = "GOR fitter";
+		super("GOR fitter");
 	}
 
 	/**
@@ -42,7 +42,6 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	 */
 	public GORfitter(StreamInterface stream) {
 		this();
-		name = "GOR fitter";
 		this.inletStream = stream;
 		this.outletStream = stream.clone();
 	}
@@ -241,7 +240,7 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		// gORFItter.setGVF(0.1);
 		gORFItter.setGOR(10.1);
 
-		Stream stream_2 = new Stream(gORFItter.getOutStream());
+        Stream stream_2 = new Stream("stream_2", gORFItter.getOutStream());
 
 		MultiPhaseMeter multiPhaseMeter2 = new MultiPhaseMeter("test", stream_2);
 		multiPhaseMeter2.setTemperature(90.0, "C");

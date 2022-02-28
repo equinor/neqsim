@@ -28,7 +28,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      * Constructor for Splitter.
      * </p>
      */
-    public Splitter() {}
+    public Splitter() {
+        super("Splitter");
+    }
 
     /**
      * <p>
@@ -38,7 +40,29 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Splitter(StreamInterface inletStream) {
+        this();
+        this.setInletStream(inletStream);
+    }
+
+    /**
+     * Constructor for Splitter.
+     * 
+     * @param name
+     */
+    public Splitter(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for Splitter.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public Splitter(String name, StreamInterface inStream) {
+        this(name);
         this.setInletStream(inletStream);
     }
 
@@ -53,8 +77,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      * @param i a int
      */
     public Splitter(String name, StreamInterface inletStream, int i) {
-        this(inletStream);
-        this.name = name;
+        this(name, inletStream);
         setSplitNumber(i);
         splitFactor = new double[i];
     }

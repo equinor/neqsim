@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.powerGeneration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -45,16 +44,21 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      * </p>
      */
     public GasTurbine() {
+        this("GasTurbine");
+    }
+
+    public GasTurbine(String name) {
+        super(name);
         // needs to be changed to gas tubing mechanical design
         SystemInterface airThermoSystem = neqsim.thermo.Fluid.create("air");
         airThermoSystem.addComponent("CO2", 0.0);
         airThermoSystem.addComponent("water", 0.0);
         airThermoSystem.createDatabase(true);
         // airThermoSystem.display();
-        airStream = new Stream(airThermoSystem);
+        airStream = new Stream("airStream", airThermoSystem);
         airStream.setPressure(1.01325);
         airStream.setTemperature(288.15, "K");
-        airCompressor = new Compressor(airStream);
+        airCompressor = new Compressor("airCompressor", airStream);
     }
 
     /**
@@ -65,6 +69,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public GasTurbine(StreamInterface inletStream) {
         this();
         setInletStream(inletStream);
@@ -80,8 +85,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      *        object
      */
     public GasTurbine(String name, StreamInterface inletStream) {
-        this();
-        this.name = name;
+        this(name);
         setInletStream(inletStream);
     }
 
@@ -139,7 +143,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         // double molePropane = outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
 
         outStreamAir.run();
-        Heater locHeater = new Heater(outStreamAir);
+        Heater locHeater = new Heater("locHeater", outStreamAir);
         locHeater.setEnergyInput(heatOfCombustion);
         locHeater.run();
 
@@ -151,11 +155,11 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         // locHeater.getOutStream().run();
         locHeater.displayResult();
 
-        Expander expander = new Expander(locHeater.getOutStream());
+        Expander expander = new Expander("expander", locHeater.getOutStream());
         expander.setOutletPressure(1.01325);
         expander.run();
 
-        Cooler cooler1 = new Cooler(expander.getOutStream());
+        Cooler cooler1 = new Cooler("cooler1", expander.getOutStream());
         cooler1.setOutTemperature(288.15);
         cooler1.run();
 

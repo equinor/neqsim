@@ -1,7 +1,5 @@
 package neqsim.processSimulation.processEquipment.separator.sectionType;
 
-import java.io.Serializable;
-
 import neqsim.processSimulation.mechanicalDesign.separator.sectionType.SepDesignSection;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.util.NamedBaseClass;
@@ -14,7 +12,7 @@ import neqsim.util.NamedBaseClass;
  * @author esol
  * @version $Id: $Id
  */
-public class SeparatorSection extends NamedBaseClass implements Serializable {
+public class SeparatorSection extends NamedBaseClass {
     private static final long serialVersionUID = 1000;
 
     private double efficiency = 0.95;

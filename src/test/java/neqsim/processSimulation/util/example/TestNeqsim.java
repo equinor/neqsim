@@ -56,12 +56,12 @@ public class TestNeqsim {
         double[] Density = new double[10];
 
         // for(int i=0;i<10;i++){
-        Stream stream1 = new Stream(testFluid);
-        Compressor compressor1 = new Compressor(stream1);
+        Stream stream1 = new Stream("stream1", testFluid);
+        Compressor compressor1 = new Compressor("compressor1", stream1);
         compressor1.setOutletPressure(26.590909);// (20+5*i)
         compressor1.setUsePolytropicCalc(true);
         compressor1.setPolytropicEfficiency(0.64951);
-        Stream stream2 = new Stream(compressor1.getOutStream());
+        Stream stream2 = new Stream("stream2", compressor1.getOutStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

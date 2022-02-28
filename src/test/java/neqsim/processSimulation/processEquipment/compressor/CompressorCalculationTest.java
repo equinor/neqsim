@@ -3,7 +3,6 @@ package neqsim.processSimulation.processEquipment.compressor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -33,7 +32,7 @@ public class CompressorCalculationTest {
         testFluid.setTotalFlowRate(1.0, "MSm3/day");
 
         stream_1 = new Stream("Stream1", testFluid);
-        comp1 = new Compressor(stream_1);
+        comp1 = new Compressor("comp1", stream_1);
     }
 
     private void setCurves() {

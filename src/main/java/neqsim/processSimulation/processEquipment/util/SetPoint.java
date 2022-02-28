@@ -30,7 +30,10 @@ public class SetPoint extends ProcessEquipmentBaseClass {
      * Constructor for SetPoint.
      * </p>
      */
-    public SetPoint() {}
+    @Deprecated
+    public SetPoint() {
+        this("SetPoint");
+    }
 
     /**
      * <p>
@@ -57,6 +60,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
      */
     public SetPoint(String name, ProcessEquipmentInterface targetEquipment, String targetVariable,
             ProcessEquipmentInterface sourceEquipment) {
+        this(name);
         this.targetEquipment = targetEquipment;
         this.targetVariable = targetVariable;
         this.sourceEquipment = sourceEquipment;

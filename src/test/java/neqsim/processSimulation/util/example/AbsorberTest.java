@@ -26,9 +26,9 @@ public class AbsorberTest {
         Stream stream_Hot = new Stream("Stream1", testSystem);
 
         neqsim.processSimulation.processEquipment.absorber.SimpleAbsorber absorber1 =
-                new neqsim.processSimulation.processEquipment.absorber.SimpleAbsorber(stream_Hot);
+                new neqsim.processSimulation.processEquipment.absorber.SimpleAbsorber("absorber",
+                        stream_Hot);
         absorber1.setAproachToEquilibrium(0.75);
-        absorber1.setName("absorber");
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

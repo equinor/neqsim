@@ -33,12 +33,9 @@ public class threePhaseSeparation_1 {
         separator.setEntrainment(0.01, "feed", "mole", "gas", "oil");
         separator.setEntrainment(0.001, "feed", "mole", "aqueous", "gas");
         separator.setEntrainment(0.01, "feed", "mole", "oil", "aqueous");
-        Stream stream_2 = new Stream(separator.getGasOutStream());
-        stream_2.setName("gas from separator");
-        Stream stream_3 = new Stream(separator.getOilOutStream());
-        stream_3.setName("oil from separator");
-        Stream stream_4 = new Stream(separator.getWaterOutStream());
-        stream_4.setName("water from separator");
+        Stream stream_2 = new Stream("gas from separator", separator.getGasOutStream());
+        Stream stream_3 = new Stream("oil from separator", separator.getOilOutStream());
+        Stream stream_4 = new Stream("water from separator", separator.getWaterOutStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

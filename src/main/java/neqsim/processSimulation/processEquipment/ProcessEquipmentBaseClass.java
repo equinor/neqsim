@@ -8,9 +8,7 @@ package neqsim.processSimulation.processEquipment;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
-
 import org.apache.commons.lang.SerializationUtils;
-
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
@@ -37,9 +35,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     public HashMap<String, String> properties = new HashMap<String, String>();
     public EnergyStream energyStream = new EnergyStream();
     private boolean isSetEnergyStream = false;
-
-    public ProcessEquipmentBaseClass() {
-    }
 
     /**
      * <p>

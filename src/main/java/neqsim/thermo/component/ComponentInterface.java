@@ -704,7 +704,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * init.
+     * Initialize component
      * </p>
      *
      * @param temperature a double

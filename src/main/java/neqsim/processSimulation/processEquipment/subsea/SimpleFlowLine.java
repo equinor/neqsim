@@ -32,9 +32,10 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
      *        object
      */
     public SimpleFlowLine(StreamInterface instream) {
+        super("SimpleFlowLine");
         this.inStream = instream;
         setOutStream(instream.clone());
-        pipeline = new AdiabaticTwoPhasePipe(instream);
+        pipeline = new AdiabaticTwoPhasePipe("pipeline", instream);
     }
 
     /**

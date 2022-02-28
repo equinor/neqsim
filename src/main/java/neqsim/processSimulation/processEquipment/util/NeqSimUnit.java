@@ -41,6 +41,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
      * @param flowPattern a {@link java.lang.String} object
      */
     public NeqSimUnit(Stream inletStream, String equipment, String flowPattern) {
+        super("NeqSimUnit");
         this.flowPattern = flowPattern;
         this.setEquipment(equipment);
         setInletStream(inletStream);
@@ -57,7 +58,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
         this.inletStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();
-        outStream = new Stream(thermoSystem);
+        outStream = new Stream("outStream", thermoSystem);
     }
 
     /**

@@ -39,9 +39,9 @@ public class oxygenRemovalWater {
         mix.addStream(stream_air);
         // mix.addStream(stream_water);
 
-        Separator separator = new Separator(mix.getOutStream());
+        Separator separator = new Separator("separator", mix.getOutStream());
 
-        Heater heater1 = new Heater(separator.getLiquidOutStream());
+        Heater heater1 = new Heater("heater1", separator.getLiquidOutStream());
         heater1.setOutTemperature(273.15 + 20);
 
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", heater1.getOutStream());
