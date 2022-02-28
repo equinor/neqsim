@@ -42,7 +42,8 @@ public class shtokman {
         StreamInterface stream_2 = separator.getGasOutStream();
 
         neqsim.processSimulation.processEquipment.heatExchanger.Heater heater =
-                new neqsim.processSimulation.processEquipment.heatExchanger.Heater(stream_2);
+                new neqsim.processSimulation.processEquipment.heatExchanger.Heater("heater",
+                        stream_2);
         heater.setOutTemperature(273.15 + 35);
         heater.setPressureDrop(134);
         neqsim.processSimulation.processSystem.ProcessSystem operations =

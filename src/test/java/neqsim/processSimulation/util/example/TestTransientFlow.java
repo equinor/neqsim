@@ -47,25 +47,25 @@ public class TestTransientFlow {
         testSystem2.setMixingRule(2);
 
         Stream purgeStream = new Stream("Purge Stream", testSystem2);
-        ThrottlingValve purgeValve = new ThrottlingValve(purgeStream);
+        ThrottlingValve purgeValve = new ThrottlingValve("purgeValve", purgeStream);
         purgeValve.setOutletPressure(7.0);
         purgeValve.setPercentValveOpening(50.0);
 
         Stream stream_1 = new Stream("Stream1", testSystem);
-        ThrottlingValve valve_1 = new ThrottlingValve(stream_1);
+        ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
         valve_1.setOutletPressure(7.0);
         valve_1.setPercentValveOpening(50);
 
-        Separator separator_1 = new Separator();
+        Separator separator_1 = new Separator("separator_1");
         separator_1.addStream(valve_1.getOutStream());
         separator_1.addStream(purgeValve.getOutStream());
 
-        ThrottlingValve valve_2 = new ThrottlingValve(separator_1.getLiquidOutStream());
+        ThrottlingValve valve_2 = new ThrottlingValve("valve_2", separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(5.0);
         valve_2.setPercentValveOpening(50);
         // valve_2.setCv(10.0);
 
-        ThrottlingValve valve_3 = new ThrottlingValve(separator_1.getGasOutStream());
+        ThrottlingValve valve_3 = new ThrottlingValve("valve_3", separator_1.getGasOutStream());
         valve_3.setOutletPressure(5.0);
         valve_3.setPercentValveOpening(50);
         // valve_3.setCv(10.0);

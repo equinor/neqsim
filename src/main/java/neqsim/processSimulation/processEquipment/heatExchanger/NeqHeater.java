@@ -25,7 +25,10 @@ public class NeqHeater extends Heater {
      * Constructor for NeqHeater.
      * </p>
      */
-    public NeqHeater() {}
+    @Deprecated
+    public NeqHeater() {
+        this("NeqHeater");
+    }
 
     /**
      * <p>
@@ -34,9 +37,28 @@ public class NeqHeater extends Heater {
      *
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
+    @Deprecated
     public NeqHeater(Stream inStream) {
-        this.inStream = inStream;
-        outStream = inStream.clone();
+        this("NeqHeater", inStream);
+    }
+
+    /**
+     * Constructor for NeqHeater.
+     * 
+     * @param name
+     */
+    public NeqHeater(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for NeqHeater.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public NeqHeater(String name, Stream inStream) {
+        super(name, inStream);
     }
 
     /** {@inheritDoc} */

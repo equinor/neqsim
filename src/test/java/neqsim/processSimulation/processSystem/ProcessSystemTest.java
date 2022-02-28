@@ -45,7 +45,7 @@ public class ProcessSystemTest {
     @Test
     void testAdd() {
         String sepName = "TestSep";
-        Separator sep = new Separator();
+        Separator sep = new Separator("sep");
         sep.setName(sepName);
         p.add(sep);
 
@@ -81,7 +81,7 @@ public class ProcessSystemTest {
 
     @Test
     public void testAddUnitTwice() {
-        Separator sep = new Separator();
+        Separator sep = new Separator("sep");
         p.add(sep);
         p.add(sep); // Won't add the copy
         Assertions.assertEquals(1, p.size());
@@ -89,7 +89,7 @@ public class ProcessSystemTest {
 
     @Test
     public void testRemoveUnit() {
-        Separator sep = new Separator();
+        Separator sep = new Separator("Separator");
         p.add(sep);
         Assertions.assertEquals(1, p.size());
         p.removeUnit("Separator");
@@ -112,9 +112,9 @@ public class ProcessSystemTest {
 
     @Test
     public void testGetUnitNumber() {
-        Separator sep = new Separator();
+        Separator sep = new Separator("Separator");
         p.add(sep);
-        Separator sep2 = new Separator();
+        Separator sep2 = new Separator("Separator2");
         p.add(sep2);
 
         Assertions.assertEquals(0, p.getUnitNumber("Separator"));

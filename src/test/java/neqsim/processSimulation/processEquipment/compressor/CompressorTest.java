@@ -1,20 +1,17 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
@@ -46,7 +43,7 @@ class CompressorTest {
         testSystem = new SystemSrkEos(298.0, 10.0);
         testSystem.addComponent("methane", 100.0);
         processOps = new ProcessSystem();
-        Stream inletStream = new Stream(testSystem);
+        Stream inletStream = new Stream("inletStream", testSystem);
         inletStream.setPressure(pressure_inlet, "bara");
         inletStream.setTemperature(temperature_inlet, "C");
         inletStream.setFlowRate(gasFlowRate, "MSm3/day");
@@ -142,7 +139,7 @@ class CompressorTest {
      */
     @Test
     public void testCompressorWithSrk() {
-        Stream inletStream = new Stream(testSystem);
+        Stream inletStream = new Stream("inletStream", testSystem);
         inletStream.setPressure(pressure_inlet, "bara");
         inletStream.setTemperature(temperature_inlet, "C");
         inletStream.setFlowRate(gasFlowRate, "MSm3/day");
@@ -170,7 +167,7 @@ class CompressorTest {
      */
     @Test
     public void testCompressorWithGERG2008() {
-        Stream inletStream = new Stream(testSystem);
+        Stream inletStream = new Stream("inletStream", testSystem);
         inletStream.setPressure(pressure_inlet, "bara");
         inletStream.setTemperature(temperature_inlet, "C");
         inletStream.setFlowRate(gasFlowRate, "MSm3/day");

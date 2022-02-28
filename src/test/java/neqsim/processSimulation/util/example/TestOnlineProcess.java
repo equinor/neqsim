@@ -31,7 +31,7 @@ public class TestOnlineProcess {
         TemperatureTransmitter temperatureTransmitter = new TemperatureTransmitter(stream_1);
         temperatureTransmitter.setIsOnlineSignal(true, "Karsto", "21TI1117");
 
-        ThrottlingValve valve_1 = new ThrottlingValve(stream_1);
+        ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
         valve_1.setOutletPressure(5.0);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =

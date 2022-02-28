@@ -117,7 +117,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
 
         Stream stream_1 = new Stream("Stream1", testSystem);
 
-        AdiabaticPipe pipe = new AdiabaticPipe(stream_1);
+        AdiabaticPipe pipe = new AdiabaticPipe("pipe", stream_1);
         pipe.setDiameter(1.0);
         pipe.setLength(1000.0);
         pipe.getMechanicalDesign().setMaxOperationPressure(100.0);

@@ -24,7 +24,10 @@ public class OnePhasePipeLine extends Pipeline {
      * Constructor for OnePhasePipeLine.
      * </p>
      */
-    public OnePhasePipeLine() {}
+    @Deprecated
+    public OnePhasePipeLine() {
+        this("OnePhasePipeLine");
+    }
 
     /**
      * <p>
@@ -34,7 +37,26 @@ public class OnePhasePipeLine extends Pipeline {
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public OnePhasePipeLine(Stream inStream) {
-        super(inStream);
+        this("OnePhasePipeLine", inStream);
+    }
+
+    /**
+     * Constructor for OnePhasePipeLine.
+     * 
+     * @param name
+     */
+    public OnePhasePipeLine(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for OnePhasePipeLine.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public OnePhasePipeLine(String name, Stream inStream) {
+        super(name, inStream);
         pipe = new PipeFlowSystem();
     }
 

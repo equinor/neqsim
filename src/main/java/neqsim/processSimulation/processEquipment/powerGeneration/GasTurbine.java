@@ -55,7 +55,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         airThermoSystem.addComponent("water", 0.0);
         airThermoSystem.createDatabase(true);
         // airThermoSystem.display();
-        airStream = new Stream(airThermoSystem);
+        airStream = new Stream("airStream", airThermoSystem);
         airStream.setPressure(1.01325);
         airStream.setTemperature(288.15, "K");
         airCompressor = new Compressor("airCompressor", airStream);
@@ -143,7 +143,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         // double molePropane = outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
 
         outStreamAir.run();
-        Heater locHeater = new Heater(outStreamAir);
+        Heater locHeater = new Heater("locHeater", outStreamAir);
         locHeater.setEnergyInput(heatOfCombustion);
         locHeater.run();
 
@@ -155,11 +155,11 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         // locHeater.getOutStream().run();
         locHeater.displayResult();
 
-        Expander expander = new Expander(locHeater.getOutStream());
+        Expander expander = new Expander("expander", locHeater.getOutStream());
         expander.setOutletPressure(1.01325);
         expander.run();
 
-        Cooler cooler1 = new Cooler(expander.getOutStream());
+        Cooler cooler1 = new Cooler("cooler1", expander.getOutStream());
         cooler1.setOutTemperature(288.15);
         cooler1.run();
 

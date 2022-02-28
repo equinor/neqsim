@@ -29,9 +29,9 @@ public class NeqGasScrubber extends Separator {
      * Constructor for NeqGasScrubber.
      * </p>
      */
+    @Deprecated
     public NeqGasScrubber() {
-        super();
-        this.setOrientation("vertical");
+        this("NeqGasScrubber");
     }
 
     /**
@@ -41,9 +41,19 @@ public class NeqGasScrubber extends Separator {
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
+    @Deprecated
     public NeqGasScrubber(Stream inletStream) {
-        this();
-        this.setInletStream(inletStream);
+        this("NeqGasScrubber", inletStream);
+    }
+
+    /**
+     * Constructor for NeqGasScrubber.
+     * 
+     * @param name
+     */
+    public NeqGasScrubber(String name) {
+        super(name);
+        this.setOrientation("vertical");
     }
 
     /**
@@ -55,9 +65,8 @@ public class NeqGasScrubber extends Separator {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public NeqGasScrubber(String name, Stream inletStream) {
-        this();
-        this.name = name;
-        this.setInletStream(inletStream);
+        super(name, inletStream);
+        this.setOrientation("vertical");
     }
 
     public GasScrubberMechanicalDesign getMechanicalDesign() {
@@ -76,11 +85,11 @@ public class NeqGasScrubber extends Separator {
 
         thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
-        gasOutStream = new Stream(gasSystem);
+        gasOutStream = new Stream("gasOutStream", gasSystem);
 
         thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-        liquidOutStream = new Stream(liquidSystem);
+        liquidOutStream = new Stream("liquidOutStream", liquidSystem);
     }
 
     /**

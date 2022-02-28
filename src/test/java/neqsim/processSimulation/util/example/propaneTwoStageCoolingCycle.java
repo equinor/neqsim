@@ -33,38 +33,38 @@ public class propaneTwoStageCoolingCycle {
         Stream stream_1 = new Stream("Stream1", testSystem);
         stream_1.setSpecification("bubT");
 
-        ThrottlingValve JTvalve1 = new ThrottlingValve(stream_1);
+        ThrottlingValve JTvalve1 = new ThrottlingValve("JTvalve1", stream_1);
         JTvalve1.setOutletPressure(3.0);
 
-        Separator medPresSep = new Separator(JTvalve1.getOutStream());
+        Separator medPresSep = new Separator("medPresSep", JTvalve1.getOutStream());
 
-        ThrottlingValve JTvalve2 = new ThrottlingValve(medPresSep.getLiquidOutStream());
+        ThrottlingValve JTvalve2 = new ThrottlingValve("JTvalve2", medPresSep.getLiquidOutStream());
         JTvalve2.setOutletPressure(1.11325);
 
-        StreamInterface lowHStream = new Stream(JTvalve2.getOutStream());
+        StreamInterface lowHStream = new Stream("lowHStream", JTvalve2.getOutStream());
 
-        Cooler cooler2 = new Cooler(JTvalve2.getOutStream());
+        Cooler cooler2 = new Cooler("cooler2", JTvalve2.getOutStream());
         // cooler2.setPressureDrop(0.35);
         cooler2.setSpecification("out stream");
 
-        Stream stream_3 = new Stream(cooler2.getOutStream());
+        Stream stream_3 = new Stream("stream_3", cooler2.getOutStream());
         stream_3.setSpecification("dewP");
         // stream_3.setTemperature(-40.0, "C");
         cooler2.setOutStream(stream_3);
 
-        StreamInterface lowHStream2 = new Stream(stream_3);
+        StreamInterface lowHStream2 = new Stream("lowHStream2", stream_3);
 
-        Compressor compressor1 = new Compressor(stream_3);
+        Compressor compressor1 = new Compressor("compressor1", stream_3);
         compressor1.setOutletPressure(JTvalve1.getOutletPressure());
 
         Mixer propMixer = new Mixer();
         propMixer.addStream(compressor1.getOutStream());
         propMixer.addStream(medPresSep.getGasOutStream());
 
-        Compressor compressor2 = new Compressor(propMixer.getOutStream());
+        Compressor compressor2 = new Compressor("compressor2", propMixer.getOutStream());
         compressor2.setOutletPressure(stream_1.getPressure());
 
-        Heater cooler3 = new Heater(compressor2.getOutStream());
+        Heater cooler3 = new Heater("Heater", compressor2.getOutStream());
         cooler3.setSpecification("out stream");
         cooler3.setOutStream(stream_1);
 
@@ -88,7 +88,7 @@ public class propaneTwoStageCoolingCycle {
 
         operations.run();
         operations.run();
-        ThrottlingValve JTvalve3 = new ThrottlingValve(medPresSep.getLiquidOutStream());
+        ThrottlingValve JTvalve3 = new ThrottlingValve("JTvalve3", medPresSep.getLiquidOutStream());
         JTvalve3.setOutletPressure(2.03981146);
         JTvalve3.run();
         JTvalve3.getOutStream().displayResult();

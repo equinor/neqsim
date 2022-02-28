@@ -41,9 +41,8 @@ public class HeatExchanger {
         Stream stream_Cold = new Stream("Stream2", testSystem2);
 
         neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger heatExchanger1 =
-                new neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger(
+                new neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger("heatEx",
                         stream_Hot, stream_Cold);
-        heatExchanger1.setName("heatEx");
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

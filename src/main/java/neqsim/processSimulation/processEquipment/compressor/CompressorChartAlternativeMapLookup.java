@@ -2,14 +2,12 @@ package neqsim.processSimulation.processEquipment.compressor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -364,7 +362,7 @@ public class CompressorChartAlternativeMapLookup
         testFluid.setTotalFlowRate(5.4, "MSm3/day");
 
         Stream stream_1 = new Stream("Stream1", testFluid);
-        Compressor comp1 = new Compressor(true);
+        Compressor comp1 = new Compressor("cmp1", true);
         comp1.setInletStream(stream_1);
         comp1.setUsePolytropicCalc(true);
         // comp1.getAntiSurge().setActive(true);

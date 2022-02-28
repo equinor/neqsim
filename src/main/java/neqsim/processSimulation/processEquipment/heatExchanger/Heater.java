@@ -58,6 +58,15 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
+     * Constructor for Heater.
+     * 
+     * @param name
+     */
+    public Heater(String name) {
+        super(name);
+    }
+
+    /**
      * <p>
      * Constructor for Heater.
      * </p>
@@ -70,7 +79,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         super(name);
         this.inStream = inStream;
         system = inStream.getThermoSystem().clone();
-        outStream = new Stream(system);
+        outStream = new Stream("outStream", system);
     }
 
     /**

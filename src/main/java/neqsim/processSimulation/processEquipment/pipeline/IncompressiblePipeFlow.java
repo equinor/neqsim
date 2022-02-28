@@ -24,7 +24,10 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
      * Constructor for IncompressiblePipeFlow.
      * </p>
      */
-    public IncompressiblePipeFlow() {}
+    @Deprecated
+    public IncompressiblePipeFlow() {
+        super("IncompressiblePipeFlow");
+    }
 
     /**
      * <p>
@@ -34,8 +37,28 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public IncompressiblePipeFlow(StreamInterface inStream) {
-        super(inStream);
+        this("IncompressiblePipeFlow", inStream);
+    }
+
+    /**
+     * Constructor for IncompressiblePipeFlow.
+     * 
+     * @param name
+     */
+    public IncompressiblePipeFlow(String name) {
+        super(name);
+    }
+
+    /**
+     * * Constructor for IncompressiblePipeFlow.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public IncompressiblePipeFlow(String name, StreamInterface inStream) {
+        super(name, inStream);
     }
 
     /**

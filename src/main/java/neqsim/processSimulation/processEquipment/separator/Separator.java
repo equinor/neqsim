@@ -65,8 +65,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
      */
     @Deprecated
     public Separator(StreamInterface inletStream) {
-        this();
-        addStream(inletStream);
+        this("Separator", inletStream);
     }
 
     /**
@@ -86,8 +85,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
      *        object
      */
     public Separator(String name, StreamInterface inletStream) {
-        this(inletStream);
-        this.name = name;
+        this(name);
+        setInletStream(inletStream);
     }
 
     public SeparatorMechanicalDesign gMechanicalDesign() {
@@ -106,11 +105,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         inletStreamMixer.addStream(inletStream);
         thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
-        gasOutStream = new Stream(gasSystem);
+        gasOutStream = new Stream("gasOutStream", gasSystem);
 
         thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-        liquidOutStream = new Stream(liquidSystem);
+        liquidOutStream = new Stream("liquidOutStream", liquidSystem);
     }
 
     /**

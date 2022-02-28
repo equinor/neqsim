@@ -44,9 +44,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * Constructor for HeatExchanger.
      * </p>
      */
+    @Deprecated
     public HeatExchanger() {
-        outStream = new Stream[2];
-        inStream = new Stream[2];
+        this("HeatExchanger");
     }
 
     /**
@@ -57,13 +57,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public HeatExchanger(StreamInterface inStream1) {
-        outStream = new Stream[2];
-        inStream = new Stream[2];
-        this.inStream[0] = inStream1;
-        this.inStream[1] = inStream1;
-        outStream[0] = inStream1.clone();
-        outStream[1] = inStream1.clone();
+        this("HeatExchanger", inStream1);
     }
 
     /**
@@ -76,9 +72,45 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * @param inStream2 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public HeatExchanger(StreamInterface inStream1, StreamInterface inStream2) {
+        this("HeatExchanger", inStream1, inStream2);
+    }
+
+    /**
+     * Constructor for HeatExchanger.
+     * 
+     * @param name
+     */
+    public HeatExchanger(String name) {
+        super(name);
         outStream = new Stream[2];
         inStream = new Stream[2];
+    }
+
+    /**
+     * Constructor for HeatExchanger.
+     * 
+     * @param name
+     * @param inStream1
+     */
+    public HeatExchanger(String name, StreamInterface inStream1) {
+        super(name);
+        this.inStream[0] = inStream1;
+        this.inStream[1] = inStream1;
+        outStream[0] = inStream1.clone();
+        outStream[1] = inStream1.clone();
+    }
+
+    /**
+     * Constructor for HeatExchanger.
+     * 
+     * @param name
+     * @param inStream1
+     * @param inStream2
+     */
+    public HeatExchanger(String name, StreamInterface inStream1, StreamInterface inStream2) {
+        super(name);
         this.inStream[0] = inStream1;
         this.inStream[1] = inStream2;
         outStream[0] = inStream1.clone();
