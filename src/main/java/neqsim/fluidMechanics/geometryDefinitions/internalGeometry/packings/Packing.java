@@ -5,6 +5,8 @@
  */
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
+import neqsim.util.NamedBaseClass;
+
 /**
  * <p>
  * Packing class.
@@ -13,16 +15,18 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
  * @author esol
  * @version $Id: $Id
  */
-public class Packing implements PackingInterface {
+public class Packing extends NamedBaseClass implements PackingInterface {
     double voidFractionPacking = 0.951, size = 0, surfaceAreaPrVolume = 112.6;
-    String name = null;
 
     /**
      * <p>
      * Constructor for Packing.
      * </p>
      */
-    public Packing() {}
+    @Deprecated
+    public Packing() {
+        super("Packing");
+    }
 
     /**
      * <p>
@@ -32,7 +36,7 @@ public class Packing implements PackingInterface {
      * @param name a {@link java.lang.String} object
      */
     public Packing(String name) {
-        this.name = name;
+        super(name);
         try {
             System.out.println("init packing");
             neqsim.util.database.NeqSimDataBase database =
@@ -62,7 +66,7 @@ public class Packing implements PackingInterface {
      * @param size a int
      */
     public Packing(String name, String material, int size) {
-        this.name = name;
+        super(name);
         try {
             System.out.println("init packing");
             neqsim.util.database.NeqSimDataBase database =
