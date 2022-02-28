@@ -152,10 +152,8 @@ public class Hydrocyclone extends Separator {
         thermoSystem.display("from here " + getName());
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
+    }
 }
