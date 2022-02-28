@@ -53,7 +53,7 @@ public class GasTurbine extends TwoPortEquipment {
         airThermoSystem.addComponent("water", 0.0);
         airThermoSystem.createDatabase(true);
         // airThermoSystem.display();
-        airStream = new Stream(airThermoSystem);
+        airStream = new Stream("airStream", airThermoSystem);
         airStream.setPressure(1.01325);
         airStream.setTemperature(288.15, "K");
         airCompressor = new Compressor("airCompressor", airStream);

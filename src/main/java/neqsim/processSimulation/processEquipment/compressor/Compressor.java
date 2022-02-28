@@ -32,7 +32,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     public SystemInterface thermoSystem;
     private double outTemperature = 298.15;
     private boolean useOutTemperature = false;
-    private CompresorPropertyProfile propertyProfile = new CompresorPropertyProfile();
+    private CompressorPropertyProfile propertyProfile = new CompressorPropertyProfile();
     public double dH = 0.0;
     public double inletEnthalpy = 0;
     public double pressure = 0.0;
@@ -1251,11 +1251,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         this.useGERG2008 = useGERG2008;
     }
 
-    public CompresorPropertyProfile getPropertyProfile() {
+    public CompressorPropertyProfile getPropertyProfile() {
       return propertyProfile;
     }
 
-    public void setPropertyProfile(CompresorPropertyProfile propertyProfile) {
+    public void setPropertyProfile(CompressorPropertyProfile propertyProfile) {
       this.propertyProfile = propertyProfile;
     }
   

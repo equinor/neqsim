@@ -89,7 +89,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     @Override
     public void setInletStream(StreamInterface stream) {
         super.setInletStream(stream);
-        super.setOutletStream(stream.clone());
+        StreamInterface outStream = stream.clone();
+        outStream.setName("outStream");
+        super.setOutletStream(outStream);
     }
 
     /** {@inheritDoc} */

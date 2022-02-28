@@ -88,13 +88,13 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         inletMixer = new Mixer();
         inletMixer.addStream(inletValve.getOutletStream());
 
-        flashSeparator = new Separator(inletMixer.getOutStream());
+        flashSeparator = new Separator("flashSeparator", inletMixer.getOutStream());
 
-        MEGRecircPump = new Pump("MegRecircPump", flashSeparator.getLiquidOutStream());
+        MEGRecircPump = new Pump("MEGRecircPump", flashSeparator.getLiquidOutStream());
         MEGRecircPump.setMolarFlow(50.0);
         MEGRecircPump.setOutletPressure(5.0);
 
-        MEGrecircHeater = new Heater(MEGRecircPump.getOutStream());
+        MEGrecircHeater = new Heater("MEGrecircHeater", MEGRecircPump.getOutStream());
         // MEGrecircHeater.setEnergyInput(5000.0);
         MEGrecircHeater.setOutTemperature(273 + 68.9);
 
@@ -104,7 +104,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
         inletMixer.addStream(recircValve.getOutletStream());
 
-        vacumCooler = new Heater(flashSeparator.getGasOutStream());
+        vacumCooler = new Heater("vacumCooler", flashSeparator.getGasOutStream());
 
         getOperations().add(streamToReclaimer);
         getOperations().add(inletValve);
@@ -166,7 +166,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
-        Stream inletStream = new Stream(testSystem);
+        Stream inletStream = new Stream("inletStream", testSystem);
         inletStream.run();
         inletStream.displayResult();
         MEGReclaimerModule reclaimer = new MEGReclaimerModule("reclaimer");

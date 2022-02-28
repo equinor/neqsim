@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -25,6 +24,7 @@ public class SimpleTPoutPipeline extends Pipeline {
      * Constructor for SimpleTPoutPipeline.
      * </p>
      */
+    @Deprecated
     public SimpleTPoutPipeline() {}
 
     /**
@@ -35,9 +35,28 @@ public class SimpleTPoutPipeline extends Pipeline {
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public SimpleTPoutPipeline(StreamInterface inStream) {
-        this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+        this("SimpleTPoutPipeline", inStream);
+    }
+
+    /**
+     * Constructor for SimpleTPoutPipeline.
+     * 
+     * @param name
+     */
+    public SimpleTPoutPipeline(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for SimpleTPoutPipeline.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public SimpleTPoutPipeline(String name, StreamInterface inStream) {
+        super(name, inStream);
     }
 
     /** {@inheritDoc} */

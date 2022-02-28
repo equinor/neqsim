@@ -3,13 +3,11 @@ package neqsim.processSimulation.processEquipment.compressor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -294,7 +292,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         testFluid.setTotalFlowRate(1.0, "MSm3/day");
 
         Stream stream_1 = new Stream("Stream1", testFluid);
-        Compressor comp1 = new Compressor("comp", stream_1);
+        Compressor comp1 = new Compressor("cmp1", stream_1);
         comp1.setUsePolytropicCalc(true);
         // comp1.getAntiSurge().setActive(true);
         comp1.setSpeed(11918);

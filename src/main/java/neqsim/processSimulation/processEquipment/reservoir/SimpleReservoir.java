@@ -101,7 +101,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     public StreamInterface addGasProducer(String name) {
         Well newWell = new Well(name);
         gasProducer.add(newWell);
-        StreamInterface gasOutStream = new Stream();
+        StreamInterface gasOutStream = new Stream("gasOutStream");
         gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));
         gasOutStream.getFluid().setTotalFlowRate(1.0e-1, "kg/sec");
         newWell.setStream(gasOutStream);
@@ -119,7 +119,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     public StreamInterface addOilProducer(String name) {
         Well newWell = new Well(name);
         oilProducer.add(newWell);
-        StreamInterface oilOutStream = new Stream();
+        StreamInterface oilOutStream = new Stream("oilOutStream");
         oilOutStream.setFluid(thermoSystem.phaseToSystem("oil"));
         oilOutStream.getFluid().setTotalFlowRate(1.0e-1, "kg/sec");
         newWell.setStream(oilOutStream);
@@ -137,7 +137,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     public StreamInterface addWaterInjector(String name) {
         Well newWell = new Well(name);
         waterInjector.add(newWell);
-        StreamInterface waterInStream = new Stream();
+        StreamInterface waterInStream = new Stream("waterInStream");
         waterInStream.setFluid(thermoSystem.phaseToSystem("aqueous"));
         // waterInStream.init(0);
         waterInStream.getFluid().setTotalFlowRate(1.0e-1, "kg/sec");
@@ -156,7 +156,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     public StreamInterface addGasInjector(String name) {
         Well newWell = new Well(name);
         gasInjector.add(newWell);
-        StreamInterface gasInStream = new Stream();
+        StreamInterface gasInStream = new Stream("gasInStream");
         gasInStream.setFluid(thermoSystem.phaseToSystem("gas"));
         gasInStream.getFluid().setTotalFlowRate(1.0e-1, "kg/sec");
         newWell.setStream(gasInStream);
@@ -666,7 +666,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         }
         System.out.println("oil flow " + producedOilStream.getFlowRate("kg/hr"));
 
-        AdiabaticTwoPhasePipe testPipe = new AdiabaticTwoPhasePipe(producedOilStream);
+        AdiabaticTwoPhasePipe testPipe = new AdiabaticTwoPhasePipe("testPipe", producedOilStream);
         testPipe.setLength(3300.0);
         testPipe.setInletElevation(0.0);
         testPipe.setOutletElevation(2200.0);

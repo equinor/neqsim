@@ -44,7 +44,8 @@ public class ProcessSystemTest {
     @Test
     void testAdd() {
         String sepName = "TestSep";
-        Separator sep = new Separator(sepName);
+        Separator sep = new Separator("sep");
+        sep.setName(sepName);
         p.add(sep);
 
         ArrayList<ProcessEquipmentInterface> list = p.getUnitOperations();
@@ -87,7 +88,7 @@ public class ProcessSystemTest {
 
     @Test
     public void testRemoveUnit() {
-        Separator sep = new Separator("sep");
+        Separator sep = new Separator("Separator");
         p.add(sep);
         Assertions.assertEquals(1, p.size());
         p.removeUnit("Separator");
@@ -111,7 +112,7 @@ public class ProcessSystemTest {
     public void testGetUnitNumber() {
         Separator sep = new Separator("Separator");
         p.add(sep);
-        Separator sep2 = new Separator("Separator");
+        Separator sep2 = new Separator("Separator2");
         p.add(sep2);
 
         Assertions.assertEquals(0, p.getUnitNumber("Separator"));

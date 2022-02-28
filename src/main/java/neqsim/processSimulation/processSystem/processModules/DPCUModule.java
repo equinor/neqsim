@@ -93,10 +93,9 @@ public class DPCUModule extends ProcessModuleBaseClass {
         // heatExchanger1.setUAvalue(10000.0);
         // heatExchanger1.addInStream(feedStream2);
 
-        Cooler heatExchanger2 = new Cooler("exchanger2", heatExchanger1.getOutStream(0));
+        Cooler heatExchanger2 = new Cooler("heatExchanger2", heatExchanger1.getOutStream(0));
         // heatExchanger2.setUAvalue(1000.0);
         heatExchanger1.setOutTemperature(273.15 - 21.0);
-        heatExchanger2.setName("heatExchanger2");
         // heatExchanger1.addInStream(feedStream2);
 
         expander = new Expander("expander", heatExchanger2.getOutletStream());

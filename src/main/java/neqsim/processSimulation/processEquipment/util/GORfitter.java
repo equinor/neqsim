@@ -237,7 +237,7 @@ public class GORfitter extends TwoPortEquipment {
 		// gORFItter.setGVF(0.1);
 		gORFItter.setGOR(10.1);
 
-		Stream stream_2 = new Stream(gORFItter.getOutStream());
+        Stream stream_2 = new Stream("stream_2", gORFItter.getOutStream());
 
 		MultiPhaseMeter multiPhaseMeter2 = new MultiPhaseMeter("test", stream_2);
 		multiPhaseMeter2.setTemperature(90.0, "C");

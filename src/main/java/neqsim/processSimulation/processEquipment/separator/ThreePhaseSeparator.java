@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class ThreePhaseSeparator extends Separator {
     private static final long serialVersionUID = 1000;
 
-    StreamInterface waterOutStream = new Stream(waterSystem);
+    StreamInterface waterOutStream = new Stream("waterOutStream", waterSystem);
 
     String specifiedStream = "feed";
     double gasInAqueous = 0.00;
@@ -40,6 +40,16 @@ public class ThreePhaseSeparator extends Separator {
      * <p>
      * Constructor for ThreePhaseSeparator.
      * </p>
+     */
+    @Deprecated
+    public ThreePhaseSeparator() {
+        super();
+    }
+
+    /**
+     * <p>
+     * Constructor for ThreePhaseSeparator.
+     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
@@ -47,6 +57,15 @@ public class ThreePhaseSeparator extends Separator {
     @Deprecated
     public ThreePhaseSeparator(StreamInterface inletStream) {
         addStream(inletStream);
+    }
+
+    /**
+     * Constructor for ThreePhaseSeparator.
+     * 
+     * @param name
+     */
+    public ThreePhaseSeparator(String name) {
+        super(name);
     }
 
     /**
@@ -110,7 +129,7 @@ public class ThreePhaseSeparator extends Separator {
 
         thermoSystem = inletStream.getThermoSystem().clone();
         waterSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-        waterOutStream = new Stream(waterSystem);
+        waterOutStream = new Stream("waterOutStream", waterSystem);
     }
 
     /**

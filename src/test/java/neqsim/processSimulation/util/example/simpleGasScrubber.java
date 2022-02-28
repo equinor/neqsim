@@ -33,10 +33,8 @@ public class simpleGasScrubber {
         GasScrubberSimple gasScrubber = new GasScrubberSimple("Scrubber", stream_1);
         // gasScrubber.addScrubberSection("mesh");
         // gasScrubber.addScrubberSection("mesh2");
-        Stream stream_2 = new Stream(gasScrubber.getGasOutStream());
-        stream_2.setName("gas from scrubber");
-        Stream stream_3 = new Stream(gasScrubber.getLiquidOutStream());
-        stream_3.setName("liquid from scrubber");
+        Stream stream_2 = new Stream("gas from scrubber", gasScrubber.getGasOutStream());
+        Stream stream_3 = new Stream("liquid from scrubber", gasScrubber.getLiquidOutStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

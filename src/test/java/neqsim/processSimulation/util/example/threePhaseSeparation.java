@@ -60,8 +60,7 @@ public class threePhaseSeparation {
 
         ThreePhaseSeparator separator = new ThreePhaseSeparator("Separator", stream_1);
 
-        Stream stream_2 = new Stream(separator.getGasOutStream());
-        stream_2.setName("gas from scrubber");
+        Stream stream_2 = new Stream("gas from scrubber", separator.getGasOutStream());
         // Stream stream_3 = new Stream(separator.getOilOutStream());
         // stream_3.setName("oil from scrubber");
         // Stream stream_4 = new Stream(separator.getWaterOutStream());

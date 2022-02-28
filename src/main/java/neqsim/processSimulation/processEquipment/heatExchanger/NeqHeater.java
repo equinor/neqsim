@@ -17,6 +17,15 @@ public class NeqHeater extends Heater {
     SystemInterface system;
     double dH = 0.0;
 
+    /**
+     * <p>
+     * Constructor for NeqHeater.
+     * </p>
+     */
+    @Deprecated
+    public NeqHeater() {
+        this("NeqHeater");
+    }
 
     /**
      * <p>
@@ -28,8 +37,28 @@ public class NeqHeater extends Heater {
      *                 {@link neqsim.processSimulation.processEquipment.stream.Stream}
      *                 object
      */
-    public NeqHeater(String name, StreamInterface stream) {
-        super(name, stream);
+    @Deprecated
+    public NeqHeater(Stream inStream) {
+        this("NeqHeater", inStream);
+    }
+
+    /**
+     * Constructor for NeqHeater.
+     * 
+     * @param name
+     */
+    public NeqHeater(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for NeqHeater.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public NeqHeater(String name, Stream inStream) {
+        super(name, inStream);
     }
 
     /** {@inheritDoc} */

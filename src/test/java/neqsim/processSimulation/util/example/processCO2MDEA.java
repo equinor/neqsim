@@ -32,9 +32,9 @@ public class processCO2MDEA {
         testSystem.chemicalReactionInit();
         testSystem.setMixingRule(4);
 
-        Stream stream1 = new NeqStream(testSystem);
+        Stream stream1 = new NeqStream("stream1", testSystem);
 
-        Pipeline pipe = new TwoPhasePipeLine(stream1);
+        Pipeline pipe = new TwoPhasePipeLine("pipe", stream1);
         pipe.setOutputFileName("c:/tempNew3.nc");
         pipe.setInitialFlowPattern("annular");
         int numberOfLegs = 1, numberOfNodesInLeg = 10;

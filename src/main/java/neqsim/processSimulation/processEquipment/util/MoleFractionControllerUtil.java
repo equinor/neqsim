@@ -48,7 +48,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
         this.inStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();
-        outStream = new Stream(thermoSystem);
+        outStream = new Stream("outStream", thermoSystem);
     }
 
     /**

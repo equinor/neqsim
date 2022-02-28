@@ -1,13 +1,14 @@
 package neqsim.processSimulation.util.example;
 
 import org.junit.jupiter.api.Test;
-
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>compressorTest12 class.</p>
+ * <p>
+ * compressorTest12 class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -50,8 +51,8 @@ public class compressorTest12 {
         // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         // testOps.TPflash();
 
-        Stream pre = new Stream(testSystem);
-        Compressor ka501 = new Compressor("KA501", pre);
+        Stream pre = new Stream("pre", testSystem);
+        Compressor ka501 = new Compressor("ka501");
         ka501.setInletStream(pre);
         double p = 64.5 + 1; // insert pressure after comp
         double t = 287; // insert temp after comp

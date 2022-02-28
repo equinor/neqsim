@@ -11,7 +11,9 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>multiThreadTest class.</p>
+ * <p>
+ * multiThreadTest class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -44,11 +46,10 @@ public class multiThreadTest {
         StreamInterface stream_2 = separator.getGasOutStream();
         stream_2.setName("stream2");
 
-        Compressor comp1 = new Compressor(stream_2);
-        comp1.setName("comp1");
+        Compressor comp1 = new Compressor("comp1", stream_2);
         comp1.setOutletPressure(50.0);
 
-        Cooler cooler1 = new Cooler(comp1.getOutletStream());
+        Cooler cooler1 = new Cooler("cooler1", comp1.getOutStream());
         cooler1.setOutTemperature(283.15 + 30);
 
         // mixer.addStream(stream_2);
@@ -88,12 +89,12 @@ public class multiThreadTest {
         Compressor comp12 = new Compressor("comp22", stream_222);
         comp12.setOutletPressure(45.0);
 
-        Cooler cooler12 = new Cooler(comp12.getOutletStream());
+        Cooler cooler12 = new Cooler("cooler12", comp12.getOutStream());
         cooler12.setOutTemperature(283.15 + 30);
 
         Separator separator3 = new Separator("Separator 122", cooler12.getOutStream());
 
-        Recycle resyc = new Recycle();
+        Recycle resyc = new Recycle("resyc");
         resyc.addStream(separator3.getLiquidOutStream());
 
         mixer2.addStream(resyc.getOutStream());

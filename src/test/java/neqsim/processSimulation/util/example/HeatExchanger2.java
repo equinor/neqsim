@@ -36,19 +36,19 @@ public class HeatExchanger2 {
         Stream stream_Hot = new Stream("Stream1", testSystem);
         Stream stream_Cold = new Stream("Stream1", testSystem.clone());
 
-        HeatExchanger heatEx = new HeatExchanger("heatex");
+        HeatExchanger heatEx = new HeatExchanger("heatEx");
         heatEx.setFeedStream(0, stream_Hot);
         heatEx.setFeedStream(1, stream_Cold);// resyc.getOutStream());
 
-        Separator sep = new Separator(stream_Hot);
+        Separator sep = new Separator("sep", stream_Hot);
 
-        Stream oilOutStream = new Stream(sep.getLiquidOutStream());
+        Stream oilOutStream = new Stream("oilOutStream", sep.getLiquidOutStream());
 
-        ThrottlingValve valv1 = new ThrottlingValve(oilOutStream);
+        ThrottlingValve valv1 = new ThrottlingValve("valv1", oilOutStream);
         valv1.setOutletPressure(5.0);
 
-        Recycle resyc = new Recycle();
-        resyc.addStream(valv1.getOutletStream());
+        Recycle resyc = new Recycle("resyc");
+        resyc.addStream(valv1.getOutStream());
         resyc.setOutletStream(stream_Cold);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =

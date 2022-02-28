@@ -32,6 +32,28 @@ public class GasScrubberSimple extends Separator {
      * Constructor for GasScrubberSimple.
      * </p>
      */
+    @Deprecated
+    public GasScrubberSimple() {
+        this("GasScrubberSimple");
+    }
+
+    /**
+     * <p>
+     * Constructor for GasScrubberSimple.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
+    @Deprecated
+    public GasScrubberSimple(Stream inletStream) {
+        this("GasScrubberSimple", inletStream);
+    }
+
+    /**
+     * Constructor for GasScrubberSimple.
+     * 
+     * @param name
+     */
     public GasScrubberSimple(String name) {
         super(name);
         this.setOrientation("vertical");
@@ -67,11 +89,11 @@ public class GasScrubberSimple extends Separator {
 
         thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(0);
-        gasOutStream = new Stream(gasSystem);
+        gasOutStream = new Stream("gasOutStream", gasSystem);
 
         thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(1);
-        liquidOutStream = new Stream(liquidSystem);
+        liquidOutStream = new Stream("liquidOutStream", liquidSystem);
     }
 
     /** {@inheritDoc} */

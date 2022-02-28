@@ -79,6 +79,15 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      * Constructor for Stream.
      * 
      * @param name
+     */
+    public Stream(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for Stream.
+     * 
+     * @param name
      * @param stream
      */
     public Stream(String name, StreamInterface stream) {

@@ -44,8 +44,7 @@ public class TEGAbsorberTest {
 
         Separator gasScrubber = new GasScrubberSimple("gasInletScrubber", fluidStreamIn);
 
-        Stream gasToAbsorber = new Stream(gasScrubber.getGasOutStream());
-        gasToAbsorber.setName("gas from scrubber");
+        Stream gasToAbsorber = new Stream("gas from scrubber", gasScrubber.getGasOutStream());
 
         Stream TEGstreamIn = new Stream("TEGstreamIn", testSystem2);
 
@@ -55,11 +54,9 @@ public class TEGAbsorberTest {
         absorber.setNumberOfStages(5);
         absorber.setStageEfficiency(0.5);
 
-        Stream gasStreamOut = new Stream(absorber.getGasOutStream());
-        gasStreamOut.setName("gasStreamOut");
+        Stream gasStreamOut = new Stream("gasStreamOut", absorber.getGasOutStream());
 
-        Stream TEGStreamOut = new Stream(absorber.getSolventOutStream());
-        TEGStreamOut.setName("TEGStreamOut");
+        Stream TEGStreamOut = new Stream("TEGStreamOut", absorber.getSolventOutStream());
 
         ThrottlingValve TEG_HPLP_valve = new ThrottlingValve("ventil", TEGStreamOut);
         TEG_HPLP_valve.setOutletPressure(10.0);
@@ -75,7 +72,7 @@ public class TEGAbsorberTest {
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", MPstreamLiq);
         LP_valve.setOutletPressure(1.5);
 
-        ReBoiler reboiler = new ReBoiler("reboiler", LP_valve.getOutletStream());
+        ReBoiler reboiler = new ReBoiler("reboiler", LP_valve.getOutStream());
         reboiler.setReboilerDuty(20000.0);
 
         neqsim.thermo.system.SystemSrkEos testSystem3 =
@@ -86,7 +83,7 @@ public class TEGAbsorberTest {
         testSystem3.createDatabase(true);
         testSystem3.setMixingRule(2);
 
-        Stream mixStream = new Stream(testSystem3);
+        Stream mixStream = new Stream("mixStream", testSystem3);
 
         Mixer mix = new Mixer("mixer");
         mix.addStream(reboiler.getOutletStream());

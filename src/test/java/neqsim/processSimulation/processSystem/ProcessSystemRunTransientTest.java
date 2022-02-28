@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.measurementDevice.LevelTransmitter;
@@ -58,7 +57,7 @@ public class ProcessSystemRunTransientTest {
         Stream stream_1 = new Stream("Stream1", testSystem);
         stream_1.setFlowRate(50.0, "kg/hr");
         stream_1.setPressure(10.0, "bara");
-
+        
         ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
         valve_1.setOutletPressure(5.0);
         valve_1.setPercentValveOpening(50);
@@ -127,7 +126,7 @@ public class ProcessSystemRunTransientTest {
         valve_1.setOutletPressure(7.0);
         valve_1.setPercentValveOpening(50);
 
-        Separator separator_1 = new Separator();
+        Separator separator_1 = new Separator("separator_1");
         separator_1.addStream(valve_1.getOutStream());
         separator_1.addStream(purgeValve.getOutStream());
 
