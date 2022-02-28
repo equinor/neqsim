@@ -31,13 +31,6 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
      * <p>
      * Constructor for ComponentGEUnifacUMRPRU.
      * </p>
-     */
-    public ComponentGEUnifacUMRPRU() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGEUnifacUMRPRU.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

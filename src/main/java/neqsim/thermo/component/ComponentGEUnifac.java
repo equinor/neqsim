@@ -36,13 +36,6 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
      * <p>
      * Constructor for ComponentGEUnifac.
      * </p>
-     */
-    public ComponentGEUnifac() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGEUnifac.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

@@ -30,24 +30,6 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
      * <p>
      * Constructor for ComponentElectrolyteCPAOld.
      * </p>
-     */
-    public ComponentElectrolyteCPAOld() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPAOld.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentElectrolyteCPAOld(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPAOld.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

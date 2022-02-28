@@ -92,37 +92,6 @@ abstract class Component implements ComponentInterface {
      * <p>
      * Constructor for Component.
      * </p>
-     */
-    // Class methods
-    public Component() {}
-
-    /**
-     * <p>
-     * Constructor for Component.
-     * </p>
-     *
-     * @param number a int
-     * @param moles a double
-     */
-    public Component(int number, double moles) {
-        numberOfMoles = moles;
-    }
-
-    /**
-     * <p>
-     * Constructor for Component.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public Component(double moles) {
-        numberOfMoles = moles;
-    }
-
-    /**
-     * <p>
-     * Constructor for Component.
-     * </p>
      *
      * @param number a int
      * @param TC a double

@@ -3,6 +3,7 @@ package neqsim.processSimulation.processEquipment.reservoir;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.NamedBaseClass;
 
 /**
  * <p>
@@ -12,19 +13,23 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author asmund
  * @version $Id: $Id
  */
-public class Well implements java.io.Serializable {
+public class Well extends NamedBaseClass {
     private static final long serialVersionUID = 1000;
 
     private StreamInterface stream = null;
-    private String name;
     double x, y, z;
 
     /**
      * <p>
      * Constructor for Well.
      * </p>
+     * 
+     * @deprecated use {@link #Well(String)} instead
      */
-    public Well() {}
+    @Deprecated
+    public Well() {
+        this("Well");
+    }
 
     /**
      * <p>
@@ -34,7 +39,7 @@ public class Well implements java.io.Serializable {
      * @param name a {@link java.lang.String} object
      */
     public Well(String name) {
-        this.setName(name);
+        super(name);
     }
 
     /**
@@ -119,27 +124,5 @@ public class Well implements java.io.Serializable {
             volume = locStream.getPhase("oil").getVolume("m3");
         }
         return volume;
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>name</code>.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>name</code>.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void setName(String name) {
-        this.name = name;
     }
 }

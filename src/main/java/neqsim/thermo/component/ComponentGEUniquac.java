@@ -28,13 +28,6 @@ public class ComponentGEUniquac extends ComponentGE {
      * <p>
      * Constructor for ComponentGEUniquac.
      * </p>
-     */
-    public ComponentGEUniquac() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGEUniquac.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

@@ -23,13 +23,6 @@ public class ComponentDesmukhMather extends ComponentGE {
      * <p>
      * Constructor for ComponentDesmukhMather.
      * </p>
-     */
-    public ComponentDesmukhMather() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentDesmukhMather.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

@@ -14,7 +14,10 @@ public class RachigRingPacking extends Packing {
      * Constructor for RachigRingPacking.
      * </p>
      */
-    public RachigRingPacking() {}
+    @Deprecated
+    public RachigRingPacking() {
+        super("RachigRingPacking");
+    }
 
     /**
      * <p>

@@ -27,24 +27,6 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
      * <p>
      * Constructor for ComponentSrkCPA.
      * </p>
-     */
-    public ComponentSrkCPA() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentSrkCPA.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentSrkCPA(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentSrkCPA.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

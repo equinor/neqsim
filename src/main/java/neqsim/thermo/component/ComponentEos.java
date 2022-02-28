@@ -50,13 +50,6 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
      * <p>
      * Constructor for ComponentEos.
      * </p>
-     */
-    public ComponentEos() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentEos.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

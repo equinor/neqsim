@@ -6,6 +6,7 @@
 package neqsim.standards.salesContract;
 
 import neqsim.standards.StandardInterface;
+import neqsim.util.NamedBaseClass;
 
 /**
  * <p>
@@ -15,9 +16,8 @@ import neqsim.standards.StandardInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public class ContractSpecification {
+public class ContractSpecification extends NamedBaseClass {
     StandardInterface standard = null;
-    private String name = "";
     String description = "dew point temperature specification";
     private String country = "";
     private String terminal = "";
@@ -27,7 +27,10 @@ public class ContractSpecification {
     private double referencePressure = 0;
     private String unit = "", comments = "";
 
-    public ContractSpecification() {}
+    @Deprecated
+    public ContractSpecification() {
+        super("ContractSpecification");
+    }
 
     /**
      * <p>
@@ -51,7 +54,7 @@ public class ContractSpecification {
             StandardInterface standard, double minValue, double maxValue, String unit,
             double referenceTemperature, double referenceTemperatureComb, double referencePressure,
             String comments) {
-        this.name = name;
+        super(name);
         this.country = country;
         this.terminal = terminal;
         this.description = description;
@@ -229,28 +232,6 @@ public class ContractSpecification {
      */
     public void setComments(String comments) {
         this.comments = comments;
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>name</code>.
-     * </p>
-     *
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>name</code>.
-     * </p>
-     *
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
     }
 
     /**

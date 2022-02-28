@@ -17,13 +17,6 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
      * <p>
      * Constructor for ComponentKentEisenberg.
      * </p>
-     */
-    public ComponentKentEisenberg() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentKentEisenberg.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

@@ -30,13 +30,6 @@ public class ComponentSolid extends ComponentSrk {
      * <p>
      * Constructor for ComponentSolid.
      * </p>
-     */
-    public ComponentSolid() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentSolid.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

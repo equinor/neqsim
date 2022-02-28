@@ -23,13 +23,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
      * <p>
      * Constructor for ComponentHydrateGF.
      * </p>
-     */
-    public ComponentHydrateGF() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentHydrateGF.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

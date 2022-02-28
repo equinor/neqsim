@@ -17,24 +17,6 @@ public class ComponentTST extends ComponentEos {
      * <p>
      * Constructor for ComponentTST.
      * </p>
-     */
-    public ComponentTST() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentTST.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentTST(double moles) {
-        numberOfMoles = moles;
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentTST.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

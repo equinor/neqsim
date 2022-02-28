@@ -3,6 +3,7 @@ package neqsim.processSimulation.util.monitor;
 import java.util.HashMap;
 import java.util.Map;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.NamedBaseClass;
 
 /**
  * <p>
@@ -12,9 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author asmund
  * @version $Id: $Id
  */
-public class Fluid {
-    public String name;
-
+public class Fluid extends NamedBaseClass {
     public Double volumeFlow;
     public Double molarMass;
     public Double massDensity;
@@ -30,23 +29,41 @@ public class Fluid {
      * Constructor for Fluid.
      * </p>
      */
+    @Deprecated
     public Fluid() {
+        this("Fluid");
+    }
+
+    /**
+     * <p>
+     * Constructor for Fluid. Sets name of inputFluid as name.
+     * </p>
+     * 
+     * @param inputFluid a {@link neqsim.thermo.system.SystemInterface} object
+     */
+    public Fluid(SystemInterface inputFluid) {
+        this(inputFluid.getFluidName(), inputFluid);
+    }
+
+    /**
+     * Constructor for Fluid.
+     * 
+     * @param name
+     */
+    public Fluid(String name) {
+        super(name);
         this.definedComponent = new HashMap<>();
         this.oilComponent = new HashMap<>();
     }
 
     /**
-     * <p>
      * Constructor for Fluid.
-     * </p>
-     *
-     * @param inputFluid a {@link neqsim.thermo.system.SystemInterface} object
+     * 
+     * @param name
+     * @param inputFluid
      */
-    public Fluid(SystemInterface inputFluid) {
-        this.definedComponent = new HashMap<>();
-        this.oilComponent = new HashMap<>();
-
-        name = inputFluid.getFluidName();
+    public Fluid(String name, SystemInterface inputFluid) {
+        this(name);
 
         for (int i = 0; i < inputFluid.getNumberOfComponents(); i++) {
             compProp = new HashMap<>();

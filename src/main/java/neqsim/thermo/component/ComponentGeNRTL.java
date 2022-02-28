@@ -19,13 +19,6 @@ public class ComponentGeNRTL extends ComponentGE {
      * <p>
      * Constructor for ComponentGeNRTL.
      * </p>
-     */
-    public ComponentGeNRTL() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGeNRTL.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

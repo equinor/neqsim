@@ -14,29 +14,7 @@ import neqsim.thermo.component.attractiveEosTerm.AttractiveTermSrk;
 public class ComponentSrk extends ComponentEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     *
-     * 
-     */
     private double factTemp = Math.pow(2.0, 1.0 / 3.0);
-
-    /**
-     * <p>
-     * Constructor for ComponentSrk.
-     * </p>
-     */
-    public ComponentSrk() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentSrk.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentSrk(double moles) {
-        numberOfMoles = moles;
-    }
 
     /**
      * <p>
