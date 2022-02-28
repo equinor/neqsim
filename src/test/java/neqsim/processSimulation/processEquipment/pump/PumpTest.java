@@ -23,7 +23,7 @@ public class PumpTest {
         feedGasStream.setPressure(1.0, "bara");
         feedGasStream.run();
 
-        Pump pump1 = new Pump(feedGasStream);
+        Pump pump1 = new Pump("pump1", feedGasStream);
         pump1.setOutletPressure(12.6);
         pump1.calculateAsCompressor(false);
 

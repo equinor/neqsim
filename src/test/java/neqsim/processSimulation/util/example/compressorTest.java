@@ -42,7 +42,7 @@ public class compressorTest {
         StreamInterface stream_2 = separator.getGasOutStream();
         stream_2.setName("stream2");
 
-        Compressor comp1 = new Compressor(stream_2);
+        Compressor comp1 = new Compressor("comp1", stream_2);
         comp1.setOutletPressure(50.0);
 
         mixer.addStream(stream_2);

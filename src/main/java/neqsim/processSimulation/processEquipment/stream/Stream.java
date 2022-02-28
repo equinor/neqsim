@@ -59,9 +59,18 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
-        @Deprecated
+    @Deprecated
     public Stream(SystemInterface thermoSystem) {
         this("Stream", thermoSystem);
+    }
+
+    /**
+     * Constructor for Stream.
+     * 
+     * @param name
+     */
+    public Stream(String name) {
+        super(name);
     }
 
     /**

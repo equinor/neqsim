@@ -59,14 +59,14 @@ public class LNGtankfilling {
 
         Stream stream_1 = new Stream("Methane Stream", testSystem);
 
-        ValveInterface valve = new ThrottlingValve(stream_1);
+        ValveInterface valve = new ThrottlingValve("valve", stream_1);
         valve.setOutletPressure(1.01325 + 0.110);
 
-        Tank tank = new neqsim.processSimulation.processEquipment.tank.Tank();
+        Tank tank = new neqsim.processSimulation.processEquipment.tank.Tank("tank");
         tank.addStream(valve.getOutStream());
         // tank.addStream(stream_2);
 
-        ValveInterface valve2 = new ThrottlingValve(tank.getGasOutStream());
+        ValveInterface valve2 = new ThrottlingValve("valve2", tank.getGasOutStream());
         valve2.setOutletPressure(0.9);
 
         PressureTransmitter tankPressureTransmitter =

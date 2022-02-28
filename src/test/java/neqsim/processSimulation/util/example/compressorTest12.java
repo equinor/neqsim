@@ -46,8 +46,8 @@ public class compressorTest12 {
         // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         // testOps.TPflash();
 
-        Stream pre = new Stream(testSystem);
-        Compressor ka501 = new Compressor();
+        Stream pre = new Stream("pre", testSystem);
+        Compressor ka501 = new Compressor("ka501");
         ka501.setInletStream(pre);
         double p = 64.5 + 1; // insert pressure after comp
         double t = 287; // insert temp after comp

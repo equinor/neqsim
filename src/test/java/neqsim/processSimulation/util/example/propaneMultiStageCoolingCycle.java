@@ -58,57 +58,59 @@ public class propaneMultiStageCoolingCycle {
         Stream stream_1 = new Stream("Stream1", testSystem);
         stream_1.setSpecification("bubT");
 
-        ThrottlingValve JTvalve1 = new ThrottlingValve(stream_1);
+        ThrottlingValve JTvalve1 = new ThrottlingValve("JTvalve1", stream_1);
         JTvalve1.setOutletPressure(5.0);
 
-        HeatExchanger heatEx1_et = new HeatExchanger(stream_Ethane);
+        HeatExchanger heatEx1_et = new HeatExchanger("heatEx1_et", stream_Ethane);
         heatEx1_et.setFeedStream(1, JTvalve1.getOutStream());
         heatEx1_et.setSpecification("out stream");
 
-        Stream stream_Ethane_out = new Stream(heatEx1_et.getOutStream(0));
+        Stream stream_Ethane_out = new Stream("stream_Ethane_out", heatEx1_et.getOutStream(0));
         stream_Ethane.setSpecification("bubT");
         heatEx1_et.setOutStream(0, stream_Ethane_out);
 
-        ThrottlingValve JTvalve1_et = new ThrottlingValve(stream_Ethane_out);
+        ThrottlingValve JTvalve1_et = new ThrottlingValve("JTvalve1_et", stream_Ethane_out);
         JTvalve1_et.setOutletPressure(2.5);
 
-        HeatExchanger heatEx1 = new HeatExchanger(naturalGasInletStream);
+        HeatExchanger heatEx1 = new HeatExchanger("heatEx1", naturalGasInletStream);
         heatEx1.setGuessOutTemperature(273.0 + 10.0);
         heatEx1.setUAvalue(10000.0);
         heatEx1.setFeedStream(1, heatEx1_et.getOutStream(1));
 
-        Stream coldMidGasFromPropaneCooler = new Stream(heatEx1.getOutStream(0));
+        Stream coldMidGasFromPropaneCooler =
+                new Stream("coldMidGasFromPropaneCooler", heatEx1.getOutStream(0));
 
         StreamInterface heatExPropaneOut = heatEx1.getOutStream(1);
 
-        Separator sep1 = new Separator(heatExPropaneOut);
+        Separator sep1 = new Separator("sep1", heatExPropaneOut);
 
-        ThrottlingValve JTvalve2 = new ThrottlingValve(sep1.getLiquidOutStream());
+        ThrottlingValve JTvalve2 = new ThrottlingValve("JTvalve2", sep1.getLiquidOutStream());
         JTvalve2.setOutletPressure(1.5);
 
-        HeatExchanger heatEx2 = new HeatExchanger(heatEx1.getOutStream(0));
+        HeatExchanger heatEx2 = new HeatExchanger("heatEx2", heatEx1.getOutStream(0));
         heatEx2.setFeedStream(1, JTvalve2.getOutStream());
         heatEx2.setSpecification("out stream");
 
         // Cooler cooler = new Cooler(heatEx2.getOutStream(1));
         // cooler.setSpecification("out stream");
 
-        Stream stream_2 = new Stream(heatEx2.getOutStream(1));
+        Stream stream_2 = new Stream("stream_2", heatEx2.getOutStream(1));
         stream_2.setSpecification("dewP");
         stream_2.run();
         heatEx2.setOutStream(1, stream_2);
 
-        Stream coldGasFromPropaneCooler = new Stream(heatEx2.getOutStream(0));
+        Stream coldGasFromPropaneCooler =
+                new Stream("coldGasFromPropaneCooler", heatEx2.getOutStream(0));
 
-        HeatExchanger heatEx22 = new HeatExchanger(heatEx2.getOutStream(0));
+        HeatExchanger heatEx22 = new HeatExchanger("heatEx22", heatEx2.getOutStream(0));
         heatEx22.setFeedStream(1, JTvalve1_et.getOutStream());
         heatEx22.setSpecification("out stream");
 
-        Stream stream_22 = new Stream(heatEx22.getOutStream(1));
+        Stream stream_22 = new Stream("stream_22", heatEx22.getOutStream(1));
         stream_22.setSpecification("dewP");
         heatEx22.setOutStream(1, stream_22);
 
-        Stream heatEx22stream = new Stream(heatEx22.getOutStream(0));
+        Stream heatEx22stream = new Stream("heatEx22stream", heatEx22.getOutStream(0));
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

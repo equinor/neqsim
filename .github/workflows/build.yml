@@ -2,7 +2,8 @@ name: Build maven
 
 on:
   push:
-  
+    branches: [ master ]
+    
   # pull_request:
   #  types: [ opened, edited, reopened, review_requested ]
   #  branches: [ master ]
