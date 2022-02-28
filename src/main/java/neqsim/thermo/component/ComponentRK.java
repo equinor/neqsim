@@ -18,17 +18,6 @@ public class ComponentRK extends ComponentEos {
      * Constructor for ComponentRK.
      * </p>
      *
-     * @param moles a double
-     */
-    public ComponentRK(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentRK.
-     * </p>
-     *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double

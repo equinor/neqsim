@@ -27,15 +27,6 @@ public class ComponentSolid extends ComponentSrk {
     double pureCompFug = 0.0;
 
     /**
-     * Constructor for ComponentSolid.
-     * 
-     * @param moles a double
-     */
-    public ComponentSolid(double moles) {
-        super(moles);
-    }
-
-    /**
      * <p>
      * Constructor for ComponentSolid.
      * </p>

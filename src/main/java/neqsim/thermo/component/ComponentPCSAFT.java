@@ -29,17 +29,6 @@ public class ComponentPCSAFT extends ComponentSrk {
      * Constructor for ComponentPCSAFT.
      * </p>
      *
-     * @param moles a double
-     */
-    public ComponentPCSAFT(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentPCSAFT.
-     * </p>
-     *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double

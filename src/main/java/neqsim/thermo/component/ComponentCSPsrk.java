@@ -23,17 +23,6 @@ public class ComponentCSPsrk extends ComponentSrk {
      * Constructor for ComponentCSPsrk.
      * </p>
      *
-     * @param moles a double
-     */
-    public ComponentCSPsrk(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentCSPsrk.
-     * </p>
-     *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double

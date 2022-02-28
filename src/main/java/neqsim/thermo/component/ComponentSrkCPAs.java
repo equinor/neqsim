@@ -18,17 +18,6 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
      * Constructor for ComponentSrkCPAs.
      * </p>
      *
-     * @param moles a double
-     */
-    public ComponentSrkCPAs(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentSrkCPAs.
-     * </p>
-     *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double

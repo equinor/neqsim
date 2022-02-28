@@ -47,15 +47,6 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     static Logger logger = LogManager.getLogger(ComponentEos.class);
 
     /**
-     * Constructor for ComponentEos.
-     * 
-     * @param moles a double
-     */
-    public ComponentEos(double moles) {
-        super(moles);
-    }
-
-    /**
      * <p>
      * Constructor for ComponentEos.
      * </p>

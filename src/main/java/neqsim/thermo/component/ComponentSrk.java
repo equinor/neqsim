@@ -21,17 +21,6 @@ public class ComponentSrk extends ComponentEos {
      * Constructor for ComponentSrk.
      * </p>
      *
-     * @param moles a double
-     */
-    public ComponentSrk(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentSrk.
-     * </p>
-     *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double

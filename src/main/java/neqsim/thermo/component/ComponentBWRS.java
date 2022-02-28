@@ -40,17 +40,6 @@ public class ComponentBWRS extends ComponentSrk {
      * Constructor for ComponentBWRS.
      * </p>
      *
-     * @param moles a double
-     */
-    public ComponentBWRS(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentBWRS.
-     * </p>
-     *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double

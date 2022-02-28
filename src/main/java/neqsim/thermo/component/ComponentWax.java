@@ -22,17 +22,6 @@ public class ComponentWax extends ComponentSolid {
      * <p>
      * Constructor for ComponentWax.
      * </p>
-     * 
-     * @param moles a double
-     */
-    public ComponentWax(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentWax.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

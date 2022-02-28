@@ -20,17 +20,6 @@ public class ComponentSrkPeneloux extends ComponentSrk {
      * Constructor for ComponentSrkPeneloux.
      * </p>
      *
-     * @param moles a double
-     */
-    public ComponentSrkPeneloux(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentSrkPeneloux.
-     * </p>
-     *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double

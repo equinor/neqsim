@@ -28,17 +28,6 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
      * Constructor for ComponentElectrolyteCPA.
      * </p>
      *
-     * @param moles a double
-     */
-    public ComponentElectrolyteCPA(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPA.
-     * </p>
-     *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double

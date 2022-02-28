@@ -18,17 +18,6 @@ public class ComponentGERG2004 extends ComponentEos {
      * Constructor for ComponentGERG2004.
      * </p>
      *
-     * @param moles a double
-     */
-    public ComponentGERG2004(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentGERG2004.
-     * </p>
-     *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double
