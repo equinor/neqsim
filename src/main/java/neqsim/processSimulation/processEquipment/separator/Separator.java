@@ -65,8 +65,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
      */
     @Deprecated
     public Separator(StreamInterface inletStream) {
-        this();
-        addStream(inletStream);
+        this("Separator", inletStream);
     }
 
     /**
@@ -86,8 +85,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
      *        object
      */
     public Separator(String name, StreamInterface inletStream) {
-        this(inletStream);
-        this.name = name;
+        this(name);
+        setInletStream(inletStream);
     }
 
     public SeparatorMechanicalDesign gMechanicalDesign() {
