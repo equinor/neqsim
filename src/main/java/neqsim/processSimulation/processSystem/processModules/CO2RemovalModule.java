@@ -83,7 +83,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
     @Override
     public void initializeModule() {
         isInitializedModule = true;
-        inletSeparator = new Separator(streamToAbsorber);
+        inletSeparator = new Separator("inletSeparator", streamToAbsorber);
 
         getOperations().add(inletSeparator);
     }

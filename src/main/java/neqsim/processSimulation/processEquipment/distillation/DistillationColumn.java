@@ -30,8 +30,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double topTrayPressure = -1.0, bottomTrayPressure = -1.0;
     int numberOfTrays = 1;
     private int feedTrayNumber = 1;
-    StreamInterface stream_3 = new Stream(), gasOutStream = new Stream(),
-            liquidOutStream = new Stream(), feedStream = null;
+    StreamInterface stream_3 = new Stream("stream_3"), gasOutStream = new Stream("gasOutStream"),
+            liquidOutStream = new Stream("liquidOutStream"), feedStream = null;
     boolean stream_3isset = false;
     private double internalDiameter = 1.0;
     neqsim.processSimulation.processSystem.ProcessSystem distoperations;

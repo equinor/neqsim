@@ -50,7 +50,7 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
         this.inletStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();
-        outStream = new Stream(thermoSystem);
+        outStream = new Stream("outStream", thermoSystem);
     }
 
     /**

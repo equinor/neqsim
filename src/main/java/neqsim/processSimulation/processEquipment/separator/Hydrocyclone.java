@@ -21,15 +21,16 @@ public class Hydrocyclone extends Separator {
     double overflowPressure = 1.0;
     double separationEfficiency = 0.9;
     double oilInAqueous = 100e-6;
-    StreamInterface waterOutStream = new Stream(waterSystem);
+    StreamInterface waterOutStream = new Stream("waterOutStream", waterSystem);
 
     /**
      * <p>
      * Constructor for Hydrocyclone.
      * </p>
      */
+    @Deprecated
     public Hydrocyclone() {
-        super();
+        this("Hydrocyclone");
     }
 
     /**
@@ -40,9 +41,18 @@ public class Hydrocyclone extends Separator {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Hydrocyclone(StreamInterface inletStream) {
-        this();
-        addStream(inletStream);
+        this("Hydrocyclone", inletStream);
+    }
+
+    /**
+     * Constructor for Hydrocyclone.
+     * 
+     * @param name
+     */
+    public Hydrocyclone(String name) {
+        super(name);
     }
 
     /**
@@ -55,9 +65,7 @@ public class Hydrocyclone extends Separator {
      *        object
      */
     public Hydrocyclone(String name, StreamInterface inletStream) {
-        this();
-        setName(name);
-        addStream(inletStream);
+        super(name, inletStream);
     }
 
     /** {@inheritDoc} */
@@ -67,7 +75,7 @@ public class Hydrocyclone extends Separator {
 
         thermoSystem = inletStream.getThermoSystem().clone();
         waterSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-        waterOutStream = new Stream(waterSystem);
+        waterOutStream = new Stream("waterOutStream", waterSystem);
     }
 
     /**

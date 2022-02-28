@@ -20,6 +20,7 @@ public class Expander extends Compressor implements ExpanderInterface {
      * Constructor for Expander.
      * </p>
      */
+    @Deprecated
     public Expander() {
         super();
     }
@@ -32,8 +33,18 @@ public class Expander extends Compressor implements ExpanderInterface {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Expander(StreamInterface inletStream) {
         super(inletStream);
+    }
+
+    /**
+     * Constructor for Expander.
+     * 
+     * @param name
+     */
+    public Expander(String name) {
+        super(name);
     }
 
     /**

@@ -28,9 +28,20 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
+    @Deprecated
     public StreamSaturatorUtil(Stream inletStream) {
-        super("StreamSaturatorUtil");
-        setInletStream(inletStream);
+        this("StreamSaturatorUtil", inletStream);
+    }
+
+    /**
+     * Constructor for StreamSaturatorUtil.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public StreamSaturatorUtil(String name, Stream inStream) {
+        super(name);
+        setInletStream(inStream);
     }
 
     /**
@@ -44,7 +55,7 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
         this.inletStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();
-        outStream = new Stream(thermoSystem);
+        outStream = new Stream("outStream", thermoSystem);
     }
 
     /**
