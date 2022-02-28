@@ -207,7 +207,7 @@ class CompressorTest {
         testSystem.setMultiPhaseCheck(true);
         
         processOps = new ProcessSystem();
-        Stream inletStream = new Stream(testSystem);
+        Stream inletStream = new Stream("feed stream", testSystem);
         inletStream.setPressure(pressure_inlet, "bara");
         inletStream.setTemperature(temperature_inlet, "C");
         inletStream.setFlowRate(gasFlowRate, "MSm3/day");
