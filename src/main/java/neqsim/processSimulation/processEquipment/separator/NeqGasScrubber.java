@@ -53,6 +53,7 @@ public class NeqGasScrubber extends Separator {
      */
     public NeqGasScrubber(String name) {
         super(name);
+        this.setOrientation("vertical");
     }
 
     /**
@@ -64,9 +65,8 @@ public class NeqGasScrubber extends Separator {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public NeqGasScrubber(String name, Stream inletStream) {
-        this(name);
+        super(name, inletStream);
         this.setOrientation("vertical");
-        this.setInletStream(inletStream);
     }
 
     public GasScrubberMechanicalDesign getMechanicalDesign() {
