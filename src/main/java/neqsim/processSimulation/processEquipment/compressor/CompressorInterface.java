@@ -7,7 +7,6 @@ package neqsim.processSimulation.processEquipment.compressor;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.TwoPortInterface;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  * <p>
@@ -26,17 +25,6 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
      * @return a double
      */
     public double getEnergy();
-
-    /**
-     * <p>
-     * getOutStream.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    @Deprecated
-    public StreamInterface getOutStream();
-
 
     /**
      * <p>
