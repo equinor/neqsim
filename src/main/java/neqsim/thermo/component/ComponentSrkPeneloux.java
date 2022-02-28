@@ -19,18 +19,11 @@ public class ComponentSrkPeneloux extends ComponentSrk {
      * <p>
      * Constructor for ComponentSrkPeneloux.
      * </p>
-     */
-    public ComponentSrkPeneloux() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentSrkPeneloux.
-     * </p>
      *
      * @param moles a double
      */
     public ComponentSrkPeneloux(double moles) {
-        numberOfMoles = moles;
+        super(moles);
     }
 
     /**

@@ -29,18 +29,11 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
      * <p>
      * Constructor for ComponentModifiedFurstElectrolyteEosMod2004.
      * </p>
-     */
-    public ComponentModifiedFurstElectrolyteEosMod2004() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentModifiedFurstElectrolyteEosMod2004.
-     * </p>
      *
      * @param moles a double
      */
     public ComponentModifiedFurstElectrolyteEosMod2004(double moles) {
-        numberOfMoles = moles;
+        super(moles);
     }
 
     /**

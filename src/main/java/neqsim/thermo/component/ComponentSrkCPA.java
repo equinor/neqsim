@@ -27,13 +27,6 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
      * <p>
      * Constructor for ComponentSrkCPA.
      * </p>
-     */
-    public ComponentSrkCPA() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentSrkCPA.
-     * </p>
      *
      * @param moles a double
      */

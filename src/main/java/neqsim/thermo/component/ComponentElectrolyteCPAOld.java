@@ -30,13 +30,6 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
      * <p>
      * Constructor for ComponentElectrolyteCPAOld.
      * </p>
-     */
-    public ComponentElectrolyteCPAOld() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPAOld.
-     * </p>
      *
      * @param moles a double
      */

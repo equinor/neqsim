@@ -17,13 +17,6 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
      * <p>
      * Constructor for ComponentElectrolyteCPAstatoil.
      * </p>
-     */
-    public ComponentElectrolyteCPAstatoil() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPAstatoil.
-     * </p>
      *
      * @param moles a double
      */

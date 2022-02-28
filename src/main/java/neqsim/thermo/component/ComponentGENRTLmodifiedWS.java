@@ -17,13 +17,6 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
      * <p>
      * Constructor for ComponentGENRTLmodifiedWS.
      * </p>
-     */
-    public ComponentGENRTLmodifiedWS() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGENRTLmodifiedWS.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

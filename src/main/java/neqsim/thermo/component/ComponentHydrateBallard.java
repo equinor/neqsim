@@ -20,13 +20,6 @@ public class ComponentHydrateBallard extends ComponentHydrate {
      * <p>
      * Constructor for ComponentHydrateBallard.
      * </p>
-     */
-    public ComponentHydrateBallard() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentHydrateBallard.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

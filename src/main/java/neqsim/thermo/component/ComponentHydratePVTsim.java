@@ -24,13 +24,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
      * <p>
      * Constructor for ComponentHydratePVTsim.
      * </p>
-     */
-    public ComponentHydratePVTsim() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentHydratePVTsim.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

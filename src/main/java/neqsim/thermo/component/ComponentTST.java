@@ -17,18 +17,11 @@ public class ComponentTST extends ComponentEos {
      * <p>
      * Constructor for ComponentTST.
      * </p>
-     */
-    public ComponentTST() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentTST.
-     * </p>
      *
      * @param moles a double
      */
     public ComponentTST(double moles) {
-        numberOfMoles = moles;
+        super(moles);
     }
 
     /**

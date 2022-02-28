@@ -28,20 +28,11 @@ public class ComponentPCSAFT extends ComponentSrk {
      * <p>
      * Constructor for ComponentPCSAFT.
      * </p>
-     */
-    public ComponentPCSAFT() {
-        super();
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentPCSAFT.
-     * </p>
      *
      * @param moles a double
      */
     public ComponentPCSAFT(double moles) {
-        numberOfMoles = moles;
+        super(moles);
     }
 
     /**

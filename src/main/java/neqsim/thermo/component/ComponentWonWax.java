@@ -20,13 +20,6 @@ public class ComponentWonWax extends ComponentSolid {
      * <p>
      * Constructor for ComponentWonWax.
      * </p>
-     */
-    public ComponentWonWax() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentWonWax.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

@@ -17,18 +17,11 @@ public class ComponentRK extends ComponentEos {
      * <p>
      * Constructor for ComponentRK.
      * </p>
-     */
-    public ComponentRK() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentRK.
-     * </p>
      *
      * @param moles a double
      */
     public ComponentRK(double moles) {
-        numberOfMoles = moles;
+        super(moles);
     }
 
     /**

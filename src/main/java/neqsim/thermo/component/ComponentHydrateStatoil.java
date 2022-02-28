@@ -25,13 +25,6 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
      * <p>
      * Constructor for ComponentHydrateStatoil.
      * </p>
-     */
-    public ComponentHydrateStatoil() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentHydrateStatoil.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

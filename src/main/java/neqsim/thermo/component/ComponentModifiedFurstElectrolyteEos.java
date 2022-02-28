@@ -29,13 +29,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
      * <p>
      * Constructor for ComponentModifiedFurstElectrolyteEos.
      * </p>
-     */
-    public ComponentModifiedFurstElectrolyteEos() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentModifiedFurstElectrolyteEos.
-     * </p>
      *
      * @param moles a double
      */

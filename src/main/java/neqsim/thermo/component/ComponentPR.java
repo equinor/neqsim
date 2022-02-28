@@ -17,18 +17,11 @@ public class ComponentPR extends ComponentEos {
      * <p>
      * Constructor for ComponentPR.
      * </p>
-     */
-    public ComponentPR() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentPR.
-     * </p>
      *
      * @param moles a double
      */
     public ComponentPR(double moles) {
-        numberOfMoles = moles;
+        super(moles);
     }
 
     /**

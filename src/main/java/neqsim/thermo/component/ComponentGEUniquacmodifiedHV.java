@@ -18,13 +18,6 @@ abstract class ComponentGEUniquacmodifiedHV extends ComponentGEUniquac {
      * <p>
      * Constructor for ComponentGEUniquacmodifiedHV.
      * </p>
-     */
-    public ComponentGEUniquacmodifiedHV() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGEUniquacmodifiedHV.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

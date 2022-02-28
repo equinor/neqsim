@@ -22,15 +22,6 @@ public class ComponentCSPsrk extends ComponentSrk {
      * <p>
      * Constructor for ComponentCSPsrk.
      * </p>
-     */
-    public ComponentCSPsrk() {
-        super();
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentCSPsrk.
-     * </p>
      *
      * @param moles a double
      */

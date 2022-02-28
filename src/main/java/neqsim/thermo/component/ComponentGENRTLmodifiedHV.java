@@ -22,13 +22,6 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
      * <p>
      * Constructor for ComponentGENRTLmodifiedHV.
      * </p>
-     */
-    public ComponentGENRTLmodifiedHV() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGENRTLmodifiedHV.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

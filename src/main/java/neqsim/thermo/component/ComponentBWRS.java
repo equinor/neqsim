@@ -39,18 +39,11 @@ public class ComponentBWRS extends ComponentSrk {
      * <p>
      * Constructor for ComponentBWRS.
      * </p>
-     */
-    public ComponentBWRS() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentBWRS.
-     * </p>
      *
      * @param moles a double
      */
     public ComponentBWRS(double moles) {
-        numberOfMoles = moles;
+        super(moles);
     }
 
     /**
