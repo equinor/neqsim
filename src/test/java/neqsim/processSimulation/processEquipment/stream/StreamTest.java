@@ -4,10 +4,9 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 /**
@@ -46,4 +45,14 @@ class StreamTest {
         // 18978 J/Sm3
     }
 
+    @Test
+    public void testNoFlow() {
+        testSystem.setTotalFlowRate(0, "MSm3/day");
+        RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
+            testSystem.initProperties();
+        });
+        Assertions.assertEquals(
+                "neqsim.util.exception.InvalidInputException: Phase:init - Input totalNumberOfMoles must be larger than zero.",
+                thrown.getMessage());
+    }
 }
