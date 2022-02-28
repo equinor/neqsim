@@ -239,12 +239,10 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         outStream[1].displayResult();
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
+    }
 
     /**
      * <p>

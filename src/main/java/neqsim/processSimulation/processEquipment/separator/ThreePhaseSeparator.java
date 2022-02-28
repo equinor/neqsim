@@ -235,12 +235,10 @@ public class ThreePhaseSeparator extends Separator {
         // }
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
+    }
 
     /** {@inheritDoc} */
     @Override

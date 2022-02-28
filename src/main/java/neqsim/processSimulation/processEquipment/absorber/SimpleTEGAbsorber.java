@@ -253,7 +253,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {
+    }
 
     /**
      * <p>
