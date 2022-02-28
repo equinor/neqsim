@@ -65,8 +65,7 @@ public class Hydrocyclone extends Separator {
      *        object
      */
     public Hydrocyclone(String name, StreamInterface inletStream) {
-        super(name);
-        addStream(inletStream);
+        super(name, inletStream);
     }
 
     /** {@inheritDoc} */

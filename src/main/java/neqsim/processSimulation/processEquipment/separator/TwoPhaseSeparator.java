@@ -27,7 +27,9 @@ public class TwoPhaseSeparator extends Separator {
      * </p>
      */
     @Deprecated
-    public TwoPhaseSeparator() {}
+    public TwoPhaseSeparator() {
+        this("TwoPhaseSeparator");
+    }
 
     /**
      * <p>
@@ -39,7 +41,16 @@ public class TwoPhaseSeparator extends Separator {
      */
     @Deprecated
     public TwoPhaseSeparator(StreamInterface inletStream) {
-        this.setInletStream(inletStream);
+        this("TwoPhaseSeparator", inletStream);
+    }
+
+    /**
+     * Constructor for TwoPhaseSeparator.
+     * 
+     * @param name
+     */
+    public TwoPhaseSeparator(String name) {
+        super(name);
     }
 
     /**

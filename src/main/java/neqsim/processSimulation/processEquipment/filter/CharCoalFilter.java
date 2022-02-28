@@ -16,6 +16,16 @@ public class CharCoalFilter extends Filter {
     /**
      * Constructor for CharCoalFilter.
      * 
+     * @param inStream
+     */
+    @Deprecated
+    public CharCoalFilter(StreamInterface inStream) {
+        super(inStream);
+    }
+
+    /**
+     * Constructor for CharCoalFilter.
+     * 
      * @param name
      * @param inStream
      */

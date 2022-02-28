@@ -43,7 +43,7 @@ public class ThreePhaseSeparator extends Separator {
      */
     @Deprecated
     public ThreePhaseSeparator() {
-        super();
+        this("ThreePhaseSeparator");
     }
 
     /**
@@ -56,7 +56,16 @@ public class ThreePhaseSeparator extends Separator {
      */
     @Deprecated
     public ThreePhaseSeparator(StreamInterface inletStream) {
-        addStream(inletStream);
+        this("ThreePhaseSeparator", inletStream);
+    }
+
+    /**
+     * Constructor for ThreePhaseSeparator.
+     * 
+     * @param name
+     */
+    public ThreePhaseSeparator(String name) {
+        super(name);
     }
 
     /**
@@ -78,8 +87,12 @@ public class ThreePhaseSeparator extends Separator {
      *        object
      */
     public ThreePhaseSeparator(String name, StreamInterface inletStream) {
+<<<<<<< HEAD
         super(name);
         addStream(inletStream);
+=======
+        super(name, inletStream);
+>>>>>>> upstream/master
     }
 
     /**
