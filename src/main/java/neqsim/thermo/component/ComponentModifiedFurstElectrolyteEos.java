@@ -34,7 +34,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
      */
     public ComponentModifiedFurstElectrolyteEos(double moles) {
         super(moles);
-        numberOfMoles = moles;
     }
 
     /**
