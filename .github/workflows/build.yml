@@ -1,6 +1,11 @@
 name: Build maven
 
-on: [push]
+on:
+  push:
+  
+  pull_request:
+    types: [ opened, edited, reopened, review_requested ]
+    branches: [ master ]
 
 jobs:
   build:
