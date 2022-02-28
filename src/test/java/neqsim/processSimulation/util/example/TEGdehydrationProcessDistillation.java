@@ -134,7 +134,6 @@ public class TEGdehydrationProcessDistillation {
         column.setBottomPressure(1.23);
 
         Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
-        coolerRegenGas.setName();
         coolerRegenGas.setOutTemperature(273.15 + 35.5);
 
         Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutStream());
