@@ -513,7 +513,14 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
                         if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
                             thermoOps.PSflashGERG2008(entropy);
                         } else {
+                        	double oleTemp= getThermoSystem().getTemperature();
                             thermoOps.PSflash(entropy);
+                            if(Math.abs(getThermoSystem().getEntropy()-entropy)>1e-3) {
+                            	getThermoSystem().setTemperature(oleTemp);
+                            	thermoOps.TPflash();
+                            	getThermoSystem().init(2);
+                            	continue;
+                            }
                         }
                         double newEnt = getThermoSystem().getEnthalpy();
                         if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {

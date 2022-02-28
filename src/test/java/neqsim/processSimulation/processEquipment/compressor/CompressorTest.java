@@ -14,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processSystem.ProcessSystem;
+import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
 class CompressorTest {
@@ -96,8 +98,8 @@ class CompressorTest {
         processOps.run();
         // System.out.println("schultz compressor power " + compressor1.getPower() / 1e6
         // + " MW");
-        assertEquals(4.668373797540108, compressor1.getPower() / 1e6,
-                "Test case for compressor Schultz method polytropic calculation should return approximate 4.67 MW");
+        assertEquals(compressor1.getPower() / 1e6, 4.668373797540108,0.01);
+//                "Test case for compressor Schultz method polytropic calculation should return approximate 4.67 MW");
     }
 
     /**
@@ -113,8 +115,8 @@ class CompressorTest {
         processOps.run();
         // System.out.println("rigorous compressor power " + compressor1.getPower() /
         // 1e6 + " MW");
-        assertEquals(4.655081035416562, compressor1.getPower() / 1e6,
-                "Test case for rigorous polytropic compressor calculation should return approximate 4.66 MW");
+        assertEquals(compressor1.getPower() / 1e6, 4.655081035416562,0.01);
+//                "Test case for rigorous polytropic compressor calculation should return approximate 4.66 MW");
     }
 
     /**
@@ -129,7 +131,7 @@ class CompressorTest {
         processOps.run();
         // System.out.println("compressor power " + compressor1.getPower() / 1e6 + "
         // MW");
-        assertEquals(4.5621157449685, compressor1.getPower() / 1e6);
+        assertEquals(compressor1.getPower() / 1e6, 4.5621157449685,0.01);
     }
 
     /**
@@ -156,8 +158,8 @@ class CompressorTest {
         // System.out.println("srk fluid head " + compressor1.getPolytropicFluidHead() +
         // " kJ/kg");
         // System.out.println("srk power " + compressor1.getPower() + " W");
-        assertEquals(88.94871563458828, compressor1.getPolytropicEfficiency() * 100,
-                "Test case for rigorous polytropic efficiency with SRK calculation should return approximate 88.948715 ");
+        assertEquals(compressor1.getPolytropicEfficiency() * 100, 88.94871563458828,0.01);
+//                "Test case for rigorous polytropic efficiency with SRK calculation should return approximate 88.948715 ");
     }
 
     /**
@@ -186,7 +188,36 @@ class CompressorTest {
         // System.out.println("gerg fluid head " + compressor1.getPolytropicFluidHead()
         // + " kJ/kg");
         // System.out.println("gerg power " + compressor1.getPower() + " W");
-        assertEquals(89.99367027631443, compressor1.getPolytropicEfficiency() * 100,
-                "Test case for rigorous polytropic efficiency with GER2008 calculation should return approximate 89.992296751");
+        assertEquals(compressor1.getPolytropicEfficiency() * 100, 89.99367027631443,0.01);
+//                "Test case for rigorous polytropic efficiency with GER2008 calculation should return approximate 89.992296751");
+    }
+    
+    /**
+     * <p>
+     * test Multi Phase Compression.
+     * </p>
+     */
+    @Test
+    public void testMultiPhaseCompression() throws Exception {
+    	SystemSrkEos testSystem = new SystemSrkEos(315.0, 10.0);
+        testSystem.addComponent("methane", 50.0);
+        testSystem.addComponent("nC10", 100.0);
+        testSystem.addComponent("water", 100.0);
+        testSystem.setMixingRule(2);
+        testSystem.setMultiPhaseCheck(true);
+        
+        processOps = new ProcessSystem();
+        Stream inletStream = new Stream(testSystem);
+        inletStream.setPressure(pressure_inlet, "bara");
+        inletStream.setTemperature(temperature_inlet, "C");
+        inletStream.setFlowRate(gasFlowRate, "MSm3/day");
+        compressor1 = new Compressor(unitName, inletStream);
+        compressor1.setOutletPressure(pressure_Out);
+        compressor1.setUsePolytropicCalc(true);
+        compressor1.setPolytropicEfficiency(0.5);
+        processOps.add(inletStream);
+        processOps.add(compressor1);
+        processOps.run();
+        
     }
 }
