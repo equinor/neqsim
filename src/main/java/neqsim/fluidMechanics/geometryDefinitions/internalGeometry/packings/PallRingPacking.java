@@ -19,8 +19,9 @@ public class PallRingPacking extends Packing {
      * Constructor for PallRingPacking.
      * </p>
      */
+    @Deprecated
     public PallRingPacking() {
-        super();
+        super("PallRingPacking");
     }
 
     /**

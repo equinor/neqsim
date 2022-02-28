@@ -9,6 +9,7 @@ import Jama.Matrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.NamedBaseClass;
 
 /**
  * <p>
@@ -18,11 +19,11 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInterface {
+public class ChemicalReaction extends NamedBaseClass
+        implements neqsim.thermo.ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
 
     String[] names, reactantNames, productNames;
-    String name;
     double[] stocCoefs = new double[4];
     double[] reacCoefs, prodCoefs, moles;
     boolean shiftSignK = false;
@@ -35,8 +36,15 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
      * <p>
      * Constructor for ChemicalReaction.
      * </p>
+     * 
+     * @deprecated use
+     *             {@link #ChemicalReaction(String, String[], double[], double[], double, double, double)}
+     *             instead
      */
-    public ChemicalReaction() {}
+    @Deprecated
+    public ChemicalReaction() {
+        super("ChemicalReaction");
+    }
 
     /**
      * <p>
@@ -57,7 +65,7 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
          * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
          * 
          */
-        this.name = name;
+        super(name);
         this.names = new String[names.length];
         this.moles = new double[names.length];
         this.stocCoefs = new double[stocCoefs.length];
@@ -485,23 +493,5 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
      */
     public void setK(int i, double Kd) {
         this.K[i] = Kd;
-    }
-
-    /**
-     * Getter for property name.
-     *
-     * @return Value of property name.
-     */
-    public java.lang.String getName() {
-        return name;
-    }
-
-    /**
-     * Setter for property name.
-     *
-     * @param name New value of property name.
-     */
-    public void setName(java.lang.String name) {
-        this.name = name;
     }
 }
