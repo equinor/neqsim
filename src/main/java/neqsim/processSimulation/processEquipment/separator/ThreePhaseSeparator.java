@@ -69,15 +69,6 @@ public class ThreePhaseSeparator extends Separator {
     }
 
     /**
-     * Constructor for ThreePhaseSeparator.
-     * 
-     * @param name
-     */
-    public ThreePhaseSeparator(String name) {
-        super(name);
-    }
-
-    /**
      * <p>
      * Constructor for ThreePhaseSeparator.
      * </p>
@@ -87,12 +78,7 @@ public class ThreePhaseSeparator extends Separator {
      *        object
      */
     public ThreePhaseSeparator(String name, StreamInterface inletStream) {
-<<<<<<< HEAD
-        super(name);
-        addStream(inletStream);
-=======
         super(name, inletStream);
->>>>>>> upstream/master
     }
 
     /**
