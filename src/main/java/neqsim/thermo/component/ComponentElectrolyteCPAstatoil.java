@@ -17,24 +17,6 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
      * <p>
      * Constructor for ComponentElectrolyteCPAstatoil.
      * </p>
-     */
-    public ComponentElectrolyteCPAstatoil() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPAstatoil.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentElectrolyteCPAstatoil(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPAstatoil.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

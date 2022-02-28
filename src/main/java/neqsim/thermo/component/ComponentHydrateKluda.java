@@ -31,13 +31,6 @@ public class ComponentHydrateKluda extends Component {
      * <p>
      * Constructor for ComponentHydrateKluda.
      * </p>
-     */
-    public ComponentHydrateKluda() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentHydrateKluda.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

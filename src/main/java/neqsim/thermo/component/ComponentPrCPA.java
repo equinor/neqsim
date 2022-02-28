@@ -17,24 +17,6 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
      * <p>
      * Constructor for ComponentPrCPA.
      * </p>
-     */
-    public ComponentPrCPA() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentPrCPA.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentPrCPA(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentPrCPA.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

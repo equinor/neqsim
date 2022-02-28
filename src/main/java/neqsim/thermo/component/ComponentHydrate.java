@@ -43,13 +43,6 @@ public class ComponentHydrate extends Component {
      * <p>
      * Constructor for ComponentHydrate.
      * </p>
-     */
-    public ComponentHydrate() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentHydrate.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

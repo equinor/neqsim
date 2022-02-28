@@ -17,24 +17,6 @@ public class ComponentPR extends ComponentEos {
      * <p>
      * Constructor for ComponentPR.
      * </p>
-     */
-    public ComponentPR() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentPR.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentPR(double moles) {
-        numberOfMoles = moles;
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentPR.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

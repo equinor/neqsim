@@ -18,13 +18,6 @@ public class ComponentGEWilson extends ComponentGE {
      * <p>
      * Constructor for ComponentGEWilson.
      * </p>
-     */
-    public ComponentGEWilson() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGEWilson.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

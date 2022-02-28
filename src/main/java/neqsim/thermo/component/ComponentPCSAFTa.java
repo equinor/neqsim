@@ -25,24 +25,6 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
      * <p>
      * Constructor for ComponentPCSAFTa.
      * </p>
-     */
-    public ComponentPCSAFTa() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentPCSAFTa.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentPCSAFTa(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentPCSAFTa.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

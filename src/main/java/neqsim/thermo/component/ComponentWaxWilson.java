@@ -23,13 +23,6 @@ public class ComponentWaxWilson extends ComponentSolid {
      * <p>
      * Constructor for ComponentWaxWilson.
      * </p>
-     */
-    public ComponentWaxWilson() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentWaxWilson.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

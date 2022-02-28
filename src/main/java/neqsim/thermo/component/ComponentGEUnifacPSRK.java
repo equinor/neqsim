@@ -21,13 +21,6 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
      * <p>
      * Constructor for ComponentGEUnifacPSRK.
      * </p>
-     */
-    public ComponentGEUnifacPSRK() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGEUnifacPSRK.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

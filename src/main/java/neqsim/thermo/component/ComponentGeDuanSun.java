@@ -20,13 +20,6 @@ public class ComponentGeDuanSun extends ComponentGE {
      * <p>
      * Constructor for ComponentGeDuanSun.
      * </p>
-     */
-    public ComponentGeDuanSun() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGeDuanSun.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double

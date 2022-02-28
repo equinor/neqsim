@@ -26,13 +26,6 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
      * <p>
      * Constructor for ComponentGE.
      * </p>
-     */
-    public ComponentGE() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGE.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
