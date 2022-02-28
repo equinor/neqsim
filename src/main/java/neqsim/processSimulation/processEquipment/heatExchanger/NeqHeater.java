@@ -38,7 +38,7 @@ public class NeqHeater extends Heater {
      *                 object
      */
     @Deprecated
-    public NeqHeater(Stream inStream) {
+    public NeqHeater(StreamInterface inStream) {
         this("NeqHeater", inStream);
     }
 
@@ -57,7 +57,7 @@ public class NeqHeater extends Heater {
      * @param name
      * @param inStream
      */
-    public NeqHeater(String name, Stream inStream) {
+    public NeqHeater(String name, StreamInterface inStream) {
         super(name, inStream);
     }
 
