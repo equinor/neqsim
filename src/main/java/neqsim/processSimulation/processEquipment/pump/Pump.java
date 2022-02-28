@@ -467,16 +467,4 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     public PumpChart getPumpChart() {
         return pumpChart;
     }
-
-    /**
-     * <p>
-     * Getter for the field <code>inStream</code>.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    @Deprecated
-    public StreamInterface getInStream() {
-        return inStream;
-    }
 }

@@ -12,6 +12,16 @@ public interface TwoPortInterface {
 
     /**
      * Get inlet Stream of twoport.
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
+    @Deprecated
+    default public StreamInterface getInStream() {
+        return getInletStream();
+    }
+
+    /**
+     * Get inlet Stream of twoport.
      * 
      * @return inlet Stream of TwoPortEquipment
      */

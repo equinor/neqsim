@@ -241,18 +241,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
 
     /**
-     * <p>
-     * getInStream.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    @Deprecated
-    public StreamInterface getInStream() {
-        return inStream;
-    }
-
-    /**
      * Calculates polytropic or isentropic efficiency
      *
      * @param outTemperature a double

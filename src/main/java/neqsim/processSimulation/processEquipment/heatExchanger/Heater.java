@@ -80,18 +80,6 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
         outStream = new Stream("outStream", system);
     }
 
-    /**
-     * <p>
-     * Getter for the field <code>inStream</code>.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    @Deprecated
-    public StreamInterface getInStream() {
-        return inStream;
-    }
-
     /** {@inheritDoc} */
     @Override
     public void setdT(double dT) {
