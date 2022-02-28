@@ -1,8 +1,7 @@
-name: Run test package from pull request
+name: Pull request to master, test
 
 on: 
   pull_request:
-    types: [ opened, edited, reopened, review_requested ]
     branches: [ master ]
 
 jobs:
