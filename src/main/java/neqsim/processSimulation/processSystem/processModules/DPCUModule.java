@@ -112,7 +112,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         mixer.addStream(heatExchanger1.getOutStream(1));
         mixer.addStream(splitter.getSplitStream(1));
 
-        compressor1 = new Compressor("Compressor 1", mixer.getOutStream());
+        compressor1 = new Compressor("Compressor 1", mixer.getOutletStream());
         compressor1.setOutletPressure(65.0);
 
         Recycle recycl = new Recycle("recycler");

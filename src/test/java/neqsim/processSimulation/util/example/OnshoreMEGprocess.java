@@ -60,14 +60,14 @@ public class OnshoreMEGprocess {
                 new StreamSaturatorUtil("water saturator", dryFeedGas);
 
         Stream waterSaturatedFeedGas =
-                new Stream("water saturated feed gas", saturatedFeedGas.getOutStream());
+                new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
         Compressor inletCompressor =
                 new Compressor("Compressor 1 - first stage", waterSaturatedFeedGas);
         inletCompressor.setOutletPressure(70.0, "bara");
 
         Cooler interstageGasCooler =
-                new Cooler("Compressor 1 - interstage cooler", inletCompressor.getOutStream());
+                new Cooler("Compressor 1 - interstage cooler", inletCompressor.getOutletStream());
         interstageGasCooler.setOutTemperature(40.0, "C");
 
         Compressor inletCompressor2ndstage = new Compressor("Compressor 1 - second stage",
@@ -89,15 +89,15 @@ public class OnshoreMEGprocess {
         MEGmixer1.addStream(inletCompressor2ndstage.getOutletStream());
         MEGmixer1.addStream(MEGsplitter1.getSplitStream(0));
 
-        Cooler inletGasCooler = new Cooler("dehydration cooler", MEGmixer1.getOutStream());
+        Cooler inletGasCooler = new Cooler("dehydration cooler", MEGmixer1.getOutletStream());
         inletGasCooler.setOutTemperature(10.0, "C");
 
         StaticMixer MEGmixer2 = new StaticMixer("MEG mixer 2");
-        MEGmixer2.addStream(inletGasCooler.getOutStream());
+        MEGmixer2.addStream(inletGasCooler.getOutletStream());
         MEGmixer2.addStream(MEGsplitter1.getSplitStream(1));
 
         HeatExchanger heatEx =
-                new HeatExchanger("gas-gas heat exchanger", MEGmixer2.getOutStream());
+                new HeatExchanger("gas-gas heat exchanger", MEGmixer2.getOutletStream());
         heatEx.setGuessOutTemperature(273.15 - 10.0);
         heatEx.setUAvalue(30000.0);
 
@@ -105,11 +105,13 @@ public class OnshoreMEGprocess {
         MEGmixer3.addStream(heatEx.getOutStream(0));
         MEGmixer3.addStream(MEGsplitter1.getSplitStream(2));
 
-        ThrottlingValve presRedValveLT = new ThrottlingValve("JT valve", MEGmixer3.getOutStream());
+        ThrottlingValve presRedValveLT =
+                new ThrottlingValve("JT valve", MEGmixer3.getOutletStream());
         presRedValveLT.setOutletPressure(92.0);
 
         ThreePhaseSeparator mpseparator =
-                new ThreePhaseSeparator("low temperature scrubber", presRedValveLT.getOutStream());
+                new ThreePhaseSeparator("low temperature scrubber",
+                        presRedValveLT.getOutletStream());
 
         Stream coldGasFromSep = new Stream("gas from cold scrubber", mpseparator.getGasOutStream());
 
