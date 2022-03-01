@@ -93,7 +93,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         stream_2.getThermoSystem().setTemperature(vaporizerTemperature);
         stream_2.run();
 
-        cooler.getOutletStream(stream_2);
+        cooler.setOutletStream(stream_2);
         JTvalve.setOutletPressure(stream_2.getPressure());
 
         Compressor compressor1 = new Compressor("propane compressor", stream_2);

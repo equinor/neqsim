@@ -125,7 +125,7 @@ public class SubseaWell extends TwoPortEquipment {
         ThrottlingValve subseaChoke = new ThrottlingValve("subseaChoke", well1.getOutStream());
         subseaChoke.setOutletPressure(90.0);
         subseaChoke.setAcceptNegativeDP(false);
-        SimpleFlowLine flowLine = new SimpleFlowLine(subseaChoke.getOutletStream());
+        SimpleFlowLine flowLine = new SimpleFlowLine("flowLine", subseaChoke.getOutletStream());
         flowLine.getPipeline().setDiameter(0.4);
         flowLine.getPipeline().setLength(2000.0);
         flowLine.getPipeline().setInletElevation(-100.0);

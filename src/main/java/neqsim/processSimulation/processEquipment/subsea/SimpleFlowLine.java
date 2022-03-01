@@ -30,11 +30,16 @@ public class SimpleFlowLine extends TwoPortEquipment {
      *        object
      */
     @Deprecated
-    public SimpleFlowLine(StreamInterface instream) {
-        super("SimpleFlowLine");
-        this.inStream = instream;
-        setOutStream(instream.clone());
-        pipeline = new AdiabaticTwoPhasePipe("pipeline", instream);
+    public SimpleFlowLine(StreamInterface inStream) {
+        this("SimpleFlowLine", inStream);
+
+    }
+
+    public SimpleFlowLine(String name, StreamInterface inStream) {
+        super(name);
+        this.inStream = inStream;
+        setOutStream(inStream.clone());
+        pipeline = new AdiabaticTwoPhasePipe("pipeline", inStream);
     }
 
     /**

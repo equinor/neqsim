@@ -42,7 +42,8 @@ public class ReactorData extends GeometryDefinition {
     public ReactorData(double diameter, double roughness) {
         super(diameter, roughness);
         packing =
-                new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
+                new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
+                        "PallRingPacking");
     }
 
     /**
@@ -63,7 +64,8 @@ public class ReactorData extends GeometryDefinition {
     public void setPackingType(int i) {
         // if(i!=100){
         packing =
-                new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
+                new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
+                        "PallRingPacking");
         // }
     }
 

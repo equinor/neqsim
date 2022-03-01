@@ -183,7 +183,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     @Override
     public void run() {
         inletStreamMixer.run();
-        thermoSystem2 = inletStreamMixer.getOutStream().getThermoSystem().clone();
+        thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
         thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
 
         if (thermoSystem2.hasPhaseType("gas")) {
@@ -275,22 +275,24 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         liquidOutStream.getThermoSystem().init(3);
         double volume1 = thermoSystem.getVolume();
         //System.out.println("volume1 " + volume1);
-        double deltaEnergy = inletStreamMixer.getOutStream().getThermoSystem().getEnthalpy()
+        double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
                 - gasOutStream.getThermoSystem().getEnthalpy()
                 - liquidOutStream.getThermoSystem().getEnthalpy();
         //System.out.println("enthalph delta " + deltaEnergy);
         double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-            double dn = inletStreamMixer.getOutStream().getThermoSystem().getPhase(0)
+            double dn = inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0)
                     .getComponent(i).getNumberOfMolesInPhase()
-                    + inletStreamMixer.getOutStream().getThermoSystem().getPhase(1).getComponent(i)
+                    + inletStreamMixer.getOutletStream().getThermoSystem().getPhase(1)
+                            .getComponent(i)
                             .getNumberOfMolesInPhase()
                     - gasOutStream.getThermoSystem().getPhase(0).getComponent(i)
                             .getNumberOfMolesInPhase()
                     - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i)
                             .getNumberOfMolesInPhase();
             //System.out.println("dn " + dn);
-            thermoSystem.addComponent(inletStreamMixer.getOutStream().getThermoSystem().getPhase(0)
+            thermoSystem.addComponent(inletStreamMixer.getOutletStream().getThermoSystem()
+                    .getPhase(0)
                     .getComponent(i).getComponentNumber(), dn * dt);
         }
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);

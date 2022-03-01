@@ -168,7 +168,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
         }
         ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         if (getSpecification().equals("out stream")) {
-            getOutStream().setFlowRate(getInStream().getFlowRate("kg/sec"), "kg/sec");
+            getOutStream().setFlowRate(getInletStream().getFlowRate("kg/sec"), "kg/sec");
             getOutStream().run();
             temperatureOut = getOutStream().getTemperature();
             system = getOutStream().getThermoSystem().clone();
