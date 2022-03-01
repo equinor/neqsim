@@ -59,19 +59,19 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         }
         getOperations().run();
 
-        double volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutStream()
+        double volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutletStream()
                 .getThermoSystem().getVolume();
         double volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))
                 .getOilOutStream().getThermoSystem().getVolume();
 
         double GOR = volGas / volOil;
         System.out.println("GOR " + GOR);
-        outStream = ((Mixer) getOperations().getUnit("well mixer")).getOutStream();
+        outStream = ((Mixer) getOperations().getUnit("well mixer")).getOutletStream();
 
         // ((Heater) getOperations().getUnit("gas heater")).displayResult();
 
         Stream gasStream =
-                (Stream) ((Heater) getOperations().getUnit("gas heater")).getOutStream().clone();
+                (Stream) ((Heater) getOperations().getUnit("gas heater")).getOutletStream().clone();
         gasStream.getThermoSystem().setPressure(inletPressure);
         Stream oilStream =
                 (Stream) ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))

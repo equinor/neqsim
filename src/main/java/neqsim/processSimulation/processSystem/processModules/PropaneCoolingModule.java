@@ -104,7 +104,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         Heater condenser = new Heater("propane condenser", compressor1.getOutletStream());
         condenser.setPressureDrop(0.07);
         condenser.setSpecification("out stream");
-        condenser.setOutStream((Stream) refrigerantStream);
+        condenser.setOutletStream((Stream) refrigerantStream);
 
         System.out.println("adding operations....");
         getOperations().add(refrigerantStream);
