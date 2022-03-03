@@ -200,6 +200,7 @@ class CompressorTest {
     @Test
     public void testMultiPhaseCompression() throws Exception {
     	SystemSrkEos testSystem = new SystemSrkEos(315.0, 10.0);
+    	testSystem.addComponent("nitrogen", 2.0);
         testSystem.addComponent("methane", 50.0);
         testSystem.addComponent("nC10", 100.0);
         testSystem.addComponent("water", 100.0);
@@ -207,7 +208,7 @@ class CompressorTest {
         testSystem.setMultiPhaseCheck(true);
         
         processOps = new ProcessSystem();
-        Stream inletStream = new Stream(testSystem);
+        Stream inletStream = new Stream("feed stream", testSystem);
         inletStream.setPressure(pressure_inlet, "bara");
         inletStream.setTemperature(temperature_inlet, "C");
         inletStream.setFlowRate(gasFlowRate, "MSm3/day");
@@ -218,6 +219,6 @@ class CompressorTest {
         processOps.add(inletStream);
         processOps.add(compressor1);
         processOps.run();
-        
+        assertEquals(compressor1.getPower(), 3712608.4725392014 , 0.01);
     }
 }
