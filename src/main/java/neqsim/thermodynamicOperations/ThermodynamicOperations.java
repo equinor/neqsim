@@ -1979,17 +1979,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                 if (FlashMode == 1) {
                     this.system.setTemperature(Sp2);
                     this.TPflash();
-                    this.system.init(2);
-                    this.system.initPhysicalProperties();
                 } else if (FlashMode == 2) {
                     this.PHflash(Sp2, "J/mol");
-                    this.system.init(2);
-                    this.system.initPhysicalProperties();
+
                 } else if (FlashMode == 3) {
                     this.PSflash(Sp2, "J/molK");
-                    this.system.init(2);
-                    this.system.initPhysicalProperties();
+                } else {
+                    throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+                            "ThermodynamicOperations", "propertyFlash",
+                            "Input mode must be 1, 2 or 3"));
                 }
+                this.system.init(2);
+                this.system.initPhysicalProperties();
 
                 int numberOfMole = Math.round((float) this.system.getNumberOfMoles());
 

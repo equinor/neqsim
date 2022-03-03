@@ -22,7 +22,15 @@ public class ThermodynamicOperationsTest {
         List<Double> jP = Arrays.asList(new Double[] {10.0});
         List<Double> jT = Arrays.asList(new Double[] {280.0});
         CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
-        Assertions.assertEquals(1.0, res.fluidProperties[0][0]);
+        Assertions.assertEquals(1.0, res.fluidProperties[0][0], "Number of phases mismatch");
+        Assertions.assertEquals(thermoSystem.getPressure("Pa"), res.fluidProperties[0][1], 1e-5,
+                "Pressure mismatch");
+        Assertions.assertEquals(thermoSystem.getTemperature("K"), res.fluidProperties[0][2], 1e-5,
+                "Temperature mismatch");
+
+        CalculationResult res2 = thermoOps.propertyFlash(jP, jT, 0, null, null);
+        Assertions.assertEquals(res2.calculationError[0],
+                "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input mode must be 1, 2 or 3");
     }
 
     @Test
