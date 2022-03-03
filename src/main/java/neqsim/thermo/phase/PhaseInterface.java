@@ -551,7 +551,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
 	/**
      * <p>
-     * Set the pressure in bara (absolute pressure in bar)
+     * Set the pressure
      * </p>
      *
      * @param pres a double

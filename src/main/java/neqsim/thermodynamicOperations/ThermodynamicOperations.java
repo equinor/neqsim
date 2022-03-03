@@ -3,11 +3,14 @@ package neqsim.thermodynamicOperations;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.util.List;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
@@ -1917,13 +1920,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * Possible to specify fractions for each value of Spec1.
      * 
      * 
-     * @param Spec1 Flash pressure in bar absolute.
-     * @param Spec2 Flash specification. Depends on FlashMode. Temperature in Kelvin, entalphy in
-     *        J/mol or entropy in J/molK.
-     * @param FlashMode 1 - PT 2 - PH 3 - PS
-     * @param components Not yet in use.
-     * @param onlineFractions Specify fractions per sample instance or null to use static
-     *        composition specified in system.
+     * @param Spec1           Flash specification. Depends on FlashMode
+     * @param Spec2           Flash specification. Depends on FlashMode
+     * @param FlashMode       1 - TP 2 - PH 3 - PS
+     * @param components      Not in use.
+     * @param onlineFractions Specify fractions per sample instance or null to use
+     *                        static composition specified in fluid
      * @return
      */
     public CalculationResult propertyFlash(List<Double> Spec1, List<Double> Spec2, int FlashMode,
@@ -1962,6 +1964,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                             fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
                         }
                         this.system.setMolarComposition(fraction);
+                        // this.system.setMolarComposition(components.toArray(new String[0]),fraction,
+                        // true);
                     }
                 }
 
@@ -1974,7 +1978,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                     continue;
                 }
 
-                this.system.setPressure(Sp1);
+                double pressureInPa = Sp1 / 1e5;
+                this.system.setPressure(pressureInPa);
 
                 if (FlashMode == 1) {
                     this.system.setTemperature(Sp2);
