@@ -26,4 +26,15 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
     public InvalidInputException(String msg) {
         super(msg);
     }
+
+    /**
+     * Constructs an <code>InvalidInputException</code> with the specified detail message.
+     * 
+     * @param className Class that exception is raised from
+     * @param methodName Method that exception is raised from
+     * @param msg the detail message.
+     */
+    public InvalidInputException(String className, String methodName, String msg) {
+        super(className + ":" + methodName + " - " + msg);
+    }
 }
