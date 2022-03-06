@@ -3,11 +3,10 @@
  */
 package neqsim.thermo.component;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -28,9 +27,7 @@ class ComponentHydrateGFTest {
 	        thermoSystem.addComponent("methane", 11.0);
 	        thermoSystem.addComponent("CO2", 1.0);
 	        thermoSystem.addComponent("water", 11.0);
-	        thermoSystem.setMixingRule(10);
-	        
-	        
+            thermoSystem.setMixingRule(10);
 	}
 
 	/**
