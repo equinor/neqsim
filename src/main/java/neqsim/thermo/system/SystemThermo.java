@@ -15,14 +15,11 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
-
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
@@ -745,6 +742,8 @@ abstract class SystemThermo implements SystemInterface {
     /** {@inheritDoc} */
     @Override
     public void addComponent(String componentName, double value, String name, int phase) {
+        componentName = ComponentInterface.getComponentName(componentName);
+
         if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
             logger.error("No component with name: " + componentName + " in database");
             return;
@@ -1094,6 +1093,8 @@ abstract class SystemThermo implements SystemInterface {
     /** {@inheritDoc} */
     @Override
     public void addComponent(String componentName, double value, String name) {
+        componentName = ComponentInterface.getComponentName(componentName);
+
         if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
             logger.error("No component with name: " + componentName + " in database");
             return;
@@ -1126,6 +1127,8 @@ abstract class SystemThermo implements SystemInterface {
     /** {@inheritDoc} */
     @Override
     public void addComponent(String componentName, double moles, double TC, double PC, double acs) {
+        componentName = ComponentInterface.getComponentName(componentName);
+
         String comNam = componentName;
         if (getPhase(0).hasComponent(componentName)) {
             addComponent(componentName, moles);
@@ -1210,6 +1213,8 @@ abstract class SystemThermo implements SystemInterface {
     /** {@inheritDoc} */
     @Override
     public void addComponent(String componentName, double moles) {
+        componentName = ComponentInterface.getComponentName(componentName);
+
         int index = 0;
 
         boolean addForFirstTime = true;
@@ -1261,6 +1266,8 @@ abstract class SystemThermo implements SystemInterface {
     /** {@inheritDoc} */
     @Override
     public void addComponent(String componentName, double moles, int phaseNumber) {
+        componentName = ComponentInterface.getComponentName(componentName);
+
         if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
             logger.error("No component with name: " + componentName + " in database");
             return;
@@ -1321,6 +1328,8 @@ abstract class SystemThermo implements SystemInterface {
     /** {@inheritDoc} */
     @Override
     public void removeComponent(String name) {
+        name = ComponentInterface.getComponentName(name);
+
         setTotalNumberOfMoles(
                 getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {

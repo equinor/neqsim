@@ -34,6 +34,22 @@ public class ThermodynamicOperationsTest {
     }
 
     @Test
+    void testComponentNames() {
+        SystemInterface system = new neqsim.thermo.system.SystemSrkEos();
+        system.addComponent("H2O");
+        system.addComponent("N2");
+        system.addComponent("CO2");
+        system.addComponent("C1");
+        system.addComponent("C2");
+        system.addComponent("C3");
+        system.addComponent("iC4");
+        system.addComponent("nC4");
+        system.addComponent("iC5");
+        system.addComponent("nC5");
+        system.addComponent("C6");
+    }
+
+    @Test
     void testPropertyFlash() {
         SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 22.0);
 
