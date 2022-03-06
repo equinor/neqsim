@@ -47,6 +47,20 @@ public class ThermodynamicOperationsTest {
         system.addComponent("iC5");
         system.addComponent("nC5");
         system.addComponent("C6");
+        system.addComponent("nC10");
+
+        system.removeComponent("H2O");
+        system.removeComponent("N2");
+        system.removeComponent("CO2");
+        system.removeComponent("C1");
+        system.removeComponent("C2");
+        system.removeComponent("C3");
+        system.removeComponent("iC4");
+        system.removeComponent("nC4");
+        system.removeComponent("iC5");
+        system.removeComponent("nC5");
+        system.removeComponent("C6");
+        system.removeComponent("nC10");
     }
 
     @Test
