@@ -101,8 +101,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
             0.061767, 0.069064};
 
     public Standard_ISO6578() {
-        super("Standard_ISO6578");
-        standardDescription = "LNG density calcuation method";
+        super("Standard_ISO6578", "LNG density calcuation method");
         setCorrectionFactors();
     }
 
@@ -114,7 +113,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public Standard_ISO6578(SystemInterface thermoSystem) {
-        super("Standard_ISO6578", thermoSystem);
+        super("Standard_ISO6578", "LNG density calcuation method", thermoSystem);
         setCorrectionFactors();
     }
 

@@ -14,8 +14,7 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
     String componentName = "", unit = "mol%";
 
     public GasChromotograpyhBase() {
-        super("gas cromotography");
-        standardDescription = "Gas composition";
+        super("gas cromotography", "Gas composition");
     }
 
     /**
@@ -27,7 +26,7 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
      * @param component a {@link java.lang.String} object
      */
     public GasChromotograpyhBase(SystemInterface thermoSystem, String component) {
-        super("gas cromotography", thermoSystem);
+        super("gas cromotography", "Gas composition", thermoSystem);
         this.componentName = component;
     }
 

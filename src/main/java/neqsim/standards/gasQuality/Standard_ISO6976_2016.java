@@ -1,6 +1,5 @@
 package neqsim.standards.gasQuality;
 
-import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -35,15 +34,12 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
     public Standard_ISO6976_2016() {
         name = "Standard_ISO6976_2016";
-        componentsNotDefinedByStandard = new ArrayList<String>();
         standardDescription =
                 "Calculation of calorific values, density, relative density and Wobbe index from composition based on ISO6976 version 2016";
     }
 
     public Standard_ISO6976_2016(SystemInterface thermoSystem) {
-        super(thermoSystem);
-        componentsNotDefinedByStandard = new ArrayList<String>();
-        name = "Standard_ISO6976_2016";
+        super("Standard_ISO6976_2016", thermoSystem);
         M = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         carbonNumber = new int[thermoSystem.getPhase(0).getNumberOfComponents()];
 

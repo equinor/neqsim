@@ -19,8 +19,7 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
     double initTemperature = 273.15;
 
     public Draft_GERG2004() {
-        super("Draft_GERG2004");
-        standardDescription = "reference properties of natural gas";
+        super("Draft_GERG2004", "reference properties of natural gas");
     }
 
     /**

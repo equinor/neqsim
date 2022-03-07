@@ -38,32 +38,12 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     /**
      * Constructor for Standard.
      * 
-     */
-    @Deprecated
-    public Standard() {
-        super("Base Standard");
-    }
-
-    /**
-     * <p>
-     * Constructor for Standard.
-     * </p>
-     *
-     * @param thermoSyst a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    @Deprecated
-    public Standard(SystemInterface thermoSyst) {
-        this("Base Standard", thermoSyst);
-    }
-
-    /**
-     * Constructor for Standard.
-     * 
      * @param name
      * 
      */
-    public Standard(String name) {
+    public Standard(String name, String description) {
         super(name);
+        standardDescription = description;
     }
 
     /**
@@ -72,8 +52,8 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
      * @param name
      * @param thermoSyst
      */
-    public Standard(String name, SystemInterface thermoSyst) {
-        super(name);
+    public Standard(String name, String description, SystemInterface thermoSyst) {
+        this(name, description);
         setThermoSystem(thermoSyst);
     }
 
