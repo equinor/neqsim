@@ -463,12 +463,13 @@ abstract class Component implements ComponentInterface {
     /** {@inheritDoc} */
     @Override
     public void addMolesChemReac(double dn, double totdn) {
-        numberOfMoles += totdn;
-        numberOfMolesInPhase += dn;
+      numberOfMoles += totdn;
 
         if (numberOfMoles < 0) {
             numberOfMoles = 0;
         }
+
+        numberOfMolesInPhase += dn;
         if (numberOfMolesInPhase < 0) {
             numberOfMolesInPhase = 0;
         }
@@ -499,8 +500,8 @@ abstract class Component implements ComponentInterface {
             int type) {
 
         if (totalNumberOfMoles == 0) {
-            throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-                    "Component", "init", "Input totalNumberOfMoles must be larger than 0"));
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
+              "totalNumberOfMoles", "must be larger than 0"));
         }
         if (type == 0) {
             K = Math.exp(Math.log(criticalPressure / pressure) + 5.373 * (1.0 + srkacentricFactor)

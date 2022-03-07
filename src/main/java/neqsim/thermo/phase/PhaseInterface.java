@@ -596,14 +596,14 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	public double getPureComponentFugacity(int k, boolean pure);
 
 	/**
-	 * <p>
-	 * addMolesChemReac.
-	 * </p>
-	 *
-	 * @param component a int
-	 * @param dn a double
-	 * @param totdn a double
-	 */
+     * <p>
+     * addMolesChemReac.
+     * </p>
+     *
+     * @param component Component number
+     * @param dn a double
+     * @param totdn a double
+     */
 	public void addMolesChemReac(int component, double dn, double totdn);
 
 	/**

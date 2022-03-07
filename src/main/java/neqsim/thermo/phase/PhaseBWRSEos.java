@@ -548,6 +548,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         double Btemp = getB();
         setMolarVolume(1.0 / BonV * Btemp);// numberOfMolesInPhase;
         int iterations = 0;
+        int maxIterations = 10000;
         double guesPres = pressure;
         double guesPresdV = 0.0;
         do {
@@ -559,13 +560,15 @@ public class PhaseBWRSEos extends PhaseSrkEos {
             setMolarVolume(getMolarVolume() - 1.0 / (guesPresdV * getNumberOfMolesInPhase())
                     * (guesPres - pressure) / 50.0);
             Z = pressure * getMolarVolume() / (R * temperature);
-        } while (Math.abs((guesPres - pressure) / pressure) > 1.0e-10 && iterations < 10000);
+        } while (Math.abs((guesPres - pressure) / pressure) > 1.0e-10
+                && iterations < maxIterations);
         // System.out.println("gues pres " + guesPres);
-        if (iterations >= 10000) {
-            throw new neqsim.util.exception.TooManyIterationsException();
+        if (iterations >= maxIterations) {
+          throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume2",
+              maxIterations);
         }
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolume2", "Molar Volume");
         }
         // System.out.println("Z: " + Z + " "+" itert: " +iterations);
         // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
