@@ -10,7 +10,6 @@ public class Draft_ISO18453Test {
     @Test
     void testCalculate() {
         SystemInterface testSystem = new SystemGERGwaterEos(273.15 - 5.0, 20.0);
-
         testSystem.addComponent("methane", 0.9);
         testSystem.addComponent("water", 0.0000051);
 

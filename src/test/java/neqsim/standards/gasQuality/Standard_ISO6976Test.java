@@ -50,6 +50,10 @@ class Standard_ISO6976Test {
     @Test
     void testCalculate2() {
         SystemInterface testSystem = new SystemSrkEos(273.15 - 150.0, 1.0);
+        testSystem.addComponent("methane", 0.931819);
+        testSystem.addComponent("ethane", 0.025618);
+        testSystem.addComponent("nitrogen", 0.010335);
+        testSystem.addComponent("CO2", 0.015391);
 
         // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         /*
@@ -72,12 +76,6 @@ class Standard_ISO6976Test {
          * 0.0068);
          * 
          */
-
-        testSystem.addComponent("methane", 0.931819);
-        testSystem.addComponent("ethane", 0.025618);
-        testSystem.addComponent("nitrogen", 0.010335);
-        testSystem.addComponent("CO2", 0.015391);
-        // testSystem.addComponent("water", 0.016837);
 
         // testSystem.addComponent("water", 0.016837);
 

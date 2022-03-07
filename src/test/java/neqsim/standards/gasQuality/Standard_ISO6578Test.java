@@ -9,7 +9,6 @@ public class Standard_ISO6578Test {
     @Test
     void testCalculate() {
         SystemInterface testSystem = new SystemSrkEos(273.15 - 160.0, 1.0);
-
         testSystem.addComponent("nitrogen", 0.006538);
         testSystem.addComponent("methane", 0.91863);
         testSystem.addComponent("ethane", 0.058382);
