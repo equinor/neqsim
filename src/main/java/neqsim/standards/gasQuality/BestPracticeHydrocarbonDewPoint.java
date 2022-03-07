@@ -21,7 +21,7 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     ThermodynamicOperations thermoOps;
 
     public BestPracticeHydrocarbonDewPoint() {
-        name = "StatoilBestPracticeHydrocarbonDewPoint";
+        super("StatoilBestPracticeHydrocarbonDewPoint");
         standardDescription = "hydrocarbon dew point calculation method";
     }
 

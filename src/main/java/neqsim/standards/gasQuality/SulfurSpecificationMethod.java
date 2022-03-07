@@ -21,7 +21,7 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
      * </p>
      */
     public SulfurSpecificationMethod() {
-        name = "SulfurSpecificationMethod";
+        super("SulfurSpecificationMethod");
         standardDescription = "SulfurSpecificationMethod";
     }
 
