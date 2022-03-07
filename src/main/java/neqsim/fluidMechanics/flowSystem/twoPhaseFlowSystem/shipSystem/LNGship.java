@@ -182,7 +182,7 @@ public class LNGship
         if (backCalculate) {
             molarBoilOffRate = -molarBoilOffRate;
         }
-        double orginalMolarBoilOff = molarBoilOffRate;
+        // double orginalMolarBoilOff = molarBoilOffRate;
         logger.info("end Volume " + endVolume);
         int iterations = 0;
         double boilOffCorrection = 0.0;

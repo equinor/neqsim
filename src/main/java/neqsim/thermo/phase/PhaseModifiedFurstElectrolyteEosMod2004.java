@@ -494,10 +494,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
             BonV = 1.0 - 1.0e-6;
         }
         double BonVold = BonV;
-        double Btemp = 0, Dtemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
+        double Btemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
         double d1 = 0, d2 = 0;
         Btemp = getB();
-        Dtemp = getA();
         if (Btemp <= 0) {
             logger.info("b negative in volume calc");
         }

@@ -95,8 +95,7 @@ public class ChungViscosityMethod extends Viscosity {
     public void initChungPureComponentViscosity() {
         double tempVar = 0;
         double A = 1.16145, B = 0.14874, C = 0.52487, D = 0.77320, E = 2.16178, F = 2.43787;
-        double A2 = 1.06036, B2 = 0.15610, C2 = 0.19300, D2 = 0.47635, E2 = 1.03587, F2 = 1.52996,
-                G2 = 1.76474, H2 = 3.89411;
+
         double chungy = 0, chungG1 = 0, chungG2 = 0, chungviskstartstar = 0, chungviskstar = 0;
 
         for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
