@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -168,7 +169,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
     }
 
@@ -179,7 +180,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
     }
 
