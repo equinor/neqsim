@@ -1,26 +1,14 @@
-package neqsim.standards.util.example;
+package neqsim.standards.gasQuality;
 
+import org.junit.jupiter.api.Test;
 import neqsim.standards.StandardInterface;
-import neqsim.standards.gasQuality.Standard_ISO6578;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/**
- * <p>Test_ISO6578 class.</p>
- *
- * @author esol
- * @since 2.2.3
- * @version $Id: $Id
- */
-public class Test_ISO6578 {
-    /**
-     * <p>main.</p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    @SuppressWarnings("unused")
-    public static void main(String args[]) {
+public class Standard_ISO6578Test {
+    @Test
+    void testCalculate() {
         SystemInterface testSystem = new SystemSrkEos(273.15 - 160.0, 1.0);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

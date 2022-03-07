@@ -1,26 +1,13 @@
-package neqsim.standards.util.example;
+package neqsim.standards.salesContract;
 
-import neqsim.standards.salesContract.BaseContract;
-import neqsim.standards.salesContract.ContractInterface;
+import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/**
- * <p>Test_ContractBase class.</p>
- *
- * @author esol
- * @since 2.2.3
- * @version $Id: $Id
- */
-public class Test_ContractBase {
-    /**
-     * <p>main.</p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    @SuppressWarnings("unused")
-    public static void main(String args[]) {
+public class BaseContractTest {
+    @Test
+    void testRunCheck() {
         SystemInterface testSystem = new SystemGERGwaterEos(273.15 - 5.0, 20.0);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
