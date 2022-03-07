@@ -16,7 +16,7 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<UNIFACgroup> {
+public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable {
     private static final long serialVersionUID = 1000;
     double R = 0.0;
     double Q = 0.0;
@@ -214,13 +214,18 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     public void setGroupName(java.lang.String groupName) {
         this.groupName = groupName;
     }
-
-    /** {@inheritDoc} */
+    
+    //TODO - two methods for equals
     @Override
-    public int compareTo(UNIFACgroup o) {
-        if (o.getSubGroup() < getSubGroup()) {
+	public boolean equals(Object o) {
+        return ((UNIFACgroup) o).getSubGroup() == getSubGroup();
+    }
+
+    @Override
+	public int compareTo(java.lang.Object o) {
+        if (((UNIFACgroup) o).getSubGroup() < getSubGroup()) {
             return 1;
-        } else if (o.getSubGroup() == getSubGroup()) {
+        } else if (((UNIFACgroup) o).getSubGroup() == getSubGroup()) {
             return 0;
         } else {
             return -1;
@@ -241,8 +246,8 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     }
 
     /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object obj) {
+   // @Override
+    public boolean equals2(Object obj) {
         if (this == obj)
             return true;
         if (obj == null)
