@@ -6,7 +6,7 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  * <p>
@@ -36,7 +36,7 @@ public class OnePhasePipeLine extends Pipeline {
      *
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public OnePhasePipeLine(Stream inStream) {
+    public OnePhasePipeLine(StreamInterface inStream) {
         this("OnePhasePipeLine", inStream);
     }
 
@@ -55,7 +55,7 @@ public class OnePhasePipeLine extends Pipeline {
      * @param name
      * @param inStream
      */
-    public OnePhasePipeLine(String name, Stream inStream) {
+    public OnePhasePipeLine(String name, StreamInterface inStream) {
         super(name, inStream);
         pipe = new PipeFlowSystem();
     }

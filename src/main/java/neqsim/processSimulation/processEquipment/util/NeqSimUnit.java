@@ -7,6 +7,7 @@ import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.Stratifi
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -20,8 +21,8 @@ import neqsim.thermo.system.SystemInterface;
 public class NeqSimUnit extends ProcessEquipmentBaseClass {
     private static final long serialVersionUID = 1000;
 
-    Stream inletStream;
-    Stream outStream;
+    StreamInterface inletStream;
+    StreamInterface outStream;
     SystemInterface thermoSystem;
     private String equipment = "pipeline";
     String flowPattern = "stratified";
@@ -40,7 +41,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
      * @param equipment a {@link java.lang.String} object
      * @param flowPattern a {@link java.lang.String} object
      */
-    public NeqSimUnit(Stream inletStream, String equipment, String flowPattern) {
+    public NeqSimUnit(StreamInterface inletStream, String equipment, String flowPattern) {
         super("NeqSimUnit");
         this.flowPattern = flowPattern;
         this.setEquipment(equipment);
@@ -54,7 +55,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public void setInletStream(Stream inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();
@@ -68,7 +69,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream;
     }
 

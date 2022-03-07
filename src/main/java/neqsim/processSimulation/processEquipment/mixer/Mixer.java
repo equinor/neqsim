@@ -196,7 +196,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     /** {@inheritDoc} */
     @Override
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return mixedStream;
     }
 
