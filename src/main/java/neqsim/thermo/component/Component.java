@@ -170,6 +170,7 @@ abstract class Component implements ComponentInterface {
     @Override
     public void createComponent(String component_name, double moles, double molesInPhase,
             int compnumber) {
+        component_name = ComponentInterface.getComponentName(component_name);
         componentName = component_name;
         numberOfMoles = moles;
         numberOfMolesInPhase = molesInPhase;
