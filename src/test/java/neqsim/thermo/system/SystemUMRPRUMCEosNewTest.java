@@ -3,10 +3,13 @@ package neqsim.thermo.system;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.checkerframework.checker.nullness.qual.AssertNonNullIfNonNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.mchange.util.AssertException;
 
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -157,7 +160,9 @@ class SystemUMRPRUMCEosNewTest {
 			 System.out.println("Cricondenbar " + (testOps.get("cricondenbar")[0]-273.15) + " " +
 			             testOps.get("cricondenbar")[1]);
 		} catch (Exception e) {
+			assertTrue(false);
 			throw new Exception(e);
 		}
+		assertEquals(testOps.get("cricondenbar")[1], 130.686140727503, 0.02);
 	}
 }
