@@ -39,24 +39,4 @@ public class Draft_ISO18453Test {
 
         Assertions.assertTrue(testSystem.getStandard().isOnSpec());
     }
-
-    @Test
-    void testGetUnit() {
-
-    }
-
-    @Test
-    void testGetValue() {
-
-    }
-
-    @Test
-    void testGetValue2() {
-
-    }
-
-    @Test
-    void testIsOnSpec() {
-
-    }
 }

@@ -1,17 +1,15 @@
 package neqsim.standards.gasQuality;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.standards.StandardInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class Standard_ISO6578Test {
     @Test
     void testCalculate() {
         SystemInterface testSystem = new SystemSrkEos(273.15 - 160.0, 1.0);
 
-        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testSystem.addComponent("nitrogen", 0.006538);
         testSystem.addComponent("methane", 0.91863);
         testSystem.addComponent("ethane", 0.058382);
@@ -26,15 +24,15 @@ public class Standard_ISO6578Test {
         testSystem.setMixingRule(2);
 
         testSystem.init(0);
-        StandardInterface standard = new Standard_ISO6578(testSystem);// testSystem);
+        Standard_ISO6578 standard = new Standard_ISO6578(testSystem);// testSystem);
         standard.calculate();
         testSystem.display();
 
-        System.out.println("corrfactor " + ((Standard_ISO6578) standard).getCorrFactor1());
+        Assertions.assertEquals(0.30930700620842033, standard.getCorrFactor1());
         // ((Standard_ISO6578) standard).useISO6578VolumeCorrectionFacotrs(false);
 
         standard.calculate();
-        System.out.println("corrfactor " + ((Standard_ISO6578) standard).getCorrFactor1());
-        testSystem.display();
+        Assertions.assertEquals(0.30930700620842033, standard.getCorrFactor1());
+        // testSystem.display();
     }
 }

@@ -3,14 +3,12 @@ package neqsim.standards.salesContract;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class BaseContractTest {
     @Test
     void testRunCheck() {
         SystemInterface testSystem = new SystemGERGwaterEos(273.15 - 5.0, 20.0);
 
-        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testSystem.addComponent("methane", 0.9);
         testSystem.addComponent("ethane", 0.04);
         testSystem.addComponent("propane", 0.02);

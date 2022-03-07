@@ -4,6 +4,7 @@
 package neqsim.standards.gasQuality;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
@@ -50,7 +51,7 @@ class Standard_ISO6976Test {
     void testCalculate2() {
         SystemInterface testSystem = new SystemSrkEos(273.15 - 150.0, 1.0);
 
-        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         /*
          * testSystem.addComponent("methane", 0.922393); testSystem.addComponent("ethane",
          * 0.025358); testSystem.addComponent("propane", 0.01519);
@@ -99,17 +100,18 @@ class Standard_ISO6976Test {
         standard.setReferenceState("real");
         standard.setReferenceType("volume");
         standard.calculate();
-        System.out.println("Comp Factor " + standard.getValue("CompressionFactor"));
-        System.out
-                .println("Superior Calorific Value " + standard.getValue("SuperiorCalorificValue"));
-        System.out
-                .println("Inferior Calorific Value " + standard.getValue("InferiorCalorificValue"));
-        System.out.println("GCV " + standard.getValue("GCV"));
-        System.out.println("Superior Wobbe " + standard.getValue("SuperiorWobbeIndex"));
-        System.out.println("Inferior Wobbe " + standard.getValue("InferiorWobbeIndex"));
-        System.out.println("relative density " + standard.getValue("RelativeDensity"));
-        System.out.println("compression factor " + standard.getValue("CompressionFactor"));
-        System.out.println("molar mass " + standard.getValue("MolarMass"));
+        Assertions.assertEquals(0.9974432506378011, standard.getValue("CompressionFactor"));
+        Assertions.assertEquals(39614.56783352743, standard.getValue("SuperiorCalorificValue"));
+        Assertions.assertEquals(35693.92161464964, standard.getValue("InferiorCalorificValue"));
+        Assertions.assertEquals(39614.56783352743, standard.getValue("GCV"));
+
+        Assertions.assertEquals(51701.01275822569, standard.getValue("SuperiorWobbeIndex"));
+        Assertions.assertEquals(46584.17339159412, standard.getValue("InferiorWobbeIndex"));
+
+        Assertions.assertEquals(0.5870995452263126, standard.getValue("RelativeDensity"));
+        Assertions.assertEquals(0.9974432506378011, standard.getValue("CompressionFactor"));
+        Assertions.assertEquals(16.972142879156355, standard.getValue("MolarMass"));
+
         standard.display("test");
         /*
          * StandardInterface standardUK = new UKspecifications_ICF_SI(testSystem);
