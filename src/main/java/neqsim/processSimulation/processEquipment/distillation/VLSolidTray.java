@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -111,13 +112,13 @@ public class VLSolidTray extends SimpleTray {
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
     }
 

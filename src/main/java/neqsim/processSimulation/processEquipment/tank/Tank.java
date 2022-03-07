@@ -119,7 +119,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return liquidOutStream;
     }
 
@@ -130,7 +130,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
@@ -141,7 +141,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getGas() {
+    public StreamInterface getGas() {
         return getGasOutStream();
     }
 
@@ -152,7 +152,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getLiquid() {
+    public StreamInterface getLiquid() {
         return getLiquidOutStream();
     }
 

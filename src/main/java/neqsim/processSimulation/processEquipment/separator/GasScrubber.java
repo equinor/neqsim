@@ -111,25 +111,25 @@ public class GasScrubber extends Separator {
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return liquidOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGas() {
+    public StreamInterface getGas() {
         return getGasOutStream();
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquid() {
+    public StreamInterface getLiquid() {
         return getLiquidOutStream();
     }
 

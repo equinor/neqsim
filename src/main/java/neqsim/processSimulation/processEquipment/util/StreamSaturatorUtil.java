@@ -2,6 +2,7 @@ package neqsim.processSimulation.processEquipment.util;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -65,7 +66,7 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream;
     }
 
