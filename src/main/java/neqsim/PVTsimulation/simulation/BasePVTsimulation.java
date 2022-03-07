@@ -20,7 +20,7 @@ public class BasePVTsimulation implements SimulationInterface {
     public double[] pressures = {381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3};
     public double temperature = 289.0;
     double[][] experimentalData = null;
-    double saturationVolume = 0, saturationPressure = 0;
+    double saturationVolume = 0, saturationPressure = 0, saturationTemperature;
     double Zsaturation = 0;
     public LevenbergMarquardt optimizer = new LevenbergMarquardt();
 
@@ -165,4 +165,11 @@ public class BasePVTsimulation implements SimulationInterface {
     public double getZsaturation() {
         return Zsaturation;
     }
+
+	/**
+	 * @return the saturationTemperature
+	 */
+	public double getSaturationTemperature() {
+		return saturationTemperature;
+	}
 }
