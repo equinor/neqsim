@@ -14,7 +14,9 @@ public class BerlSaddlePacking extends Packing {
      * Constructor for BerlSaddlePacking.
      * </p>
      */
-    public BerlSaddlePacking() {}
+    public BerlSaddlePacking() {
+        this("BerlSaddlePacking");
+    }
 
     /**
      * <p>

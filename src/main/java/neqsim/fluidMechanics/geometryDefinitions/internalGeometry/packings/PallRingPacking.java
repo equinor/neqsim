@@ -21,7 +21,7 @@ public class PallRingPacking extends Packing {
      */
     @Deprecated
     public PallRingPacking() {
-        super("PallRingPacking");
+        this("PallRingPacking");
     }
 
     /**
