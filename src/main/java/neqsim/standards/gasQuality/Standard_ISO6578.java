@@ -100,11 +100,6 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
     double[] Vinitrogen = {0.038408, 0.039949, 0.041788, 0.0440143, 0.047019, 0.051022, 0.055897,
             0.061767, 0.069064};
 
-    public Standard_ISO6578() {
-        super("Standard_ISO6578", "LNG density calcuation method");
-        setCorrectionFactors();
-    }
-
     /**
      * <p>
      * Constructor for Standard_ISO6578.

@@ -34,7 +34,7 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     public BestPracticeHydrocarbonDewPoint(SystemInterface thermoSystem) {
         this();
 
-        System.out.println("setting model GERG water...");
+        // System.out.println("setting model GERG water...");
         this.thermoSystem = new SystemSrkEos(initTemperature, specPressure);
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
             if (!thermoSystem.getPhase(0).getComponent(i).getName().equals("water")) {

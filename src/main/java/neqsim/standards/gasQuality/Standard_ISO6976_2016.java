@@ -32,14 +32,10 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
             HinfIdeal60F = 0.0;
     static Logger logger = LogManager.getLogger(Standard_ISO6976_2016.class);
 
-    public Standard_ISO6976_2016() {
-        name = "Standard_ISO6976_2016";
-        standardDescription =
-                "Calculation of calorific values, density, relative density and Wobbe index from composition based on ISO6976 version 2016";
-    }
-
     public Standard_ISO6976_2016(SystemInterface thermoSystem) {
-        super("Standard_ISO6976_2016", thermoSystem);
+        super("Standard_ISO6976_2016",
+                "Calculation of calorific values, density, relative density and Wobbe index from composition based on ISO6976 version 2016",
+                thermoSystem);
         M = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         carbonNumber = new int[thermoSystem.getPhase(0).getNumberOfComponents()];
 

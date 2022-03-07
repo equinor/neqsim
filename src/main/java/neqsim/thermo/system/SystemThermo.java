@@ -15,14 +15,11 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
-
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
@@ -4096,11 +4093,11 @@ abstract class SystemThermo implements SystemInterface {
     @Override
     public void setStandard(String standardName) {
         if (standardName.equals("ISO1992")) {
-            this.standard = new neqsim.standards.gasQuality.Standard_ISO6976();
+            this.standard = new neqsim.standards.gasQuality.Standard_ISO6976(this);
         } else if (standardName.equals("Draft_ISO18453")) {
             this.standard = new neqsim.standards.gasQuality.Draft_ISO18453(this);
         } else {
-            this.standard = new neqsim.standards.gasQuality.Standard_ISO6976();
+            this.standard = new neqsim.standards.gasQuality.Standard_ISO6976(this);
         }
     }
 

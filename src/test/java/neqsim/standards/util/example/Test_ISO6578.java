@@ -38,8 +38,7 @@ public class Test_ISO6578 {
         testSystem.setMixingRule(2);
 
         testSystem.init(0);
-        StandardInterface standard = new Standard_ISO6578();// testSystem);
-        standard.setThermoSystem(testSystem);
+        StandardInterface standard = new Standard_ISO6578(testSystem);// testSystem);
         standard.calculate();
         testSystem.display();
 

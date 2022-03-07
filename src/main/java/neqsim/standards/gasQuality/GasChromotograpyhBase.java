@@ -13,10 +13,6 @@ import neqsim.thermo.system.SystemInterface;
 public class GasChromotograpyhBase extends neqsim.standards.Standard {
     String componentName = "", unit = "mol%";
 
-    public GasChromotograpyhBase() {
-        super("gas cromotography", "Gas composition");
-    }
-
     /**
      * <p>
      * Constructor for GasChromotograpyhBase.
