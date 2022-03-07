@@ -16,7 +16,7 @@ public class RachigRingPacking extends Packing {
      */
     @Deprecated
     public RachigRingPacking() {
-        super("RachigRingPacking");
+        this("RachigRingPacking");
     }
 
     /**

@@ -15,7 +15,7 @@ public class BerlSaddlePacking extends Packing {
      * </p>
      */
     public BerlSaddlePacking() {
-        super("BerlSaddlePacking");
+        this("BerlSaddlePacking");
     }
 
     /**
