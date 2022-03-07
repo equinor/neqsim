@@ -2317,9 +2317,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void autoSelectMixingRule();
 
     /**
-     * <p>
-     * orderByDensity.
-     * </p>
+     * Order phases by density.
      */
     public void orderByDensity();
 

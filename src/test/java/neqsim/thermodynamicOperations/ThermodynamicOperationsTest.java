@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ThermodynamicOperationsTest {
@@ -31,6 +32,35 @@ public class ThermodynamicOperationsTest {
         CalculationResult res2 = thermoOps.propertyFlash(jP, jT, 0, null, null);
         Assertions.assertEquals(res2.calculationError[0],
                 "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input mode must be 1, 2 or 3");
+    }
+
+    @Test
+    void testNeqSimPython2() {
+        String[] components = new String[] {"H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4",
+                "iC5", "nC5", "C6"};
+        double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.990, 2.399, 0.355, 0.172, 0.088,
+                0.076, 0.036, 0.162};
+
+        SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
+        thermoSystem.addComponents(components, fractions);
+        thermoSystem.setTotalNumberOfMoles(1);
+        thermoSystem.init(0);
+        ThermodynamicOperations thermoOps =
+                new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
+        List<Double> jP = Arrays.asList(new Double[] {60.0 + 1.013});
+        List<Double> jT = Arrays.asList(new Double[] {373.15});
+        CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
+
+        List<List<Double>> onlineFractions =
+                createDummyRequest(thermoSystem.getMolarComposition(), 5);
+
+        SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
+        thermoSystem2.addComponents(components);
+        ThermodynamicOperations thermoOps2 =
+                new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem2);
+        CalculationResult res2 = thermoOps2.propertyFlash(jP, jT, 1, null, onlineFractions);
+        Assertions.assertArrayEquals(res.fluidProperties[0], res2.fluidProperties[0]);
+        String[] propNames = SystemProperties.getPropertyNames();
     }
 
     @Test

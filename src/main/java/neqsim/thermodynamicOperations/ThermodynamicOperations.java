@@ -1949,22 +1949,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
         for (int t = 0; t < Spec1.size(); t++) {
             try {
-                if (onlineFractions != null) {
-                    if (!((sum[t] >= 0.95 && sum[t] <= 1.05) || (sum[t] >= 95 && sum[t] <= 105))) {
-                        calculationError[t] = "Sum of fractions must be equal to 1 or 100, currently ("
-                                + String.valueOf(sum[t]) + ")";
-                        logger.info("Online fraction does not sum to 100% for datapoint {}", t);
-                        continue;
-                    } else {
-                        double[] fraction = new double[onlineFractions.size()];
-
-                        for (int comp = 0; comp < onlineFractions.size(); comp++) {
-                            fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
-                        }
-                        this.system.setMolarComposition(fraction);
-                    }
-                }
-
                 Double Sp1 = Spec1.get(t);
                 Double Sp2 = Spec2.get(t);
 
@@ -1974,14 +1958,32 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                     continue;
                 }
 
-                this.system.setPressure(Sp1);
+                if (onlineFractions != null) {
+                    if (!((sum[t] >= 0.95 && sum[t] <= 1.05) || (sum[t] >= 95 && sum[t] <= 105))) {
+                        calculationError[t] = "Sum of fractions must be equal to 1 or 100, currently ("
+                                + String.valueOf(sum[t]) + ")";
+                        logger.info("Online fraction does not sum to 1 or 100 for datapoint {}", t);
+                        continue;
+                    } else {
+                        // Remaining fractions will be set to 0.0
+                        double[] fraction = new double[this.system.getNumberOfComponents()];
 
+                        for (int comp = 0; comp < onlineFractions.size(); comp++) {
+                            fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
+                        }
+
+                        this.system.setMolarComposition(fraction);
+                        this.system.setTotalNumberOfMoles(1);
+                        this.system.init(0);
+                    }
+                }
+
+                this.system.setPressure(Sp1);
                 if (FlashMode == 1) {
                     this.system.setTemperature(Sp2);
                     this.TPflash();
                 } else if (FlashMode == 2) {
                     this.PHflash(Sp2, "J/mol");
-
                 } else if (FlashMode == 3) {
                     this.PSflash(Sp2, "J/molK");
                 } else {
