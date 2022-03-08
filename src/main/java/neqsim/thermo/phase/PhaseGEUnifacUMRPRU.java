@@ -143,7 +143,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
      * @return a double
      */
     public double getQmix(String name) {
-        int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
+        // int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
         for (int i = 0; i < gropuNames.length; i++) {
             if (name.equals(gropuNames[i]))
                 return Qmix[i];
@@ -160,7 +160,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
      * @return an array of {@link double} objects
      */
     public double[] getQmixdN(String name) {
-        int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
+        // int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
         for (int i = 0; i < gropuNames.length; i++) {
             if (name.equals(gropuNames[i]))
                 return QmixdN[i];

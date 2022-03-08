@@ -106,20 +106,7 @@ public class StirredCellSystem
 
         // Definerer termodyanmikken5
         neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemSrkEos(295.3, 5.0); // initierer
-                                                                   // et
-                                                                   // system
-                                                                   // som
-                                                                   // benytter
-                                                                   // SRK
-                                                                   // tilstandsligning
-        // med trykk 305.3 K og 125 bar
-        neqsim.thermodynamicOperations.ThermodynamicOperations testOps =
-                new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem); // gjor
-                                                                                        // termodyanmiske
-                                                                                        // Flash
-                                                                                        // rutiner
-                                                                                        // tilgjengelige
+                new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);
         testSystem.addComponent("methane", 0.11152181, 0);
         // testSystem.addComponent("ethane", 0.0011152181, 0);
         testSystem.addComponent("water", 0.04962204876, 1);
