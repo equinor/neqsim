@@ -98,6 +98,8 @@ abstract class Phase implements PhaseInterface {
     @Override
     public void removeComponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
+        componentName = ComponentInterface.getComponentName(componentName);
+
         ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();
 
         try {

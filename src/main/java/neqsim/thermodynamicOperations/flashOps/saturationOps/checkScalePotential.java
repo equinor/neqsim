@@ -3,7 +3,6 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -45,7 +44,6 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        ThermodynamicOperations ops = new ThermodynamicOperations(system);
         double ksp = 0.0;
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt");

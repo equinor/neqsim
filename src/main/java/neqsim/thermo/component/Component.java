@@ -170,6 +170,7 @@ abstract class Component implements ComponentInterface {
     @Override
     public void createComponent(String component_name, double moles, double molesInPhase,
             int compnumber) {
+        component_name = ComponentInterface.getComponentName(component_name);
         componentName = component_name;
         numberOfMoles = moles;
         numberOfMolesInPhase = molesInPhase;
@@ -499,7 +500,7 @@ abstract class Component implements ComponentInterface {
 
         if (totalNumberOfMoles == 0) {
             throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-                    "Component:init - Input totalNumberOfMoles must be larger than 0"));
+                    "Component", "init", "Input totalNumberOfMoles must be larger than 0"));
         }
         if (type == 0) {
             K = Math.exp(Math.log(criticalPressure / pressure) + 5.373 * (1.0 + srkacentricFactor)

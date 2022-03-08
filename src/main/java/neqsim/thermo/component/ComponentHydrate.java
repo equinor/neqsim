@@ -281,17 +281,14 @@ public class ComponentHydrate extends Component {
     public double calcChemPotEmpty(PhaseInterface phase, int numberOfComps, double temp,
             double pres, int hydrateStruct) {
         double dGf = 0.0, dHf = 0.0, Cpa = getCpA(), Cpb = getCpB(), Cpc = getCpC(), Cpd = getCpD();
-        double molarvolume = 1.0 / (55493.0);// *0.9);
         double deltaMolarVolume = 0.0;
         if (hydrateStruct == 1) {
             dGf = getDGfHydrate()[1];
             dHf = getDHfHydrate()[1];
-            molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 5.0e-6;
         } else {
             dGf = getDGfHydrate()[0];
             dHf = getDHfHydrate()[0];
-            molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 4.6e-6;
         }
         double T0 = 298.15;

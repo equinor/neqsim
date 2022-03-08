@@ -152,8 +152,8 @@ public class ComponentHydrateKluda extends Component {
      */
     public double dfugdt(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         if (componentName.equals("water")) {
-            double solvol =
-                    1.0 / getPureComponentSolidDensity(getMeltingPointTemperature()) * molarMass;
+            // double solvol =1.0 / getPureComponentSolidDensity(getMeltingPointTemperature()) *
+            // molarMass;
             dfugdt = Math
                     .log((getEmptyHydrateStructureVapourPressuredT(hydrateStructure, temp)) / pres);
         } else {
@@ -368,10 +368,10 @@ public class ComponentHydrateKluda extends Component {
      */
     public double delt(int intnumb, double n, double radius, int struccture, int cavityType,
             PhaseInterface phase) {
-        double lenjonsenergy = Math.sqrt(this.getLennardJonesEnergyParameter()
-                * phase.getComponent("water").getLennardJonesEnergyParameter());
-        double diam = (this.getLennardJonesMolecularDiameter()
-                + phase.getComponent("water").getLennardJonesMolecularDiameter()) / 2.0;
+        // double lenjonsenergy = Math.sqrt(this.getLennardJonesEnergyParameter() *
+        // phase.getComponent("water").getLennardJonesEnergyParameter());
+        // double diam = (this.getLennardJonesMolecularDiameter() +
+        // phase.getComponent("water").getLennardJonesMolecularDiameter()) / 2.0;
         double corerad = (this.getSphericalCoreRadius()
                 + phase.getComponent("water").getSphericalCoreRadius()) / 2.0;
 
