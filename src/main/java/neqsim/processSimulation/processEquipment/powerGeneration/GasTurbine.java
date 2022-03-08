@@ -11,7 +11,6 @@ import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * <p>
@@ -50,9 +49,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     public GasTurbine(String name) {
         super(name);
         // needs to be changed to gas tubing mechanical design
-        SystemInterface airThermoSystem = neqsim.thermo.Fluid.create("air");
-        airThermoSystem.addComponent("CO2", 0.0);
-        airThermoSystem.addComponent("water", 0.0);
+        SystemInterface airThermoSystem = neqsim.thermo.Fluid.create("combustion air");
         airThermoSystem.createDatabase(true);
         // airThermoSystem.display();
         airStream = new Stream("airStream", airThermoSystem);
@@ -95,6 +92,17 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
 
     /**
      * <p>
+     * Getter for the field <code>heat</code>.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getHeat() {
+        return heat;
+    }
+
+    /**
+     * <p>
      * Getter for the field <code>power</code>.
      * </p>
      *
@@ -124,12 +132,12 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        // System.out.println("compressor running..");
         double heatOfCombustion = inletStream.LCV() * inletStream.getFlowRate("mole/sec");
         thermoSystem = inletStream.getThermoSystem().clone();
         airStream.setFlowRate(thermoSystem.getFlowRate("mole/sec") * airGasRatio, "mole/sec");
         airStream.setPressure(1.01325);
         airStream.run();
+
         airCompressor.setInletStream(airStream);
         airCompressor.setOutletPressure(combustionpressure);
         airCompressor.run();
@@ -151,6 +159,8 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         locHeater.getOutStream().getFluid().addComponent("water", moleMethane * 2.0);
         locHeater.getOutStream().getFluid().addComponent("methane", -moleMethane);
         locHeater.getOutStream().getFluid().addComponent("oxygen", -moleMethane * 2.0);
+
+        // todo: Init fails because there is less than moleMethane of oxygen
         locHeater.getOutStream().getFluid().init(3);
         // locHeater.getOutStream().run();
         locHeater.displayResult();
@@ -166,60 +176,11 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         expanderPower = expander.getPower();
 
         power = expanderPower - compressorPower;
-        setHeat(cooler1.getDuty());
+        this.heat = cooler1.getDuty();
     }
 
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-    }
-
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        // test code;....
-        neqsim.thermo.system.SystemInterface testSystem = new SystemSrkEos(298.15, 1.0);
-
-        testSystem.addComponent("methane", 1.0);
-
-        Stream gasstream = new Stream("well stream", testSystem);
-        gasstream.setFlowRate(1.0, "MSm3/day");
-        gasstream.setTemperature(50.0, "C");
-        gasstream.setPressure(2.0, "bara");
-        gasstream.run();
-        GasTurbine gasturb = new GasTurbine(gasstream);
-
-        gasstream.run();
-        gasturb.run();
-
-        System.out.println("power generated " + gasturb.getPower() / 1.0e6);
-        System.out.println("heat generated " + gasturb.getHeat() / 1.0e6);
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>heat</code>.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getHeat() {
-        return heat;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>heat</code>.
-     * </p>
-     *
-     * @param heat a double
-     */
-    public void setHeat(double heat) {
-        this.heat = heat;
     }
 }
