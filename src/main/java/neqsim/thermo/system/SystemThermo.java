@@ -4296,9 +4296,9 @@ abstract class SystemThermo implements SystemInterface {
             // if (tempModel.getCharacterization().characterize()) {
             // tempModel.addPlusFraction(6, 100);
             // }
-            if(NeqSimDataBase.createTemporaryTables()){
-                tempModel.createDatabase(true);
+            if (NeqSimDataBase.createTemporaryTables()) {
                 logger.info("done ... create database ......");
+                tempModel.createDatabase(true);
             }
             logger.info("done ... set mixing rule ......");
             tempModel.autoSelectMixingRule();
