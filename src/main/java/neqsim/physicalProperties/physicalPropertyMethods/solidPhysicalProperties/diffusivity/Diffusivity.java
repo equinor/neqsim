@@ -58,6 +58,8 @@ public class Diffusivity extends
 
         properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
         for (int i = 0; i < solidPhase.getPhase().getNumberOfComponents(); i++) {
+            // todo: fails with indexerror if components has been added after construction of object
+            // getNumberOfComponents() > len(this.binaryDiffusionCoefficients)
             System.arraycopy(this.binaryDiffusionCoefficients[i], 0,
                     properties.binaryDiffusionCoefficients[i], 0,
                     solidPhase.getPhase().getNumberOfComponents());
