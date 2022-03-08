@@ -15,14 +15,11 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
-
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
@@ -4299,10 +4296,9 @@ abstract class SystemThermo implements SystemInterface {
             // if (tempModel.getCharacterization().characterize()) {
             // tempModel.addPlusFraction(6, 100);
             // }
-            logger.info("creatore database ......");
-            logger.info("done ... creatore database ......");
-            if(NeqSimDataBase.createTemporaryTables()){
-            	tempModel.createDatabase(true);
+            if (NeqSimDataBase.createTemporaryTables()) {
+                logger.info("done ... create database ......");
+                tempModel.createDatabase(true);
             }
             logger.info("done ... set mixing rule ......");
             tempModel.autoSelectMixingRule();

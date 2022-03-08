@@ -50,9 +50,9 @@ public class SaturationTemperature extends BasePVTsimulation {
             getThermoSystem().setTemperature((minTemp + maxTemp) / 2.0);
             thermoOps.TPflash();
             if (getThermoSystem().getNumberOfPhases() > 1) {
-            	minTemp = getThermoSystem().getTemperature();
+                minTemp = getThermoSystem().getTemperature();
             } else {
-            	maxTemp = getThermoSystem().getTemperature();
+                maxTemp = getThermoSystem().getTemperature();
             }
         } while (Math.abs(maxTemp - minTemp) > 1e-5 && iteration < 500);
         getThermoSystem().setTemperature(maxTemp);
@@ -75,7 +75,6 @@ public class SaturationTemperature extends BasePVTsimulation {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-        // SystemInterface tempSystem = new SystemSrkCPAstatoil(273.15 + 120, 100.0);
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 20, 60.0);
         tempSystem.addComponent("nitrogen", 0.34);
         tempSystem.addComponent("CO2", 3.59);
