@@ -1380,21 +1380,18 @@ abstract class SystemThermo implements SystemInterface {
         betal = 1.0 - nybeta;
 
         for (i = 0; i < numberOfComponents; i++) {
-            if (getPhase(0).getMolarComposition()[i] > 0) {
-                midler = (compArray[i].getK() * compArray[i].getz() - 1.0)
+            midler = (compArray[i].getK() * compArray[i].getz() - 1.0)
                     / (compArray[i].getK() - 1.0);
-                if ((midler > minBeta) && (compArray[i].getK() > 1.0)) {
-                    minBeta = midler;
-                }
-                midler = (1.0 - compArray[i].getz()) / (1.0 - compArray[i].getK());
-                if ((midler < maxBeta) && (compArray[i].getK() < 1.0)) {
-                    maxBeta = midler;
-                }
-                g0 += compArray[i].getz() * compArray[i].getK();
-                g1 += -compArray[i].getz() / compArray[i].getK();
+            if ((midler > minBeta) && (compArray[i].getK() > 1.0)) {
+                minBeta = midler;
             }
+            midler = (1.0 - compArray[i].getz()) / (1.0 - compArray[i].getK());
+            if ((midler < maxBeta) && (compArray[i].getK() < 1.0)) {
+                maxBeta = midler;
+            }
+            g0 += compArray[i].getz() * compArray[i].getK();
+            g1 += -compArray[i].getz() / compArray[i].getK();
         }
-
 
         if (g0 < 0) {
             beta[1] = 1.0 - tolerance;
@@ -1415,12 +1412,10 @@ abstract class SystemThermo implements SystemInterface {
         // ' *l = 1.0-nybeta;
         gtest = 0.0;
         for (i = 0; i < numberOfComponents; i++) {
-            if (getPhase(0).getMolarComposition()[i] > 0) {
-                gtest += compArray[i].getz() * (compArray[i].getK() - 1.0)
+            gtest += compArray[i].getz() * (compArray[i].getK() - 1.0)
                     / (1.0 - nybeta + nybeta * compArray[i].getK()); // beta
                                                                      // =
                                                                      // nybeta
-            }
         }
 
         if (gtest >= 0) {
@@ -1446,13 +1441,11 @@ abstract class SystemThermo implements SystemInterface {
                 gbeta = 0.0;
 
                 for (i = 0; i < numberOfComponents; i++) {
-                    if (getPhase(0).getMolarComposition()[i] > 0) {
-                        double temp1 = (compArray[i].getK() - 1.0);
-                        double temp2 = 1.0 + temp1 * nybeta;
-                        deriv += -(compArray[i].getz() * temp1 * temp1) / (temp2 * temp2);
-                        gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
-                                / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
-                    }
+                    double temp1 = (compArray[i].getK() - 1.0);
+                    double temp2 = 1.0 + temp1 * nybeta;
+                    deriv += -(compArray[i].getz() * temp1 * temp1) / (temp2 * temp2);
+                    gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
+                            / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
                 }
 
                 if (gbeta >= 0) {
@@ -1480,19 +1473,12 @@ abstract class SystemThermo implements SystemInterface {
                 gbeta = 0.0;
 
                 for (i = 0; i < numberOfComponents; i++) {
-                    if (getPhase(0).getMolarComposition()[i] > 0) {
-                        deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0)
+                    deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0)
                             * (1.0 - compArray[i].getK()))
                             / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
-                        gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
+                    gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
                             / (betal + (-betal + 1.0) * compArray[i].getK());
-                    }
                 }
-
-                if (deriv == 0) {
-                    break;
-                }
-
 
                 if (gbeta < 0) {
                     minBeta = betal;
@@ -1515,7 +1501,6 @@ abstract class SystemThermo implements SystemInterface {
                  */
                 nybeta = 1.0 - betal;
             }
-
             step = gbeta / deriv;
             // System.out.println("step : " + step);
         } while (((Math.abs(step)) >= 1.0e-10 && iterations < 300));// &&
