@@ -16,7 +16,7 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable {
+public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<UNIFACgroup> {
     private static final long serialVersionUID = 1000;
     double R = 0.0;
     double Q = 0.0;
@@ -214,18 +214,12 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     public void setGroupName(java.lang.String groupName) {
         this.groupName = groupName;
     }
-    
-    //TODO - two methods for equals
-    @Override
-	public boolean equals(Object o) {
-        return ((UNIFACgroup) o).getSubGroup() == getSubGroup();
-    }
 
     @Override
-	public int compareTo(java.lang.Object o) {
-        if (((UNIFACgroup) o).getSubGroup() < getSubGroup()) {
+	public int compareTo(UNIFACgroup o) {
+        if (o.getSubGroup() < getSubGroup()) {
             return 1;
-        } else if (((UNIFACgroup) o).getSubGroup() == getSubGroup()) {
+        } else if (o.getSubGroup() == getSubGroup()) {
             return 0;
         } else {
             return -1;
@@ -247,7 +241,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
 
     /** {@inheritDoc} */
    // @Override
-    public boolean equals2(Object obj) {
+    public boolean equals(Object obj) {
         if (this == obj)
             return true;
         if (obj == null)
@@ -255,7 +249,8 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
         if (getClass() != obj.getClass())
             return false;
         UNIFACgroup other = (UNIFACgroup) obj;
-        return Double.doubleToLongBits(Q) == Double.doubleToLongBits(other.Q)
+        return subGroup == other.subGroup;
+        /*Double.doubleToLongBits(Q) == Double.doubleToLongBits(other.Q)
                 && Double.doubleToLongBits(QComp) == Double.doubleToLongBits(other.QComp)
                 && Double.doubleToLongBits(QMix) == Double.doubleToLongBits(other.QMix)
                 && Arrays.equals(QMixdN, other.QMixdN)
@@ -274,7 +269,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
                         .doubleToLongBits(other.lnGammaMixdTdT)
                 && Arrays.equals(lnGammaMixdn, other.lnGammaMixdn) && mainGroup == other.mainGroup
                 && n == other.n && subGroup == other.subGroup
-                && Double.doubleToLongBits(xComp) == Double.doubleToLongBits(other.xComp);
+                && Double.doubleToLongBits(xComp) == Double.doubleToLongBits(other.xComp);*/
     }
 
 
