@@ -110,21 +110,21 @@ public class CompressorCalculationTest {
         operations.run();
 
         // System.out.println("power " + comp1.getPower());
-        Assertions.assertEquals(1163805.2992826412, comp1.getPower());
+        Assertions.assertEquals(1163805.2992826412, comp1.getPower(), 0.01);
         Assertions.assertFalse(comp1.getAntiSurge().isSurge());
         Assertions.assertEquals(0.0, comp1.getAntiSurge().getCurrentSurgeFraction());
 
-        System.out.println("Polytropic head from curve:" + comp1.getPolytropicHead());
+        //System.out.println("Polytropic head from curve:" + comp1.getPolytropicHead());
 
-        Assertions.assertEquals(55.40415411694987, comp1.getPolytropicHead());
-        System.out.println("Polytropic eff from curve:" + comp1.getPolytropicEfficiency() * 100.0);
-        Assertions.assertEquals(0.43175024049749283, comp1.getPolytropicEfficiency());
+        Assertions.assertEquals(55.40415411694987, comp1.getPolytropicHead(), 0.01);
+        //System.out.println("Polytropic eff from curve:" + comp1.getPolytropicEfficiency() * 100.0);
+        Assertions.assertEquals(0.43175024049749283, comp1.getPolytropicEfficiency(), 0.01);
 
-        System.out.println("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
-        System.out.println("speed " + comp1.getCompressorChart().getSpeed(
-                stream_1.getThermoSystem().getFlowRate("m3/hr") + 10.0, comp1.getPolytropicHead()));
-        System.out.println("pressure out " + comp1.getOutletPressure());
-        System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
+        //System.out.println("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
+        //System.out.println("speed " + comp1.getCompressorChart().getSpeed(
+        //        stream_1.getThermoSystem().getFlowRate("m3/hr") + 10.0, comp1.getPolytropicHead()));
+        //System.out.println("pressure out " + comp1.getOutletPressure());
+        //System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
         /*
          * double temperatureOut = 273.15 + 84;
          * comp1.setOutletPressure(96.0);
