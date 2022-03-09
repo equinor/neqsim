@@ -4107,11 +4107,11 @@ abstract class SystemThermo implements SystemInterface {
     @Override
     public void setStandard(String standardName) {
         if (standardName.equals("ISO1992")) {
-            this.standard = new neqsim.standards.gasQuality.Standard_ISO6976();
+            this.standard = new neqsim.standards.gasQuality.Standard_ISO6976(this);
         } else if (standardName.equals("Draft_ISO18453")) {
             this.standard = new neqsim.standards.gasQuality.Draft_ISO18453(this);
         } else {
-            this.standard = new neqsim.standards.gasQuality.Standard_ISO6976();
+            this.standard = new neqsim.standards.gasQuality.Standard_ISO6976(this);
         }
     }
 
