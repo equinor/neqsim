@@ -219,7 +219,7 @@ public class TPmultiflashWAX extends TPflash {
         double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
                 .getNumberOfComponents()];
         double[] sumw = new double[system.getPhase(0).getNumberOfComponents()];
-        double sumz = 0, err = 0;
+        double err = 0;
         double[] oldlogw = new double[system.getPhase(0).getNumberOfComponents()];
         double[] d = new double[system.getPhase(0).getNumberOfComponents()];
         double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
@@ -258,7 +258,7 @@ public class TPmultiflashWAX extends TPflash {
         // logger.info("low gibbs phase " + lowestGibbsEnergyPhase);
 
         for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
-            sumz += minimumGibbsEnergySystem.getPhase(0).getComponents()[k].getz();
+            // sumz += minimumGibbsEnergySystem.getPhase(0).getComponents()[k].getz();
             for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
                 if (!((clonedSystem.get(k)) == null)) {
                     sumw[k] += (clonedSystem.get(k)).getPhase(waxphasenumber).getComponents()[i]

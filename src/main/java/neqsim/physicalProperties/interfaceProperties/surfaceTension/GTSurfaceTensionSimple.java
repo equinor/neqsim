@@ -136,10 +136,12 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
             for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
                 mu_inter[j][i] = localSystem.getPhase(0).getComponent(i)
                         .getChemicalPotential(localSystem.getPhase(0));
-                if (java.lang.Double.isNaN(mu_inter[j][i])) {
-                    double chemicalPotential = localSystem.getPhase(0).getComponent(i)
-                            .getChemicalPotential(localSystem.getPhase(0));
-                }
+                /*
+                 * if (java.lang.Double.isNaN(mu_inter[j][i])) { double chemicalPotential =
+                 * localSystem.getPhase(0).getComponent(i)
+                 * .getChemicalPotential(localSystem.getPhase(0)); }
+                 */
+
                 for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
                     dmudn[j][i][k] = localSystem.getPhase(0).getComponent(i)
                             .getChemicalPotentialdNTV(k, localSystem.getPhase(0));
@@ -389,7 +391,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
      * @return a double
      */
     public double getInfluenceParameter(double interfaceTension, int componentNumber) {
-        double startGuess = calcSurfaceTension(0, 1);
+        // double startGuess = calcSurfaceTension(0, 1);
         double oldInfluenceParameter = influenceParam[componentNumber];
         double calcVal = 0.0, oldCalcVal = 0.0, dSurfTensdinfluence = 0.0;
         int iter = 0;

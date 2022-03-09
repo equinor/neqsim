@@ -71,7 +71,7 @@ public class PhaseDesmukhMather extends PhaseGE {
                             this.aij[l][k] = this.aij[k][l];
                         }
                     } else {
-                        int templ = l, tempk = k;
+                        // int templ = l, tempk = k;
                         // database = new util.database.NeqSimDataBase();
                         java.sql.ResultSet dataSet = database
                                 .getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
@@ -82,8 +82,8 @@ public class PhaseDesmukhMather extends PhaseGE {
 
                         if (dataSet.getString("comp1").trim()
                                 .equals(getComponents()[l].getComponentName())) {
-                            templ = k;
-                            tempk = l;
+                            // templ = k;
+                            // tempk = l;
                         }
                         this.aij[k][l] = Double.parseDouble(dataSet.getString("aijDesMath"));
                         this.bij[k][l] = Double.parseDouble(dataSet.getString("bijDesMath"));
@@ -250,8 +250,6 @@ public class PhaseDesmukhMather extends PhaseGE {
      * @return a double
      */
     public double getSolventDensity() {
-        double moles = 0.0;
-
         return 1020.0;
     }
 
