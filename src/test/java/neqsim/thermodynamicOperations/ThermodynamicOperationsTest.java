@@ -127,8 +127,15 @@ public class ThermodynamicOperationsTest {
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         CalculationResult s = ops.propertyFlash(Sp1, Sp2, 1, null, null);
 
-        Assertions.assertEquals(new Double(100), s.fluidProperties[0][4],
-                "Mole count didn't return expected result");
+
+
+        // Mix mole count and mix molecular weights shall be same for all passes
+        for (int i = 1; i < s.fluidProperties.length; i++) {
+          Assertions.assertEquals(new Double(100), s.fluidProperties[i][4],
+              "Mix mole count didn't return expected result");
+          Assertions.assertEquals(s.fluidProperties[0][9], s.fluidProperties[i][9],
+              "Mix molecular weight not correct");
+        }
     }
 
     @Test

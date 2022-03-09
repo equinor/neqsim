@@ -1983,7 +1983,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                         }
 
                         this.system.setMolarComposition(fraction);
-                        this.system.init(0);
                     }
                 }
                 else {
@@ -1991,8 +1990,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
                     // int numberOfMole = Math.round((float) this.system.getNumberOfMoles());
                     // if (numberOfMole != 1 && numberOfMole != 100) {
-                    if (!((sum[t] >= 1 - range && sum[t] <= 1 + range)
-                            || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
+                    if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
+                        || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
                         calculationError[t] =
                                 "Sum of fractions must be equal to 1 or 100, currently ("
                                         + String.valueOf(sum[t]) + ")";
