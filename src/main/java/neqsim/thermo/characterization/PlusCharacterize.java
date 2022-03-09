@@ -163,11 +163,10 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
             firsttime = false;
         }
 
-        double zSum = 0.0, mSum = 0.0, densSum = 0.0;
+        double mSum = 0.0, densSum = 0.0;
         int iter = 0;
         do {
             iter++;
-            zSum = 0.0;
             mSum = 0.0;
             densSum = 0.0;
             for (int i = this.getFirstPlusFractionNumber(); i < this
@@ -175,7 +174,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
                 double ztemp = Math.exp(this.getCoef(0) + this.getCoef(1) * (i));
                 double M = PVTsimMolarMass[i - 6] / 1000.0;
                 double dens = this.getCoef(2) + this.getCoef(3) * Math.log(i);
-                zSum += ztemp;
                 mSum += ztemp * M;
                 densSum += (ztemp * M / dens);
             }
@@ -232,7 +230,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         }
 
         double meanWeightFrac = weightTot / (numberOfPseudocomponents + 0.000001);
-        int pluscomp = 0;
         zPlus = new double[numberOfPseudocomponents];
         MPlus = new double[numberOfPseudocomponents];
         int k = 0;
@@ -253,7 +250,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
             // System.out.println("weigth " + weightFrac + " i" + i);
             if (weightFrac >= meanWeightFrac || !pseudocomponents
                     || i == getLastPlusFractionNumber() - 1) {
-                pluscomp++;
                 String name = (i == firstPS) ? "PC" + Integer.toString(firstPS)
                         : "PC" + Integer.toString(firstPS) + "-" + Integer.toString(i);
                 system.addTBPfraction(name, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k],
