@@ -39,7 +39,10 @@ public class ThermodynamicOperationsTest {
         String[] components = new String[] {"H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4",
                 "iC5", "nC5", "C6"};
         double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.990, 2.399, 0.355, 0.172, 0.088,
-                0.076, 0.036, 0.162};
+                0.076, 0.036, 0.1656};
+
+        double[] fractions2 = new double[] {0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172,
+                0.088, 0.076, 0.036, 0.1656};
 
         SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
         thermoSystem.addComponents(components, fractions);
@@ -50,14 +53,18 @@ public class ThermodynamicOperationsTest {
         List<Double> jT = Arrays.asList(new Double[] {373.15});
         CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
 
+        int numFrac = 2;
         List<List<Double>> onlineFractions =
-                createDummyRequest(thermoSystem.getMolarComposition(), 5);
+                createDummyRequest(thermoSystem.getMolarComposition(), numFrac);
 
-        SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
-        thermoSystem2.addComponents(components,fractions);
+        List<Double> jP2 = Arrays.asList(new Double[] {60.0 + 1.013, 60.0 + 1.013});
+        List<Double> jT2 = Arrays.asList(new Double[] {373.15, 373.15});
+        SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(273.15, 0.0);
+        thermoSystem2.addComponents(components, fractions2);
         ThermodynamicOperations thermoOps2 =
                 new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem2);
-        CalculationResult res2 = thermoOps2.propertyFlash(jP, jT, 1, null, onlineFractions);
+        CalculationResult res2 = thermoOps2.propertyFlash(jP2, jT2, 1, null, onlineFractions);
+
         Assertions.assertArrayEquals(res.fluidProperties[0], res2.fluidProperties[0]);
         String[] propNames = SystemProperties.getPropertyNames();
     }

@@ -1946,6 +1946,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                 this.system.setTotalNumberOfMoles(1);
             }
         }
+        else {
+            double[] fraction = this.system.getMolarComposition();
+            sum[0] = 0.0;
+            for (int comp = 0; comp < fraction.length; comp++) {
+                sum[0] = sum[0] + fraction[comp];
+            }
+        }
 
         for (int t = 0; t < Spec1.size(); t++) {
             try {
@@ -1976,6 +1983,23 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                         this.system.init(0);
                     }
                 }
+                else {
+                    // int numberOfMole = Math.round((float) this.system.getNumberOfMoles());
+                    // if (numberOfMole != 1 && numberOfMole != 100) {
+                    if (sum[0] != 1 && sum[0] != 100) {
+                        calculationError[t] =
+                                "Sum of fractions must be equal to 1 or 100, currently ("
+                                        + String.valueOf(sum[t]) + ")";
+                        logger.info("Online fraction does not sum to 1 or 100 for datapoint {}", t);
+                        /*
+                         * calculationError[t] = "Number of moles is " +
+                         * this.system.getNumberOfMoles() + " and not 1. Check input fragments.";
+                         * logger.info("Number of moles is " + this.system.getNumberOfMoles() +
+                         * " and not 1. Check input fragments.", t);
+                         */
+                        continue;
+                    }
+                }
 
                 this.system.setPressure(Sp1);
                 if (FlashMode == 1) {
@@ -1992,16 +2016,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                 }
                 this.system.init(2);
                 this.system.initPhysicalProperties();
-
-                int numberOfMole = Math.round((float) this.system.getNumberOfMoles());
-
-                if (numberOfMole != 1) {
-                    calculationError[t] = "Number of moles is " + this.system.getNumberOfMoles()
-                            + " and not 1. Check input fragments.";
-                    logger.info("Number of moles is " + this.system.getNumberOfMoles()
-                            + " and not 1. Check input fragments.", t);
-                    continue;
-                }
 
                 fluidProperties[t] = this.system.getProperties().getValues();
             } catch (Exception ex) {
