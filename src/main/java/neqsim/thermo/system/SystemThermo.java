@@ -1762,7 +1762,7 @@ abstract class SystemThermo implements SystemInterface {
     public void initAnalytic(int type) {
         if (type == 0) {
             numberOfPhases = getMaxNumberOfPhases();
-            for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+            for (int i = 0; i < numberOfPhases; i++) {
                 phaseType[i] = 0;
                 beta[i] = 1.0;
                 phaseIndex[i] = i;
