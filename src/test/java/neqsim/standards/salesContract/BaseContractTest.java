@@ -27,6 +27,5 @@ public class BaseContractTest {
         // "EUROPE");
         ContractInterface standard = new BaseContract(testSystem, "UK-GSMR1996", "UK");
         standard.runCheck();
-        standard.display();
     }
 }
