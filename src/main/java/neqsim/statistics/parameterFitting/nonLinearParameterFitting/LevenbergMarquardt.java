@@ -79,7 +79,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
             Matrix oldParameters =
                     new Matrix(sampleSet.getSample(0).getFunction().getFittingParams(), 1).copy();
             newParameters = oldParameters.copy().plus(solvedMatrix.transpose());
-            Matrix diffMat = newParameters.copy().minus(oldParameters);
+            // Matrix diffMat = newParameters.copy().minus(oldParameters);
             this.checkBounds(newParameters);
             this.setFittingParameters(newParameters.copy().getArray()[0]);
             newChiSquare = calcChiSquare();

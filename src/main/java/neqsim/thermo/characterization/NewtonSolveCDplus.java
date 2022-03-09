@@ -1,8 +1,9 @@
 package neqsim.thermo.characterization;
 
-import Jama.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -92,10 +93,8 @@ public class NewtonSolveCDplus implements java.io.Serializable {
      */
     public void setJac() {
         Jac.timesEquals(0.0);
-        double dij = 0.0;
 
-        double tempJ = 0.0, sumdyidbeta = 0, sumdxidbeta = 0;
-        int nofc = numberOfComponents;
+        double tempJ = 0.0;
 
         for (int j = 0; j < 3; j++) {
             double nTot = 0.0, mTot = 0.0, nTot2 = 0.0;

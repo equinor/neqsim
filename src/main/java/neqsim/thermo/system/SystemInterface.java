@@ -688,29 +688,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public neqsim.thermo.characterization.Characterise getCharacterization();
 
     /**
-     * add a component to a fluid. If component already exists, it will be added to the component
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void addComponent(String name);
-    
-    /**
-     * add a component to a fluid. If component name already exists, it will be added to the
-     * component
-     *
-     * @param inComponent a {@link neqsim.thermo.component.ComponentInterface} object
-     */
-    public void addComponent(ComponentInterface inComponent);
-
-    /**
-     * add a component to a fluid. If component already exists, it will be added to the component
-     *
-     * @param moles number of moles (per second) of the component to be added to the fluid
-     * @param componenName a {@link java.lang.String} object
-     */
-    public void addComponent(String componenName, double moles);
-
-    /**
      * <p>
      * readObject.
      * </p>
@@ -843,38 +820,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      * @return a {@link neqsim.thermo.phase.PhaseInterface} object
      */
     public PhaseInterface getPhaseOfType(String phaseTypeName);
-
-    /**
-     * add a component to a fluid. I component already exists, it will be added to the component
-     *
-     * @param componentName Name of the component to be added. See NeqSim database for component in
-     *        the database.
-     * @param moles number of moles (per second) of the component to be added to the fluid
-     * @param phaseNumber the phase number of the phase to add the component to
-     */
-    public void addComponent(String componentName, double moles, int phaseNumber);
-
-    /**
-     * add a component to a fluid. I component already exists, it will be added to the component
-     *
-     * @param componentName Name of the component to be added. See NeqSim database for component in
-     *        the database.
-     * @param value rate of the component to be added to the fluid
-     * @param unitName the unit of the flow rate (eg. mol/sec, kg/sec, etc.)
-     * @param phaseNumber the phase number of the phase to add the component to
-     */
-    public void addComponent(String componentName, double value, String unitName, int phaseNumber);
-
-    /**
-     * add a component to a fluid. I component already exists, it will be added to the component
-     *
-     * @param componentName Name of the component to be added. See NeqSim database for component in
-     *        the database.
-     * @param unitName the unit of rate (sported units are kg/sec, mol/sec, Nlitre/min, kg/hr,
-     *        Sm^3/hr, Sm^3/day, MSm^3/day ..
-     * @param value a double
-     */
-    public void addComponent(String componentName, double value, String unitName);
 
     /**
      * <p>
@@ -1044,17 +989,93 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void tuneModel(String model, double val, int phase);
 
     /**
+     * add a component to a fluid. If component name already exists, it will be added to the
+     * component
+     *
+     * @param inComponent a {@link neqsim.thermo.component.ComponentInterface} object
+     */
+    public void addComponent(ComponentInterface inComponent);
+
+    /**
+     * add a component to a fluid. If component already exists, it will be added to the component
+     *
+     * @param name a {@link java.lang.String} object
+     */
+    public void addComponent(String name);
+
+    /**
+     * add a component to a fluid. If component already exists, it will be added to the component
+     *
+     * @param moles number of moles (per second) of the component to be added to the fluid
+     * @param name a {@link java.lang.String} object
+     */
+    public void addComponent(String name, double moles);
+
+    /**
+     * add a component to a fluid. If component already exists, it will be added to the component
+     *
+     * @param name Name of the component to be added. See NeqSim database for component in the
+     *        database.
+     * @param unitName the unit of rate (sported units are kg/sec, mol/sec, Nlitre/min, kg/hr,
+     *        Sm^3/hr, Sm^3/day, MSm^3/day ..
+     * @param value a double
+     */
+    public void addComponent(String name, double value, String unitName);
+
+    /**
      * <p>
      * addComponent.
      * </p>
      *
-     * @param componentName a {@link java.lang.String} object
+     * @param name a {@link java.lang.String} object
      * @param moles a double
      * @param TC a double
      * @param PC a double
      * @param acs a double
      */
-    public void addComponent(String componentName, double moles, double TC, double PC, double acs);
+    public void addComponent(String name, double moles, double TC, double PC, double acs);
+
+    /**
+     * add a component to a fluid. I component already exists, it will be added to the component
+     *
+     * @param name Name of the component to be added. See NeqSim database for component in the
+     *        database.
+     * @param moles number of moles (per second) of the component to be added to the fluid
+     * @param phaseNumber the phase number of the phase to add the component to
+     */
+    public void addComponent(String name, double moles, int phaseNumber);
+
+    /**
+     * add a component to a fluid. I component already exists, it will be added to the component
+     *
+     * @param name Name of the component to be added. See NeqSim database for component in the
+     *        database.
+     * @param value rate of the component to be added to the fluid
+     * @param unitName the unit of the flow rate (eg. mol/sec, kg/sec, etc.)
+     * @param phaseNumber the phase number of the phase to add the component to
+     */
+    public void addComponent(String name, double value, String unitName, int phaseNumber);
+
+    /**
+     * <p>
+     * addComponent.
+     * </p>
+     *
+     * @param index a int
+     * @param moles a double
+     */
+    public void addComponent(int index, double moles);
+
+    /**
+     * <p>
+     * addComponent.
+     * </p>
+     *
+     * @param index a int
+     * @param moles a double
+     * @param phaseNumber a int
+     */
+    public void addComponent(int index, double moles, int phaseNumber);
 
     /**
      * <p>
@@ -1491,17 +1512,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      * @param temp a boolean
      */
     public void isChemicalSystem(boolean temp);
-
-    /**
-     * <p>
-     * addComponent.
-     * </p>
-     *
-     * @param index a int
-     * @param moles a double
-     * @param phaseNumber a int
-     */
-    public void addComponent(int index, double moles, int phaseNumber);
 
     /**
      * <p>
@@ -2452,16 +2462,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      */
     public void setImplementedCompositionDeriativesofFugacity(
             boolean implementedCompositionDeriativesofFugacity);
-
-    /**
-     * <p>
-     * addComponent.
-     * </p>
-     *
-     * @param componentIndex a int
-     * @param moles a double
-     */
-    public void addComponent(int componentIndex, double moles);
 
     /**
      * <p>

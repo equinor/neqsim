@@ -103,10 +103,8 @@ public class StaticPhaseMixer extends StaticMixer {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        double enthalpy = 0.0;
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
-            enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
         }
 
         mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
