@@ -17,6 +17,7 @@ public class ThermodynamicOperationsTest {
         SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(280.0, 10.0);
         thermoSystem.addComponent("methane", 0.7);
         thermoSystem.addComponent("ethane", 0.3);
+        thermoSystem.init(0);
 
         ThermodynamicOperations thermoOps =
                 new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);

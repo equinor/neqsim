@@ -1966,8 +1966,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                 }
 
                 if (onlineFractions != null) {
-                    if (!((sum[t] >= 0.95 && sum[t] <= 1.05) || (sum[t] >= 95 && sum[t] <= 105))) {
-                        calculationError[t] = "Sum of fractions must be equal to 1 or 100, currently ("
+                    double range = 5;
+                    if (!((sum[t] >= 1 - range / 100 && sum[t] <= 1 + range / 100)
+                            || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
+                        calculationError[t] =
+                                "Sum of fractions must be approximately 1 or 100, currently ("
                                 + String.valueOf(sum[t]) + ")";
                         logger.info("Online fraction does not sum to 1 or 100 for datapoint {}", t);
                         continue;
@@ -1984,9 +1987,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                     }
                 }
                 else {
+                    double range = 1e-5;
+
                     // int numberOfMole = Math.round((float) this.system.getNumberOfMoles());
                     // if (numberOfMole != 1 && numberOfMole != 100) {
-                    if (sum[0] != 1 && sum[0] != 100) {
+                    if (!((sum[t] >= 1 - range && sum[t] <= 1 + range)
+                            || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
                         calculationError[t] =
                                 "Sum of fractions must be equal to 1 or 100, currently ("
                                         + String.valueOf(sum[t]) + ")";
