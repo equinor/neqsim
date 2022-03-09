@@ -110,7 +110,7 @@ class Standard_ISO6976Test {
         Assertions.assertEquals(0.9974432506378011, standard.getValue("CompressionFactor"));
         Assertions.assertEquals(16.972142879156355, standard.getValue("MolarMass"));
 
-        standard.display("test");
+        //standard.display("test");
         /*
          * StandardInterface standardUK = new UKspecifications_ICF_SI(testSystem);
          * standardUK.calculate(); System.out.println("ICF " +
