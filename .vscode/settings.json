@@ -5,5 +5,8 @@
         "editor.formatOnSave": true,
     },
     "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
-    "java.saveActions.organizeImports": true
+    "java.saveActions.organizeImports": true,
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false
 }
