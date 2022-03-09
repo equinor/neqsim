@@ -43,7 +43,6 @@ public class ThermodynamicOperationsTest {
 
         SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
         thermoSystem.addComponents(components, fractions);
-        thermoSystem.setTotalNumberOfMoles(1);
         thermoSystem.init(0);
         ThermodynamicOperations thermoOps =
                 new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
@@ -55,7 +54,7 @@ public class ThermodynamicOperationsTest {
                 createDummyRequest(thermoSystem.getMolarComposition(), 5);
 
         SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
-        thermoSystem2.addComponents(components);
+        thermoSystem2.addComponents(components,fractions);
         ThermodynamicOperations thermoOps2 =
                 new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem2);
         CalculationResult res2 = thermoOps2.propertyFlash(jP, jT, 1, null, onlineFractions);
