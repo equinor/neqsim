@@ -1972,7 +1972,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                         calculationError[t] =
                                 "Sum of fractions must be approximately 1 or 100, currently ("
                                 + String.valueOf(sum[t]) + ")";
-                        logger.info("Online fraction does not sum to 1 or 100 for datapoint {}", t);
+                        logger.info("Online fraction does not sum to approximately 1 or 100 for datapoint {}", t);
                         continue;
                     } else {
                         // Remaining fractions will be set to 0.0
@@ -1986,22 +1986,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                     }
                 }
                 else {
-                    double range = 1e-5;
-
-                    // int numberOfMole = Math.round((float) this.system.getNumberOfMoles());
-                    // if (numberOfMole != 1 && numberOfMole != 100) {
+                    double range = 1e-8;
                     if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
                         || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
                         calculationError[t] =
                                 "Sum of fractions must be equal to 1 or 100, currently ("
                                         + String.valueOf(sum[t]) + ")";
-                        logger.info("Online fraction does not sum to 1 or 100 for datapoint {}", t);
-                        /*
-                         * calculationError[t] = "Number of moles is " +
-                         * this.system.getNumberOfMoles() + " and not 1. Check input fragments.";
-                         * logger.info("Number of moles is " + this.system.getNumberOfMoles() +
-                         * " and not 1. Check input fragments.", t);
-                         */
+                        logger.info("Sum of fractions must be equal to 1 or 100 for datapoint {}", t);
                         continue;
                     }
                 }
