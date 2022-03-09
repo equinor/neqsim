@@ -25,7 +25,7 @@ public class Standard_ISO6578Test {
         testSystem.init(0);
         Standard_ISO6578 standard = new Standard_ISO6578(testSystem);// testSystem);
         standard.calculate();
-        testSystem.display();
+        //testSystem.display();
 
         Assertions.assertEquals(0.30930700620842033, standard.getCorrFactor1());
         // ((Standard_ISO6578) standard).useISO6578VolumeCorrectionFacotrs(false);
