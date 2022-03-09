@@ -18,11 +18,6 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     Standard_ISO6976 iso6976 = null;
     double propaneNumber = 0.0;
 
-    public UKspecifications_ICF_SI() {
-        name = "UKspecifications_ICF_SI";
-        standardDescription = "UKspecifications_ICF_SI";
-    }
-
     /**
      * <p>
      * Constructor for UKspecifications_ICF_SI.
@@ -31,8 +26,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public UKspecifications_ICF_SI(SystemInterface thermoSystem) {
-        super(thermoSystem);
-        name = "UKspecifications_ICF_SI";
+        super("UKspecifications_ICF_SI", "UKspecifications_ICF_SI", thermoSystem);
         iso6976 = new Standard_ISO6976(thermoSystem, 15, 15, "volume");
     }
 

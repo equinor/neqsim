@@ -20,11 +20,6 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
 
-    public BestPracticeHydrocarbonDewPoint() {
-        name = "StatoilBestPracticeHydrocarbonDewPoint";
-        standardDescription = "hydrocarbon dew point calculation method";
-    }
-
     /**
      * <p>
      * Constructor for BestPracticeHydrocarbonDewPoint.
@@ -33,9 +28,9 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public BestPracticeHydrocarbonDewPoint(SystemInterface thermoSystem) {
-        this();
+        super("StatoilBestPracticeHydrocarbonDewPoint", "hydrocarbon dew point calculation method");
 
-        System.out.println("setting model GERG water...");
+        // System.out.println("setting model GERG water...");
         this.thermoSystem = new SystemSrkEos(initTemperature, specPressure);
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
             if (!thermoSystem.getPhase(0).getComponent(i).getName().equals("water")) {

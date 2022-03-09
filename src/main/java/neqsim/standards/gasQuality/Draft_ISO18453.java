@@ -20,11 +20,6 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
 
-    public Draft_ISO18453() {
-        name = "Draft_ISO18453";
-        standardDescription = "water dew point calculation method";
-    }
-
     /**
      * <p>
      * Constructor for Draft_ISO18453.
@@ -33,12 +28,12 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public Draft_ISO18453(SystemInterface thermoSystem) {
-        this();
+        super("Draft_ISO18453", "water dew point calculation method");
 
         if (thermoSystem.getModelName().equals("GERGwater")) {
             this.thermoSystem = thermoSystem;
         } else {
-            System.out.println("setting model GERG water...");
+            // System.out.println("setting model GERG water...");
             this.thermoSystem = new SystemGERGwaterEos(initTemperature, specPressure);
             for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
                 this.thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(),

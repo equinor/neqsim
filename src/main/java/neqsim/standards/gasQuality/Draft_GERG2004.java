@@ -18,11 +18,6 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
     double specPressure = 70.0;
     double initTemperature = 273.15;
 
-    public Draft_GERG2004() {
-        name = "Draft_GERG2004";
-        standardDescription = "reference properties of natural gas";
-    }
-
     /**
      * <p>
      * Constructor for Draft_GERG2004.
@@ -31,12 +26,12 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
      * @param thermoSystemMet a {@link neqsim.thermo.system.SystemInterface} object
      */
     public Draft_GERG2004(SystemInterface thermoSystemMet) {
-        this();
+        super("Draft_GERG2004", "reference properties of natural gas");
 
         if (thermoSystemMet.getModelName().equals("GERG2004-EOS")) {
             this.thermoSystem = thermoSystemMet;
         } else {
-            System.out.println("setting model GERG2004 EOS...");
+            // System.out.println("setting model GERG2004 EOS...");
             this.thermoSystem = new SystemGERG2004Eos(thermoSystemMet.getTemperature(),
                     thermoSystemMet.getPressure());
             for (int i = 0; i < thermoSystemMet.getPhase(0).getNumberOfComponents(); i++) {

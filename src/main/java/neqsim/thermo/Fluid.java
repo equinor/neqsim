@@ -115,6 +115,10 @@ public class Fluid {
             compNames = new String[] {"nitrogen", "oxygen"};
             flowrate = new double[] {0.78, 0.22};
             createFluid(compNames, flowrate, "mole/sec");
+        } else if (fluidType.equals("combustion air")) {
+            compNames = new String[] {"nitrogen", "oxygen", "CO2", "water"};
+            flowrate = new double[] {0.78084, 0.20946, 0.033, 0.1};
+            createFluid(compNames, flowrate, "mole/sec");
         } else if (fluidType.equals("gas condensate")) {
             compNames = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
                     "n-butane", "i-pentane", "n-pentane", "n-hexane", "n-heptane", "n-octane",
