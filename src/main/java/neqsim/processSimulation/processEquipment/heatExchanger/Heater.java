@@ -315,7 +315,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
      *
      * @param outStream the outStream to set
      */
-    public void setOutStream(Stream outStream) {
+    public void setOutStream(StreamInterface outStream) {
         this.outStream = outStream;
     }
 

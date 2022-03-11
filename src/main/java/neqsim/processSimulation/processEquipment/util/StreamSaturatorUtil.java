@@ -17,8 +17,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
     private static final long serialVersionUID = 1000;
 
-    Stream inletStream;
-    Stream outStream;
+    StreamInterface inletStream;
+    StreamInterface outStream;
     SystemInterface thermoSystem;
     private boolean multiPhase = true;
 
@@ -27,10 +27,11 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
      * Constructor for StreamSaturatorUtil.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     @Deprecated
-    public StreamSaturatorUtil(Stream inletStream) {
+    public StreamSaturatorUtil(StreamInterface inletStream) {
         this("StreamSaturatorUtil", inletStream);
     }
 
@@ -40,7 +41,7 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
      * @param name
      * @param inStream
      */
-    public StreamSaturatorUtil(String name, Stream inStream) {
+    public StreamSaturatorUtil(String name, StreamInterface inStream) {
         super(name);
         setInletStream(inStream);
     }
@@ -50,9 +51,10 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
      * Setter for the field <code>inletStream</code>.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public void setInletStream(Stream inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();

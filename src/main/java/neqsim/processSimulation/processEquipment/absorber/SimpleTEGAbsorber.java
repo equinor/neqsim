@@ -565,10 +565,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      * Setter for the field <code>solventOutStream</code>.
      * </p>
      *
-     * @param solventOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream}
-     *        object
+     * @param solventOutStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
-    public void setSolventOutStream(Stream solventOutStream) {
+    public void setSolventOutStream(StreamInterface solventOutStream) {
         this.solventOutStream = solventOutStream;
     }
 

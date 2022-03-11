@@ -48,10 +48,11 @@ public class Tank extends ProcessEquipmentBaseClass {
      * Constructor for Tank.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     @Deprecated
-    public Tank(Stream inletStream) {
+    public Tank(StreamInterface inletStream) {
         this("Tank", inletStream);
     }
 
@@ -70,9 +71,10 @@ public class Tank extends ProcessEquipmentBaseClass {
      * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public Tank(String name, Stream inletStream) {
+    public Tank(String name, StreamInterface inletStream) {
         super(name);
         addStream(inletStream);
     }
@@ -82,9 +84,10 @@ public class Tank extends ProcessEquipmentBaseClass {
      * setInletStream.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public void setInletStream(Stream inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         inletStreamMixer.addStream(inletStream);
         thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);

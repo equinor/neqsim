@@ -1,6 +1,5 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -35,10 +34,11 @@ public class NeqHeater extends Heater {
      * Constructor for NeqHeater.
      * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     @Deprecated
-    public NeqHeater(Stream inStream) {
+    public NeqHeater(StreamInterface inStream) {
         this("NeqHeater", inStream);
     }
 
@@ -57,7 +57,7 @@ public class NeqHeater extends Heater {
      * @param name
      * @param inStream
      */
-    public NeqHeater(String name, Stream inStream) {
+    public NeqHeater(String name, StreamInterface inStream) {
         super(name, inStream);
     }
 

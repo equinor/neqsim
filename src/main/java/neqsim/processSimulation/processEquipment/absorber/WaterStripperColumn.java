@@ -519,9 +519,10 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * Setter for the field <code>gasOutStream</code>.
      * </p>
      *
-     * @param gasOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param gasOutStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
-    public void setGasOutStream(Stream gasOutStream) {
+    public void setGasOutStream(StreamInterface gasOutStream) {
         this.gasOutStream = gasOutStream;
     }
 
@@ -541,10 +542,10 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * Setter for the field <code>solventOutStream</code>.
      * </p>
      *
-     * @param solventOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream}
-     *        object
+     * @param solventOutStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
-    public void setSolventOutStream(Stream solventOutStream) {
+    public void setSolventOutStream(StreamInterface solventOutStream) {
         this.solventOutStream = solventOutStream;
     }
 }

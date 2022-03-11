@@ -20,9 +20,9 @@ public class NeqGasScrubber extends Separator {
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
     ArrayList<SeparatorSection> scrubberSection = null;
-    Stream inletStream;
-    Stream gasOutStream;
-    Stream liquidOutStream;
+    StreamInterface inletStream;
+    StreamInterface gasOutStream;
+    StreamInterface liquidOutStream;
     String name = new String();
 
     /**
@@ -40,10 +40,11 @@ public class NeqGasScrubber extends Separator {
      * Constructor for NeqGasScrubber.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     @Deprecated
-    public NeqGasScrubber(Stream inletStream) {
+    public NeqGasScrubber(StreamInterface inletStream) {
         this("NeqGasScrubber", inletStream);
     }
 
@@ -63,9 +64,10 @@ public class NeqGasScrubber extends Separator {
      * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public NeqGasScrubber(String name, Stream inletStream) {
+    public NeqGasScrubber(String name, StreamInterface inletStream) {
         super(name, inletStream);
         this.setOrientation("vertical");
     }
@@ -79,9 +81,10 @@ public class NeqGasScrubber extends Separator {
      * Setter for the field <code>inletStream</code>.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public void setInletStream(Stream inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();
