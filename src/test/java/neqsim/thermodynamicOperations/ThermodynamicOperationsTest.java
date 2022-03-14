@@ -40,7 +40,7 @@ public class ThermodynamicOperationsTest {
         String[] components = new String[] {"H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4",
                 "iC5", "nC5", "C6"};
         double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.990, 2.399, 0.355, 0.172, 0.088,
-                0.076, 0.036, 0.162};
+                0.076, 0.036, 0.1656};
 
         double[] fractions2 = new double[] {0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172,
                 0.088, 0.076, 0.036, 0.1656};
