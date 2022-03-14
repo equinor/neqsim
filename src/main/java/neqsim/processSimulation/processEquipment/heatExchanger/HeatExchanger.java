@@ -95,7 +95,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * @param inStream1
      */
     public HeatExchanger(String name, StreamInterface inStream1) {
-        super(name);
+        this(name);
         this.inStream[0] = inStream1;
         this.inStream[1] = inStream1;
         outStream[0] = inStream1.clone();
