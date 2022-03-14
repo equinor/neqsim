@@ -20,7 +20,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 	private static final long serialVersionUID = 1000;
 
 	// metering conditions
-	ArrayList<String> componentsNotDefinedByStandard = null;
+    ArrayList<String> componentsNotDefinedByStandard = new ArrayList<String>();
 	double volRefT = 0;
 	double volRefP = 1.01325;
 	double R = 8.314510;
@@ -48,16 +48,16 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 	double densIdeal = 0.0, densReal = 0.0;
 	static Logger logger = LogManager.getLogger(Standard_ISO6976.class);
 
-	public Standard_ISO6976() {
-		name = "Standard_ISO6976";
-		componentsNotDefinedByStandard = new ArrayList<String>();
-		standardDescription = "Calculation of calorific values, density, relative density and Wobbe index from composition";
-	}
+    public Standard_ISO6976(SystemInterface thermoSystem) {
+        this("Standard_ISO6976",
+                "Calculation of calorific values, density, relative density and Wobbe index from composition",
+                thermoSystem);
+    }
 
-	public Standard_ISO6976(SystemInterface thermoSystem) {
-		super(thermoSystem);
-		componentsNotDefinedByStandard = new ArrayList<String>();
-		name = "Standard_ISO6976";
+    public Standard_ISO6976(String name, String description, SystemInterface thermoSystem) {
+        super(name,
+                description,
+                thermoSystem);
 		M = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
 		carbonNumber = new int[thermoSystem.getPhase(0).getNumberOfComponents()];
 

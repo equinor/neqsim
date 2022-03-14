@@ -24,7 +24,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public Standard_ASTM_D6377(SystemInterface thermoSystem) {
-        super(thermoSystem);
+        super("Standard_ASTM_D6377", "Standard_ASTM_D6377", thermoSystem);
     }
 
     /** {@inheritDoc} */
