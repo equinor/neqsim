@@ -17,8 +17,8 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
-    Stream[] outStream;
-    Stream[] inStream;
+    Stream[] outStream = new Stream[2];
+    Stream[] inStream = new Stream[2];
     SystemInterface system;
     protected double temperatureOut = 0, dT = 0.0;
     private int numberOfStages = 5;
@@ -68,9 +68,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public SimpleAbsorber(String name, Stream inStream1) {
-        this(name);
-        outStream = new Stream[2];
-        inStream = new Stream[2];
+        super(name);
         this.inStream[0] = inStream1;
         this.inStream[1] = inStream1;
         outStream[0] = inStream1.clone();
