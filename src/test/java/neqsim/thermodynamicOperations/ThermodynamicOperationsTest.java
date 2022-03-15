@@ -53,7 +53,7 @@ public class ThermodynamicOperationsTest {
         List<Double> jP = Arrays.asList(new Double[] {60.0 + 1.013});
         List<Double> jT = Arrays.asList(new Double[] {373.15});
         CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
-
+      
         int numFrac = 2;
         List<List<Double>> onlineFractions =
                 createDummyRequest(thermoSystem.getMolarComposition(), numFrac);

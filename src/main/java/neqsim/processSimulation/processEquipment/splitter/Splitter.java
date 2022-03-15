@@ -63,7 +63,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      */
     public Splitter(String name, StreamInterface inStream) {
         this(name);
-        this.setInletStream(inletStream);
+        this.setInletStream(inStream);
     }
 
     /**
