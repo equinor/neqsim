@@ -9,7 +9,6 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -47,10 +46,11 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
      * Constructor for ExpanderOld.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     @Deprecated
-    public ExpanderOld(Stream inletStream) {
+    public ExpanderOld(StreamInterface inletStream) {
         this("ExpanderOld", inletStream);
     }
 

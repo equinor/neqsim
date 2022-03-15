@@ -304,8 +304,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
      *
      * @param outStream the outStream to set
      */
-    @Deprecated
-    public void setOutStream(Stream outStream) {
+    public void setOutStream(StreamInterface outStream) {
         this.outStream = outStream;
     }
 

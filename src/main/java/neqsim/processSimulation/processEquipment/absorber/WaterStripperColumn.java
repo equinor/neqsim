@@ -28,13 +28,13 @@ public class WaterStripperColumn extends SimpleAbsorber {
     protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
     protected double pressure = 0;
     protected int numberOfInputStreams = 0;
-    protected Stream mixedStream;
-    protected Stream gasInStream;
-    protected Stream solventInStream;
-    private Stream gasOutStream;
-    private Stream solventOutStream;
+    protected StreamInterface mixedStream;
+    protected StreamInterface gasInStream;
+    protected StreamInterface solventInStream;
+    private StreamInterface gasOutStream;
+    private StreamInterface solventOutStream;
     protected String name = "mixer";
-    protected Stream outStream;
+    protected StreamInterface outStream;
     private double waterDewPointTemperature = 263.15, dewPressure = 70.0, kwater = 1e-4;
     int solventStreamNumber = 0;
 
@@ -208,7 +208,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
 
     /** {@inheritDoc} */
     @Override
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return mixedStream;
     }
 
@@ -219,25 +219,25 @@ public class WaterStripperColumn extends SimpleAbsorber {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getInStream() {
+    public StreamInterface getInStream() {
         return gasInStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return solventOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getSolventInStream() {
+    public StreamInterface getSolventInStream() {
         return solventInStream;
     }
 
@@ -358,7 +358,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
                     * mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase();
             // System.out.println("mole water to move " + molesWaterToMove);
 
-            Stream stream = mixedStream.clone();
+            StreamInterface stream = mixedStream.clone();
             stream.setName("test");
             stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
             stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
@@ -519,9 +519,10 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * Setter for the field <code>gasOutStream</code>.
      * </p>
      *
-     * @param gasOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param gasOutStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
-    public void setGasOutStream(Stream gasOutStream) {
+    public void setGasOutStream(StreamInterface gasOutStream) {
         this.gasOutStream = gasOutStream;
     }
 
@@ -532,7 +533,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getSolventOutStream() {
+    public StreamInterface getSolventOutStream() {
         return solventOutStream;
     }
 
@@ -541,10 +542,10 @@ public class WaterStripperColumn extends SimpleAbsorber {
      * Setter for the field <code>solventOutStream</code>.
      * </p>
      *
-     * @param solventOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream}
-     *        object
+     * @param solventOutStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
-    public void setSolventOutStream(Stream solventOutStream) {
+    public void setSolventOutStream(StreamInterface solventOutStream) {
         this.solventOutStream = solventOutStream;
     }
 }

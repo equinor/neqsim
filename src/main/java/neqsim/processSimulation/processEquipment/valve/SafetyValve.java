@@ -1,6 +1,5 @@
 package neqsim.processSimulation.processEquipment.valve;
 
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
@@ -32,10 +31,11 @@ public class SafetyValve extends ThrottlingValve {
      * Constructor for SafetyValve.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     @Deprecated
-    public SafetyValve(Stream inletStream) {
+    public SafetyValve(StreamInterface inletStream) {
         this("SafetyValve", inletStream);
     }
 

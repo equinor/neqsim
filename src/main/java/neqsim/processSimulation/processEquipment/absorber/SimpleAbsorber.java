@@ -45,7 +45,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    * Constructor for SimpleAbsorber.
    * </p>
    *
-   * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+   * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   @Deprecated
   public SimpleAbsorber(StreamInterface inStream1) {

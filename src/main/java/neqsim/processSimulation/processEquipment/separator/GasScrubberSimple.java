@@ -45,7 +45,7 @@ public class GasScrubberSimple extends Separator {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     @Deprecated
-    public GasScrubberSimple(Stream inletStream) {
+    public GasScrubberSimple(StreamInterface inletStream) {
         this("GasScrubberSimple", inletStream);
     }
 
@@ -100,25 +100,25 @@ public class GasScrubberSimple extends Separator {
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return liquidOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGas() {
+    public StreamInterface getGas() {
         return getGasOutStream();
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquid() {
+    public StreamInterface getLiquid() {
         return getLiquidOutStream();
     }
 

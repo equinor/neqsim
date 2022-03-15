@@ -192,9 +192,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /** {@inheritDoc} */
-    @Override
-    public Stream getOutStream() {
-        return (Stream) mixedStream;
+    @Deprecated
+    public StreamInterface getOutStream() {
+        return mixedStream;
     }
 
     /** {@inheritDoc} */
@@ -208,9 +208,10 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
      * initiateDownstreamProperties.
      * </p>
      *
-     * @param outstream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param outstream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public void initiateDownstreamProperties(Stream outstream) {
+    public void initiateDownstreamProperties(StreamInterface outstream) {
         lastIterationStream = outstream.clone();
     }
 

@@ -25,9 +25,9 @@ public class GasScrubber extends Separator {
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
     ArrayList<SeparatorSection> scrubberSection = null;
-    Stream inletStream;
-    Stream gasOutStream;
-    Stream liquidOutStream;
+    StreamInterface inletStream;
+    StreamInterface gasOutStream;
+    StreamInterface liquidOutStream;
     String name = new String();
 
     /**
@@ -86,7 +86,7 @@ public class GasScrubber extends Separator {
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public void setInletStream(Stream inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();
@@ -111,25 +111,25 @@ public class GasScrubber extends Separator {
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return liquidOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGas() {
+    public StreamInterface getGas() {
         return getGasOutStream();
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquid() {
+    public StreamInterface getLiquid() {
         return getLiquidOutStream();
     }
 
