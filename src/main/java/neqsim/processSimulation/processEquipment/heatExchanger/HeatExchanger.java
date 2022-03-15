@@ -24,8 +24,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
-    StreamInterface[] outStream;
-    StreamInterface[] inStream;
+    StreamInterface[] outStream = new Stream[2];
+    StreamInterface[] inStream = new Stream[2];
     SystemInterface system;
     double NTU;
     protected double temperatureOut = 0, dT = 0.0;
@@ -83,9 +83,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * @param name
      */
     public HeatExchanger(String name) {
-        super(name);
-        outStream = new Stream[2];
-        inStream = new Stream[2];
+      super(name);
     }
 
     /**
@@ -110,7 +108,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * @param inStream2
      */
     public HeatExchanger(String name, StreamInterface inStream1, StreamInterface inStream2) {
-        super(name);
+      this(name);
         this.inStream[0] = inStream1;
         this.inStream[1] = inStream2;
         outStream[0] = inStream1.clone();
@@ -512,7 +510,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         double duty2 = Math.abs(outStream[1].getThermoSystem().getEnthalpy()
                 - inStream[1].getThermoSystem().getEnthalpy());
         thermalEffectiveness = ((HeatExchanger) refExchanger).getThermalEffectiveness()
-                * (duty1 + duty2) / 2.0 / Math.abs(((HeatExchanger) refExchanger).getDuty());
+            * (duty1 + duty2) / 2.0 / Math.abs(((HeatExchanger) refExchanger).getDuty());
         hotColdDutyBalance = duty1 / duty2;
     }
 
