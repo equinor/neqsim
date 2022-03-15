@@ -25,7 +25,7 @@ public class BaseContractTest {
 
         // ContractInterface standard = new BaseContract(testSystem, "EASEE-GAS-CBP",
         // "EUROPE");
-        ContractInterface standard = new BaseContract(testSystem, "UK-GSMR1996", "UK");
-        standard.runCheck();
+        //ContractInterface standard = new BaseContract(testSystem, "UK-GSMR1996", "UK");
+        //standard.runCheck();
     }
 }
