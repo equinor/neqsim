@@ -918,19 +918,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void addSolidComplexPhase(String type);
 
     /**
-     * method to calculate thermodynamic properties of the fluid. The temperature,
-     * pressure, number
-     * of phases and composition of the phases will be used as basis for
-     * calculation.
+     * method to calculate thermodynamic properties of the fluid. The temperature, pressure, number
+     * of phases and composition of the phases will be used as basis for calculation.
+     * 
      *
-     * @param number - The number can be 0, 1, 2 or 3.
-     *               0: Set feed composition for all phases.
-     *               1: Calculation of density, fugacities and Z-factor
-     *               2: 1 + calculation of enthalpy, entropy, Cp, Cv, and most other
-     *               thermodynamic properties
-     *               3: 1+2 + Calculation of composition derivatives of fugacity
-     *               coefficients
-     *               init(1) is faster than init(2) which is faster than init(3).
+     * @param number - The number can be 0, 1, 2 or 3. 0: Set feed composition for all phases. 1:
+     *        Calculation of density, fugacities and Z-factor 2: 1 + calculation of enthalpy,
+     *        entropy, Cp, Cv, and most other thermodynamic properties 3: 1+2 + Calculation of
+     *        composition derivatives of fugacity coefficients.
      */
     public void init(int number);
 
@@ -2317,9 +2312,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void autoSelectMixingRule();
 
     /**
-     * <p>
-     * orderByDensity.
-     * </p>
+     * Order phases by density.
      */
     public void orderByDensity();
 

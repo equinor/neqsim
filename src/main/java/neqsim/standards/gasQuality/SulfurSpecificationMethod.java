@@ -19,22 +19,11 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
      * <p>
      * Constructor for SulfurSpecificationMethod.
      * </p>
-     */
-    public SulfurSpecificationMethod() {
-        name = "SulfurSpecificationMethod";
-        standardDescription = "SulfurSpecificationMethod";
-    }
-
-    /**
-     * <p>
-     * Constructor for SulfurSpecificationMethod.
-     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public SulfurSpecificationMethod(SystemInterface thermoSystem) {
-        this();
-        this.thermoSystem = thermoSystem;
+        super("SulfurSpecificationMethod", "Sulfur Specification Method", thermoSystem);
     }
 
     /** {@inheritDoc} */

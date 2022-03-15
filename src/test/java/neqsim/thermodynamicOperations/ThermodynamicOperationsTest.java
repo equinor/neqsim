@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ThermodynamicOperationsTest {
@@ -16,6 +17,7 @@ public class ThermodynamicOperationsTest {
         SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(280.0, 10.0);
         thermoSystem.addComponent("methane", 0.7);
         thermoSystem.addComponent("ethane", 0.3);
+        thermoSystem.init(0);
 
         ThermodynamicOperations thermoOps =
                 new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
@@ -31,6 +33,41 @@ public class ThermodynamicOperationsTest {
         CalculationResult res2 = thermoOps.propertyFlash(jP, jT, 0, null, null);
         Assertions.assertEquals(res2.calculationError[0],
                 "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input mode must be 1, 2 or 3");
+    }
+
+    @Test
+    void testNeqSimPython2() {
+        String[] components = new String[] {"H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4",
+                "iC5", "nC5", "C6"};
+        double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.990, 2.399, 0.355, 0.172, 0.088,
+                0.076, 0.036, 0.1656};
+
+        double[] fractions2 = new double[] {0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172,
+                0.088, 0.076, 0.036, 0.1656};
+
+        SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
+        thermoSystem.addComponents(components, fractions);
+        thermoSystem.init(0);
+        ThermodynamicOperations thermoOps =
+                new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
+        List<Double> jP = Arrays.asList(new Double[] {60.0 + 1.013});
+        List<Double> jT = Arrays.asList(new Double[] {373.15});
+        CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
+      
+        int numFrac = 2;
+        List<List<Double>> onlineFractions =
+                createDummyRequest(thermoSystem.getMolarComposition(), numFrac);
+
+        List<Double> jP2 = Arrays.asList(new Double[] {60.0 + 1.013, 60.0 + 1.013});
+        List<Double> jT2 = Arrays.asList(new Double[] {373.15, 373.15});
+        SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(273.15, 0.0);
+        thermoSystem2.addComponents(components, fractions2);
+        ThermodynamicOperations thermoOps2 =
+                new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem2);
+        CalculationResult res2 = thermoOps2.propertyFlash(jP2, jT2, 1, null, onlineFractions);
+
+        Assertions.assertArrayEquals(res.fluidProperties[0], res2.fluidProperties[0]);
+        String[] propNames = SystemProperties.getPropertyNames();
     }
 
     @Test
@@ -90,8 +127,15 @@ public class ThermodynamicOperationsTest {
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         CalculationResult s = ops.propertyFlash(Sp1, Sp2, 1, null, null);
 
-        Assertions.assertEquals(new Double(100), s.fluidProperties[0][4],
-                "Mole count didn't return expected result");
+
+
+        // Mix mole count and mix molecular weights shall be same for all passes
+        for (int i = 1; i < s.fluidProperties.length; i++) {
+          Assertions.assertEquals(new Double(100), s.fluidProperties[i][4],
+              "Mix mole count didn't return expected result");
+          Assertions.assertEquals(s.fluidProperties[0][9], s.fluidProperties[i][9],
+              "Mix molecular weight not correct");
+        }
     }
 
     @Test
