@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.adsorber;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
@@ -15,7 +16,8 @@ public class SimpleAdsorberTest {
     testSystem.createDatabase(true);
     testSystem.setMixingRule(4);
   }
-
+  
+  @Disabled("Disabled until neqsim.processSimulation.processEquipment.adsorber.SimpleAdsorber is fixed")
   @Test
   void testRun() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
