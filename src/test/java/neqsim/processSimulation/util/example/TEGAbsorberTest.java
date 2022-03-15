@@ -89,7 +89,7 @@ public class TEGAbsorberTest {
         mix.addStream(reboiler.getOutStream());
         mix.addStream(mixStream);
 
-        Stream ReboilLiqStream = mix.getOutStream();
+        StreamInterface ReboilLiqStream = mix.getOutStream();
         ReboilLiqStream.setName("ReboilLiqStream");
 
         // Stream ReboilGasStream = reboiler.getOutStream();

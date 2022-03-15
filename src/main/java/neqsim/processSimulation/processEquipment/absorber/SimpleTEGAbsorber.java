@@ -29,12 +29,12 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
     protected double pressure = 0;
     protected int numberOfInputStreams = 0;
-    protected Stream mixedStream;
-    protected Stream gasInStream;
-    protected Stream solventInStream;
-    private Stream gasOutStream;
-    private Stream solventOutStream;
-    protected Stream outStream;
+    protected StreamInterface mixedStream;
+    protected StreamInterface gasInStream;
+    protected StreamInterface solventInStream;
+    private StreamInterface gasOutStream;
+    private StreamInterface solventOutStream;
+    protected StreamInterface outStream;
     private double kwater = 1e-4;
     int solventStreamNumber = 0;
 
@@ -207,7 +207,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
 
     /** {@inheritDoc} */
     @Override
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return mixedStream;
     }
 
@@ -218,13 +218,13 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getInStream() {
+    public StreamInterface getInStream() {
         return gasInStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
@@ -235,19 +235,19 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getGasInStream() {
+    public StreamInterface getGasInStream() {
         return gasInStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return solventOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getSolventInStream() {
+    public StreamInterface getSolventInStream() {
         return solventInStream;
     }
 
@@ -367,7 +367,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
             // mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase());
             // System.out.println("total moles water " +
             // mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles());
-            Stream stream = mixedStream.clone();
+            StreamInterface stream = mixedStream.clone();
             stream.setName("test");
             stream.getThermoSystem().addComponent("water", -molesWaterToMove, 0);
             stream.getThermoSystem().addComponent("water", molesWaterToMove, 1);
@@ -545,7 +545,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      *
      * @param gasOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public void setGasOutStream(Stream gasOutStream) {
+    public void setGasOutStream(StreamInterface gasOutStream) {
         this.gasOutStream = gasOutStream;
     }
 
@@ -556,7 +556,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getSolventOutStream() {
+    public StreamInterface getSolventOutStream() {
         return solventOutStream;
     }
 
@@ -565,10 +565,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      * Setter for the field <code>solventOutStream</code>.
      * </p>
      *
-     * @param solventOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream}
-     *        object
+     * @param solventOutStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
-    public void setSolventOutStream(Stream solventOutStream) {
+    public void setSolventOutStream(StreamInterface solventOutStream) {
         this.solventOutStream = solventOutStream;
     }
 
