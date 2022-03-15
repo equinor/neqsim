@@ -131,8 +131,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
     /** {@inheritDoc} */
     @Override
-    public Stream getSplitStream(int i) {
-        return (Stream) splitStream[i];
+    public StreamInterface getSplitStream(int i) {
+        return splitStream[i];
     }
 
     /** {@inheritDoc} */

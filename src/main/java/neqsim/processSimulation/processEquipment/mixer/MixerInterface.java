@@ -6,7 +6,6 @@
 package neqsim.processSimulation.processEquipment.mixer;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -36,7 +35,7 @@ public interface MixerInterface extends ProcessEquipmentInterface {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getOutStream();
+    public StreamInterface getOutStream();
 
     /**
      * <p>
