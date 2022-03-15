@@ -1983,6 +1983,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                         }
 
                         this.system.setMolarComposition(fraction);
+                        this.system.init(0);
                     }
                 }
                 else {
