@@ -51,7 +51,7 @@ class StreamTest {
             testSystem.initProperties();
         });
         Assertions.assertEquals(
-                "neqsim.util.exception.InvalidInputException: Phase:init - Input totalNumberOfMoles must be larger than zero.",
+            "neqsim.util.exception.InvalidInputException: PhaseSrkEos:init - Input totalNumberOfMoles must be larger than zero.",
                 thrown.getMessage());
     }
 }

@@ -393,6 +393,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         }
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
+        int maxIterations = 1000;
         // System.out.println("volume " + getVolume());
         do {
             iterations++;
@@ -434,7 +435,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
             // System.out.println("Z " + Z);
-        } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < 1000);
+        } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < maxIterations);
         // System.out.println("error BonV " + Math.abs((BonV-BonVold)/BonV));
         // System.out.println("iterations " + iterations);
         if (BonV < 0) {
@@ -442,19 +443,21 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
         }
-        if (iterations >= 10000) {
-            throw new neqsim.util.exception.TooManyIterationsException();
+        if (iterations >= maxIterations) {
+          throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume",
+              maxIterations);
         }
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException(); // if(phaseType==0)
-                                                              // System.out.println("density " +
-                                                              // getDensity());//"BonV: " + BonV + "
-                                                              // "+" itert: " +
-                                                              // iterations +" " + " phase " +
-                                                              // phaseType+ " " + h + "
-                                                              // " +dh + " B " + Btemp + " D " +
-                                                              // Dtemp + " gv" + gV()
-                                                              // + " fv " + fv() + " fvv" + fVV());
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
+          // if(phaseType==0)
+          // System.out.println("density " +
+          // getDensity());//"BonV: " + BonV + "
+          // "+" itert: " +
+          // iterations +" " + " phase " +
+          // phaseType+ " " + h +
+          // " +dh + " B " + Btemp + " D " +
+          // Dtemp + " gv" + gV()
+          // + " fv " + fv() + " fvv" + fVV());
         }
         return getMolarVolume();
     }

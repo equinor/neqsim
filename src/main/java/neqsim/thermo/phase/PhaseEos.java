@@ -212,6 +212,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
+        int maxIterations = 1000;
 
         do {
             iterations++;
@@ -257,7 +258,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-        } while (Math.abs(BonV - BonVold) > 1.0e-9 && iterations < 1000);
+        } while (Math.abs(BonV - BonVold) > 1.0e-9 && iterations < maxIterations);
         // molarVolume = 1.0/BonV*Btemp/numberOfMolesInPhase;
         // Z = pressure*molarVolume/(R*temperature);
         // logger.info("BonV: " + BonV + " " + h + " " +dh + " B " + Btemp + " D " +
@@ -265,11 +266,12 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         // logger.info("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh +
         // " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" +
         // fVV());
-        if (iterations >= 1000) {
-            throw new neqsim.util.exception.TooManyIterationsException();
+        if (iterations >= maxIterations) {
+          throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume2",
+              maxIterations);
         }
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolume2", "Molar volume");
             // logger.info("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh +
             // " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" +
             // fVV());
@@ -293,7 +295,6 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         }
 
         double BonVold = BonV, Btemp = getB(), h, dh, dhh, d1, d2, BonV2;
-        int iterations = 0;
 
         if (Btemp < 0) {
             logger.info("b negative in volume calc");
@@ -301,7 +302,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         boolean changeFase = false;
         double error = 1.0, errorOld = 1.0e10;
-
+        int iterations = 0;
+        int maxIterations = 300;
         do {
             errorOld = error;
             iterations++;
@@ -354,18 +356,19 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
             // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
-        } while (Math.abs((BonV - BonVold) / BonVold) > 1.0e-10 && iterations < 300);
+        } while (Math.abs((BonV - BonVold) / BonVold) > 1.0e-10 && iterations < maxIterations);
         // logger.info("pressure " + Z*R*temperature/molarVolume);
         // logger.info("error in volume " +
         // (-pressure+R*temperature/molarVolume-R*temperature*dFdV()) + " firstterm " +
         // (R*temperature/molarVolume) + " second " + R*temperature*dFdV());
-        if (iterations >= 300) {
-            throw new neqsim.util.exception.TooManyIterationsException();
+        if (iterations >= maxIterations) {
+          throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume",
+              maxIterations);
         }
         if (Double.isNaN(getMolarVolume())) {
             // A = calcA(this, temperature, pressure, numberOfComponents);
             // molarVolume(pressure, temperature, A, B, phase);
-            throw new neqsim.util.exception.IsNaNException();
+            throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
             // logger.info("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh +
             // " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" +
             // fVV());

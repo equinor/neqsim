@@ -1167,7 +1167,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
         }
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
-        // System.out.println("volume " + getVolume());
+        int maxIterations = 2000;
         do {
             iterations++;
             this.volInit();
@@ -1188,7 +1188,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
             // System.out.println("Z " + Z);
-        } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < 2000);
+        } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < maxIterations);
         // System.out.println("error BonV " + Math.abs((BonV-BonVold)/BonV));
         // System.out.println("iterations " + iterations);
         if (BonV < 0) {
@@ -1197,11 +1197,12 @@ public class PhasePCSAFT extends PhaseSrkEos {
             Z = pressure * getMolarVolume() / (R * temperature);
         }
 
-        if (iterations >= 2000) {
-            throw new neqsim.util.exception.TooManyIterationsException();
+        if (iterations >= maxIterations) {
+          throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume",
+              maxIterations);
         }
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
         }
 
         // if(phaseType==0) System.out.println("density " + getDensity());//"BonV: " +

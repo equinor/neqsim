@@ -156,14 +156,14 @@ abstract class Phase implements PhaseInterface {
             String msg = "Negative number of moles in phase.";
             logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException(msg);
+                new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", msg);
             throw new RuntimeException(e);
         }
         if (getComponent(component).getNumberOfMolesInPhase() < 0.0) {
             String msg = "Negative number of moles of component " + component;
             logger.error(msg);
             neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException(msg);
+                new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", msg);
             throw new RuntimeException(e);
         }
     }
@@ -384,8 +384,9 @@ abstract class Phase implements PhaseInterface {
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
             double beta) {
         if (totalNumberOfMoles <= 0) {
-            throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-                    "Phase:init - Input totalNumberOfMoles must be larger than zero."));
+            throw new RuntimeException(
+                new neqsim.util.exception.InvalidInputException(this, "init", "totalNumberOfMoles",
+                    "must be larger than zero."));
         }
 
         this.beta = beta;

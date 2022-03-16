@@ -642,8 +642,17 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
      * addMolesChemReac.
      * </p>
      *
-     * @param dn a double
-     * @param totdn a double
+     * @param dn Number of moles to add to phase and total
+     */
+    public void addMolesChemReac(double dn);
+
+    /**
+     * <p>
+     * addMolesChemReac.
+     * </p>
+     *
+     * @param dn Number of moles to add to phase
+     * @param totdn Number of moles to add total
      */
     public void addMolesChemReac(double dn, double totdn);
 
@@ -878,15 +887,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
      * @return a int
      */
     public int getComponentNumber();
-
-    /**
-     * <p>
-     * addMolesChemReac.
-     * </p>
-     *
-     * @param dn a double
-     */
-    public void addMolesChemReac(double dn);
 
     /**
      * <p>

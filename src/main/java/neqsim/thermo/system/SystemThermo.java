@@ -130,12 +130,22 @@ abstract class SystemThermo implements SystemInterface {
      */
     public SystemThermo(double T, double P) {
         this();
-        if (T < 0.0 || P < 0.0) {
-            String msg = "Negative input temperature or pressure";
-            logger.error(msg);
-            neqsim.util.exception.InvalidInputException e =
-                    new neqsim.util.exception.InvalidInputException(msg);
-            throw new RuntimeException(e);
+        if (T < 0.0) {
+          String msg = "Negative input temperature";
+          logger.error(msg);
+          neqsim.util.exception.InvalidInputException e =
+              new neqsim.util.exception.InvalidInputException(this.getClass().getSimpleName(),
+                  "SystemThermo", "T", "is negative");
+          throw new RuntimeException(e);
+        }
+
+        if (P < 0.0) {
+          String msg = "Negative input pressure";
+          logger.error(msg);
+          neqsim.util.exception.InvalidInputException e =
+              new neqsim.util.exception.InvalidInputException(this.getClass().getSimpleName(),
+                  "SystemThermo", "P", "is negative");
+          throw new RuntimeException(e);
         }
         beta[0] = 1.0;
         beta[1] = 1.0;
@@ -1431,6 +1441,7 @@ abstract class SystemThermo implements SystemInterface {
         }
 
         iterations = 0;
+        int maxIterations = 300;
         // System.out.println("gtest: " + gtest);
         double step = 1.0;
         do {
@@ -1503,7 +1514,7 @@ abstract class SystemThermo implements SystemInterface {
             }
             step = gbeta / deriv;
             // System.out.println("step : " + step);
-        } while (((Math.abs(step)) >= 1.0e-10 && iterations < 300));// &&
+          } while (((Math.abs(step)) >= 1.0e-10 && iterations < maxIterations));// &&
                                                                     // (Math.abs(nybeta)-Math.abs(maxBeta))>0.1);
 
         // System.out.println("beta: " + nybeta + " iterations: " + iterations);
@@ -1521,15 +1532,16 @@ abstract class SystemThermo implements SystemInterface {
         beta[0] = nybeta;
         beta[1] = 1.0 - nybeta;
 
-        if (iterations >= 300) {
-            throw new neqsim.util.exception.TooManyIterationsException();
+        if (iterations >= maxIterations) {
+          throw new neqsim.util.exception.TooManyIterationsException(this, "calcBeta",
+              maxIterations);
         }
         if (Double.isNaN(beta[1])) {
-            for (i = 0; i < numberOfComponents; i++) {
-                // System.out.println("K " + compArray[i].getK());
-                // System.out.println("z " + compArray[i].getz());
-            }
-            throw new neqsim.util.exception.IsNaNException();
+          /*
+           * for (i = 0; i < numberOfComponents; i++) { System.out.println("K " +
+           * compArray[i].getK()); System.out.println("z " + compArray[i].getz()); }
+           */
+          throw new neqsim.util.exception.IsNaNException(this, "calcBeta", "beta");
         }
         return beta[0];
     }
