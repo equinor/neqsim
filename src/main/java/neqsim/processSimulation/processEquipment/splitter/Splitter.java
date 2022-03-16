@@ -20,7 +20,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
     StreamInterface inletStream;
     StreamInterface[] splitStream;
-    protected int splitNumber;
+    protected int splitNumber = 1;
     double[] splitFactor = new double[1];
 
     /**
@@ -77,16 +77,15 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      * @param i a int
      */
     public Splitter(String name, StreamInterface inletStream, int i) {
-        this(name, inletStream);
+        this(name);
         setSplitNumber(i);
-        splitFactor = new double[i];
+        this.setInletStream(inletStream);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setSplitNumber(int i) {
         splitNumber = i;
-        this.setInletStream(inletStream);
         splitFactor = new double[splitNumber];
         splitFactor[0] = 1.0;
     }

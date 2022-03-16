@@ -2,7 +2,6 @@ package neqsim.thermo.characterization;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -201,7 +200,8 @@ public class LumpingModel implements java.io.Serializable {
         @Override
         public double getFractionOfHeavyEnd(int i) {
             if (fractionOfHeavyEnd == null) {
-                neqsim.util.exception.ThermoException e = new neqsim.util.exception.NotInitializedException(
+              neqsim.util.exception.ThermoException e =
+                  new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                         "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
                 logger.error(e.getMessage());
                 throw new RuntimeException(e);
@@ -316,7 +316,8 @@ public class LumpingModel implements java.io.Serializable {
         @Override
         public double getFractionOfHeavyEnd(int i) {
             if (fractionOfHeavyEnd == null) {
-                neqsim.util.exception.ThermoException e = new neqsim.util.exception.NotInitializedException(
+              neqsim.util.exception.ThermoException e =
+                  new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                         "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
                 logger.error(e.getMessage());
                 throw new RuntimeException(e);

@@ -6,7 +6,6 @@ import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
-
 // import org.ejml.data.DenseMatrix64F;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
@@ -680,7 +679,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
-
+        int maxIterations = 300;
         do {
             iterations++;
             gcpa = calc_g();
@@ -765,7 +764,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
         } while ((Math.abs((BonV - BonVold) / BonV) > 1.0e-10 || Math.abs(h) > 1e-12)
-                && iterations < 100);
+                && iterations < maxIterations);
 
         // System.out.println("h failed " + h + " Z" + Z + " iterations " + iterations +
         // " BonV " + BonV);
@@ -787,7 +786,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
         // " +dh + " B " + Btemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
             // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
             // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
             // + fVV());
@@ -1312,7 +1311,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh + " B
         // " + Btemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolumeChangePhase",
+              "Molar volume");
             // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
             // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
             // + fVV());
@@ -2109,7 +2109,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         // " + Btemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
 
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolumeOld", "Molar volume");
             // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
             // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
             // + fVV());

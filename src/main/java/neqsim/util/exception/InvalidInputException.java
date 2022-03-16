@@ -12,19 +12,24 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>
-     * Constructor for InvalidInputException.
-     * </p>
-     */
-    public InvalidInputException() {}
-
-    /**
      * Constructs an <code>InvalidInputException</code> with the specified detail message.
      *
      * @param msg the detail message.
      */
+    @Deprecated
     public InvalidInputException(String msg) {
         super(msg);
+    }
+
+    /**
+     * Constructs an <code>InvalidInputException</code> with a default message.
+     * 
+     * @param className Class that exception is raised from
+     * @param methodName Method that exception is raised from
+     * @param inputName Name of invalid input
+     */
+    public InvalidInputException(String className, String methodName, String inputName) {
+        super(className, methodName, "Input " + inputName + " was invalid.");
     }
 
     /**
@@ -32,9 +37,34 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
      * 
      * @param className Class that exception is raised from
      * @param methodName Method that exception is raised from
-     * @param msg the detail message.
+     * @param inputName Name of invalid input
+     * @param msg error message detailing input problem
      */
-    public InvalidInputException(String className, String methodName, String msg) {
-        super(className + ":" + methodName + " - " + msg);
+    public InvalidInputException(String className, String methodName, String inputName,
+            String msg) {
+      super(className, methodName, "Input " + inputName + " " + msg);
+    }
+
+    /**
+     * Constructs an <code>InvalidInputException</code> with a default message.
+     * 
+     * @param obj Object that exception is raised from
+     * @param methodName Method that exception is raised from
+     * @param inputName Name of invalid input
+     */
+    public InvalidInputException(Object obj, String methodName, String inputName) {
+      this(obj.getClass().getSimpleName(), methodName, inputName);
+    }
+
+    /**
+     * Constructs an <code>InvalidInputException</code> with a default message.
+     * 
+     * @param obj Object that exception is raised from
+     * @param methodName Method that exception is raised from
+     * @param inputName Name of invalid input
+     * @param msg error message detailing input problem
+     */
+    public InvalidInputException(Object obj, String methodName, String inputName, String msg) {
+      this(obj.getClass().getSimpleName(), methodName, inputName, msg);
     }
 }

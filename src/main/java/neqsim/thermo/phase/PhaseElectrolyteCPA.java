@@ -1002,7 +1002,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
             // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
             // + fVV());
-            throw new neqsim.util.exception.IsNaNException();
+            throw new neqsim.util.exception.IsNaNException(this, "molarVolume2", "Molar volume");
             // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
             // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
             // + fVV());
@@ -1138,7 +1138,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         // " + Btemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
 
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
             // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
             // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
             // + fVV());
@@ -1280,7 +1280,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh + " B
         // " + Btemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolumeChangePhase",
+              "Molar volume");
             // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
             // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
             // + fVV());

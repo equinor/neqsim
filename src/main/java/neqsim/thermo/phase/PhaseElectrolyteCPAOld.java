@@ -2,7 +2,6 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.component.ComponentEosInterface;
@@ -622,7 +621,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
         // (-pressure+R*temperature/molarVolume-R*temperature*dFdV()) + " firstterm " +
         // (R*temperature/molarVolume) + " second " + R*temperature*dFdV());
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolume3", "Molar volume");
             // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
             // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
             // + fVV());
@@ -655,6 +654,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
         }
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
+        int maxIterations = 1000;
         double oldVolume = getVolume();
         do {
             this.volInit();
@@ -713,7 +713,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
             Z = pressure * getMolarVolume() / (R * temperature);
 
             // System.out.println("Z" + Z);
-        } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < 1001);
+          } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < maxIterations);
         // System.out.println("Z" + Z + " iterations " + iterations + " h " + h);
         // System.out.println("pressure " + Z*R*temperature/getMolarVolume());
         // if(iterations>=100) throw new util.exception.TooManyIterationsException();
@@ -722,7 +722,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
         // firstterm " + (R*temperature/molarVolume) + " second " +
         // R*temperature*dFdV());
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
             // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
             // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
             // + fVV());

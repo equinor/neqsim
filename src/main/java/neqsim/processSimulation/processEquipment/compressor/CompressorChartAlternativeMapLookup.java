@@ -191,10 +191,11 @@ public class CompressorChartAlternativeMapLookup
                 return c;
             }
         }
-        String msg = "Input ref. speed does not match any speed in the chart.";
+        String msg = "Does not match any speed in the chart.";
         logger.error(msg);
         neqsim.util.exception.InvalidInputException e =
-                new neqsim.util.exception.InvalidInputException(msg);
+            new neqsim.util.exception.InvalidInputException(this, "getCurveAtRefSpeed", "refSpeed",
+                msg);
         throw new RuntimeException(e);
     }
 

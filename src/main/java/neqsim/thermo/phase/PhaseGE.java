@@ -56,8 +56,8 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
             int numberOfComponents, int type, int phase) {
         if (totalNumberOfMoles <= 0) {
-            throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-                    "PhaseGE", "init", "Input totalNumberOfMoles must be larger than zero."));
+          new neqsim.util.exception.InvalidInputException(this, "init", "totalNumberOfMoles",
+              "must be larger than zero.");
         }
         for (int i = 0; i < numberOfComponents; i++) {
             componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type);

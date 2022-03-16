@@ -12,31 +12,51 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>
-     * Constructor for NotInitializedException.
-     * </p>
+     * Constructs an <code>NotInitializedException</code> with the specified detail message.
+     *
+     * @param className Class exception is raised from
+     * @param methodName Method exception is raised from
+     * @param msg Detailed error message
      */
-    public NotInitializedException() {
+    public NotInitializedException(String className, String methodName, String msg) {
+      super(className, methodName, msg);
     }
 
     /**
-     * Constructs an <code>NotInitializedException</code> with the specified detail
-     * message.
+     * Constructs an <code>NotInitializedException</code> with default detail message.
      *
-     * @param msg the detail message.
+     * @param className Class exception is raised from
+     * @param methodName Method exception is raised from
+     * @param parameter Parameter not initialized
+     * @param initMethod Method to call to initialize parameter
      */
-    public NotInitializedException(String msg) {
-        super(msg);
+    public NotInitializedException(String className, String methodName, String parameter,
+        String initMethod) {
+      this(className, methodName,
+          "Parameter " + parameter + " not initialized. Method " + initMethod + " must be called.");
     }
 
     /**
-     * Constructs an <code>NotInitializedException</code> with default detail
-     * message.
-     *
-     * @param parameter
-     * @param initMethod
+     * Constructs an <code>NotInitializedException</code> with the specified detail message.
+     * 
+     * @param obj Object exception is raised from
+     * @param methodName Method exception is raised from
+     * @param msg Detailed error message
      */
-    public NotInitializedException(String parameter, String initMethod) {
-        this("Parameter " + parameter + " not initialized. Method " + initMethod + " must be called.");
+    public NotInitializedException(Object obj, String methodName, String msg) {
+      this(obj.getClass().getSimpleName(), methodName, msg);
+    }
+
+    /**
+     * Constructs an <code>NotInitializedException</code> with default detail message.
+     * 
+     * @param obj Object exception is raised from
+     * @param methodName Method exception is raised from
+     * @param parameter Parameter not initialized
+     * @param initMethod Method to call to initialize parameter
+     */
+    public NotInitializedException(Object obj, String methodName, String parameter,
+        String initMethod) {
+      this(obj.getClass().getSimpleName(), methodName, parameter, initMethod);
     }
 }
