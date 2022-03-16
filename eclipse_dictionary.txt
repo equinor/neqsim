@@ -5,3 +5,8 @@ reboiler
 polytropic
 rpm
 kappa
+esol
+thermo
+multiphase
+asmund
+solbraa

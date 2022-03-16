@@ -130,7 +130,8 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     localIso6976.removeInertsButNitrogen();
 
     double newWI = targetWI / 1.01, oldWI = 0.0;
-    double dWIdN2 = 0.0, dn2 = 0.1;
+    double dn2 = 0.1;
+    // double dWIdN2;
     int iter = 0;
     do {
       iter++;
@@ -146,7 +147,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
       localIso6976.getThermoSystem().init_x_y();
       localIso6976.calculate();
       newWI = localIso6976.getValue("SuperiorWobbeIndex");
-      dWIdN2 = newWI - oldWI / (1.0);
+      // dWIdN2 = newWI - oldWI / (1.0);
       System.out.println("WI " + newWI);
       System.out.println("error " + Math.abs(targetWI - newWI));
     } while (Math.abs(targetWI - newWI) > 1e-6 && iter < 100);
