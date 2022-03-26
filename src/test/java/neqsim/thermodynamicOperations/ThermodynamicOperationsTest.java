@@ -1,8 +1,17 @@
 package neqsim.thermodynamicOperations;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.api.ioc.CalculationResult;
@@ -181,6 +190,37 @@ public class ThermodynamicOperationsTest {
     Assertions.assertEquals(len, s.fluidProperties.length);
   }
 
+  @Test
+  @SuppressWarnings("unchecked")
+  void testpropertyFlashRegressions() throws IOException {
+    Collection<TestData> testData = getTestData();
+
+    for (TestData test : testData) {
+      System.out.println(test);
+      HashMap<String, Object> inputData = test.getInput();
+
+      SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 22.0);
+
+      ArrayList<String> compNames = (ArrayList<String>) inputData.get("components");
+      ArrayList<Double> fractions = (ArrayList<Double>) inputData.get("fractions");
+
+      for (int k = 0; k < compNames.size(); k++) {
+        fluid.addComponent(compNames.get(k), fractions.get(k));
+      }
+
+      ArrayList<Double> sp1 = (ArrayList<Double>) inputData.get("Sp1");
+      ArrayList<Double> sp2 = (ArrayList<Double>) inputData.get("Sp2");
+
+
+      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+      int flashMode = (int) inputData.get("FlashMode");
+      CalculationResult s =
+          ops.propertyFlash(sp1, sp2, flashMode, compNames, null);
+
+      Assertions.assertEquals(test.getOutput(), s);
+    }
+  }
+
   private List<List<Double>> createDummyRequest(double[] fractions, int len) {
     List<List<Double>> onlineFractions = new ArrayList<List<Double>>();
 
@@ -193,5 +233,103 @@ public class ThermodynamicOperationsTest {
     }
 
     return onlineFractions;
+  }
+
+  private Collection<TestData> getTestData() throws IOException {
+    ClassLoader classLoader = getClass().getClassLoader();
+    File folder =
+        new File(classLoader.getResource("neqsim/thermodynamicOperations/testcases").getFile());
+
+    HashMap<String, TestData> testData = new HashMap<>();
+
+    File[] directoryListing = folder.listFiles();
+    for (File child : directoryListing) {
+      String[] n = child.getName().split("_");
+
+      if (testData.get(n[0]) == null) {
+        testData.put(n[0], new TestData(n[0]));
+      }
+
+      if ("I.json".equals(n[1])) {
+        testData.get(n[0]).setInputFile(child.getAbsolutePath());
+      } else if ("O.json".equals(n[1])) {
+        testData.get(n[0]).setOutputFile(child.getAbsolutePath());
+      }
+    }
+
+    return testData.values();
+  }
+
+  private class TestData {
+
+    private final String name;
+    private String inputFile;
+    private String outputFile;
+    private HashMap<String, Object> input;
+
+    public TestData(String name) {
+      this.name = name;
+    }
+
+    public void setInputFile(String inputFile) throws IOException {
+      this.setInput(inputFile);
+      this.inputFile = inputFile;
+    }
+
+    public String getOutputFile() {
+      return outputFile;
+    }
+
+    public void setOutputFile(String outputFile) {
+      this.outputFile = outputFile;
+    }
+
+    private void setInput(String inputFile) throws IOException {
+      String fileContents = new String(Files.readAllBytes(Paths.get(inputFile)));
+      Gson gson = new Gson();
+      Type type = new TypeToken<HashMap<String, Object>>() {}.getType();
+
+      input = gson.fromJson(fileContents, type);
+
+      input.replace("fn", Math.toIntExact(Math.round((double) input.get("fn"))));
+      input.replace("FlashMode", Math.toIntExact(Math.round((double) input.get("FlashMode"))));
+    }
+
+    private HashMap<String, Object> getInput() {
+      return input;
+    }
+
+    @SuppressWarnings("unchecked")
+    public CalculationResult getOutput() throws IOException {
+      String fileContents = new String(Files.readAllBytes(Paths.get(this.getOutputFile())));
+      Gson gson = new Gson();
+      Type type = new TypeToken<HashMap<String, Object>>() {}.getType();
+
+      HashMap<String, Object> outputData = gson.fromJson(fileContents, type);
+      ArrayList<ArrayList<Double>> calcresult =
+          (ArrayList<ArrayList<Double>>) outputData.get("calcresult");
+
+      Double[][] calcResult = new Double[calcresult.size()][];
+      for (int kSample = 0; kSample < calcresult.size(); kSample++) {
+        calcResult[kSample] = new Double[calcresult.get(kSample).size()];
+        for (int kProp = 0; kProp < calcresult.get(kSample).size(); kProp++) {
+          try {
+            calcResult[kSample][kProp] = calcresult.get(kSample).get(kProp);
+
+          } catch (Exception e) {
+            calcResult[kSample][kProp] = Double.NaN;
+          }
+        }
+      }
+
+      ArrayList<String> calcerrors = (ArrayList<String>) outputData.get("calcerrors");
+
+      return new CalculationResult(calcResult, calcerrors.toArray(new String[0]));
+    }
+
+    @Override
+    public String toString() {
+      return "TestData{" + "name=" + name + ", input=" + inputFile + ", output=" + outputFile + '}';
+    }
   }
 }
