@@ -75,7 +75,6 @@ public class ComponentWonWax extends ComponentSolid {
      */
     public double getWonActivityCoefficient(PhaseInterface phase1) {
         double TetaAvg = 0.0;
-        // double SolidActivity = 0.0;
         double gamma = 0.0;
         for (int i = 0; i < phase1.getNumberOfComponents(); i++) {
             double tempSum = 0.0;
@@ -116,7 +115,6 @@ public class ComponentWonWax extends ComponentSolid {
      * @return a double
      */
     public double getWonParam(PhaseInterface phase1) {
-        // double WonParam = 0.0;
         // calculation of Heat of fusion
         double Tf = 374.5 * 0.02617 * getMolarMass() - 20172 / getMolarMass();
         double Hf = 0.1426 * getMolarMass() * Tf;
