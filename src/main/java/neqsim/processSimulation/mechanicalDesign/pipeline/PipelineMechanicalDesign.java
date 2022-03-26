@@ -93,7 +93,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
             // * ((AdiabaticPipe)
             // getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getMinimumYeildStrength());
         }
-        // iterate to find correct diamter -> between 60-80 ft/sec9
+        // iterate to find correct diameter -> between 60-80 ft/sec9
 
         // double length = pipeline.getLength();
     }

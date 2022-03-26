@@ -76,7 +76,6 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
      */
     public boolean checkFugacityCoefficients() {
         double temp1 = 0, temp2 = 0;
-
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
             temp1 += system.getPhases()[0].getComponents()[i].getNumberOfMolesInPhase()
                     * Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient());
@@ -135,7 +134,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         logger.info("Diffference : " + sum);
         // System.out.println("Testing composition derivatives of fugacity
         // coefficients...................");
-        // System.out.println("Diffference : " + sum);
+        // System.out.println("Difference : " + sum);
         return Math.abs(sum) < 1e-10;
     }
 
@@ -172,7 +171,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         logger.info("Diffference : " + sum);
         // System.out.println("Testing composition derivatives2 of fugacity
         // coefficients...................");
-        // System.out.println("Diffference : " + sum);
+        // System.out.println("Difference : " + sum);
 
         return Math.abs(sum) < 1e-10;
     }
