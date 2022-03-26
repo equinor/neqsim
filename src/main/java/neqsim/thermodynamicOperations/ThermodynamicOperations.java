@@ -1956,11 +1956,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             }
         }
         else {
-            double[] fraction = this.system.getMolarComposition();
-            sum[0] = 0.0;
-            for (int comp = 0; comp < fraction.length; comp++) {
-                sum[0] = sum[0] + fraction[comp];
-            }
+          if (this.system.getMoleFractionsSum() == 0) {
+            this.system.init(0);
+          }
+
+          double[] fraction = this.system.getMolarComposition();
+          sum[0] = 0.0;
+          for (int comp = 0; comp < fraction.length; comp++) {
+            sum[0] = sum[0] + fraction[comp];
+          }
         }
 
         for (int t = 0; t < Spec1.size(); t++) {
