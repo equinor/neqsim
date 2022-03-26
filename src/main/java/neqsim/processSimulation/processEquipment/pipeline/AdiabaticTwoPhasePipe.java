@@ -230,8 +230,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
                 testOps = new ThermodynamicOperations(system);
                 testOps.TPflash();
             }
-
-            // boolean test = false;
             do {
                 iter++;
                 oldPressure = system.getPressure();

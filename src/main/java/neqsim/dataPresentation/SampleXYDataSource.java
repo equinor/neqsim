@@ -26,7 +26,6 @@ package neqsim.dataPresentation;
  * @version $Id: $Id
  */
 public class SampleXYDataSource {
-    // implements XYDataSource, java.io.Serializable {
     double[][] points;
     int numberOfSeries;
     int[] items = new int[10];

@@ -25,10 +25,9 @@ public class CompositionEstimation {
         this.reservoirPressure = reservoirPressure;
     }
 
-    // correltaion from Haaland et. al. 1999
     /**
      * <p>
-     * estimateH2Sconcentration.
+     * estimateH2Sconcentration. correlation from Haaland et. al. 1999
      * </p>
      *
      * @return a double
@@ -37,10 +36,9 @@ public class CompositionEstimation {
         return 5.0e7 * Math.exp(-6543.0 / reservoirTemperature);
     }
 
-    // reservoir temperatur in Kelvin CO2concentration in molfraction
     /**
      * <p>
-     * estimateH2Sconcentration.
+     * estimateH2Sconcentration. reservoir temperature in Kelvin CO2concentration in molfraction
      * </p>
      *
      * @param CO2concentration a double

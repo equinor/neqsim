@@ -151,7 +151,6 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
             double pressure, int phasetype) {
         int initType = phase.getInitType();
         double lngammaCombinational = 0.0, lngammaResidual = 0.0;
-        // double lngammaCombinationaldT = 0.0;
         double lngammaResidualdT = 0.0;
         dlngammadn = new double[numberOfComponents];
         dlngammadt = 0.0;

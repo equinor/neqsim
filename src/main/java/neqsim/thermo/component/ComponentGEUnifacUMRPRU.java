@@ -355,11 +355,10 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
             VCommontemp += compArray[j].getx() * compArray[j].getR();
             FCommontemp += (compArray[j].getQ() * compArray[j].getx());
         }
-
-        // int initType = phase.getInitType();
     }
 
     // TODO impement dlngammadn
+
     /** {@inheritDoc} */
     @Override
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,

@@ -40,7 +40,6 @@ public class WettedWallDataReader extends DataReader {
     @Override
     public void readData() {
         StringTokenizer tokenizer;
-        // String token;
         int k = 0;
         String path = "c:/logdata/" + this.fileName + ".log";
         System.out.println(path);
