@@ -3803,13 +3803,13 @@ abstract class SystemThermo implements SystemInterface {
 
     /** {@inheritDoc} */
     @Override
-    public java.lang.String getMixingRuleName() {
+    public String getMixingRuleName() {
         return ((PhaseEosInterface) getPhase(0)).getMixingRule().getMixingRuleName();
     }
 
     /** {@inheritDoc} */
     @Override
-    public java.lang.String getFluidInfo() {
+    public String getFluidInfo() {
         return fluidInfo;
     }
 

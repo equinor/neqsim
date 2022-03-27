@@ -71,11 +71,11 @@ public class TestViscosityFit {
             logger.error("database error" + e);
         }
 
-        double sample1[] = {0.1};
-        for (int i = 0; i < sampleList.size(); i++) {
-            // logger.info("ans: " +
-            // ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
-        }
+        // double sample1[] = { 0.1 };
+        // for (int i = 0; i < sampleList.size(); i++) {
+        // logger.info("ans: " +
+        // ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
+        // }
 
         SampleSet sampleSet = new SampleSet(sampleList);
         optim.setSampleSet(sampleSet);

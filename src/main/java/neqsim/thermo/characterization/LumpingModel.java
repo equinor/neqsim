@@ -86,8 +86,6 @@ public class LumpingModel implements java.io.Serializable {
             lumpedComponentNames = new String[numberOfLumpedComponents];
             fractionOfHeavyEnd = new double[numberOfPseudocomponents];
             double[] zPlus = new double[numberOfPseudocomponents];
-            // double[] MPlus = new double[numberOfPseudocomponents];
-
             double weightFrac = 0.0;
             double weightTot = 0.0;
             double molFracTot = 0.0;
@@ -149,8 +147,6 @@ public class LumpingModel implements java.io.Serializable {
                     weightFrac = 0.0;
                     Maverage = 0.0;
                     k++;
-                    // firstPS = i + 1;
-
                     added++;
                 }
             }
@@ -187,7 +183,6 @@ public class LumpingModel implements java.io.Serializable {
                     weightFrac = 0.0;
                     Maverage = 0.0;
                     k++;
-                    // firstPS = i + 1;
                 }
             }
             if (charac.getPlusFractionModel().hasPlusFraction()) {

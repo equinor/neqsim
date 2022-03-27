@@ -231,21 +231,17 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
         double Cp = 0;
 
-        // double molarvolume = 1.0 / (55493.0);// *0.9);
-
         double deltaMolarVolume = 0.0;
 
         if (hydrateStruct == 0) {
             dGf = 1264.0;
             dHf = -4858.0;
             Cp = -39.16;
-            // molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 4.6e-6;
         } else {
             dGf = 883.0;
             dHf = -5201.0;
             Cp = -39.16;
-            // molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 5.0e-6;
         }
         double T0 = 273.15;

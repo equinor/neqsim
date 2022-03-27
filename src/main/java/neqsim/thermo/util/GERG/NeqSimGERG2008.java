@@ -180,7 +180,6 @@ public class NeqSimGERG2008 {
      * @return an array of {@link double} objects
      */
     public double[] propertiesGERG() {
-        // int _x_offset = 0;
         doubleW p = new doubleW(0.0);
         doubleW z = new doubleW(0.0);
         doubleW dpdd = new doubleW(0.0);
