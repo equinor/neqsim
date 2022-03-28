@@ -196,7 +196,6 @@ public class ThermodynamicOperationsTest {
     Collection<TestData> testData = getTestData();
 
     for (TestData test : testData) {
-      System.out.println(test);
       HashMap<String, Object> inputData = test.getInput();
 
       SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 22.0);
@@ -204,8 +203,17 @@ public class ThermodynamicOperationsTest {
       ArrayList<String> compNames = (ArrayList<String>) inputData.get("components");
       ArrayList<Double> fractions = (ArrayList<Double>) inputData.get("fractions");
 
-      for (int k = 0; k < compNames.size(); k++) {
-        fluid.addComponent(compNames.get(k), fractions.get(k));
+      if (compNames == null) {
+        System.out.println("Skips test " + test.toString());
+        /*
+         * for (int k = 0; k < fractions.size(); k++) { fluid.addComponent(k, fractions.get(k)); }
+         */
+        continue;
+      } else {
+
+        for (int k = 0; k < compNames.size(); k++) {
+          fluid.addComponent(compNames.get(k), fractions.get(k));
+        }
       }
 
       ArrayList<Double> sp1 = (ArrayList<Double>) inputData.get("Sp1");
@@ -284,6 +292,7 @@ public class ThermodynamicOperationsTest {
       this.outputFile = outputFile;
     }
 
+    @SuppressWarnings("unchecked")
     private void setInput(String inputFile) throws IOException {
       String fileContents = new String(Files.readAllBytes(Paths.get(inputFile)));
       Gson gson = new Gson();
@@ -293,6 +302,14 @@ public class ThermodynamicOperationsTest {
 
       input.replace("fn", Math.toIntExact(Math.round((double) input.get("fn"))));
       input.replace("FlashMode", Math.toIntExact(Math.round((double) input.get("FlashMode"))));
+
+      ArrayList<Double> sp_in_pa = (ArrayList<Double>) input.get("Sp1");
+      ArrayList<Double> sp1 = new ArrayList<Double>();
+
+      for (int k = 0; k < sp_in_pa.size(); k++) {
+        sp1.add(sp_in_pa.get(k) / 1e5);
+      }
+      input.replace("Sp1", sp1);
     }
 
     private HashMap<String, Object> getInput() {
