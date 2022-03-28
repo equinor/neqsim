@@ -1366,16 +1366,6 @@ abstract class SystemThermo implements SystemInterface {
 
     /** {@inheritDoc} */
     @Override
-    @Deprecated
-    public void removeMoles() {
-        for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-            getPhase(i).setEmptyFluid();
-        }
-        totalNumberOfMoles = 0.0;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public final double calcBeta() throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
         ComponentInterface[] compArray = getPhase(0).getComponents();
@@ -1755,12 +1745,6 @@ abstract class SystemThermo implements SystemInterface {
         } else {
             initAnalytic(type, phase);
         }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void init() {
-        this.init(initType);
     }
 
     /**
