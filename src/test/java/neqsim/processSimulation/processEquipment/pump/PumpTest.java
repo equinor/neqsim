@@ -10,7 +10,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class PumpTest {
+public class PumpTest extends neqsim.NeqSimTest{
     @Test
     void testRun() {
         neqsim.thermo.system.SystemInterface feedGas =

@@ -17,7 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class HeatExchangerTest {
+public class HeatExchangerTest extends neqsim.NeqSimTest{
   static neqsim.thermo.system.SystemInterface testSystem;
   static Stream gasStream;
 

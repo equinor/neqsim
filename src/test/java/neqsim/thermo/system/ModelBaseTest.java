@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public abstract class ModelBaseTest {
+public abstract class ModelBaseTest extends neqsim.NeqSimTest{
     static SystemInterface thermoSystem = null;
     neqsim.thermo.ThermodynamicModelTest fugTest;
 

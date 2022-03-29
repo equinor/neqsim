@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class SystemThermoSetMolarCompositionTest {
+public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest{
     SystemInterface sys;
 
     @BeforeEach

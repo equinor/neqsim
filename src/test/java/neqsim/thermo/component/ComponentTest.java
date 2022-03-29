@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class ComponentTest {
+public class ComponentTest  extends neqsim.NeqSimTest{
     static SystemInterface thermoSystem = null;
 
     /**
@@ -14,7 +14,6 @@ public class ComponentTest {
      */
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
-        neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimtestdatabase");
         thermoSystem = new SystemSrkEos(298.0, 100.0);
         thermoSystem.addComponent("water", 1.0);
     }

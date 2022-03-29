@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class Standard_ISO6578Test {
+public class Standard_ISO6578Test extends neqsim.NeqSimTest{
     @Test
     void testCalculate() {
         SystemInterface testSystem = new SystemSrkEos(273.15 - 160.0, 1.0);

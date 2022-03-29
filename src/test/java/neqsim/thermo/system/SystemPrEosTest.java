@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-class SystemPrEoSTest {
+class SystemPrEoSTest extends neqsim.NeqSimTest{
     static neqsim.thermo.system.SystemInterface testSystem = null;
     static neqsim.thermo.ThermodynamicModelTest testModel = null;
 
