@@ -3048,19 +3048,36 @@ abstract class SystemThermo implements SystemInterface {
     return refCv * conversionFactor;
   }
 
-  /** {@inheritDoc} */
-  @Override
+  /**
+   * {@inheritDoc}
+   * 
+   * @Override
+   *
+   *           method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
+   */
   public double getKappa() {
     return -getCp() / getCv() * getVolume() / getPressure() * getdPdVtn();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   * 
+   * @Override
+   *
+   *           method to return ideal gas isentropic exponent (gamma = Cp/Cv)
+   */
   @Override
   public double getGamma() {
     return getCp() / getCv();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   * 
+   * @Override
+   *
+   *           method to return ideal gas isentropic exponent (gamma = Cp/(Cp-R))
+   */
   @Override
   public double getGamma2() {
     double cp0 = getCp();
