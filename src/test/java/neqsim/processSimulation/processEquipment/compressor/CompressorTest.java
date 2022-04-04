@@ -16,7 +16,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
-class CompressorTest {
+class CompressorTest  extends neqsim.NeqSimTest{
     static Logger logger = LogManager.getLogger(CompressorTest.class);
 
     static neqsim.thermo.system.SystemInterface testSystem = null;
