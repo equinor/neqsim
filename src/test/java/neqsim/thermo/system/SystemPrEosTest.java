@@ -136,4 +136,24 @@ class SystemPrEoSTest {
         assertEquals(-165.60627184389855, testSystem.getEnthalpy("kJ/kg"),
                 Math.abs(-165.60627184389855 / 1000.0));
     }
+    
+    /**
+     * <p>
+     * checkKappa.
+     * </p>
+     */
+    @Test
+    @DisplayName("check kappa of fluid and phase is the same")
+    public void checkKappa() {
+      neqsim.thermo.system.SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 75.0);
+      testSystem.addComponent("nitrogen", 0.01);
+      testSystem.addComponent("CO2", 0.01);
+      testSystem.addComponent("methane", 0.68);
+      testSystem.addComponent("ethane", 0.1);
+      testSystem.setMixingRule("classic");
+      ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+      testOps.TPflash();
+      testSystem.initProperties();
+      assertEquals(testSystem.getKappa(), testSystem.getPhase("gas").getKappa(), 1e-5);
+    }
 }
