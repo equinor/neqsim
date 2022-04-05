@@ -13,7 +13,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
-public class ProcessSystemRunTransientTest {
+public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
     ProcessSystem p;
 
     @BeforeEach

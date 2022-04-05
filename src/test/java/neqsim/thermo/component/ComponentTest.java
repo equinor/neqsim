@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class ComponentTest {
+public class ComponentTest  extends neqsim.NeqSimTest{
     static SystemInterface thermoSystem = null;
 
     /**

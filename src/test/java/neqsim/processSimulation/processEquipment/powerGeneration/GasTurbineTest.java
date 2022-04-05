@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class GasTurbineTest {
+public class GasTurbineTest extends neqsim.NeqSimTest{
     static neqsim.thermo.system.SystemInterface testSystem;
     static Stream gasStream;
 

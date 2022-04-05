@@ -280,11 +280,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     }
 
     /**
-     * Calculates thermodynamic properties of a fluid using the init(2) method
-     */
-    public void initThermoProperties();
-
-    /**
      * <p>
      * getInterfacialTension.
      * </p>
@@ -409,6 +404,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      * @param forcePhaseTypes a boolean
      */
     public void setForcePhaseTypes(boolean forcePhaseTypes);
+
+    /**
+     * Set the flow rate of all components to zero.
+     * 
+     * @deprecated use {@link #setEmptyFluid()} instead.
+     */
+    @Deprecated
+    default public void removeMoles() {
+      setEmptyFluid();
+    }
 
     /**
      * Set the flow rate of all components to zero.
@@ -918,18 +923,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void addSolidComplexPhase(String type);
 
     /**
-     * method to calculate thermodynamic properties of the fluid. The temperature, pressure, number
-     * of phases and composition of the phases will be used as basis for calculation.
-     * 
-     *
-     * @param number - The number can be 0, 1, 2 or 3. 0: Set feed composition for all phases. 1:
-     *        Calculation of density, fugacities and Z-factor 2: 1 + calculation of enthalpy,
-     *        entropy, Cp, Cv, and most other thermodynamic properties 3: 1+2 + Calculation of
-     *        composition derivatives of fugacity coefficients.
-     */
-    public void init(int number);
-
-    /**
      * <p>
      * resetCharacterisation.
      * </p>
@@ -1261,13 +1254,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
     /**
      * <p>
-     * init.
-     * </p>
-     */
-    public void init();
-
-    /**
-     * <p>
      * Getter for property info.
      * </p>
      *
@@ -1365,21 +1351,48 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void setMultiPhaseCheck(boolean doMultiPhaseCheck);
 
     /**
-     * <p>
-     * init.
-     * </p>
+     * Calculate thermodynamic properties of the fluid using the init type set in fluid.
+     * 
+     * @see getInitType
+     */
+    default public void init() {
+      this.init(this.getInitType());
+    }
+
+    /**
+     * method to calculate thermodynamic properties of the fluid. The temperature, pressure, number
+     * of phases and composition of the phases will be used as basis for calculation.
+     * 
      *
-     * @param number a int
+     * @param number - The number can be 0, 1, 2 or 3. 0: Set feed composition for all phases. 1:
+     *        Calculation of density, fugacities and Z-factor 2: 1 + calculation of enthalpy,
+     *        entropy, Cp, Cv, and most other thermodynamic properties 3: 1+2 + Calculation of
+     *        composition derivatives of fugacity coefficients.
+     */
+    public void init(int number);
+
+    /**
+     * method to calculate thermodynamic properties of the selected phase. The temperature,
+     * pressure, number of phases and composition of the phase will be used as basis for
+     * calculation.
+     *
+     * @param number - The number can be 0, 1, 2 or 3. 0: Set feed composition. 1: Calculation of
+     *        density, fugacities and Z-factor 2: 1 + calculation of enthalpy, entropy, Cp, Cv, and
+     *        most other thermodynamic properties 3: 1+2 + Calculation of composition derivatives of
+     *        fugacity coefficients.
      * @param phase a int
      */
     public void init(int number, int phase);
 
     /**
-     * <p>
      * initNumeric.
-     * </p>
      */
     public void initNumeric();
+
+    /**
+     * Calculates thermodynamic properties of a fluid using the init(2) method
+     */
+    public void initThermoProperties();
 
     /**
      * <p>
@@ -1782,9 +1795,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     public void chemicalReactionInit();
 
     /**
-     * <p>
-     * initPhysicalProperties.
-     * </p>
+     * Init physical properties for all phases and interfaces.
      */
     public void initPhysicalProperties();
 
@@ -2188,12 +2199,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      */
     public void setPhaseType(int phaseToChange, String phaseTypeName);
 
-    /**
-     * Set the flow rate of all components to zero.
-     * 
-     * @deprecated use {@link #setEmptyFluid()} instead.
-     */
-    public void removeMoles();
 
     /**
      * <p>
