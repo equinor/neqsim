@@ -3,6 +3,7 @@ package neqsim.processSimulation.measurementDevice;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.WellAllocatorResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -18,12 +19,13 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
 
 
   public WellAllocator(StreamInterface stream) {
+    name = "Well Allocator";
     this.wellStream = stream;
   }
 
-  public WellAllocator(String name, StreamInterface stream) {
+  public WellAllocator(String streamname, StreamInterface stream) {
     this(stream);
-    this.name = name;
+    name = streamname;
   }
 
 
@@ -90,7 +92,7 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
     Stream stream_1 = new Stream("Stream1", testFluid);
     
     SystemInterface testFluid2 = testFluid.clone();
-    testFluid2.setMolarComposition(new double[] {0.1, 0.1, 0.9, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0});
+   // testFluid2.setMolarComposition(new double[] {0.1, 0.1, 0.9, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0});
     Stream stream_2 = new Stream("Stream2", testFluid2);
 
     Separator sep1 = new Separator("sep1", stream_1);
@@ -114,9 +116,12 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
     operations.add(wellAlloc);
     operations.run();
    
-    System.out.println("gas flow " + wellAlloc.getMeasuredValue("gas export rate"));
-    System.out.println("oil flow " + wellAlloc.getMeasuredValue("oil export rate"));
-    System.out.println("total flow " + wellAlloc.getMeasuredValue("total export rate"));
+    WellAllocatorResponse responsAl = new WellAllocatorResponse(wellAlloc);
+    
+    System.out.println("name " + responsAl.name);
+    System.out.println("gas flow " + responsAl.gasExportRate);
+    System.out.println("oil flow " + responsAl.oilExportRate);
+    System.out.println("total flow " + responsAl.totalExportRate);
 
   }
 

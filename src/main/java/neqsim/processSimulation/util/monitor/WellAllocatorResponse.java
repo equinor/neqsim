@@ -1,11 +1,10 @@
 package neqsim.processSimulation.util.monitor;
 
-import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
 import neqsim.processSimulation.measurementDevice.WellAllocator;
 
 /**
  * <p>
- * MPMResponse class.
+ * WellAllocatorResponse class.
  * </p>
  *
  * @author asmund
@@ -27,7 +26,7 @@ public class WellAllocatorResponse {
      * Constructor for WellAllocatorResponse.
      * </p>
      *
-     * @param inputMPM a {@link neqsim.processSimulation.measurementDevice.WellAllocator} object
+     * @param inputAllocator a {@link neqsim.processSimulation.measurementDevice.WellAllocator} object
      */
     public WellAllocatorResponse(WellAllocator inputAllocator) {
         name = inputAllocator.getName();
