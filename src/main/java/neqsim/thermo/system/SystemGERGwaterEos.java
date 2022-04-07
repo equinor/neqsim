@@ -60,8 +60,7 @@ public class SystemGERGwaterEos extends SystemPrEos {
         this(T, P);
         modelName = "GERG-water-EOS";
         attractiveTermNumber = 10;
-        numberOfPhases = 5;
-        maxNumberOfPhases = 5;
+        setNumberOfPhases(5);
         solidPhaseCheck = solidCheck;
 
         for (int i = 0; i < numberOfPhases; i++) {

@@ -56,8 +56,7 @@ public class SystemUNIFACpsrk extends SystemEos {
     public SystemUNIFACpsrk(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
-        numberOfPhases = 4;
-        maxNumberOfPhases = 4;
+        setNumberOfPhases(4);
         modelName = "UNIFAC-GE-model";
         solidPhaseCheck = solidCheck;
 

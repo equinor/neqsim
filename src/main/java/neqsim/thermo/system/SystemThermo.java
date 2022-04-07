@@ -167,7 +167,7 @@ abstract class SystemThermo implements SystemInterface {
     phaseType[0] = 1;
     phaseType[1] = 0;
     numberOfComponents = 0;
-    numberOfPhases = 2;
+    setNumberOfPhases(2);
     phase = 2;
     onePhaseType = 1;
     beta[0] = 1.0;
@@ -324,7 +324,7 @@ abstract class SystemThermo implements SystemInterface {
       }
     }
     ((PhaseSolid) phaseArray[3]).setSolidRefFluidPhase(phaseArray[0]);
-    // numberOfPhases = 4;
+
     if (getMaxNumberOfPhases() < 4) {
       setMaxNumberOfPhases(4);
     }
@@ -354,8 +354,7 @@ abstract class SystemThermo implements SystemInterface {
             getPhase(0).getComponent(i).getNumberOfmoles(), i);
       }
     }
-    numberOfPhases = 4;
-    setMaxNumberOfPhases(4);
+    setNumberOfPhases(4);
   }
 
   /** {@inheritDoc} */
@@ -387,8 +386,7 @@ abstract class SystemThermo implements SystemInterface {
       }
     }
     ((PhaseSolid) phaseArray[5]).setSolidRefFluidPhase(phaseArray[0]);
-    numberOfPhases = 6;
-    setMaxNumberOfPhases(6);
+    setNumberOfPhases(6);
   }
 
   /**
@@ -439,10 +437,7 @@ abstract class SystemThermo implements SystemInterface {
     }
     ((PhaseHydrate) phaseArray[4]).setSolidRefFluidPhase(phaseArray[0]);
 
-    numberOfPhases = 5;
-    if (getMaxNumberOfPhases() < 5) {
-      setMaxNumberOfPhases(5);
-    }
+    setNumberOfPhases(5);
   }
 
   /** {@inheritDoc} */
@@ -1722,7 +1717,7 @@ abstract class SystemThermo implements SystemInterface {
    */
   public void initAnalytic(int type) {
     if (type == 0) {
-      numberOfPhases = getMaxNumberOfPhases();
+      setNumberOfPhases(getMaxNumberOfPhases());
       for (int i = 0; i < numberOfPhases; i++) {
         phaseType[i] = 0;
         beta[i] = 1.0;
@@ -1736,7 +1731,7 @@ abstract class SystemThermo implements SystemInterface {
               phaseType[phaseIndex[i]], beta[phaseIndex[i]]);
         }
       }
-      numberOfPhases = 2;
+      setNumberOfPhases(2);
     }
 
     if (type == 1) {
@@ -2302,6 +2297,9 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setNumberOfPhases(int number) {
     this.numberOfPhases = number;
+    if (getMaxNumberOfPhases() < numberOfPhases) {
+      setMaxNumberOfPhases(number);
+    }
   }
 
   /** {@inheritDoc} */
@@ -3513,7 +3511,7 @@ abstract class SystemThermo implements SystemInterface {
         getPhase(3).getComponent(k).setSolidCheck(solidPhaseCheck);
       }
     }
-    numberOfPhases = oldphase;
+    setNumberOfPhases(oldphase);
   }
 
   /** {@inheritDoc} */
@@ -3535,7 +3533,7 @@ abstract class SystemThermo implements SystemInterface {
         logger.error("error", e);
       }
     }
-    numberOfPhases = oldphase;
+    setNumberOfPhases(oldphase);
   }
 
   /** {@inheritDoc} */
