@@ -105,7 +105,6 @@ abstract class SystemThermo implements SystemInterface {
   protected neqsim.standards.StandardInterface standard = null;
   protected InterphasePropertiesInterface interfaceProp = null;
   private boolean multiphaseWaxCheck = false;
-  Object pdfDocument = null;
   private boolean forcePhaseTypes = false;
   static Logger logger = LogManager.getLogger(SystemThermo.class);
 
@@ -3986,7 +3985,7 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void generatePDF() {
+  public neqsim.dataPresentation.iTextPDF.PdfCreator generatePDF() {
     neqsim.dataPresentation.iTextPDF.PdfCreator pdfDocument = null;
     pdfDocument = new neqsim.dataPresentation.iTextPDF.PdfCreator();
     pdfDocument.getDocument().addTitle("NeqSim Thermo Simulation Report");
@@ -4026,14 +4025,7 @@ abstract class SystemThermo implements SystemInterface {
       logger.error("error", e);
     }
     pdfDocument.getDocument().close();
-    this.pdfDocument = pdfDocument;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void displayPDF() {
-    generatePDF();
-    ((neqsim.dataPresentation.iTextPDF.PdfCreator) pdfDocument).openPDF();
+    return pdfDocument;
   }
 
   /**
