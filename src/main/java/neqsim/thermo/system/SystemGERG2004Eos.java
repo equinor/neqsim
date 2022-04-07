@@ -62,8 +62,7 @@ public class SystemGERG2004Eos extends SystemEos {
         this(T, P);
         modelName = "GERG2004-EOS";
 
-        numberOfPhases = 5;
-        maxNumberOfPhases = 5;
+        setNumberOfPhases(5);
         solidPhaseCheck = solidCheck;
         for (int i = 0; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseGERG2004Eos();

@@ -62,9 +62,8 @@ public class SystemTSTEos extends SystemEos {
     public SystemTSTEos(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 14;
-        numberOfPhases = 5;
+        setNumberOfPhases(5);
         modelName = "TST-EOS";
-        maxNumberOfPhases = 5;
         solidPhaseCheck = solidCheck;
 
         for (int i = 0; i < numberOfPhases; i++) {
