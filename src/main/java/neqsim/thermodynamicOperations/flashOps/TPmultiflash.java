@@ -360,7 +360,10 @@ public class TPmultiflash extends TPflash {
                 if (system.getPhase(0).getComponent(cc).getz() < 1e-100) {
                     nomb = 0.0;
                 }
-                clonedSystem.get(0).getPhase(1).getComponents()[cc].setx(nomb);
+
+                if (clonedSystem.get(0).IsPhase(1)) {
+                  clonedSystem.get(0).getPhase(1).getComponents()[cc].setx(nomb);
+                }
             }
             // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")
             // && minimumGibbsEnergySystem.isChemicalSystem()) continue;

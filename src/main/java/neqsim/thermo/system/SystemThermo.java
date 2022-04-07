@@ -1284,8 +1284,10 @@ abstract class SystemThermo implements SystemInterface {
       return;
     }
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
-    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      getPhase(i).addMolesChemReac(index, moles, moles);
+    for (PhaseInterface tmpPhase : phaseArray) {
+      if (tmpPhase != null) {
+        tmpPhase.addMolesChemReac(index, moles, moles);
+      }
     }
   }
 
@@ -1330,8 +1332,10 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void setEmptyFluid() {
-    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      getPhase(i).setEmptyFluid();
+    for (PhaseInterface tmpPhase : phaseArray) {
+      if (tmpPhase != null) {
+        tmpPhase.setEmptyFluid();
+      }
     }
     totalNumberOfMoles = 0.0;
   }
@@ -2108,8 +2112,10 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void resetPhysicalProperties() {
-    for (int i = 0; i < maxNumberOfPhases; i++) {
-      getPhase(i).resetPhysicalProperties();
+    for (PhaseInterface tmpPhase : phaseArray) {
+      if (tmpPhase != null) {
+        tmpPhase.resetPhysicalProperties();
+      }
     }
   }
 
@@ -2164,6 +2170,17 @@ abstract class SystemThermo implements SystemInterface {
     }
     logger.info("No liquid phase at current state.");
     return null;
+  }
+
+
+  /** @{inheritdoc} */
+  @Override
+  public boolean IsPhase(int i) {
+    if (i > phaseArray.length) {
+      return false;
+    }
+
+    return phaseArray[i] != null;
   }
 
   /** {@inheritDoc} */
