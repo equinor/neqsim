@@ -2201,7 +2201,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final PhaseInterface getPhase(int i) {
-    if (i >= getNumberOfPhases()) {
+    if (i >= getNumberOfPhases() && phaseArray[phaseIndex[i]] == null) {
       throw new RuntimeException("Can not return phase number " + i
           + ". Current number of phases are " + getNumberOfPhases());
     }
