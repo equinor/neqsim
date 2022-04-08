@@ -2195,7 +2195,8 @@ abstract class SystemThermo implements SystemInterface {
       return false;
     }
 
-    return phaseArray[i] != null;
+    // getPhase(i) without try/catch
+    return phaseArray[phaseIndex[i]] != null;
   }
 
   /** {@inheritDoc} */
