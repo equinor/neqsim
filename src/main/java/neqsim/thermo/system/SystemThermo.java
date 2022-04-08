@@ -2281,8 +2281,8 @@ abstract class SystemThermo implements SystemInterface {
    * @param name a {@link java.lang.String} object
    */
   public void setMixingRuleGEmodel(String name) {
-    for (int i = 0; i < numberOfPhases; i++) {
-      getPhase(i).setMixingRuleGEModel(name);
+    for (PhaseInterface tmpPhase : phaseArray) {
+      tmpPhase.setMixingRuleGEModel(name);
     }
   }
 
@@ -2343,8 +2343,10 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void useVolumeCorrection(boolean volcor) {
-    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      getPhase(i).useVolumeCorrection(volcor);
+    for (PhaseInterface tmpPhase : phaseArray) {
+      if (tmpPhase != null) {
+        tmpPhase.useVolumeCorrection(volcor);
+      }
     }
   }
 
