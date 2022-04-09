@@ -2273,14 +2273,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      * generatePDF.
      * </p>
      */
-    public void generatePDF();
+    public neqsim.dataPresentation.iTextPDF.PdfCreator generatePDF();
 
     /**
      * <p>
      * displayPDF.
      * </p>
      */
-    public void displayPDF();
+    default public void displayPDF() {
+      generatePDF().openPDF();
+    }
 
     /**
      * <p>

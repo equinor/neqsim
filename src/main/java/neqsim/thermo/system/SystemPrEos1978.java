@@ -56,9 +56,8 @@ public class SystemPrEos1978 extends SystemEos {
     public SystemPrEos1978(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 13;
-        numberOfPhases = 5;
+        setNumberOfPhases(5);
         modelName = "PR1978-EOS";
-        maxNumberOfPhases = 5;
         solidPhaseCheck = solidCheck;
 
         for (int i = 0; i < numberOfPhases; i++) {
