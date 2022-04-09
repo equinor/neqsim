@@ -2281,7 +2281,7 @@ abstract class SystemThermo implements SystemInterface {
    */
   public void setMixingRuleGEmodel(String name) {
     for (PhaseInterface tmpPhase : phaseArray) {
-      if (tmpPhase1 != null)
+      if (tmpPhase != null)
         tmpPhase.setMixingRuleGEModel(name);
     }
   }
