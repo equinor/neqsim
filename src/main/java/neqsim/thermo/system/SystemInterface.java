@@ -2496,4 +2496,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     /** {@inheritDoc} */
     @Override
     public int hashCode();
+    
+    /** {@inheritDoc} */
+    public void addToComponentNames(java.lang.String name);
 }
