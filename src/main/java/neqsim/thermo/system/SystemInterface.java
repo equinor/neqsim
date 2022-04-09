@@ -538,6 +538,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      */
     public double[] getMolarRate();
 
+
+    /**
+     * Returns true if phase exists and is not null
+     * 
+     * @param i Phase number
+     * @return True if phase exists, false if not.
+     */
+    public boolean IsPhase(int i);
+
+
     /**
      * <p>
      * getPhase.

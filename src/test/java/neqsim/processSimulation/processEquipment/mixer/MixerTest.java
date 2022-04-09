@@ -3,7 +3,7 @@
  */
 package neqsim.processSimulation.processEquipment.mixer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -32,7 +32,7 @@ class MixerTest {
     testSystem.setMixingRule(2);
     testSystem.setMultiPhaseCheck(true);
     
-    waterSystem =testSystem.clone();
+    waterSystem = testSystem.clone();
     waterSystem.setMolarComposition(new double[]{1.0, 0.0, 0.0,0.0, 0.0});
 
     gasStream = new Stream("turbine stream", testSystem);
@@ -52,12 +52,10 @@ class MixerTest {
    */
   @Test
   void testRun() {
-    
     Mixer testMixer = new Mixer("test mixer");
     testMixer.addStream(gasStream);
     testMixer.addStream(waterStream);
     testMixer.run();
     assertEquals(testMixer.getOutStream().getFluid().getEnthalpy("kJ/kg"),-177.27666625251516, 1e-3);
   }
-
 }

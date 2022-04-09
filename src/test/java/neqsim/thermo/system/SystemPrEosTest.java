@@ -154,6 +154,8 @@ class SystemPrEoSTest extends neqsim.NeqSimTest{
       ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
       testOps.TPflash();
       testSystem.initProperties();
+      testSystem.getKappa();
+      testSystem.getPhase("gas").getKappa();
       assertEquals(testSystem.getKappa(), testSystem.getPhase("gas").getKappa(), 1e-5);
     }
 }
