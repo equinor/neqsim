@@ -56,8 +56,7 @@ public class SystemKentEisenberg extends SystemEos {
     public SystemKentEisenberg(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
-        numberOfPhases = 4;
-        maxNumberOfPhases = 4;
+        setNumberOfPhases(4);
         modelName = "Kent Eisenberg-model";
         solidPhaseCheck = solidCheck;
 

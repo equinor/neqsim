@@ -7,7 +7,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class CompressorCalculationTest {
+public class CompressorCalculationTest extends neqsim.NeqSimTest {
   Compressor comp1;
   Stream stream_1;
 

@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  *
  */
-class Standard_ISO6976Test {
+class Standard_ISO6976Test extends neqsim.NeqSimTest{
 	static SystemInterface testSystem = null;
 	/**
 	 * @throws java.lang.Exception

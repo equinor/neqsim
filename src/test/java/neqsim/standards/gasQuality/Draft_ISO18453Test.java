@@ -6,7 +6,7 @@ import neqsim.standards.StandardInterface;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
 
-public class Draft_ISO18453Test {
+public class Draft_ISO18453Test extends neqsim.NeqSimTest{
     @Test
     void testCalculate() {
         SystemInterface testSystem = new SystemGERGwaterEos(273.15 - 5.0, 20.0);

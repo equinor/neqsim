@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
-public class SimpleAbsorberTest {
+public class SimpleAbsorberTest extends neqsim.NeqSimTest{
   neqsim.thermo.system.SystemFurstElectrolyteEos testSystem;
 
   @BeforeEach
