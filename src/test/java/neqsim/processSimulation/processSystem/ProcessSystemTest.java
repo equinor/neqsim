@@ -376,7 +376,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
         new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
 
     HeatExchanger heatEx2 =
-        new HeatExchanger("rich TEG heat exchanger 1", richGLycolHeaterCondenser.getOutletStream());
+        new HeatExchanger("rich TEG heat exchanger 1", richGLycolHeaterCondenser.getOutStream());
     heatEx2.setGuessOutTemperature(273.15 + 62.0);
     heatEx2.setUAvalue(200.0);
 
@@ -390,11 +390,11 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Filter fineFilter = new Filter("TEG fine filter", flashLiquid);
     fineFilter.setDeltaP(0.05, "bara");
 
-    Filter carbonFilter = new Filter("activated carbon filter", fineFilter.getOutletStream());
+    Filter carbonFilter = new Filter("activated carbon filter", fineFilter.getOutStream());
     carbonFilter.setDeltaP(0.01, "bara");
 
     HeatExchanger heatEx =
-        new HeatExchanger("rich TEG heat exchanger 2", carbonFilter.getOutletStream());
+        new HeatExchanger("rich TEG heat exchanger 2", carbonFilter.getOutStream());
     heatEx.setGuessOutTemperature(273.15 + 130.0);
     heatEx.setUAvalue(390.0);
 
@@ -417,7 +417,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     DistillationColumn column = new DistillationColumn(1, true, true);
     column.setName("TEG regeneration column");
-    column.addFeedStream(glycol_flash_valve2.getOutletStream(), 0);
+    column.addFeedStream(glycol_flash_valve2.getOutStream(), 0);
     column.getReboiler().setOutTemperature(273.15 + 201.0);
     column.getCondenser().setOutTemperature(273.15 + 92.0);
     column.getReboiler().addStream(gasToReboiler);
@@ -427,7 +427,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
     coolerRegenGas.setOutTemperature(273.15 + 7.5);
 
-    Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
+    Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutStream());
 
     Stream gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
 
@@ -450,25 +450,25 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Heater bufferTank = new Heater("TEG buffer tank", stripper.getLiquidOutStream());
     bufferTank.setOutTemperature(273.15 + 191.0);
 
-    Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutletStream());// stripper.getSolventOutStream());
+    Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutStream());// stripper.getSolventOutStream());
     hotLeanTEGPump.setOutletPressure(5.0);
     hotLeanTEGPump.setIsentropicEfficiency(0.6);
 
-    heatEx.setFeedStream(1, hotLeanTEGPump.getOutletStream());
+    heatEx.setFeedStream(1, hotLeanTEGPump.getOutStream());
 
     heatEx2.setFeedStream(1, heatEx.getOutStream(1));
 
     Heater coolerhOTteg3 = new Heater("lean TEG cooler", heatEx2.getOutStream(1));
     coolerhOTteg3.setOutTemperature(273.15 + 35.41);
 
-    Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutletStream());
+    Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutStream());
     hotLeanTEGPump2.setOutletPressure(87.2);
     hotLeanTEGPump2.setIsentropicEfficiency(0.75);
 
     SetPoint pumpHPPresSet =
         new SetPoint("HP pump set", hotLeanTEGPump2, "pressure", feedToAbsorber);
 
-    Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutletStream());
+    Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutStream());
 
     neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
     pureTEG.setMolarComposition(
@@ -491,7 +491,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     makeupMixer.addStream(makeupTEG);
 
     Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-    resycleLeanTEG.addStream(makeupMixer.getOutletStream());
+    resycleLeanTEG.addStream(makeupMixer.getOutStream());
     resycleLeanTEG.setOutletStream(TEGFeed);
     resycleLeanTEG.setPriority(200);
     resycleLeanTEG.setDownstreamProperty("flow rate");
@@ -542,6 +542,8 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.add(makeupTEG);
     operations.add(makeupMixer);
     operations.add(resycleLeanTEG);
-    // operations.run();
+    operations.run();
+    dehydratedGas.getFluid().display();
+    dehydratedGas.getFluid().display();
   }
 }
