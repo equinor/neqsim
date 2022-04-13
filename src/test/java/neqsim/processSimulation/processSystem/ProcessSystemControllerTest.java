@@ -74,6 +74,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest{
         flowTransmitter.setUnit("kg/hr");
         flowTransmitter.setMaximumValue(150.0);
         flowTransmitter.setMinimumValue(10.0);
+        flowTransmitter.set
 
         ControllerDeviceInterface flowController = new ControllerDeviceBaseClass();
         flowController.setTransmitter(flowTransmitter);
