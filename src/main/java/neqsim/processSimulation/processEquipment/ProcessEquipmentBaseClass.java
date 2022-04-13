@@ -31,6 +31,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     ControllerDeviceInterface flowValveController = null;
     public boolean hasController = false;
     private String specification = "TP";
+    private boolean runTransient = false;
     public String[][] report = new String[0][0];
     public HashMap<String, String> properties = new HashMap<String, String>();
     public EnergyStream energyStream = new EnergyStream();
@@ -284,5 +285,19 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
                 && Objects.equals(name, other.name) && Objects.equals(properties, other.properties)
                 && Arrays.deepEquals(report, other.report)
                 && Objects.equals(specification, other.specification);
+    }
+
+    /**
+     * @return the runTransient
+     */
+    public boolean isRunTransient() {
+      return runTransient;
+    }
+
+    /**
+     * @param runTransient the runTransient to set
+     */
+    public void setRunTransient(boolean runTransient) {
+      this.runTransient = runTransient;
     }
 }

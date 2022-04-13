@@ -26,6 +26,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     protected String preferedThermodynamicModel = "";
     protected boolean isInitializedModule = false, isInitializedStreams = false;
     private boolean isCalcDesign = false;
+    private boolean runTransient = false;
     private neqsim.processSimulation.processSystem.ProcessSystem operations =
             new neqsim.processSimulation.processSystem.ProcessSystem();
 
@@ -218,5 +219,18 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
      */
     public String[][] getResultTable() {
         return null;
+    }
+    /**
+     * @return the runTransient
+     */
+    public boolean isRunTransient() {
+      return runTransient;
+    }
+
+    /**
+     * @param runTransient the runTransient to set
+     */
+    public void setRunTransient(boolean runTransient) {
+      this.runTransient = runTransient;
     }
 }

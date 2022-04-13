@@ -186,4 +186,11 @@ public interface ProcessEquipmentInterface
     /** {@inheritDoc} */
     @Override
     public int hashCode();
+    
+    public boolean isRunTransient();
+
+    /**
+     * @param runTransient the runTransient to set
+     */
+    public void setRunTransient(boolean runTransient);
 }
