@@ -17,9 +17,22 @@
 	},
 
 	// Set *default* container specific settings.json values on container create.
-	"settings": { 
-		"java.home": "/docker-java-home"
-	},
+	//"settings": { 
+	//	"java.home": "/docker-java-home"
+	//},
+  "settings": {
+      "java.configuration.updateBuildConfiguration": "interactive",
+      "[java]": {
+          "editor.defaultFormatter": "redhat.java",
+          "editor.formatOnSave": true,
+      },
+      "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+      "java.saveActions.organizeImports": true,
+      "editor.tabSize": 2,
+      "editor.insertSpaces": true,
+      "editor.detectIndentation": false
+  },
+
 	
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
