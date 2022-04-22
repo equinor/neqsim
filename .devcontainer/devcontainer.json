@@ -38,7 +38,8 @@
 	"extensions": [
 		"vscjava.vscode-java-pack",
     "redhat.vscode-xml",
-    "vscjava.vscode-maven"
+    "vscjava.vscode-maven",
+    "vscjava.vscode-java-debug"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
