@@ -124,18 +124,20 @@ public class CompressorChartTest {
     operations.run();
     // operations.displayResult();
 
-    System.out.println("power " + comp1.getPower());
-    System.out.println("is surge " + comp1.getAntiSurge().isSurge());
-    System.out
-        .println("fraction in anti surge line " + comp1.getAntiSurge().getCurrentSurgeFraction());
-    System.out.println("Polytropic head from curve:" + comp1.getPolytropicHead());
-    System.out.println("Polytropic eff from curve:" + comp1.getPolytropicEfficiency() * 100.0);
-    System.out.println("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
+    /*
+     * System.out.println("power " + comp1.getPower()); System.out.println("is surge " +
+     * comp1.getAntiSurge().isSurge()); System.out .println("fraction in anti surge line " +
+     * comp1.getAntiSurge().getCurrentSurgeFraction());
+     * System.out.println("Polytropic head from curve:" + comp1.getPolytropicHead());
+     * System.out.println("Polytropic eff from curve:" + comp1.getPolytropicEfficiency() * 100.0);
+     * System.out.println("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
+     * 
+     * System.out.println("speed " + comp1.getCompressorChart().getSpeed(
+     * stream_1.getThermoSystem().getFlowRate("m3/hr") + 10.0, comp1.getPolytropicHead()));
+     * System.out.println("pressure out " + comp1.getOutletPressure());
+     * System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
+     */
 
-    System.out.println("speed " + comp1.getCompressorChart().getSpeed(
-        stream_1.getThermoSystem().getFlowRate("m3/hr") + 10.0, comp1.getPolytropicHead()));
-    System.out.println("pressure out " + comp1.getOutletPressure());
-    System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
     double temperatureOut = 273.15 + 84;
     comp1.setOutletPressure(96.0);
     comp1.setOutTemperature(temperatureOut);
@@ -143,12 +145,15 @@ public class CompressorChartTest {
     double polytropicHead = comp1.getPolytropicHead();
     double flowRate = stream_1.getThermoSystem().getFlowRate("m3/hr");
     double calcSpeed = comp1.getCompressorChart().getSpeed(flowRate, polytropicHead);
-    System.out.println("polytopic head " + polytropicHead);
-    System.out.println("polytopic efficiency " + comp1.getPolytropicEfficiency());
-    System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
-    System.out.println("calculated speed " + calcSpeed);
-    System.out.println("power " + comp1.getPower());
 
-    comp1.getCompressorChart().plot();
+    /*
+     * System.out.println("polytopic head " + polytropicHead);
+     * System.out.println("polytopic efficiency " + comp1.getPolytropicEfficiency());
+     * System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
+     * System.out.println("calculated speed " + calcSpeed); System.out.println("power " +
+     * comp1.getPower());
+     */
+
+    // comp1.getCompressorChart().plot();
   }
 }
