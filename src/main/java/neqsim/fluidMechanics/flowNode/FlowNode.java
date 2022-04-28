@@ -50,7 +50,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     protected InterphaseTransportCoefficientInterface interphaseTransportCoefficient;
     protected double[] wallFrictionFactor, interphaseFrictionFactor;
     protected ThermodynamicOperations phaseOps;
-
+    protected boolean useConstantFrictionFactor = false;
     /**
      * <p>
      * Constructor for FlowNode.
@@ -88,6 +88,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
         volumetricFlowRate = new double[2];
         interphaseFrictionFactor = new double[2];
         velocity[0] = 0.0;
+        boolean useConstantFrictionFactor = false;
 
         this.bulkSystem = system.clone();
         if (this.bulkSystem.isChemicalSystem()) {
@@ -385,13 +386,25 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     /** {@inheritDoc} */
     @Override
     public double getWallFrictionFactor() {
-        return wallFrictionFactor[0];
+      return wallFrictionFactor[0];
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setWallFrictionFactor(double frictionFactor) {
+      wallFrictionFactor[0] = frictionFactor;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setWallFrictionFactor(int phase, double frictionFactor) {
+      wallFrictionFactor[phase] = frictionFactor;
     }
 
     /** {@inheritDoc} */
     @Override
     public double getWallFrictionFactor(int phase) {
-        return wallFrictionFactor[phase];
+      return wallFrictionFactor[phase];
     }
 
     /** {@inheritDoc} */
@@ -790,16 +803,20 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     /** {@inheritDoc} */
     @Override
     public void write(String name, String filename, boolean newfile) {
-        String[][] table = createTable(name);
-        neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file =
-                new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
-        if (newfile) {
-            file.newFile(filename);
-        }
-        file.setOutputFileName(filename);
-        file.setValues(table);
-        file.createFile();
-        getBulkSystem().write(("thermo for " + name), filename, false);
-        getFluidBoundary().write(("boundary for " + name), filename, false);
+      String[][] table = createTable(name);
+      neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file =
+          new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
+      if (newfile) {
+        file.newFile(filename);
+      }
+      file.setOutputFileName(filename);
+      file.setValues(table);
+      file.createFile();
+      getBulkSystem().write(("thermo for " + name), filename, false);
+      getFluidBoundary().write(("boundary for " + name), filename, false);
+    }
+
+    public void setUseConstantFrictionFactor(boolean use) {
+      this.useConstantFrictionFactor = use;
     }
 }

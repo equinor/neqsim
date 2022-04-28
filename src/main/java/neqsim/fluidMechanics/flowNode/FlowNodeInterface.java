@@ -704,4 +704,10 @@ public interface FlowNodeInterface extends Cloneable {
      * @param name a {@link java.lang.String} object
      */
     public void display(String name);
+
+    public void setUseConstantFrictionFactor(boolean use);
+
+    public void setWallFrictionFactor(int phase, double frictionFactor);
+
+    public void setWallFrictionFactor(double frictionFactor);
 }
