@@ -175,15 +175,6 @@ public class RecycleController implements java.io.Serializable {
 
     /**
      * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {}
-
-    /**
-     * <p>
      * Getter for the field <code>currentPriorityLevel</code>.
      * </p>
      *

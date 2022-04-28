@@ -428,6 +428,21 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
             getController().runTransient(this.getFlowRate("kg/hr"), dt);
         }
     }
+    
+    /**
+     * <p>
+     * runController.
+     * </p>
+     *
+     * @param dt a double
+     */
+    public void runController(double dt) {
+        if (hasController) {
+            getController().runTransient(this.getFlowRate("kg/hr"), dt);
+            thermoSystem.setTotalFlowRate(getController().getResponse(), "kg/hr");
+            this.setFlowRate(getController().getResponse(), "kg/hr");
+        }
+    }
 
     /** {@inheritDoc} */
     @Override
