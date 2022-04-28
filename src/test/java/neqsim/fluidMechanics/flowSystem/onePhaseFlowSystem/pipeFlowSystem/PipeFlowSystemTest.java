@@ -1,10 +1,8 @@
 package neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem;
 
 import java.util.Arrays;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -54,18 +52,30 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest{
         pipe.setLegOuterTemperatures(Arrays.copyOfRange(outerTemperature, 0, height.length));
         pipe.setLegWallHeatTransferCoefficients(Arrays.copyOfRange(wallHeacCoef, 0, height.length));
         pipe.setLegOuterHeatTransferCoefficients(Arrays.copyOfRange(outHeatCoef, 0, height.length));
-    }
 
+    }
 
     @Test
     void testCreateSystem() {
-        pipe.createSystem();
+      pipe.createSystem();
     }
 
     @Test
     void testInit() {
-        testCreateSystem();
-        pipe.init();
+      testCreateSystem();
+      pipe.init();
+    }
+
+    @Test
+    void testSolveSteadyStateConstantFrictionFactor() {
+      testInit();
+      for (int i = 0; i < pipe.getFlowNodes().length; i++) {
+        pipe.getNode(i).setUseConstantFrictionFactor(true);
+        pipe.getNode(i).setWallFrictionFactor(0, 0.02);
+      }
+      pipe.solveSteadyState(10);
+      System.out.println("pressure out "
+          + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
     }
 
     @Test
@@ -75,7 +85,7 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest{
         // pipe.print();
     }
 
-    @Test
+    // @Test
     void testSolveTransient() {
         testInit();
         // transient solver
