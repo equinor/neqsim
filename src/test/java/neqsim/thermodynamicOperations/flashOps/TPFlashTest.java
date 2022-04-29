@@ -6,7 +6,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-
+import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author ESOL
  *
@@ -74,7 +74,7 @@ class TPFlashTest {
         8.96e-3, 1.539e-3, 5.9921e-1});
     testOps = new ThermodynamicOperations(wellFluid);
     testOps.TPflash();
-    System.out.println("number of phases " + wellFluid.getNumberOfPhases());
+    assertEquals(1.4292538950216407, wellFluid.getPhase(0).getDensity(), 1e-5);
   }
 
 }
