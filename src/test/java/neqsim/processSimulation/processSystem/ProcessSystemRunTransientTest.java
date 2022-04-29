@@ -184,15 +184,17 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         p.run();
         // p.displayResult();
         p.setTimeStep(0.01);
-        for(int i=0;i<1000;i++) {
-          System.out.println("pressure "+separator_1.getGasOutStream().getPressure()+ " flow "+ separator_1.getGasOutStream().getFlowRate("kg/hr"));
+        for (int i = 0; i < 500; i++) {
+          // System.out.println("pressure "+separator_1.getGasOutStream().getPressure()+ " flow "+
+          // separator_1.getGasOutStream().getFlowRate("kg/hr"));
           p.runTransient();
           }
         
         valve_1.setPercentValveOpening(60);
         
-        for(int i=0;i<1000;i++) {
-        System.out.println("pressure "+separator_1.getGasOutStream().getPressure()+ " flow "+ separator_1.getGasOutStream().getFlowRate("kg/hr"));
+        for (int i = 0; i < 100; i++) {
+          // System.out.println("pressure "+separator_1.getGasOutStream().getPressure()+ " flow "+
+          // separator_1.getGasOutStream().getFlowRate("kg/hr"));
         p.runTransient();
         }
     }

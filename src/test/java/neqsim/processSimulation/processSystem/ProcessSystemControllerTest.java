@@ -5,8 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
-import neqsim.processSimulation.measurementDevice.LevelTransmitter;
-import neqsim.processSimulation.measurementDevice.PressureTransmitter;
 import neqsim.processSimulation.measurementDevice.VolumeFlowTransmitter;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -94,18 +92,22 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest{
         for (int i = 0; i < 55; i++) {
           flowController.setControllerSetPoint(65.0+getRandomDistrurbanceFlowRate());
           p.runTransient();
-           System.out.println("flow rate " + valve_1.getOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr") +" controller response " + flowController.getResponse()
-                    + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
-                    + separator_1.getGasOutStream().getPressure());
+          // System.out.println("flow rate " +
+          // valve_1.getOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr") +" controller
+          // response " + flowController.getResponse()
+          // + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
+          // + separator_1.getGasOutStream().getPressure());
         }
         
         for (int i = 0; i < 100; i++) {
           flowController.setControllerSetPoint(55.0+getRandomDistrurbanceFlowRate());
           //stream_1.runTransient(1.0);
           p.runTransient();
-           System.out.println("flow rate " + valve_1.getOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr") +" controller response " + flowController.getResponse()
-                    + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
-                    + separator_1.getGasOutStream().getPressure());
+          // System.out.println("flow rate " +
+          // valve_1.getOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr") +" controller
+          // response " + flowController.getResponse()
+          // + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
+          // + separator_1.getGasOutStream().getPressure());
         }
         
         // transient behaviour
