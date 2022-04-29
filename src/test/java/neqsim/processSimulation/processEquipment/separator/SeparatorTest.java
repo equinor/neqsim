@@ -54,15 +54,16 @@ class SeparatorTest extends neqsim.NeqSimTest {
 
   @Test
   public void testFlow() {
-    ((StreamInterface) processOps.getUnit("inlet stream")).setFlowRate(0.0, "MSm3/day");
+    ((StreamInterface) processOps.getUnit("inlet stream")).setFlowRate(0.01, "MSm3/day");
     processOps.run();
   }
 
   @Test
   public void testOnePhase() {
-    ((StreamInterface) processOps.getUnit("inlet stream")).getFluid()
-        .setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0});;
     ((StreamInterface) processOps.getUnit("inlet stream")).setFlowRate(1.0, "MSm3/day");
+    ((StreamInterface) processOps.getUnit("inlet stream")).getFluid()
+        .setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0});
+
     processOps.run();
   }
 }
