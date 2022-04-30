@@ -145,6 +145,10 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	public void run() {
 		SystemInterface tempFluid = inletStream.getThermoSystem().clone();
 		double flow = tempFluid.getFlowRate("kg/sec");
+		if(GOR<1e-15) {
+		  outletStream.setThermoSystem(tempFluid);
+		  return;
+		}
 		if (!getReferenceConditions().equals("actual")) {
 			tempFluid.setTemperature(15.0, "C");
 			tempFluid.setPressure(1.01325, "bara");
