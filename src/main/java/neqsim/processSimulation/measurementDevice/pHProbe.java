@@ -22,6 +22,7 @@ public class pHProbe extends MeasurementDeviceBaseClass {
     protected StreamInterface stream = null;
     protected SystemInterface reactiveThermoSystem;
     protected ThermodynamicOperations thermoOps;
+    private double alkanility = 0.0;
 
     /**
      * <p>
@@ -50,13 +51,30 @@ public class pHProbe extends MeasurementDeviceBaseClass {
      * </p>
      */
     public void run() {
+      
         if (stream != null) {
+          if(stream.getFluid().hasPhaseType("aqueous")) {
+            reactiveThermoSystem = stream.getFluid().clone();
+            //reactiveThermoSystem = stream.getFluid().phaseToSystem("aqueous");   
             reactiveThermoSystem =
-                    this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
+                reactiveThermoSystem.setModel("Electrolyte-CPA-EOS-statoil");
+            if(getAlkanility()>1e-10) {
+              double waterkg = reactiveThermoSystem.getComponent("water").getTotalFlowRate("kg/sec");
+              reactiveThermoSystem.addComponent("Na+", waterkg*getAlkanility()/1e3);
+              reactiveThermoSystem.addComponent("OH-", waterkg*getAlkanility()/1e3);
+            }
+            if(!reactiveThermoSystem.isChemicalSystem()) {
+              reactiveThermoSystem.chemicalReactionInit();
+              reactiveThermoSystem.setMixingRule(10);
+              reactiveThermoSystem.setMultiPhaseCheck(false);
+            }
+            thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
+            thermoOps.TPflash();
+          }
+          else 
+            return;
         }
-        thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
-        thermoOps.TPflash();
-    }
+      }
 
     /** {@inheritDoc} */
     @Override
@@ -67,7 +85,24 @@ public class pHProbe extends MeasurementDeviceBaseClass {
     /** {@inheritDoc} */
     @Override
     public double getMeasuredValue() {
+      if(stream.getFluid().hasPhaseType("aqueous")) {
         return reactiveThermoSystem.getPhase(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"))
                 .getpH();
+      }
+      else return 7.0;
+    }
+
+    /**
+     * @return the alkanility
+     */
+    public double getAlkanility() {
+      return alkanility;
+    }
+
+    /**
+     * @param alkanility the alkanility to set
+     */
+    public void setAlkanility(double alkanility) {
+      this.alkanility = alkanility;
     }
 }
