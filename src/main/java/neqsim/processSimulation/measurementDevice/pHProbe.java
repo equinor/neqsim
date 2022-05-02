@@ -15,10 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class pHProbe extends MeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
 
-  protected int streamNumber = 0;
-  /** Constant <code>numberOfStreams=0</code> */
-  protected static int numberOfStreams = 0;
-  protected String name = new String();
   protected StreamInterface stream = null;
   protected SystemInterface reactiveThermoSystem;
   protected ThermodynamicOperations thermoOps;
@@ -40,8 +36,6 @@ public class pHProbe extends MeasurementDeviceBaseClass {
    */
   public pHProbe(StreamInterface stream) {
     this.stream = stream;
-    numberOfStreams++;
-    streamNumber = numberOfStreams;
   }
 
   /**
