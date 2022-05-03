@@ -5093,7 +5093,7 @@ abstract class SystemThermo implements SystemInterface {
   private void setMolarComposition(double[] molefractions, String type) {
     double totalFlow = getTotalNumberOfMoles();
     if (totalFlow < 1e-100) {
-      String msg = "Total flow can not be 0 when setting molar composition";
+      String msg = "must be larger than 0 (1e-100) when setting molar composition";
       logger.error(msg);
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "setMolarComposition", "totalFlow", msg));
