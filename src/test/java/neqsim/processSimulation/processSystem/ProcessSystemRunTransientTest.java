@@ -2,7 +2,6 @@ package neqsim.processSimulation.processSystem;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
@@ -103,7 +102,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         }
     }
 
-    //@Disabled("Disabled until CustomerService is up!")
     @Test
     public void testDynamicCalculation2() {
         
@@ -122,7 +120,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         purgeValve.setPercentValveOpening(50.0);
 
         Stream stream_1 = new Stream("Stream1", testSystem);
-        stream_1.setRunTransient(false);
+        stream_1.setCalculateSteadyState(false);
         ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
         valve_1.setOutletPressure(7.0);
         valve_1.setPercentValveOpening(50);
@@ -130,18 +128,18 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         Separator separator_1 = new Separator("separator_1");
         separator_1.addStream(valve_1.getOutStream());
         separator_1.addStream(purgeValve.getOutStream());
-        separator_1.setRunTransient(true);
+        separator_1.setCalculateSteadyState(true);
 
         ThrottlingValve valve_2 = new ThrottlingValve("valve_2", separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(5.0);
         valve_2.setPercentValveOpening(50);
-        valve_2.setRunTransient(true);
+        valve_2.setCalculateSteadyState(true);
         // valve_2.setCv(10.0);
 
         ThrottlingValve valve_3 = new ThrottlingValve("valve_3", separator_1.getGasOutStream());
         valve_3.setOutletPressure(5.0);
         valve_3.setPercentValveOpening(50);
-        valve_3.setRunTransient(true);
+        valve_3.setCalculateSteadyState(true);
         // valve_3.setCv(10.0);
 
         LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator_1);

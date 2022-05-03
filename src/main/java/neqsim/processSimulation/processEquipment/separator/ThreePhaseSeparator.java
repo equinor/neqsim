@@ -259,20 +259,21 @@ public class ThreePhaseSeparator extends Separator {
 
     /** {@inheritDoc} */
     @Override
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double surroundingTemperature) {
         double entrop = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
             inletStreamMixer.getStream(i).getFluid().init(3);
-            entrop += inletStreamMixer.getStream(i).getFluid().getExergy(sourrondingTemperature,
+            entrop +=
+                inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature,
                     unit);
         }
         getWaterOutStream().getThermoSystem().init(3);
         getOilOutStream().getThermoSystem().init(3);
         getGasOutStream().getThermoSystem().init(3);
 
-        return getWaterOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)
+        return getWaterOutStream().getThermoSystem().getExergy(surroundingTemperature, unit)
                 + getOilOutStream().getThermoSystem().getEntropy(unit)
-                + getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)
+            + getGasOutStream().getThermoSystem().getExergy(surroundingTemperature, unit)
                 - entrop;
     }
 }

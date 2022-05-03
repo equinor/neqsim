@@ -5,8 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
-import neqsim.processSimulation.measurementDevice.LevelTransmitter;
-import neqsim.processSimulation.measurementDevice.PressureTransmitter;
 import neqsim.processSimulation.measurementDevice.VolumeFlowTransmitter;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -62,7 +60,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest{
         Stream stream_1 = new Stream("Stream1", testSystem);
         stream_1.setFlowRate(100.0+getRandomDistrurbanceFlowRate(), "kg/hr");
         stream_1.setPressure(10.0, "bara");
-        stream_1.setRunTransient(true);
+        stream_1.setCalculateSteadyState(true);
         
         ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
         valve_1.setOutletPressure(5.0);

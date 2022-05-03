@@ -404,16 +404,12 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-      if(isRunTransient()) {
+      if (getCalculateSteadyState()) {
         runController(dt);
         this.setFlowRate(getController().getResponse(), "kg/hr");
-        run();
-        return;
       }
-      else {
-        run();
-      }
-     
+
+      run();
     }
     
     /**

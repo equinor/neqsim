@@ -196,7 +196,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
     /** {@inheritDoc} */
     @Override
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double surroundingTemperature) {
         return 0.0;
     }
 
@@ -223,14 +223,14 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     /**
      * @return the runTransient
      */
-    public boolean isRunTransient() {
+    public boolean getCalculateSteadyState() {
       return runTransient;
     }
 
     /**
      * @param runTransient the runTransient to set
      */
-    public void setRunTransient(boolean runTransient) {
+    public void setCalculateSteadyState(boolean runTransient) {
       this.runTransient = runTransient;
     }
 }

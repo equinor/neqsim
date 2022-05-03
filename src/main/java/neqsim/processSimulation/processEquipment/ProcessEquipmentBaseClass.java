@@ -31,7 +31,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     ControllerDeviceInterface flowValveController = null;
     public boolean hasController = false;
     private String specification = "TP";
-    private boolean runTransient = false;
+    private boolean calculateSteadyState = false;
     public String[][] report = new String[0][0];
     public HashMap<String, String> properties = new HashMap<String, String>();
     public EnergyStream energyStream = new EnergyStream();
@@ -228,7 +228,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
     /** {@inheritDoc} */
     @Override
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double surroundingTemperature) {
         return 0.0;
     }
 
@@ -287,17 +287,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
                 && Objects.equals(specification, other.specification);
     }
 
-    /**
-     * @return the runTransient
-     */
-    public boolean isRunTransient() {
-      return runTransient;
+    /** {@inheritDoc} */
+    @Override
+    public boolean getCalculateSteadyState() {
+      return calculateSteadyState;
     }
 
-    /**
-     * @param runTransient the runTransient to set
-     */
-    public void setRunTransient(boolean runTransient) {
-      this.runTransient = runTransient;
+    /** {@inheritDoc} */
+    @Override
+    public void setCalculateSteadyState(boolean steady) {
+      this.calculateSteadyState = steady;
     }
 }

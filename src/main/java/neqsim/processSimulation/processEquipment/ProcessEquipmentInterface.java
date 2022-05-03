@@ -153,7 +153,7 @@ public interface ProcessEquipmentInterface
     public String getConditionAnalysisMessage();
 
     /**
-     * method to return entropy production of the unit operation
+     * Get entropy production of the unit operation
      *
      * @param unit Supported units are J/K and kJ/K
      * @return entropy in specified unit
@@ -161,14 +161,13 @@ public interface ProcessEquipmentInterface
     public double getEntropyProduction(String unit);
 
     /**
-     * method to return exergy change production of the unit operation * @param
-     * sourrondingTemperature The surrounding temperature in Kelvin
+     * Get exergy change production of the unit operation
      *
      * @param unit Supported units are J and kJ
+     * @param surroundingTemperature The surrounding temperature in Kelvin
      * @return change in exergy in specified unit
-     * @param sourrondingTemperature a double
      */
-    public double getExergyChange(String unit, double sourrondingTemperature);
+    public double getExergyChange(String unit, double surroundingTemperature);
 
     /**
      * <p>
@@ -187,10 +186,17 @@ public interface ProcessEquipmentInterface
     @Override
     public int hashCode();
     
-    public boolean isRunTransient();
+    /**
+     * Get calculateSteadyState
+     * 
+     * @return Value of property calculateSteadyState
+     */
+    public boolean getCalculateSteadyState();
 
     /**
-     * @param runTransient the runTransient to set
+     * Setter for property calculateSteadyState
+     * 
+     * @param steady Set true to do steady state calculation when calling runTransient.
      */
-    public void setRunTransient(boolean runTransient);
+    public void setCalculateSteadyState(boolean steady);
 }

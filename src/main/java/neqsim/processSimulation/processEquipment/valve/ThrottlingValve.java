@@ -233,7 +233,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt) {
-    if (!isRunTransient()) {
+    if (!getCalculateSteadyState()) {
       run();
       return;
     } else {
@@ -373,11 +373,11 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 
   /** {@inheritDoc} */
   @Override
-  public double getExergyChange(String unit, double sourrondingTemperature) {
+  public double getExergyChange(String unit, double surroundingTemperature) {
     outStream.getThermoSystem().init(3);
     inletStream.getThermoSystem().init(3);
-    return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)
-        - inletStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
+    return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
+        - inletStream.getThermoSystem().getExergy(surroundingTemperature, unit);
   }
 
   /**

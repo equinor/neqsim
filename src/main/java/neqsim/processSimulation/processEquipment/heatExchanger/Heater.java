@@ -337,7 +337,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
 
     /** {@inheritDoc} */
     @Override
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double surroundingTemperature) {
         double entrop = 0.0;
 
         inStream.run();
@@ -345,8 +345,8 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         outStream.run();
         outStream.getFluid().init(3);
 
-        entrop += outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)
-                - inStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
+        entrop += outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
+            - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
 
         return entrop;
     }
