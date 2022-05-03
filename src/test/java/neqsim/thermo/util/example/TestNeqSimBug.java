@@ -1,7 +1,6 @@
 package neqsim.thermo.util.example;
 
 import java.util.Arrays;
-import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -57,11 +56,7 @@ public class TestNeqSimBug {
     double spec1 = 73.22862045673597; // grane Pressure
     double spec2 = -62179.7247076579; // Enthalpy
 
-    CalculationResult s =
-        fluidOps.propertyFlash(Arrays.asList(spec1), Arrays.asList(spec2), 3, null, null);
-
-    // Double[][] prop = s.fluidProperties;
-
+    fluidOps.propertyFlash(Arrays.asList(spec1), Arrays.asList(spec2), 3, null, null);
 
     /*
      * for (int t = 0; t < 1; t++) { fluid.setPressure(spec1[t]); fluidOps.PHflash(spec2[t],

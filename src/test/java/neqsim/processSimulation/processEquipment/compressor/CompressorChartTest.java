@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -146,6 +147,7 @@ public class CompressorChartTest {
     double flowRate = stream_1.getThermoSystem().getFlowRate("m3/hr");
     double calcSpeed = comp1.getCompressorChart().getSpeed(flowRate, polytropicHead);
 
+    assertTrue(calcSpeed > 0);
     /*
      * System.out.println("polytopic head " + polytropicHead);
      * System.out.println("polytopic efficiency " + comp1.getPolytropicEfficiency());

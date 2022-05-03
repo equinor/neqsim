@@ -1,6 +1,5 @@
 package neqsim.fluidMechanics.util.example;
 
-import org.junit.jupiter.api.BeforeAll;
 import neqsim.processSimulation.processEquipment.pipeline.Pipeline;
 import neqsim.processSimulation.processEquipment.pipeline.TwoPhasePipeLine;
 import neqsim.processSimulation.processEquipment.stream.NeqStream;
@@ -18,7 +17,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class WettedWall_CO2_water  extends neqsim.NeqSimTest{
+public class WettedWall_CO2_water extends neqsim.NeqSimTest {
 
   /**
    * This method is just meant to test the thermo package.
