@@ -1,9 +1,4 @@
-/**
- * 
- */
 package neqsim;
-
-import org.junit.jupiter.api.BeforeAll;
 
 /**
  * @author ESOL

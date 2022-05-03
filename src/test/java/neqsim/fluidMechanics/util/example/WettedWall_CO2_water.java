@@ -1,6 +1,5 @@
 package neqsim.fluidMechanics.util.example;
 
-import org.junit.jupiter.api.BeforeAll;
 import neqsim.processSimulation.processEquipment.pipeline.Pipeline;
 import neqsim.processSimulation.processEquipment.pipeline.TwoPhasePipeLine;
 import neqsim.processSimulation.processEquipment.stream.NeqStream;

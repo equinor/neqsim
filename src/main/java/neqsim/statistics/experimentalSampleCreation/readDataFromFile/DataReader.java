@@ -43,10 +43,9 @@ public class DataReader implements DataReaderInterface {
     /** {@inheritDoc} */
     @Override
     public void readData() {
-        StringTokenizer tokenizer;
-        String token;
+      StringTokenizer tokenizer;
 
-        String path = "c:/logdata/" + this.fileName + ".log";
+      String path = "c:/logdata/" + this.fileName + ".log";
         System.out.println(path);
 
         try (RandomAccessFile file = new RandomAccessFile(path, "r")) {
@@ -59,7 +58,7 @@ public class DataReader implements DataReaderInterface {
                 System.out.println("test");
                 String s = file.readLine();
                 tokenizer = new StringTokenizer(s);
-                token = tokenizer.nextToken();
+                tokenizer.nextToken();
 
                 filepointer = file.getFilePointer();
                 tokenizer.nextToken();

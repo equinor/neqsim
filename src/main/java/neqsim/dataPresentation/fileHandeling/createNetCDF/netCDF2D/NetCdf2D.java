@@ -83,7 +83,7 @@ public class NetCdf2D {
   @SuppressWarnings("deprecation")
   public void createFile() {
     try {
-      NetcdfFileWriter ncfile =
+      ncfile =
           NetcdfFileWriter.createNew(NetcdfFileWriter.Version.netcdf3, fileName, null);
     } catch (IOException e) {
       System.err.println("ERROR creating file");

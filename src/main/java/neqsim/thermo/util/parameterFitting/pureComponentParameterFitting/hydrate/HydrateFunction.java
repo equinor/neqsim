@@ -46,7 +46,7 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
     /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
-        int structure = 1;
+      // int structure = 1;
         params[i] = value;
         // if(i==0) ((ComponentHydrate)
         // system.getPhase(4).getComponent("water")).setDGfHydrate(value, structure);

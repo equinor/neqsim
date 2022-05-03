@@ -5,8 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
-import neqsim.processSimulation.measurementDevice.LevelTransmitter;
-import neqsim.processSimulation.measurementDevice.PressureTransmitter;
 import neqsim.processSimulation.measurementDevice.VolumeFlowTransmitter;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;

@@ -113,6 +113,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest{
 
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testAddUnitsWithNoName() {
         Separator sep = new Separator();
         p.add(sep);
