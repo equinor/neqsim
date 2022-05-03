@@ -1747,8 +1747,7 @@ abstract class SystemThermo implements SystemInterface {
         }
       }
       numberOfPhases = 2;
-    } 
-    else if (type == 1) {
+    } else if (type == 1) {
       for (int i = 0; i < numberOfPhases; i++) {
         if (IsPhase(i)) {
           getPhase(i).init(getTotalNumberOfMoles(), numberOfComponents, 1, phaseType[phaseIndex[i]],
@@ -3823,18 +3822,19 @@ abstract class SystemThermo implements SystemInterface {
   public void setFluidName(java.lang.String fluidName) {
     this.fluidName = fluidName;
   }
-  
+
   public void addToComponentNames(java.lang.String name) {
-    for(int j=0;j<componentNames.size();j++) {
-      componentNames.set(j, componentNames.get(j)+name);
+    for (int j = 0; j < componentNames.size(); j++) {
+      componentNames.set(j, componentNames.get(j) + name);
     }
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      for(int j=0;j<componentNames.size();j++) {
-        getPhase(i).getComponent(j).setComponentName(getPhase(i).getComponent(j).getComponentName()+name);
+      for (int j = 0; j < componentNames.size(); j++) {
+        getPhase(i).getComponent(j)
+            .setComponentName(getPhase(i).getComponent(j).getComponentName() + name);
       }
     }
   }
-  
+
   /**
    * <p>
    * setLastTBPasPlus.
