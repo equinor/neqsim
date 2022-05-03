@@ -1171,9 +1171,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
   /** {@inheritDoc} */
   @Override
-  public double getExergyChange(String unit, double sourrondingTemperature) {
-    return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)
-        - inletStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
+  public double getExergyChange(String unit, double surroundingTemperature) {
+    return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
+        - inletStream.getThermoSystem().getExergy(surroundingTemperature, unit);
   }
 
   /**
