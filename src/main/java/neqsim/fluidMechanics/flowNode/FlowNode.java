@@ -49,7 +49,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   public GeometryDefinitionInterface pipe;
   protected InterphaseTransportCoefficientInterface interphaseTransportCoefficient;
   protected double[] wallFrictionFactor, interphaseFrictionFactor;
-  protected Double[] specifiedFrictionFactor;
+  protected Double[] specifiedFrictionFactor = null;
   protected ThermodynamicOperations phaseOps;
 
   /**
@@ -338,7 +338,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   /** {@inheritDoc} */
   @Override
   public void setWallFrictionFactor(int phase, double frictionFactor) {
-    if (specifiedFrictionFactor == null) {
+    if (specifiedFrictionFactor[0] == null) {
       specifiedFrictionFactor = new Double[2];
     }
     specifiedFrictionFactor[phase] = frictionFactor;
