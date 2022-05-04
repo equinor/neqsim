@@ -79,7 +79,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
                         String compType =
                                 this.thermoSystem.getPhase(0).getComponent(i).getComponentType();
 
-                        if (compType.equals("HC") || compType.equals("TPB")
+                        if (compType.equals("HC") || compType.equals("TBP")
                                 || compType.equals("plus")) {
                             compName = "n-heptane";
                         } else if (compType.equals("alcohol") || compType.equals("glycol")) {

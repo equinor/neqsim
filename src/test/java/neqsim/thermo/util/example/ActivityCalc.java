@@ -41,7 +41,7 @@ public class ActivityCalc {
         } catch (Exception e) {
         }
 
-        testSystem.display();
+        //testSystem.display();
         System.out.println("activity water " + testSystem.getPhase(1).getActivityCoefficient(1));
     }
 }

@@ -23,7 +23,7 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     testSystem.initPhysicalProperties();
     testSystem.setTotalFlowRate(60.0, "MSm3/day");
 
-    double[] height = {0, 0, 0}; // , 0, 0, 0, 0, 0, 0, 0, 0};
+    double[] height = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     double[] diameter = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
     double[] roughness =
         {1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5};
@@ -31,7 +31,7 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     double[] wallHeacCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
 
     double[] length =
-        {0, 10000, 50000, 150000, 200000, 400000, 500000, 600000, 650000, 700000, 750000};
+        {0, 10000, 50000, 150000, 200000, 400000, 500000, 600000, 650000, 700000, 740000};
     double[] outerTemperature =
         {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0};
 
@@ -54,7 +54,6 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     pipe.setLegOuterHeatTransferCoefficients(Arrays.copyOfRange(outHeatCoef, 0, height.length));
   }
 
-
   @Test
   void testCreateSystem() {
     pipe.createSystem();
@@ -67,9 +66,27 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void testSolveSteadyStateConstantFrictionFactor() {
+    testInit();
+    for (int i = 0; i < pipe.getFlowNodes().length; i++) {
+      pipe.getNode(i).setWallFrictionFactor(0, 0.00725);
+    }
+    pipe.solveSteadyState(10);
+    //System.out.println("pressure out set friction "
+  //      + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
+  }
+
+  @Test
   void testSolveSteadyState() {
     testInit();
     pipe.solveSteadyState(10);
+    for (int i = 0; i < pipe.getFlowNodes().length; i++) {
+      //System.out.println("wall friction " + pipe.getNode(i).getWallFrictionFactor(0));
+    }
+   // System.out.println("pressure out calc friction "
+    //    + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
+
+ 
     // pipe.print();
   }
 
