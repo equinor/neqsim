@@ -135,6 +135,8 @@ public abstract class onePhaseFlowNode extends FlowNode {
         volumetricFlowRate[0] = superficialVelocity[0] * pipe.getArea();
         this.updateMolarFlow();
         calcReynoldsNumber();
-        wallFrictionFactor[0] = interphaseTransportCoefficient.calcWallFrictionFactor(this);
+        if (specifiedFrictionFactor != null && specifiedFrictionFactor[0] != null) {
+          wallFrictionFactor[0] = interphaseTransportCoefficient.calcWallFrictionFactor(this);
+        }
     }
 }

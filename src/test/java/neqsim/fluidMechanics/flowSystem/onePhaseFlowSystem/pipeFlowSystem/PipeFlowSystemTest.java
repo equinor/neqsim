@@ -54,7 +54,6 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     pipe.setLegOuterHeatTransferCoefficients(Arrays.copyOfRange(outHeatCoef, 0, height.length));
   }
 
-
   @Test
   void testCreateSystem() {
     pipe.createSystem();
@@ -64,6 +63,17 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
   void testInit() {
     testCreateSystem();
     pipe.init();
+  }
+
+  @Test
+  void testSolveSteadyStateConstantFrictionFactor() {
+    testInit();
+    for (int i = 0; i < pipe.getFlowNodes().length; i++) {
+      pipe.getNode(i).setWallFrictionFactor(0, 0.02);
+    }
+    pipe.solveSteadyState(10);
+    System.out.println("pressure out "
+        + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
   }
 
   @Test
