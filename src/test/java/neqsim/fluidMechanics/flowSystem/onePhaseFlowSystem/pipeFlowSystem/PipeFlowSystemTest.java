@@ -85,6 +85,7 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     }
    // System.out.println("pressure out calc friction "
     //    + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
+
  
     // pipe.print();
   }
