@@ -72,8 +72,7 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
       pipe.getNode(i).setWallFrictionFactor(0, 0.03);
     }
     pipe.solveSteadyState(10);
-    System.out.println("pressure out set friction "
-        + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
+    //System.out.println("pressure out set friction "
   }
 
   @Test
@@ -83,8 +82,8 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     for (int i = 0; i < pipe.getFlowNodes().length; i++) {
       //System.out.println("wall friction " + pipe.getNode(i).getWallFrictionFactor(0));
     }
-    System.out.println("pressure out calc friction "
-        + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
+   // System.out.println("pressure out calc friction "
+    //    + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
  
     // pipe.print();
   }
