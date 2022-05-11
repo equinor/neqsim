@@ -5,21 +5,13 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- *
- * @author Even Solbraa
- * @version
- */
-
-/**
  * This class defines a thermodynamic system using the SRK EoS amd NRTL for liquids
+ * 
+ * @author Even Solbraa
  */
 public class SystemNRTL extends SystemEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
     public SystemNRTL() {
         super();
         modelName = "NRTL-GE-model";
@@ -64,8 +56,7 @@ public class SystemNRTL extends SystemEos {
     public SystemNRTL(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
-        numberOfPhases = 4;
-        maxNumberOfPhases = 4;
+        setNumberOfPhases(4);
         modelName = "NRTL-GE-model";
         solidPhaseCheck = solidCheck;
 

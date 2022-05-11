@@ -23,13 +23,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
      * <p>
      * Constructor for ComponentHydrateGF.
      * </p>
-     */
-    public ComponentHydrateGF() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentHydrateGF.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -49,7 +42,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
                     dataSet = database.getResultSet(
                             ("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
-                    dataSet.close();
+                    dataSet.getString("ID");
                 } catch (Exception e) {
                     logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
                     dataSet = database.getResultSet(
@@ -104,7 +97,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
             // this is the empty hydrate fugacity devited by pressure (why??)
             double solvol = getMolarVolumeHydrate(hydrateStructure, temp);
             if (hydrateStructure == -1) {
-                fugasityCoeffisient = getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
+                fugacityCoefficient = getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
                         * Math.exp(solvol / (R * temp) * (pres
                                 - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp))
                                 * 1e5)
@@ -138,7 +131,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
 
                 // System.out.println("pointing "
                 // +(Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStruct,temp))*1e5))));
-                fugasityCoeffisient = Math.exp(val)
+                fugacityCoefficient = Math.exp(val)
                         * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
                         * Math.exp(solvol / (R * temp) * (pres
                                 - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp))
@@ -150,14 +143,14 @@ public class ComponentHydrateGF extends ComponentHydrate {
                 // System.out.println("structure " + (hydrateStructure+1));
             }
         } else {
-            fugasityCoeffisient = 1e50;
+            fugacityCoefficient = 1e50;
         }
 
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
 
         // System.out.println("reading fugacity coeffiicent calculation");
 
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */
@@ -167,7 +160,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
         int stableStructure = 0;
         if (hydrateStructure == -1) {
             stableStructure = -1;
-            // fugasityCoeffisient = 1.02 *
+            // fugacityCoefficient = 1.02 *
             // getEmptyHydrateStructureVapourPressure(hydrateStructure, temp) *
             // Math.exp(getMolarVolumeHydrate(hydrateStructure, temp) / (R * temp) * (pres -
             // getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5) /
@@ -191,7 +184,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
                     + K3 * Math.pow((temp - tmi), 3));
 
             double LNFUG_ICE = LNFUG_ICEREF + (VM * 100000 * (pres - 1.0) / (R * temp));
-            fugasityCoeffisient = Math.exp(LNFUG_ICE);
+            fugacityCoefficient = Math.exp(LNFUG_ICE);
         } else {
             for (int structure = 0; structure < 2; structure++) {
                 hydrateStructure = structure;
@@ -228,7 +221,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
                      */
                     // System.out.println("pointing "
                     // +(Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStruct,temp))*1e5))));
-                    fugasityCoeffisient = Math.exp(val)
+                    fugacityCoefficient = Math.exp(val)
                             * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
                             * Math.exp(solvol / (R * temp)
                                     * (pres - getEmptyHydrateStructureVapourPressure(
@@ -239,24 +232,21 @@ public class ComponentHydrateGF extends ComponentHydrate {
                     // (hydrateStruct+1));
 
                     // System.out.println("structure " + (hydrateStructure+1));
-                    if (fugasityCoeffisient < maxFug) {
-                        maxFug = fugasityCoeffisient;
+                    if (fugacityCoefficient < maxFug) {
+                        maxFug = fugacityCoefficient;
                         stableStructure = hydrateStructure;
                     }
                 } else {
-                    fugasityCoeffisient = 1e50;
+                    fugacityCoefficient = 1e50;
                 }
             }
-            fugasityCoeffisient = maxFug;
+            fugacityCoefficient = maxFug;
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
         hydrateStructure = stableStructure;
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
-    // public int getHydrateStructure() {
-    // return this.getHydrateStructure();
-    // }
     /** {@inheritDoc} */
     @Override
     public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {

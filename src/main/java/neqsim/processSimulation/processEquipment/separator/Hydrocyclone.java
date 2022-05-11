@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.separator;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -22,15 +21,16 @@ public class Hydrocyclone extends Separator {
     double overflowPressure = 1.0;
     double separationEfficiency = 0.9;
     double oilInAqueous = 100e-6;
-    StreamInterface waterOutStream = new Stream(waterSystem);
+    StreamInterface waterOutStream = new Stream("waterOutStream", waterSystem);
 
     /**
      * <p>
      * Constructor for Hydrocyclone.
      * </p>
      */
+    @Deprecated
     public Hydrocyclone() {
-        super();
+        this("Hydrocyclone");
     }
 
     /**
@@ -41,9 +41,18 @@ public class Hydrocyclone extends Separator {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Hydrocyclone(StreamInterface inletStream) {
-        this();
-        addStream(inletStream);
+        this("Hydrocyclone", inletStream);
+    }
+
+    /**
+     * Constructor for Hydrocyclone.
+     * 
+     * @param name
+     */
+    public Hydrocyclone(String name) {
+        super(name);
     }
 
     /**
@@ -56,9 +65,7 @@ public class Hydrocyclone extends Separator {
      *        object
      */
     public Hydrocyclone(String name, StreamInterface inletStream) {
-        this();
-        setName(name);
-        addStream(inletStream);
+        super(name, inletStream);
     }
 
     /** {@inheritDoc} */
@@ -66,9 +73,9 @@ public class Hydrocyclone extends Separator {
     public void setInletStream(StreamInterface inletStream) {
         super.setInletStream(inletStream);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         waterSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-        waterOutStream = new Stream(waterSystem);
+        waterOutStream = new Stream("waterOutStream", waterSystem);
     }
 
     /**
@@ -97,15 +104,16 @@ public class Hydrocyclone extends Separator {
     @Override
     public void run() {
         inletStreamMixer.run();
-        thermoSystem = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
+        thermoSystem = inletStreamMixer.getOutStream().getThermoSystem().clone();
 
-        double oilInWaterIn = 0.0001;// thermoSystem.getPhase("aqueous").getOilMolarConcentration();
-        double oilInWaterOut = 0.0;
+        // double oilInWaterIn = 0.0001; //
+        // thermoSystem.getPhase("aqueous").getOilMolarConcentration();
+        // double oilInWaterOut = 0.0;
         double inPressure = thermoSystem.getPressure("bara");
         underflowPressure = inPressure / 2.0;
         overflowPressure = inPressure + (inPressure - underflowPressure) / 1.0 / PDR;
         separationEfficiency = 0.9;
-        oilInWaterOut = oilInWaterIn * separationEfficiency;
+        // oilInWaterOut = oilInWaterIn * separationEfficiency;
 
         thermoSystem.setMultiPhaseCheck(true);
         thermoSystem.setPressure(underflowPressure);
@@ -124,8 +132,8 @@ public class Hydrocyclone extends Separator {
             gasOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
         }
         // //gasOutStream.run();
-        //
-        //// liquidSystem = (SystemInterface) thermoSystem.phaseToSystem(1);
+
+        //// liquidSystem = thermoSystem.phaseToSystem(1);
         //// liquidOutStream.setThermoSystem(liquidSystem);
         if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
             liquidOutStream.setThermoSystemFromPhase(thermoSystem, "liquid");
@@ -146,14 +154,6 @@ public class Hydrocyclone extends Separator {
 
     /** {@inheritDoc} */
     @Override
-    public String getName() {
-        return name;
+    public void runTransient(double dt) {
     }
-
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
 }

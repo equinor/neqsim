@@ -10,14 +10,18 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestMassTransfer class.</p>
+ * <p>
+ * TestMassTransfer class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class TestMassTransfer {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -39,7 +43,7 @@ public class TestMassTransfer {
                 function.setInitialGuess(guess);
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
-                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
                 double vappres = Double.parseDouble(dataSet.getString("VapourPressure"));
                 double standardDeviation1[] = {0.15};
                 SampleValue sample = new SampleValue(Math.log(vappres),

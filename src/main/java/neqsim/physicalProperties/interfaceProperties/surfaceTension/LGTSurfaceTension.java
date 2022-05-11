@@ -1,8 +1,3 @@
-/*
- * GasLiquidSurfaceTension.java
- *
- * Created on 13. august 2001, 13:14
- */
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
 import neqsim.thermo.system.SystemInterface;
@@ -50,12 +45,11 @@ public class LGTSurfaceTension extends SurfaceTension {
     @Override
     public double calcSurfaceTension(int interface1, int interface2) {
         double surdenstemp = 0.0;
-        localSystem = (SystemInterface) system.clone();
+        localSystem = system.clone();
 
         int referenceComponentNumber = getComponentWithHighestBoilingpoint();
-        double influenceParamReferenceComponent = localSystem.getPhase(0)
-                .getComponent(referenceComponentNumber)
-                .getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
+        // double influenceParamReferenceComponent =
+        // localSystem.getPhase(0).getComponent(referenceComponentNumber).getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
         double pressure_equi = 1e5 * system.getPressure();
 
         den_interface = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()];
@@ -70,8 +64,8 @@ public class LGTSurfaceTension extends SurfaceTension {
                 .getNumberOfComponents()][localSystem.getPhase(0).getNumberOfComponents()];
 
         double[][] mu_inter = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()];
-        double[][][] dmudn_equi = new double[ite_step][localSystem.getPhase(0)
-                .getNumberOfComponents()][localSystem.getPhase(0).getNumberOfComponents()];
+        // double[][][] dmudn_equi = new
+        // double[ite_step][localSystem.getPhase(0).getNumberOfComponents()][localSystem.getPhase(0).getNumberOfComponents()];
 
         double[] mu_times_den = new double[ite_step];
         z_step = new double[ite_step];
@@ -120,10 +114,6 @@ public class LGTSurfaceTension extends SurfaceTension {
                 del_den_interface_old[i] = 0.0;
             }
 
-            double err = 1.0;
-            int iterations = 0;
-
-            iterations++;
             for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
                 den_interface[j][i] = den_interface[j - 1][i] + del_den_interface[i];
                 localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
@@ -147,7 +137,6 @@ public class LGTSurfaceTension extends SurfaceTension {
             pressure_interface[j] = 1e5 * localSystem.getPhase(0).getPressure();
 
             mu_times_den[j] = 0.0;
-            int ii = 0;
             double kappa = 0.0, kappai = 0.0, kappak = 0.0;
             double interact = 1.0;
             for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -159,11 +148,9 @@ public class LGTSurfaceTension extends SurfaceTension {
                     kappai = 1.0;
                 } else {
                     kappai = del_den_interface[i] / del_den_interface[referenceComponentNumber];
-                    ii++;
                 }
 
                 mu_times_den[j] += den_interface[j][i] * (mu_inter[j][i] - mu_equi[i]);
-                int kk = 0;
                 for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
                     if ((localSystem.getPhase(0).getComponent(i).getName().equals("water")
                             || localSystem.getPhase(0).getComponent(k).getName().equals("water"))
@@ -187,7 +174,6 @@ public class LGTSurfaceTension extends SurfaceTension {
                         kappak = 1.0;
                     } else {
                         kappak = del_den_interface[k] / del_den_interface[referenceComponentNumber];
-                        kk++;
                     }
 
                     kappa += Math.sqrt(infli * inflk) * kappai * kappak * (1.0 - interact);

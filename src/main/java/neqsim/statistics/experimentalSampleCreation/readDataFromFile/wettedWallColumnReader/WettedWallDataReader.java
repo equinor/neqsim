@@ -7,7 +7,6 @@ package neqsim.statistics.experimentalSampleCreation.readDataFromFile.wettedWall
 
 import java.io.RandomAccessFile;
 import java.util.StringTokenizer;
-
 import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
 
 /**
@@ -41,7 +40,6 @@ public class WettedWallDataReader extends DataReader {
     @Override
     public void readData() {
         StringTokenizer tokenizer;
-        String token;
         int k = 0;
         String path = "c:/logdata/" + this.fileName + ".log";
         System.out.println(path);
@@ -80,9 +78,7 @@ public class WettedWallDataReader extends DataReader {
                 filepointer = file.getFilePointer();
                 tokenizer.nextToken();
                 sampleObjectList.add(dataObject);
-            }
-
-            while (filepointer < length);
+            } while (filepointer < length);
         } catch (Exception e) {
             String err = e.toString();
             System.out.println(err);

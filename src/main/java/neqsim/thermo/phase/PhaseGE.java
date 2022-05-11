@@ -54,8 +54,11 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
      * @param phase a int
      */
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-            int numberOfComponents, int type, int phase) { // type = 0 start init type =1 gi nye
-                                                           // betingelser
+            int numberOfComponents, int type, int phase) {
+        if (totalNumberOfMoles <= 0) {
+          new neqsim.util.exception.InvalidInputException(this, "init", "totalNumberOfMoles",
+              "must be larger than zero.");
+        }
         for (int i = 0; i < numberOfComponents; i++) {
             componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type);
         }
@@ -314,7 +317,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     /**
      * {@inheritDoc}
      *
-     * method to get density of a phase note: at the moment return density of water (997 kg/m3)
+     * note: at the moment return density of water (997 kg/m3)
      */
     @Override
     public double getDensity() {

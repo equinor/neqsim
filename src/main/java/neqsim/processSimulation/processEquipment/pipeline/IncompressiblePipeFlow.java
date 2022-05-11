@@ -1,13 +1,7 @@
-/*
- * Heater.java
- *
- * Created on 15. mars 2001, 14:17
- */
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -30,7 +24,10 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
      * Constructor for IncompressiblePipeFlow.
      * </p>
      */
-    public IncompressiblePipeFlow() {}
+    @Deprecated
+    public IncompressiblePipeFlow() {
+        super("IncompressiblePipeFlow");
+    }
 
     /**
      * <p>
@@ -40,8 +37,28 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public IncompressiblePipeFlow(StreamInterface inStream) {
-        super(inStream);
+        this("IncompressiblePipeFlow", inStream);
+    }
+
+    /**
+     * Constructor for IncompressiblePipeFlow.
+     * 
+     * @param name
+     */
+    public IncompressiblePipeFlow(String name) {
+        super(name);
+    }
+
+    /**
+     * * Constructor for IncompressiblePipeFlow.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public IncompressiblePipeFlow(String name, StreamInterface inStream) {
+        super(name, inStream);
     }
 
     /**
@@ -107,7 +124,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         // system.setMultiPhaseCheck(true);
         if (setTemperature) {
             system.setTemperature(this.temperatureOut);

@@ -1,11 +1,5 @@
-/*
- * Heater.java
- *
- * Created on 15. mars 2001, 14:17
- */
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -30,18 +24,41 @@ public class NeqHeater extends Heater {
      * Constructor for NeqHeater.
      * </p>
      */
-    public NeqHeater() {}
+    @Deprecated
+    public NeqHeater() {
+        this("NeqHeater");
+    }
 
     /**
      * <p>
      * Constructor for NeqHeater.
      * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public NeqHeater(Stream inStream) {
-        this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+    @Deprecated
+    public NeqHeater(StreamInterface inStream) {
+        this("NeqHeater", inStream);
+    }
+
+    /**
+     * Constructor for NeqHeater.
+     * 
+     * @param name
+     */
+    public NeqHeater(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for NeqHeater.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public NeqHeater(String name, StreamInterface inStream) {
+        super(name, inStream);
     }
 
     /** {@inheritDoc} */
@@ -60,7 +77,7 @@ public class NeqHeater extends Heater {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         double oldH = system.getEnthalpy();
         if (setTemperature) {
             system.setTemperature(temperatureOut);

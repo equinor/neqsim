@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
@@ -17,24 +12,6 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentSrkCPAs extends ComponentSrkCPA {
     private static final long serialVersionUID = 1000;
-
-    /**
-     * <p>
-     * Constructor for ComponentSrkCPAs.
-     * </p>
-     */
-    public ComponentSrkCPAs() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentSrkCPAs.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentSrkCPAs(double moles) {
-        super(moles);
-    }
 
     /**
      * <p>

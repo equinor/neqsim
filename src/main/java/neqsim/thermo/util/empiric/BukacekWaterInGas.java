@@ -27,9 +27,9 @@ public class BukacekWaterInGas {
 		
 		double mgwaterSm3 = 761900.42*psw/pressure + 16.016*Math.pow(10.0, -1716.26/(temperature) + 6.69449);
 	
-		double molarMassGas = 0.6*28.0*1000.0; //mgr/mol
+		double molarMassGas = 0.6*28.0*1000.0; // mgr/mol
 		
-		double ans = mgwaterSm3/molarMassGas;  //mol water /Sm3 gas
+		double ans = mgwaterSm3/molarMassGas;  // mol water /Sm3 gas
 		
 		double molgasSm3 = 101325.0/(8.314*288.15); // mol gas/ Sm3
 	

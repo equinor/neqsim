@@ -43,13 +43,6 @@ public class ComponentHydrate extends Component {
      * <p>
      * Constructor for ComponentHydrate.
      * </p>
-     */
-    public ComponentHydrate() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentHydrate.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -91,7 +84,6 @@ public class ComponentHydrate extends Component {
                     } else {
                         dataSet = database.getResultSet(
                                 ("SELECT * FROM comp WHERE name='" + component_name + "'"));
-
                     }
                     dataSet.next();
                     dataSet.getString("FORMULA");
@@ -177,7 +169,7 @@ public class ComponentHydrate extends Component {
      */
     public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         if (componentName.equals("water")) {
-            fugasityCoeffisient = -1e50;
+            fugacityCoefficient = -1e50;
             double val = 1.0;
             double tempy = 1.0;
             double fugold = 0.0;
@@ -185,7 +177,7 @@ public class ComponentHydrate extends Component {
             do {
                 val = 0;
                 tempy = 0.0;
-                fugold = fugasityCoeffisient;
+                fugold = fugacityCoefficient;
                 if (hydrateStructure >= 0) {
                     for (int cavType = 0; cavType < 2; cavType++) {
                         tempy = 0.0;
@@ -200,9 +192,9 @@ public class ComponentHydrate extends Component {
                     }
                 }
                 // System.out.println("val " +(val));
-                // System.out.println("fugasityCoeffisient bef " + fugasityCoeffisient);
+                // System.out.println("fugacityCoefficient bef " + fugacityCoefficient);
                 double solvol = 1.0 / 906.0 * getMolarMass();
-                fugasityCoeffisient = Math.exp(val)
+                fugacityCoefficient = Math.exp(val)
                         * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
                         * Math.exp(solvol / (R * temp) * ((pres
                                 - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)))
@@ -211,20 +203,20 @@ public class ComponentHydrate extends Component {
                 // System.out.println("struct " + hydrateStruct + " fug " + tempfugcoef + " val
                 // "+ val);
 
-                // fugasityCoeffisient =
+                // fugacityCoefficient =
                 // Math.exp(val)*getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)*Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)))*1e5)/pres;
-                // fugasityCoeffisient = getAntoineVaporPressure(temp)/pres;
-                // logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-                // logFugasityCoeffisient += val*boltzmannConstant/R;
-                // fugasityCoeffisient = Math.exp(logFugasityCoeffisient);
-                // System.out.println("fugasityCoeffisient " + fugasityCoeffisient);
-            } while (Math.abs((fugasityCoeffisient - fugold) / fugold) > 1e-6);
+                // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
+                // logFugacityCoefficient = Math.log(fugacityCoefficient);
+                // logFugacityCoefficient += val*boltzmannConstant/R;
+                // fugacityCoefficient = Math.exp(logFugacityCoefficient);
+                // System.out.println("fugacityCoefficient " + fugacityCoefficient);
+            } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-6);
         } else {
-            fugasityCoeffisient = 1e5;
+            fugacityCoefficient = 1e5;
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        // System.out.println("fug " + fugasityCoeffisient);
-        return fugasityCoeffisient;
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        // System.out.println("fug " + fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /**
@@ -289,17 +281,14 @@ public class ComponentHydrate extends Component {
     public double calcChemPotEmpty(PhaseInterface phase, int numberOfComps, double temp,
             double pres, int hydrateStruct) {
         double dGf = 0.0, dHf = 0.0, Cpa = getCpA(), Cpb = getCpB(), Cpc = getCpC(), Cpd = getCpD();
-        double molarvolume = 1.0 / (55493.0);// *0.9);
         double deltaMolarVolume = 0.0;
         if (hydrateStruct == 1) {
             dGf = getDGfHydrate()[1];
             dHf = getDHfHydrate()[1];
-            molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 5.0e-6;
         } else {
             dGf = getDGfHydrate()[0];
             dHf = getDHfHydrate()[0];
-            molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 4.6e-6;
         }
         double T0 = 298.15;
@@ -676,7 +665,7 @@ public class ComponentHydrate extends Component {
     // } else dfugdt=0;
     // return dfugdt;
     // }
-    //
+
     // public double getEmptyHydrateStructureVapourPressure2(int type, double
     // temperature){
     // double par1_struc1=4.6477;
@@ -691,10 +680,10 @@ public class ComponentHydrate extends Component {
     // return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
     // } else return 0.0;
     // }
-    //
+
     // public double getEmptyHydrateStructureVapourPressure(int type, double
     // temperature){
-    //
+
     // if(type==0){
     // return Math.exp(par1_struc1+par2_struc1/temperature)*1.01325;
     // }
@@ -702,10 +691,10 @@ public class ComponentHydrate extends Component {
     // return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
     // } else return 0.0;
     // }
-    //
+
     // public double getEmptyHydrateStructureVapourPressuredT(int type, double
     // temperature){
-    //
+
     // if(type==0){
     // return
     // -par2_struc1/(temperature*temperature)*Math.exp(par1_struc1+par2_struc1/temperature);

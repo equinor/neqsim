@@ -6,7 +6,6 @@
 package neqsim.processSimulation.processEquipment.mixer;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -19,10 +18,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface MixerInterface extends ProcessEquipmentInterface {
-    /** {@inheritDoc} */
-    @Override
-    public void run();
-
     /**
      * <p>
      * addStream.
@@ -40,11 +35,7 @@ public interface MixerInterface extends ProcessEquipmentInterface {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getOutStream();
-
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name);
+    public StreamInterface getOutStream();
 
     /**
      * <p>
@@ -59,16 +50,5 @@ public interface MixerInterface extends ProcessEquipmentInterface {
 
     /** {@inheritDoc} */
     @Override
-    public String getName();
-
-    /** {@inheritDoc} */
-    @Override
     public SystemInterface getThermoSystem();
-
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient();
 }

@@ -1,8 +1,3 @@
-/*
- * FrictionFactorInterface.java
- *
- * Created on 12. juni 2001, 19:57
- */
 package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient;
 
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;

@@ -17,13 +17,6 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
      * <p>
      * Constructor for ComponentGENRTLmodifiedWS.
      * </p>
-     */
-    public ComponentGENRTLmodifiedWS() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGENRTLmodifiedWS.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -74,6 +67,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
      * @param mixRule an array of {@link java.lang.String} objects
      * @return a double
      */
+    @SuppressWarnings("unused")
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] WSalpha, double[][] WSgij, double[][] WSgijT,
             double[][] intparam, String[][] mixRule) {

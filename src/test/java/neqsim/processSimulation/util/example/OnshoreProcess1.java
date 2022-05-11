@@ -243,7 +243,8 @@ public class OnshoreProcess1 {
             stream_2.setName("Gas From Snohvit Reservoir");
 
             StreamInterface MEGstream_1 = new Stream("MEG Stream1", testSystem3);
-            StreamInterface snohvitFormationWaterStream = new Stream(snohvitFormationWater);
+            StreamInterface snohvitFormationWaterStream =
+                    new Stream("snohvitFormationWaterStream", snohvitFormationWater);
 
             Mixer MEGmixer1 = new Mixer("MEG Mixer 1");
             MEGmixer1.addStream(stream_2);
@@ -278,10 +279,10 @@ public class OnshoreProcess1 {
             waterAnalyser3.setName("Total Water Analyser");
 
             // Pipeline
-            SimpleTPoutPipeline pipeLine1 = new SimpleTPoutPipeline(mixer1.getOutStream());
+            SimpleTPoutPipeline pipeLine1 =
+                    new SimpleTPoutPipeline("snohvit pipeline", mixer1.getOutStream());
             pipeLine1.setOutPressure(55.0);
             pipeLine1.setOutTemperature(273.15 + 5.0);
-            pipeLine1.setName("snohvit pipeline");
             pipeLine1.setNumberOfLegs(1);
             pipeLine1.setPipeDiameters(new double[] {1.2, 1.2});
             pipeLine1.setLegPositions(new double[] {0, 150000.0});
@@ -291,12 +292,13 @@ public class OnshoreProcess1 {
             // IronIonSaturationStream(pipeLine1.getOutStream());
 
             // // Land plant
-            ThreePhaseSeparator slugCatcher = new ThreePhaseSeparator(pipeLine1.getOutStream());
+            ThreePhaseSeparator slugCatcher =
+                    new ThreePhaseSeparator("slugCatcher", pipeLine1.getOutStream());
 
             VolumeFlowTransmitter volumeTransmitter2 =
                     new VolumeFlowTransmitter(slugCatcher.getOilOutStream());
             volumeTransmitter2.setMeasuredPhaseNumber(0);
-            volumeTransmitter2.setName("Condesate Volume Flow From Slug Catcher");
+            volumeTransmitter2.setName("Condensate Volume Flow From Slug Catcher");
 
             VolumeFlowTransmitter volumeTransmitter1 =
                     new VolumeFlowTransmitter(slugCatcher.getWaterOutStream());
@@ -311,16 +313,17 @@ public class OnshoreProcess1 {
             // Stream stream_5 = new Stream(slugCatcher.getWaterOutStream());
             // stream_5.setName("MEG stream from slugcatcher");
 
-            Heater condesateheater1 = new Heater(slugCatcher.getOilOutStream());
-            condesateheater1.setName("Condesate heater1");
-            condesateheater1.setdT(23.4);
+            Heater condensateheater1 =
+                    new Heater("Condensate heater1", slugCatcher.getOilOutStream());
+            condensateheater1.setdT(23.4);
 
             // Heater gasHeater = new Heater(slugCatcher.getGasOutStream());
             // gasHeater.setName("Gas heater after slugcatcher");
             // gasHeater.setdT(30.0);
 
             ThreePhaseSeparator condensateSeparator =
-                    new ThreePhaseSeparator(condesateheater1.getOutStream());
+                    new ThreePhaseSeparator("condensateSeparator",
+                            condensateheater1.getOutStream());
 
             // Heater MEGheater1 = new Heater(stream_5);
             // MEGheater1.setName("MEG heater1");
@@ -396,7 +399,7 @@ public class OnshoreProcess1 {
             operations.add(pipeLine1);
             ////// operations.add(ironSatStream);
             operations.add(slugCatcher);
-            operations.add(condesateheater1);
+            operations.add(condensateheater1);
             // operations.add(gasHeater);
             operations.add(condensateSeparator);
             // operations.add(stream_5);
@@ -449,7 +452,7 @@ public class OnshoreProcess1 {
                                     .getComponent("water").getx()
                             * 3600.0
                     + " kg/hr");
-            System.out.println("kg water in condesate phase from slug catcher "
+            System.out.println("kg water in condensate phase from slug catcher "
                     + slugCatcher.getOilOutStream().getThermoSystem().getTotalNumberOfMoles()
                             * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0)
                                     .getComponent("water").getMolarMass()
@@ -475,7 +478,7 @@ public class OnshoreProcess1 {
                                     .getComponent("MEG").getx()
                             * 3600.0
                     + " kg/hr");
-            System.out.println("kg MEG in condesate phase from slug catcher "
+            System.out.println("kg MEG in condensate phase from slug catcher "
                     + slugCatcher.getOilOutStream().getThermoSystem().getTotalNumberOfMoles()
                             * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0)
                                     .getComponent("MEG").getMolarMass()

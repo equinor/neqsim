@@ -12,8 +12,6 @@ import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.Stratifi
  * @version $Id: $Id
  */
 public class FlowNodeSelector {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for FlowNodeSelector.

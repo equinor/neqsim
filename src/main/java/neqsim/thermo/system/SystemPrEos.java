@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
@@ -10,12 +5,9 @@ import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- *
- * @author Even Solbraa
- * @version
- */
-/**
  * This class defines a thermodynamic system using the Peng Robinson equation of state
+ * 
+ * @author Even Solbraa
  */
 public class SystemPrEos extends SystemEos {
     private static final long serialVersionUID = 1000;
@@ -65,9 +57,8 @@ public class SystemPrEos extends SystemEos {
     public SystemPrEos(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 1;
-        numberOfPhases = 5;
+        setNumberOfPhases(5);
         modelName = "PR-EOS";
-        maxNumberOfPhases = 5;
         solidPhaseCheck = solidCheck;
 
         for (int i = 0; i < numberOfPhases; i++) {

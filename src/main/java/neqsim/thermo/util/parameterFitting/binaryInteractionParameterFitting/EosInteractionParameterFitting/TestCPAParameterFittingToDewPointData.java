@@ -20,7 +20,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class TestCPAParameterFittingToDewPointData {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCPAParameterFittingToDewPointData.class);
 
     /**
@@ -71,7 +70,7 @@ public class TestCPAParameterFittingToDewPointData {
                 testSystem.setMixingRule(8);
 
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
 
                 double standardDeviation1[] = {0.13};
                 SampleValue sample = new SampleValue(testSystem.getTemperature(), 1.0, sample1,

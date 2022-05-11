@@ -12,8 +12,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class DifferentialLiberation extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
     double VoilStd = 0.0;
     double[] relativeVolume = null;
     double[] totalVolume = null, liquidVolumeRelativeToVsat = null, liquidVolume = null;

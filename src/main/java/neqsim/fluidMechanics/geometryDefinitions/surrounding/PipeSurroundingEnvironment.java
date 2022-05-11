@@ -9,8 +9,6 @@ package neqsim.fluidMechanics.geometryDefinitions.surrounding;
  * @version $Id: $Id
  */
 public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for PipeSurroundingEnvironment.

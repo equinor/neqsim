@@ -94,17 +94,17 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
                     do {
                         yold = system.getPhases()[0].getComponents()[i].getx();
                         if (!Double.isNaN(Math.exp(Math.log(
-                                system.getPhases()[1].getComponents()[i].getFugasityCoeffisient())
+                                system.getPhases()[1].getComponents()[i].getFugacityCoefficient())
                                 - Math.log(system.getPhases()[0].getComponents()[i]
-                                        .getFugasityCoeffisient())))) {
+                                        .getFugacityCoefficient())))) {
                             if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
                                 system.getPhases()[0].getComponents()[i].setK(1e-40);
                             } else {
                                 system.getPhases()[0].getComponents()[i].setK(Math.exp(Math
                                         .log(system.getPhases()[1].getComponents()[i]
-                                                .getFugasityCoeffisient())
+                                                .getFugacityCoefficient())
                                         - Math.log(system.getPhases()[0].getComponents()[i]
-                                                .getFugasityCoeffisient())));
+                                                .getFugacityCoefficient())));
                             }
                         }
                         system.getPhases()[1].getComponents()[i]
@@ -174,7 +174,6 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
                 }
                 // logger.info("iter in bub calc " + iterations + " pres " +
                 // system.getPressure()+ " ytot " + ytotal + " chem iter " + chemIter);
-
             } while (((((Math.abs(ytotal - 1.0)) > 1e-7)
                     || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-6)
                     && (iterations < maxNumberOfIterations)) || iterations < 5);
@@ -187,7 +186,6 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
             }
             // logger.info("iter in bub calc " + iterations + " pres " +
             // system.getPressure()+ " chem iter " + chemIter);
-
         } while ((Math.abs(oldChemPres - system.getPressure()) / oldChemPres > 1e-6 || chemIter < 2
                 || !chemSolved) && chemIter < 20);
         // if(system.getPressure()>300) system.setPressure(300.0);

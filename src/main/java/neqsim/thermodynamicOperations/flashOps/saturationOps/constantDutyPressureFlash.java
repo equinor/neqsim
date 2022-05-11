@@ -41,8 +41,10 @@ public class constantDutyPressureFlash extends constantDutyFlash {
             system.getChemicalReactionOperations().solveChemEq(0);
         }
 
-        int iterations = 0, maxNumberOfIterations = 10000;
-        double yold = 0, ytotal = 1, deriv = 0, funk = 0, dkidp = 0, dyidp = 0, dxidp = 0, Pold = 0;
+        int iterations = 0;
+        // int maxNumberOfIterations = 10000;
+        // double yold = 0, ytotal = 1;
+        double deriv = 0, funk = 0, dkidp = 0, dyidp = 0, dxidp = 0, Pold = 0;
 
         do {
             // system.setBeta(beta+0.65);
@@ -50,9 +52,9 @@ public class constantDutyPressureFlash extends constantDutyFlash {
             iterations++;
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 system.getPhases()[0].getComponents()[i]
-                        .setK(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
+                        .setK(system.getPhases()[1].getComponents()[i].getFugacityCoefficient()
                                 / system.getPhases()[0].getComponents()[i]
-                                        .getFugasityCoeffisient());
+                                        .getFugacityCoefficient());
                 system.getPhases()[1].getComponents()[i]
                         .setK(system.getPhases()[0].getComponents()[i].getK());
             }
@@ -86,7 +88,6 @@ public class constantDutyPressureFlash extends constantDutyFlash {
             system.setPressure(pres);
         } while ((Math.abs((system.getPressure() - Pold) / system.getPressure()) > 1e-10
                 && iterations < 300) || iterations < 3);
-
     }
 
     /** {@inheritDoc} */

@@ -1,8 +1,3 @@
-/*
- * staticMixer.java
- *
- * Created on 11. mars 2001, 01:49
- */
 package neqsim.processSimulation.processEquipment.util;
 
 import org.apache.logging.log4j.LogManager;
@@ -35,7 +30,10 @@ public class SetPoint extends ProcessEquipmentBaseClass {
      * Constructor for SetPoint.
      * </p>
      */
-    public SetPoint() {}
+    @Deprecated
+    public SetPoint() {
+        this("SetPoint");
+    }
 
     /**
      * <p>
@@ -62,6 +60,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
      */
     public SetPoint(String name, ProcessEquipmentInterface targetEquipment, String targetVariable,
             ProcessEquipmentInterface sourceEquipment) {
+        this(name);
         this.targetEquipment = targetEquipment;
         this.targetVariable = targetVariable;
         this.sourceEquipment = sourceEquipment;
@@ -173,12 +172,9 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         this.targetComponent = targetComponent;
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
         run();
     }
 

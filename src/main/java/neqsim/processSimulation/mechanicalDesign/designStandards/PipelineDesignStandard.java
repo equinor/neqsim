@@ -27,8 +27,8 @@ public class PipelineDesignStandard extends DesignStandard {
     public PipelineDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
 
-        double wallT = 0;
-        double maxAllowableStress = equipment.getMaterialDesignStandard().getDivisionClass();
+        // double wallT = 0;
+        // double maxAllowableStress = equipment.getMaterialDesignStandard().getDivisionClass();
         // double jointEfficiency =
         // equipment.getJointEfficiencyStandard().getJEFactor();
 

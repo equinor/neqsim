@@ -1,8 +1,3 @@
-/*
- * Heater.java
- *
- * Created on 15. mars 2001, 14:17
- */
 package neqsim.processSimulation.processEquipment.absorber;
 
 import java.awt.Container;
@@ -14,7 +9,6 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -35,12 +29,12 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
     protected double pressure = 0;
     protected int numberOfInputStreams = 0;
-    protected Stream mixedStream;
-    protected Stream gasInStream;
-    protected Stream solventInStream;
-    private Stream gasOutStream;
-    private Stream solventOutStream;
-    protected Stream outStream;
+    protected StreamInterface mixedStream;
+    protected StreamInterface gasInStream;
+    protected StreamInterface solventInStream;
+    private StreamInterface gasOutStream;
+    private StreamInterface solventOutStream;
+    protected StreamInterface outStream;
     private double kwater = 1e-4;
     int solventStreamNumber = 0;
 
@@ -49,8 +43,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      * Constructor for SimpleTEGAbsorber.
      * </p>
      */
+    @Deprecated
     public SimpleTEGAbsorber() {
-        mechanicalDesign = new AbsorberMechanicalDesign(this);
     }
 
     /**
@@ -61,9 +55,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      * @param name a {@link java.lang.String} object
      */
     public SimpleTEGAbsorber(String name) {
-        super();
-        setName(name);
-        mechanicalDesign = new AbsorberMechanicalDesign(this);
+        super(name);
     }
 
     /** {@inheritDoc} */
@@ -206,7 +198,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
             enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-            // System.out.println("total enthalpy k : " + ((SystemInterface)
+            // System.out.println("total enthalpy k : " + (
             // ((StreamInterface) streams.get(k)).getThermoSystem()).getEnthalpy());
         }
         // System.out.println("total enthalpy of streams: " + enthalpy);
@@ -215,7 +207,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
 
     /** {@inheritDoc} */
     @Override
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return mixedStream;
     }
 
@@ -226,13 +218,13 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getInStream() {
+    public StreamInterface getInStream() {
         return gasInStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
@@ -243,25 +235,26 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getGasInStream() {
+    public StreamInterface getGasInStream() {
         return gasInStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return solventOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getSolventInStream() {
+    public StreamInterface getSolventInStream() {
         return solventInStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {
+    }
 
     /**
      * <p>
@@ -291,12 +284,12 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
         // double xrel =
         // mixedStream.getFluid().getPhase(0).getComponent("water").getx()/solventInStream.getFluid().getPhase(0).getComponent("water").getx();
         // double y0 =
-        // xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugasityCoefficient()*mixedStream.getFluid().getPressure());
+        // xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugacityCoefficient()*mixedStream.getFluid().getPressure());
         double fugCoefRef = mixedStream.getThermoSystem().getPhase(1).getComponent("water")
-                .getFugasityCoefficient();
+                .getFugacityCoefficient();
         double y0 = solventInStream.getFluid().getPhase(0).getComponent("water").getx() * fugCoefRef
                 / (mixedStream.getThermoSystem().getPhase(0).getComponent("water")
-                        .getFugasityCoefficient());
+                        .getFugacityCoefficient());
         return y0;
     }
 
@@ -332,11 +325,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     @Override
     public void run() {
         try {
-            double y0 = 0.0, y1 = 0.0,
-                    yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
+            double y0 = 0.0, y1 = 0.0;
+            // double yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
             double absorptionEffiency = 0.0;
-            mixedStream
-                    .setThermoSystem(((SystemInterface) streams.get(0).getThermoSystem().clone()));
+            mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
             mixedStream.getThermoSystem().setNumberOfPhases(2);
             mixedStream.getThermoSystem().reInitPhaseType();
             mixedStream.getThermoSystem().init(0);
@@ -375,7 +367,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
             // mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase());
             // System.out.println("total moles water " +
             // mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles());
-            Stream stream = (Stream) mixedStream.clone();
+            StreamInterface stream = mixedStream.clone();
             stream.setName("test");
             stream.getThermoSystem().addComponent("water", -molesWaterToMove, 0);
             stream.getThermoSystem().addComponent("water", molesWaterToMove, 1);
@@ -386,14 +378,14 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
 
             // stream.getThermoSystem().display();
 
-            SystemInterface tempSystem = (SystemInterface) mixedStream.getThermoSystem().clone();
+            SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
             SystemInterface gasTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[0]);
             gasTemp.init(2);
             gasOutStream.setThermoSystem(gasTemp);
             // System.out.println("gas total number of water " +
             // gasOutStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
 
-            tempSystem = (SystemInterface) mixedStream.getThermoSystem().clone();
+            tempSystem = mixedStream.getThermoSystem().clone();
             SystemInterface liqTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[1]);
             liqTemp.init(2);
             solventOutStream.setThermoSystem(liqTemp);
@@ -404,20 +396,20 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
                     gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx(), yMean));
             // System.out.println("NTU " + getNTU());
 
-            double Ks = 0.055;
+            // double Ks = 0.055;
             getSolventOutStream().getThermoSystem().initPhysicalProperties();
             getGasOutStream().getThermoSystem().initPhysicalProperties();
-            double vtemp = Ks * Math.sqrt((getSolventOutStream().getThermoSystem().getPhase(0)
-                    .getPhysicalProperties().getDensity()
-                    - getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties()
-                            .getDensity())
-                    / getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties()
-                            .getDensity());
-            double d = Math.sqrt(4.0 * getGasOutStream().getMolarRate()
-                    * getGasOutStream().getThermoSystem().getPhase(0).getMolarMass()
-                    / getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties()
-                            .getDensity()
-                    / 3.14 / vtemp);
+
+            // double vtemp = Ks * Math.sqrt((getSolventOutStream().getThermoSystem().getPhase(0)
+            // .getPhysicalProperties().getDensity() -
+            // getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties()
+            // .getDensity()) /
+            // getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
+
+            // double d = Math.sqrt(4.0 * getGasOutStream().getMolarRate() *
+            // getGasOutStream().getThermoSystem().getPhase(0).getMolarMass() /
+            // getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties()
+            // .getDensity()/ 3.14 / vtemp);
             // System.out.println("diameter " + d);
         } catch (Exception e) {
             e.printStackTrace();
@@ -553,7 +545,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      *
      * @param gasOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public void setGasOutStream(Stream gasOutStream) {
+    public void setGasOutStream(StreamInterface gasOutStream) {
         this.gasOutStream = gasOutStream;
     }
 
@@ -564,7 +556,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getSolventOutStream() {
+    public StreamInterface getSolventOutStream() {
         return solventOutStream;
     }
 
@@ -573,10 +565,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
      * Setter for the field <code>solventOutStream</code>.
      * </p>
      *
-     * @param solventOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream}
-     *        object
+     * @param solventOutStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
-    public void setSolventOutStream(Stream solventOutStream) {
+    public void setSolventOutStream(StreamInterface solventOutStream) {
         this.solventOutStream = solventOutStream;
     }
 

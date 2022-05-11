@@ -17,18 +17,22 @@ public class ThermoException extends java.lang.Exception {
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>
-     * Constructor for ThermoException.
-     * </p>
-     */
-    public ThermoException() {}
-
-    /**
      * Constructs an <code>ThermoException</code> with the specified detail message.
      *
      * @param msg the detail message.
      */
     public ThermoException(String msg) {
         super(msg);
+    }
+
+    /**
+     * Constructs an <code>ThermoException</code> with the specified detail message.
+     * 
+     * @param className Class that exception is raised from
+     * @param methodName Method that exception is raised from
+     * @param msg specific error message
+     */
+    public ThermoException(String className, String methodName, String msg) {
+        super(className + ":" + methodName + " - " + msg);
     }
 }

@@ -1,5 +1,8 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
@@ -7,7 +10,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>StoneWallCurve class.</p>
+ * <p>
+ * StoneWallCurve class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -23,7 +28,9 @@ public class StoneWallCurve implements java.io.Serializable {
     PolynomialFunction flowFitterFunc = null;
 
     /**
-     * <p>Constructor for StoneWallCurve.</p>
+     * <p>
+     * Constructor for StoneWallCurve.
+     * </p>
      */
     public StoneWallCurve() {
         // flow = new double[] {453.2, 600.0, 750.0};
@@ -31,7 +38,9 @@ public class StoneWallCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>Constructor for StoneWallCurve.</p>
+     * <p>
+     * Constructor for StoneWallCurve.
+     * </p>
      *
      * @param flow an array of {@link double} objects
      * @param head an array of {@link double} objects
@@ -42,7 +51,9 @@ public class StoneWallCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>setCurve.</p>
+     * <p>
+     * setCurve.
+     * </p>
      *
      * @param chartConditions an array of {@link double} objects
      * @param flow an array of {@link double} objects
@@ -59,7 +70,9 @@ public class StoneWallCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>getStoneWallFlow.</p>
+     * <p>
+     * getStoneWallFlow.
+     * </p>
      *
      * @param head a double
      * @return a double
@@ -69,7 +82,9 @@ public class StoneWallCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>isStoneWall.</p>
+     * <p>
+     * isStoneWall.
+     * </p>
      *
      * @param head a double
      * @param flow a double
@@ -82,11 +97,46 @@ public class StoneWallCurve implements java.io.Serializable {
             return false;
     }
 
+    /**
+     * @return boolean
+     */
     boolean isActive() {
         return isActive;
     }
 
+    /**
+     * @param isActive
+     */
     void setActive(boolean isActive) {
         this.isActive = isActive;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(chartConditions);
+        result = prime * result + Arrays.hashCode(flow);
+        result = prime * result + Arrays.hashCode(head);
+        result = prime * result + Objects.hash(flowFitterFunc, isActive);
+        // result = prime * result + Objects.hash(flowFitter);
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        StoneWallCurve other = (StoneWallCurve) obj;
+        return Arrays.equals(chartConditions, other.chartConditions) && Arrays.equals(flow, other.flow)
+        // && Objects.equals(flowFitter, other.flowFitter)
+                && Objects.equals(flowFitterFunc, other.flowFitterFunc) && Arrays.equals(head, other.head)
+                && isActive == other.isActive;
     }
 }

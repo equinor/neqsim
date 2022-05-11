@@ -5,9 +5,10 @@
  */
 package neqsim.thermo.component;
 
+import java.util.LinkedHashMap;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.atomElement.Element;
-import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
+import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -132,8 +133,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     /**
      * method to return flow rate of a component
      *
-     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
-     *        m3/hr, mole/sec, mole/min, mole/hr
+     * @param flowunit Supported units are kg/sec, kg/min, m3/sec, m3/min,
+     *                 m3/hr, mole/sec, mole/min, mole/hr
      * @return flow rate in specified unit
      */
     public double getFlowRate(String flowunit);
@@ -141,8 +142,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     /**
      * method to return total flow rate of a component
      *
-     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, mole/sec, mole/min,
-     *        mole/hr
+     * @param flowunit Supported units are kg/sec, kg/min, mole/sec, mole/min,
+     *                 mole/hr
      * @return flow rate in specified unit
      */
     public double getTotalFlowRate(String flowunit);
@@ -575,15 +576,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getFugasityCoefficient.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getFugasityCoefficient();
-
-    /**
-     * <p>
      * setLennardJonesMolecularDiameter.
      * </p>
      *
@@ -650,8 +642,17 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
      * addMolesChemReac.
      * </p>
      *
-     * @param dn a double
-     * @param totdn a double
+     * @param dn Number of moles to add to phase and total
+     */
+    public void addMolesChemReac(double dn);
+
+    /**
+     * <p>
+     * addMolesChemReac.
+     * </p>
+     *
+     * @param dn Number of moles to add to phase
+     * @param totdn Number of moles to add total
      */
     public void addMolesChemReac(double dn, double totdn);
 
@@ -713,7 +714,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * init.
+     * Initialize component
      * </p>
      *
      * @param temperature a double
@@ -889,15 +890,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * addMolesChemReac.
-     * </p>
-     *
-     * @param dn a double
-     */
-    public void addMolesChemReac(double dn);
-
-    /**
-     * <p>
      * getHeatOfVapourization.
      * </p>
      *
@@ -944,12 +936,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getLogFugasityCoeffisient.
+     * getLogFugacityCoefficient.
      * </p>
      *
      * @return a double
      */
-    public double getLogFugasityCoeffisient();
+    public double getLogFugacityCoefficient();
 
     /**
      * <p>
@@ -1192,12 +1184,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getFugasityCoeffisient.
+     * getFugacityCoefficient.
      * </p>
      *
      * @return a double
      */
-    public double getFugasityCoeffisient();
+    public double getFugacityCoefficient();
 
     /**
      * <p>
@@ -1210,21 +1202,21 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * setAtractiveTerm.
+     * setAttractiveTerm.
      * </p>
      *
      * @param i a int
      */
-    public void setAtractiveTerm(int i);
+    public void setAttractiveTerm(int i);
 
     /**
      * <p>
-     * getAtractiveTerm.
+     * getAttractiveTerm.
      * </p>
      *
-     * @return a {@link neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface} object
+     * @return a {@link neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface} object
      */
-    public AtractiveTermInterface getAtractiveTerm();
+    public AttractiveTermInterface getAttractiveTerm();
 
     /**
      * <p>
@@ -1605,12 +1597,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     /**
      * <p>
-     * getAtractiveTermNumber.
+     * getAttractiveTermNumber.
      * </p>
      *
      * @return a int
      */
-    public int getAtractiveTermNumber();
+    public int getAttractiveTermNumber();
 
     /**
      * <p>
@@ -2186,4 +2178,36 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
      * @param CpE a double
      */
     public void setCpE(double CpE);
+
+    static public String getComponentName(String name) {
+        LinkedHashMap<String, String> c = getComponentMap();
+        if (c.containsKey(name)) {
+            return c.get(name);
+        } else {
+            return name;
+        }
+    }
+
+    static public LinkedHashMap<String, String> getComponentMap() {
+        LinkedHashMap<String, String> c = new LinkedHashMap<>();
+        c.put("H2O", "water");
+        c.put("N2", "nitrogen");
+        c.put("C1", "methane");
+        c.put("C2", "ethane");
+        c.put("C3", "propane");
+        c.put("iC4", "i-butane");
+        c.put("nC4", "n-butane");
+        c.put("iC5", "i-pentane");
+        c.put("nC5", "n-pentane");
+        c.put("C6", "n-hexane");
+        c.put("O2", "oxygen");
+        c.put("He", "helium");
+        c.put("H2", "hydrogen");
+        c.put("Ar", "argon");
+        c.put("H2S", "H2S");
+        c.put("nC7", "n-heptane");
+        c.put("nC8", "n-octane");
+        c.put("nC9", "n-nonane");
+        return c;
+    }
 }

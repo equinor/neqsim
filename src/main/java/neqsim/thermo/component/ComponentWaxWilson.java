@@ -23,13 +23,6 @@ public class ComponentWaxWilson extends ComponentSolid {
      * <p>
      * Constructor for ComponentWaxWilson.
      * </p>
-     */
-    public ComponentWaxWilson() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentWaxWilson.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -49,8 +42,8 @@ public class ComponentWaxWilson extends ComponentSolid {
     @Override
     public double fugcoef(PhaseInterface phase1) {
         if (!isWaxFormer()) {
-            // fugasityCoeffisient = 1.0e30;
-            // logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+            // fugacityCoefficient = 1.0e30;
+            // logFugacityCoefficient = Math.log(fugacityCoefficient);
             return 1.0e30;
         }
         return fugcoef2(phase1);
@@ -65,7 +58,7 @@ public class ComponentWaxWilson extends ComponentSolid {
         refPhase.getComponent(0).fugcoef(refPhase);
 
         double liquidPhaseFugacity =
-                refPhase.getComponent(0).getFugasityCoefficient() * refPhase.getPressure();
+                refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
         // calculating and setting heat of fusion
         double Tf = 374.5 + 0.2617 * getMolarMass() - 20.172 / getMolarMass();
@@ -84,7 +77,7 @@ public class ComponentWaxWilson extends ComponentSolid {
         double deltaSolVol = (solMolVol - liqMolVol);
 
         // calculating activity coefficient according to Wilson
-        double solidActivityCoefficient = getWilsonActivityCoeffisient(phase1);
+        double solidActivityCoefficient = getWilsonActivityCoefficient(phase1);
         // SolidFug = getx() * liquidPhaseFugacity * Math.exp((-getHeatOfFusion() / (R *
         // phase1.getTemperature()) * (1.0 - phase1.getTemperature() /
         // getTriplePointTemperature())) );
@@ -99,20 +92,20 @@ public class ComponentWaxWilson extends ComponentSolid {
                         - deltaSolVol * (1.0 - phase1.getPressure())
                                 / (R * phase1.getTemperature()));
 
-        fugasityCoeffisient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        fugacityCoefficient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /**
      * <p>
-     * getWilsonActivityCoeffisient.
+     * getWilsonActivityCoefficient.
      * </p>
      *
      * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
      */
-    public double getWilsonActivityCoeffisient(PhaseInterface phase1) {
+    public double getWilsonActivityCoefficient(PhaseInterface phase1) {
         double sum1 = 0.0;
         double sum2 = 0.0;
         double tempSum = 0.0;
@@ -199,12 +192,12 @@ public class ComponentWaxWilson extends ComponentSolid {
                 * ((deltaHvap0 + omega * deltaHvap1 + omega * omega * deltaHvap2) * 4.1868);
 
         // calculating transition enthalpy
-
         double deltaHtot = (3.7791 * carbonnumber - 12.654) * 1000;
 
         /// should not be a cooma - cirrected Tosin 08.05.2013
-        double Ttrans =
-                420.42 - 134784.0 * Math.exp(-4.344 * Math.pow(carbonnumber + 6.592, 0.14627));
+
+        // double Ttrans = 420.42 - 134784.0 * Math.exp(-4.344 * Math.pow(carbonnumber + 6.592,
+        /// 0.14627));
         double Tf = 374.5 + 0.2617 * getMolarMass() - 20.172 / getMolarMass();
         double deltaHf = (0.1426 * getMolarMass() * Tf) * 4.1868;
         double deltaHtrans = (deltaHtot - deltaHf);

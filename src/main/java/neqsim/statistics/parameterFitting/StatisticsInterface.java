@@ -101,7 +101,7 @@ public interface StatisticsInterface {
      * runMonteCarloSimulation.
      * </p>
      *
-     * @param numerOfRuns a int
+     * @param numberOfRuns a int
      */
-    public void runMonteCarloSimulation(int numerOfRuns);
+    public void runMonteCarloSimulation(int numberOfRuns);
 }

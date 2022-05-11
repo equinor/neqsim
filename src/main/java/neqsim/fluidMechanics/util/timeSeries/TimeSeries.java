@@ -103,7 +103,7 @@ public class TimeSeries implements java.io.Serializable {
         timeSteps = new double[(timeSeries.length - 1) * numberOfTimeStepsInInterval];
         times = new double[(timeSeries.length - 1) * numberOfTimeStepsInInterval];
 
-        System.out.println("times " + inletThermoSystem.length);
+        // System.out.println("times " + inletThermoSystem.length);
         double temp = 0;
         for (int k = 0; k < timeSeries.length - 1; k++) {
             double stepLength = (timeSeries[k + 1] - timeSeries[k]) / numberOfTimeStepsInInterval;
@@ -114,7 +114,7 @@ public class TimeSeries implements java.io.Serializable {
                 if (Double.isNaN(outletMolarFlowRate[0])) {
                     outletMolarFlowRates[p] = outletMolarFlowRate[k];
                 }
-                thermoSystems[p++] = (SystemInterface) inletThermoSystem[k].clone();
+                thermoSystems[p++] = inletThermoSystem[k].clone();
             }
         }
     }

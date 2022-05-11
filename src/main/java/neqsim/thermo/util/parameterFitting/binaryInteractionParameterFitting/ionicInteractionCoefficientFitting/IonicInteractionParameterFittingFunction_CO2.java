@@ -16,7 +16,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_CO2.class);
 
     /**
@@ -311,7 +310,8 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
      */
     public void setFittingParams3(int i, double value) {
         params[i] = value;
-        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
+        int MDEAplusNumb = 0, CO2Numb = 0;
+        // double MDEANumb = 0, HCO3numb = 0, Waternumb = 0;
         int j = 0;
         do {
             MDEAplusNumb = j;
@@ -321,7 +321,7 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         j = 0;
 
         do {
-            MDEANumb = j;
+            // MDEANumb = j;
             j++;
         } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("MDEA"));
         j = 0;
@@ -332,15 +332,15 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         j = 0;
 
         do {
-            HCO3numb = j;
+            // HCO3numb = j;
             j++;
         } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
                 .equals("HCO3minus"));
-        j = 0;
-        do {
-            Waternumb = j;
-            j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("water"));
+
+        /*
+         * j = 0; do { Waternumb = j; j++; } while (!system.getPhases()[0].getComponents()[j -
+         * 1].getComponentName().equals("water"));
+         */
 
         if (i == 0) {
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0]).getElectrolyteMixingRule()

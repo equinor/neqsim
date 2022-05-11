@@ -6,7 +6,7 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  * <p>
@@ -24,7 +24,10 @@ public class OnePhasePipeLine extends Pipeline {
      * Constructor for OnePhasePipeLine.
      * </p>
      */
-    public OnePhasePipeLine() {}
+    @Deprecated
+    public OnePhasePipeLine() {
+        this("OnePhasePipeLine");
+    }
 
     /**
      * <p>
@@ -33,8 +36,27 @@ public class OnePhasePipeLine extends Pipeline {
      *
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public OnePhasePipeLine(Stream inStream) {
-        super(inStream);
+    public OnePhasePipeLine(StreamInterface inStream) {
+        this("OnePhasePipeLine", inStream);
+    }
+
+    /**
+     * Constructor for OnePhasePipeLine.
+     * 
+     * @param name
+     */
+    public OnePhasePipeLine(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for OnePhasePipeLine.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public OnePhasePipeLine(String name, StreamInterface inStream) {
+        super(name, inStream);
         pipe = new PipeFlowSystem();
     }
 
@@ -57,7 +79,7 @@ public class OnePhasePipeLine extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {
-        super.runTransient();
+    public void runTransient(double dt) {
+        super.runTransient(dt);
     }
 }

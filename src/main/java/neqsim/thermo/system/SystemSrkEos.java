@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
@@ -10,12 +5,9 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- *
- * @author Even Solbraa
- * @version
- */
-/**
  * This class defines a thermodynamic system using the SRK equation of state
+ * 
+ * @author Even Solbraa
  */
 public class SystemSrkEos extends SystemEos {
     private static final long serialVersionUID = 1000;
@@ -66,8 +58,7 @@ public class SystemSrkEos extends SystemEos {
         this(T, P);
         modelName = "SRK-EOS";
         attractiveTermNumber = 0;
-        numberOfPhases = 5;
-        maxNumberOfPhases = 5;
+        setNumberOfPhases(5);
         solidPhaseCheck = solidCheck;
         for (int i = 0; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseSrkEos();

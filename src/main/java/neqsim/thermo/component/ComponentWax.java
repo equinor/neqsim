@@ -22,13 +22,6 @@ public class ComponentWax extends ComponentSolid {
      * <p>
      * Constructor for ComponentWax.
      * </p>
-     */
-    public ComponentWax() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentWax.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -47,8 +40,8 @@ public class ComponentWax extends ComponentSolid {
     @Override
     public double fugcoef(PhaseInterface phase1) {
         if (!isWaxFormer()) {
-            fugasityCoeffisient = 1.0e50;
-            logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+            fugacityCoefficient = 1.0e50;
+            logFugacityCoefficient = Math.log(fugacityCoefficient);
             return 1.0e50;
         }
         return fugcoef2(phase1);
@@ -68,7 +61,7 @@ public class ComponentWax extends ComponentSolid {
         refPhase.getComponent(0).fugcoef(refPhase);
 
         double liquidPhaseFugacity =
-                refPhase.getComponent(0).getFugasityCoefficient() * refPhase.getPressure();
+                refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
         double liquidDenisty = refPhase.getMolarVolume();
         double solidDensity = liquidDenisty * 0.9;
@@ -81,15 +74,14 @@ public class ComponentWax extends ComponentSolid {
                         * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
                                 * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
                                 + presTerm);
-        double SolidFug2 =
-                getx() * liquidPhaseFugacity
-                        * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
-                                * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
-                                + presTerm);
 
-        fugasityCoeffisient = SolidFug / (phase1.getPressure() * getx());
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        // double SolidFug2 = getx() * liquidPhaseFugacity * Math.exp(-getHeatOfFusion() / (R *
+        // phase1.getTemperature()) * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
+        // + presTerm);
+
+        fugacityCoefficient = SolidFug / (phase1.getPressure() * getx());
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
 
         // getS
     }

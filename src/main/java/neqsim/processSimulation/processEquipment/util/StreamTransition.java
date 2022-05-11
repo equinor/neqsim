@@ -6,7 +6,9 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>StreamTransition class.</p>
+ * <p>
+ * StreamTransition class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,25 +22,51 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
     private StreamInterface inletStream = null;
 
     /**
-     * <p>Constructor for StreamTransition.</p>
+     * <p>
+     * Constructor for StreamTransition.
+     * </p>
      */
     public StreamTransition() {
-        super();
+        super("StreamTransition");
     }
 
     /**
-     * <p>Constructor for StreamTransition.</p>
+     * <p>
+     * Constructor for StreamTransition.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     * @param outletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     * @param outletStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
+    @Deprecated
     public StreamTransition(StreamInterface inletStream, StreamInterface outletStream) {
+        this("StreamTransition", inletStream, outletStream);
+    }
+
+    /**
+     * <p>
+     * Constructor for StreamTransition.
+     * </p>
+     *
+     * @param name
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     * @param outletStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
+    public StreamTransition(String name, StreamInterface inletStream,
+            StreamInterface outletStream) {
+        super(name);
         this.inletStream = inletStream;
         this.outletStream = outletStream;
     }
 
     /**
-     * <p>Getter for the field <code>inletStream</code>.</p>
+     * <p>
+     * Getter for the field <code>inletStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -47,16 +75,21 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>inletStream</code>.</p>
+     * <p>
+     * Setter for the field <code>inletStream</code>.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
     }
 
     /**
-     * <p>Getter for the field <code>outletStream</code>.</p>
+     * <p>
+     * Getter for the field <code>outletStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -65,9 +98,12 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>outletStream</code>.</p>
+     * <p>
+     * Setter for the field <code>outletStream</code>.
+     * </p>
      *
-     * @param outletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param outletStream a
+     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public void setOutletStream(StreamInterface outletStream) {
         this.outletStream = outletStream;
@@ -78,11 +114,11 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
     public void run() {
         SystemInterface outThermoSystem = null;
         if (outletStream != null) {
-            outThermoSystem = (SystemInterface) outletStream.getFluid().clone();
+            outThermoSystem = outletStream.getFluid().clone();
         } else {
-            outThermoSystem = (SystemInterface) inletStream.getFluid().clone();
+            outThermoSystem = inletStream.getFluid().clone();
         }
-        outThermoSystem.removeMoles();
+        outThermoSystem.setEmptyFluid();
 
         // SystemInterface fluid1 = outletStream.getFluid();
         // SystemInterface fluid2 = inletStream.getFluid();
@@ -108,7 +144,9 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

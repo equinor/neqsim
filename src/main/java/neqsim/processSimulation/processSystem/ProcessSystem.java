@@ -4,18 +4,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-/*
- * thermoOps.java
- *
- * Created on 2. oktober 2000, 20:27
- */
 import java.util.ArrayList;
 import java.util.Arrays;
-
+import java.util.Objects;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
@@ -34,12 +29,11 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ProcessSystem implements java.io.Serializable, Runnable {
+public class ProcessSystem extends SimulationBaseClass {
     private static final long serialVersionUID = 1000;
 
-    Thread thisThread;
-    // ProcessEquipmentInterface[]
-    String[][] signalDB = new String[100][100];
+    transient Thread thisThread;
+    String[][] signalDB = new String[1000][100];
     private double time = 0;
     private double surroundingTemperature = 288.15;
     private int timeStepNumber = 0;
@@ -49,9 +43,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             new ArrayList<MeasurementDeviceInterface>(0);
     RecycleController recycleController = new RecycleController();
     private double timeStep = 1.0;
-    private String name = "process name";
-    private SystemMechanicalDesign systemMechanicalDesign = null;
-    private CostEstimateBaseClass costEstimator = null;
     static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
     /**
@@ -60,8 +51,16 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * </p>
      */
     public ProcessSystem() {
-        systemMechanicalDesign = new SystemMechanicalDesign(this);
-        costEstimator = new CostEstimateBaseClass(this);
+        this("Process system");
+    }
+
+    /**
+     * Constructor for ProcessSystem.
+     * 
+     * @param name
+     */
+    public ProcessSystem(String name) {
+        super(name);
     }
 
     /**
@@ -73,6 +72,25 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      */
     public void add(ProcessEquipmentInterface operation) {
+        ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
+
+        for (ProcessEquipmentInterface unit : units) {
+            if (unit == operation) {
+                return;
+            }
+        }
+
+        if (getAllUnitNames().contains(operation.getName())) {
+            String currClass = operation.getClass().getSimpleName();
+            int num = 1;
+            for (ProcessEquipmentInterface unit : units) {
+                if (unit.getClass().getSimpleName().equals(currClass)) {
+                    num++;
+                }
+            }
+            operation.setName(currClass + Integer.toString(num));
+        }
+
         getUnitOperations().add(operation);
         if (operation instanceof ModuleInterface) {
             ((ModuleInterface) operation).initializeModule();
@@ -276,7 +294,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * @param addNewComponents a boolean
      */
     public void setFluid(SystemInterface fluid1, SystemInterface fluid2, boolean addNewComponents) {
-        fluid1.removeMoles();
+        fluid1.setEmptyFluid();
         boolean addedComps = false;
         for (int i = 0; i < fluid2.getNumberOfComponents(); i++) {
             if (fluid1.getPhase(0).hasComponent(fluid2.getComponent(i).getName())) {
@@ -315,7 +333,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * @param fluid2 a {@link neqsim.thermo.system.SystemInterface} object
      */
     public void setFluid(SystemInterface fluid1, SystemInterface fluid2) {
-        fluid1.removeMoles();
+        fluid1.setEmptyFluid();
         boolean addedComps = false;
         for (int i = 0; i < fluid2.getNumberOfComponents(); i++) {
             if (fluid1.getPhase(0).hasComponent(fluid2.getComponent(i).getName())) {
@@ -450,9 +468,28 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      *
      * @param deltat a double
      */
-    public void runTransient(double deltat) {
-        timeStep = deltat;
-        runTransient();
+    @Override
+    public void runTransient(double dt) {
+        setTimeStep(dt);
+        time += dt;
+
+        for (int i = 0; i < unitOperations.size(); i++) {
+            unitOperations.get(i).runTransient(dt);
+        }
+        timeStepNumber++;
+        signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()];
+        for (int i = 0; i < measurementDevices.size(); i++) {
+            signalDB[timeStepNumber][0] = Double.toString(time);
+            signalDB[timeStepNumber][3 * i + 1] = measurementDevices.get(i).getName();
+            signalDB[timeStepNumber][3 * i + 2] =
+                    Double.toString(measurementDevices.get(i).getMeasuredValue());
+            signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
+        }
+    }
+
+    @Override
+    public boolean solved() {
+        return true;
     }
 
     /**
@@ -493,20 +530,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * </p>
      */
     public void runTransient() {
-        time += getTimeStep();
-
-        for (int i = 0; i < unitOperations.size(); i++) {
-            unitOperations.get(i).runTransient(getTimeStep());
-        }
-        timeStepNumber++;
-        signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()];
-        for (int i = 0; i < measurementDevices.size(); i++) {
-            signalDB[timeStepNumber][0] = Double.toString(time);
-            signalDB[timeStepNumber][3 * i + 1] = measurementDevices.get(i).getName();
-            signalDB[timeStepNumber][3 * i + 2] =
-                    Double.toString(measurementDevices.get(i).getMeasuredValue());
-            signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
-        }
+        runTransient(getTimeStep());
     }
 
     /**
@@ -601,16 +625,15 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
      */
     public static ProcessSystem open(String filePath) {
-        ProcessSystem tempSystem = null;
         try (ObjectInputStream objectinputstream =
                 new ObjectInputStream(new FileInputStream(filePath))) {
-            tempSystem = (ProcessSystem) objectinputstream.readObject();
+            return (ProcessSystem) objectinputstream.readObject();
             // logger.info("process file open ok: " + filePath);
         } catch (Exception e) {
             // logger.error(e.toString());
             e.printStackTrace();
         }
-        return tempSystem;
+        return null;
     }
 
     /**
@@ -693,35 +716,24 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
 
     /**
      * <p>
-     * Getter for the field <code>systemMechanicalDesign</code>.
+     * Get a SystemMechanicalDesign object from processSystem.
      * </p>
      *
-     * @return the systemMechanicalDesign
+     * @return a new SystemMechanicalDesign object
      */
     public SystemMechanicalDesign getSystemMechanicalDesign() {
-        return systemMechanicalDesign;
+        return new SystemMechanicalDesign(this);
     }
 
     /**
      * <p>
-     * Setter for the field <code>systemMechanicalDesign</code>.
+     * Get a CostEstimateBaseClass object from processSystem.
      * </p>
      *
-     * @param systemMechanicalDesign the systemMechanicalDesign to set
-     */
-    public void setSystemMechanicalDesign(SystemMechanicalDesign systemMechanicalDesign) {
-        this.systemMechanicalDesign = systemMechanicalDesign;
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>costEstimator</code>.
-     * </p>
-     *
-     * @return the costEstimator
+     * @return a new CostEstimateBaseClass object
      */
     public CostEstimateBaseClass getCostEstimator() {
-        return costEstimator;
+        return new CostEstimateBaseClass(this);
     }
 
     /**
@@ -868,7 +880,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
 
     /**
      * <p>
-     * copy.
+     * Create deep copy.
      * </p>
      *
      * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
@@ -889,6 +901,40 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     public ConditionMonitor getConditionMonitor() {
         return new ConditionMonitor(this);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.deepHashCode(signalDB);
+        result = prime * result + Objects.hash(measurementDevices, name, recycleController,
+                surroundingTemperature, time, timeStep, timeStepNumber, unitOperations);
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ProcessSystem other = (ProcessSystem) obj;
+        return Objects.equals(measurementDevices, other.measurementDevices)
+                && Objects.equals(name, other.name)
+                && Objects.equals(recycleController, other.recycleController)
+                && Arrays.deepEquals(signalDB, other.signalDB)
+                && Double.doubleToLongBits(surroundingTemperature) == Double
+                        .doubleToLongBits(other.surroundingTemperature)
+                && Double.doubleToLongBits(time) == Double.doubleToLongBits(other.time)
+                && Double.doubleToLongBits(timeStep) == Double.doubleToLongBits(other.timeStep)
+                && timeStepNumber == other.timeStepNumber
+                && Objects.equals(unitOperations, other.unitOperations);
+    }
+
     /*
      * @XmlRootElement private class Report extends Object{ public Double name; public
      * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();

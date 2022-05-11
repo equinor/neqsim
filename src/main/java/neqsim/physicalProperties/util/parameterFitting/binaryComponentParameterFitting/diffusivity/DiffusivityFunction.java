@@ -11,8 +11,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class DiffusivityFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for DiffusivityFunction.
@@ -25,7 +23,7 @@ public class DiffusivityFunction extends LevenbergMarquardtFunction {
     public double calcValue(double[] dependentValues) {
         system.init(1);
         system.initPhysicalProperties();
-        return system.getPhase(1).getPhysicalProperties().getDiffusionCoeffisient(0, 1) * 1e9;
+        return system.getPhase(1).getPhysicalProperties().getDiffusionCoefficient(0, 1) * 1e9;
     }
 
     /** {@inheritDoc} */

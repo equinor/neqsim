@@ -477,8 +477,6 @@ public class GERG2004EOS {
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
-    /** Creates a new instance of GERG2004EOS */
-
     public String[] nameList = {"methane", "nitrogen", "CO2", "ethane", "propane", "n-butane",
             "i-butane", "n-pentane", "i-pentane", "n-hexane", "n-heptane", "n-octane", "hydrogen",
             "oxygen", "CO", "water", "helium", "argon"};
@@ -489,7 +487,8 @@ public class GERG2004EOS {
      * </p>
      */
     public GERG2004EOS() {
-        System.loadLibrary("test2");
+      // todo: does not work
+      System.loadLibrary("test2");
     }
 
     /**

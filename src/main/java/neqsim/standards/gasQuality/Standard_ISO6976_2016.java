@@ -1,11 +1,5 @@
-/*
- * Standard_ISO1992.java
- *
- * Created on 13. juni 2004, 23:30
- */
 package neqsim.standards.gasQuality;
 
-import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -38,25 +32,10 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
             HinfIdeal60F = 0.0;
     static Logger logger = LogManager.getLogger(Standard_ISO6976_2016.class);
 
-    /**
-     * Creates a new instance of Standard_ISO1992
-     */
-    public Standard_ISO6976_2016() {
-        name = "Standard_ISO6976_2016";
-        componentsNotDefinedByStandard = new ArrayList<String>();
-        standardDescription =
-                "Calculation of calorific values, density, relative density and Wobbe index from composition based on ISO6976 version 2016";
-    }
-
-    /**
-     * Creates a new instance of Standard_ISO1992
-     *
-     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-     */
     public Standard_ISO6976_2016(SystemInterface thermoSystem) {
-        super(thermoSystem);
-        componentsNotDefinedByStandard = new ArrayList<String>();
-        name = "Standard_ISO6976_2016";
+        super("Standard_ISO6976_2016",
+                "Calculation of calorific values, density, relative density and Wobbe index from composition based on ISO6976 version 2016",
+                thermoSystem);
         M = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         carbonNumber = new int[thermoSystem.getPhase(0).getNumberOfComponents()];
 
@@ -96,31 +75,21 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
                     M[i] = Double.parseDouble(dataSet.getString("MolarMass"));
                 } catch (Exception e) {
                     try {
-                        dataSet.close();
-                        if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                .equals("inert")) {
-                            dataSet = database.getResultSet(
-                                    ("SELECT * FROM iso6976constants2016 WHERE ComponentName='nitrogen'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                .equals("HC")) {
-                            dataSet = database.getResultSet(
-                                    ("SELECT * FROM iso6976constants2016 WHERE ComponentName='n-heptane'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                .equals("alcohol")
-                                || this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                        .equals("glycol")) {
-                            dataSet = database.getResultSet(
-                                    ("SELECT * FROM iso6976constants2016 WHERE ComponentName='methanol'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                .equals("TPB")
-                                || this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
-                                        .equals("plus")) {
-                            dataSet = database.getResultSet(
-                                    ("SELECT * FROM iso6976constants2016 WHERE ComponentName='n-heptane'"));
-                        } else {
-                            dataSet = database.getResultSet(
-                                    ("SELECT * FROM iso6976constants2016 WHERE ComponentName='nitrogen'"));
+                        String compName = "inert";
+                        String compType =
+                                this.thermoSystem.getPhase(0).getComponent(i).getComponentType();
+
+                        if (compType.equals("HC") || compType.equals("TBP")
+                                || compType.equals("plus")) {
+                            compName = "n-heptane";
+                        } else if (compType.equals("alcohol") || compType.equals("glycol")) {
+                            compName = "methanol";
                         }
+
+                        dataSet.close();
+                        dataSet = database.getResultSet(
+                                ("SELECT * FROM iso6976constants2016 WHERE ComponentName='"
+                                        + compName + "'"));
                         M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
                         dataSet.next();
                     } catch (Exception er) {
@@ -130,6 +99,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
                             "this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
                     logger.info("added component not specified by ISO6976constants2016 "
                             + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
+                } finally {
+                    dataSet.close();
                 }
 
                 carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));
@@ -244,6 +215,9 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("GCV")) {
             returnParameter = "SuperiorCalorificValue";
+        }
+        if (returnParameter.equals("LCV")) {
+            returnParameter = "InferiorCalorificValue";
         }
 
         double returnValue = 0.0;

@@ -44,7 +44,6 @@ public class TestSlugcatcher {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(7);
 
-
         Stream stream_1 = new Stream("Stream1", testSystem);
         ThreePhaseSeparator separator = new ThreePhaseSeparator("Separator 1", stream_1);
 
@@ -54,7 +53,7 @@ public class TestSlugcatcher {
 
         ThreePhaseSeparator separator2 =
                 new ThreePhaseSeparator("Separator 1", valve1.getOutStream());
-        Stream stream_2 = new Stream(separator2.getGasOutStream());
+        Stream stream_2 = new Stream("stream_2", separator2.getGasOutStream());
 
         VolumeFlowTransmitter volumeTransmitter3 =
                 new VolumeFlowTransmitter(separator2.getGasOutStream());

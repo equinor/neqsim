@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
@@ -17,24 +12,6 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentGERG2004 extends ComponentEos {
     private static final long serialVersionUID = 1000;
-
-    /**
-     * <p>
-     * Constructor for ComponentGERG2004.
-     * </p>
-     */
-    public ComponentGERG2004() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGERG2004.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentGERG2004(double moles) {
-        numberOfMoles = moles;
-    }
 
     /**
      * <p>
@@ -108,7 +85,7 @@ public class ComponentGERG2004 extends ComponentEos {
     /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase) {
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */

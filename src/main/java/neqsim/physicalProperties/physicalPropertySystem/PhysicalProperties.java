@@ -86,22 +86,12 @@ public abstract class PhysicalProperties
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
-        properties.densityCalc =
-                (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface) densityCalc
-                        .clone();
-        properties.diffusivityCalc =
-                (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface) diffusivityCalc
-                        .clone();
-        properties.viscosityCalc =
-                (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface) viscosityCalc
-                        .clone();
-        properties.conductivityCalc =
-                (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface) conductivityCalc
-                        .clone();
+        properties.densityCalc = densityCalc.clone();
+        properties.diffusivityCalc = diffusivityCalc.clone();
+        properties.viscosityCalc = viscosityCalc.clone();
+        properties.conductivityCalc = conductivityCalc.clone();
         if (mixingRule != null)
-            properties.mixingRule =
-                    (neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface) mixingRule
-                            .clone();
+            properties.mixingRule = mixingRule.clone();
         return properties;
     }
 
@@ -255,9 +245,9 @@ public abstract class PhysicalProperties
             density = densityCalc.calcDensity();
             viscosity = viscosityCalc.calcViscosity();
             kinematicViscosity = this.calcKinematicViscosity();
-            diffusivityCalc.calcDiffusionCoeffisients(binaryDiffusionCoefficientMethod,
+            diffusivityCalc.calcDiffusionCoefficients(binaryDiffusionCoefficientMethod,
                     multicomponentDiffusionMethod);
-            // diffusivityCalc.calcEffectiveDiffusionCoeffisients();
+            // diffusivityCalc.calcEffectiveDiffusionCoefficients();
             conductivity = conductivityCalc.calcConductivity();
         } catch (Exception e) {
             // might be a chance that entering here ends in an infinite loop...
@@ -340,12 +330,6 @@ public abstract class PhysicalProperties
         return kinematicViscosity;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getDiffusionCoeffisient(int i, int j) {
-        return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(i, j);
-    }
-
     /**
      * <p>
      * getDiffusionCoefficient.
@@ -369,7 +353,7 @@ public abstract class PhysicalProperties
 
     /** {@inheritDoc} */
     @Override
-    public double getFickDiffusionCoeffisient(int i, int j) {
+    public double getFickDiffusionCoefficient(int i, int j) {
         return diffusivityCalc.getFickBinaryDiffusionCoefficient(i, j);
     }
 
@@ -377,7 +361,7 @@ public abstract class PhysicalProperties
     @Override
     public void calcEffectiveDiffusionCoefficients() {
         this.init(phase);
-        diffusivityCalc.calcEffectiveDiffusionCoeffisients();
+        diffusivityCalc.calcEffectiveDiffusionCoefficients();
     }
 
     /** {@inheritDoc} */

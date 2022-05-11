@@ -1,8 +1,3 @@
-/*
- * Separator.java
- *
- * Created on 12. mars 2001, 19:48
- */
 package neqsim.processSimulation.processEquipment.tank;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
@@ -43,17 +38,31 @@ public class Tank extends ProcessEquipmentBaseClass {
      * Constructor for Tank.
      * </p>
      */
-    public Tank() {}
+    @Deprecated
+    public Tank() {
+        super("Tank");
+    }
 
     /**
      * <p>
      * Constructor for Tank.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public Tank(Stream inletStream) {
-        addStream(inletStream);
+    @Deprecated
+    public Tank(StreamInterface inletStream) {
+        this("Tank", inletStream);
+    }
+
+    /**
+     * Constructor for Tank.
+     * 
+     * @param name
+     */
+    public Tank(String name) {
+        super(name);
     }
 
     /**
@@ -62,10 +71,11 @@ public class Tank extends ProcessEquipmentBaseClass {
      * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public Tank(String name, Stream inletStream) {
-        this.name = name;
+    public Tank(String name, StreamInterface inletStream) {
+        super(name);
         addStream(inletStream);
     }
 
@@ -74,17 +84,18 @@ public class Tank extends ProcessEquipmentBaseClass {
      * setInletStream.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public void setInletStream(Stream inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         inletStreamMixer.addStream(inletStream);
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
-        gasOutStream = new Stream(gasSystem);
+        gasOutStream = new Stream("gasOutStream", gasSystem);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-        liquidOutStream = new Stream(liquidSystem);
+        liquidOutStream = new Stream("liquidOutStream", liquidSystem);
     }
 
     /**
@@ -111,7 +122,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return liquidOutStream;
     }
 
@@ -122,7 +133,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
@@ -133,7 +144,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getGas() {
+    public StreamInterface getGas() {
         return getGasOutStream();
     }
 
@@ -144,7 +155,7 @@ public class Tank extends ProcessEquipmentBaseClass {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getLiquid() {
+    public StreamInterface getLiquid() {
         return getLiquidOutStream();
     }
 
@@ -152,8 +163,7 @@ public class Tank extends ProcessEquipmentBaseClass {
     @Override
     public void run() {
         inletStreamMixer.run();
-        SystemInterface thermoSystem2 =
-                (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
+        SystemInterface thermoSystem2 = inletStreamMixer.getOutStream().getThermoSystem().clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
         ops.VUflash(thermoSystem2.getVolume(), thermoSystem2.getInternalEnergy());
         System.out.println("Volume " + thermoSystem2.getVolume() + " internalEnergy "
@@ -170,7 +180,7 @@ public class Tank extends ProcessEquipmentBaseClass {
             gasOutStream.setThermoSystemFromPhase(thermoSystem2.getEmptySystemClone(), "oil");
         }
 
-        thermoSystem = (SystemInterface) thermoSystem2.clone();
+        thermoSystem = thermoSystem2.clone();
         thermoSystem.setTotalNumberOfMoles(1.0e-10);
         thermoSystem.init(1);
         System.out.println("number of phases " + thermoSystem.getNumberOfPhases());
@@ -224,9 +234,10 @@ public class Tank extends ProcessEquipmentBaseClass {
         inletStreamMixer.run();
 
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-        double inMoles = inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
-        double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
-        double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
+        // double inMoles =
+        // inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
+        // double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
+        // double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
         thermoSystem.init(3);
         gasOutStream.getThermoSystem().init(3);
         liquidOutStream.getThermoSystem().init(3);
@@ -281,7 +292,6 @@ public class Tank extends ProcessEquipmentBaseClass {
                 * separatorLength;
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
                 * separatorLength;
-
     }
 
     /**

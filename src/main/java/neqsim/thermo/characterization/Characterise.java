@@ -25,9 +25,6 @@ public class Characterise implements java.io.Serializable, Cloneable {
     protected TBPfractionModel TBPfractionModelSelector;
     static Logger logger = LogManager.getLogger(Characterise.class);
 
-    /**
-     * Creates a new instance of TBPCharacterize
-     */
     public Characterise() {}
 
     /**

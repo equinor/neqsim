@@ -7,7 +7,9 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 
 /**
- * <p>MasstransferMeOH class.</p>
+ * <p>
+ * MasstransferMeOH class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -15,7 +17,9 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
  */
 public class MasstransferMeOH {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -37,14 +41,13 @@ public class MasstransferMeOH {
         dryFeedGas.setTemperature(10.4, "C");
         dryFeedGas.setPressure(52.21, "bara");
 
-        StreamSaturatorUtil saturatedFeedGas = new StreamSaturatorUtil(dryFeedGas);
-        saturatedFeedGas.setName("water saturator");
+        StreamSaturatorUtil saturatedFeedGas =
+                new StreamSaturatorUtil("water saturator", dryFeedGas);
 
-        Stream waterSaturatedFeedGas = new Stream(saturatedFeedGas.getOutStream());
-        waterSaturatedFeedGas.setName("water saturated feed gas");
+        Stream waterSaturatedFeedGas =
+                new Stream("water saturated feed gas", saturatedFeedGas.getOutStream());
 
-        neqsim.thermo.system.SystemInterface feedMeOH =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface feedMeOH = feedGas.clone();
         feedMeOH.setMolarComposition(new double[] {0.0, 0.0, 1.0});
 
         Stream MeOHFeed = new Stream("lean TEG to absorber", feedMeOH);
@@ -63,7 +66,7 @@ public class MasstransferMeOH {
 
         GasScrubber scrubber = new GasScrubber("gas scrub", pipeline.getOutStream());
 
-        Stream gasFromScrubber = new Stream(scrubber.getGasOutStream());
+        Stream gasFromScrubber = new Stream("gasFromScrubber", scrubber.getGasOutStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

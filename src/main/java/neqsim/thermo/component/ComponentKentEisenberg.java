@@ -17,13 +17,6 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
      * <p>
      * Constructor for ComponentKentEisenberg.
      * </p>
-     */
-    public ComponentKentEisenberg() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentKentEisenberg.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -40,21 +33,21 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
     public double fugcoef(PhaseInterface phase) {
         double gamma = 1.0;
         if (referenceStateType.equals("solvent")) {
-            fugasityCoeffisient =
+            fugacityCoefficient =
                     gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
             gammaRefCor = gamma;
         } else {
             double activinf = 1.0;
             if (ionicCharge == 0) {
-                fugasityCoeffisient =
+                fugacityCoefficient =
                         activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();
             } else {
-                fugasityCoeffisient = 1e8;
+                fugacityCoefficient = 1e8;
             }
             gammaRefCor = activinf;
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
         // System.out.println("gamma " + gamma);
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 }

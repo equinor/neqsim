@@ -63,8 +63,9 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
         system.init(0);
         system.init(2);
 
-        int iterations = 0, maxNumberOfIterations = 10000;
-        double yold = 0, ytotal = 1, deriv = 0, funk = 0, dkidt = 0, dyidt = 0, dxidt = 0, Told = 0;
+        // int iterations = 0, maxNumberOfIterations = 10000;
+        // double yold = 0, ytotal = 1;
+        double deriv = 0, funk = 0, dkidt = 0, dyidt = 0, dxidt = 0, Told = 0;
 
         do {
             // system.setBeta(beta+0.65);
@@ -72,13 +73,13 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
 
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 system.getPhases()[0].getComponents()[i]
-                        .setK(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                        .setK(system.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                                 / system.getPhases()[1].getComponents()[i]
-                                        .getFugasityCoeffisient());
+                                        .getFugacityCoefficient());
                 system.getPhases()[1].getComponents()[i]
-                        .setK(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                        .setK(system.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                                 / system.getPhases()[1].getComponents()[i]
-                                        .getFugasityCoeffisient());
+                                        .getFugacityCoefficient());
             }
 
             system.calc_x_y();
@@ -129,11 +130,7 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
         system.display();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property superCritical.
-     */
+    /** {@inheritDoc} */
     @Override
     public boolean isSuperCritical() {
         return superCritical;

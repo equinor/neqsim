@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public abstract class ModelBaseTest {
+public abstract class ModelBaseTest extends neqsim.NeqSimTest{
     static SystemInterface thermoSystem = null;
     neqsim.thermo.ThermodynamicModelTest fugTest;
 
@@ -103,7 +103,7 @@ public abstract class ModelBaseTest {
         thermoSystem.init(0);
         thermoSystem.init(1);
         fugTest = new neqsim.thermo.ThermodynamicModelTest(thermoSystem);
-        assertTrue(fugTest.checkFugasityCoeffisients());
+        assertTrue(fugTest.checkFugacityCoefficients());
     }
 
     /**
@@ -116,7 +116,7 @@ public abstract class ModelBaseTest {
         thermoSystem.init(0);
         thermoSystem.init(3);
         fugTest = new neqsim.thermo.ThermodynamicModelTest(thermoSystem);
-        assertTrue(fugTest.checkFugasityCoeffisientsDT());
+        assertTrue(fugTest.checkFugacityCoefficientsDT());
     }
 
     /**
@@ -129,7 +129,7 @@ public abstract class ModelBaseTest {
         thermoSystem.init(0);
         thermoSystem.init(3);
         fugTest = new neqsim.thermo.ThermodynamicModelTest(thermoSystem);
-        assertTrue(fugTest.checkFugasityCoeffisientsDP());
+        assertTrue(fugTest.checkFugacityCoefficientsDP());
     }
 
     /**
@@ -142,6 +142,6 @@ public abstract class ModelBaseTest {
         thermoSystem.init(0);
         thermoSystem.init(3);
         fugTest = new neqsim.thermo.ThermodynamicModelTest(thermoSystem);
-        assertTrue(fugTest.checkFugasityCoeffisientsDn());
+        assertTrue(fugTest.checkFugacityCoefficientsDn());
     }
 }

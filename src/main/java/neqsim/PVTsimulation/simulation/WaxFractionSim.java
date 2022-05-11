@@ -17,8 +17,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class WaxFractionSim extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
     double[] temperature = null;
 
     double[] pressure = null;
@@ -87,8 +85,7 @@ public class WaxFractionSim extends BasePVTsimulation {
 
                 function.setInitialGuess(guess);
 
-                SystemInterface tempSystem = getThermoSystem();// (SystemInterface)
-                                                               // getThermoSystem().clone();
+                SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
 
                 tempSystem.setTemperature(temperature[i]);
                 tempSystem.setPressure(pressure[i]);

@@ -1,8 +1,3 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -42,8 +37,10 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
         system.init(0);
         system.init(2);
 
-        int iterations = 0, maxNumberOfIterations = 10000;
-        double yold = 0, ytotal = 1, deriv = 0, funk = 0, dkidt = 0, dyidt = 0, dxidt = 0, Told = 0;
+        int iterations = 0;
+        // int maxNumberOfIterations = 10000;
+        // double yold = 0, ytotal = 1;
+        double deriv = 0, funk = 0, dkidt = 0, dyidt = 0, dxidt = 0, Told = 0;
 
         do {
             iterations++;
@@ -52,13 +49,13 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
 
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 system.getPhases()[0].getComponents()[i]
-                        .setK(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                        .setK(system.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                                 / system.getPhases()[1].getComponents()[i]
-                                        .getFugasityCoeffisient());
+                                        .getFugacityCoefficient());
                 system.getPhases()[1].getComponents()[i]
-                        .setK(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                        .setK(system.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                                 / system.getPhases()[1].getComponents()[i]
-                                        .getFugasityCoeffisient());
+                                        .getFugacityCoefficient());
             }
 
             system.calc_x_y_nonorm();
@@ -88,7 +85,6 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
             Told = system.getTemperature();
             system.setTemperature((Told - funk / deriv * 0.7));
             // System.out.println("Temp: " + system.getTemperature() + " funk " + funk);
-
         } while ((Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7
                 && iterations < 300) || iterations < 3);
     }

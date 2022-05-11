@@ -22,8 +22,12 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
      * <p>
      * Constructor for Reboiler.
      * </p>
+     * 
+     * @param name
      */
-    public Reboiler() {}
+    public Reboiler(String name) {
+        super(name);
+    }
 
     /**
      * <p>
@@ -66,8 +70,7 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
         if (!refluxIsSet) {
             super.run();
         } else {
-            SystemInterface thermoSystem2 =
-                    (SystemInterface) streams.get(0).getThermoSystem().clone();
+            SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
             // System.out.println("total number of moles " +
             // thermoSystem2.getTotalNumberOfMoles());
             mixedStream.setThermoSystem(thermoSystem2);

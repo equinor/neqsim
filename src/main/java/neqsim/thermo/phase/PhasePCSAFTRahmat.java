@@ -97,11 +97,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         for (int i = 0; i < numberOfComponents; i++) {
             componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,
                     numberOfComponents, type);
@@ -130,10 +126,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         dnSAFTdVdVdV = -6.0 * ThermodynamicConstantsInterface.pi / 6.0
                 * ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase()
                 / Math.pow(volumeSAFT, 4.0) * getDSAFT();
-        //
 
         // added by rahmat
-
         dNSAFTdT = 1.0 * ThermodynamicConstantsInterface.pi / 6.0
                 * ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase()
                 / volumeSAFT * getdDSAFTdT();
@@ -1022,7 +1016,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
                         * F1dispI1dVdV)
                 + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm()
                         * F1dispI1dVdVdV));
-
     }
 
     // added by Rahmat
@@ -1182,9 +1175,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     @Override
     public double getF() {
         // System.out.println("F-HC " + useHS*F_HC_SAFT());
-        //
+
         // System.out.println("F-DISP1 " + useDISP1*F_DISP1_SAFT());
-        //
+
         // System.out.println("F-DISP2 " + useDISP2*F_DISP2_SAFT());
         return useHS * F_HC_SAFT() + useDISP1 * F_DISP1_SAFT() + useDISP2 * F_DISP2_SAFT();
     }
@@ -1195,7 +1188,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         // System.out.println("N-saft " + getNSAFT());
         // System.out.println("F-HC " + useHS*F_HC_SAFT());
         // System.out.println("F-DISP1 " + useDISP1*F_DISP1_SAFT());
-        //
+
         // System.out.println("F-DISP2 " + useDISP2*F_DISP2_SAFT());
 
         return (useHS * dF_HC_SAFTdV() + useDISP1 * dF_DISP1_SAFTdV()
@@ -1400,12 +1393,12 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         if (BonV > 1.0) {
             BonV = 1.0 - 1.0e-6;
         }
-        double BonVold = BonV;
-        double Btemp = 0, Dtemp = 0, h = 0, hOld = 0, dh = 0, dhOld = 0, gvvv = 0, fvvv = 0,
-                dhh = 1;
-        double d1 = 0, d2 = 0;
+        // double BonVold = BonV;
+        double Btemp = 0, dh = 0, h = 0;
+        // double Dtemp = 0, hOld = 0, dhOld = 0, gvvv = 0, fvvv = 0, d2 = 0, dhh = 1;
+        double d1 = 0;
         Btemp = getB();
-        Dtemp = getA();
+        // Dtemp = getA();
         if (Btemp <= 0) {
             logger.info("b negative in volume calc");
         }
@@ -1458,9 +1451,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
             // setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
             // System.out.println("BonV " + BonV);
-        } // while(Math.abs((BonV-BonVold)/BonV)>1.0e-10 && iterations<500);
-        while (Math.abs((oldMolarVolume - getMolarVolume()) / oldMolarVolume) > 1.0e-10
+        } while (Math.abs((oldMolarVolume - getMolarVolume()) / oldMolarVolume) > 1.0e-10
                 && iterations < 100);
+        // while(Math.abs((BonV-BonVold)/BonV)>1.0e-10 && iterations<500);
 
         // while(Math.abs((h-hOld)/h)>1.0e-10 && iterations<6000);
         // System.out.println("error BonV " + Math.abs((BonV-BonVold)/BonV));

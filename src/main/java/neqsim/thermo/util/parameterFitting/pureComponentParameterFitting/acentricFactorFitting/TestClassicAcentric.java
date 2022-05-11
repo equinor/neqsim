@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 /**
- * <p>TestClassicAcentric class.</p>
+ * <p>
+ * TestClassicAcentric class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,7 +23,9 @@ public class TestClassicAcentric {
     static Logger logger = LogManager.getLogger(TestClassicAcentric.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -51,10 +55,9 @@ public class TestClassicAcentric {
 
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
-                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
                 double vappres = Double.parseDouble(dataSet.getString("VapourPressure"));
-                double standardDeviation1[] = {0.15}; // std.dev temperature // presure std.dev
-                                                      // pressure
+                double standardDeviation1[] = {0.15};
                 SampleValue sample = new SampleValue(Math.log(vappres),
                         Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
                         standardDeviation1);

@@ -3,11 +3,12 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>WellStreamMixer class.</p>
+ * <p>
+ * WellStreamMixer class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,7 +16,9 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class WellStreamMixer {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -44,7 +47,7 @@ public class WellStreamMixer {
         testSystem.setMolarComposition(new double[] {1.0, 1.42, 70.1, 8, 3.54, 0.54, 0.2, 0.21,
                 0.19, 0.28, 5.0, 1.0, 1.0, 0, 0});
 
-        neqsim.thermo.system.SystemInterface testSystem2 = (SystemInterface) testSystem.clone();
+        neqsim.thermo.system.SystemInterface testSystem2 = testSystem.clone();
         testSystem2.createDatabase(true);
         testSystem2.setMixingRule(2);
         testSystem2.setMultiPhaseCheck(true);
@@ -69,8 +72,7 @@ public class WellStreamMixer {
         wellStramMixer.addStream(wellStream_1);
         wellStramMixer.addStream(wellStream_2);
 
-        Stream mixerdStream = new Stream(wellStramMixer.getOutStream());
-        mixerdStream.setName("mixed stream");
+        Stream mixerdStream = new Stream("mixed stream", wellStramMixer.getOutStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

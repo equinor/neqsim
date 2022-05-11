@@ -18,13 +18,6 @@ public class ComponentGEWilson extends ComponentGE {
      * <p>
      * Constructor for ComponentGEWilson.
      * </p>
-     */
-    public ComponentGEWilson() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGEWilson.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -50,10 +43,10 @@ public class ComponentGEWilson extends ComponentGE {
      */
     public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
-        fugasityCoeffisient =
+        fugacityCoefficient =
                 (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
                         * this.getAntoineVaporPressure(temperature) / pressure);
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /**
@@ -70,7 +63,7 @@ public class ComponentGEWilson extends ComponentGE {
      */
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
-        return getWilsonActivityCoeffisient(phase);
+        return getWilsonActivityCoefficient(phase);
     }
 
     /** {@inheritDoc} */
@@ -83,13 +76,13 @@ public class ComponentGEWilson extends ComponentGE {
 
     /**
      * <p>
-     * getWilsonActivityCoeffisient.
+     * getWilsonActivityCoefficient.
      * </p>
      *
      * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
      */
-    public double getWilsonActivityCoeffisient(PhaseInterface phase1) {
+    public double getWilsonActivityCoefficient(PhaseInterface phase1) {
         double sum1 = 0.0;
         double sum2 = 0.0;
         double tempSum = 0.0;
@@ -185,8 +178,9 @@ public class ComponentGEWilson extends ComponentGE {
         // calculating transition enthalpy
 
         double deltaHtot = (3.7791 * carbonnumber - 12.654) * 1000;
-        double Ttrans =
-                420.42 - 134.784 * Math.exp(-4.344 * Math.pow(carbonnumber + 6.592, 0.14627));
+        // double Ttrans = 420.42 - 134.784 * Math.exp(-4.344 * Math.pow(carbonnumber + 6.592,
+        // 0.14627));
+
         double Tf = 374.5 + 0.2617 * getMolarMass() - 20.172 / getMolarMass();
         double deltaHf = (0.1426 * getMolarMass() * Tf) * 4.1868;
         double deltaHtrans = (deltaHtot - deltaHf);

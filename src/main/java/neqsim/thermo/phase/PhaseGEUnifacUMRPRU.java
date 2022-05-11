@@ -51,7 +51,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
                     phase.getComponents()[i].getNumberOfmoles(),
                     phase.getComponents()[i].getNumberOfMolesInPhase(),
                     phase.getComponents()[i].getComponentNumber());
-            componentArray[i].setAtractiveTerm(phase.getComponents()[i].getAtractiveTermNumber());
+            componentArray[i].setAttractiveTerm(phase.getComponents()[i].getAttractiveTermNumber());
         }
         this.setMixingRule(2);
     }
@@ -79,11 +79,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
@@ -147,7 +143,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
      * @return a double
      */
     public double getQmix(String name) {
-        int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
+        // int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
         for (int i = 0; i < gropuNames.length; i++) {
             if (name.equals(gropuNames[i]))
                 return Qmix[i];
@@ -164,7 +160,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
      * @return an array of {@link double} objects
      */
     public double[] getQmixdN(String name) {
-        int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
+        // int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
         for (int i = 0; i < gropuNames.length; i++) {
             if (name.equals(gropuNames[i]))
                 return QmixdN[i];
@@ -184,7 +180,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
         for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
             try {
-                if (getPhase().getComponent(0).getAtractiveTermNumber() == 13) {
+                if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
                     dataSet = database
                             .getResultSet(("SELECT * FROM unifacinterparama_umrmc WHERE MainGroup="
                                     + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i)
@@ -247,7 +243,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
         for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
             try {
-                if (getPhase().getComponent(0).getAtractiveTermNumber() == 13) {
+                if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
                     dataSet = database
                             .getResultSet(("SELECT * FROM unifacinterparamb_umrmc WHERE MainGroup="
                                     + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i)
@@ -310,7 +306,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
         for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
             try {
-                if (getPhase().getComponent(0).getAtractiveTermNumber() == 13) {
+                if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
                     dataSet = database
                             .getResultSet(("SELECT * FROM unifacinterparamc_umrmc WHERE MainGroup="
                                     + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i)

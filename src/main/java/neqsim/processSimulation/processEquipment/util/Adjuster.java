@@ -1,8 +1,3 @@
-/*
- * staticMixer.java
- *
- * Created on 11. mars 2001, 01:49
- */
 package neqsim.processSimulation.processEquipment.util;
 
 import org.apache.logging.log4j.LogManager;
@@ -39,7 +34,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
      * Constructor for Adjuster.
      * </p>
      */
-    public Adjuster() {}
+    @Deprecated
+    public Adjuster() {
+        this("Adjuster");
+    }
 
     /**
      * <p>
@@ -130,12 +128,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         this.targetComponent = targetComponent;
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
         run();
     }
 

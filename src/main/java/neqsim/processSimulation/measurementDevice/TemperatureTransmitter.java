@@ -23,9 +23,6 @@ public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
     protected static int numberOfStreams = 0;
     protected StreamInterface stream = null;
 
-    /**
-     * Creates a new instance of TemperatureTransmitter
-     */
     public TemperatureTransmitter() {
         name = "Temperature Transmitter";
         unit = "K";

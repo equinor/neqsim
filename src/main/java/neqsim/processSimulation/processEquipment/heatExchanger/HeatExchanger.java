@@ -24,8 +24,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
-    StreamInterface[] outStream;
-    StreamInterface[] inStream;
+    StreamInterface[] outStream = new Stream[2];
+    StreamInterface[] inStream = new Stream[2];
     SystemInterface system;
     double NTU;
     protected double temperatureOut = 0, dT = 0.0;
@@ -44,9 +44,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * Constructor for HeatExchanger.
      * </p>
      */
+    @Deprecated
     public HeatExchanger() {
-        outStream = new Stream[2];
-        inStream = new Stream[2];
+        this("HeatExchanger");
     }
 
     /**
@@ -57,13 +57,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public HeatExchanger(StreamInterface inStream1) {
-        outStream = new Stream[2];
-        inStream = new Stream[2];
-        this.inStream[0] = inStream1;
-        this.inStream[1] = inStream1;
-        outStream[0] = (StreamInterface) inStream1.clone();
-        outStream[1] = (StreamInterface) inStream1.clone();
+        this("HeatExchanger", inStream1);
     }
 
     /**
@@ -76,13 +72,47 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      * @param inStream2 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public HeatExchanger(StreamInterface inStream1, StreamInterface inStream2) {
-        outStream = new Stream[2];
-        inStream = new Stream[2];
+        this("HeatExchanger", inStream1, inStream2);
+    }
+
+    /**
+     * Constructor for HeatExchanger.
+     * 
+     * @param name
+     */
+    public HeatExchanger(String name) {
+      super(name);
+    }
+
+    /**
+     * Constructor for HeatExchanger.
+     * 
+     * @param name
+     * @param inStream1
+     */
+    public HeatExchanger(String name, StreamInterface inStream1) {
+        this(name);
+        this.inStream[0] = inStream1;
+        this.inStream[1] = inStream1;
+        outStream[0] = inStream1.clone();
+        outStream[1] = inStream1.clone();
+    }
+
+    /**
+     * Constructor for HeatExchanger.
+     * 
+     * @param name
+     * @param inStream1
+     * @param inStream2
+     */
+    public HeatExchanger(String name, StreamInterface inStream1, StreamInterface inStream2) {
+      this(name);
         this.inStream[0] = inStream1;
         this.inStream[1] = inStream2;
-        outStream[0] = (StreamInterface) inStream1.clone();
-        outStream[1] = (StreamInterface) inStream2.clone();
+        outStream[0] = inStream1.clone();
+        outStream[1] = inStream2.clone();
     }
 
     /**
@@ -108,15 +138,15 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
      */
     public void setFeedStream(int number, StreamInterface inStream) {
         this.inStream[number] = inStream;
-        outStream[number] = (StreamInterface) inStream.clone();
+        outStream[number] = inStream.clone();
     }
 
     /** {@inheritDoc} */
     @Override
     public void setName(String name) {
+        super.setName(name);
         outStream[0].setName(name + "_Sout1");
         outStream[1].setName(name + "_Sout2");
-        this.name = name;
     }
 
     /** {@inheritDoc} */
@@ -195,9 +225,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
             nonOutStreamSpecifiedStreamNumber = 1;
         }
 
-        SystemInterface systemOut0 = (SystemInterface) inStream[nonOutStreamSpecifiedStreamNumber]
-                .getThermoSystem().clone();
-        // SystemInterface systemOut1 = (SystemInterface)
+        SystemInterface systemOut0 =
+                inStream[nonOutStreamSpecifiedStreamNumber].getThermoSystem().clone();
+        // SystemInterface systemOut1 =
         // inStream[outStreamSpecificationNumber].getThermoSystem().clone();
 
         if (getSpecification().equals("out stream")) {
@@ -205,7 +235,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
                     getInStream(outStreamSpecificationNumber).getFlowRate("kg/sec"), "kg/sec");
             outStream[outStreamSpecificationNumber].run();
             temperatureOut = outStream[outStreamSpecificationNumber].getTemperature();
-            // system = (SystemInterface)
+            // system =
             // outStream[outStreamSpecificationNumber].getThermoSystem().clone();
         }
 
@@ -232,7 +262,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         // inStream[1].displayResult();
         if (firstTime) {
             firstTime = false;
-            SystemInterface systemOut0 = (SystemInterface) inStream[0].getThermoSystem().clone();
+            SystemInterface systemOut0 = inStream[0].getThermoSystem().clone();
             outStream[0].setThermoSystem(systemOut0);
             outStream[0].getThermoSystem().setTemperature(guessOutTemperature);
             outStream[0].run();
@@ -248,10 +278,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
             // streamToCalculate = 1;
             // streamToSet = 0;
         }
-        SystemInterface systemOut0 =
-                (SystemInterface) inStream[streamToSet].getThermoSystem().clone();
-        SystemInterface systemOut1 =
-                (SystemInterface) inStream[streamToCalculate].getThermoSystem().clone();
+        SystemInterface systemOut0 = inStream[streamToSet].getThermoSystem().clone();
+        SystemInterface systemOut1 = inStream[streamToCalculate].getThermoSystem().clone();
 
         // systemOut1.setTemperature(inTemp1);
         outStream[streamToSet].setThermoSystem(systemOut0);
@@ -334,11 +362,11 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
          * inStream[0].getThermoSystem().getNumberOfMoles() /
          * inStream[1].getThermoSystem().getNumberOfMoles();
          * 
-         * systemOut1 = (SystemInterface) inStream[1].getThermoSystem().clone();
-         * System.out.println("dent " + dEntalphy); testOps = new
-         * ThermodynamicOperations(systemOut1); testOps.PHflash(systemOut1.getEnthalpy() -
-         * corrected_Entalphy, 0); outStream[1].setThermoSystem(systemOut1);
-         * System.out.println("temperatur out " + outStream[1].getTemperature()); }
+         * systemOut1 = inStream[1].getThermoSystem().clone(); System.out.println("dent " +
+         * dEntalphy); testOps = new ThermodynamicOperations(systemOut1);
+         * testOps.PHflash(systemOut1.getEnthalpy() - corrected_Entalphy, 0);
+         * outStream[1].setThermoSystem(systemOut1); System.out.println("temperatur out " +
+         * outStream[1].getTemperature()); }
          */
     }
 
@@ -482,7 +510,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         double duty2 = Math.abs(outStream[1].getThermoSystem().getEnthalpy()
                 - inStream[1].getThermoSystem().getEnthalpy());
         thermalEffectiveness = ((HeatExchanger) refExchanger).getThermalEffectiveness()
-                * (duty1 + duty2) / 2.0 / Math.abs(((HeatExchanger) refExchanger).getDuty());
+            * (duty1 + duty2) / 2.0 / Math.abs(((HeatExchanger) refExchanger).getDuty());
         hotColdDutyBalance = duty1 / duty2;
     }
 
@@ -517,10 +545,16 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         this.thermalEffectiveness = thermalEffectiveness;
     }
 
+    /**
+     * @return String
+     */
     String getFlowArrangement() {
         return flowArrangement;
     }
 
+    /**
+     * @param flowArrangement
+     */
     void setFlowArrangement(String flowArrangement) {
         this.flowArrangement = flowArrangement;
     }

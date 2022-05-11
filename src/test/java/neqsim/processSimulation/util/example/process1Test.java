@@ -1,6 +1,5 @@
 package neqsim.processSimulation.util.example;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -11,7 +10,9 @@ class process1Test {
     static neqsim.processSimulation.processSystem.ProcessSystem operations;
 
     /**
-     * <p>setUp.</p>
+     * <p>
+     * setUp.
+     * </p>
      */
     @BeforeAll
     public static void setUp() {
@@ -26,7 +27,8 @@ class process1Test {
         Stream stream_1 = new Stream("Stream1", testSystem);
 
         neqsim.processSimulation.processEquipment.compressor.Compressor compr =
-                new neqsim.processSimulation.processEquipment.compressor.Compressor(stream_1);
+                new neqsim.processSimulation.processEquipment.compressor.Compressor("compr",
+                        stream_1);
         compr.setOutletPressure(80.0);
         compr.setPolytropicEfficiency(0.9);
         compr.setIsentropicEfficiency(0.9);
@@ -37,12 +39,14 @@ class process1Test {
         operations.add(compr);
     }
 
+    /**
+     * @throws Exception
+     */
     @AfterEach
     void tearDown() throws Exception {}
 
     @Test
     void runTest() {
         operations.run();
-        assertEquals(2, 2);
     }
 }

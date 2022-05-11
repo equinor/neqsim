@@ -1,8 +1,3 @@
-/*
- * OperationInterafce.java
- *
- * Created on 2. oktober 2000, 22:14
- */
 package neqsim.processSimulation.controllerDevice;
 
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
@@ -16,24 +11,6 @@ import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
  * @version $Id: $Id
  */
 public interface ControllerDeviceInterface extends java.io.Serializable {
-    /**
-     * <p>
-     * getName.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getName();
-
-    /**
-     * <p>
-     * setName.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void setName(String name);
-
     /**
      * <p>
      * getMeasuredValue.
@@ -88,7 +65,7 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
      * @param signal a double
      * @param dt a double
      */
-    public void run(double signal, double dt);
+    public void runTransient(double signal, double dt);
 
     /**
      * <p>
@@ -127,4 +104,12 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
      * @param Td a double
      */
     public void setControllerParameters(double Ksp, double Ti, double Td);
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object o);
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode();
 }

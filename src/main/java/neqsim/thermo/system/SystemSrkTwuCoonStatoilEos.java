@@ -11,10 +11,6 @@ package neqsim.thermo.system;
 public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
     public SystemSrkTwuCoonStatoilEos() {
         super();
         modelName = "TwuCoonStatoil-EOS";
@@ -60,7 +56,6 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
             logger.error("Cloning failed.", e);
         }
 
-        //
         // for(int i = 0; i < numberOfPhases; i++) {
         // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
         // }

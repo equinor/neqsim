@@ -18,6 +18,8 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  * @version $Id: $Id
  */
 public class SubseaWell extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000;
+
     protected StreamInterface inStream;
     private StreamInterface outStream;
     public double height = 1000.0, length = 1200.0;
@@ -32,9 +34,10 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
      *        object
      */
     public SubseaWell(StreamInterface instream) {
+        super("SubseaWell");
         this.inStream = instream;
-        setOutStream((StreamInterface) instream.clone());
-        pipeline = new AdiabaticTwoPhasePipe(instream);
+        setOutStream(instream.clone());
+        pipeline = new AdiabaticTwoPhasePipe("pipeline", instream);
     }
 
     /**
@@ -56,8 +59,8 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         getOutStream().setFluid(pipeline.getOutStream().getFluid());
 
         /*
-         * System.out.println("stary P " ); SystemInterface fluidIn = (SystemInterface)
-         * (inStream.getFluid()).clone(); fluidIn.initProperties();
+         * System.out.println("stary P " ); SystemInterface fluidIn = (inStream.getFluid()).clone();
+         * fluidIn.initProperties();
          * 
          * double density = fluidIn.getDensity("kg/m3");
          * 
@@ -120,7 +123,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         well1.getPipeline().setLength(5500.0);
         well1.getPipeline().setInletElevation(-1000.0);
         well1.getPipeline().setOutletElevation(-100.0);
-        ThrottlingValve subseaChoke = new ThrottlingValve(well1.getOutStream());
+        ThrottlingValve subseaChoke = new ThrottlingValve("subseaChoke", well1.getOutStream());
         subseaChoke.setOutletPressure(90.0);
         subseaChoke.setAcceptNegativeDP(false);
         SimpleFlowLine flowLine = new SimpleFlowLine(subseaChoke.getOutStream());
@@ -128,11 +131,11 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         flowLine.getPipeline().setLength(2000.0);
         flowLine.getPipeline().setInletElevation(-100.0);
         // flowLine.set
-        ThrottlingValve topsideChoke = new ThrottlingValve(flowLine.getOutStream());
+        ThrottlingValve topsideChoke = new ThrottlingValve("topsideChoke", flowLine.getOutStream());
         topsideChoke.setOutletPressure(50.0, "bara");
         topsideChoke.setAcceptNegativeDP(false);
 
-        Adjuster adjust = new Adjuster();
+        Adjuster adjust = new Adjuster("adjust");
         adjust.setActivateWhenLess(true);
         adjust.setTargetVariable(flowLine.getOutStream(), "pressure", 70.0, "bara");
         adjust.setAdjustedVariable(producedOilStream, "flow rate");

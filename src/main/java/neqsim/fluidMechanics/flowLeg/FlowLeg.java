@@ -129,13 +129,13 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
     /** {@inheritDoc} */
     @Override
     public void setThermoSystem(SystemInterface thermoSystem) {
-        this.thermoSystem = (SystemInterface) thermoSystem.clone();
+        this.thermoSystem = thermoSystem.clone();
     }
 
     /** {@inheritDoc} */
     @Override
     public void setEquipmentGeometry(GeometryDefinitionInterface equipmentGeometry) {
-        this.equipmentGeometry = (GeometryDefinitionInterface) equipmentGeometry.clone();
+        this.equipmentGeometry = equipmentGeometry.clone();
     }
 
     /** {@inheritDoc} */
@@ -159,7 +159,7 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
 
     /** {@inheritDoc} */
     @Override
-    public void setOuterHeatTransferCOefficients(double startHeatTransferCoefficient,
+    public void setOuterHeatTransferCoefficients(double startHeatTransferCoefficient,
             double endHeatTransferCoefficient) {
         this.startOuterHeatTransferCoefficient = startHeatTransferCoefficient;
         this.endOuterHeatTransferCoefficient = endHeatTransferCoefficient;
@@ -167,7 +167,7 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
 
     /** {@inheritDoc} */
     @Override
-    public void setWallHeatTransferCOefficients(double startHeatTransferCoefficient,
+    public void setWallHeatTransferCoefficients(double startHeatTransferCoefficient,
             double endHeatTransferCoefficient) {
         this.startWallHeatTransferCOefficients = startHeatTransferCoefficient;
         this.endWallHeatTransferCOefficients = endHeatTransferCoefficient;

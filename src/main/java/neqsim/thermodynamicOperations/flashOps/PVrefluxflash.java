@@ -1,8 +1,3 @@
-/*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -49,7 +44,7 @@ public class PVrefluxflash extends Flash {
     @Override
     public void run() {
         // System.out.println("enthalpy: " + system.getEnthalpy());
-        double err = 0;
+        // double err = 0;
         int iter = 0;
         double f_func = 0.0, f_func_old = 0.0, df_func_dt = 0, t_old = 0, t_oldold = 0.0;
         tpFlash.run();
@@ -65,7 +60,7 @@ public class PVrefluxflash extends Flash {
                                                                             // / system.getVolume();
             df_func_dt = (f_func - f_func_old) / (t_old - t_oldold);
 
-            err = Math.abs(f_func);
+            // err = Math.abs(f_func);
 
             if (iter < 4) {
                 if (f_func > 0) {

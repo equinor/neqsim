@@ -10,8 +10,6 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
  */
 public class IonicInteractionParameterFittingFunctionCH4_1
         extends IonicInteractionParameterFittingFunctionCH4 {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for IonicInteractionParameterFittingFunctionCH4_1.

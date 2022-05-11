@@ -4,7 +4,9 @@ import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>TEGstripperProcess class.</p>
+ * <p>
+ * TEGstripperProcess class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -12,7 +14,9 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  */
 public class TEGstripperProcess {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -41,8 +45,7 @@ public class TEGstripperProcess {
         dryFeedGas.setTemperature(200.5, "C");
         dryFeedGas.setPressure(1.21, "bara");
 
-        neqsim.thermo.system.SystemInterface feedTEG =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
         feedTEG.setMolarComposition(
                 new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.09, 0.91});
 

@@ -18,7 +18,10 @@ public class NeqStream extends Stream {
      * Constructor for NeqStream.
      * </p>
      */
-    public NeqStream() {}
+    @Deprecated
+    public NeqStream() {
+        super("NeqStream");
+    }
 
     /**
      * <p>
@@ -27,8 +30,41 @@ public class NeqStream extends Stream {
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
+    @Deprecated
     public NeqStream(SystemInterface thermoSystem) {
         super(thermoSystem);
+    }
+
+    /**
+     * <p>
+     * Constructor for NeqStream.
+     * </p>
+     *
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    @Deprecated
+    public NeqStream(StreamInterface stream) {
+        super(stream);
+    }
+
+    /**
+     * Constructor for NeqStream.
+     * 
+     * @param name
+     */
+    public NeqStream(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for NeqStream.
+     * 
+     * @param name
+     * @param stream
+     */
+    public NeqStream(String name, StreamInterface stream) {
+        super(name, stream);
     }
 
     /**
@@ -43,18 +79,6 @@ public class NeqStream extends Stream {
         super(name, thermoSystem);
     }
 
-    /**
-     * <p>
-     * Constructor for NeqStream.
-     * </p>
-     *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public NeqStream(StreamInterface stream) {
-        super(stream);
-    }
-
     /** {@inheritDoc} */
     @Override
     public NeqStream clone() {
@@ -66,7 +90,7 @@ public class NeqStream extends Stream {
             e.printStackTrace(System.err);
         }
 
-        thermoSystem = (SystemInterface) thermoSystem.clone();
+        thermoSystem = thermoSystem.clone();
 
         return clonedStream;
     }
@@ -76,7 +100,7 @@ public class NeqStream extends Stream {
     public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
-            thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
+            thermoSystem = this.stream.getThermoSystem().clone();
         }
         this.thermoSystem.init_x_y();
         this.thermoSystem.initBeta();

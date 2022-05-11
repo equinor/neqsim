@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
@@ -17,24 +12,6 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
     private static final long serialVersionUID = 1000;
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPAstatoil.
-     * </p>
-     */
-    public ComponentElectrolyteCPAstatoil() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPAstatoil.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentElectrolyteCPAstatoil(double moles) {
-        super(moles);
-    }
 
     /**
      * <p>

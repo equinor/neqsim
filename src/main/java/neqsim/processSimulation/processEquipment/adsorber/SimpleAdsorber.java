@@ -1,8 +1,3 @@
-/*
- * Heater.java
- *
- * Created on 15. mars 2001, 14:17
- */
 package neqsim.processSimulation.processEquipment.adsorber;
 
 import neqsim.processSimulation.mechanicalDesign.adsorber.AdsorberMechanicalDesign;
@@ -24,8 +19,8 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 
     boolean setTemperature = false;
     String name = new String();
-    StreamInterface[] outStream;
-    StreamInterface[] inStream;
+    StreamInterface[] outStream = new Stream[2];
+    StreamInterface[] inStream = new Stream[2];
     SystemInterface system;
     protected double temperatureOut = 0, dT = 0.0;
     private int numberOfStages = 5;
@@ -40,8 +35,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
      * Constructor for SimpleAdsorber.
      * </p>
      */
+    @Deprecated
     public SimpleAdsorber() {
-        mechanicalDesign = new AdsorberMechanicalDesign(this);
+        this("SimpleAdsorber");
     }
 
     /**
@@ -52,23 +48,21 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public SimpleAdsorber(StreamInterface inStream1) {
-        mechanicalDesign = new AdsorberMechanicalDesign(this);
-
-        outStream = new Stream[2];
-        inStream = new Stream[2];
+      this("SimpleAdsorber");
         this.inStream[0] = inStream1;
         this.inStream[1] = inStream1;
         outStream[0] = (Stream) inStream1.clone();
         outStream[1] = (Stream) inStream1.clone();
 
-        SystemInterface systemOut1 = (SystemInterface) inStream1.getThermoSystem().clone();
+        SystemInterface systemOut1 = inStream1.getThermoSystem().clone();
         outStream[0].setThermoSystem(systemOut1);
 
         double molCO2 =
                 inStream1.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
         System.out.println("mol CO2 " + molCO2);
-        SystemInterface systemOut0 = (SystemInterface) inStream1.getThermoSystem().clone();
+        SystemInterface systemOut0 = inStream1.getThermoSystem().clone();
         systemOut0.init(0);
         systemOut0.addComponent("MDEA", molCO2 * absorptionEfficiency);
         systemOut0.addComponent("water", molCO2 * absorptionEfficiency * 10.0);
@@ -79,12 +73,59 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         outStream[1].run();
     }
 
+    /**
+     * Constructor for SimpleAdsorber.
+     * 
+     * @param name
+     */
+    public SimpleAdsorber(String name) {
+        super(name);
+    }
+
+    /**
+     * <p>
+     * Constructor for SimpleAdsorber.
+     * </p>
+     * 
+     * @param name
+     * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    public SimpleAdsorber(String name, StreamInterface inStream1) {
+      this(name);
+        this.inStream[0] = inStream1;
+        this.inStream[1] = inStream1;
+        outStream[0] = (Stream) inStream1.clone();
+        outStream[1] = (Stream) inStream1.clone();
+        setName(name);
+
+        SystemInterface systemOut1 = inStream1.getThermoSystem().clone();
+        outStream[0].setThermoSystem(systemOut1);
+
+        double molCO2 =
+                inStream1.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
+        System.out.println("mol CO2 " + molCO2);
+        SystemInterface systemOut0 = inStream1.getThermoSystem().clone();
+        systemOut0.init(0);
+        systemOut0.addComponent("MDEA", molCO2 * absorptionEfficiency);
+        systemOut0.addComponent("water", molCO2 * absorptionEfficiency * 10.0);
+        systemOut0.chemicalReactionInit();
+        systemOut0.createDatabase(true);
+        systemOut0.setMixingRule(4);
+        outStream[1].setThermoSystem(systemOut0);
+        outStream[1].run();
+    }
+
+    public AdsorberMechanicalDesign getMechanicalDesign() {
+        return new AdsorberMechanicalDesign(this);
+    }
+
     /** {@inheritDoc} */
     @Override
     public void setName(String name) {
+        super.setName(name);
         outStream[0].setName(name + "_Sout1");
         outStream[1].setName(name + "_Sout2");
-        this.name = name;
     }
 
     /**
@@ -146,7 +187,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        SystemInterface systemOut1 = (SystemInterface) inStream[1].getThermoSystem().clone();
+        SystemInterface systemOut1 = inStream[1].getThermoSystem().clone();
         outStream[0].setThermoSystem(systemOut1);
         outStream[0].run();
 
@@ -196,16 +237,8 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public String getName() {
-        return name;
+    public void runTransient(double dt) {
     }
-
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
 
     /**
      * <p>

@@ -1,6 +1,5 @@
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
-import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -15,8 +14,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionUtils {
-    private static final long serialVersionUID = 1000;
-
     private static final double Pa = 1e-5;
     private static final double m3 = 1e-5;
 
@@ -51,12 +48,10 @@ public class GTSurfaceTensionUtils {
         phase.setTotalVolume(v);
 
         for (i = 0; i < ncomp; i++) {
-            ComponentInterface component;
-
             if (rho[i] < 0.) {
                 throw new RuntimeException("Number density is negative.");
             }
-            component = phase.getComponent(i);
+            // ComponentInterface component = phase.getComponent(i);
             n = rho[i] * Pa;
             nv[i] = n;
         }

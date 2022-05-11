@@ -1,8 +1,3 @@
-/*
- * Heater.java
- *
- * Created on 15. mars 2001, 14:17
- */
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -23,6 +18,7 @@ public class Cooler extends Heater {
      * Constructor for Cooler.
      * </p>
      */
+    @Deprecated
     public Cooler() {
         super();
     }
@@ -35,8 +31,18 @@ public class Cooler extends Heater {
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Cooler(StreamInterface inStream) {
         super(inStream);
+    }
+
+    /**
+     * Constructor for Cooler.
+     * 
+     * @param name
+     */
+    public Cooler(String name) {
+        super(name);
     }
 
     /**
@@ -55,7 +61,6 @@ public class Cooler extends Heater {
     /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
-        //
         double entrop = 0.0;
 
         inStream.run();

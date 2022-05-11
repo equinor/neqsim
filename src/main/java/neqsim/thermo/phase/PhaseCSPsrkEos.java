@@ -68,11 +68,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         double oldtemp = temperature;
         if (type == 0) {
             refBWRSPhase.init(1.0, 1, 0, phase, 1.0);
@@ -236,7 +232,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
-
+        int maxIterations = 1000;
         do {
             iterations++;
             BonVold = BonV;
@@ -281,7 +277,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-        } while (Math.abs(BonV - BonVold) > 1.0e-10 && iterations < 1000);
+        } while (Math.abs(BonV - BonVold) > 1.0e-10 && iterations < maxIterations);
         // molarVolume = 1.0/BonV*Btemp/numberOfMolesInPhase;
         // Z = pressure*molarVolume/(R*temperature);
         // System.out.println("BonV: " + BonV + " " + h + " " +dh + " B " + Btemp + " D
@@ -289,11 +285,12 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
         // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
         // + fVV());
-        if (iterations >= 1000) {
-            throw new neqsim.util.exception.TooManyIterationsException();
+        if (iterations >= maxIterations) {
+          throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume",
+              maxIterations);
         }
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
         }
         // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
         // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"

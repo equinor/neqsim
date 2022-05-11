@@ -26,9 +26,6 @@ public class TBPCharacterize extends PlusCharacterize {
     double[] TBP_Mnom = null;
     double[] TBP_M = null;
 
-    /**
-     * Creates a new instance of TBPCharacterize
-     */
     public TBPCharacterize() {}
 
     /**
@@ -152,11 +149,7 @@ public class TBPCharacterize extends PlusCharacterize {
         return this.TBPfractions;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property coefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setCoefs(double coef, int i) {
         this.coefs[i] = coef;
@@ -200,11 +193,7 @@ public class TBPCharacterize extends PlusCharacterize {
         solver.solve();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property coefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setCoefs(double[] coefs) {
         this.coefs = coefs;
@@ -240,11 +229,7 @@ public class TBPCharacterize extends PlusCharacterize {
         this.TBPdens = TBPdens;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property length.
-     */
+    /** {@inheritDoc} */
     @Override
     public int getLength() {
         return length;
@@ -268,21 +253,13 @@ public class TBPCharacterize extends PlusCharacterize {
         this.TBP_M = TBP_M;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property carbonNumberVector.
-     */
+    /** {@inheritDoc} */
     @Override
     public int[] getCarbonNumberVector() {
         return this.carbonNumberVector;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property carbonNumberVector.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setCarbonNumberVector(int[] carbonNumberVector) {
         this.carbonNumberVector = carbonNumberVector;
@@ -306,11 +283,7 @@ public class TBPCharacterize extends PlusCharacterize {
         this.calcTBPfractions = calcTBPfractions;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property plusCoefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getPlusCoefs() {
         return this.plusCoefs;
@@ -322,31 +295,19 @@ public class TBPCharacterize extends PlusCharacterize {
         return this.plusCoefs[i];
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property plusCoefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setPlusCoefs(double[] plusCoefs) {
         this.plusCoefs = plusCoefs;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property densPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getDensPlus() {
         return densPlus;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property densPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setDensPlus(double densPlus) {
         this.densPlus = densPlus;

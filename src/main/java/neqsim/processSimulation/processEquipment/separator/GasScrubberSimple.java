@@ -7,6 +7,7 @@ package neqsim.processSimulation.processEquipment.separator;
 
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -22,9 +23,9 @@ public class GasScrubberSimple extends Separator {
     private static final long serialVersionUID = 1000;
 
     SystemInterface gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
-    Stream inletStream;
-    Stream gasOutStream;
-    Stream liquidOutStream;
+    StreamInterface inletStream;
+    StreamInterface gasOutStream;
+    StreamInterface liquidOutStream;
     String name = new String();
 
     /**
@@ -32,10 +33,9 @@ public class GasScrubberSimple extends Separator {
      * Constructor for GasScrubberSimple.
      * </p>
      */
+    @Deprecated
     public GasScrubberSimple() {
-        super();
-        mechanicalDesign = new GasScrubberMechanicalDesign(this);
-        this.setOrientation("vertical");
+        this("GasScrubberSimple");
     }
 
     /**
@@ -45,9 +45,19 @@ public class GasScrubberSimple extends Separator {
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public GasScrubberSimple(Stream inletStream) {
-        this();
-        this.setInletStream(inletStream);
+    @Deprecated
+    public GasScrubberSimple(StreamInterface inletStream) {
+        this("GasScrubberSimple", inletStream);
+    }
+
+    /**
+     * Constructor for GasScrubberSimple.
+     * 
+     * @param name
+     */
+    public GasScrubberSimple(String name) {
+        super(name);
+        this.setOrientation("vertical");
     }
 
     /**
@@ -58,16 +68,13 @@ public class GasScrubberSimple extends Separator {
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public GasScrubberSimple(String name, Stream inletStream) {
-        this();
-        this.name = name;
-        this.setInletStream(inletStream);
+    public GasScrubberSimple(String name, StreamInterface inletStream) {
+        super(name, inletStream);
+        this.setOrientation("vertical");
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name) {
-        this.name = name;
+    public GasScrubberMechanicalDesign getMechanicalDesign() {
+        return new GasScrubberMechanicalDesign(this);
     }
 
     /**
@@ -77,46 +84,46 @@ public class GasScrubberSimple extends Separator {
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public void setInletStream(Stream inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(0);
-        gasOutStream = new Stream(gasSystem);
+        gasOutStream = new Stream("gasOutStream", gasSystem);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(1);
-        liquidOutStream = new Stream(liquidSystem);
+        liquidOutStream = new Stream("liquidOutStream", liquidSystem);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return liquidOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGas() {
+    public StreamInterface getGas() {
         return getGasOutStream();
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquid() {
+    public StreamInterface getLiquid() {
         return getLiquidOutStream();
     }
 
     /** {@inheritDoc} */
     @Override
     public void run() {
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
         if (separatorSection.size() > 0) {
@@ -127,19 +134,13 @@ public class GasScrubberSimple extends Separator {
         gasSystem.setNumberOfPhases(1);
         gasOutStream.setThermoSystem(gasSystem);
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         if (separatorSection.size() > 0) {
             thermoSystem.addGasToLiquid(getGasCarryunderFraction());
             liquidSystem = thermoSystem.phaseToSystem(1);
         }
         liquidSystem.setNumberOfPhases(1);
         liquidOutStream.setThermoSystem(liquidSystem);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
     }
 
     /**
@@ -163,10 +164,8 @@ public class GasScrubberSimple extends Separator {
         return gasVel;
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
+    }
 }

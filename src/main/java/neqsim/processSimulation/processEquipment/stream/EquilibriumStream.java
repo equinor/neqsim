@@ -19,6 +19,7 @@ public class EquilibriumStream extends Stream {
      * Constructor for EquilibriumStream.
      * </p>
      */
+    @Deprecated
     public EquilibriumStream() {}
 
     /**
@@ -28,6 +29,7 @@ public class EquilibriumStream extends Stream {
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
+    @Deprecated
     public EquilibriumStream(SystemInterface thermoSystem) {
         super(thermoSystem);
     }
@@ -40,8 +42,18 @@ public class EquilibriumStream extends Stream {
      * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public EquilibriumStream(StreamInterface stream) {
-        super(stream.getThermoSystem());
+        this("EquilibriumStream", stream.getThermoSystem());
+    }
+
+    /**
+     * Constructor for EquilibriumStream.
+     * 
+     * @param name
+     */
+    public EquilibriumStream(String name) {
+        super(name);
     }
 
     /**
@@ -67,7 +79,7 @@ public class EquilibriumStream extends Stream {
             e.printStackTrace(System.err);
         }
 
-        thermoSystem = (SystemInterface) thermoSystem.clone();
+        thermoSystem = thermoSystem.clone();
         return clonedStream;
     }
 

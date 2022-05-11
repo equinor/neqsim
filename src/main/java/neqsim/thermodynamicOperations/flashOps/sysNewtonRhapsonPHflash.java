@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import Jama.Matrix;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -112,10 +113,10 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0,
-                    Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient())
+                    Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient())
                             + Math.log(system.getPhases()[0].getComponents()[i].getx())
                             - Math.log(system.getPhases()[1].getComponents()[i]
-                                    .getFugasityCoeffisient())
+                                    .getFugacityCoefficient())
                             - Math.log(system.getPhases()[1].getComponents()[i].getx()));
         }
         double rP = 0.0, rT = 0.0;
@@ -141,8 +142,8 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         Jac.timesEquals(0.0);
         double dij = 0.0;
 
-        double tempJ = 0.0, sumdyidbeta = 0, sumdxidbeta = 0;
-        int nofc = numberOfComponents;
+        double tempJ = 0.0;
+        // int nofc = numberOfComponents;
 
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
@@ -247,7 +248,7 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
      * @return a int
      */
     public int solve(int np) {
-        Matrix dx;
+        // Matrix dx;
         iter = 1;
         do {
             iter++;

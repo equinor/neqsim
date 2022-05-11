@@ -19,13 +19,6 @@ public class ComponentGeNRTL extends ComponentGE {
      * <p>
      * Constructor for ComponentGeNRTL.
      * </p>
-     */
-    public ComponentGeNRTL() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGeNRTL.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -39,6 +32,7 @@ public class ComponentGeNRTL extends ComponentGE {
 
     /** {@inheritDoc} */
     @Override
+    @SuppressWarnings("unused")
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij,
             double[][] intparam, String[][] mixRule) {

@@ -37,9 +37,9 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
     /** {@inheritDoc} */
     @Override
     public void run() {
-        int iterations = 0, maxNumberOfIterations = 15000;
-        double yold = 0, ytotal = 1;
-        double deriv = 0, funk = 0;
+        int iterations = 0, maxNumberOfIterations = 10000;
+        // double yold = 0, ytotal = 1, deriv = 0;
+        double funk = 0;
         double maxTemperature = 0, minTemperature = 1e6;
         system.init(0);
 
@@ -62,34 +62,33 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
                 iterations = 0;
                 do {
                     funk = 0;
-                    deriv = 0.0;
+                    // deriv = 0.0;
                     iterations++;
                     system.init(3);
                     funk = system.getPhases()[0].getComponents()[k].getz();
 
                     funk -= system.getPhases()[0].getBeta()
-                            * system.getPhases()[1].getComponents()[k].getFugasityCoeffisient()
-                            / system.getPhases()[0].getComponents()[k].getFugasityCoeffisient();
-                    deriv -= system.getPhases()[0].getBeta()
-                            * (system.getPhases()[1].getComponents()[k].getFugasityCoeffisient()
-                                    * system.getPhases()[0].getComponents()[k].getdfugdt() * -1.0
-                                    / Math.pow(system.getPhases()[0].getComponents()[k]
-                                            .getFugasityCoeffisient(), 2.0)
-                                    + system.getPhases()[1].getComponents()[k].getdfugdt()
-                                            / system.getPhases()[i].getComponents()[k]
-                                                    .getFugasityCoeffisient());
+                            * system.getPhases()[1].getComponents()[k].getFugacityCoefficient()
+                            / system.getPhases()[0].getComponents()[k].getFugacityCoefficient();
 
                     // logger.info("funk " + funk);
-
-                    // double newTemp = system.getTemperature() - funk/deriv;
-                    // system.setTemperature(newTemp);
+                    /*
+                     * deriv -= system.getPhases()[0].getBeta()
+                     * (system.getPhases()[1].getComponents()[k].getFugacityCoefficient()
+                     * system.getPhases()[0].getComponents()[k].getdfugdt() * -1.0 /
+                     * Math.pow(system.getPhases()[0].getComponents()[k] .getFugacityCoefficient(),
+                     * 2.0) + system.getPhases()[1].getComponents()[k].getdfugdt() /
+                     * system.getPhases()[i].getComponents()[k] .getFugacityCoefficient());
+                     * 
+                     * system.setTemperature(system.getTemperature() - funk/deriv);
+                     */
 
                     system.setTemperature(system.getTemperature() + 100.0 * funk);
 
                     // logger.info("temp " + system.getTemperature());
                     // if(system.getPhase(0).getComponent(k).getComponentName().equals("MEG"))
                     // logger.info("funk " + funk + " temp " + system.getTemperature());
-                } while (Math.abs(funk) >= 0.0000001 && iterations < 10000);
+                } while (Math.abs(funk) >= 0.0000001 && iterations < maxNumberOfIterations);
 
                 // logger.info("funk " + funk + k + " " + system.getTemperature());
                 if (system.getTemperature() < minTemperature) {

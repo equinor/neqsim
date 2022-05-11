@@ -40,8 +40,8 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
         }
 
         int iterations = 0, maxNumberOfIterations = 1000;
-        double xold = 0, xtotal = 1;
-        double deriv = 0, funk = 0;
+        double xtotal = 1;
+        // double deriv = 0, funk = 0;
         // System.out.println("starting");
         system.init(0);
         system.setBeta(0, 1.0 - 1e-15);
@@ -82,7 +82,8 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
                     .setx(system.getPhases()[1].getComponents()[i].getx() / xtotal);
         }
 
-        double ktot = 0.0, oldTemperature = 0.0, fold = 0;
+        double ktot = 0.0;
+        // double = 0.0, fold = 0;
         do {
             oldTemp = system.getTemperature();
             iterations++;
@@ -99,10 +100,10 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
                                 - system.getPhases()[0].getComponents()[i].getdfugdt());
             }
             double f = xtotal - 1.0;
-            fold = f;
+            // fold = f;
 
             // System.out.println("x" + xtotal);
-            oldTemperature = system.getTemperature();
+            // oldTemperature = system.getTemperature();
 
             if (iterations < 5) {
                 system.setTemperature(system.getTemperature() + iterations / (iterations + 100.0)
@@ -117,14 +118,13 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
 
             ktot = 0.0;
             for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-                xold = system.getPhases()[1].getComponents()[i].getx();
                 if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
                     system.getPhases()[0].getComponents()[i].setK(1e-40);
                 } else {
                     system.getPhases()[0].getComponents()[i].setK(Math.exp(
-                            system.getPhases()[1].getComponents()[i].getLogFugasityCoeffisient()
+                            system.getPhases()[1].getComponents()[i].getLogFugacityCoefficient()
                                     - system.getPhases()[0].getComponents()[i]
-                                            .getLogFugasityCoeffisient()));
+                                            .getLogFugacityCoefficient()));
                 }
                 system.getPhases()[1].getComponents()[i]
                         .setK(system.getPhases()[0].getComponents()[i].getK());

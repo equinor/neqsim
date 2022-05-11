@@ -35,14 +35,14 @@ public class compressorTest {
 
         MixerInterface mixer = new StaticMixer("Mixer 1");
         mixer.addStream(stream_1);
-        Stream stream_3 = mixer.getOutStream();
+        StreamInterface stream_3 = mixer.getOutStream();
         stream_3.setName("stream3");
 
         Separator separator = new Separator("Separator 1", stream_3);
         StreamInterface stream_2 = separator.getGasOutStream();
         stream_2.setName("stream2");
 
-        Compressor comp1 = new Compressor(stream_2);
+        Compressor comp1 = new Compressor("comp1", stream_2);
         comp1.setOutletPressure(50.0);
 
         mixer.addStream(stream_2);

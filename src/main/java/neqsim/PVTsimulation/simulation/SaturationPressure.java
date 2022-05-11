@@ -4,18 +4,18 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>SaturationPressure class.</p>
+ * <p>
+ * SaturationPressure class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class SaturationPressure extends BasePVTsimulation {
-    private static final long serialVersionUID = 1000;
-
-    private double saturationPressure;
-
     /**
-     * <p>Constructor for SaturationPressure.</p>
+     * <p>
+     * Constructor for SaturationPressure.
+     * </p>
      *
      * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -24,7 +24,9 @@ public class SaturationPressure extends BasePVTsimulation {
     }
 
     /**
-     * <p>calcSaturationPressure.</p>
+     * <p>
+     * calcSaturationPressure.
+     * </p>
      *
      * @return a double
      */
@@ -41,6 +43,11 @@ public class SaturationPressure extends BasePVTsimulation {
             thermoOps.TPflash();
         } while (getThermoSystem().getNumberOfPhases() > 1
                 && getThermoSystem().getPressure() < 1000.0);
+        
+        if(getThermoSystem().getPressure()>1000.0) {
+          return getThermoSystem().getPressure();
+        }
+        
         double minPres = getThermoSystem().getPressure() - 10.0;
         double maxPres = getThermoSystem().getPressure();
         int iteration = 0;
@@ -67,7 +74,9 @@ public class SaturationPressure extends BasePVTsimulation {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -94,14 +103,13 @@ public class SaturationPressure extends BasePVTsimulation {
         tempSystem.setMixingRule(9);// "HV", "UNIFAC_UMRPRU");
         tempSystem.init(0);
         tempSystem.init(1);
-        tempSystem.saveFluid(928);
+        //tempSystem.saveFluid(928);
 
         SimulationInterface satPresSim = new SaturationPressure(tempSystem);
         satPresSim.run();
         satPresSim.getThermoSystem().display();
         /*
-         * double saturationPressure = 350.0;
-         * double saturationTemperature = 273.15 + 80;
+         * double saturationPressure = 350.0; double saturationTemperature = 273.15 + 80;
          * 
          * TuningInterface tuning = new TuneToSaturation(satPresSim);
          * tuning.setSaturationConditions(saturationTemperature, saturationPressure); tuning.run();

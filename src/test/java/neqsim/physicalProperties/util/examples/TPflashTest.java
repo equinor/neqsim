@@ -19,7 +19,9 @@ public class TPflashTest {
     static Logger logger = LogManager.getLogger(TPflashTest.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -89,7 +91,7 @@ public class TPflashTest {
 
         testSystem.initPhysicalProperties();
         // double a =
-        // testSystem.getPhase("oil").getPhysicalProperties().getDiffusionCoeffisient(0,
+        // testSystem.getPhase("oil").getPhysicalProperties().getDiffusionCoefficient(0,
         // 1);
         // testSystem.setPhysicalPropertyModel(6);
         // testSystem.getPhase(0).initPhysicalProperties("viscosity");

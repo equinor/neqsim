@@ -42,7 +42,7 @@ public class TestIonicInteractionParameterFitting {
         // Reference<>'Bahiri1984' AND Temperature<393.15 AND loading>0.05 AND loading<1.2 AND
         // VapourPressure1<15.0 AND wtMDEA>40 AND wtMDEA<60 ORDER BY
         // wtMDEA,Temperature,Reference,loading");
-        //
+
         // //ResultSet dataSet = database.getResultSet( "SELECT * FROM CO2KurCor WHERE
         // Reference<>'Bahiri1984' AND wtMDEA>40.0 AND Temperature>=280.15 AND Temperature<=470.15
         // AND loading>0.00002 AND VapourPressure1<25.0 ORDER BY wtMDEA,Temperature,Reference");
@@ -50,7 +50,7 @@ public class TestIonicInteractionParameterFitting {
         // WHERE Component1='MDEA' AND Component2='water'");AND Reference='Lemoine2000'
         // //ResultSet dataSet = database.getResultSet( "SELECT * FROM CO2KurCor WHERE
         // Reference='Austgen1991' AND loading>0.01");
-        //
+
         // try{
         // int i=0;
         // while(dataSet.next() && i<450){
@@ -95,8 +95,8 @@ public class TestIonicInteractionParameterFitting {
         // testSystem.init(0);
         // double sample1[] =
         // {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()/testSystem.getPhase(0).getComponent(1).getNumberOfmoles()};
-        // // temperature
-        // double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev pressure
+        //
+        // double standardDeviation1[] = {0.01};
         // double stddev = pressure;//Double.parseDouble(dataSet.getString("StandardDeviation"))
         // SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
         // function.setInitialGuess(guess);
@@ -176,9 +176,8 @@ public class TestIonicInteractionParameterFitting {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
-                        / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
-                                                      // pressure
+                        / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()};
+                double standardDeviation1[] = {0.01};
                 double stddev = pressure;// Double.parseDouble(dataSet.getString("StandardDeviation"))
                 SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
                 function.setInitialGuess(guess);
@@ -254,9 +253,8 @@ public class TestIonicInteractionParameterFitting {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
-                        / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()}; // temperature
-                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
-                                                      // pressure
+                        / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()};
+                double standardDeviation1[] = {0.01};
                 double stddev = pressure;// Double.parseDouble(dataSet.getString("StandardDeviation"))
                 SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
                 function.setInitialGuess(guess);
@@ -274,8 +272,7 @@ public class TestIonicInteractionParameterFitting {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        //
-        //
+
         optim.solve();
         // optim.runMonteCarloSimulation();
         // optim.displayCurveFit();

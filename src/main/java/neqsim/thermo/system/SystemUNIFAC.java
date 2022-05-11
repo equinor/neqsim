@@ -5,22 +5,14 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- *
- * @author Even Solbraa
- * @version
- */
-
-/**
  * This class defines a thermodynamic system using the SRK equation of state for gas and Unifac for
  * liquids
+ * 
+ * @author Even Solbraa
  */
 public class SystemUNIFAC extends SystemEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
     public SystemUNIFAC() {
         super();
         modelName = "UNIFAC-GE-model";
@@ -65,8 +57,7 @@ public class SystemUNIFAC extends SystemEos {
     public SystemUNIFAC(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
-        numberOfPhases = 4;
-        maxNumberOfPhases = 4;
+        setNumberOfPhases(4);
         modelName = "UNIFAC-GE-model";
         solidPhaseCheck = solidCheck;
 

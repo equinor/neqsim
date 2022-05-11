@@ -18,6 +18,10 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @version $Id: $Id
  */
 public class PropaneCoolingModule extends ProcessModuleBaseClass {
+
+    public PropaneCoolingModule(String name) {
+        super(name);
+    }
     /**
      * <p>
      * Setter for the field <code>condenserTemperature</code>.
@@ -78,13 +82,13 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         ((Stream) refrigerantStream).setSpecification("bubT");
         refrigerantStream.run();
 
-        ThrottlingValve JTvalve = new ThrottlingValve(refrigerantStream);
+        ThrottlingValve JTvalve = new ThrottlingValve("JTvalve", refrigerantStream);
 
         Cooler cooler = new Cooler("propane evaporator", JTvalve.getOutStream());
         cooler.setPressureDrop(0.35);
         cooler.setSpecification("out stream");
 
-        Stream stream_2 = new Stream(cooler.getOutStream());
+        Stream stream_2 = new Stream("stream_2", cooler.getOutStream());
         stream_2.setSpecification("dewT");
         stream_2.getThermoSystem().setTemperature(vaporizerTemperature);
         stream_2.run();
@@ -133,7 +137,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-        getOperations().runTransient();
+        getOperations().runTransient(dt);
     }
 
     /** {@inheritDoc} */
@@ -171,8 +175,8 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         testSystem.addComponent("propane", 0.30);
         testSystem.createDatabase(true);
 
-        Stream porpane = new Stream(testSystem);
-        PropaneCoolingModule propaneModule = new PropaneCoolingModule();
+        Stream porpane = new Stream("porpane", testSystem);
+        PropaneCoolingModule propaneModule = new PropaneCoolingModule("propaneModule");
         propaneModule.setCondenserTemperature(273.15 + 30);
         propaneModule.setVaporizerTemperature(273.15 - 40);
 

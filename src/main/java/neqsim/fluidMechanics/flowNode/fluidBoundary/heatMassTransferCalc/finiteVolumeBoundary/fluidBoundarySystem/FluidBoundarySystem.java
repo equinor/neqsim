@@ -1,8 +1,3 @@
-/*
- * FiniteVolumeBoundary.java
- *
- * Created on 8. august 2001, 13:46
- */
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySystem;
 
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface;
@@ -19,8 +14,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version $Id: $Id
  */
 public class FluidBoundarySystem implements FluidBoundarySystemInterface {
-    private static final long serialVersionUID = 1000;
-
     protected FluidBoundaryInterface boundary;
     protected int numberOfNodes = 10;
     protected double filmThickness = 0.01;

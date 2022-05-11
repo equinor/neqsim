@@ -56,15 +56,15 @@ public class TestEosParameterFittingToMercurySolubility {
                 SystemInterface testSystem = new SystemSrkEos(290, 1.0);
                 testSystem.addComponent("mercury", 10.0);
                 testSystem.addComponent("n-hexane", 10.0);
-                testSystem.getPhase(0).getComponent("mercury").setAtractiveTerm(12);
-                testSystem.getPhase(1).getComponent("mercury").setAtractiveTerm(12);
+                testSystem.getPhase(0).getComponent("mercury").setAttractiveTerm(12);
+                testSystem.getPhase(1).getComponent("mercury").setAttractiveTerm(12);
                 testSystem.createDatabase(true);
                 testSystem.setMultiPhaseCheck(true);
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")) + 2);
                 testSystem.setMixingRule(2);
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
                 double standardDeviation1[] = {0.13};
                 double x1 = Double.parseDouble(dataSet.getString("x1"));
                 SampleValue sample = new SampleValue(x1, x1 / 100.0, sample1, standardDeviation1);

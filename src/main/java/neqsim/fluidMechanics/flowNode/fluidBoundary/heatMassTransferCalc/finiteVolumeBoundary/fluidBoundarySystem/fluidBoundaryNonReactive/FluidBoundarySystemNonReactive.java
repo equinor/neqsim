@@ -1,8 +1,3 @@
-/*
- * FluidBoundarySystemReactive.java
- *
- * Created on 8. august 2001, 13:56
- */
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySystem.fluidBoundaryNonReactive;
 
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
@@ -23,8 +18,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for FluidBoundarySystemNonReactive.

@@ -90,7 +90,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
      * </p>
      */
     public void initProfiles() {
-        double err = 0, oldPres = 0, oldTemp = 0, dpdx = 0;
+        double err = 0, oldPres = 0, dpdx = 0;
 
         do {
             // pipe.getNode(0).setVelocityIn(pipe.getNode(0).getVelocity());
@@ -101,7 +101,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
             for (int i = 0; i < numberOfNodes - 1; i++) {
                 // setting temperatures
                 pipe.getNode(i).init();
-                oldTemp = pipe.getNode(i + 1).getBulkSystem().getTemperature();
                 pipe.getNode(i + 1).getBulkSystem().setTemperature((4.0
                         * pipe.getNode(i).calcTotalHeatTransferCoefficient(0)
                         * (pipe.getNode(i).getGeometry().getSurroundingEnvironment()
@@ -127,8 +126,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
                 // System.out.println("velocity " + pipe.getNode(i).getVelocity());
                 // setting pressures
-                System.out
-                        .println("presbef : " + pipe.getNode(i + 1).getBulkSystem().getPressure());
+                // System.out
+                // .println("presbef : " + pipe.getNode(i + 1).getBulkSystem().getPressure());
                 oldPres = pipe.getNode(i + 1).getBulkSystem().getPressure();
                 pipe.getNode(i + 1).getBulkSystem()
                         .setPressure(-pipe.getNode(i).getWallFrictionFactor()
@@ -152,22 +151,21 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                         - pipe.getNode(i).getBulkSystem().getPressure())
                         / ((pipe.getNode(i + 1).getGeometry().getNodeLength()
                                 + pipe.getNode(i).getGeometry().getNodeLength()) * 0.5);
-
-                System.out.println("pres : " + pipe.getNode(i + 1).getBulkSystem().getPressure());
-                System.out
-                        .println("temp : " + pipe.getNode(i + 1).getBulkSystem().getTemperature());
-                System.out.println("velocity : " + pipe.getNode(i + 1).getVelocity());
-                System.out.println("dpdx : " + dpdx);
-                System.out
-                        .println("JT coeff : " + pipe.getNode(i + 1).getBulkSystem().getPhases()[0]
-                                .getJouleThomsonCoefficient());
+                /*
+                 * System.out.println("pres : " + pipe.getNode(i +
+                 * 1).getBulkSystem().getPressure()); System.out .println("temp : " + pipe.getNode(i
+                 * + 1).getBulkSystem().getTemperature()); System.out.println("velocity : " +
+                 * pipe.getNode(i + 1).getVelocity()); System.out.println("dpdx : " + dpdx);
+                 * System.out .println("JT coeff : " + pipe.getNode(i +
+                 * 1).getBulkSystem().getPhases()[0] .getJouleThomsonCoefficient());
+                 */
                 // setting velocities
                 pipe.getNode(i + 1).setVelocityIn(pipe.getNode(i + 1).getVelocity());
                 pipe.getNode(i + 1)
                         .setVelocity((pipe.getNode(i + 1).getVelocityIn().doubleValue()));
                 pipe.getNode(i + 1).init();
             }
-            System.out.println("err: " + err);
+            // System.out.println("err: " + err);
         } while (Math.abs(err) > 1);
         initMatrix();
     }
@@ -297,7 +295,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                                         .getMolarMass());// pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
                                                          // +
                                                          // 0.5*diff4Matrix[p].get(j,0));
-
             }
 
             pipe.getNode(j).getBulkSystem().getPhases()[0].normalize();
@@ -708,7 +705,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     public void solveTDMA() {
         double d[];
         int iter = 0, iterTop = 0;
-        double maxDiff = 1.0, maxDiffOld = 0;
+        double maxDiff = 1.0;
         double diff = 0;
         xNew = new double[pipe.getNode(0).getBulkSystem().getPhases()[0]
                 .getNumberOfComponents()][numberOfNodes];
@@ -718,7 +715,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         initMatrix();
 
         do {
-            maxDiffOld = maxDiff;
             maxDiff = 0;
             iterTop++;
 
@@ -780,7 +776,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                     d = TDMAsolve.solve(a, b, c, r);
                     sol3Matrix = new Matrix(d, 1).transpose();
                     diffMatrix = sol3Matrix.minus(sol3Old);
-                    System.out.println("diff3: " + diffMatrix.norm1() / sol3Matrix.norm1());
+                    // System.out.println("diff3: " + diffMatrix.norm1() / sol3Matrix.norm1());
                     initTemperature(iter);
 
                     diff = Math.abs(diffMatrix.norm1() / sol3Matrix.norm1());
@@ -811,7 +807,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                 } while (diff > 1e-15 && iter < 10);
             }
 
-            System.out.println("maxDiff " + maxDiff);
+            // System.out.println("maxDiff " + maxDiff);
         } while (Math.abs(maxDiff) > 1e-10 && iterTop < 100);// diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
 
         initFinalResults();

@@ -1,8 +1,3 @@
-/*
- * TBPCharacterize.java
- *
- * Created on 3. januar 2003, 10:03
- */
 package neqsim.thermo.characterization;
 
 import java.util.ArrayList;
@@ -37,9 +32,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     SystemInterface system = null;
     static Logger logger = LogManager.getLogger(PlusCharacterize.class);
 
-    /**
-     * Creates a new instance of TBPCharacterize
-     */
     public PlusCharacterize() {}
 
     /**
@@ -138,11 +130,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         // solver3.solve();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property coefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getCoefs() {
         return this.coefs;
@@ -154,11 +142,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         return this.coefs[i];
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property coefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setCoefs(double[] coefs) {
         System.arraycopy(coefs, 0, this.coefs, 0, coefs.length);
@@ -179,11 +163,10 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
             firsttime = false;
         }
 
-        double zSum = 0.0, mSum = 0.0, densSum = 0.0;
+        double mSum = 0.0, densSum = 0.0;
         int iter = 0;
         do {
             iter++;
-            zSum = 0.0;
             mSum = 0.0;
             densSum = 0.0;
             for (int i = this.getFirstPlusFractionNumber(); i < this
@@ -191,7 +174,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
                 double ztemp = Math.exp(this.getCoef(0) + this.getCoef(1) * (i));
                 double M = PVTsimMolarMass[i - 6] / 1000.0;
                 double dens = this.getCoef(2) + this.getCoef(3) * Math.log(i);
-                zSum += ztemp;
                 mSum += ztemp * M;
                 densSum += (ztemp * M / dens);
             }
@@ -202,11 +184,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         } while (Math.abs(densPlus - densSum) > 1e-6 && iter < 1000);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property coefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setCoefs(double coef, int i) {
         this.coefs[i] = coef;
@@ -252,7 +230,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         }
 
         double meanWeightFrac = weightTot / (numberOfPseudocomponents + 0.000001);
-        int pluscomp = 0;
         zPlus = new double[numberOfPseudocomponents];
         MPlus = new double[numberOfPseudocomponents];
         int k = 0;
@@ -273,7 +250,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
             // System.out.println("weigth " + weightFrac + " i" + i);
             if (weightFrac >= meanWeightFrac || !pseudocomponents
                     || i == getLastPlusFractionNumber() - 1) {
-                pluscomp++;
                 String name = (i == firstPS) ? "PC" + Integer.toString(firstPS)
                         : "PC" + Integer.toString(firstPS) + "-" + Integer.toString(i);
                 system.addTBPfraction(name, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k],
@@ -354,59 +330,42 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     }
 
     /**
-     * Setter for property startPlus. NB! Deprecated and replaced by firstPlusFractionNumber?
+     * Setter for property firstPlusFractionNumber.
      *
-     * @param startPlus New value of property startPlus.
+     * @param startPlus New value of property firstPlusFractionNumber.
+     * @deprecated use {@link #setFirstPlusFractionNumber(int firstPlusFractionNumber)} instead.
+     * 
      */
+    @Deprecated
     public void setStartPlus(int startPlus) {
         setFirstPlusFractionNumber(startPlus);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property MPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getMPlus() {
         return MPlus;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property MPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setMPlus(double MPlus) {
         this.MPlus = MPlus;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property zPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getZPlus() {
         return zPlus;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property zPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setZPlus(double zPlus) {
         this.zPlus = zPlus;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property plusCoefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getPlusCoefs() {
         return this.plusCoefs;
@@ -418,21 +377,13 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         return this.plusCoefs[i];
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property plusCoefs.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setPlusCoefs(double[] plusCoefs) {
         this.plusCoefs = plusCoefs;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property densPlus.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getDensPlus() {
         return densPlus;
@@ -462,31 +413,19 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         return numberOfPseudocomponents;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property numberOfPseudocomponents.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfPseudocomponents(int numberOfPseudocomponents) {
         this.numberOfPseudocomponents = numberOfPseudocomponents;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property pseudocomponents.
-     */
+    /** {@inheritDoc} */
     @Override
     public boolean isPseudocomponents() {
         return pseudocomponents;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property pseudocomponents.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setPseudocomponents(boolean pseudocomponents) {
         this.pseudocomponents = pseudocomponents;
@@ -505,7 +444,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
 
         for (int i = 0; i < list.size(); i++) {
             try {
-                system.removeComponent((String) list.get(i));
+                system.removeComponent(list.get(i));
                 logger.info("removing " + list.get(i));
             } catch (Exception e) {
                 logger.error("not able to remove " + list.get(i));

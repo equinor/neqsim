@@ -31,13 +31,6 @@ public class ComponentHydrateKluda extends Component {
      * <p>
      * Constructor for ComponentHydrateKluda.
      * </p>
-     */
-    public ComponentHydrateKluda() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentHydrateKluda.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -111,7 +104,7 @@ public class ComponentHydrateKluda extends Component {
             do {
                 val = 0.0;
                 tempy = 0.0;
-                fugold = fugasityCoeffisient;
+                fugold = fugacityCoefficient;
                 for (int cavType = 0; cavType < 2; cavType++) {
                     tempy = 0.0;
                     for (int j = 0; j < phase.getNumberOfComponents(); j++) {
@@ -124,26 +117,26 @@ public class ComponentHydrateKluda extends Component {
                     val += cavprwat[hydrateStructure][cavType] * Math.log(1.0 - tempy);
                 }
                 logger.info("val " + (val));
-                logger.info("fugasityCoeffisient bef " + fugasityCoeffisient);
+                logger.info("fugacityCoefficient bef " + fugacityCoefficient);
                 double solvol = 1.0 / 906.0 * getMolarMass();
-                fugasityCoeffisient = Math.exp(val)
+                fugacityCoefficient = Math.exp(val)
                         * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
                         * Math.exp(solvol / (R * temp) * ((pres
                                 - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)))
                                 * 1e5)
                         / pres;
-                // fugasityCoeffisient = getAntoineVaporPressure(temp)/pres;
-                // logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-                // logFugasityCoeffisient += val*boltzmannConstant/R;
+                // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
+                // logFugacityCoefficient = Math.log(fugacityCoefficient);
+                // logFugacityCoefficient += val*boltzmannConstant/R;
 
-                // fugasityCoeffisient = Math.exp(logFugasityCoeffisient);
-                logger.info("fugasityCoeffisient " + fugasityCoeffisient);
-            } while (Math.abs((fugasityCoeffisient - fugold) / fugold) > 1e-8);
+                // fugacityCoefficient = Math.exp(logFugacityCoefficient);
+                logger.info("fugacityCoefficient " + fugacityCoefficient);
+            } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-8);
         } else {
-            fugasityCoeffisient = 1e5;
+            fugacityCoefficient = 1e5;
         }
-        // System.out.println("fug " + fugasityCoeffisient);
-        return fugasityCoeffisient;
+        // System.out.println("fug " + fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /**
@@ -159,8 +152,8 @@ public class ComponentHydrateKluda extends Component {
      */
     public double dfugdt(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         if (componentName.equals("water")) {
-            double solvol =
-                    1.0 / getPureComponentSolidDensity(getMeltingPointTemperature()) * molarMass;
+            // double solvol =1.0 / getPureComponentSolidDensity(getMeltingPointTemperature()) *
+            // molarMass;
             dfugdt = Math
                     .log((getEmptyHydrateStructureVapourPressuredT(hydrateStructure, temp)) / pres);
         } else {
@@ -332,7 +325,7 @@ public class ComponentHydrateKluda extends Component {
                         * (delt(intnumb, 4.0, radius, struccture, cavityType, phase) + corerad
                                 / cavRadius[intnumb][struccture][cavityType]
                                 * delt(intnumb, 5.0, radius, struccture, cavityType, phase))));
-        //
+
         // intnumb++;
         // pot += 2.0*coordNumb[intnumb][struccture][cavityType]*lenjonsenergy*(
         // (Math.pow(diam,12.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],11.0)*
@@ -342,7 +335,7 @@ public class ComponentHydrateKluda extends Component {
         // radius)*(delt(intnumb,
         // 4.0,radius,struccture,cavityType,phase)+corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,5.0,radius,struccture,cavityType,phase)))
         // );
-        //
+
         // intnumb++;
         // pot += 2.0*coordNumb[intnumb][struccture][cavityType]*lenjonsenergy*(
         // (Math.pow(diam,12.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],11.0)*
@@ -375,10 +368,10 @@ public class ComponentHydrateKluda extends Component {
      */
     public double delt(int intnumb, double n, double radius, int struccture, int cavityType,
             PhaseInterface phase) {
-        double lenjonsenergy = Math.sqrt(this.getLennardJonesEnergyParameter()
-                * phase.getComponent("water").getLennardJonesEnergyParameter());
-        double diam = (this.getLennardJonesMolecularDiameter()
-                + phase.getComponent("water").getLennardJonesMolecularDiameter()) / 2.0;
+        // double lenjonsenergy = Math.sqrt(this.getLennardJonesEnergyParameter() *
+        // phase.getComponent("water").getLennardJonesEnergyParameter());
+        // double diam = (this.getLennardJonesMolecularDiameter() +
+        // phase.getComponent("water").getLennardJonesMolecularDiameter()) / 2.0;
         double corerad = (this.getSphericalCoreRadius()
                 + phase.getComponent("water").getSphericalCoreRadius()) / 2.0;
 

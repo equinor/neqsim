@@ -12,7 +12,7 @@
 .classpath
 .factorypath
 
-# BAckup of java files
+# Backup of java files
 *.java~
 
 # Log file
@@ -74,3 +74,5 @@ neqsim.iml
 .classpath
 
 .DS_Store
+# Test output - Serialized files
+test_*.ser

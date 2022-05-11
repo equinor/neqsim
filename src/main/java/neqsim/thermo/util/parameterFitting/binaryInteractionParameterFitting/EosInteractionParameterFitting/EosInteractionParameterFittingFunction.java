@@ -12,8 +12,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version $Id: $Id
  */
 public class EosInteractionParameterFittingFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for EosInteractionParameterFittingFunction.
@@ -37,11 +35,11 @@ public class EosInteractionParameterFittingFunction extends LevenbergMarquardtFu
         system.getPhases()[0].getComponents()[1].setx(1.0 - dependentValues[1]);
         system.init(1);
         system.getPhases()[0].getComponents()[0].setK(Math.exp(
-                Math.log(system.getPhases()[1].getComponents()[0].getFugasityCoeffisient()) - Math
-                        .log(system.getPhases()[0].getComponents()[0].getFugasityCoeffisient())));
+                Math.log(system.getPhases()[1].getComponents()[0].getFugacityCoefficient()) - Math
+                        .log(system.getPhases()[0].getComponents()[0].getFugacityCoefficient())));
         system.getPhases()[1].getComponents()[0].setK(Math.exp(
-                Math.log(system.getPhases()[1].getComponents()[0].getFugasityCoeffisient()) - Math
-                        .log(system.getPhases()[0].getComponents()[0].getFugasityCoeffisient())));
+                Math.log(system.getPhases()[1].getComponents()[0].getFugacityCoefficient()) - Math
+                        .log(system.getPhases()[0].getComponents()[0].getFugacityCoefficient())));
         calcK = system.getPhases()[0].getComponents()[0].getK();
 
         double diff = expK - calcK;

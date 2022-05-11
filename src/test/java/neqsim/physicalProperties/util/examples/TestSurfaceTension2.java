@@ -21,9 +21,6 @@ public class TestSurfaceTension2 {
      */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
-        int i;
-        int nncomp = 6; // Hard coded
-        double ci[] = new double[6];
         int gtmethod = 1; // 2; John changed
 
         SystemInterface testSystem = new SystemSrkEos(445.0, 105);

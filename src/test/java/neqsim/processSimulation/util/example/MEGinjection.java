@@ -9,7 +9,9 @@ import neqsim.processSimulation.processEquipment.util.Adjuster;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>MEGinjection class.</p>
+ * <p>
+ * MEGinjection class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -17,7 +19,9 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  */
 public class MEGinjection {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -51,8 +55,7 @@ public class MEGinjection {
         feedGasStream.setTemperature(50.0, "C");
         feedGasStream.setPressure(55.00, "bara");
 
-        neqsim.thermo.system.SystemInterface feedMEG =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface feedMEG = feedGas.clone();
         feedMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                 0.0, 0.0, 0.0, 0.1, 0.9});
 
@@ -65,8 +68,7 @@ public class MEGinjection {
         feedGasMEGmixer.addStream(feedGasStream);
         feedGasMEGmixer.addStream(MEGFeed);
 
-        Heater pipeline = new Heater(feedGasMEGmixer.getOutStream());
-        pipeline.setName("gas-MEG pipeline");
+        Heater pipeline = new Heater("gas-MEG pipeline", feedGasMEGmixer.getOutStream());
         pipeline.setOutTemperature(273.15 + 35.5);
         pipeline.setOutPressure(80.2);
 
@@ -91,8 +93,8 @@ public class MEGinjection {
 
         MEGwelloperations.save("c:/temp/MEGinjection.neqsim");
 
-        Stream feedStream = new Stream((Stream) MEGwelloperations.getUnit("feed gas and MEG"));
-        feedStream.setName("feed to onhore");
+        Stream feedStream = new Stream("feed to onhore",
+                (Stream) MEGwelloperations.getUnit("feed gas and MEG"));
 
         ThrottlingValve onshoreChockeValve = new ThrottlingValve("onshore choke valve", feedStream);
         onshoreChockeValve.setOutletPressure(70.3);
@@ -100,8 +102,7 @@ public class MEGinjection {
         ThreePhaseSeparator slugCatcher =
                 new ThreePhaseSeparator("slug catcher", onshoreChockeValve.getOutStream());
 
-        neqsim.thermo.system.SystemInterface feedMEGOnshore =
-                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        neqsim.thermo.system.SystemInterface feedMEGOnshore = feedGas.clone();
         feedMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                 0.0, 0.0, 0.0, 0.1, 0.9});
 
@@ -111,8 +112,7 @@ public class MEGinjection {
         MEGFeedOnshore.setPressure(80.0, "bara");
 
         neqsim.processSimulation.processEquipment.splitter.Splitter MEGsplitter =
-                new Splitter(MEGFeedOnshore);
-        MEGsplitter.setName("MEG splitter");
+                new Splitter("MEG splitter", MEGFeedOnshore);
         MEGsplitter.setSplitFactors(new double[] {0.1, 0.1, 0.8});
 
         StaticMixer MEGmixer1 = new StaticMixer("MEG mixer 1");

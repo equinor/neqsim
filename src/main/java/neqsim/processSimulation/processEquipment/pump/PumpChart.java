@@ -151,11 +151,6 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
         return (int) Math.round(newspeed);
     }
 
-    // public double getHead(double flow, double speed) {
-    // checkSurge1(flow, speed);
-    // return 100.0;
-    // }
-
     /**
      * <p>
      * efficiency.
@@ -234,7 +229,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
 
         Stream stream_1 = new Stream("Stream1", testFluid);
 
-        Pump pump1 = new Pump(stream_1);
+        Pump pump1 = new Pump("pump1", stream_1);
         pump1.setOutletPressure(100.0);
         // comp1.getAntiSurge().setActive(true);
         pump1.setSpeed(12918);

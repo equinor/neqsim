@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
 package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
@@ -35,24 +30,6 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
      * <p>
      * Constructor for ComponentElectrolyteCPAOld.
      * </p>
-     */
-    public ComponentElectrolyteCPAOld() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPAOld.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentElectrolyteCPAOld(double moles) {
-        super(moles);
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPAOld.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -80,7 +57,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
                 a = aCPA;
                 b = bCPA;
             }
-            setAtractiveTerm(0);
+            setAttractiveTerm(0);
         }
     }
 
@@ -114,7 +91,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
                 a = aCPA;
                 b = bCPA;
             }
-            setAtractiveTerm(0);
+            setAttractiveTerm(0);
         }
     }
 
@@ -157,10 +134,10 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
-        super.setAtractiveTerm(i);
+    public void setAttractiveTerm(int i) {
+        super.setAttractiveTerm(i);
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-            getAtractiveTerm().setm(mCPA);
+            getAttractiveTerm().setm(mCPA);
         }
     }
 
@@ -367,11 +344,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
                 / phase.getTotalVolume();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property xsite.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getXsite() {
         return this.xsite;

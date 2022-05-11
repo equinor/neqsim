@@ -29,25 +29,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
      * <p>
      * Constructor for ComponentModifiedFurstElectrolyteEos.
      * </p>
-     */
-    public ComponentModifiedFurstElectrolyteEos() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentModifiedFurstElectrolyteEos.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentModifiedFurstElectrolyteEos(double moles) {
-        super(moles);
-        numberOfMoles = moles;
-    }
-
-    /**
-     * <p>
-     * Constructor for ComponentModifiedFurstElectrolyteEos.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -68,8 +49,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
                         * 1e5
                 : b;
         a = ionicCharge != 0 ? 1.0e-35 : a;
-        setAtractiveParameter(
-                new neqsim.thermo.component.atractiveEosTerm.AtractiveTermSchwartzentruber(this));
+        setAttractiveParameter(
+                new neqsim.thermo.component.attractiveEosTerm.AttractiveTermSchwartzentruber(this));
         lennardJonesMolecularDiameter = ionicCharge != 0
                 ? Math.pow((6.0 * b / 1.0e5) / (pi * avagadroNumber), 1.0 / 3.0) * 1e10
                 : lennardJonesMolecularDiameter;

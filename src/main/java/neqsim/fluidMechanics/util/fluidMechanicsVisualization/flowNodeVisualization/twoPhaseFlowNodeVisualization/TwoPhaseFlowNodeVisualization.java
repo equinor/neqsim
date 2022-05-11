@@ -1,8 +1,3 @@
-/*
- * OnePhaseFlowNodeVisualization.java
- *
- * Created on 5. august 2001, 16:29
- */
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.twoPhaseFlowNodeVisualization;
 
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
@@ -17,8 +12,6 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  * @version $Id: $Id
  */
 public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for TwoPhaseFlowNodeVisualization.

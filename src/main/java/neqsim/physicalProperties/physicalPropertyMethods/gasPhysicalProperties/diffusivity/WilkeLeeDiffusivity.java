@@ -11,7 +11,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.
 public class WilkeLeeDiffusivity extends Diffusivity {
     private static final long serialVersionUID = 1000;
 
-    double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
+    double[][] binaryDiffusionCoefficients, binaryLennardJonesOmega;
 
     /**
      * <p>
@@ -32,7 +32,7 @@ public class WilkeLeeDiffusivity extends Diffusivity {
     public WilkeLeeDiffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         super(gasPhase);
-        binaryDiffusionCoeffisients = new double[gasPhase.getPhase()
+        binaryDiffusionCoefficients = new double[gasPhase.getPhase()
                 .getNumberOfComponents()][gasPhase.getPhase().getNumberOfComponents()];
         binaryLennardJonesOmega = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase
                 .getPhase().getNumberOfComponents()];
@@ -50,11 +50,11 @@ public class WilkeLeeDiffusivity extends Diffusivity {
         double tempVar2 = gasPhase.getPhase().getTemperature() / binaryEnergyParameter[i][j];
         binaryLennardJonesOmega[i][j] = A2 / Math.pow(tempVar2, B2) + C2 / Math.exp(D2 * tempVar2)
                 + E2 / Math.exp(F2 * tempVar2) + G2 / Math.exp(H2 * tempVar2);
-        binaryDiffusionCoeffisients[i][j] = (3.03 - (0.98 / Math.sqrt(binaryMolecularMass[i][j]))
+        binaryDiffusionCoefficients[i][j] = (3.03 - (0.98 / Math.sqrt(binaryMolecularMass[i][j]))
                 * 1.0e-3 * Math.pow(gasPhase.getPhase().getTemperature(), 1.5))
                 / (gasPhase.getPhase().getPressure() * Math.sqrt(binaryMolecularMass[i][j])
                         * Math.pow(binaryMolecularDiameter[i][j], 2.0)
                         * binaryLennardJonesOmega[i][j]);
-        return binaryDiffusionCoeffisients[i][j] * 1e-4;
+        return binaryDiffusionCoefficients[i][j] * 1e-4;
     }
 }

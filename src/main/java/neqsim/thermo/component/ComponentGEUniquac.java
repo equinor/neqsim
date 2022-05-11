@@ -5,8 +5,9 @@
  */
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -27,13 +28,6 @@ public class ComponentGEUniquac extends ComponentGE {
      * <p>
      * Constructor for ComponentGEUniquac.
      * </p>
-     */
-    public ComponentGEUniquac() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGEUniquac.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -47,8 +41,8 @@ public class ComponentGEUniquac extends ComponentGE {
             return;
         }
         if (component_name.contains("_PC")) {
-            double number = getMolarMass() / 0.014;
-            int intNumb = (int) Math.round(number) - 2;
+            // double number = getMolarMass() / 0.014;
+            // int intNumb = (int) Math.round(number) - 2;
             r = 1.0;
             q = 1.0;
             return;
@@ -93,10 +87,10 @@ public class ComponentGEUniquac extends ComponentGE {
      */
     public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
-        fugasityCoeffisient =
+        fugacityCoefficient =
                 (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
                         * this.getAntoineVaporPressure(temperature) / pressure);
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */

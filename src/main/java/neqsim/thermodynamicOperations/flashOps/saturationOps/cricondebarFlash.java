@@ -53,9 +53,9 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         double xtotal = 0;
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
             system.getPhases()[0].getComponents()[i].setK(
-                    Math.exp(system.getPhases()[1].getComponents()[i].getLogFugasityCoeffisient()
+                    Math.exp(system.getPhases()[1].getComponents()[i].getLogFugacityCoefficient()
                             - system.getPhases()[0].getComponents()[i]
-                                    .getLogFugasityCoeffisient()));
+                                    .getLogFugacityCoefficient()));
 
             system.getPhases()[1].getComponents()[i]
                     .setK(system.getPhases()[0].getComponents()[i].getK());
@@ -83,8 +83,8 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         // double sumX = 0.0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             XI[i] = Math.exp(Math.log(system.getPhase(0).getComponent(i).getz())
-                    + system.getPhase(0).getComponent(i).getLogFugasityCoeffisient()
-                    - system.getPhase(1).getComponent(i).getLogFugasityCoeffisient());
+                    + system.getPhase(0).getComponent(i).getLogFugacityCoefficient()
+                    - system.getPhase(1).getComponent(i).getLogFugacityCoefficient());
             // sumX += XI[i];
         }
         double tempSumXI = 1.0;// sumX;
@@ -255,13 +255,12 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             sumxx += system.getPhases()[1].getComponents()[i].getx();
             fvec.set(i, 0, Math
-                    .log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                    .log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                             * system.getPhases()[0].getComponents()[i].getz()
                             * system.getPressure())
-                    - Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
+                    - Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient()
                             * system.getPhases()[1].getComponents()[i].getx()
                             * system.getPressure()));
-
         }
         fvec.set(system.getPhase(0).getNumberOfComponents(), 0, 1.0 - sumxx);
         // logger.info("sumx" + sumxx);

@@ -62,11 +62,7 @@ public class PhaseDefault extends Phase {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
@@ -94,7 +90,7 @@ public class PhaseDefault extends Phase {
         double val = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             val += getComponent(i).getNumberOfMolesInPhase()
-                    * (getComponent(i).getLogFugasityCoeffisient());// +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
+                    * (getComponent(i).getLogFugacityCoefficient());// +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
         }
         return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
     }

@@ -30,7 +30,7 @@ public class TestMechanicalDesign {
          * pipel.setLength(100);
          */
 
-        Separator sep = new Separator(stream_1);
+        Separator sep = new Separator("sep", stream_1);
         // sep.addSeparatorSection("tray", "");
         // sep.getMechanicalDesign().getMaterialDesignStandard().readMaterialDesignStandard("Carbon
         // Steel Plates and Sheets", "SA-516", "55", 1);

@@ -12,8 +12,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public abstract class BaseFunction implements FunctionInterface {
-    private static final long serialVersionUID = 1000;
-
     public double[] params = null;
     public double[][] bounds = null;
 
@@ -36,7 +34,7 @@ public abstract class BaseFunction implements FunctionInterface {
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
-        // if(system!=null) clonedClass.system = (SystemInterface) system.clone();
+        // if(system!=null) clonedClass.system = system.clone();
         clonedClass.params = params.clone();
         System.arraycopy(params, 0, clonedClass.params, 0, params.length);
 
@@ -100,11 +98,7 @@ public abstract class BaseFunction implements FunctionInterface {
     @Override
     public void setDatabaseParameters() {}
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property bounds.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getLowerBound(int i) {
         return this.bounds[i][0];
@@ -122,11 +116,7 @@ public abstract class BaseFunction implements FunctionInterface {
         return this.bounds;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Setter for property bounds.
-     */
+    /** {@inheritDoc} */
     @Override
     public void setBounds(double[][] bounds) {
         this.bounds = bounds;

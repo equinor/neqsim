@@ -33,14 +33,16 @@ public class LumpingModel implements java.io.Serializable {
     }
 
     /**
-     * StandardLumpingModel distributes the pseudo components into equal wwight frations starting
-     * with the first TBP fraction in the fluid
+     * StandardLumpingModel distributes the pseudo components into equal weight
+     * fractions starting with the first TBP fraction in the fluid
      * 
      * @author Even Solbraa
      * @version 1.0
      */
     public class StandardLumpingModel
             implements LumpingModelInterface, Cloneable, java.io.Serializable {
+        private static final long serialVersionUID = 1000;
+
         public StandardLumpingModel() {}
 
         @Override
@@ -84,8 +86,6 @@ public class LumpingModel implements java.io.Serializable {
             lumpedComponentNames = new String[numberOfLumpedComponents];
             fractionOfHeavyEnd = new double[numberOfPseudocomponents];
             double[] zPlus = new double[numberOfPseudocomponents];
-            double[] MPlus = new double[numberOfPseudocomponents];
-
             double weightFrac = 0.0;
             double weightTot = 0.0;
             double molFracTot = 0.0;
@@ -101,10 +101,9 @@ public class LumpingModel implements java.io.Serializable {
 
             double meanWeightFrac = weightTot / (numberOfPseudocomponents + 1e-10);
             int k = 0;
-            int firstPS = charac.getPlusFractionModel().getFirstTBPFractionNumber();
+            // int firstPS = charac.getPlusFractionModel().getFirstTBPFractionNumber();
             double Maverage = 0.0, denstemp1 = 0.0, denstemp2 = 0.0;
             double totalNumberOfMoles = system.getNumberOfMoles();
-            int numbComp = system.getPhase(0).getNumberOfComponents();
             int i = 0;
             int added = 0;
             if (charac.getPlusFractionModel().hasPlusFraction()) {
@@ -148,8 +147,6 @@ public class LumpingModel implements java.io.Serializable {
                     weightFrac = 0.0;
                     Maverage = 0.0;
                     k++;
-                    firstPS = i + 1;
-
                     added++;
                 }
             }
@@ -186,7 +183,6 @@ public class LumpingModel implements java.io.Serializable {
                     weightFrac = 0.0;
                     Maverage = 0.0;
                     k++;
-                    firstPS = i + 1;
                 }
             }
             if (charac.getPlusFractionModel().hasPlusFraction()) {
@@ -198,22 +194,27 @@ public class LumpingModel implements java.io.Serializable {
 
         @Override
         public double getFractionOfHeavyEnd(int i) {
+            if (fractionOfHeavyEnd == null) {
+              neqsim.util.exception.ThermoException e =
+                  new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
+                        "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
+                logger.error(e.getMessage());
+                throw new RuntimeException(e);
+            }
             return fractionOfHeavyEnd[i];
         }
     }
 
     /**
-     * PVTLumpingModel Model Object.
-     * <P>
-     * PVTLumpingModel
-     * <P>
-     * PVTLumpingModel distributes the pseudo components into equal wwight frations starting with
-     * the plus fra
+     * PVTLumpingModel distributes the pseudo components into equal weight fractions
+     * starting with the plus fractions
      * 
      * @author Even Solbraa
      * @version 1.0
      */
     public class PVTLumpingModel extends StandardLumpingModel {
+        private static final long serialVersionUID = 1000;
+
         public PVTLumpingModel() {}
 
         @Override
@@ -242,7 +243,6 @@ public class LumpingModel implements java.io.Serializable {
             lumpedComponentNames = new String[numberOfLumpedComponents];
             fractionOfHeavyEnd = new double[numberOfLumpedComponents];
             double[] zPlus = new double[numberOfLumpedComponents];
-            double[] zPLus = new double[numberOfLumpedComponents];
 
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                 if ((system.getPhase(0).getComponent(i).isIsTBPfraction()
@@ -310,6 +310,13 @@ public class LumpingModel implements java.io.Serializable {
 
         @Override
         public double getFractionOfHeavyEnd(int i) {
+            if (fractionOfHeavyEnd == null) {
+              neqsim.util.exception.ThermoException e =
+                  new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
+                        "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
+                logger.error(e.getMessage());
+                throw new RuntimeException(e);
+            }
             return fractionOfHeavyEnd[i];
         }
     }

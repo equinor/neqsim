@@ -17,8 +17,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version $Id: $Id
  */
 public class EnhancementFactor implements EnhancementFactorInterface {
-    private static final long serialVersionUID = 1000;
-
     protected double[] enhancementVec = null;
     protected double[] hattaNumber = null;
     protected FluidBoundaryInterface fluidBoundary;
@@ -84,11 +82,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
     @Override
     public void calcEnhancementVec(int phase) {}
 
-    /**
-     * {@inheritDoc}
-     *
-     * Indexed getter for property enhancementVec.
-     */
+    /** {@inheritDoc} */
     @Override
     public double getEnhancementVec(int index) {
         return enhancementVec[index];

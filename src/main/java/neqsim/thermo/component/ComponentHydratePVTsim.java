@@ -24,13 +24,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
      * <p>
      * Constructor for ComponentHydratePVTsim.
      * </p>
-     */
-    public ComponentHydratePVTsim() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentHydratePVTsim.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -54,7 +47,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                     } else {
                         dataSet = database.getResultSet(
                                 ("SELECT * FROM comp WHERE name='" + component_name + "'"));
-
                     }
                     dataSet.next();
                 } catch (Exception e) {
@@ -92,7 +84,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
     public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
                 phase.getPressure());
-
     }
 
     /** {@inheritDoc} */
@@ -127,7 +118,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                     + K3 * Math.pow((temp - tmi), 3));
 
             double LNFUG_ICE = LNFUG_ICEREF + (VM * 100000 * (pres - 1.0) / (R * temp));
-            fugasityCoeffisient = Math.exp(LNFUG_ICE);
+            fugacityCoefficient = Math.exp(LNFUG_ICE);
         } else {
             for (int structure = 0; structure < 2; structure++) {
                 hydrateStructure = structure;
@@ -165,25 +156,25 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                             + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure));
                     // tempfugcoef = refWaterFugacity * Math.exp(val + calcDeltaChemPot(phase,
                     // numberOfComps, temp, pres, hydrateStruct) + wateralphaRef) / (pres);
-                    fugasityCoeffisient = alphaWater * Math.exp(val
+                    fugacityCoefficient = alphaWater * Math.exp(val
                             + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure)
                             + wateralphaRef) / pres;
 
-                    if (fugasityCoeffisient < maxFug) {
-                        maxFug = fugasityCoeffisient;
+                    if (fugacityCoefficient < maxFug) {
+                        maxFug = fugacityCoefficient;
 
                         stableStructure = hydrateStructure;
                     }
                 } else {
-                    fugasityCoeffisient = 1e50;
+                    fugacityCoefficient = 1e50;
                 }
             }
-            fugasityCoeffisient = maxFug;
+            fugacityCoefficient = maxFug;
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
         hydrateStructure = stableStructure;
 
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /** {@inheritDoc} */
@@ -200,7 +191,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
             if (phase.getComponent(i).isHydrateFormer()) {
                 temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType,
                         phase) * reffug[i];
-
             }
             // System.out.println("reffug " + reffug[i]);
             // System.out.println("temp " + temp);
@@ -210,7 +200,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
         return yki / temp;
         // }
         // else return 0.0;
-
     }
 
     /** {@inheritDoc} */
@@ -242,21 +231,17 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
         double Cp = 0;
 
-        // double molarvolume = 1.0 / (55493.0);// *0.9);
-
         double deltaMolarVolume = 0.0;
 
         if (hydrateStruct == 0) {
             dGf = 1264.0;
             dHf = -4858.0;
             Cp = -39.16;
-            // molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 4.6e-6;
         } else {
             dGf = 883.0;
             dHf = -5201.0;
             Cp = -39.16;
-            // molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 5.0e-6;
         }
         double T0 = 273.15;

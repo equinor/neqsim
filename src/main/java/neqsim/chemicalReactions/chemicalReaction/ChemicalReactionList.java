@@ -1,5 +1,5 @@
 /*
- * chemicalReactionList.java
+ * ChemicalReactionList.java
  *
  * Created on 4. februar 2001, 15:32
  */
@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.StringTokenizer;
 import Jama.Matrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -50,8 +49,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
      */
     public void readReactions(SystemInterface system) {
         chemicalReactionList.clear();
-        StringTokenizer tokenizer;
-        String token;
         ArrayList<String> names = new ArrayList<String>();
         ArrayList<String> stocCoef = new ArrayList<String>();
         double r = 0, refT = 0, actH;
@@ -113,8 +110,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
                     nameArray = new String[names.size()];
                     coefArray = new double[nameArray.length];
                     for (int i = 0; i < nameArray.length; i++) {
-                        coefArray[i] = Double.parseDouble((String) stocCoef.get(i));
-                        nameArray[i] = (String) names.get(i);
+                        coefArray[i] = Double.parseDouble(stocCoef.get(i));
+                        nameArray[i] = names.get(i);
                     }
 
                     ChemicalReaction reaction =
@@ -149,7 +146,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
      * @return a {@link neqsim.chemicalReactions.chemicalReaction.ChemicalReaction} object
      */
     public ChemicalReaction getReaction(int i) {
-        return (ChemicalReaction) chemicalReactionList.get(i);
+        return chemicalReactionList.get(i);
     }
 
     /**
@@ -162,8 +159,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
      */
     public ChemicalReaction getReaction(String name) {
         for (int i = 0; i < chemicalReactionList.size(); i++) {
-            if (((ChemicalReaction) chemicalReactionList.get(i)).getName().equals(name)) {
-                return (ChemicalReaction) chemicalReactionList.get(i);
+            if ((chemicalReactionList.get(i)).getName().equals(name)) {
+                return chemicalReactionList.get(i);
             }
         }
         System.out.println("did not find reaction: " + name);
@@ -182,7 +179,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         while (e.hasNext()) {
             // System.out.println("reaction name " +((ChemicalReaction)
             // e.next()).getName());
-            if (!((ChemicalReaction) e.next()).reactantsContains(names)) {
+            if (!(e.next()).reactantsContains(names)) {
                 e.remove();
             }
         }
@@ -198,7 +195,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     public void checkReactions(PhaseInterface phase) {
         Iterator<ChemicalReaction> e = chemicalReactionList.iterator();
         while (e.hasNext()) {
-            ((ChemicalReaction) e.next()).init(phase);
+            (e.next()).init(phase);
         }
     }
 
@@ -216,7 +213,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             double[][] Amatrix, double[] chemRefPot) {
         Iterator<ChemicalReaction> e = chemicalReactionList.iterator();
         while (e.hasNext()) {
-            ((ChemicalReaction) e.next()).initMoleNumbers(phase, components, Amatrix, chemRefPot);
+            (e.next()).initMoleNumbers(phase, components, Amatrix, chemRefPot);
             // ((ChemicalReaction)e).checkK(system);
         }
     }
@@ -233,14 +230,14 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         Iterator<ChemicalReaction> e = chemicalReactionList.iterator();
         ChemicalReaction reaction;
         while (e.hasNext()) {
-            reaction = (ChemicalReaction) e.next();
+            reaction = e.next();
             components.addAll(Arrays.asList(reaction.getNames()));
         }
         String[] componentList = new String[components.size()];
         int k = 0;
         Iterator<String> newe = components.iterator();
         while (newe.hasNext()) {
-            componentList[k++] = (String) newe.next();
+            componentList[k++] = newe.next();
         }
         reactiveComponentList = componentList;
         return componentList;
@@ -263,7 +260,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         reacGMatrix = new double[chemicalReactionList.size()][reactiveComponentList.length + 1];
         try {
             while (e.hasNext()) {
-                reaction = (ChemicalReaction) e.next();
+                reaction = e.next();
                 for (int i = 0; i < components.length; i++) {
                     reacMatrix[reactionNumber][i] = 0;
                     // System.out.println("Component List loop "+components[i].getComponentName());
@@ -281,13 +278,11 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         } catch (Exception er) {
             er.printStackTrace();
         }
-        Matrix reacMatr;
-        if (reacGMatrix.length > 0) {
-            reacMatr = new Matrix(reacGMatrix);
-        }
-        // System.out.println("reac matrix: ");
-        // reacMatr.print(10,3);
 
+        /*
+         * Matrix reacMatr; if (reacGMatrix.length > 0) { reacMatr = new Matrix(reacGMatrix); }
+         * System.out.println("reac matrix: "); reacMatr.print(10,3);
+         */
         return reacMatrix;
     }
 
@@ -304,7 +299,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             ComponentInterface[] components) {
         for (int i = 0; i < chemicalReactionList.size(); i++) {
             reacGMatrix[i][components.length] = R * phase.getTemperature()
-                    * Math.log(((ChemicalReaction) chemicalReactionList.get(i)).getK(phase));
+                    * Math.log((chemicalReactionList.get(i)).getK(phase));
         }
         return calcReferencePotentials();
     }
@@ -371,7 +366,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         for (int i = 0; i < phase.getNumberOfComponents(); i++) {
             Iterator<ChemicalReaction> e = chemicalReactionList.iterator();
             while (e.hasNext()) {
-                reaction = (ChemicalReaction) e.next();
+                reaction = e.next();
                 for (int j = 0; j < reaction.getNames().length; j++) {
                     if (phase.getComponents()[i].getName().equals(reaction.getNames()[j])) {
                         for (int k = 0; k < phase.getNumberOfComponents(); k++) {
@@ -392,8 +387,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
                 }
             }
         }
-        Matrix temp = new Matrix(tempReacMatrix);
-        Matrix temp2 = new Matrix(tempStocMatrix);
+
+        // Matrix temp = new Matrix(tempReacMatrix);
+        // Matrix temp2 = new Matrix(tempStocMatrix);
         // temp.print(10,10);
         // temp2.print(10,10);
     }
@@ -448,9 +444,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         double[] reacVec = new double[chemicalReactionList.size()];
 
         for (int i = 0; i < chemicalReactionList.size(); i++) {
-            tempForward[i] = ((ChemicalReaction) chemicalReactionList.get(i)).getRateFactor();
-            tempBackward[i] = ((ChemicalReaction) chemicalReactionList.get(i)).getK(phase)
-                    / ((ChemicalReaction) chemicalReactionList.get(i)).getRateFactor();
+            tempForward[i] = (chemicalReactionList.get(i)).getRateFactor();
+            tempBackward[i] = (chemicalReactionList.get(i)).getK(phase)
+                    / (chemicalReactionList.get(i)).getRateFactor();
             for (int j = 0; j < components.length; j++) {
                 if (reacMatrix[i][j] > 0) {
                     tempForward[i] *= modReacMatrix.get(i, j);
@@ -528,7 +524,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         double heat = 0.0;
         Iterator<ChemicalReaction> e = chemicalReactionList.iterator();
         while (e.hasNext()) {
-            reaction = (ChemicalReaction) e.next();
+            reaction = e.next();
             heat += phase.getComponent(comp).getNumberOfmoles() * reaction.getReactionHeat(phase);
             // System.out.println("moles " + phase.getComponent(comp).getNumberOfmoles());
             // System.out.println("reac heat 2 " + heat);

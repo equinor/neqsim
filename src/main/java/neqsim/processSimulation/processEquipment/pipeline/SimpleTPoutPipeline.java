@@ -1,9 +1,7 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -26,6 +24,7 @@ public class SimpleTPoutPipeline extends Pipeline {
      * Constructor for SimpleTPoutPipeline.
      * </p>
      */
+    @Deprecated
     public SimpleTPoutPipeline() {}
 
     /**
@@ -36,15 +35,28 @@ public class SimpleTPoutPipeline extends Pipeline {
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public SimpleTPoutPipeline(StreamInterface inStream) {
-        this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+        this("SimpleTPoutPipeline", inStream);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name) {
-        this.name = name;
+    /**
+     * Constructor for SimpleTPoutPipeline.
+     * 
+     * @param name
+     */
+    public SimpleTPoutPipeline(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for SimpleTPoutPipeline.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public SimpleTPoutPipeline(String name, StreamInterface inStream) {
+        super(name, inStream);
     }
 
     /** {@inheritDoc} */
@@ -78,7 +90,7 @@ public class SimpleTPoutPipeline extends Pipeline {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        system = (SystemInterface) inStream.getThermoSystem().clone();
+        system = inStream.getThermoSystem().clone();
         // system.setMultiPhaseCheck(true);
         system.setTemperature(this.temperatureOut);
         system.setPressure(this.pressureOut);
@@ -100,13 +112,8 @@ public class SimpleTPoutPipeline extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public String getName() {
-        return name;
+    public void runTransient(double dt) {
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient() {}
 
     /** {@inheritDoc} */
     @Override

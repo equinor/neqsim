@@ -1,20 +1,13 @@
 package neqsim.thermo.system;
-/**
- *
- * @author Even Solbraa
- * @version
- */
 
 /**
  * This class defines a thermodynamic system using the SRK equation of state
+ * 
+ * @author Even Solbraa
  */
 public class SystemPrMathiasCopeman extends SystemPrEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
     public SystemPrMathiasCopeman() {
         super();
         modelName = "Mathias-Copeman-PR-EOS";
@@ -60,7 +53,6 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
             logger.error("Cloning failed.", e);
         }
 
-        //
         // for(int i = 0; i < numberOfPhases; i++) {
         // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
         // }

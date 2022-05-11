@@ -232,7 +232,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
      */
     public void initCalc() {
         double stdTemp = 288.15, stdPres = 1.01325;
-        double GOR, GLR, standgasdens, standliqdens, TC, PC;
+        // double GOR, GLR;
         double molfracs[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         double MW[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         double dens[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -250,8 +250,10 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
 
         thermoOps.TPflash();
 
-        GOR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
-        GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
+        // GOR = thermoSystem.getPhase(0).getTotalVolume() /
+        // thermoSystem.getPhase(1).getTotalVolume();
+        // GLR = thermoSystem.getPhase(0).getTotalVolume() /
+        // thermoSystem.getPhase(1).getTotalVolume();
     }
 
     /**
@@ -281,7 +283,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
         units = new String[nProps];
         names = new String[nProps];
 
-        int startGasTemperatures = 0, startLiquid = 0, startWater = 0;
+        // int startGasTemperatures = 0;
         boolean acceptedFlash = true;
         for (int j = 0; j < temperatures.length; j++) {
             thermoSystem.setTemperature(temperatures[j]);
@@ -427,8 +429,9 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
                             k++;
                         } while (k < 9);// names[k] = "GAS DENSITY";
                         // units[k] = "KG/M3";
-                    } else if (false && !hasGasValues) {
-                        startGasTemperatures = j;
+                        /*
+                         * } else if (false && !hasGasValues) { startGasTemperatures = j;
+                         */
                     } else {
                         gasSystem.setTemperature(temperatures[j]);
                         gasSystem.setPressure(pressures[i]);

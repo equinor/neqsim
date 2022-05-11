@@ -5,17 +5,12 @@ import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
+ * This class defines a thermodynamic system using the SRK equation of state
  *
  * @author Even Solbraa
- * @version
- */
-
-/**
- * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemBWRSEos extends SystemEos {
     private static final long serialVersionUID = 1000;
-    /** Creates a thermodynamic system using the SRK equation of state. */
     double[][] TBPfractionCoefs = {{163.12, 86.052, 0.43475, -1877.4, 0.0},
             {-0.13408, 2.5019, 208.46, -3987.2, 1.0}, {0.7431, 0.004812, 0.009671, -3.7e-6, 0.0}};
 
@@ -67,8 +62,7 @@ public class SystemBWRSEos extends SystemEos {
         this(T, P);
         modelName = "BWRS-EOS";
         attractiveTermNumber = 0;
-        numberOfPhases = 5;
-        maxNumberOfPhases = 5;
+        setNumberOfPhases(5);
         solidPhaseCheck = solidCheck;
 
         for (int i = 0; i < numberOfPhases; i++) {

@@ -51,7 +51,6 @@ public class LinearProgrammingChemicalEquilibrium
      */
     public LinearProgrammingChemicalEquilibrium() {}
 
-    @SuppressWarnings("unchecked")
     /**
      * <p>
      * Constructor for LinearProgrammingChemicalEquilibrium.
@@ -182,8 +181,8 @@ public class LinearProgrammingChemicalEquilibrium
             minChanges--;
         }
         ComponentInterface tempComp;
-        tempComp = (ComponentInterface) components[minChanges - 1].clone();
-        components[minChanges - 1] = (ComponentInterface) components[changes].clone();
+        tempComp = components[minChanges - 1].clone();
+        components[minChanges - 1] = components[changes].clone();
         components[changes] = tempComp;
         changes++;
         // chemRefPot = operations.calcChemRefPot();
@@ -302,6 +301,7 @@ public class LinearProgrammingChemicalEquilibrium
      * 
      * return nEts; }
      */
+
     /**
      * <p>
      * calcx.

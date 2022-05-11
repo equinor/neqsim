@@ -13,7 +13,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(MathiasCopemanToDewPoint.class);
 
     /**
@@ -80,17 +79,17 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
             }
 
             system.getPhases()[1].getComponent(0).setMatiascopemanParams(i, value);
-            system.getPhases()[0].getComponent(0).getAtractiveTerm().setParameters(i, value);
-            system.getPhases()[1].getComponent(0).getAtractiveTerm().setParameters(i, value);
+            system.getPhases()[0].getComponent(0).getAttractiveTerm().setParameters(i, value);
+            system.getPhases()[1].getComponent(0).getAttractiveTerm().setParameters(i, value);
             return;
         }
 
         if (system.getPhase(0).hasComponent("methane") && i < 3) {
             system.getPhases()[0].getComponent("methane").setMatiascopemanParams(i, value);
             system.getPhases()[1].getComponent("methane").setMatiascopemanParams(i, value);
-            system.getPhases()[0].getComponent("methane").getAtractiveTerm().setParameters(i,
+            system.getPhases()[0].getComponent("methane").getAttractiveTerm().setParameters(i,
                     value);
-            system.getPhases()[1].getComponent("methane").getAtractiveTerm().setParameters(i,
+            system.getPhases()[1].getComponent("methane").getAttractiveTerm().setParameters(i,
                     value);
             return;
         }
@@ -98,9 +97,9 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
         if (system.getPhase(0).hasComponent("ethane") && i < 6) {
             system.getPhases()[0].getComponent("ethane").setMatiascopemanParams(i - 3, value);
             system.getPhases()[1].getComponent("ethane").setMatiascopemanParams(i - 3, value);
-            system.getPhases()[0].getComponent("ethane").getAtractiveTerm().setParameters(i - 3,
+            system.getPhases()[0].getComponent("ethane").getAttractiveTerm().setParameters(i - 3,
                     value);
-            system.getPhases()[1].getComponent("ethane").getAtractiveTerm().setParameters(i - 3,
+            system.getPhases()[1].getComponent("ethane").getAttractiveTerm().setParameters(i - 3,
                     value);
             return;
         }
@@ -108,9 +107,9 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
         if (system.getPhase(0).hasComponent("propane") && i < 9) {
             system.getPhases()[0].getComponent("propane").setMatiascopemanParams(i - 6, value);
             system.getPhases()[1].getComponent("propane").setMatiascopemanParams(i - 6, value);
-            system.getPhases()[0].getComponent("propane").getAtractiveTerm().setParameters(i - 6,
+            system.getPhases()[0].getComponent("propane").getAttractiveTerm().setParameters(i - 6,
                     value);
-            system.getPhases()[1].getComponent("propane").getAtractiveTerm().setParameters(i - 6,
+            system.getPhases()[1].getComponent("propane").getAttractiveTerm().setParameters(i - 6,
                     value);
             return;
         }
@@ -118,9 +117,9 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
         if (system.getPhase(0).hasComponent("n-butane") && i < 12) {
             system.getPhases()[0].getComponent("n-butane").setMatiascopemanParams(i - 9, value);
             system.getPhases()[1].getComponent("n-butane").setMatiascopemanParams(i - 9, value);
-            system.getPhases()[0].getComponent("n-butane").getAtractiveTerm().setParameters(i - 9,
+            system.getPhases()[0].getComponent("n-butane").getAttractiveTerm().setParameters(i - 9,
                     value);
-            system.getPhases()[1].getComponent("n-butane").getAtractiveTerm().setParameters(i - 9,
+            system.getPhases()[1].getComponent("n-butane").getAttractiveTerm().setParameters(i - 9,
                     value);
             return;
         }
@@ -128,9 +127,9 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
         if (system.getPhase(0).hasComponent("i-butane") && i < 15) {
             system.getPhases()[0].getComponent("i-butane").setMatiascopemanParams(i - 12, value);
             system.getPhases()[1].getComponent("i-butane").setMatiascopemanParams(i - 12, value);
-            system.getPhases()[0].getComponent("i-butane").getAtractiveTerm().setParameters(i - 12,
+            system.getPhases()[0].getComponent("i-butane").getAttractiveTerm().setParameters(i - 12,
                     value);
-            system.getPhases()[1].getComponent("i-butane").getAtractiveTerm().setParameters(i - 12,
+            system.getPhases()[1].getComponent("i-butane").getAttractiveTerm().setParameters(i - 12,
                     value);
             return;
         }
@@ -138,19 +137,19 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
         if (system.getPhase(0).hasComponent("n-pentane") && i < 18) {
             system.getPhases()[0].getComponent("n-pentane").setMatiascopemanParams(i - 15, value);
             system.getPhases()[1].getComponent("n-pentane").setMatiascopemanParams(i - 15, value);
-            system.getPhases()[0].getComponent("n-pentane").getAtractiveTerm().setParameters(i - 15,
-                    value);
-            system.getPhases()[1].getComponent("n-pentane").getAtractiveTerm().setParameters(i - 15,
-                    value);
+            system.getPhases()[0].getComponent("n-pentane").getAttractiveTerm()
+                    .setParameters(i - 15, value);
+            system.getPhases()[1].getComponent("n-pentane").getAttractiveTerm()
+                    .setParameters(i - 15, value);
             return;
         }
 
         if (system.getPhase(0).hasComponent("c-hexane") && i < 21) {
             system.getPhases()[0].getComponent("c-hexane").setMatiascopemanParams(i - 18, value);
             system.getPhases()[1].getComponent("c-hexane").setMatiascopemanParams(i - 18, value);
-            system.getPhases()[0].getComponent("c-hexane").getAtractiveTerm().setParameters(i - 18,
+            system.getPhases()[0].getComponent("c-hexane").getAttractiveTerm().setParameters(i - 18,
                     value);
-            system.getPhases()[1].getComponent("c-hexane").getAtractiveTerm().setParameters(i - 18,
+            system.getPhases()[1].getComponent("c-hexane").getAttractiveTerm().setParameters(i - 18,
                     value);
             return;
         }
@@ -158,9 +157,9 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
         if (system.getPhase(0).hasComponent("benzene") && i < 24) {
             system.getPhases()[0].getComponent("benzene").setMatiascopemanParams(i - 21, value);
             system.getPhases()[1].getComponent("benzene").setMatiascopemanParams(i - 21, value);
-            system.getPhases()[0].getComponent("benzene").getAtractiveTerm().setParameters(i - 21,
+            system.getPhases()[0].getComponent("benzene").getAttractiveTerm().setParameters(i - 21,
                     value);
-            system.getPhases()[1].getComponent("benzene").getAtractiveTerm().setParameters(i - 21,
+            system.getPhases()[1].getComponent("benzene").getAttractiveTerm().setParameters(i - 21,
                     value);
             return;
         }
@@ -168,10 +167,10 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
         if (system.getPhase(0).hasComponent("n-heptane") && i < 27) {
             system.getPhases()[0].getComponent("n-heptane").setMatiascopemanParams(i - 24, value);
             system.getPhases()[1].getComponent("n-heptane").setMatiascopemanParams(i - 24, value);
-            system.getPhases()[0].getComponent("n-heptane").getAtractiveTerm().setParameters(i - 24,
-                    value);
-            system.getPhases()[1].getComponent("n-heptane").getAtractiveTerm().setParameters(i - 24,
-                    value);
+            system.getPhases()[0].getComponent("n-heptane").getAttractiveTerm()
+                    .setParameters(i - 24, value);
+            system.getPhases()[1].getComponent("n-heptane").getAttractiveTerm()
+                    .setParameters(i - 24, value);
         }
     }
 }

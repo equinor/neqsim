@@ -1,8 +1,3 @@
-/*
- * Separator.java
- *
- * Created on 12. mars 2001, 19:48
- */
 package neqsim.processSimulation.processEquipment.splitter;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
@@ -25,7 +20,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
     StreamInterface inletStream;
     StreamInterface[] splitStream;
-    protected int splitNumber;
+    protected int splitNumber = 1;
     double[] splitFactor = new double[1];
 
     /**
@@ -33,7 +28,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      * Constructor for Splitter.
      * </p>
      */
-    public Splitter() {}
+    public Splitter() {
+        super("Splitter");
+    }
 
     /**
      * <p>
@@ -43,8 +40,30 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Splitter(StreamInterface inletStream) {
+        this();
         this.setInletStream(inletStream);
+    }
+
+    /**
+     * Constructor for Splitter.
+     * 
+     * @param name
+     */
+    public Splitter(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for Splitter.
+     * 
+     * @param name
+     * @param inStream
+     */
+    public Splitter(String name, StreamInterface inStream) {
+        this(name);
+        this.setInletStream(inStream);
     }
 
     /**
@@ -58,17 +77,15 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      * @param i a int
      */
     public Splitter(String name, StreamInterface inletStream, int i) {
-        this(inletStream);
-        this.name = name;
+        this(name);
         setSplitNumber(i);
-        splitFactor = new double[i];
+        this.setInletStream(inletStream);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setSplitNumber(int i) {
         splitNumber = i;
-        this.setInletStream(inletStream);
         splitFactor = new double[splitNumber];
         splitFactor[0] = 1.0;
     }
@@ -104,8 +121,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         try {
             for (int i = 0; i < splitNumber; i++) {
                 // System.out.println("splitting...." + i);
-                splitStream[i] = new Stream("Split Stream",
-                        (SystemInterface) inletStream.getThermoSystem().clone());
+                splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -114,15 +130,15 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
     /** {@inheritDoc} */
     @Override
-    public Stream getSplitStream(int i) {
-        return (Stream) splitStream[i];
+    public StreamInterface getSplitStream(int i) {
+        return splitStream[i];
     }
 
     /** {@inheritDoc} */
     @Override
     public void run() {
         for (int i = 0; i < splitNumber; i++) {
-            thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+            thermoSystem = inletStream.getThermoSystem().clone();
             thermoSystem.init(0);
             splitStream[i].setThermoSystem(thermoSystem);
             for (int j = 0; j < inletStream.getThermoSystem().getPhase(0)

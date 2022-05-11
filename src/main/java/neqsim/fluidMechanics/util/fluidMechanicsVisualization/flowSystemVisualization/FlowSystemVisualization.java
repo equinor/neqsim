@@ -1,8 +1,3 @@
-/*
- * FlowVisualization.java
- *
- * Created on 26. oktober 2000, 20:07
- */
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
@@ -18,8 +13,6 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  * @version $Id: $Id
  */
 public class FlowSystemVisualization implements FlowSystemVisualizationInterface {
-    private static final long serialVersionUID = 1000;
-
     protected FlowNodeVisualizationInterface[][] flowNodes;
     protected FlowSystemInterface[] flowSystem;
     protected int time = 0;
@@ -49,8 +42,8 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
                 flowNodes[i][j] = new FlowNodeVisualization();
             }
         }
-        System.out.println("nodes " + nodes);
-        System.out.println("times " + time);
+        // System.out.println("nodes " + nodes);
+        // System.out.println("times " + time);
     }
 
     /** {@inheritDoc} */

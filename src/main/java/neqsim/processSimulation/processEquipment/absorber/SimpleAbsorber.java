@@ -3,6 +3,7 @@ package neqsim.processSimulation.processEquipment.absorber;
 import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -17,8 +18,8 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
-    Stream[] outStream;
-    Stream[] inStream;
+    StreamInterface[] outStream = new Stream[2];
+    StreamInterface[] inStream = new Stream[2];
     SystemInterface system;
     protected double temperatureOut = 0, dT = 0.0;
     private int numberOfStages = 5;
@@ -34,8 +35,9 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * Constructor for SimpleAbsorber.
      * </p>
      */
+    @Deprecated
     public SimpleAbsorber() {
-        mechanicalDesign = new AbsorberMechanicalDesign(this);
+        this("SimpleAbsorber");
     }
 
     /**
@@ -45,23 +47,42 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      *
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public SimpleAbsorber(Stream inStream1) {
-        mechanicalDesign = new AbsorberMechanicalDesign(this);
+    @Deprecated
+    public SimpleAbsorber(StreamInterface inStream1) {
+        this("SimpleAbsorber", inStream1);
+    }
 
-        outStream = new Stream[2];
-        inStream = new Stream[2];
+    /**
+     * 
+     * @param name
+     */
+    public SimpleAbsorber(String name) {
+        super(name);
+    }
+
+    /**
+     * <p>
+     * Constructor for SimpleAbsorber.
+     * </p>
+     *
+     * @param name
+     * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
+    public SimpleAbsorber(String name, StreamInterface inStream1) {
+        super(name);
         this.inStream[0] = inStream1;
         this.inStream[1] = inStream1;
-        outStream[0] = (Stream) inStream1.clone();
-        outStream[1] = (Stream) inStream1.clone();
+        outStream[0] = inStream1.clone();
+        outStream[1] = inStream1.clone();
+        setName(name);
 
-        SystemInterface systemOut1 = (SystemInterface) inStream1.getThermoSystem().clone();
+        SystemInterface systemOut1 = inStream1.getThermoSystem().clone();
         outStream[0].setThermoSystem(systemOut1);
 
         double molCO2 =
                 inStream1.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
         System.out.println("mol CO2 " + molCO2);
-        SystemInterface systemOut0 = (SystemInterface) inStream1.getThermoSystem().clone();
+        SystemInterface systemOut0 = inStream1.getThermoSystem().clone();
         systemOut0.init(0);
         systemOut0.addComponent("MDEA", molCO2 * absorptionEfficiency);
         systemOut0.addComponent("water", molCO2 * absorptionEfficiency * 10.0);
@@ -73,11 +94,16 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     }
 
     /** {@inheritDoc} */
+    public AbsorberMechanicalDesign getMechanicalDesign() {
+        return new AbsorberMechanicalDesign(this);
+    }
+
+    /** {@inheritDoc} */
     @Override
     public void setName(String name) {
+        super.setName(name);
         // outStream[0].setName(name + "_Sout1");
         // outStream[1].setName(name + "_Sout2");
-        super.setName(name);
     }
 
     /**
@@ -98,7 +124,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream[0];
     }
 
@@ -110,7 +136,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * @param i a int
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getOutStream(int i) {
+    public StreamInterface getOutStream(int i) {
         return outStream[i];
     }
 
@@ -121,7 +147,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getSolventInStream() {
+    public StreamInterface getSolventInStream() {
         return inStream[0];
     }
 
@@ -133,7 +159,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * @param i a int
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getInStream(int i) {
+    public StreamInterface getInStream(int i) {
         return inStream[i];
     }
 
@@ -173,7 +199,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        SystemInterface systemOut1 = (SystemInterface) inStream[1].getThermoSystem().clone();
+        SystemInterface systemOut1 = inStream[1].getThermoSystem().clone();
         outStream[0].setThermoSystem(systemOut1);
         outStream[0].run();
 
@@ -226,7 +252,9 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * runTransient.
      * </p>
      */
-    public void runTransient() {}
+    @Override
+    public void runTransient(double dt) {
+    }
 
     /** {@inheritDoc} */
     @Override

@@ -13,8 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class BasePVTsimulation implements SimulationInterface {
-    private static final long serialVersionUID = 1000;
-
     private SystemInterface thermoSystem = null;
     private SystemInterface baseThermoSystem = null;
     public ThermodynamicOperations thermoOps = null;
@@ -22,7 +20,7 @@ public class BasePVTsimulation implements SimulationInterface {
     public double[] pressures = {381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3};
     public double temperature = 289.0;
     double[][] experimentalData = null;
-    double saturationVolume = 0, saturationPressure = 0;
+    double saturationVolume = 0, saturationPressure = 0, saturationTemperature;
     double Zsaturation = 0;
     public LevenbergMarquardt optimizer = new LevenbergMarquardt();
 
@@ -34,9 +32,9 @@ public class BasePVTsimulation implements SimulationInterface {
      * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public BasePVTsimulation(SystemInterface tempSystem) {
-        thermoSystem = tempSystem;// (SystemInterface) tempSystem.clone();
+        thermoSystem = tempSystem;// tempSystem.clone();
         thermoOps = new ThermodynamicOperations(getThermoSystem());
-        baseThermoSystem = (SystemInterface) thermoSystem.clone();
+        baseThermoSystem = thermoSystem.clone();
     }
 
     /**
@@ -166,5 +164,12 @@ public class BasePVTsimulation implements SimulationInterface {
      */
     public double getZsaturation() {
         return Zsaturation;
+    }
+
+    /**
+     * @return the saturationTemperature
+     */
+    public double getSaturationTemperature() {
+        return saturationTemperature;
     }
 }

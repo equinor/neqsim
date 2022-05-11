@@ -30,6 +30,10 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     double firstStageCompressorAfterCoolerTemperature = 273.15 + 30;
     double exportOilTemperature = 273.15 + 30;
 
+    public WellFluidModule(String name) {
+        super(name);
+    }
+
     /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
@@ -162,7 +166,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-        getOperations().runTransient();
+        getOperations().runTransient(dt);
     }
 
     /** {@inheritDoc} */
@@ -224,7 +228,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         Stream wellStream = new Stream("Well stream", testSystem);
         // wellStream.getThermoSystem().setTotalFlowRate(5.0, "MSm^3/day");
 
-        WellFluidModule separationModule = new WellFluidModule();
+        WellFluidModule separationModule = new WellFluidModule("separationModule");
         separationModule.addInputStream("feed stream", wellStream);
         separationModule.setSpecification("Second stage pressure", 15.0);
         separationModule.setSpecification("separation temperature", 273.15 + 15.0);

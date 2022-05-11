@@ -13,7 +13,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunctionStatoil.class);
 
     /**
@@ -50,20 +49,20 @@ public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
     public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 0) {
-            system.getPhase(0).getComponent(0).getAtractiveTerm().setm(value);
-            system.getPhases()[1].getComponents()[0].getAtractiveTerm().setm(value);
+            system.getPhase(0).getComponent(0).getAttractiveTerm().setm(value);
+            system.getPhases()[1].getComponents()[0].getAttractiveTerm().setm(value);
         }
         system.getPhases()[0].getComponents()[0].setMatiascopemanParams(i, value);
         system.getPhases()[1].getComponents()[0].setMatiascopemanParams(i, value);
-        system.getPhases()[0].getComponents()[0].getAtractiveTerm().setParameters(i, value);
-        system.getPhases()[1].getComponents()[0].getAtractiveTerm().setParameters(i, value);
+        system.getPhases()[0].getComponents()[0].getAttractiveTerm().setParameters(i, value);
+        system.getPhases()[1].getComponents()[0].getAttractiveTerm().setParameters(i, value);
 
         // value = 0.0;
         // for(int j=1;j<3;j++){
         // system.getPhases()[0].getComponents()[0].setSchwartzentruberParams(j, value);
         // system.getPhases()[1].getComponents()[0].setSchwartzentruberParams(j, value);
-        // system.getPhases()[0].getComponents()[0].getAtractiveTerm().setParameters(j, value);
-        // system.getPhases()[1].getComponents()[0].getAtractiveTerm().setParameters(j, value);
+        // system.getPhases()[0].getComponents()[0].getAttractiveTerm().setParameters(j, value);
+        // system.getPhases()[1].getComponents()[0].getAttractiveTerm().setParameters(j, value);
         // }
     }
 }

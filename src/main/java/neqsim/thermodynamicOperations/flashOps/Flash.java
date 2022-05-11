@@ -13,7 +13,6 @@ import neqsim.thermodynamicOperations.BaseOperation;
 
 /**
  * @author Even Solbraa
- * @version
  */
 abstract class Flash extends BaseOperation {
     private static final long serialVersionUID = 1000;
@@ -51,7 +50,7 @@ abstract class Flash extends BaseOperation {
      */
     public int findLowestGibbsEnergyPhase() {
         if (!findLowesGibsPhaseIsChecked) {
-            minimumGibbsEnergySystem = (SystemInterface) system.clone();
+            minimumGibbsEnergySystem = system.clone();
             minimumGibbsEnergySystem.init(0);
             minimumGibbsEnergySystem.init(1);
             if ((minimumGibbsEnergySystem.getPhase(0).getGibbsEnergy()
@@ -161,7 +160,7 @@ abstract class Flash extends BaseOperation {
                     fNormOld = fNorm;
                     for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
                         f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i]) + clonedSystem
-                                .getPhase(j).getComponent(i).getLogFugasityCoeffisient() - d[i]));
+                                .getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
                     }
                     fNorm = f.norm2();
                     if (fNorm > fNormOld && iterations > 3 || (iterations + 1) % 7 != 0) {
@@ -189,7 +188,7 @@ abstract class Flash extends BaseOperation {
                         for (int i = 0; i < clonedSystem.getPhases()[0]
                                 .getNumberOfComponents(); i++) {
                             logWi[i] = d[i] - clonedSystem.getPhase(j).getComponent(i)
-                                    .getLogFugasityCoeffisient();
+                                    .getLogFugacityCoefficient();
                             error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
                             Wi[j][i] = Math.exp(logWi[i]);
                         }
@@ -209,7 +208,7 @@ abstract class Flash extends BaseOperation {
 
                     for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
                         f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i]) + clonedSystem
-                                .getPhase(j).getComponent(i).getLogFugasityCoeffisient() - d[i]));
+                                .getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
                         for (int k = 0; k < clonedSystem.getPhases()[0]
                                 .getNumberOfComponents(); k++) {
                             double kronDelt = (i == k) ? 1.5 : 0.0; // adding 0.5 to diagonal
@@ -384,8 +383,8 @@ abstract class Flash extends BaseOperation {
                 tempVar[k] = system.getPhase(0).getComponents()[k].getz();
                 for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
                     tempVar[k] -= system.getBeta(i)
-                            * system.getPhases()[3].getComponent(k).getFugasityCoeffisient()
-                            / system.getPhase(i).getComponent(k).getFugasityCoeffisient();
+                            * system.getPhases()[3].getComponent(k).getFugacityCoefficient()
+                            / system.getPhase(i).getComponent(k).getFugacityCoefficient();
                 }
 
                 if (tempVar[k] > 0.0 && tempVar[k] > frac) {

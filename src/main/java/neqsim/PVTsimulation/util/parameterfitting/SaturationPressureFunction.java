@@ -13,8 +13,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class SaturationPressureFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     double molarMass = 0.0;
 
     /**
@@ -36,7 +34,7 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
                 plusNumber = i;
             }
         }
-        SystemInterface tempSystem = (SystemInterface) system.clone();
+        SystemInterface tempSystem = system.clone();
         tempSystem.resetCharacterisation();
         tempSystem.createDatabase(true);
         tempSystem.setMixingRule(system.getMixingRule());

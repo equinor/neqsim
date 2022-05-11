@@ -1,6 +1,6 @@
 package neqsim.thermo.component;
 
-import neqsim.thermo.component.atractiveEosTerm.AtractiveTermTwu;
+import neqsim.thermo.component.attractiveEosTerm.AttractiveTermTwu;
 
 /**
  * <p>
@@ -12,24 +12,6 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermTwu;
  */
 public class ComponentTST extends ComponentEos {
     private static final long serialVersionUID = 1000;
-
-    /**
-     * <p>
-     * Constructor for ComponentTST.
-     * </p>
-     */
-    public ComponentTST() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentTST.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentTST(double moles) {
-        numberOfMoles = moles;
-    }
 
     /**
      * <p>
@@ -51,7 +33,7 @@ public class ComponentTST extends ComponentEos {
 
         delta1 = 1.0 + Math.sqrt(2.0);
         delta2 = 1.0 - Math.sqrt(2.0);
-        setAtractiveParameter(new AtractiveTermTwu(this));
+        setAttractiveParameter(new AttractiveTermTwu(this));
     }
 
     /**

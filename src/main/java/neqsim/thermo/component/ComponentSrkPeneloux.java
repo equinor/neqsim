@@ -1,11 +1,6 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
 package neqsim.thermo.component;
 
-import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
+import neqsim.thermo.component.attractiveEosTerm.AttractiveTermSrk;
 
 /**
  * <p>
@@ -19,24 +14,6 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     private static final long serialVersionUID = 1000;
 
     private double factTemp = Math.pow(2.0, 1.0 / 3.0);
-
-    /**
-     * <p>
-     * Constructor for ComponentSrkPeneloux.
-     * </p>
-     */
-    public ComponentSrkPeneloux() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentSrkPeneloux.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentSrkPeneloux(double moles) {
-        numberOfMoles = moles;
-    }
 
     /**
      * <p>
@@ -60,8 +37,8 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         delta1 = 1.0;
         delta2 = 0.0;
         // System.out.println("a " + a);
-        // atractiveParameter = new AtractiveTermSchwartzentruber(this);
-        setAtractiveParameter(new AtractiveTermSrk(this));
+        // attractiveParameter = new AttractiveTermSchwartzentruber(this);
+        setAttractiveParameter(new AttractiveTermSrk(this));
 
         double[] surfTensInfluenceParamtemp =
                 {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};

@@ -11,7 +11,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id: $Id
  */
-public class Condenser extends neqsim.processSimulation.processEquipment.distillation.SimpleTray {
+public class Condenser extends SimpleTray {
     private static final long serialVersionUID = 1000;
 
     private double refluxRatio = 0.1;
@@ -22,8 +22,12 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
      * <p>
      * Constructor for Condenser.
      * </p>
+     * 
+     * @param name
      */
-    public Condenser() {}
+    public Condenser(String name) {
+        super(name);
+    }
 
     /**
      * <p>
@@ -67,8 +71,7 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
         if (!refluxIsSet) {
             super.run();
         } else {
-            SystemInterface thermoSystem2 =
-                    (SystemInterface) streams.get(0).getThermoSystem().clone();
+            SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
             // System.out.println("total number of moles " +
             // thermoSystem2.getTotalNumberOfMoles());
             mixedStream.setThermoSystem(thermoSystem2);

@@ -1,8 +1,3 @@
-/*
- * GasPhysicalProperties.java
- *
- * Created on 29. oktober 2000, 16:18
- */
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties;
 
 /**

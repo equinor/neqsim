@@ -1,6 +1,5 @@
 package neqsim.fluidMechanics.flowNode.multiPhaseNode;
 
-import neqsim.MathLib.generalMath.GeneralMath;
 import neqsim.fluidMechanics.flowNode.FlowNode;
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.TwoPhaseFlowNode;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
@@ -131,10 +130,10 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
                 phaseFraction[0] -= phaseFraction[0] / step;
             }
             phaseFraction[1] = 1.0 - phaseFraction[0];
-        } // while(Math.abs((f-fOld)/f)>1e-8 && iterations<10000);
-        while (Math.abs(f) > 1e-2 && iterations < 100);
+        } while (Math.abs(f) > 1e-2 && iterations < 100);
+        // while(Math.abs((f-fOld)/f)>1e-8 && iterations<10000);
 
-        if (iterations == 10000) {
+        if (iterations == 100) {
             System.out.println("error in void init calc");
         }
         this.init();
@@ -181,7 +180,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     public double calcWallFrictionFactor() {
         for (int i = 0; i < 2; i++) {
             wallFrictionFactor[i] = Math.pow(
-                    (1.0 / (-1.8 * GeneralMath.log10(6.9 / getReynoldsNumber(i) * Math.pow(
+                    (1.0 / (-1.8 * Math.log10(6.9 / getReynoldsNumber(i) * Math.pow(
                             pipe.getRelativeRoughnes(this.getHydraulicDiameter(i)) / 3.7, 1.11)))),
                     2.0);
         }

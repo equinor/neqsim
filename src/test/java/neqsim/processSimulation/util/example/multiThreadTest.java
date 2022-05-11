@@ -37,18 +37,17 @@ public class multiThreadTest {
 
         MixerInterface mixer = new StaticMixer("Mixer 1");
         mixer.addStream(stream_1);
-        Stream stream_3 = mixer.getOutStream();
+        StreamInterface stream_3 = mixer.getOutStream();
         stream_3.setName("stream3");
 
         Separator separator = new Separator("Separator 1", stream_3);
         StreamInterface stream_2 = separator.getGasOutStream();
         stream_2.setName("stream2");
 
-        Compressor comp1 = new Compressor(stream_2);
-        comp1.setName("comp1");
+        Compressor comp1 = new Compressor("comp1", stream_2);
         comp1.setOutletPressure(50.0);
 
-        Cooler cooler1 = new Cooler(comp1.getOutStream());
+        Cooler cooler1 = new Cooler("cooler1", comp1.getOutStream());
         cooler1.setOutTemperature(283.15 + 30);
 
         // mixer.addStream(stream_2);
@@ -78,23 +77,22 @@ public class multiThreadTest {
 
         MixerInterface mixer2 = new StaticMixer("Mixer 1");
         mixer2.addStream(stream_22);
-        Stream stream_32 = mixer2.getOutStream();
+        StreamInterface stream_32 = mixer2.getOutStream();
         stream_32.setName("stream32");
 
         Separator separator2 = new Separator("Separator 1", stream_32);
         StreamInterface stream_222 = separator2.getGasOutStream();
         stream_222.setName("stream222");
 
-        Compressor comp12 = new Compressor(stream_222);
-        comp12.setName("comp22");
+        Compressor comp12 = new Compressor("comp22", stream_222);
         comp12.setOutletPressure(45.0);
 
-        Cooler cooler12 = new Cooler(comp12.getOutStream());
+        Cooler cooler12 = new Cooler("cooler12", comp12.getOutStream());
         cooler12.setOutTemperature(283.15 + 30);
 
         Separator separator3 = new Separator("Separator 122", cooler12.getOutStream());
 
-        Recycle resyc = new Recycle();
+        Recycle resyc = new Recycle("resyc");
         resyc.addStream(separator3.getLiquidOutStream());
 
         mixer2.addStream(resyc.getOutStream());

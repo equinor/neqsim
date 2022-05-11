@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseCPAInterface;
@@ -27,24 +22,6 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     double[] xsitedV = new double[0];
     double[] xsitedT = new double[0];
     double[] xsitedTdT = new double[0];
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPA.
-     * </p>
-     */
-    public ComponentElectrolyteCPA() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentElectrolyteCPA.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentElectrolyteCPA(double moles) {
-        super(moles);
-    }
 
     /**
      * <p>
@@ -79,7 +56,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
                 a = aCPA;
                 b = bCPA;
             }
-            setAtractiveTerm(0);
+            setAttractiveTerm(0);
         }
         // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
         // -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
@@ -118,7 +95,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
                 a = aCPA;
                 b = bCPA;
             }
-            setAtractiveTerm(0);
+            setAttractiveTerm(0);
         }
         // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
         // -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
@@ -171,10 +148,10 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
-        super.setAtractiveTerm(i);
+    public void setAttractiveTerm(int i) {
+        super.setAttractiveTerm(i);
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-            getAtractiveTerm().setm(mCPA);
+            getAttractiveTerm().setm(mCPA);
         }
     }
 
@@ -533,11 +510,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
                         * (4.0 * phase.getTotalVolume() - phase.getB()));
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property xsite.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getXsite() {
         return this.xsite;

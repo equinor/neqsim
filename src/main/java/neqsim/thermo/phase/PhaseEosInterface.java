@@ -67,12 +67,12 @@ public interface PhaseEosInterface extends PhaseInterface {
 
     /**
      * <p>
-     * getPressureAtractive.
+     * getPressureAttractive.
      * </p>
      *
      * @return a double
      */
-    public double getPressureAtractive();
+    public double getPressureAttractive();
 
     /**
      * <p>

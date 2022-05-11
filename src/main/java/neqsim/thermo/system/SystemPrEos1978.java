@@ -5,22 +5,13 @@ import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- *
- * @author Even Solbraa
- * @version
- */
-
-/**
  * This class defines a thermodynamic system using the Peng RObinson v. 1978 equation of state
+ * 
+ * @author Even Solbraa
  */
 public class SystemPrEos1978 extends SystemEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-
-    // SystemPrEos clonedSystem;
     public SystemPrEos1978() {
         super();
         modelName = "PR1978-EOS";
@@ -65,9 +56,8 @@ public class SystemPrEos1978 extends SystemEos {
     public SystemPrEos1978(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 13;
-        numberOfPhases = 5;
+        setNumberOfPhases(5);
         modelName = "PR1978-EOS";
-        maxNumberOfPhases = 5;
         solidPhaseCheck = solidCheck;
 
         for (int i = 0; i < numberOfPhases; i++) {

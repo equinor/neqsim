@@ -14,6 +14,8 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class SimpleFlowLine extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000;
+
     protected StreamInterface inStream;
     private StreamInterface outStream;
     private double height = 100.0;
@@ -30,9 +32,10 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
      *        object
      */
     public SimpleFlowLine(StreamInterface instream) {
+        super("SimpleFlowLine");
         this.inStream = instream;
-        setOutStream((StreamInterface) instream.clone());
-        pipeline = new AdiabaticTwoPhasePipe(instream);
+        setOutStream(instream.clone());
+        pipeline = new AdiabaticTwoPhasePipe("pipeline", instream);
     }
 
     /**
@@ -62,8 +65,7 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
         /*
          * System.out.println("stary P " );
          * 
-         * SystemInterface fluidIn = (SystemInterface) (inStream.getFluid()).clone();
-         * fluidIn.initProperties();
+         * SystemInterface fluidIn = (inStream.getFluid()).clone(); fluidIn.initProperties();
          * 
          * double density = fluidIn.getDensity("kg/m3");
          * 

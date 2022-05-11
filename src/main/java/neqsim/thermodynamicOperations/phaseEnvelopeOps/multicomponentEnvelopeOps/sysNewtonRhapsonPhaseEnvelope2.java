@@ -76,8 +76,8 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     public void setfvec() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             fvec.setEntry(i, 0, u.getEntry(i, 0)
-                    + Math.log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
-                            / system.getPhase(1).getComponents()[i].getFugasityCoeffisient()));
+                    + Math.log(system.getPhase(0).getComponents()[i].getFugacityCoefficient()
+                            / system.getPhase(1).getComponents()[i].getFugacityCoefficient()));
         }
         double fsum = 0.0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {

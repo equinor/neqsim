@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -23,8 +24,12 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
      * <p>
      * Constructor for SimpleTray.
      * </p>
+     * 
+     * @param name
      */
-    public SimpleTray() {}
+    public SimpleTray(String name) {
+        super(name);
+    }
 
     /**
      * <p>
@@ -60,7 +65,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
             enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-            // System.out.println("total enthalpy k : " + ((SystemInterface) ((Stream)
+            // System.out.println("total enthalpy k : " + ( ((Stream)
             // streams.get(k)).getThermoSystem()).getEnthalpy());
         }
         // System.out.println("total enthalpy of streams: " + enthalpy);
@@ -78,7 +83,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
             enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-            // System.out.println("total enthalpy k : " + ((SystemInterface) ((Stream)
+            // System.out.println("total enthalpy k : " + ( ((Stream)
             // streams.get(k)).getThermoSystem()).getEnthalpy());
         }
         // System.out.println("total enthalpy of streams: " + enthalpy);
@@ -109,7 +114,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         // double flowRate = ((Stream)
         // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
         // ((Stream) streams.get(0)).getThermoSystem().display();
-        SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
+        SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
 
         // System.out.println("total number of moles " +
         // thermoSystem2.getTotalNumberOfMoles());
@@ -155,7 +160,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {}
 
     /**
      * <p>
@@ -164,7 +169,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
     }
 
@@ -175,7 +180,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
     }
 

@@ -33,6 +33,10 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     double firstStageCompressorAfterCoolerTemperature = 273.15 + 30;
     double exportOilTemperature = 273.15 + 30;
 
+    public SeparationTrainModule(String name) {
+        super(name);
+    }
+
     /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
@@ -166,7 +170,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-        getOperations().runTransient();
+        getOperations().runTransient(dt);
     }
 
     /** {@inheritDoc} */
@@ -237,7 +241,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
         Stream wellStream = new Stream("Well stream", testSystem);
         // wellStream.getThermoSystem().setTotalFlowRate(5.0, "MSm^3/day");
 
-        SeparationTrainModule separationModule = new SeparationTrainModule();
+        SeparationTrainModule separationModule = new SeparationTrainModule("separationModule");
         separationModule.addInputStream("feed stream", wellStream);
         separationModule.setSpecification("Second stage pressure", 15.0);
         separationModule.setSpecification("heated oil temperature", 273.15 + 55.0);

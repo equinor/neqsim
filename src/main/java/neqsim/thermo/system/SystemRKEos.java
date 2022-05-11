@@ -4,21 +4,13 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseRK;
 
 /**
- *
- * @author Even Solbraa
- * @version
- */
-
-/**
  * This class defines a thermodynamic system using the RK equation of state
+ * 
+ * @author Even Solbraa
  */
 public class SystemRKEos extends SystemEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
     public SystemRKEos() {
         super();
         modelName = "RK-EOS";
@@ -61,9 +53,8 @@ public class SystemRKEos extends SystemEos {
     public SystemRKEos(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 5;
-        numberOfPhases = 4;
+        setNumberOfPhases(4);
         modelName = "RK-EOS";
-        maxNumberOfPhases = 4;
         solidPhaseCheck = solidCheck;
 
         for (int i = 0; i < numberOfPhases; i++) {

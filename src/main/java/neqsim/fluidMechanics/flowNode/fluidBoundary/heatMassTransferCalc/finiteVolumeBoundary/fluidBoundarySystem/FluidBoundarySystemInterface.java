@@ -1,8 +1,3 @@
-/*
- * FiniteVolumeBoundaryInterface.java
- *
- * Created on 8. august 2001, 13:47
- */
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySystem;
 
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface;

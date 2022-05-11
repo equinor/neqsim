@@ -1,8 +1,3 @@
-/*
- * FrictionFactorBaseClass.java
- *
- * Created on 12. juni 2001, 19:58
- */
 package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow;
 
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
@@ -18,10 +13,6 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
     private static final long serialVersionUID = 1000;
 
-    /**
-     *
-     * frictionfactor.
-     */
     public InterphaseAnnularFlow() {}
 
     /**

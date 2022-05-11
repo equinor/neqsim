@@ -5,21 +5,13 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- *
- * @author Even Solbraa
- * @version
- */
-
-/**
  * This class defines a thermodynamic system using the SRK equation of state
+ * 
+ * @author Even Solbraa
  */
 public class SystemDesmukhMather extends SystemEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
     public SystemDesmukhMather() {
         super();
         modelName = "Desmukh-Mather-model";
@@ -64,8 +56,7 @@ public class SystemDesmukhMather extends SystemEos {
     public SystemDesmukhMather(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
-        numberOfPhases = 4;
-        maxNumberOfPhases = 4;
+        setNumberOfPhases(4);
         modelName = "Desmukh-Mather-model";
         solidPhaseCheck = solidCheck;
 

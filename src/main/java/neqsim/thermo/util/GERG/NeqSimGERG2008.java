@@ -1,11 +1,12 @@
 package neqsim.thermo.util.GERG;
 
-import neqsim.thermo.phase.PhaseInterface;
-import neqsim.thermo.system.*;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -16,7 +17,6 @@ import org.netlib.util.intW;
  * @version $Id: $Id
  */
 public class NeqSimGERG2008 {
-    private static final long serialVersionUID = 1000;
     double[] normalizedGERGComposition = new double[21 + 1];
     double[] notNormalizedGERGComposition = new double[21 + 1];
     PhaseInterface phase = null;
@@ -89,7 +89,6 @@ public class NeqSimGERG2008 {
      * @return a double
      */
     public double getPressure() {
-        int d = 0;
         double moldens = getMolarDensity();
         doubleW P = new doubleW(0.0);
         doubleW Z = new doubleW(0.0);
@@ -118,12 +117,10 @@ public class NeqSimGERG2008 {
      * @return a double
      */
     public double getMolarDensity() {
-        int d = 0;
         int flag = 0;
         intW ierr = new intW(0);
         StringW herr = new StringW("");
         doubleW D = new doubleW(0.0);
-        StringW strW = new StringW("");
         double pressure = phase.getPressure() * 100.0;
         neqsim.thermo.util.GERG.GERG2008.DensityGERG(flag, phase.getTemperature(), pressure,
                 normalizedGERGComposition, D, ierr, herr);
@@ -153,7 +150,6 @@ public class NeqSimGERG2008 {
      * @return an array of {@link double} objects
      */
     public double[] getProperties(PhaseInterface phase, String[] properties) {
-        double molarDens = getMolarDensity(phase);
         double[] allProperties = propertiesGERG();
         double[] returnProperties = new double[properties.length];
 
@@ -184,7 +180,6 @@ public class NeqSimGERG2008 {
      * @return an array of {@link double} objects
      */
     public double[] propertiesGERG() {
-        int _x_offset = 0;
         doubleW p = new doubleW(0.0);
         doubleW z = new doubleW(0.0);
         doubleW dpdd = new doubleW(0.0);

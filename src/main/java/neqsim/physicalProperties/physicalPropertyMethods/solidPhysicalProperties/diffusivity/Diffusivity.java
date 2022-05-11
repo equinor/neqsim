@@ -18,7 +18,7 @@ public class Diffusivity extends
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
 
-    double[][] binaryDiffusionCoeffisients;
+    double[][] binaryDiffusionCoefficients;
     double[] effectiveDiffusionCoefficient;
 
     /**
@@ -40,7 +40,7 @@ public class Diffusivity extends
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
-        binaryDiffusionCoeffisients = new double[solidPhase.getPhase()
+        binaryDiffusionCoefficients = new double[solidPhase.getPhase()
                 .getNumberOfComponents()][solidPhase.getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[solidPhase.getPhase().getNumberOfComponents()];
     }
@@ -56,10 +56,12 @@ public class Diffusivity extends
             logger.error("Cloning failed.", e);
         }
 
-        properties.binaryDiffusionCoeffisients = this.binaryDiffusionCoeffisients.clone();
+        properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
         for (int i = 0; i < solidPhase.getPhase().getNumberOfComponents(); i++) {
-            System.arraycopy(this.binaryDiffusionCoeffisients[i], 0,
-                    properties.binaryDiffusionCoeffisients[i], 0,
+            // todo: fails with indexerror if components has been added after construction of object
+            // getNumberOfComponents() > len(this.binaryDiffusionCoefficients)
+            System.arraycopy(this.binaryDiffusionCoefficients[i], 0,
+                    properties.binaryDiffusionCoefficients[i], 0,
                     solidPhase.getPhase().getNumberOfComponents());
         }
         return properties;
@@ -67,19 +69,19 @@ public class Diffusivity extends
 
     /** {@inheritDoc} */
     @Override
-    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
-        return binaryDiffusionCoeffisients;
+        return binaryDiffusionCoefficients;
     }
 
     /** {@inheritDoc} */
     @Override
-    public void calcEffectiveDiffusionCoeffisients() {}
+    public void calcEffectiveDiffusionCoefficients() {}
 
     /** {@inheritDoc} */
     @Override
     public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
-        return binaryDiffusionCoeffisients[i][j];
+        return binaryDiffusionCoefficients[i][j];
     }
 
     /** {@inheritDoc} */
@@ -92,7 +94,7 @@ public class Diffusivity extends
     @Override
     public double getFickBinaryDiffusionCoefficient(int i, int j) {
         double nonIdealCorrection = 1.0;
-        return binaryDiffusionCoeffisients[i][j] * nonIdealCorrection; // shuld be divided by non
+        return binaryDiffusionCoefficients[i][j] * nonIdealCorrection; // shuld be divided by non
                                                                        // ideality factor
     }
 

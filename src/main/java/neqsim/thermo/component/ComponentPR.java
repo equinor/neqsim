@@ -1,11 +1,6 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
 package neqsim.thermo.component;
 
-import neqsim.thermo.component.atractiveEosTerm.AtractiveTermPr;
+import neqsim.thermo.component.attractiveEosTerm.AttractiveTermPr;
 
 /**
  * <p>
@@ -17,24 +12,6 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermPr;
  */
 public class ComponentPR extends ComponentEos {
     private static final long serialVersionUID = 1000;
-
-    /**
-     * <p>
-     * Constructor for ComponentPR.
-     * </p>
-     */
-    public ComponentPR() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentPR.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentPR(double moles) {
-        numberOfMoles = moles;
-    }
 
     /**
      * <p>
@@ -56,7 +33,7 @@ public class ComponentPR extends ComponentEos {
 
         delta1 = 1.0 + Math.sqrt(2.0);
         delta2 = 1.0 - Math.sqrt(2.0);
-        setAtractiveParameter(new AtractiveTermPr(this));
+        setAttractiveParameter(new AttractiveTermPr(this));
 
         double[] surfTensInfluenceParamtemp = {1.3192, 1.6606, 1.1173, 0.8443};
         this.surfTensInfluenceParam = surfTensInfluenceParamtemp;

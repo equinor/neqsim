@@ -1,8 +1,3 @@
-/*
- * RacketFunction.java
- *
- * Created on 24. januar 2001, 21:15
- */
 package neqsim.physicalProperties.util.parameterFitting.binaryComponentParameterFitting.binarySystemViscosity.grunbergNissanMethod;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
@@ -16,8 +11,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class GrunbergNissanFunction extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for GrunbergNissanFunction.

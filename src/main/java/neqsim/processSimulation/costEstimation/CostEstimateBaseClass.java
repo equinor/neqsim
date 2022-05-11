@@ -1,6 +1,8 @@
 package neqsim.processSimulation.costEstimation;
 
 import java.util.ArrayList;
+import java.util.Objects;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
@@ -15,25 +17,29 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 public class CostEstimateBaseClass implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
-    ProcessSystem procesSystem = null;
+    private ProcessSystem processSystem;
     private double CAPEXperWeight = 1000.0; // KNOK/tones
 
     /**
      * <p>
      * Constructor for CostEstimateBaseClass.
      * </p>
+     *
+     * @param process a {@link neqsim.processSimulation.processSystem.ProcessSystem}
+     *                object
      */
-    public CostEstimateBaseClass() {}
+    public CostEstimateBaseClass(ProcessSystem process) {
+        this.processSystem = process;
+    }
 
     /**
-     * <p>
-     * Constructor for CostEstimateBaseClass.
-     * </p>
-     *
-     * @param procesSystem a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+     * 
+     * @param process
+     * @param costFactor
      */
-    public CostEstimateBaseClass(ProcessSystem procesSystem) {
-        this.procesSystem = procesSystem;
+    public CostEstimateBaseClass(ProcessSystem process, double costFactor) {
+        this(process);
+        this.CAPEXperWeight = costFactor;
     }
 
     /**
@@ -44,7 +50,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
      * @return a double
      */
     public double getWeightBasedCAPEXEstimate() {
-        return procesSystem.getSystemMechanicalDesign().getTotalWeight() * CAPEXperWeight;
+        return this.processSystem.getSystemMechanicalDesign().getTotalWeight() * CAPEXperWeight;
     }
 
     /**
@@ -56,14 +62,12 @@ public class CostEstimateBaseClass implements java.io.Serializable {
      */
     public double getCAPEXestimate() {
         double cost = 0;
-        ArrayList<String> names = procesSystem.getAllUnitNames();
+        ArrayList<String> names = this.processSystem.getAllUnitNames();
         for (int i = 0; i < names.size(); i++) {
             try {
-                if (!((ProcessEquipmentInterface) procesSystem
-                        .getUnit((String) names.get(i)) == null)) {
-                    cost += ((ProcessEquipmentInterface) procesSystem
-                            .getUnit((String) names.get(i))).getMechanicalDesign().getCostEstimate()
-                                    .getTotaltCost();
+                if (!((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)) == null)) {
+                    cost += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
+                            .getMechanicalDesign().getCostEstimate().getTotaltCost();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -72,14 +76,23 @@ public class CostEstimateBaseClass implements java.io.Serializable {
         return cost;
     }
 
-    /**
-     * <p>
-     * getCAPEXperWeight.
-     * </p>
-     *
-     * @return the CAPEXperWeight
-     */
-    public double getCAPEXperWeight() {
-        return CAPEXperWeight;
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        return Objects.hash(CAPEXperWeight);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        CostEstimateBaseClass other = (CostEstimateBaseClass) obj;
+        return Double.doubleToLongBits(CAPEXperWeight) == Double
+                .doubleToLongBits(other.CAPEXperWeight);
     }
 }

@@ -12,7 +12,9 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
- * <p>MixerGasProcessingModule class.</p>
+ * <p>
+ * MixerGasProcessingModule class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -31,6 +33,10 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     Compressor secondStageCompressor;
     Pump oilPump;
     Cooler secondStageAfterCooler;
+
+    public MixerGasProcessingModule(String name) {
+        super(name);
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -66,7 +72,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     @Override
     public void initializeModule() {
         isInitializedModule = true;
-        double inletPressure = feedStream.getPressure();
+        // double inletPressure = feedStream.getPressure();
 
         Cooler inletCooler = new Cooler("inlet well stream cooler", feedStream);
         inletCooler.setOutTemperature(inletSepTemperature + 273.15);
@@ -129,6 +135,12 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
 
     /** {@inheritDoc} */
     @Override
+    public void initializeStreams() {
+        isInitializedStreams = true;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void run() {
         if (!isInitializedModule) {
             initializeModule();
@@ -142,14 +154,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public void initializeStreams() {
-        isInitializedStreams = true;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public void runTransient(double dt) {
-        getOperations().runTransient();
+        getOperations().runTransient(dt);
     }
 
     /** {@inheritDoc} */
@@ -185,7 +191,9 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -221,7 +229,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         Stream glycolFeedStream = new Stream("Glycol feed stream", glycolTestSystem);
         glycolFeedStream.getThermoSystem().setTotalFlowRate(4.0 * 1e3, "kg/hr");
 
-        MixerGasProcessingModule separationModule = new MixerGasProcessingModule();
+        MixerGasProcessingModule separationModule = new MixerGasProcessingModule("GasMixer");
         separationModule.addInputStream("feed stream", wellStream);
         separationModule.addInputStream("glycol feed stream", glycolFeedStream);
         separationModule.setSpecification("inlet separation temperature", 55.0);

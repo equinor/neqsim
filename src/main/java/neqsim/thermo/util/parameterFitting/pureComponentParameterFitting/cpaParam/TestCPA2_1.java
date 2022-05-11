@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestCPA2_1 class.</p>
+ * <p>
+ * TestCPA2_1 class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,7 +23,9 @@ public class TestCPA2_1 {
     static Logger logger = LogManager.getLogger(TestCPA2_1.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -75,7 +79,7 @@ public class TestCPA2_1 {
                 double temp = testSystem.getTemperature();
                 double val = testSystem.getPressure();
 
-                double sample1[] = {temp}; // temperature
+                double sample1[] = {temp};
                 double standardDeviation1[] = {0.1};
                 double stddev = val / 100.0;
                 double logVal = Math.log(val);
@@ -117,7 +121,7 @@ public class TestCPA2_1 {
                 // testSystem.init(0);
                 double dens = Double.parseDouble(dataSet.getString("liquiddensity"));
                 // double dens = Double.parseDouble(dataSet.getString("Density"));
-                double sample1[] = {temp}; // temperature
+                double sample1[] = {temp};
                 double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
@@ -154,7 +158,7 @@ public class TestCPA2_1 {
                 testSystem.setMixingRule(2);
                 testSystem.init(0);
                 double dens = Double.parseDouble(dataSet.getString("gasdensity"));
-                double sample1[] = {temp}; // temperature
+                double sample1[] = {temp};
                 double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);

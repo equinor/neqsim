@@ -27,10 +27,9 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     double adsorberInternalDiameter = 1.0;
     double adsorbentFillingHeight = 3.0;
 
-    /**
-     * Creates a new instance of SnohvitCO2RemovalModule
-     */
-    public AdsorptionDehydrationlModule() {}
+    public AdsorptionDehydrationlModule(String name) {
+        super(name);
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -92,7 +91,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         try {
             adsorber = new SimpleAdsorber[numberOfAdorptionBeds];
             for (int i = 0; i < numberOfAdorptionBeds; i++) {
-                adsorber[i] = new SimpleAdsorber(gasStreamToAdsorber);
+                adsorber[i] = new SimpleAdsorber("SimpleAdsorber_" + i + 1, gasStreamToAdsorber);
             }
             this.gasStreamFromAdsorber = (Stream) this.gasStreamToAdsorber.clone();
             this.gasStreamFromAdsorber.setName("Stream from Adsorber");
@@ -112,7 +111,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-        getOperations().runTransient();
+        getOperations().runTransient(dt);
     }
 
     /** {@inheritDoc} */
@@ -173,7 +172,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         adsorbentFillingHeight = 400.0 * waterLoadingCycle / (Math.PI * usefulDesiccantCapacity
                 * bulkDensityDesiccant * adsorberInternalDiameter * adsorberInternalDiameter);
 
-        double lenghtDiameterRatio = adsorbentFillingHeight / adsorberInternalDiameter;
+        // double lenghtDiameterRatio = adsorbentFillingHeight / adsorberInternalDiameter;
         // design is done here
     }
 
@@ -203,11 +202,11 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
-        Stream inletStream = new Stream(testSystem);
+        Stream inletStream = new Stream("inletStream", testSystem);
         Separator separator = new Separator("Separator 1", inletStream);
 
         neqsim.processSimulation.processSystem.processModules.AdsorptionDehydrationlModule adsorptionPlant =
-                new neqsim.processSimulation.processSystem.processModules.AdsorptionDehydrationlModule();
+                new neqsim.processSimulation.processSystem.processModules.AdsorptionDehydrationlModule("absPlant");
         adsorptionPlant.addInputStream("gasStreamToAdsorber", separator.getGasOutStream());
         adsorptionPlant.setSpecification("water dew point temperature", 273.15 - 100.0);
         adsorptionPlant.setSpecification("designFlow", 20.0e6); // MSm^3/day

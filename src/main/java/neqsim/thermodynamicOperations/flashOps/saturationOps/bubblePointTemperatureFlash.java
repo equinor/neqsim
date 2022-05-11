@@ -1,12 +1,8 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -67,18 +63,17 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
 
                     yold = system.getPhases()[0].getComponents()[i].getx();
                     system.getPhases()[0].getComponents()[i]
-                            .setK(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
+                            .setK(system.getPhases()[1].getComponents()[i].getFugacityCoefficient()
                                     / system.getPhases()[0].getComponents()[i]
-                                            .getFugasityCoeffisient());
+                                            .getFugacityCoefficient());
                     system.getPhases()[1].getComponents()[i]
                             .setK(system.getPhases()[0].getComponents()[i].getK());
                     system.getPhases()[0].getComponents()[i]
                             .setx(system.getPhases()[1].getComponents()[i].getx()
                                     * system.getPhases()[1].getComponents()[i]
-                                            .getFugasityCoeffisient()
+                                            .getFugacityCoefficient()
                                     / system.getPhases()[0].getComponents()[i]
-                                            .getFugasityCoeffisient());
-
+                                            .getFugacityCoefficient());
                 } while ((Math.abs(yold - system.getPhases()[1].getComponents()[i].getx()) > 1e-10)
                         && (iterations < maxNumberOfIterations));
 

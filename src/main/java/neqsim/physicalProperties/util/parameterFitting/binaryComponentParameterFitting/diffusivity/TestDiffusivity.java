@@ -53,8 +53,8 @@ public class TestDiffusivity {
                 testSystem.init(0);
                 testSystem.setPhysicalPropertyModel(4);
                 testSystem.initPhysicalProperties();
-                double sample1[] = {testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.1}; 
+                double sample1[] = {testSystem.getTemperature()};
+                double standardDeviation1[] = {0.1};
                 SampleValue sample = new SampleValue(
                         Double.parseDouble(dataSet.getString("DiffusionCoefficient")), 0.01,
                         sample1, standardDeviation1);
@@ -65,7 +65,7 @@ public class TestDiffusivity {
         } catch (Exception e) {
             logger.error("database error" + e);
         }
-        //
+
         // double sample1[] = {0.1};
         // for(int i=0;i<sampleList.size();i++){
         // logger.info"ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));

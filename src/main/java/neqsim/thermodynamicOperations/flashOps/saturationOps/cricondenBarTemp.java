@@ -67,13 +67,12 @@ public class cricondenBarTemp implements java.io.Serializable {
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0, Math
-                    .log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                    .log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                             * system.getPhases()[0].getComponents()[i].getx()
                             * system.getPressure())
-                    - Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
+                    - Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient()
                             * system.getPhases()[1].getComponents()[i].getx()
                             * system.getPressure()));
-
         }
     }
 
@@ -86,8 +85,9 @@ public class cricondenBarTemp implements java.io.Serializable {
         Jac.timesEquals(0.0);
         double dij = 0.0;
 
-        double tempJ = 0.0, sumdyidbeta = 0, sumdxidbeta = 0;
-        int nofc = numberOfComponents;
+        double tempJ = 0.0;
+        // double sumdyidbeta = 0, sumdxidbeta = 0;
+        // int nofc = numberOfComponents;
 
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
@@ -136,7 +136,6 @@ public class cricondenBarTemp implements java.io.Serializable {
                             / system.getPhases()[1].getComponents()[i].getx());
             system.getPhases()[1].getComponents()[i]
                     .setK(system.getPhases()[0].getComponents()[i].getK());
-
         }
 
         system.init(3);

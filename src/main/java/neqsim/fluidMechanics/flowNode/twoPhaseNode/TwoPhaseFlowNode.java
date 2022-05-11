@@ -1,8 +1,6 @@
 package neqsim.fluidMechanics.flowNode.twoPhaseNode;
 
-import neqsim.MathLib.generalMath.GeneralMath;
 import neqsim.fluidMechanics.flowNode.FlowNode;
-import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -19,6 +17,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
     // public double[] molarMassTransferFlux;
     // public double[] molarMassTransfer;
+
     /**
      * <p>
      * Constructor for TwoPhaseFlowNode.
@@ -64,7 +63,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         // clonedSystem.molarMassTransferFlux.clone();;
         // clonedSystem.molarMassTransfer = (double[])
         // clonedSystem.molarMassTransferFlux.clone();
-        clonedSystem.fluidBoundary = (FluidBoundaryInterface) fluidBoundary.clone();
+        clonedSystem.fluidBoundary = fluidBoundary.clone();
         return clonedSystem;
     }
 
@@ -202,7 +201,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     public double calcWallFrictionFactor() {
         for (int i = 0; i < 2; i++) {
             wallFrictionFactor[i] = Math.pow(
-                    (1.0 / (-1.8 * GeneralMath.log10(6.9 / getReynoldsNumber(i) * Math.pow(
+                    (1.0 / (-1.8 * Math.log10(6.9 / getReynoldsNumber(i) * Math.pow(
                             pipe.getRelativeRoughnes(this.getHydraulicDiameter(i)) / 3.7, 1.11)))),
                     2.0);
         }

@@ -1,8 +1,3 @@
-/*
- * ValveInterface.java
- *
- * Created on 22. august 2001, 17:20
- */
 package neqsim.processSimulation.processEquipment.expander;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
@@ -17,10 +12,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public interface ExpanderInterface extends ProcessEquipmentInterface {
-    /** {@inheritDoc} */
-    @Override
-    public void run();
-
     /**
      * <p>
      * setOutletPressure.
@@ -49,10 +40,6 @@ public interface ExpanderInterface extends ProcessEquipmentInterface {
      */
     public double getEnergy();
 
-    /** {@inheritDoc} */
-    @Override
-    public String getName();
-
     /**
      * <p>
      * getOutStream.
@@ -61,11 +48,4 @@ public interface ExpanderInterface extends ProcessEquipmentInterface {
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public StreamInterface getOutStream();
-
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient();
 }

@@ -11,7 +11,6 @@ import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * <p>
@@ -44,17 +43,19 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      * </p>
      */
     public GasTurbine() {
+        this("GasTurbine");
+    }
+
+    public GasTurbine(String name) {
+        super(name);
         // needs to be changed to gas tubing mechanical design
-        mechanicalDesign = new CompressorMechanicalDesign(this);
-        SystemInterface airThermoSystem = neqsim.thermo.Fluid.create("air");
-        airThermoSystem.addComponent("CO2", 0.0);
-        airThermoSystem.addComponent("water", 0.0);
+        SystemInterface airThermoSystem = neqsim.thermo.Fluid.create("combustion air");
         airThermoSystem.createDatabase(true);
         // airThermoSystem.display();
-        airStream = new Stream(airThermoSystem);
+        airStream = new Stream("airStream", airThermoSystem);
         airStream.setPressure(1.01325);
         airStream.setTemperature(288.15, "K");
-        airCompressor = new Compressor(airStream);
+        airCompressor = new Compressor("airCompressor", airStream);
     }
 
     /**
@@ -65,6 +66,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public GasTurbine(StreamInterface inletStream) {
         this();
         setInletStream(inletStream);
@@ -80,9 +82,23 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
      *        object
      */
     public GasTurbine(String name, StreamInterface inletStream) {
-        this();
-        this.name = name;
+        this(name);
         setInletStream(inletStream);
+    }
+
+    public CompressorMechanicalDesign getMechanicalDesign() {
+        return new CompressorMechanicalDesign(this);
+    }
+
+    /**
+     * <p>
+     * Getter for the field <code>heat</code>.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getHeat() {
+        return heat;
     }
 
     /**
@@ -107,7 +123,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
         try {
-            this.outStream = (StreamInterface) inletStream.clone();
+            this.outStream = inletStream.clone();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -116,26 +132,26 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        // System.out.println("compressor running..");
         double heatOfCombustion = inletStream.LCV() * inletStream.getFlowRate("mole/sec");
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         airStream.setFlowRate(thermoSystem.getFlowRate("mole/sec") * airGasRatio, "mole/sec");
         airStream.setPressure(1.01325);
         airStream.run();
+
         airCompressor.setInletStream(airStream);
         airCompressor.setOutletPressure(combustionpressure);
         airCompressor.run();
         compressorPower = airCompressor.getPower();
-        StreamInterface outStreamAir = (StreamInterface) airCompressor.getOutStream().clone();
+        StreamInterface outStreamAir = airCompressor.getOutStream().clone();
         outStreamAir.getFluid().addFluid(thermoSystem);
         // outStreamAir.getFluid().setTemperature(800.0);
         // outStreamAir.getFluid().createDatabase(true);
         double moleMethane = outStreamAir.getFluid().getComponent("methane").getNumberOfmoles();
-        double moleEthane = outStreamAir.getFluid().getComponent("ethane").getNumberOfmoles();
-        double molePropane = outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
+        // double moleEthane = outStreamAir.getFluid().getComponent("ethane").getNumberOfmoles();
+        // double molePropane = outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
 
         outStreamAir.run();
-        Heater locHeater = new Heater(outStreamAir);
+        Heater locHeater = new Heater("locHeater", outStreamAir);
         locHeater.setEnergyInput(heatOfCombustion);
         locHeater.run();
 
@@ -143,77 +159,28 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         locHeater.getOutStream().getFluid().addComponent("water", moleMethane * 2.0);
         locHeater.getOutStream().getFluid().addComponent("methane", -moleMethane);
         locHeater.getOutStream().getFluid().addComponent("oxygen", -moleMethane * 2.0);
+
+        // todo: Init fails because there is less than moleMethane of oxygen
         locHeater.getOutStream().getFluid().init(3);
         // locHeater.getOutStream().run();
         locHeater.displayResult();
 
-        Expander expander = new Expander(locHeater.getOutStream());
+        Expander expander = new Expander("expander", locHeater.getOutStream());
         expander.setOutletPressure(1.01325);
         expander.run();
 
-        Cooler cooler1 = new Cooler(expander.getOutStream());
+        Cooler cooler1 = new Cooler("cooler1", expander.getOutStream());
         cooler1.setOutTemperature(288.15);
         cooler1.run();
 
         expanderPower = expander.getPower();
 
         power = expanderPower - compressorPower;
-        setHeat(cooler1.getDuty());
+        this.heat = cooler1.getDuty();
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {}
-
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        // test code;....
-        neqsim.thermo.system.SystemInterface testSystem = new SystemSrkEos(298.15, 1.0);
-
-        testSystem.addComponent("methane", 1.0);
-
-        Stream gasstream = new Stream("well stream", testSystem);
-        gasstream.setFlowRate(1.0, "MSm3/day");
-        gasstream.setTemperature(50.0, "C");
-        gasstream.setPressure(2.0, "bara");
-        gasstream.run();
-        GasTurbine gasturb = new GasTurbine(gasstream);
-
-        gasstream.run();
-        gasturb.run();
-
-        System.out.println("power generated " + gasturb.getPower() / 1.0e6);
-        System.out.println("heat generated " + gasturb.getHeat() / 1.0e6);
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>heat</code>.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getHeat() {
-        return heat;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>heat</code>.
-     * </p>
-     *
-     * @param heat a double
-     */
-    public void setHeat(double heat) {
-        this.heat = heat;
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
     }
 }

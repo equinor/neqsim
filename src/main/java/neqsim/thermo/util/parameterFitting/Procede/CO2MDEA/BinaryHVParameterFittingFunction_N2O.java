@@ -15,7 +15,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version $Id: $Id
  */
 public class BinaryHVParameterFittingFunction_N2O extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_N2O.class);
@@ -49,7 +48,7 @@ public class BinaryHVParameterFittingFunction_N2O extends LevenbergMarquardtFunc
             logger.error(e.toString());
         }
         return (system.getPressure() * system.getPhases()[0].getComponent(0).getx()
-                * system.getPhase(0).getComponent(0).getFugasityCoeffisient());
+                * system.getPhase(0).getComponent(0).getFugacityCoefficient());
     }
 
     /** {@inheritDoc} */

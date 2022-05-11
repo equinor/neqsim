@@ -1,10 +1,14 @@
 package neqsim.processSimulation.processEquipment.expander;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.Container;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -32,17 +36,31 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
      * Constructor for ExpanderOld.
      * </p>
      */
-    public ExpanderOld() {}
+    @Deprecated
+    public ExpanderOld() {
+        this("ExpanderOld");
+    }
 
     /**
      * <p>
      * Constructor for ExpanderOld.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public ExpanderOld(Stream inletStream) {
-        setInletStream(inletStream);
+    @Deprecated
+    public ExpanderOld(StreamInterface inletStream) {
+        this("ExpanderOld", inletStream);
+    }
+
+    /**
+     * Constructor for ExpanderOld.
+     * 
+     * @param name
+     */
+    public ExpanderOld(String name) {
+        super(name);
     }
 
     /**
@@ -55,7 +73,7 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
      *        object
      */
     public ExpanderOld(String name, StreamInterface inletStream) {
-        this.name = name;
+        super(name);
         setInletStream(inletStream);
     }
 
@@ -64,8 +82,8 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-        outStream = (StreamInterface) inletStream.clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
+        outStream = inletStream.clone();
     }
 
     /** {@inheritDoc} */
@@ -90,7 +108,7 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
     @Override
     public void run() {
         System.out.println("expander running..");
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        thermoSystem = inletStream.getThermoSystem().clone();
         thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoSystem.init(3);
         double hinn = thermoSystem.getEnthalpy();
@@ -204,5 +222,5 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {}
 }

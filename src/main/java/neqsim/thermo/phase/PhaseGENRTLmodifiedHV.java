@@ -149,7 +149,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         double val = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             val += getComponent(i).getNumberOfMolesInPhase()
-                    * (getComponent(i).getLogFugasityCoeffisient());// +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
+                    * (getComponent(i).getLogFugacityCoefficient());// +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
         }
         return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
     }

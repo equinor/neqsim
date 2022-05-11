@@ -20,8 +20,6 @@ import neqsim.thermo.system.SystemPrEos;
  * @version $Id: $Id
  */
 public class TestAcentric {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for TestAcentric.

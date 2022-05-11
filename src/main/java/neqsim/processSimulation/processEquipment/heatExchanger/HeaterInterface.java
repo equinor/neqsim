@@ -1,9 +1,6 @@
-/*
- * SeparatorInterface.java
- *
- * Created on 22. august 2001, 17:22
- */
 package neqsim.processSimulation.processEquipment.heatExchanger;
+
+import neqsim.processSimulation.SimulationInterface;
 
 /**
  * <p>
@@ -13,25 +10,7 @@ package neqsim.processSimulation.processEquipment.heatExchanger;
  * @author esol
  * @version $Id: $Id
  */
-public interface HeaterInterface {
-    /**
-     * <p>
-     * setName.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void setName(String name);
-
-    /**
-     * <p>
-     * getName.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getName();
-
+public interface HeaterInterface extends SimulationInterface {
     /**
      * <p>
      * setdT.

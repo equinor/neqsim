@@ -12,8 +12,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  */
 public class BinaryCPAparameterFitToActivityCoefficientFunction
         extends EosInteractionParameterFittingFunction {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for BinaryCPAparameterFitToActivityCoefficientFunction.
@@ -28,7 +26,7 @@ public class BinaryCPAparameterFitToActivityCoefficientFunction
         system.init(1);
 
         // double fug =
-        // system.getPhases()[1].getComponents()[0].getFugasityCoeffisient();
+        // system.getPhases()[1].getComponents()[0].getFugacityCoefficient();
         // double pureFug = system.getPhases()[1].getPureComponentFugacity(0);
         double val = system.getPhases()[1].getActivityCoefficient(1);
         // System.out.println("activity: " + val);

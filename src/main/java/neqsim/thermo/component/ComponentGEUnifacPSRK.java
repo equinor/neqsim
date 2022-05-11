@@ -1,8 +1,3 @@
-/*
- * ComponentGEUniquac.java
- *
- * Created on 10. juli 2000, 21:06
- */
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseGEUnifac;
@@ -21,13 +16,6 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
 
     double[][] bij = new double[1][1];
     double[][] cij = new double[1][1];
-
-    /**
-     * <p>
-     * Constructor for ComponentGEUnifacPSRK.
-     * </p>
-     */
-    public ComponentGEUnifacPSRK() {}
 
     /**
      * <p>
@@ -163,7 +151,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
             double pressure, int phasetype) {
         int initType = phase.getInitType();
         double lngammaCombinational = 0.0, lngammaResidual = 0.0;
-        double lngammaCombinationaldT = 0.0, lngammaResidualdT = 0.0;
+        double lngammaResidualdT = 0.0;
         dlngammadn = new double[numberOfComponents];
         dlngammadt = 0.0;
         ComponentGEUnifac[] compArray = (ComponentGEUnifac[]) phase.getcomponentArray();

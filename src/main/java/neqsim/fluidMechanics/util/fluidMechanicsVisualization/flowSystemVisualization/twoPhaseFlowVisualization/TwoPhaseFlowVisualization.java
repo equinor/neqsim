@@ -1,8 +1,3 @@
-/*
- * OnePhaseFlowVisualization.java
- *
- * Created on 26. oktober 2000, 20:08
- */
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization;
 
 /**
@@ -15,8 +10,6 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisuali
  */
 public class TwoPhaseFlowVisualization extends
         neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for TwoPhaseFlowVisualization.

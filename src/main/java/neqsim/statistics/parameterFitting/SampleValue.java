@@ -17,8 +17,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SampleValue implements Cloneable {
-    private static final long serialVersionUID = 1000;
-
     protected FunctionInterface testFunction;
     double sampleValue = 0;
     double[] dependentValues;
@@ -84,8 +82,8 @@ public class SampleValue implements Cloneable {
             e.printStackTrace(System.err);
         }
         // this was modified 20.05.2002
-        // clonedValue.system = (SystemInterface) system.clone();
-        clonedValue.testFunction = (FunctionInterface) testFunction.clone();
+        // clonedValue.system = system.clone();
+        clonedValue.testFunction = testFunction.clone();
         clonedValue.dependentValues = this.dependentValues.clone();
         System.arraycopy(dependentValues, 0, clonedValue.dependentValues, 0,
                 dependentValues.length);
@@ -101,7 +99,7 @@ public class SampleValue implements Cloneable {
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
     public void setThermodynamicSystem(SystemInterface system) {
-        this.system = system;// (SystemInterface) system.clone();
+        this.system = system;// system.clone();
         thermoOps = new ThermodynamicOperations(system);
         this.getFunction().setThermodynamicSystem(this.system);
     }

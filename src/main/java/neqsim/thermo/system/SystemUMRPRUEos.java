@@ -1,20 +1,13 @@
 package neqsim.thermo.system;
-/**
- *
- * @author Even Solbraa
- * @version
- */
 
 /**
  * This class defines a thermodynamic system using the UMR-PRU equation of state
+ * 
+ * @author Even Solbraa
  */
 public class SystemUMRPRUEos extends SystemPrEos {
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates a thermodynamic system using the SRK equation of state.
-     */
-    // SystemSrkEos clonedSystem;
     public SystemUMRPRUEos() {
         super();
         setBmixType(1);

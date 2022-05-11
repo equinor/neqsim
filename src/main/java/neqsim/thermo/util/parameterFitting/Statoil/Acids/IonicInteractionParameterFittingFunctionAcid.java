@@ -2,6 +2,7 @@ package neqsim.thermo.util.parameterFitting.Statoil.Acids;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
@@ -14,7 +15,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionAcid.class);
@@ -59,6 +59,7 @@ public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarqu
 
     /** {@inheritDoc} */
     @Override
+    @SuppressWarnings("unused")
     public void setFittingParams(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, CO3numb = 0,

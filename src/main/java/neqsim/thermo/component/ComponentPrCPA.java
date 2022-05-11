@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseCPAInterface;
@@ -11,34 +6,12 @@ import neqsim.thermo.phase.PhaseInterface;
 /**
  *
  * @author Even Solbraa
- * @version
  */
 abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterface {
     private static final long serialVersionUID = 1000;
 
-    /**
-     *
-     */
     int cpaon = 1;
     double[] xsite;
-
-    /**
-     * <p>
-     * Constructor for ComponentPrCPA.
-     * </p>
-     */
-    public ComponentPrCPA() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentPrCPA.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentPrCPA(double moles) {
-        super(moles);
-    }
 
     /**
      * <p>
@@ -63,7 +36,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
             }
             a = aCPA;
             b = bCPA;
-            setAtractiveTerm(1);
+            setAttractiveTerm(1);
         }
     }
 
@@ -89,7 +62,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
             a = aCPA;
             b = bCPA;
         }
-        setAtractiveTerm(1);
+        setAttractiveTerm(1);
     }
 
     /** {@inheritDoc} */
@@ -142,10 +115,10 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
 
     /** {@inheritDoc} */
     @Override
-    public void setAtractiveTerm(int i) {
-        super.setAtractiveTerm(i);
+    public void setAttractiveTerm(int i) {
+        super.setAttractiveTerm(i);
         if ((getNumberOfAssociationSites() > 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
-            getAtractiveTerm().setm(mCPA);
+            getAttractiveTerm().setm(mCPA);
         }
     }
 
@@ -229,11 +202,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
                         * (4.0 * phase.getTotalVolume() - phase.getB()));
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property xsite.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getXsite() {
         return this.xsite;

@@ -7,6 +7,7 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.splitter.Splitter;
 import neqsim.processSimulation.processEquipment.splitter.SplitterInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -34,21 +35,20 @@ public class process2 {
 
         Stream stream_1 = new Stream("Stream1", testSystem);
 
-        Heater heater = new Heater(stream_1);
+        Heater heater = new Heater("heater", stream_1);
         heater.setOutTemperature(310.0);
 
         MixerInterface mixer = new StaticMixer("Mixer 1");
         mixer.addStream(heater.getOutStream());
 
-        Stream stream_3 = mixer.getOutStream();
+        StreamInterface stream_3 = mixer.getOutStream();
         stream_3.setName("stream3");
 
         Separator separator = new Separator("Separator 1", stream_3);
-        Stream stream_2 = new Stream(separator.getGasOutStream());
-        stream_2.setName("stream2");
+        Stream stream_2 = new Stream("stream2", separator.getGasOutStream());
 
         SplitterInterface splitter = new Splitter("splitter", stream_2, 2);
-        Stream stream_5 = splitter.getSplitStream(0);
+        StreamInterface stream_5 = splitter.getSplitStream(0);
         stream_5.setName("stream5");
 
         mixer.addStream(stream_5);

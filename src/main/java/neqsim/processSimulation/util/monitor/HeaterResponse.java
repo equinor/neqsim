@@ -13,12 +13,9 @@ import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 public class HeaterResponse {
     public String name = "test";
 
-
     public Double feedTemperature;
     public Double dischargeTemperature;
     public Double duty;
-
-
 
     /**
      * <p>
@@ -42,6 +39,5 @@ public class HeaterResponse {
         dischargeTemperature = inputHeater.getOutStream().getTemperature("C");
 
         duty = inputHeater.getDuty();
-
     }
 }

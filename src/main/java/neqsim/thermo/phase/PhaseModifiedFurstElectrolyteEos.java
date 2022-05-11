@@ -70,11 +70,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         if (type == 0) {
             electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
@@ -456,7 +452,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
 
     // public double calcShieldingParameter2(){
     // if(phaseType==1) return 0.0;
-    //
+
     // double df=0, f=0;
     // int ions=0;
     // int iterations=0;
@@ -499,16 +495,15 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
             BonV = 1.0 - 1.0e-6;
         }
         double BonVold = BonV;
-        double Btemp = 0, Dtemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
+        double Btemp = 0, h = 0, dh = 0, dhh = 0;
         double d1 = 0, d2 = 0;
         Btemp = getB();
-        Dtemp = getA();
         if (Btemp <= 0) {
             logger.info("b negative in volume calc");
         }
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
-
+        int maxIterations = 1000;
         do {
             iterations++;
             this.volInit();
@@ -548,13 +543,14 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
 
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-        } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < 1000);
+          } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < maxIterations);
         this.volInit();
-        if (iterations >= 10000) {
-            throw new neqsim.util.exception.TooManyIterationsException();
+        if (iterations >= maxIterations) {
+          throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume",
+              maxIterations);
         }
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();
+          throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
         }
 
         // if(phaseType==0) System.out.println("density " + getDensity());//"BonV: " +
@@ -946,7 +942,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
                     * Math.pow(componentArray[i].getIonicCharge(), 2.0)
                     / (1.0 + getShieldingParameter()
                             * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
-
         }
         return ans2 + ans;
     }

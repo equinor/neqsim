@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.splitter;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
@@ -13,9 +12,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public interface SplitterInterface extends ProcessEquipmentInterface {
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name);
 
     /**
      * <p>
@@ -44,9 +40,5 @@ public interface SplitterInterface extends ProcessEquipmentInterface {
      * @param i a int
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    public Stream getSplitStream(int i);
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName();
+    public StreamInterface getSplitStream(int i);
 }

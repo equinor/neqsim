@@ -1,8 +1,3 @@
-/*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -48,7 +43,7 @@ public class PSFlash extends QfuncFlash {
     /** {@inheritDoc} */
     @Override
     public double calcdQdTT() {
-        double cP1 = 0.0, cP2 = 0.0;
+        // double cP1 = 0.0, cP2 = 0.0;
 
         if (system.getNumberOfPhases() == 1) {
             return -system.getPhase(0).getCp() / system.getTemperature();
@@ -78,6 +73,8 @@ public class PSFlash extends QfuncFlash {
 
         boolean correctFactor = true;
         double newCorr = 1.0;
+        system.init(2);
+        
         do {
             if (error > erorOld && factor > 0.1 && correctFactor) {
                 factor *= 0.5;
@@ -87,7 +84,7 @@ public class PSFlash extends QfuncFlash {
 
             iterations++;
             oldTemp = system.getTemperature();
-            system.init(2);
+            
             newCorr = factor * calcdQdT() / calcdQdTT();
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
@@ -106,6 +103,7 @@ public class PSFlash extends QfuncFlash {
 
             system.setTemperature(nyTemp);
             tpFlash.run();
+            system.init(2);
             erorOld = error;
             error = Math.abs(calcdQdT());// Math.abs((nyTemp - oldTemp) / (nyTemp));
             // if(error>erorOld) factor *= -1.0;

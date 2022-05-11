@@ -16,8 +16,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class TestFitToOilFieldFluid {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * main.

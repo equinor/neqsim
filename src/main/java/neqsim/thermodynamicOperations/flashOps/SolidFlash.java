@@ -84,7 +84,7 @@ public class SolidFlash extends TPflash {
         for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 system.getPhase(k).getComponent(i).setx(system.getPhase(0).getComponent(i).getz()
-                        / E[i] / system.getPhase(k).getComponent(i).getFugasityCoeffisient());
+                        / E[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient());
                 /*
                  * if (system.getPhase(k).getComponent(i).getx() > 1.0) {
                  * system.getPhase(k).getComponent(i).setx(1.0 - 1e-30); } if
@@ -135,18 +135,18 @@ public class SolidFlash extends TPflash {
             E[i] = 0.0;
             for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
                 E[i] += system.getBeta(k)
-                        / system.getPhase(k).getComponent(i).getFugasityCoeffisient();
+                        / system.getPhase(k).getComponent(i).getFugacityCoefficient();
             }
             // logger.info("Ei " +E[i]);
             // if(
         }
         // E[solidComponent] +=
-        // system.getBeta(system.getNumberOfPhases()-1)/system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient();
+        // system.getBeta(system.getNumberOfPhases()-1)/system.getPhase(3).getComponent(solidComponent).getFugacityCoefficient();
         E[solidComponent] = system.getPhase(0).getComponent(solidComponent).getz()
-                / system.getPhases()[3].getComponents()[solidComponent].getFugasityCoeffisient();
+                / system.getPhases()[3].getComponents()[solidComponent].getFugacityCoefficient();
         // logger.info("Ei " +E[solidComponent]);
         // logger.info("fug "
-        // +system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient());
+        // +system.getPhase(3).getComponent(solidComponent).getFugacityCoefficient());
         // logger.info("zi " +system.getPhase(0).getComponent(solidComponent).getz());
     }
 
@@ -174,12 +174,12 @@ public class SolidFlash extends TPflash {
 
         for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
             dQdbeta[k] = 1.0 - system.getPhases()[3].getComponents()[solidComponent]
-                    .getFugasityCoeffisient()
-                    / system.getPhase(k).getComponent(solidComponent).getFugasityCoeffisient();
+                    .getFugacityCoefficient()
+                    / system.getPhase(k).getComponent(solidComponent).getFugacityCoefficient();
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 if (i != solidComponent) {
                     dQdbeta[k] -= system.getPhase(0).getComponent(i).getz() * 1.0 / E[i]
-                            / system.getPhase(k).getComponent(i).getFugasityCoeffisient();
+                            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
                 }
             }
         }
@@ -193,8 +193,8 @@ public class SolidFlash extends TPflash {
                 for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
                     if (k != solidComponent) {
                         Qmatrix[i][j] += system.getPhase(0).getComponent(k).getz() / (E[k] * E[k]
-                                * system.getPhase(j).getComponent(k).getFugasityCoeffisient()
-                                * system.getPhase(i).getComponent(k).getFugasityCoeffisient());
+                                * system.getPhase(j).getComponent(k).getFugacityCoefficient()
+                                * system.getPhase(i).getComponent(k).getFugacityCoefficient());
                     }
                 }
             }
@@ -211,7 +211,7 @@ public class SolidFlash extends TPflash {
      */
     public void solveBeta(boolean ideal) {
         double oldBeta[] = new double[system.getNumberOfPhases() - 1];
-        double newBeta[] = new double[system.getNumberOfPhases() - 1];
+        // double newBeta[] = new double[system.getNumberOfPhases() - 1];
         int iter = 0;
         Matrix ans = new Matrix(system.getNumberOfPhases() - 1, 1);
         do {
@@ -222,7 +222,7 @@ public class SolidFlash extends TPflash {
             calcQ();
 
             oldBeta = new double[system.getNumberOfPhases() - 1];
-            newBeta = new double[system.getNumberOfPhases() - 1];
+            // newBeta = new double[system.getNumberOfPhases() - 1];
             iter++;
             for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
                 oldBeta[k] = system.getBeta(k);
@@ -319,12 +319,12 @@ public class SolidFlash extends TPflash {
      */
     public void calcSolidBeta() {
         double tempVar = system.getPhase(0).getComponents()[solidComponent].getz();
-        double beta = 1.0;
+        // double beta = 1.0;
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
             tempVar -= system.getBeta(i)
-                    * system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient()
-                    / system.getPhase(i).getComponent(solidComponent).getFugasityCoeffisient();
-            beta -= system.getBeta(i);
+                    * system.getPhase(3).getComponent(solidComponent).getFugacityCoefficient()
+                    / system.getPhase(i).getComponent(solidComponent).getFugacityCoefficient();
+            // beta -= system.getBeta(i);
         }
         if (tempVar > 0 && tempVar < 1.0) {
             system.setBeta(system.getNumberOfPhases() - 1, tempVar);

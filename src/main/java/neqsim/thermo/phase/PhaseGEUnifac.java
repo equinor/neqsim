@@ -19,9 +19,6 @@ import neqsim.thermo.component.ComponentGEUniquac;
 public class PhaseGEUnifac extends PhaseGEUniquac {
     private static final long serialVersionUID = 1000;
 
-    /**
-     *
-     */
     double[][] aij = new double[1][1];
     double[][] bij = new double[1][1];
     double[][] cij = new double[1][1];
@@ -224,7 +221,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         double val = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             val += getComponent(i).getNumberOfMolesInPhase()
-                    * (getComponent(i).getLogFugasityCoeffisient());
+                    * (getComponent(i).getLogFugacityCoefficient());
         }
         return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
     }

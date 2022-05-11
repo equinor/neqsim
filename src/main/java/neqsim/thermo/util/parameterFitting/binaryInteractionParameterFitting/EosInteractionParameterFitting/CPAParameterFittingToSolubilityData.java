@@ -13,8 +13,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version $Id: $Id
  */
 public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
-
     int phase = 1;
     int component = 0;
 
@@ -125,8 +123,8 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
             system.getPhases()[1].getComponents()[1].setb(value);
         }
         if (i == 3) {
-            system.getPhase(0).getComponent(1).getAtractiveTerm().setm(value);
-            system.getPhases()[1].getComponents()[1].getAtractiveTerm().setm(value);
+            system.getPhase(0).getComponent(1).getAttractiveTerm().setm(value);
+            system.getPhases()[1].getComponents()[1].getAttractiveTerm().setm(value);
         }
         if (i == 5) {
             system.getPhase(0).getComponent(1).setAssociationEnergy(value);

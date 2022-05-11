@@ -36,7 +36,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
         WaxCharacterise clonedSystem = null;
         try {
             clonedSystem = (WaxCharacterise) super.clone();
-            clonedSystem.model = (WaxModelInterface) model.clone();
+            clonedSystem.model = model.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
@@ -44,6 +44,8 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
     }
 
     public abstract class WaxBaseModel implements WaxModelInterface {
+        private static final long serialVersionUID = 1000;
+
         double[] parameterWax = new double[3];
         double[] parameterWaxHeatOfFusion = new double[1];
         double[] parameterWaxTriplePointTemperature = new double[1];
@@ -122,6 +124,8 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
     }
 
     public class PedersenWaxModel extends WaxBaseModel {
+        private static final long serialVersionUID = 1000;
+
         public PedersenWaxModel() {
             parameterWax[0] = 1.074;
             parameterWax[1] = 6.584e-6;

@@ -65,9 +65,6 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
      */
     public void setPreferedThermodynamicModel(String preferedThermodynamicModel);
 
-    /** {@inheritDoc} */
-    @Override
-    public void run();
 
     /**
      * <p>
@@ -120,12 +117,4 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
      * @param value a double
      */
     public void setProperty(String propertyName, double value);
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName();
-
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name);
 }

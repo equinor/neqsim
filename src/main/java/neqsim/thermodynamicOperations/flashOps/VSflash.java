@@ -40,7 +40,7 @@ public class VSflash extends Flash {
         this.tpFlash = new TPflash(system);
         this.Sspec = Sspec;
         this.Vspec = Vspec;
-        // System.out.println("entalpy " + Hspec);
+        // System.out.println("enthalpy " + Hspec);
         // System.out.println("volume " + Vspec);
     }
 

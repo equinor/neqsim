@@ -1,13 +1,9 @@
-/*
- * ComponentGEUniquac.java
- *
- * Created on 10. juli 2000, 21:06
- */
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseDesmukhMather;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -22,13 +18,6 @@ public class ComponentDesmukhMather extends ComponentGE {
 
     private double deshMathIonicDiameter = 1.0;
     static Logger logger = LogManager.getLogger(ComponentDesmukhMather.class);
-
-    /**
-     * <p>
-     * Constructor for ComponentDesmukhMather.
-     * </p>
-     */
-    public ComponentDesmukhMather() {}
 
     /**
      * <p>
@@ -139,25 +128,24 @@ public class ComponentDesmukhMather extends ComponentGE {
         if (componentName.equals("water")) {
             double watervol = 1.0 / 1000.0 * getMolarMass();
             double watervappres = getAntoineVaporPressure(phase.getTemperature());
-            fugasityCoeffisient =
+            fugacityCoefficient =
                     gamma * watervappres
                             * Math.exp(watervol / (R * phase.getTemperature())
                                     * (phase.getPressure() - watervappres) * 1e5)
                             / phase.getPressure();
         } else if (ionicCharge == 0 && referenceStateType.equals("solvent")) {
-            fugasityCoeffisient =
+            fugacityCoefficient =
                     gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
         } else if (ionicCharge == 0 && referenceStateType.equals("solute")) {
-            fugasityCoeffisient =
+            fugacityCoefficient =
                     gamma * getHenryCoef(phase.getTemperature()) / phase.getPressure(); // sjekke
                                                                                         // denne
-
         } else {
-            fugasityCoeffisient = 1e-15;
-            // System.out.println("fug " + fugasityCoeffisient);
+            fugacityCoefficient = 1e-15;
+            // System.out.println("fug " + fugacityCoefficient);
         }
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     /**

@@ -1,13 +1,8 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -49,7 +44,6 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-        ThermodynamicOperations ops = new ThermodynamicOperations(system);
         double ksp = 0.0;
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt");
@@ -198,10 +192,9 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                     resultTable[numb][1] = Double.toString(scalePotentialFactor);
                     resultTable[numb][2] = "";
                     // double maxn = scalePotentialFactor/(stoc1*stoc2);
-                    //
+
                     // double x1max =system.getPhase(phaseNumber).getComponent(name1).getx()/maxn;
                     // double x2max =system.getPhase(phaseNumber).getComponent(name2).getx()/maxn;
-
                 }
             }
         } catch (Exception e) {

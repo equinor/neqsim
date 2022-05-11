@@ -36,13 +36,6 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
      * <p>
      * Constructor for ComponentGEUnifac.
      * </p>
-     */
-    public ComponentGEUnifac() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentGEUnifac.
-     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -144,10 +137,10 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     @Override
     public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
-        fugasityCoeffisient =
+        fugacityCoefficient =
                 (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
                         * this.getAntoineVaporPressure(temperature) / pressure);
-        return fugasityCoeffisient;
+        return fugacityCoefficient;
     }
 
     /**
@@ -289,7 +282,8 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     /**
      * Getter for property unifacGroups.
      *
-     * @return Value of property unifacGroups.
+     * @return an ArrayList of {@link neqsim.thermo.atomElement.UNIFACgroup} objects. Value of
+     *         property unifacGroups.
      */
     public ArrayList<UNIFACgroup> getUnifacGroups2() {
         return unifacGroups;

@@ -8,7 +8,7 @@ package neqsim.processSimulation.processEquipment.pipeline;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
-import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDeisgn;
+import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -48,8 +48,18 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      * Constructor for Pipeline.
      * </p>
      */
+    @Deprecated
     public Pipeline() {
-        mechanicalDesign = new PipelineMechanicalDeisgn(this);
+        super("Pipeline");
+    }
+
+    /**
+     * Constructor for Pipeline.
+     * 
+     * @param name
+     */
+    public Pipeline(String name) {
+        super(name);
     }
 
     /**
@@ -60,10 +70,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public Pipeline(StreamInterface inStream) {
-        this();
-        this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+        this("Pipeline", inStream);
     }
 
     /**
@@ -76,10 +85,13 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      *        object
      */
     public Pipeline(String name, StreamInterface inStream) {
-        this();
-        this.name = name;
+        this(name);
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
+    }
+
+    public PipelineMechanicalDesign getMechanicalDesign() {
+        return new PipelineMechanicalDesign(this);
     }
 
     /** {@inheritDoc} */
@@ -265,12 +277,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         pipe.init();
     }
 
-    /**
-     * <p>
-     * runTransient.
-     * </p>
-     */
-    public void runTransient() {
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt) {
         pipe.solveTransient(2);
         pipe.getDisplay().createNetCdfFile(fileName);
     }
@@ -289,18 +298,6 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     @Override
     public void setInitialFlowPattern(String flowPattern) {
         this.flowPattern = flowPattern;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setName(String name) {
-        this.name = name;
     }
 
     /**

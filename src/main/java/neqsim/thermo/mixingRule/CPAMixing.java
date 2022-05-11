@@ -499,15 +499,15 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         // double temperature, double pressure, int numbcomp) {
         // //System.out.println("scheme " +
         // phase.getComponent(compnumb).getAssociationScheme());
-        //
+
         // double Xi=0.0;
         // double temp=0.0, temp2=0.0;
-        //
+
         // try{
         // for(int i=0;i<phase.getNumberOfComponents();i++){
         // temp2=0.0;
         // assosScheme = setAssociationScheme(i,phase);
-        //
+
         // for(int j=0;j<phase.getComponent(i).getNumberOfAssociationSites();j++){
         // double delatSite = 0.0;
         // // if(assosScheme[siteNumber][j]==0 && compnumb==i && compnumb==i){}
@@ -516,7 +516,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         // compnumb,i,phase,temperature,pressure,numbcomp);
         // } else{
         // assosScheme2= setCrossAssociationScheme(compnumb,i,phase);
-        //
+
         // // elloit rule
         // if(crossAccociationScheme==0){
         // double sum1 =1.0,sum2=1.0;

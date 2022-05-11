@@ -1,7 +1,8 @@
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -14,13 +15,6 @@ import org.apache.logging.log4j.*;
 public class ComponentWonWax extends ComponentSolid {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ComponentWonWax.class);
-
-    /**
-     * <p>
-     * Constructor for ComponentWonWax.
-     * </p>
-     */
-    public ComponentWonWax() {}
 
     /**
      * <p>
@@ -56,32 +50,31 @@ public class ComponentWonWax extends ComponentSolid {
         refPhase.getComponent(0).fugcoef(refPhase);
 
         double liquidPhaseFugacity =
-                refPhase.getComponent(0).getFugasityCoefficient() * refPhase.getPressure();
+                refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
-        double solidActivityCoefficient = getWonActivityCoeficient(phase1);
+        double solidActivityCoefficient = getWonActivityCoefficient(phase1);
         logger.info("activity coef Won " + solidActivityCoefficient);
         SolidFug = getx() * liquidPhaseFugacity
                 * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
                         * (1.0 - phase1.getTemperature() / getTriplePointTemperature()));
 
-        fugasityCoeffisient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
-        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
-        return fugasityCoeffisient;
+        fugacityCoefficient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
+        logFugacityCoefficient = Math.log(fugacityCoefficient);
+        return fugacityCoefficient;
     }
 
     // public double fugcoef(PhaseInterface phase, int numberOfComps, double temp,
     // double pres){
     /**
      * <p>
-     * getWonActivityCoeficient.
+     * getWonActivityCoefficient.
      * </p>
      *
      * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
      */
-    public double getWonActivityCoeficient(PhaseInterface phase1) {
+    public double getWonActivityCoefficient(PhaseInterface phase1) {
         double TetaAvg = 0.0;
-        double SolidActivity = 0.0;
         double gamma = 0.0;
         for (int i = 0; i < phase1.getNumberOfComponents(); i++) {
             double tempSum = 0.0;
@@ -122,7 +115,6 @@ public class ComponentWonWax extends ComponentSolid {
      * @return a double
      */
     public double getWonParam(PhaseInterface phase1) {
-        double WonParam = 0.0;
         // calculation of Heat of fusion
         double Tf = 374.5 * 0.02617 * getMolarMass() - 20172 / getMolarMass();
         double Hf = 0.1426 * getMolarMass() * Tf;

@@ -1,8 +1,3 @@
-/*
- * EnhancementFactorAlgebraic.java
- *
- * Created on 3. august 2001, 13:46
- */
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.enhancementFactor;
 
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface;
@@ -18,8 +13,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version $Id: $Id
  */
 public class EnhancementFactorNumeric extends EnhancementFactor {
-    private static final long serialVersionUID = 1000;
-
     /**
      * <p>
      * Constructor for EnhancementFactorNumeric.

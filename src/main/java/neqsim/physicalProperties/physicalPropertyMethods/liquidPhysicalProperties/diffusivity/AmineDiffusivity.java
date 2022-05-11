@@ -38,8 +38,8 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
 
     /** {@inheritDoc} */
     @Override
-    public void calcEffectiveDiffusionCoeffisients() {
-        super.calcEffectiveDiffusionCoeffisients();
+    public void calcEffectiveDiffusionCoefficients() {
+        super.calcEffectiveDiffusionCoefficients();
         double co2waterdiff =
                 0.03389 * Math.exp(-2213.7 / liquidPhase.getPhase().getTemperature()) * 1e-4; // Tammi
                                                                                               // (1994)
@@ -68,7 +68,7 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
     /** {@inheritDoc} */
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
-        calcEffectiveDiffusionCoeffisients();
+        calcEffectiveDiffusionCoefficients();
         if (liquidPhase.getPhase().getComponent(i).getComponentName().equals("MDEA")) {
             return effectiveDiffusionCoefficient[liquidPhase.getPhase().getComponent("MDEA")
                     .getComponentNumber()];
@@ -80,20 +80,20 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
 
     /** {@inheritDoc} */
     @Override
-    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
-        calcEffectiveDiffusionCoeffisients();
+        calcEffectiveDiffusionCoefficients();
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
             for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
                 if (liquidPhase.getPhase().getComponent(i).getComponentName().equals("MDEA")) {
-                    binaryDiffusionCoeffisients[i][j] = effectiveDiffusionCoefficient[liquidPhase
+                    binaryDiffusionCoefficients[i][j] = effectiveDiffusionCoefficient[liquidPhase
                             .getPhase().getComponent("MDEA").getComponentNumber()];
                 } else {
-                    binaryDiffusionCoeffisients[i][j] = effectiveDiffusionCoefficient[liquidPhase
+                    binaryDiffusionCoefficients[i][j] = effectiveDiffusionCoefficient[liquidPhase
                             .getPhase().getComponent("CO2").getComponentNumber()];
                 }
             }
         }
-        return binaryDiffusionCoeffisients;
+        return binaryDiffusionCoefficients;
     }
 }

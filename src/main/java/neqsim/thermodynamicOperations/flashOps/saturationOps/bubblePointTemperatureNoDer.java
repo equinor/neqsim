@@ -44,7 +44,7 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
 
         int iterations = 0, maxNumberOfIterations = 1000;
         double yold = 0, ytotal = 1;
-        double deriv = 0, funk = 0;
+        // double deriv = 0, funk = 0;
         // logger.info("starting");
 
         system.init(0);
@@ -69,7 +69,7 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
             }
         }
 
-        double oldPres = 0;
+        // double oldPres = 0;
         if (system.isChemicalSystem()) {
             system.getChemicalReactionOperations().solveChemEq(0);
             system.getChemicalReactionOperations().solveChemEq(1);
@@ -112,9 +112,9 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
                         system.getPhases()[0].getComponents()[i].setK(1e-40);
                     } else {
                         system.getPhases()[0].getComponents()[i].setK(Math.exp(Math.log(
-                                system.getPhases()[1].getComponents()[i].getFugasityCoeffisient())
+                                system.getPhases()[1].getComponents()[i].getFugacityCoefficient())
                                 - Math.log(system.getPhases()[0].getComponents()[i]
-                                        .getFugasityCoeffisient())));
+                                        .getFugacityCoefficient())));
                     }
                     system.getPhases()[1].getComponents()[i]
                             .setK(system.getPhases()[0].getComponents()[i].getK());
@@ -156,8 +156,8 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
             setSuperCritical(true);
         }
         if (system.getPhase(0).getNumberOfComponents() == 1
-                && Math.abs(system.getPhases()[1].getComponents()[0].getFugasityCoeffisient()
-                        / system.getPhases()[0].getComponents()[0].getFugasityCoeffisient()
+                && Math.abs(system.getPhases()[1].getComponents()[0].getFugacityCoefficient()
+                        / system.getPhases()[0].getComponents()[0].getFugacityCoefficient()
                         - 1.0) < 1e-20) {
             setSuperCritical(true);
             return;

@@ -14,7 +14,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_CO2.class);
@@ -49,7 +48,7 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         }
         if (type == 0) {
             return (system.getPressure() * system.getPhases()[0].getComponent(0).getx()
-                    * system.getPhase(0).getComponent(0).getFugasityCoeffisient());
+                    * system.getPhase(0).getComponent(0).getFugacityCoefficient());
         } else {
             return (system.getPressure());
         }

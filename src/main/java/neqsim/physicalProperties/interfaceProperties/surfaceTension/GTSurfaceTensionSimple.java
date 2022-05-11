@@ -1,14 +1,12 @@
-/*
- * GTSurfaceTension.java
- *
- * Created on 13. august 2001, 13:14
- */
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
-import Jama.*;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.commons.math3.linear.*;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -69,7 +67,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
      */
     @Override
     public double calcSurfaceTension(int interface1, int interface2) {
-        localSystem = (SystemInterface) system.clone();
+        localSystem = system.clone();
 
         double surdenstemp = 0.0;
         int referenceComponentNumber = getComponentWithHighestBoilingpoint();// 2;//localSystem.getPhase(0).getNumberOfComponents()
@@ -138,10 +136,12 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
             for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
                 mu_inter[j][i] = localSystem.getPhase(0).getComponent(i)
                         .getChemicalPotential(localSystem.getPhase(0));
-                if (java.lang.Double.isNaN(mu_inter[j][i])) {
-                    double chemicalPotential = localSystem.getPhase(0).getComponent(i)
-                            .getChemicalPotential(localSystem.getPhase(0));
-                }
+                /*
+                 * if (java.lang.Double.isNaN(mu_inter[j][i])) { double chemicalPotential =
+                 * localSystem.getPhase(0).getComponent(i)
+                 * .getChemicalPotential(localSystem.getPhase(0)); }
+                 */
+
                 for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
                     dmudn[j][i][k] = localSystem.getPhase(0).getComponent(i)
                             .getChemicalPotentialdNTV(k, localSystem.getPhase(0));
@@ -308,7 +308,6 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
             surdenstemp += Math.sqrt(2.0 * kappa * mu_times_den[j])
                     * del_den_interface[referenceComponentNumber];// *
                                                                   // thermo.ThermodynamicConstantsInterface.avagadroNumber;
-
         }
 
         // System.out.println("del den ref " +
@@ -392,7 +391,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
      * @return a double
      */
     public double getInfluenceParameter(double interfaceTension, int componentNumber) {
-        double startGuess = calcSurfaceTension(0, 1);
+        // double startGuess = calcSurfaceTension(0, 1);
         double oldInfluenceParameter = influenceParam[componentNumber];
         double calcVal = 0.0, oldCalcVal = 0.0, dSurfTensdinfluence = 0.0;
         int iter = 0;

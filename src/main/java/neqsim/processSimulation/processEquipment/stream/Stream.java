@@ -19,6 +19,89 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
+    private static final long serialVersionUID = 1000;
+
+    protected SystemInterface thermoSystem;
+
+    protected int streamNumber = 0;
+    /** Constant <code>numberOfStreams=0</code> */
+    protected static int numberOfStreams = 0;
+    private double gasQuality = 0.5;
+    protected StreamInterface stream = null;
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     */
+    @Deprecated
+    public Stream() {
+        super("Stream");
+    }
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     *
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
+    @Deprecated
+    public Stream(StreamInterface stream) {
+        this("Stream", stream);
+    }
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
+    @Deprecated
+    public Stream(SystemInterface thermoSystem) {
+        this("Stream", thermoSystem);
+    }
+
+    /**
+     * Constructor for Stream.
+     * 
+     * @param name
+     */
+    public Stream(String name) {
+        super(name);
+    }
+
+    /**
+     * Constructor for Stream.
+     * 
+     * @param name
+     * @param stream
+     */
+    public Stream(String name, StreamInterface stream) {
+        super(name);
+        this.setStream(stream);
+        thermoSystem = stream.getThermoSystem();
+        numberOfStreams++;
+        streamNumber = numberOfStreams;
+    }
+
+    /**
+     * <p>
+     * Constructor for Stream.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
+    public Stream(String name, SystemInterface thermoSystem) {
+        super(name);
+        this.thermoSystem = thermoSystem;
+        numberOfStreams++;
+        streamNumber = numberOfStreams;
+    }
+
     /**
      * <p>
      * Getter for the field <code>gasQuality</code>.
@@ -41,51 +124,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         this.gasQuality = gasQuality;
     }
 
-    private static final long serialVersionUID = 1000;
-
-    protected SystemInterface thermoSystem;
-
-    protected int streamNumber = 0;
-    /** Constant <code>numberOfStreams=0</code> */
-    protected static int numberOfStreams = 0;
-    private double gasQuality = 0.5;
-    protected StreamInterface stream = null;
-
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     */
-    public Stream() {}
-
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     *
-     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public Stream(SystemInterface thermoSystem) {
-        this.thermoSystem = thermoSystem;
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
-    }
-
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public Stream(StreamInterface stream) {
-        this.setStream(stream);
-        thermoSystem = stream.getThermoSystem();
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
-    }
-
     /** {@inheritDoc} */
     @Override
     public double getHydrateEquilibriumTemperature() {
@@ -94,7 +132,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
             return 0.0;
         }
         try {
-            SystemInterface copySystem = (SystemInterface) thermoSystem.clone();
+            SystemInterface copySystem = thermoSystem.clone();
             copySystem.setHydrateCheck(true);
             ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
             thermoOps.hydrateFormationTemperature();
@@ -114,7 +152,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      * @return a double
      */
     public double getSolidFormationTemperature(String solidName) {
-        SystemInterface copySystem = (SystemInterface) thermoSystem.clone();
+        SystemInterface copySystem = thermoSystem.clone();
 
         try {
             if (solidName.equals("hydrate")) {
@@ -134,21 +172,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         return 0.0;
     }
 
-    /**
-     * <p>
-     * Constructor for Stream.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public Stream(String name, SystemInterface thermoSystem) {
-        this.thermoSystem = thermoSystem;
-        this.name = name;
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
-    }
-
     /** {@inheritDoc} */
     @Override
     public Stream clone() {
@@ -160,7 +183,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         }
         if (stream != null)
             clonedSystem.setStream((Stream) stream.clone());;
-        clonedSystem.thermoSystem = (SystemInterface) getThermoSystem().clone();
+        clonedSystem.thermoSystem = getThermoSystem().clone();
         return clonedSystem;
     }
 
@@ -280,7 +303,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     @Override
     public void runTPflash() {
         if (stream != null) {
-            thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
+            thermoSystem = this.stream.getThermoSystem().clone();
         }
 
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -293,7 +316,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public void run() {
         // System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
-            thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
+            thermoSystem = this.stream.getThermoSystem().clone();
         }
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 
@@ -381,7 +404,23 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
+      runController(dt);
         run();
+    }
+    
+    /**
+     * <p>
+     * runController.
+     * </p>
+     *
+     * @param dt a double
+     */
+    public void runController(double dt) {
+        if (hasController) {
+            getController().runTransient(this.getFlowRate("kg/hr"), dt);
+            thermoSystem.setTotalFlowRate(getController().getResponse(), "kg/hr");
+            this.setFlowRate(getController().getResponse(), "kg/hr");
+        }
     }
 
     /** {@inheritDoc} */
@@ -397,11 +436,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
      * </p>
      */
     public void phaseEnvelope() {
-        SystemInterface localSyst = (SystemInterface) thermoSystem.clone();
+        SystemInterface localSyst = thermoSystem.clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
         ops.setRunAsThread(true);
         ops.calcPTphaseEnvelope(true);
-        boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
+        ops.waitAndCheckForFinishedCalculation(10000);
         ops.displayResult();
         // ops.getJfreeChart();
     }
@@ -409,11 +448,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     /** {@inheritDoc} */
     @Override
     public double CCB(String unit) {
-        SystemInterface localSyst = (SystemInterface) thermoSystem.clone();
+        SystemInterface localSyst = thermoSystem.clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
         ops.setRunAsThread(true);
         ops.calcPTphaseEnvelope(true);
-        boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
+        ops.waitAndCheckForFinishedCalculation(10000);
         if (unit.equals("bara") || unit.equals("bar")) {
             return ops.get("cricondenbar")[1];
         } else {
@@ -429,11 +468,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     /** {@inheritDoc} */
     @Override
     public double CCT(String unit) {
-        SystemInterface localSyst = (SystemInterface) thermoSystem.clone();
+        SystemInterface localSyst = thermoSystem.clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
         ops.setRunAsThread(true);
         ops.calcPTphaseEnvelope(true);
-        boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
+        ops.waitAndCheckForFinishedCalculation(10000);
         if (unit.equals("bara") || unit.equals("bar")) {
             return ops.get("cricondentherm")[1];
         } else {
@@ -449,13 +488,12 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     /** {@inheritDoc} */
     @Override
     public double TVP(double temperature, String unit) {
-        SystemInterface localSyst = (SystemInterface) thermoSystem.clone();
+        SystemInterface localSyst = thermoSystem.clone();
         localSyst.setTemperature(temperature, unit);
         ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
         try {
             ops.bubblePointPressureFlash(false);
         } catch (Exception e) {
-            String error = e.getMessage();
         }
         return localSyst.getPressure(unit);
     }
@@ -488,23 +526,19 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     /** {@inheritDoc} */
     @Override
     public double GCV() {
-        Standard_ISO6976 standard =
-                new Standard_ISO6976((SystemInterface) thermoSystem.clone(), 0, 15.55, "volume");
+        Standard_ISO6976 standard = new Standard_ISO6976(thermoSystem.clone(), 0, 15.55, "volume");
         standard.setReferenceState("real");
-        standard.setReferenceType("molar");
         standard.calculate();
-        return standard.getValue("GCV") * 1.0e3 / 42.2949;
+        return standard.getValue("GCV") * 1.0e3;
     }
 
     /** {@inheritDoc} */
     @Override
     public double LCV() {
-        Standard_ISO6976 standard =
-                new Standard_ISO6976((SystemInterface) thermoSystem.clone(), 0, 15.55, "volume");
+        Standard_ISO6976 standard = new Standard_ISO6976(thermoSystem.clone(), 0, 15.55, "volume");
         standard.setReferenceState("real");
-        standard.setReferenceType("molar");
         standard.calculate();
-        return standard.getValue("LCV") * 1.0e3 / 42.2949;
+        return standard.getValue("InferiorCalorificValue") * 1.0e3;
     }
 
     /**

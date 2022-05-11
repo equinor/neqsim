@@ -1,8 +1,3 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseCPAInterface;
@@ -19,33 +14,12 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInterface {
     private static final long serialVersionUID = 1000;
 
-    /**
-     *
-     */
     int cpaon = 1;
     private double[][] xsitedni = new double[0][0];
     double[] xsite = new double[0];
     double[] xsiteOld = new double[0];
     double[] xsitedV = new double[0];
     double[] xsitedT = new double[0];
-
-    /**
-     * <p>
-     * Constructor for ComponentPCSAFTa.
-     * </p>
-     */
-    public ComponentPCSAFTa() {}
-
-    /**
-     * <p>
-     * Constructor for ComponentPCSAFTa.
-     * </p>
-     *
-     * @param moles a double
-     */
-    public ComponentPCSAFTa(double moles) {
-        super(moles);
-    }
 
     /**
      * <p>
@@ -272,11 +246,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return temp;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * Getter for property xsite.
-     */
+    /** {@inheritDoc} */
     @Override
     public double[] getXsite() {
         return this.xsite;

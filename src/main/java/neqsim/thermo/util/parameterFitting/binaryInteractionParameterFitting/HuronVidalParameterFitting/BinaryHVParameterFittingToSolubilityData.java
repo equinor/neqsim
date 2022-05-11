@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingToSolubilityData.class);
 
     int phase = 1;

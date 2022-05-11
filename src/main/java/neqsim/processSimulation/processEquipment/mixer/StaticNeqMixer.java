@@ -69,7 +69,6 @@ public class StaticNeqMixer extends StaticMixer {
                         compName =
                                 streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
                                         .getComponentName();
-
                     }
                 }
 
@@ -101,12 +100,12 @@ public class StaticNeqMixer extends StaticMixer {
             enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
         }
 
-        mixedStream.setThermoSystem(((SystemInterface) streams.get(0).getThermoSystem().clone()));
+        mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
         mixedStream.getThermoSystem().setNumberOfPhases(2);
         mixedStream.getThermoSystem().reInitPhaseType();
         mixStream();
 
-        SystemInterface syst = (SystemInterface) mixedStream.getThermoSystem().clone();
+        SystemInterface syst = mixedStream.getThermoSystem().clone();
         syst.setTemperature(streams.get(0).getThermoSystem().getTemperature());
         syst.setPressure(streams.get(0).getThermoSystem().getPressure());
         ThermodynamicOperations testOps = new ThermodynamicOperations(syst);
@@ -125,11 +124,5 @@ public class StaticNeqMixer extends StaticMixer {
         // System.out.println("enthalpy: " + enthalpy);
         // System.out.println("temperature: " +
         // mixedStream.getThermoSystem().getTemperature());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getName() {
-        return name;
     }
 }

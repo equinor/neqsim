@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -22,8 +23,12 @@ public class VLSolidTray extends SimpleTray {
      * <p>
      * Constructor for VLSolidTray.
      * </p>
+     * 
+     * @param name
      */
-    public VLSolidTray() {}
+    public VLSolidTray(String name) {
+        super(name);
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -65,7 +70,7 @@ public class VLSolidTray extends SimpleTray {
 
         // ((Stream) streams.get(0)).getThermoSystem().display();
 
-        SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
+        SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
         // System.out.println("total number of moles " +
         // thermoSystem2.getTotalNumberOfMoles());
         mixedStream.setThermoSystem(thermoSystem2);
@@ -103,17 +108,17 @@ public class VLSolidTray extends SimpleTray {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient() {}
+    public void runTransient(double dt) {}
 
     /** {@inheritDoc} */
     @Override
-    public Stream getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
     }
 
     /** {@inheritDoc} */
     @Override
-    public Stream getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
     }
 

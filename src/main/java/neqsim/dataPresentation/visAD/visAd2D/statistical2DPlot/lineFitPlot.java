@@ -1,8 +1,3 @@
-/*
- * visAdContourPlot.java
- *
- * Created on 7. november 2000, 17:51
- */
 package neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot;
 
 import java.rmi.RemoteException;
@@ -32,8 +27,6 @@ import visad.java2d.DisplayImplJ2D;
  * @version $Id: $Id
  */
 public class lineFitPlot {
-    private static final long serialVersionUID = 1000;
-
     private RealType x, y, index;
 
     private RealTupleType x_y_tuple;

@@ -5,18 +5,13 @@ import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- *
- * @author Even Solbraa
- * @version
- */
-
-/**
  * This class defines a thermodynamic system using the SRK equation of state
+ * 
+ * @author Even Solbraa
  */
 public class SystemPrGassemEos extends SystemPrEos {
     private static final long serialVersionUID = 1000;
 
-    // SystemPrEos clonedSystem;
     /**
      * <p>
      * Constructor for SystemPrGassemEos.
@@ -65,8 +60,7 @@ public class SystemPrGassemEos extends SystemPrEos {
         this(T, P);
         modelName = "PR-Gassem-EOS";
         attractiveTermNumber = 8;
-        numberOfPhases = 5;
-        maxNumberOfPhases = 5;
+        setNumberOfPhases(5);
         solidPhaseCheck = solidCheck;
 
         for (int i = 0; i < numberOfPhases; i++) {

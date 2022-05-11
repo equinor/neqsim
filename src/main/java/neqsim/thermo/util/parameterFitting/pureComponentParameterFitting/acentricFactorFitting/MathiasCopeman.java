@@ -13,7 +13,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class MathiasCopeman extends LevenbergMarquardtFunction {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(MathiasCopeman.class);
 
     /**
@@ -55,7 +54,7 @@ public class MathiasCopeman extends LevenbergMarquardtFunction {
         params[i] = value;
         system.getPhases()[0].getComponents()[0].setMatiascopemanParams(i, value);
         system.getPhases()[1].getComponents()[0].setMatiascopemanParams(i, value);
-        system.getPhases()[0].getComponents()[0].getAtractiveTerm().setParameters(i, value);
-        system.getPhases()[1].getComponents()[0].getAtractiveTerm().setParameters(i, value);
+        system.getPhases()[0].getComponents()[0].getAttractiveTerm().setParameters(i, value);
+        system.getPhases()[1].getComponents()[0].getAttractiveTerm().setParameters(i, value);
     }
 }

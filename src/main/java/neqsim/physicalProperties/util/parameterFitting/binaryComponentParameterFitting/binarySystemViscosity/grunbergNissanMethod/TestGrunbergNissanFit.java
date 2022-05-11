@@ -53,8 +53,8 @@ public class TestGrunbergNissanFit {
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.init(0);
                 testSystem.initPhysicalProperties();
-                double sample1[] = {x1, testSystem.getTemperature()}; // temperature
-                double standardDeviation1[] = {0.1}; 
+                double sample1[] = {x1, testSystem.getTemperature()};
+                double standardDeviation1[] = {0.1};
                 SampleValue sample =
                         new SampleValue(Double.parseDouble(dataSet.getString("Viscosity")),
                                 Double.parseDouble(dataSet.getString("StdDev")), sample1,
@@ -66,7 +66,7 @@ public class TestGrunbergNissanFit {
         } catch (Exception e) {
             logger.error("database error" + e);
         }
-        //
+
         // double sample1[] = {0.1};
         // for(int i=0;i<sampleList.size();i++){
         // logger.info("ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));

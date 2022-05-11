@@ -1,15 +1,11 @@
-/*
- * ComponentGEUniquac.java
- *
- * Created on 10. juli 2000, 21:06
- */
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -30,13 +26,6 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     static double VCommontemp = 0.0, FCommontemp = 0.0;
     double[] sum2Comp = null, sum2Mix = null, sum2CompdT = null, sum2CompdTdT = null,
             sum2MixdT = null, sum2MixdTdT = null;
-
-    /**
-     * <p>
-     * Constructor for ComponentGEUnifacUMRPRU.
-     * </p>
-     */
-    public ComponentGEUnifacUMRPRU() {}
 
     /**
      * <p>
@@ -366,11 +355,10 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
             VCommontemp += compArray[j].getx() * compArray[j].getR();
             FCommontemp += (compArray[j].getQ() * compArray[j].getx());
         }
-
-        int initType = phase.getInitType();
     }
 
     // TODO impement dlngammadn
+
     /** {@inheritDoc} */
     @Override
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,

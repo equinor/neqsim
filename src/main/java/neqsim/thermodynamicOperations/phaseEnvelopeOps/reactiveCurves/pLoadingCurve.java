@@ -101,7 +101,7 @@ public class pLoadingCurve implements OperationInterface {
             system.getChemicalReactionOperations().solveChemEq(1);
 
             points[0][i] = (inscr * (i - 1)) / molMDEA;
-            points[1][i] = (system.getPhases()[1].getComponents()[0].getFugasityCoeffisient()
+            points[1][i] = (system.getPhases()[1].getComponents()[0].getFugacityCoefficient()
                     * system.getPhases()[1].getComponents()[0].getx() * system.getPressure());
 
             for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
@@ -128,7 +128,6 @@ public class pLoadingCurve implements OperationInterface {
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
         String[] navn = {"CO2 fugacity", "", "", ""};
-        String title2 = "";
         String title = "CO2 vapour pressure";
 
         graph2b graph2 = new graph2b(points, navn, title, "loading [-]", "Fugacity CO2 [bar]");

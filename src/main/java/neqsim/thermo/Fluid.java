@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class Fluid {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Fluid.class);
     static neqsim.thermo.system.SystemInterface fluid = null;
     private static boolean hasWater = false;
@@ -40,7 +39,9 @@ public class Fluid {
     }
 
     /**
-     * <p>create2.</p>
+     * <p>
+     * create2.
+     * </p>
      *
      * @param componentNames an array of {@link java.lang.String} objects
      * @return a {@link neqsim.thermo.system.SystemInterface} object
@@ -113,6 +114,10 @@ public class Fluid {
         } else if (fluidType.equals("air")) {
             compNames = new String[] {"nitrogen", "oxygen"};
             flowrate = new double[] {0.78, 0.22};
+            createFluid(compNames, flowrate, "mole/sec");
+        } else if (fluidType.equals("combustion air")) {
+            compNames = new String[] {"nitrogen", "oxygen", "CO2", "water"};
+            flowrate = new double[] {0.78084, 0.20946, 0.033, 0.1};
             createFluid(compNames, flowrate, "mole/sec");
         } else if (fluidType.equals("gas condensate")) {
             compNames = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
