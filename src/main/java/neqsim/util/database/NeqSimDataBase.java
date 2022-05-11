@@ -48,8 +48,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     static Logger logger = LogManager.getLogger(NeqSimDataBase.class);
     private static boolean createTemporaryTables = false;
 
-    //private static String dataBaseType = "Derby";
-    //private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
+    private static String dataBaseType = "Derby";
+    private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
     private static String username = "remote";
     private static String password = "remote";
 
