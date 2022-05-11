@@ -1,4 +1,4 @@
-package neqsim.thermo.component.atractiveEosTerm;
+package neqsim.thermo.component.attractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
 
@@ -54,7 +54,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     }
 
     @Override
-	public Object clone() {
+	public AtractiveTermMatCopPRUMRNew clone() {
         AtractiveTermMatCopPRUMRNew atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermMatCopPRUMRNew) super.clone();
