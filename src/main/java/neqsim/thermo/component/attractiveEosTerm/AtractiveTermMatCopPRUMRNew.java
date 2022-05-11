@@ -7,7 +7,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @author esol
  * @version
  */
-public class AtractiveTermMatCopPRUMRNew extends AtractiveTermMatCopPRUMR {
+public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
 
     private static final long serialVersionUID = 1000;
     double orgpar = 0.0;
