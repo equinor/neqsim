@@ -7,7 +7,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import neqsim.thermo.component.attractiveEosTerm.AtractiveTermMatCopPRUMRNew;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermCPAstatoil;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermGERG;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
@@ -178,7 +178,7 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
                 setAttractiveParameter(new AttractiveTermSrk(this));
             }
         } else if (i == 19) {
-            setAtractiveParameter(new AtractiveTermMatCopPRUMRNew(this));
+          setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this));
         } else {
             logger.error("error selecting an alpha formultaion term");
             logger.info("ok setting alpha function");
