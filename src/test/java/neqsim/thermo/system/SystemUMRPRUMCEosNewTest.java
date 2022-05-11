@@ -18,8 +18,8 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest{
      */
     @BeforeAll
     public static void setUp() {
-      //  testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
-      testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
+      testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
+      // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
         testSystem.addComponent("nitrogen", 0.01);
         testSystem.addComponent("CO2", 0.01);
         testSystem.addComponent("methane", 0.68);
@@ -40,7 +40,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest{
     @Test
     @DisplayName("test compressibility of gas phase")
     public void testCompressibility() {
-        testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
+      testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
         testSystem.addComponent("nitrogen", 0.01);
         testSystem.addComponent("CO2", 0.01);
         testSystem.addComponent("methane", 0.68);
@@ -141,7 +141,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest{
     @Test
     @DisplayName("calculate phase envelope using UMR")
     public void checkPhaseEnvelope() throws Exception {
-        testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
+      testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
         testSystem.addComponent("methane", 0.9);
         testSystem.addComponent("ethane", 0.1);
         testSystem.addComponent("propane", 0.1);
