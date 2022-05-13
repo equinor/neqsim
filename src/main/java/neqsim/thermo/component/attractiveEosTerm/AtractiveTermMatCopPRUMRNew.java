@@ -69,7 +69,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
       return Math.pow(1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
           + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
           + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0)
-          + +parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 4.0)
+          + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 4.0)
           + parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 5.0), 2.0);
     }
   }
