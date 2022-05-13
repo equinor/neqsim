@@ -178,7 +178,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
                 setAttractiveParameter(new AttractiveTermSrk(this));
             }
         } else if (i == 19) {
-          setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this));
+          setAttractiveParameter(
+              new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
         } else {
             logger.error("error selecting an alpha formultaion term");
             logger.info("ok setting alpha function");

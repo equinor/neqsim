@@ -34,23 +34,13 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     }
 
     public AtractiveTermMatCopPRUMRNew(ComponentEosInterface component, double[] params) {
-        this(component);
+      this(component);
+      parameters = new double[params.length];
         System.arraycopy(params, 0, this.parameters, 0, params.length);
         orgpar = parameters[0];
         if (Math.abs(parameters[0]) < 1e-12) {
             parameters[0] = m;
-        }
-
-        if (component.getName().equals("water")) {
-            parameters[0] = 0.91256735118818810000000000;
-            parameters[1] = -0.2872243639795234400000000;
-            parameters[2] = 0.239526763058374250000000000;
-        }
-        if (component.getName().equals("TEG")) {
-            parameters[0] = 1.05E+00;
-            parameters[1] = 2.95E+00;
-            parameters[2] = -5.98E+00;
-        }
+          }
     }
 
     @Override
