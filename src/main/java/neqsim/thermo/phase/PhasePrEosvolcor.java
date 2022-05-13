@@ -20,16 +20,8 @@ public class PhasePrEosvolcor extends PhasePrEos {
     /** Creates new PhaseSrkEos */
     public PhasePrEosvolcor() {
         super();
-        thermoPropertyModelName = "PR-EoS";
-        uEOS = 2;
-        wEOS = -1;
-        delta1 = 1.0 + Math.sqrt(2.0);
-        delta2 = 1.0 - Math.sqrt(2.0);
+        thermoPropertyModelName = "PR-EoS-volcorr";
     }
-
-    
-
-
 
     public double calcg() {
         return Math.log(1.0 - (getb()-getc()) / molarVolume);
@@ -39,8 +31,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
         return (1.0 / (R * getB() * (delta1 - delta2))
                 * Math.log((1.0 + (delta1 * getb() + getc()) / molarVolume) / (1.0 + (delta2 * getb()+getc()) / (molarVolume))));
     }
-    
-    
     
     @Override
     public double dFdV() {
@@ -78,9 +68,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
         return 2.0 / (val2 * val2 * val2) - 2.0 / (val1 * val1 * val1);
     }
 
-
-
-
     @Override
     public double fv() {
        return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * getB() + loc_C())
@@ -89,8 +76,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
        //OLD IS--> return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * loc_B)
                // * (numberOfMolesInPhase * molarVolume + delta2 * loc_B));
     }
-
-
+    
     @Override
     public double fVV() {
         double val1 = (numberOfMolesInPhase * molarVolume + delta1 * getB() + loc_C());
