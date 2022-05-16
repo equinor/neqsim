@@ -44,20 +44,24 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     // testSystem = new neqsim.thermo.system.SystemPr(298.0, 10.0);
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
     testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
-    testSystem.addComponent("nitrogen", 0.01);
+    testSystem.addComponent("nitrogen", 1);
     // testSystem.addComponent("CO2", 0.01);
     // testSystem.addComponent("methane", 0.68);
     // testSystem.addComponent("ethane", 0.1);
     // testSystem.addComponent("n-heptane", 0.2);
     testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
     testSystem.init(0);
-    testSystem.init(3);
+    testSystem.init(1);
+
+    System.out.println("molar volume is"+testSystem.getMolarVolume());
     // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     // testOps.TPflash();
 
     // testSystem.initProperties();
     // assertEquals(0.9711401538454589, testSystem.getPhase(0).getZ(), 0.001);
   }
+
+  private void println(double molarVolume) {}
 
   /**
    * <p>
