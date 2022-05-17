@@ -45,6 +45,14 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
       parameters[3] = 0.0;
       parameters[4] = 0.0;
     }
+
+    if (component.getName().equals("nitrogen")) {
+      parameters[0] = 0.43635	;
+      parameters[1] = 0;
+      parameters[2] = 0;
+      parameters[3] = 0.0;
+      parameters[4] = 0.0;
+    }
   }
 
   @Override

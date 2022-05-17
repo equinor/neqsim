@@ -44,7 +44,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     public double getC() {return 0.7;}
     @Override
     public double gV() {
-        return (getb()-getc()) / (molarVolume * (numberOfMolesInPhase * molarVolume + loc_C() - getB()));
+        return (getb()-getc()) / (molarVolume * (numberOfMolesInPhase * molarVolume + loc_C() - getB() ));
         //molarvolume is m^3/mol/10^5
         //old is-->return getb() / (molarVolume * (numberOfMolesInPhase * molarVolume - loc_B));
         //aks Dr. Soolbra whats the difference between getb and loc_B and
@@ -74,7 +74,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
         * (numberOfMolesInPhase * molarVolume + delta2 * getB() + loc_C()));     
        
        //OLD IS--> return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * loc_B)
-               // * (numberOfMolesInPhase * molarVolume + delta2 * loc_B));
+      // * (numberOfMolesInPhase * molarVolume + delta2 * loc_B));
     }
     
     @Override
