@@ -54,7 +54,9 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.init(0);
     testSystem.init(1);
 
-    System.out.println("molar volume is"+testSystem.getMolarVolume());
+    System.out.println("molar volume gas+oil is " + testSystem.getMolarVolume());
+    System.out.println("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
+    System.out.println("molar volume liquid is " + testSystem.getPhase(1).getMolarVolume());
     // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     // testOps.TPflash();
 
