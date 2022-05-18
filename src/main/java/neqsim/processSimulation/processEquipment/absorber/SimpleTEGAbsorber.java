@@ -37,6 +37,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     protected StreamInterface outStream;
     private double kwater = 1e-4;
     int solventStreamNumber = 0;
+    private boolean isSetWaterInDryGas = false;
+    private double waterInDryGas = 30e-6;
+
 
     /**
      * <p>
@@ -352,9 +355,15 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
             absorptionEffiency = calcEa();
 
             y0 = calcY0();
-            y1 = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx()
-                    - absorptionEffiency * (gasInStream.getThermoSystem().getPhase(0)
-                            .getComponent("water").getx() - y0);
+            if (isSetWaterInDryGas) {
+              y1 = waterInDryGas;
+              setNumberOfTheoreticalStages(2.0);
+            } else {
+              y1 = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx()
+                  - absorptionEffiency
+                      * (gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx()
+                          - y0);
+            }
 
             double yMean = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx();
             double molesWaterToMove = (yMean - y1)
@@ -575,12 +584,27 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     /** {@inheritDoc} */
     @Override
     public void runConditionAnalysis(ProcessEquipmentInterface refTEGabsorberloc) {
-        double yin = getGasInStream().getFluid().getPhase("gas").getComponent("water").getx();
-        double yout = getGasOutStream().getFluid().getPhase("gas").getComponent("water").getx();
-        double y0 = calcY0();
-        double A = mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase()
-                / mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase() / kwater;
-        double N = Math.log(((A - 1.0) / A) * ((yin - y0) / (yout - y0)) + (1.0 / A)) / Math.log(A);
-        setNumberOfTheoreticalStages(N);
+      double yin = getGasInStream().getFluid().getPhase("gas").getComponent("water").getx();
+      double yout = getGasOutStream().getFluid().getPhase("gas").getComponent("water").getx();
+      double y0 = calcY0();
+      double A = mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase()
+          / mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase() / kwater;
+      double N = Math.log(((A - 1.0) / A) * ((yin - y0) / (yout - y0)) + (1.0 / A)) / Math.log(A);
+      setNumberOfTheoreticalStages(N);
+    }
+
+    /**
+     * <p>
+     * Setter for the field <code>waterInDryGas</code>.
+     * </p>
+     *
+     */
+    public void setWaterInDryGas(double waterInDryGasInput) {
+      waterInDryGas = waterInDryGasInput;
+      isSetWaterInDryGas = true;
+    }
+
+    public void isSetWaterInDryGas(boolean isSetwaterInDryGas) {
+      this.isSetWaterInDryGas = isSetwaterInDryGas;
     }
 }
