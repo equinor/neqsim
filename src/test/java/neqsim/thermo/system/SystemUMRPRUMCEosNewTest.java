@@ -44,7 +44,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     // testSystem = new neqsim.thermo.system.SystemPr(298.0, 10.0);
     //testSystem = new neqsim.thermo.system.SystemSrk(298.0, 10.0);
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
-    testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
+    testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(100, 25);
     testSystem.addComponent("nitrogen", 1);
     // testSystem.addComponent("CO2", 0.01);
     // testSystem.addComponent("methane", 0.68);

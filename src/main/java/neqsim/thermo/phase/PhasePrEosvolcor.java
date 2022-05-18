@@ -39,9 +39,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
     }
 
-    public double getc() {return 0.7;}
-    public double loc_C() {return 0.7;}
-    public double getC() {return 0.7;}
+    public double getc() {return 0.0;}
+    public double loc_C() {return 0.0;}
+    public double getC() {return 0.0;}
     @Override
     public double gV() {
         return (getb()-getc()) / (molarVolume * (numberOfMolesInPhase * molarVolume + loc_C() - getB() ));
