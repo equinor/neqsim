@@ -24,8 +24,8 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
-        implements ProcessEquipmentInterface {
-    private static final long serialVersionUID = 1000;
+    implements ProcessEquipmentInterface {
+  private static final long serialVersionUID = 1000;
 
     private ControllerDeviceInterface controller = null;
     ControllerDeviceInterface flowValveController = null;
@@ -37,235 +37,235 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     public EnergyStream energyStream = new EnergyStream();
     private boolean isSetEnergyStream = false;
 
-    /**
-     * <p>
-     * Constructor for ProcessEquipmentBaseClass.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public ProcessEquipmentBaseClass(String name) {
-        super(name);
-    }
 
-    /** {@inheritDoc} */
-    @Override
-    public void run() {}
+  /**
+   * <p>
+   * Constructor for ProcessEquipmentBaseClass.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
+  public ProcessEquipmentBaseClass(String name) {
+    super(name);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {
-        run();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void run() {}
 
-    /** {@inheritDoc} */
-    @Override
-    public SystemInterface getThermoSystem() {
-        return null;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt) {
+    run();
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public SystemInterface getFluid() {
-        return getThermoSystem();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public SystemInterface getThermoSystem() {
+    return null;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void displayResult() {}
+  /** {@inheritDoc} */
+  @Override
+  public SystemInterface getFluid() {
+    return getThermoSystem();
+  }
 
-    /**
-     * Create deep copy.
-     * 
-     * @return
-     */
-    public ProcessEquipmentInterface copy() {
-        byte[] bytes = SerializationUtils.serialize(this);
-        return (ProcessEquipmentInterface) SerializationUtils.deserialize(bytes);
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void displayResult() {}
 
-    /**
-     * <p>
-     * getProperty.
-     * </p>
-     *
-     * @param propertyName a {@link java.lang.String} object
-     * @return a {@link java.lang.Object} object
-     */
-    public Object getProperty(String propertyName) {
-        // if(properties.containsKey(propertyName)) {
-        // return properties.get(properties).getValue();
-        // }
-        return null;
-    }
+  /**
+   * Create deep copy.
+   * 
+   * @return
+   */
+  public ProcessEquipmentInterface copy() {
+    byte[] bytes = SerializationUtils.serialize(this);
+    return (ProcessEquipmentInterface) SerializationUtils.deserialize(bytes);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setRegulatorOutSignal(double signal) {}
+  /**
+   * <p>
+   * getProperty.
+   * </p>
+   *
+   * @param propertyName a {@link java.lang.String} object
+   * @return a {@link java.lang.Object} object
+   */
+  public Object getProperty(String propertyName) {
+    // if(properties.containsKey(propertyName)) {
+    // return properties.get(properties).getValue();
+    // }
+    return null;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setController(ControllerDeviceInterface controller) {
-        this.controller = controller;
-        hasController = true;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setRegulatorOutSignal(double signal) {}
 
-    /**
-     * <p>
-     * Setter for the field <code>flowValveController</code>.
-     * </p>
-     *
-     * @param controller a
-     *        {@link neqsim.processSimulation.controllerDevice.ControllerDeviceInterface} object
-     */
-    public void setFlowValveController(ControllerDeviceInterface controller) {
-        this.flowValveController = controller;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setController(ControllerDeviceInterface controller) {
+    this.controller = controller;
+    hasController = true;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public ControllerDeviceInterface getController() {
-        return controller;
-    }
+  /**
+   * <p>
+   * Setter for the field <code>flowValveController</code>.
+   * </p>
+   *
+   * @param controller a {@link neqsim.processSimulation.controllerDevice.ControllerDeviceInterface}
+   *        object
+   */
+  public void setFlowValveController(ControllerDeviceInterface controller) {
+    this.flowValveController = controller;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public MechanicalDesign getMechanicalDesign() {
-        return new MechanicalDesign(this);
-    }
+  /** {@inheritDoc} */
+  @Override
+  public ControllerDeviceInterface getController() {
+    return controller;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public String getSpecification() {
-        return specification;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public MechanicalDesign getMechanicalDesign() {
+    return new MechanicalDesign(this);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setSpecification(String specification) {
-        this.specification = specification;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public String getSpecification() {
+    return specification;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public String[][] reportResults() {
-        return report;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setSpecification(String specification) {
+    this.specification = specification;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public boolean solved() {
-        return true;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public String[][] reportResults() {
+    return report;
+  }
 
-    /**
-     * <p>
-     * Getter for the field <code>energyStream</code>.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream} object
-     */
-    public EnergyStream getEnergyStream() {
-        return energyStream;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public boolean solved() {
+    return true;
+  }
 
-    /**
-     * <p>
-     * Setter for the field <code>energyStream</code>.
-     * </p>
-     *
-     * @param energyStream a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream}
-     *        object
-     */
-    public void setEnergyStream(EnergyStream energyStream) {
-        setEnergyStream(true);
-        this.energyStream = energyStream;
-    }
+  /**
+   * <p>
+   * Getter for the field <code>energyStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream} object
+   */
+  public EnergyStream getEnergyStream() {
+    return energyStream;
+  }
 
-    /**
-     * <p>
-     * isSetEnergyStream.
-     * </p>
-     *
-     * @return a boolean
-     */
-    public boolean isSetEnergyStream() {
-        return isSetEnergyStream;
-    }
+  /**
+   * <p>
+   * Setter for the field <code>energyStream</code>.
+   * </p>
+   *
+   * @param energyStream a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream}
+   *        object
+   */
+  public void setEnergyStream(EnergyStream energyStream) {
+    setEnergyStream(true);
+    this.energyStream = energyStream;
+  }
 
-    /**
-     * <p>
-     * Setter for the field <code>energyStream</code>.
-     * </p>
-     *
-     * @param isSetEnergyStream a boolean
-     */
-    public void setEnergyStream(boolean isSetEnergyStream) {
-        this.isSetEnergyStream = isSetEnergyStream;
-    }
+  /**
+   * <p>
+   * isSetEnergyStream.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isSetEnergyStream() {
+    return isSetEnergyStream;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getPressure() {
-        return 1.0;
-    }
+  /**
+   * <p>
+   * Setter for the field <code>energyStream</code>.
+   * </p>
+   *
+   * @param isSetEnergyStream a boolean
+   */
+  public void setEnergyStream(boolean isSetEnergyStream) {
+    this.isSetEnergyStream = isSetEnergyStream;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setPressure(double pressure) {}
+  /** {@inheritDoc} */
+  @Override
+  public double getPressure() {
+    return 1.0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getEntropyProduction(String unit) {
-        return 0.0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setPressure(double pressure) {}
 
-    /** {@inheritDoc} */
-    @Override
-    public double getMassBalance(String unit) {
-        return 0.0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getEntropyProduction(String unit) {
+    return 0.0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getExergyChange(String unit, double sourrondingTemperature) {
-        return 0.0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    return 0.0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
+  /** {@inheritDoc} */
+  @Override
+  public double getExergyChange(String unit, double surroundingTemperature) {
+    return 0.0;
+  }
 
-    public String conditionAnalysisMessage = "";
+  /** {@inheritDoc} */
+  @Override
+  public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
 
-    /** {@inheritDoc} */
-    @Override
-    public String getConditionAnalysisMessage() {
-        return conditionAnalysisMessage;
-    }
+  public String conditionAnalysisMessage = "";
 
-    /**
-     * <p>
-     * getResultTable.
-     * </p>
-     *
-     * @return an array of {@link java.lang.String} objects
-     */
-    public String[][] getResultTable() {
-        return null;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public String getConditionAnalysisMessage() {
+    return conditionAnalysisMessage;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + Arrays.deepHashCode(report);
-        result = prime * result
-                + Objects.hash(conditionAnalysisMessage, controller, energyStream, flowValveController,
-                        hasController, isSetEnergyStream, name, properties, specification);
-        return result;
-    }
+  /**
+   * <p>
+   * getResultTable.
+   * </p>
+   *
+   * @return an array of {@link java.lang.String} objects
+   */
+  public String[][] getResultTable() {
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + Arrays.deepHashCode(report);
+    result = prime * result + Objects.hash(conditionAnalysisMessage, controller, energyStream,
+        flowValveController, hasController, isSetEnergyStream, name, properties, specification);
+    return result;
+  }
 
     /** {@inheritDoc} */
     @Override

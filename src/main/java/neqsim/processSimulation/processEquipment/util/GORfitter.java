@@ -145,10 +145,27 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	public void run() {
 		SystemInterface tempFluid = inletStream.getThermoSystem().clone();
 		double flow = tempFluid.getFlowRate("kg/sec");
+
 		if(GOR<1e-15) {
 		  outletStream.setThermoSystem(tempFluid);
 		  return;
 		}
+		if(flow<1e-6) {
+		  outletStream.setThermoSystem(tempFluid);
+		  return;
+		}
+		if(GOR==0 && tempFluid.hasPhaseType("gas")) {
+		  tempFluid.removePhase(0);
+		  ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+	        try {
+	            thermoOps.TPflash();
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	        outletStream.setThermoSystem(tempFluid);
+	        return;
+		}
+
 		if (!getReferenceConditions().equals("actual")) {
 			tempFluid.setTemperature(15.0, "C");
 			tempFluid.setPressure(1.01325, "bara");
