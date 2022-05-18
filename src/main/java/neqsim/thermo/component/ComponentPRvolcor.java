@@ -5,7 +5,6 @@
 */
 package neqsim.thermo.component;
 
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermPr;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -23,6 +22,12 @@ public class ComponentPRvolcor extends ComponentPR {
 
     public ComponentPRvolcor(int number, double TC, double PC, double M, double a, double moles) {
         super(number, TC, PC, M, a, moles);
+    }
+
+
+    @Override
+    public double getVolumeCorrection() {
+        return 0.0;
     }
     @Override
     public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
