@@ -69,7 +69,7 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
   void testSolveSteadyStateConstantFrictionFactor() {
     testInit();
     for (int i = 0; i < pipe.getFlowNodes().length; i++) {
-      pipe.getNode(i).setWallFrictionFactor(0, 0.03);
+      pipe.getNode(i).setWallFrictionFactor(0, 0.00725);
     }
     pipe.solveSteadyState(10);
     //System.out.println("pressure out set friction "
