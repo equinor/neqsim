@@ -404,7 +404,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
-      if (getCalculateSteadyState()) {
+      if (hasController) {
+        // This adjusts the flow rate through this stream.
+        // Typically used to match/manipulate mass balance.
         runController(dt);
         this.setFlowRate(getController().getResponse(), "kg/hr");
       }
