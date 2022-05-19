@@ -31,7 +31,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   ControllerDeviceInterface flowValveController = null;
   public boolean hasController = false;
   private String specification = "TP";
-  private boolean calculateSteadyState = false;
+  private boolean calculateSteadyState = true;
   public String[][] report = new String[0][0];
   public HashMap<String, String> properties = new HashMap<String, String>();
   public EnergyStream energyStream = new EnergyStream();
