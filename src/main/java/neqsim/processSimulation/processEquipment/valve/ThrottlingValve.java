@@ -233,7 +233,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt) {
-    if (!getCalculateSteadyState()) {
+    if (getCalculateSteadyState()) {
       run();
       return;
     } else {
