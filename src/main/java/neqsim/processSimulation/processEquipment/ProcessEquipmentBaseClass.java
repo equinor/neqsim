@@ -31,7 +31,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   ControllerDeviceInterface flowValveController = null;
   public boolean hasController = false;
   private String specification = "TP";
-  private boolean calculateSteadyState = true;
   public String[][] report = new String[0][0];
   public HashMap<String, String> properties = new HashMap<String, String>();
   public EnergyStream energyStream = new EnergyStream();
@@ -48,15 +47,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     super(name);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void run() {}
 
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {
-    run();
-  }
 
   /** {@inheritDoc} */
   @Override
@@ -284,17 +275,5 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
         && Objects.equals(name, other.name) && Objects.equals(properties, other.properties)
         && Arrays.deepEquals(report, other.report)
         && Objects.equals(specification, other.specification);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean getCalculateSteadyState() {
-    return calculateSteadyState;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setCalculateSteadyState(boolean steady) {
-    this.calculateSteadyState = steady;
   }
 }

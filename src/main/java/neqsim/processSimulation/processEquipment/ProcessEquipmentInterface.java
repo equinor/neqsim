@@ -184,18 +184,4 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
   /** {@inheritDoc} */
   @Override
   public int hashCode();
-
-  /**
-   * Get calculateSteadyState
-   * 
-   * @return Value of property calculateSteadyState
-   */
-  public boolean getCalculateSteadyState();
-
-  /**
-   * Setter for property calculateSteadyState
-   * 
-   * @param steady Set true to do steady state calculation when calling runTransient.
-   */
-  public void setCalculateSteadyState(boolean steady);
 }
