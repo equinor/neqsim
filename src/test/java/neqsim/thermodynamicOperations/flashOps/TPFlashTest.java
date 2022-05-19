@@ -3,11 +3,9 @@
  */
 package neqsim.thermodynamicOperations.flashOps;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -89,5 +87,4 @@ class TPFlashTest {
     double enthalpy = testSystem.getEnthalpy();
     assertEquals(-936973.1969586421, testSystem.getEnthalpy(), 1e-2);
   }
-
 }
