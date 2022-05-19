@@ -15,11 +15,12 @@ public class TestSurfaceTension2 {
     // John debug
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
-    @SuppressWarnings("unused")
     public static void main(String args[]) {
         int gtmethod = 1; // 2; John changed
 

@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.splitter;
 
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -10,7 +9,6 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 class ComponentSplitterTest {
-  
   static neqsim.thermo.system.SystemInterface testSystem = null;
   double pressure_inlet = 85.0;
   double temperature_inlet = 35.0;
