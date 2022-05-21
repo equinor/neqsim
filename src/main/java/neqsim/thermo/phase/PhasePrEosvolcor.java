@@ -69,18 +69,16 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
 }
 
-
-
-  public double getc() {
-    return 0.0;
-  }
-
   public double loc_C() {
     return 0.0;
   }
 
+  public double getc() {
+    return loc_C() / numberOfMolesInPhase;
+  }
+
   public double getC() {
-    return 0.0;
+    return loc_C();
   }
 
 
