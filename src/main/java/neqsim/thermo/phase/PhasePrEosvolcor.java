@@ -83,6 +83,8 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return 0.0;
   }
 
+
+
   @Override
   public double gV() {
     return (getb() - getc())
@@ -190,6 +192,64 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return fv();
   }
 
+  //// second derivative of small f with regards to cc-->equal to fvv
+  public double fcc() {
+    return fVV();
+  }
+
+  //// second derivative of small f with regards to bc-->equal to fvv
+  public double fbc() {
+    return fBV();
+  }
+
+  //// second derivative of small f with regards to cv-->equal to fvv
+  public double fcv() {
+    return fVV();
+  }
+
+  //// second derivative of small f with regards to bv-->
+  @Override
+  public double fBV() {
+    return -(2.0 * fv() + (numberOfMolesInPhase * molarVolume + getC()) * fVV()) / getB();
+  }
+
+  //// second derivative of small f with regards to bb-->
+  @Override
+  public double fBB() {
+    return -(2.0 * fb() + (numberOfMolesInPhase * molarVolume + getC()) * fBV()) / getB();
+  }
+
+  //// second derivative of small g with regards to bv-->
+  @Override
+  public double gBV() {
+    double val = numberOfMolesInPhase * getMolarVolume() - getB() + getC();
+    return 1.0 / (val * val);
+  }
+
+  //// second derivative of small g with regards to bb-->
+  @Override
+  public double gBB() {
+    double val = numberOfMolesInPhase * getMolarVolume() - getB() + getC();
+    return -1.0 / (val * val);
+  }
+
+  //// second derivative of small g with regards to bc-->
+  public double gBC() {
+    double val = numberOfMolesInPhase * getMolarVolume() - getB() + getC();
+    return 1.0 / (val * val);
+  }
+
+  //// second derivative of small g with regards to cv-->
+  public double gCV() {
+    double val = numberOfMolesInPhase * getMolarVolume() - getB() + getC();
+    return -1.0 / (val * val);
+  }
+
+  //// second derivative of small g with regards to cc-->
+  public double gCC() {
+    double val = numberOfMolesInPhase * getMolarVolume() - getB() + getC();
+    return -1.0 / (val * val);
+  }
 
   @Override
   public double dFdVdV() {
