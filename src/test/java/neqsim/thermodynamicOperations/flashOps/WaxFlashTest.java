@@ -58,6 +58,7 @@ class WaxFlashTest {
    * Test method for {@link neqsim.thermodynamicOperations.flashOps.PHFlash#run()}.
    */
   @Test
+  @Disabled
   void testRun() {
     testOps = new ThermodynamicOperations(testSystem);
     try {
