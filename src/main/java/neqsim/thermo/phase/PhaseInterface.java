@@ -1400,6 +1400,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 	 */
 	public double FB();
 
+  
+
 	/**
 	 * <p>
 	 * gb.

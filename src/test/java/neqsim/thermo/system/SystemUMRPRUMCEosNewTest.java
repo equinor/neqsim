@@ -50,7 +50,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     // testSystem.addComponent("methane", 0.68);
     // testSystem.addComponent("ethane", 0.1);
     // testSystem.addComponent("n-heptane", 0.2);
-    testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+    //testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
     testSystem.init(0);
     testSystem.init(1);
 
@@ -63,8 +63,6 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     // testSystem.initProperties();
     // assertEquals(0.9711401538454589, testSystem.getPhase(0).getZ(), 0.001);
   }
-
-  private void println(double molarVolume) {}
 
   /**
    * <p>

@@ -24,6 +24,14 @@ public class PhasePrEosvolcor extends PhasePrEos {
     thermoPropertyModelName = "PR-EoS-volcorr";
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+      double beta) {
+    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+
+  }
+
   public double calcg() {
     return Math.log(1.0 - (getb() - getc()) / molarVolume);
   }
@@ -47,8 +55,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return (compi.getc() + compj.getc()) * 0.5;
   }
 
-}
-
 
 
   // @Override
@@ -59,15 +65,12 @@ public class PhasePrEosvolcor extends PhasePrEos {
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
     for (int j = 0; j < numbcomp; j++) {
-      Ci += compArray[j].getNumberOfMolesInPhase() * getcij(compArray[compNumb], compArray[j]);
+      // Ci += compArray[j].getNumberOfMolesInPhase() * getcij(compArray[compNumb], compArray[j]);
     }
 
     Ci = (2.0 * Ci - getC()) / phase.getNumberOfMolesInPhase();
     return Ci;
   }
-
-
-}
 
   public double loc_C() {
     return 0.0;
@@ -143,30 +146,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     // val2 * val2));
   }
 
-  @Override
-  public double[] dFdxMatrixSimple() {
-    double[] matrix = new double[numberOfComponents + 2];
-    double Fn = Fn(), FB = FB(), FD = FD(), FC = FC();
-    double[] Bi = new double[numberOfComponents];
-    double[] Ai = new double[numberOfComponents];
-    double[] Ci = new double[numberOfComponents];
-    ComponentEosInterface[] componentArray = (ComponentEosInterface[]) this.componentArray;
 
-    for (int i = 0; i < numberOfComponents; i++) {
-      Bi[i] = componentArray[i].getBi();
-      Ai[i] = componentArray[i].getAi();
-      Ci[i] = componentArray[i].getAi();
-    }
-
-    for (int i = 0; i < numberOfComponents; i++) {
-      matrix[i] = Fn + FB * Bi[i] + FD * Ai[i] + FC * Ci[i];
-    }
-
-    matrix[numberOfComponents] = dFdT();
-    matrix[numberOfComponents + 1] = dFdV();
-
-    return matrix;
-  }
 
   // derivative of small g with regards to b
   // problem with the loc_b in gb(),gc()-->it says that it is not visible and I think this is
@@ -274,106 +254,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
   public double FC() {
     return -numberOfMolesInPhase * gc() - getA() / temperature * fc();
   }
-
-
-
-  @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
-    // BonV is the B/V-->look michelsen book page 94 eq. 137 (in other words the small b)
-    double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
-
-    if (BonV < 0) {
-      BonV = 1.0e-4;
-    }
-    if (BonV > 1.0) {
-      BonV = 1.0 - 1.0e-4;
-    }
-
-    double BonVold = BonV, Btemp = getB(), h, dh, dhh, d1, d2, BonV2;
-    int iterations = 0;
-
-    if (Btemp < 0) {
-      logger.info("b negative in volume calc");
-    }
-    setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
-    boolean changeFase = false;
-    double error = 1.0, errorOld = 1.0e10;
-
-    do {
-      errorOld = error;
-      iterations++;
-      BonVold = BonV;
-      BonV2 = BonV * BonV;
-      h = BonV - Btemp / numberOfMolesInPhase * dFdV()
-          - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
-      dh = 1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
-      dhh = -2.0 * Btemp / (BonV2 * BonV) * (Btemp / numberOfMolesInPhase * dFdVdV())
-          - Btemp * Btemp / (BonV2 * BonV2) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
-
-      d1 = -h / dh;
-      d2 = -dh / dhh;
-
-      if (Math.abs(d1 / d2) <= 1.0) {
-        BonV += d1 * (1.0 + 0.5 * d1 / d2);
-      } else if (d1 / d2 < -1) {
-        BonV += d1 * (1.0 + 0.5 * -1.0);
-      } else if (d1 > d2) {
-        BonV += d2;
-        double hnew = h + d2 * dh;
-        if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = phase == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
-        }
-      } else {
-        BonV += d1 * (0.1);
-      }
-
-      if (BonV > 1) {
-        BonV = 1.0 - 1.0e-6;
-        BonVold = 100;
-      }
-      if (BonV < 0) {
-        // BonV = Math.abs(BonV);
-        BonV = 1.0e-10;
-        BonVold = 10;
-      }
-
-      error = Math.abs((BonV - BonVold) / BonVold);
-      // logger.info("error " + error);
-
-      if (iterations > 150 && error > errorOld && !changeFase) {
-        changeFase = true;
-        BonVold = 10.0;
-        BonV = phase == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
-      }
-
-      setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
-      Z = pressure * getMolarVolume() / (R * temperature);
-      // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
-    } while (Math.abs((BonV - BonVold) / BonVold) > 1.0e-10 && iterations < 300);
-    // logger.info("pressure " + Z*R*temperature/molarVolume);
-    // logger.info("error in volume " +
-    // (-pressure+R*temperature/molarVolume-R*temperature*dFdV()) + " firstterm " +
-    // (R*temperature/molarVolume) + " second " + R*temperature*dFdV());
-    if (iterations >= 300) {
-      throw new neqsim.util.exception.TooManyIterationsException(errorOld, phaseTypeName,
-          iterations);
-    }
-    if (Double.isNaN(getMolarVolume())) {
-      // A = calcA(this, temperature, pressure, numberOfComponents);
-      // molarVolume(pressure, temperature, A, B, phase);
-      throw new neqsim.util.exception.IsNaNException(phaseTypeName);
-      // logger.info("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh +
-      // " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" +
-      // fVV());
-    }
-    return getMolarVolume();
-  }
-
 
 
   @Override
