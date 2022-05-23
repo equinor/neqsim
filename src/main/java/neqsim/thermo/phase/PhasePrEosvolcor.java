@@ -18,6 +18,8 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   private static final long serialVersionUID = 1000;
 
+  private double CT;
+
   /** Creates new PhaseSrkEos */
   public PhasePrEosvolcor() {
     super();
@@ -29,12 +31,13 @@ public class PhasePrEosvolcor extends PhasePrEos {
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    CT = calcCT(this, temperature, pressure, numberOfComponents);
 
   }
 
 
   public double getCT() {
-    return 0;
+    return CT;
   }
 
 

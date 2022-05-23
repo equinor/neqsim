@@ -11,6 +11,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
+  neqsim.thermo.ThermodynamicModelTest fugTest;
 
   /**
    * <p>
@@ -35,6 +36,19 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
 
   /**
    * <p>
+   * testFugasities.
+   * </p>
+   */
+  @Test
+  public void testFugasities() {
+    testSystem.init(0);
+    testSystem.init(1);
+    fugTest = new neqsim.thermo.ThermodynamicModelTest(testSystem);
+    assertTrue(fugTest.checkFugacityCoefficients());
+  }
+
+  /**
+   * <p>
    * testCompressibility.
    * </p>
    */
@@ -42,7 +56,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   @DisplayName("test compressibility of gas phase")
   public void testCompressibility() {
     // testSystem = new neqsim.thermo.system.SystemPr(298.0, 10.0);
-    //testSystem = new neqsim.thermo.system.SystemSrk(298.0, 10.0);
+    // testSystem = new neqsim.thermo.system.SystemSrk(298.0, 10.0);
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
     testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(100, 25);
     testSystem.addComponent("nitrogen", 1);
@@ -50,7 +64,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     // testSystem.addComponent("methane", 0.68);
     // testSystem.addComponent("ethane", 0.1);
     // testSystem.addComponent("n-heptane", 0.2);
-    //testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+    // testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
     testSystem.init(0);
     testSystem.init(1);
 
