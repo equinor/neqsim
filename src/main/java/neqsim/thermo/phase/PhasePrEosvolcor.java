@@ -32,6 +32,17 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   }
 
+
+  public double getCT() {
+    return 0;
+  }
+
+
+  public double getCTT() {
+    return 0;
+  }
+
+
   public double calcg() {
     return Math.log(1.0 - (getb() - getc()) / molarVolume);
   }
@@ -49,12 +60,26 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   }
 
+  // note that in future the next thre lines should be modified to handle various mixing rules for
+  // the translation
 
 
-  public double getcij(ComponentPRvolcor compi, ComponentPRvolcor compj) {
-    return (compi.getc() + compj.getc()) * 0.5;
+
+  public double getcij(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
+    // return (((ComponentPRvolcor)compArray.getc()) + ((ComponentPRvolcor)compArray2.getc())) *
+    // 0.5;
+    return 0;
   }
 
+  public double getcijT(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
+    // return (compArray.getcT() + compArray2.getcT()) * 0.5;
+    return 0;
+  }
+
+  public double getcijTT(ComponentPRvolcor compi, ComponentPRvolcor compj) {
+    // return (compi.getcTT() + compj.getcTT()) * 0.5;
+    return 0;
+  }
 
 
   // @Override
@@ -71,6 +96,40 @@ public class PhasePrEosvolcor extends PhasePrEos {
     Ci = (2.0 * Ci - getC()) / phase.getNumberOfMolesInPhase();
     return Ci;
   }
+
+
+  public double calcCij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
+      double pressure, int numbcomp) {
+    double cij = 0.0;
+    ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+
+    cij = getcij(compArray[compNumb], compArray[compNumbj]);
+    return (2.0 * cij - compArray[compNumb].getCi() - compArray[compNumbj].getCi())
+        / phase.getNumberOfMolesInPhase();
+  }
+
+
+
+  public double calcCiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
+      int numbcomp) {
+    double CiT = 0.0;
+
+    ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+
+    for (int j = 0; j < numbcomp; j++) {
+      CiT += compArray[j].getNumberOfMolesInPhase() * getcijT(compArray[compNumb], compArray[j]);
+    }
+
+    CiT = (2.0 * CiT - getCT()) / phase.getNumberOfMolesInPhase();
+    return CiT;
+  }
+
+
+
+  public double calcCT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    return 0.0;
+  }
+
 
   public double loc_C() {
     return 0.0;
@@ -229,20 +288,8 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return -1.0 / (val * val);
   }
 
-  @Override
-  public double dFdVdV() {
-    return -numberOfMolesInPhase * gVV() - getA() * fVV() / temperature;
-  }
 
-  @Override
-  public double dFdVdVdV() {
-    return -numberOfMolesInPhase * gVVV() - getA() * fVVV() / temperature;
-  }
-
-  @Override
-  public double dFdTdV() {
-    return super.dFdTdV();
-  }
+  // Below are the partial derivatives of F with regards to model parameters
 
   @Override
   public double F() {
@@ -255,15 +302,56 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return -numberOfMolesInPhase * gc() - getA() / temperature * fc();
   }
 
+  public double FnC() {
+    return -gc();
+  }
 
-  @Override
-  public double dFdTdT() {
-    return super.dFdTdT();
+  public double FTC() {
+    return getA() * fc() / temperature / temperature;
+  }
+
+  public double FBC() {
+    return -numberOfMolesInPhase * gBC() - getA() * fbc() / temperature;
+  }
+
+  public double FCV() {
+    return -numberOfMolesInPhase * gCV() - getA() * fcv() / temperature;
+  }
+
+  public double FCC() {
+    return -numberOfMolesInPhase * gCC() - getA() * fcc() / temperature;
+  }
+
+  public double FCD() {
+    return -fc() / temperature;
   }
 
   @Override
+  public double dFdVdV() {
+    return -numberOfMolesInPhase * gVV() - getA() * fVV() / temperature;
+  }
+
+  @Override
+  public double dFdVdVdV() {
+    return -numberOfMolesInPhase * gVVV() - getA() * fVVV() / temperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double dFdTdV() {
+    return FTV() + FDV() * getAT() + FCV() * getCT();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double dFdT() {
-    return super.dFdT();
+    return FT() + FD() * getAT() + FC() * getCT();
+  }
+
+  @Override
+  public double dFdTdT() {
+    return FTT() + 2.0 * FDT() * getAT() + FD() * getATT() + 2 * FTC() * getCT()
+        + FCC() * getCT() * getCT() + FC() * getCTT() + 2 * FCD() * getCT() * getAT();
   }
 
 
