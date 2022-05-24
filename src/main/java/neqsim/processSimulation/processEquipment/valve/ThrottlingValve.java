@@ -38,6 +38,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
    */
   public ThrottlingValve() {
     this("ThrottlingValve");
+    setCalculateSteadyState(false);
   }
 
   /**
