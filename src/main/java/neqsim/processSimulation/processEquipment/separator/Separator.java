@@ -263,6 +263,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt) {
+    if (getCalculateSteadyState()) {
+      run();
+      return;
+    }
+
     inletStreamMixer.run();
 
     // System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());

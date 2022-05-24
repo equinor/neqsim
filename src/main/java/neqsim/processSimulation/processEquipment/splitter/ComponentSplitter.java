@@ -105,11 +105,6 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {}
-
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {
-    run();
+  public void displayResult() {
   }
 }
