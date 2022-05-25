@@ -152,7 +152,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         separatorLevelController.setReverseActing(true);
         separatorLevelController.setTransmitter(separatorLevelTransmitter);
         separatorLevelController.setControllerSetPoint(0.3);
-        separatorLevelController.setControllerParameters(0.01, 100.0, 0.0);
+        separatorLevelController.setControllerParameters(1, 1000.0, 0.0);
 
         PressureTransmitter separatorPressureTransmitter = new PressureTransmitter(separator_1.getGasOutStream());
         separatorPressureTransmitter.setUnit("bar");

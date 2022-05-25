@@ -33,9 +33,9 @@ public interface SimulationInterface extends NamedInterface, Runnable {
    * <p>
    * runTransient
    * </p>
-   * In this method all thermodynamic and unit operations will be calculated using difference
-   * equations if available. It is also possible to specify per element if steady state calculations
-   * shall be called using setCalculateSteadyState(true).
+   * This method calculates thermodynamic and unit operations using
+   * difference equations if available and calculateSteadyState is true.
+   * Use setCalculateSteadyState to set the parameter.
    * 
    * @param dt is the delta time step (seconds)
    *

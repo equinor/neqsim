@@ -158,10 +158,6 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         setTemperature(mixedStream.getTemperature());
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {}
-
     /**
      * <p>
      * getGasOutStream.

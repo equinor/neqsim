@@ -11,17 +11,14 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
   }
 
   /** {@inheritDoc} */
-  /*
-   * @Override public void run() {}
-   */
-
-  /** {@inheritDoc} */
   @Override
   public void runTransient(double dt) {
     if (getCalculateSteadyState()) {
       run();
       return;
     }
+
+    throw new UnsupportedOperationException("RunTransient using difference equations is not supported yet.");
   }
 
   /** {@inheritDoc} */

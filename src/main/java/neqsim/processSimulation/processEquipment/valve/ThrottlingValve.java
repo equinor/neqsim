@@ -38,6 +38,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
    */
   public ThrottlingValve() {
     this("ThrottlingValve");
+    setCalculateSteadyState(false);
   }
 
   /**
@@ -236,50 +237,50 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     if (getCalculateSteadyState()) {
       run();
       return;
-    } else {
-      runController(dt);
-
-      thermoSystem = inletStream.getThermoSystem().clone();
-      ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-      thermoSystem.init(3);
-
-      double enthalpy = thermoSystem.getEnthalpy();
-      thermoSystem.setPressure(getOutStream().getThermoSystem().getPressure());
-      // System.out.println("enthalpy inn.." + enthalpy);
-      if (isIsoThermal()) {
-        thermoOps.TPflash();
-      } else {
-        thermoOps.PHflash(enthalpy, 0);
-      }
-      thermoSystem.initPhysicalProperties("density");
-      outStream.setThermoSystem(thermoSystem);
-      // if(getPercentValveOpening()<99){
-      molarFlow = getCv() * getPercentValveOpening() / 100.0 * Math.sqrt(
-          (inletStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
-              / thermoSystem.getDensity());
-      // System.out.println("molar flow " + molarFlow);
-      // System.out.println("Cv " + getCv());
-      // System.out.println("density " + inletStream.getThermoSystem().getDensity());
-
-      // 8 } else {
-      // molarFlow=inletStream.getThermoSystem().getTotalNumberOfMoles();
-      // }
-
-      inletStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      inletStream.getThermoSystem().init(1);
-      inletStream.run();
-
-      outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      outStream.getThermoSystem().init(1);
-      outStream.run();
-
-      // System.out.println("delta p valve " +
-      // (inletStream.getThermoSystem().getPressure() -
-      // outStream.getThermoSystem().getPressure()));
-      // System.out.println("total molar flow out " + molarFlow);
-      // System.out.println("Total volume flow " +
-      // outStream.getThermoSystem().getVolume());
     }
+
+    runController(dt);
+
+    thermoSystem = inletStream.getThermoSystem().clone();
+    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+    thermoSystem.init(3);
+
+    double enthalpy = thermoSystem.getEnthalpy();
+    thermoSystem.setPressure(getOutStream().getThermoSystem().getPressure());
+    // System.out.println("enthalpy inn.." + enthalpy);
+    if (isIsoThermal()) {
+      thermoOps.TPflash();
+    } else {
+      thermoOps.PHflash(enthalpy, 0);
+    }
+    thermoSystem.initPhysicalProperties("density");
+    outStream.setThermoSystem(thermoSystem);
+    // if(getPercentValveOpening()<99){
+    molarFlow = getCv() * getPercentValveOpening() / 100.0 * Math.sqrt(
+        (inletStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
+            / thermoSystem.getDensity());
+    // System.out.println("molar flow " + molarFlow);
+    // System.out.println("Cv " + getCv());
+    // System.out.println("density " + inletStream.getThermoSystem().getDensity());
+
+    // 8 } else {
+    // molarFlow=inletStream.getThermoSystem().getTotalNumberOfMoles();
+    // }
+
+    inletStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+    inletStream.getThermoSystem().init(1);
+    inletStream.run();
+
+    outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+    outStream.getThermoSystem().init(1);
+    outStream.run();
+
+    // System.out.println("delta p valve " +
+    // (inletStream.getThermoSystem().getPressure() -
+    // outStream.getThermoSystem().getPressure()));
+    // System.out.println("total molar flow out " + molarFlow);
+    // System.out.println("Total volume flow " +
+    // outStream.getThermoSystem().getVolume());
   }
 
   /**

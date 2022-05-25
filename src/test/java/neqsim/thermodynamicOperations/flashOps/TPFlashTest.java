@@ -50,7 +50,7 @@ class TPFlashTest {
     double enthalpy = testSystem.getEnthalpy();
     assertEquals(-430041.49312169873, testSystem.getEnthalpy(), 1e-2);
   }
-  
+
 
   @Test
   void testRun2() {
@@ -63,7 +63,7 @@ class TPFlashTest {
     double enthalpy = testSystem.getEnthalpy();
     assertEquals(-359394.2117634512, testSystem.getEnthalpy(), 1e-2);
   }
-  
+
   @Test
   void testRun3() {
     testSystem.setMultiPhaseCheck(false);
@@ -75,8 +75,8 @@ class TPFlashTest {
     double enthalpy = testSystem.getEnthalpy();
     assertEquals(-552568.2810227782, testSystem.getEnthalpy(), 1e-2);
   }
-  
-  //@Test
+
+  // @Test
   void testRun4() {
     testSystem.setMultiPhaseCheck(true);
     testSystem.setPressure(500.0, "bara");
@@ -86,5 +86,26 @@ class TPFlashTest {
     testSystem.initProperties();
     double enthalpy = testSystem.getEnthalpy();
     assertEquals(-936973.1969586421, testSystem.getEnthalpy(), 1e-2);
+  }
+
+  @Test
+  void testRun5() {
+    neqsim.thermo.system.SystemInterface testSystem5 =
+        new neqsim.thermo.system.SystemUMRPRUMCEos(243.15, 300.0);
+    testSystem5.addComponent("methane", 4.16683e-1);
+    testSystem5.addComponent("ethane", 1.7522e-1);
+    testSystem5.addComponent("n-pentane", 3.58009e-1);
+    testSystem5.addComponent("nC16", 5.00888e-2);
+    testSystem5.setMixingRule("classic");
+    testSystem5.setMultiPhaseCheck(true);
+    testSystem5.setPressure(90.03461693, "bara");
+    testSystem5.setTemperature(293.15, "K");
+    testSystem5.setTotalFlowRate(4.925e-05, "kg/sec");
+    testOps = new ThermodynamicOperations(testSystem5);
+    testOps.TPflash();
+    testSystem5.initProperties();
+    double beta = testSystem5.getBeta();
+    assertEquals(0.9999993727123112, beta, 1e-5);
+    
   }
 }
