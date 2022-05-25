@@ -181,15 +181,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
   @Override
   public boolean equals(Object o);
 
-    /** {@inheritDoc} */
-    @Override
-    public int hashCode();
-    
-    public boolean isRunTransient();
-
-    /**
-     * @param runTransient the runTransient to set
-     */
-    public void setRunTransient(boolean runTransient);
-
+  /** {@inheritDoc} */
+  @Override
+  public int hashCode();
 }
