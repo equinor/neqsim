@@ -93,7 +93,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
     for (int j = 0; j < numbcomp; j++) {
-      // Ci += compArray[j].getNumberOfMolesInPhase() * getcij(compArray[compNumb], compArray[j]);
+      Ci += compArray[j].getNumberOfMolesInPhase() * getcij(compArray[compNumb], compArray[j]);
     }
 
     Ci = (2.0 * Ci - getC()) / phase.getNumberOfMolesInPhase();
