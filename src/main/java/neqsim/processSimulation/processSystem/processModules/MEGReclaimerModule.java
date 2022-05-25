@@ -131,12 +131,6 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         streamToWaterRemoval = flashSeparator.getGasOutStream();
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {
-        getOperations().runTransient(dt);
-    }
-
     /**
      * <p>
      * setOperationPressure.

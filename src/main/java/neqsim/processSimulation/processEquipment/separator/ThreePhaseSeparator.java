@@ -237,10 +237,6 @@ public class ThreePhaseSeparator extends Separator {
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {}
-
-  /** {@inheritDoc} */
-  @Override
   public double getEntropyProduction(String unit) {
     double entrop = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {

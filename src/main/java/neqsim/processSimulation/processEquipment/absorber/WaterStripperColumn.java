@@ -5,10 +5,12 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -239,11 +241,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
     @Override
     public StreamInterface getSolventInStream() {
         return solventInStream;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {
     }
 
     /**

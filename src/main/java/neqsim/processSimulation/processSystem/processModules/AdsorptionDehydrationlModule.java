@@ -110,12 +110,6 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-        getOperations().runTransient(dt);
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("water dew point temperature")) {
             waterDewPontTemperature = value;

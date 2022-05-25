@@ -109,6 +109,12 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return operations;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt) {
+    getOperations().runTransient(dt);
+  }
+
   // TODO: Check if all the equipment is solved correctly
   /** {@inheritDoc} */
   @Override
