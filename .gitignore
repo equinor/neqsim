@@ -76,3 +76,5 @@ neqsim.iml
 
 # Test output - Serialized files
 test_*.ser
+
+.dccache

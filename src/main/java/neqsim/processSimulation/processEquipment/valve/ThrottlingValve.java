@@ -38,6 +38,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
    */
   public ThrottlingValve() {
     this("ThrottlingValve");
+    setCalculateSteadyState(false);
   }
 
   /**
@@ -45,8 +46,9 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
    * Constructor for ThrottlingValve.
    * </p>
    *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a
+   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *                    object
    */
   @Deprecated
   public ThrottlingValve(StreamInterface inletStream) {
@@ -67,9 +69,10 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
    * Constructor for ThrottlingValve.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param name        a {@link java.lang.String} object
+   * @param inletStream a
+   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *                    object
    */
   public ThrottlingValve(String name, StreamInterface inletStream) {
     super(name);
@@ -127,7 +130,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
    * </p>
    *
    * @param pressure a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit     a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure, unit);
@@ -146,7 +149,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
    * </p>
    *
    * @param pressure a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit     a {@link java.lang.String} object
    */
   public void setOutletPressure(double pressure, String unit) {
     pressureUnit = unit;
@@ -233,6 +236,11 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt) {
+    if (getCalculateSteadyState()) {
+      run();
+      return;
+    }
+
     runController(dt);
 
     thermoSystem = inletStream.getThermoSystem().clone();

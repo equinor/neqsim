@@ -4,10 +4,12 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -218,9 +220,5 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
         dialogContentPane.add(scrollpane);
         dialog.pack();
         dialog.setVisible(true);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {}
+      }
 }
