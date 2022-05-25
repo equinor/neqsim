@@ -444,7 +444,10 @@ public class TPflash extends Flash {
     if (system.isChemicalSystem()) {
       sucsSubs();
     }
-    if (!system.doMultiPhaseCheck()) {
+    if (system.doMultiPhaseCheck()) {
+      TPmultiflash operation = new TPmultiflash(system, true);
+      operation.run();
+    } else {
       // Checks if gas or oil is the most stable phase
       if (system.getPhase(0).getPhaseType() == 1) {
         gasgib = system.getPhase(0).getGibbsEnergy();
@@ -465,10 +468,6 @@ public class TPflash extends Flash {
       system.init(1);
     }
 
-    if (system.doMultiPhaseCheck()) {
-      TPmultiflash operation = new TPmultiflash(system, true);
-      operation.run();
-    }
     if (solidCheck) {
       this.solidPhaseFlash();
     }
