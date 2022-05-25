@@ -120,6 +120,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         purgeValve.setPercentValveOpening(50.0);
 
         Stream stream_1 = new Stream("Stream1", testSystem);
+        stream_1.setCalculateSteadyState(false);
         ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
         valve_1.setOutletPressure(7.0);
         valve_1.setPercentValveOpening(50);
@@ -128,18 +129,18 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         Separator separator_1 = new Separator("separator_1");
         separator_1.addStream(valve_1.getOutStream());
         separator_1.addStream(purgeValve.getOutStream());
-        separator_1.setRunTransient(true);
+        separator_1.setCalculateSteadyState(true);
 
         ThrottlingValve valve_2 = new ThrottlingValve("valve_2", separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(5.0);
         valve_2.setPercentValveOpening(50);
-        valve_2.setRunTransient(true);
+        valve_2.setCalculateSteadyState(true);
         // valve_2.setCv(10.0);
 
         ThrottlingValve valve_3 = new ThrottlingValve("valve_3", separator_1.getGasOutStream());
         valve_3.setOutletPressure(5.0);
         valve_3.setPercentValveOpening(50);
-        valve_3.setRunTransient(true);
+        valve_3.setCalculateSteadyState(true);
         // valve_3.setCv(10.0);
 
         LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator_1);
@@ -152,7 +153,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         separatorLevelController.setReverseActing(true);
         separatorLevelController.setTransmitter(separatorLevelTransmitter);
         separatorLevelController.setControllerSetPoint(0.3);
-        separatorLevelController.setControllerParameters(0.01, 100.0, 0.0);
+        separatorLevelController.setControllerParameters(1, 1000.0, 0.0);
 
         PressureTransmitter separatorPressureTransmitter = new PressureTransmitter(separator_1.getGasOutStream());
         separatorPressureTransmitter.setUnit("bar");
@@ -163,7 +164,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         separatorPressureController.setTransmitter(separatorPressureTransmitter);
         separatorPressureController.setReverseActing(false);
         separatorPressureController.setControllerSetPoint(7.0);
-        separatorPressureController.setControllerParameters(0.05, 10.0, 0.0);
+        separatorPressureController.setControllerParameters(0.5, 10.0, 0.0);
 
         p.add(stream_1);
         p.add(valve_1);

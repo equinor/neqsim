@@ -100,11 +100,6 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
         System.out.println("out Temperature " + reboilerDuty);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {
-    }
-
     /**
      * <p>
      * Getter for the field <code>reboilerDuty</code>.

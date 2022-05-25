@@ -7,6 +7,7 @@ package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
 import java.util.Objects;
+
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -55,13 +56,15 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   @Deprecated
   public Separator() {
     super("Separator");
+    setCalculateSteadyState(false);
   }
 
   /**
    * Constructor for Separator.
    *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a
+   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *                    object
    */
   @Deprecated
   public Separator(StreamInterface inletStream) {
@@ -80,9 +83,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /**
    * Constructor for Separator.
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param name        a {@link java.lang.String} object
+   * @param inletStream a
+   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *                    object
    */
   public Separator(String name, StreamInterface inletStream) {
     this(name);
@@ -98,8 +102,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * setInletStream.
    * </p>
    *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a
+   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *                    object
    */
   public void setInletStream(StreamInterface inletStream) {
     inletStreamMixer.addStream(inletStream);
@@ -117,8 +122,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * addStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param newStream a
+   *                  {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *                  object
    */
   public void addStream(StreamInterface newStream) {
     if (numberOfInputStreams == 0) {
@@ -134,7 +140,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * Getter for the field <code>liquidOutStream</code>.
    * </p>
    *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getLiquidOutStream() {
     return liquidOutStream;
@@ -145,7 +153,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * Getter for the field <code>gasOutStream</code>.
    * </p>
    *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getGasOutStream() {
     return gasOutStream;
@@ -156,7 +166,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * getGas.
    * </p>
    *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getGas() {
     return getGasOutStream();
@@ -167,7 +179,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * getLiquid.
    * </p>
    *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getLiquid() {
     return getLiquidOutStream();
@@ -267,13 +281,15 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt) {
-    if (!isRunTransient()) {
+    if (getCalculateSteadyState()) {
       run();
       return;
     }
+
     inletStreamMixer.run();
 
-    // System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
+    // System.out.println("moles out" +
+    // liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
     // double inMoles =
     // inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
     // double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
@@ -530,8 +546,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double getDeRatedGasLoadFactor(int phase) {
     thermoSystem.initPhysicalProperties();
     double derating = 1.0;
-    double surfaceTension =
-        thermoSystem.getInterphaseProperties().getSurfaceTension(phase - 1, phase);
+    double surfaceTension = thermoSystem.getInterphaseProperties().getSurfaceTension(phase - 1, phase);
     if (surfaceTension < 10.0e-3) {
       derating = 1.0 - 0.5 * (10.0e-3 - surfaceTension) / 10.0e-3;
     }
@@ -786,7 +801,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /*
-   * private class SeparatorReport extends Object{ public Double gasLoadFactor; SeparatorReport(){
+   * private class SeparatorReport extends Object{ public Double gasLoadFactor;
+   * SeparatorReport(){
    * gasLoadFactor = getGasLoadFactor(); } }
    * 
    * public SeparatorReport getReport(){ return this.new SeparatorReport(); }

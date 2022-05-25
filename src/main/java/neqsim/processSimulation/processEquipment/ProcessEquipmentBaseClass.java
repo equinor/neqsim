@@ -49,15 +49,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     super(name);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void run() {}
 
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {
-    run();
-  }
 
   /** {@inheritDoc} */
   @Override
