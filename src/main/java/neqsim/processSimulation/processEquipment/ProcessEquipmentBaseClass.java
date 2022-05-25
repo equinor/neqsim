@@ -27,16 +27,14 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     implements ProcessEquipmentInterface {
   private static final long serialVersionUID = 1000;
 
-    private ControllerDeviceInterface controller = null;
-    ControllerDeviceInterface flowValveController = null;
-    public boolean hasController = false;
-    private String specification = "TP";
-    private boolean runTransient = false;
-    public String[][] report = new String[0][0];
-    public HashMap<String, String> properties = new HashMap<String, String>();
-    public EnergyStream energyStream = new EnergyStream();
-    private boolean isSetEnergyStream = false;
-
+  private ControllerDeviceInterface controller = null;
+  ControllerDeviceInterface flowValveController = null;
+  public boolean hasController = false;
+  private String specification = "TP";
+  public String[][] report = new String[0][0];
+  public HashMap<String, String> properties = new HashMap<String, String>();
+  public EnergyStream energyStream = new EnergyStream();
+  private boolean isSetEnergyStream = false;
 
   /**
    * <p>
@@ -259,37 +257,23 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     return result;
   }
 
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
-        return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
-                && Objects.equals(controller, other.controller)
-                && Objects.equals(energyStream, other.energyStream)
-                && Objects.equals(flowValveController, other.flowValveController)
-                && hasController == other.hasController && isSetEnergyStream == other.isSetEnergyStream
-                && Objects.equals(name, other.name) && Objects.equals(properties, other.properties)
-                && Arrays.deepEquals(report, other.report)
-                && Objects.equals(specification, other.specification);
-    }
-
-    /**
-     * @return the runTransient
-     */
-    public boolean isRunTransient() {
-      return runTransient;
-    }
-
-    /**
-     * @param runTransient the runTransient to set
-     */
-    public void setRunTransient(boolean runTransient) {
-      this.runTransient = runTransient;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
+    return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
+        && Objects.equals(controller, other.controller)
+        && Objects.equals(energyStream, other.energyStream)
+        && Objects.equals(flowValveController, other.flowValveController)
+        && hasController == other.hasController && isSetEnergyStream == other.isSetEnergyStream
+        && Objects.equals(name, other.name) && Objects.equals(properties, other.properties)
+        && Arrays.deepEquals(report, other.report)
+        && Objects.equals(specification, other.specification);
+  }
 }
