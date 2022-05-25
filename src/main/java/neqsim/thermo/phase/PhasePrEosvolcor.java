@@ -69,14 +69,13 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
 
   public double getcij(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
-    // return (((ComponentPRvolcor)compArray.getc()) + ((ComponentPRvolcor)compArray2.getc())) *
-    // 0.5;
-    return 0;
+    return ((((ComponentPRvolcor) compArray).getc()) + (((ComponentPRvolcor) compArray2).getc()))
+        * 0.5;
   }
 
   public double getcijT(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
-    // return (compArray.getcT() + compArray2.getcT()) * 0.5;
-    return 0;
+    return (((ComponentPRvolcor) compArray).getcT() + ((ComponentPRvolcor) compArray2).getcT())
+        * 0.5;
   }
 
   public double getcijTT(ComponentPRvolcor compi, ComponentPRvolcor compj) {
@@ -107,8 +106,8 @@ public class PhasePrEosvolcor extends PhasePrEos {
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
     cij = getcij(compArray[compNumb], compArray[compNumbj]);
-    return (2.0 * cij - compArray[compNumb].getCi() - compArray[compNumbj].getCi())
-        / phase.getNumberOfMolesInPhase();
+    return (2.0 * cij - ((ComponentPRvolcor) compArray[compNumb]).getCi()
+        - ((ComponentPRvolcor) compArray[compNumbj]).getCi()) / phase.getNumberOfMolesInPhase();
   }
 
 

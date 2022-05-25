@@ -20,8 +20,6 @@ public class ComponentPRvolcor extends ComponentPR {
   // private double calcc;
   public double[] Cij = new double[MAX_NUMBER_OF_COMPONENTS];
   public double Ci = 0;
-  private Object loc_CT;
-
   public ComponentPRvolcor(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
   }
@@ -66,6 +64,10 @@ public class ComponentPRvolcor extends ComponentPR {
     return c;
   }
 
+  public double getcT() {
+    return 0;
+  }
+
   // derivative of C with regards to mole fraction
   /** {@inheritDoc} */
   @Override
@@ -73,7 +75,7 @@ public class ComponentPRvolcor extends ComponentPR {
       int numberOfComponents, int type) {
     Ci = phase.calcBi(componentNumber, phase, temp, pres, numberOfComponents);
     if (type >= 2) {
-      CiT = ((PhasePrEosvolcor) phase).calcCiT(componentNumber, phase, temp, pres,
+      ((PhasePrEosvolcor) phase).calcCiT(componentNumber, phase, temp, pres,
           numberOfComponents);
     }
 
@@ -86,16 +88,22 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
 
-  private double getCi() {
-    return 0;
+  public double getCi() {
+    return Ci;
   }
+
+
+  public double getCij(int j) {
+    return Cij[j];
+  }
+
   // depending on the type of the volume translation (T-dependent or not) these sould be properly
   // modified
 
 
   // second derivative of C with regards to mole fraction and temperature
   public double getCiT() {
-    return CiT = 0;
+    return 0;
   }
 
   public double getcTT() {
@@ -118,12 +126,13 @@ public class ComponentPRvolcor extends ComponentPR {
   @Override
   public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    double loc_CT = ((PhasePrEosvolcor) phase).getcT();
+    double loc_CT = ((PhasePrEosvolcor) phase).getCT();
     double loc_FnC = ((PhasePrEosvolcor) phase).FnC();
     double loc_FBC = ((PhasePrEosvolcor) phase).FBC();
     double loc_FCD = ((PhasePrEosvolcor) phase).FCD();
     double loc_FC = ((PhasePrEosvolcor) phase).FC();
     double loc_FCT = ((PhasePrEosvolcor) phase).FTC();
+    double loc_FCC = ((PhasePrEosvolcor) phase).FCC();
 
     return loc_FnC * loc_CT
         + (phase.FBT() + phase.FBD() * phase.getAT() + loc_FBC * loc_CT) * getBi()
@@ -136,12 +145,10 @@ public class ComponentPRvolcor extends ComponentPR {
   @Override
   public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    double loc_CT = ((PhasePrEosvolcor) phase).getcT();
     double loc_FnC = ((PhasePrEosvolcor) phase).FnC();
     double loc_FBC = ((PhasePrEosvolcor) phase).FBC();
     double loc_FCD = ((PhasePrEosvolcor) phase).FCD();
     double loc_FC = ((PhasePrEosvolcor) phase).FC();
-    double loc_FCT = ((PhasePrEosvolcor) phase).FTC();
     double loc_FCC = ((PhasePrEosvolcor) phase).FCC();
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
     // return phase.FnB() * (getBi() + comp_Array[j].getBi())
