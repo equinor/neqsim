@@ -202,7 +202,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
     /** {@inheritDoc} */
     @Override
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double surroundingTemperature) {
         return 0.0;
     }
 

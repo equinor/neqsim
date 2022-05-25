@@ -7,7 +7,6 @@ package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
 import java.util.Objects;
-
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -736,16 +735,16 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** {@inheritDoc} */
   @Override
-  public double getExergyChange(String unit, double sourrondingTemperature) {
+  public double getExergyChange(String unit, double surroundingTemperature) {
     double exergy = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
       inletStreamMixer.getStream(i).getFluid().init(3);
-      exergy += inletStreamMixer.getStream(i).getFluid().getExergy(sourrondingTemperature, unit);
+      exergy += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
     }
     getLiquidOutStream().getThermoSystem().init(3);
     getGasOutStream().getThermoSystem().init(3);
-    return getLiquidOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)
-        + getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit) - exergy;
+    return getLiquidOutStream().getThermoSystem().getExergy(surroundingTemperature, unit)
+        + getGasOutStream().getThermoSystem().getExergy(surroundingTemperature, unit) - exergy;
   }
 
   /** {@inheritDoc} */
