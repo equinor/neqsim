@@ -3,7 +3,6 @@ package neqsim.processSimulation.processSystem;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.measurementDevice.LevelTransmitter;
@@ -129,15 +128,18 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         Separator separator_1 = new Separator("separator_1");
         separator_1.addStream(valve_1.getOutStream());
         separator_1.addStream(purgeValve.getOutStream());
+        separator_1.setCalculateSteadyState(true);
 
         ThrottlingValve valve_2 = new ThrottlingValve("valve_2", separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(5.0);
         valve_2.setPercentValveOpening(50);
+        valve_2.setCalculateSteadyState(true);
         // valve_2.setCv(10.0);
 
         ThrottlingValve valve_3 = new ThrottlingValve("valve_3", separator_1.getGasOutStream());
         valve_3.setOutletPressure(5.0);
         valve_3.setPercentValveOpening(50);
+        valve_3.setCalculateSteadyState(true);
         // valve_3.setCv(10.0);
 
         LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator_1);
