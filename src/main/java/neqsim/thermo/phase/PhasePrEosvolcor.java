@@ -17,8 +17,10 @@ import neqsim.thermo.component.ComponentPRvolcor;
 public class PhasePrEosvolcor extends PhasePrEos {
 
   private static final long serialVersionUID = 1000;
-
+  double loc_C=0;
   private double CT;
+  public double C;
+  public double Ctot = 0, Ci = 0;
 
   /** Creates new PhaseSrkEos */
   public PhasePrEosvolcor() {
@@ -31,6 +33,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    loc_C = calcC(this, temperature, pressure, numberOfComponents);
     CT = calcCT(this, temperature, pressure, numberOfComponents);
 
   }
@@ -45,11 +48,11 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return 0;
   }
 
-
+  @Override
   public double calcg() {
     return Math.log(1.0 - (getb() - getc()) / molarVolume);
   }
-
+  @Override
   public double calcf() {
     return (1.0 / (R * getB() * (delta1 - delta2))
         * Math.log((1.0 + (delta1 * getb() + getc()) / molarVolume)
@@ -132,9 +135,27 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return 0.0;
   }
 
+  public double calcC(PhaseInterface phase, double temperature, double pressure,
+  int numbcomp) {
+  C = 0.0;
+  ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-  public double loc_C() {
-    return 0.0;
+  for (int i = 0; i < numbcomp; i++) {
+    for (int j = 0; j < numbcomp; j++) {
+        C += compArray[i].getNumberOfMolesInPhase()
+                * compArray[j].getNumberOfMolesInPhase()
+                * getcij(compArray[i], compArray[j]);// (compArray[i].getb()+compArray[j].getb())/2;
+    }
+  }
+  C /= phase.getNumberOfMolesInPhase();
+  Ctot = C;
+  return C;
+  }
+
+
+
+  private double loc_C() {
+    return calcC(this, temperature, pressure, numberOfComponents) ;
   }
 
   public double getc() {

@@ -22,11 +22,11 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   public static void setUp() {
     //testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
     testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
-    testSystem.addComponent("nitrogen", 0.01);
-    testSystem.addComponent("CO2", 0.01);
-    testSystem.addComponent("methane", 0.68);
-    testSystem.addComponent("ethane", 0.1);
-    testSystem.addComponent("n-heptane", 0.2);
+    testSystem.addComponent("nitrogen", 1);
+    //testSystem.addComponent("CO2", 0.01);
+    //testSystem.addComponent("methane", 0.68);
+    //testSystem.addComponent("ethane", 0.1);
+    //testSystem.addComponent("n-heptane", 0.2);
     testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
     testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -58,7 +58,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
      //testSystem = new neqsim.thermo.system.SystemPr(298.0, 10.0);
      //testSystem = new SystemSrkEos(298.0, 10.0);
      //testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
-    testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(100, 25);
+    testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298, 10);
     testSystem.addComponent("nitrogen", 1);
     // testSystem.addComponent("CO2", 0.01);
     // testSystem.addComponent("methane", 0.68);

@@ -73,7 +73,7 @@ public class ComponentPRvolcor extends ComponentPR {
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
       int numberOfComponents, int type) {
-    Ci = phase.calcBi(componentNumber, phase, temp, pres, numberOfComponents);
+        Ci = ((PhasePrEosvolcor) phase).calcCi(componentNumber, phase, temp, pres, numberOfComponents);
     if (type >= 2) {
       ((PhasePrEosvolcor) phase).calcCiT(componentNumber, phase, temp, pres,
           numberOfComponents);
@@ -117,10 +117,8 @@ public class ComponentPRvolcor extends ComponentPR {
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     return phase.Fn() + phase.FB() * getBi() + phase.FD() * getAi()
-        + ((PhasePrEosvolcor) phase).FC() * getCi();
+        + ((PhasePrEosvolcor) phase).FC() * getCi();  
   }
-
-
 
   /** {@inheritDoc} */
   @Override
