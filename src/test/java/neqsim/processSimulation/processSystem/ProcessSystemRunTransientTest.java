@@ -95,9 +95,9 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         // transient behaviour
         p.setTimeStep(1.0);
         for (int i = 0; i < 5; i++) {
-          //  System.out.println("volume flow " + flowTransmitter.getMeasuredValue()
-          //          + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
-          //          + separator_1.getGasOutStream().getPressure());
+            System.out.println("volume flow " + flowTransmitter.getMeasuredValue()
+                    + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
+                    + separator_1.getGasOutStream().getPressure());
             p.runTransient();
         }
     }
@@ -115,31 +115,34 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         testSystem2.setMixingRule(2);
 
         Stream purgeStream = new Stream("Purge Stream", testSystem2);
+        
         ThrottlingValve purgeValve = new ThrottlingValve("purgeValve", purgeStream);
         purgeValve.setOutletPressure(7.0);
         purgeValve.setPercentValveOpening(50.0);
-
+        purgeValve.setCalculateSteadyState(false);
+        
         Stream stream_1 = new Stream("Stream1", testSystem);
-        stream_1.setCalculateSteadyState(false);
+        
         ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
         valve_1.setOutletPressure(7.0);
         valve_1.setPercentValveOpening(50);
-
+        valve_1.setCalculateSteadyState(false);
+        
         Separator separator_1 = new Separator("separator_1");
         separator_1.addStream(valve_1.getOutStream());
         separator_1.addStream(purgeValve.getOutStream());
-        separator_1.setCalculateSteadyState(true);
+        separator_1.setCalculateSteadyState(false);
 
         ThrottlingValve valve_2 = new ThrottlingValve("valve_2", separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(5.0);
         valve_2.setPercentValveOpening(50);
-        valve_2.setCalculateSteadyState(true);
+        valve_2.setCalculateSteadyState(false);
         // valve_2.setCv(10.0);
 
         ThrottlingValve valve_3 = new ThrottlingValve("valve_3", separator_1.getGasOutStream());
         valve_3.setOutletPressure(5.0);
         valve_3.setPercentValveOpening(50);
-        valve_3.setCalculateSteadyState(true);
+        valve_3.setCalculateSteadyState(false);
         // valve_3.setCv(10.0);
 
         LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator_1);
@@ -184,15 +187,15 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         p.run();
         // p.displayResult();
         p.setTimeStep(0.01);
-        for(int i=0;i<500;i++) {
-          //System.out.println("pressure "+separator_1.getGasOutStream().getPressure()+ " flow "+ separator_1.getGasOutStream().getFlowRate("kg/hr") + " sepr height "+separatorLevelTransmitter.getMeasuredValue());
+        for(int i=0;i<50;i++) {
+          System.out.println("pressure "+separator_1.getGasOutStream().getPressure()+ " flow "+ separator_1.getGasOutStream().getFlowRate("kg/hr") + " sepr height "+separatorLevelTransmitter.getMeasuredValue());
           p.runTransient();
           }
         
-        valve_1.setPercentValveOpening(60);
+        valve_1.setPercentValveOpening(90);
         
         for(int i=0;i<10;i++) {
-       // System.out.println("pressure "+separator_1.getGasOutStream().getPressure()+ " flow "+ separator_1.getGasOutStream().getFlowRate("kg/hr"));
+       System.out.println("pressure "+separator_1.getGasOutStream().getPressure()+ " flow "+ separator_1.getGasOutStream().getFlowRate("kg/hr"));
         p.runTransient();
         }
     }
