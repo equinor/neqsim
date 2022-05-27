@@ -122,14 +122,14 @@ class TPFlashTest {
     testSystem5.setTotalFlowRate(1.3025, "kg/sec");
     testOps = new ThermodynamicOperations(testSystem5);
     testOps.TPflash();
-    //testSystem5.display();
+   // testSystem5.display();
     
     neqsim.thermo.system.SystemInterface testSystem6 = testSystem5.phaseToSystem("oil");
+    testSystem6.setTotalFlowRate(1.2961e-09, "kg/sec");
     ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem6);
-    testSystem6.setTotalFlowRate(1.2961e-06, "kg/sec");
     testOps2.TPflash();
     testSystem6.initProperties();
-    //testSystem6.display();
+    testSystem6.display();
     double beta = testSystem6.getBeta();
     assertEquals(1.0, beta, 1e-5);
   }
