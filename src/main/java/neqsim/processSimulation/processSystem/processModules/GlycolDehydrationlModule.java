@@ -223,12 +223,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-        getOperations().runTransient(dt);
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public void setProperty(String specificationName, double value, String unit) {
         if (unit == "") {
             setProperty(specificationName, value);

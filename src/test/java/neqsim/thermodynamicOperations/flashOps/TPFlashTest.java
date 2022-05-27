@@ -106,6 +106,7 @@ class TPFlashTest {
     testSystem5.initProperties();
     double beta = testSystem5.getBeta();
     assertEquals(6.272876522701802E-7, beta, 1e-5);
+
     
   }
 }
