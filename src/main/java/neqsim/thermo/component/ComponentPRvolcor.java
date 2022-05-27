@@ -120,6 +120,12 @@ public class ComponentPRvolcor extends ComponentPR {
         + ((PhasePrEosvolcor) phase).FC() * getCi();  
   }
 
+  public double getFC(PhaseInterface phase, int numberOfComponents, double temperature,
+  double pressure) {
+    return ((PhasePrEosvolcor) phase).FC();
+  }
+
+
   /** {@inheritDoc} */
   @Override
   public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,

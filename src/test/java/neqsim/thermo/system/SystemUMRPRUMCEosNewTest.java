@@ -111,6 +111,8 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   @DisplayName("test the fugacity coefficients calculated")
   public void testFugacityCoefficients() {
     assertTrue(testModel.checkFugacityCoefficients());
+
+    //System.out.println("molar volume liquid is " + testSystem.((PhasePrEosvolcor) phase).getFC());
   }
 
   /**

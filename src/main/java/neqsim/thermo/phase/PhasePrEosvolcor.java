@@ -249,8 +249,14 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   //// derivative of small f with regards to c-->equal to fv
   public double fc() {
-    return fv();
+    return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * getB() + loc_C())
+    * (numberOfMolesInPhase * molarVolume + delta2 * getB() + loc_C()));
   }
+
+  @Override
+  public double fb() {
+    return -(calcf() + (numberOfMolesInPhase * molarVolume + getC())* fv()) / getB();
+}
 
   //// second derivative of small f with regards to cc-->equal to fvv
   public double fcc() {
