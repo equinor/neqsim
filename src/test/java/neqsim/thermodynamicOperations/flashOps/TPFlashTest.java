@@ -106,6 +106,31 @@ class TPFlashTest {
     testSystem5.initProperties();
     double beta = testSystem5.getBeta();
     assertEquals(6.272876522701802E-7, beta, 1e-5);
+  }
+  
+  @Test
+  void testRun6() {
+    neqsim.thermo.system.SystemInterface testSystem5 =
+        new neqsim.thermo.system.SystemUMRPRUMCEos(293.15, 89.03471693706786);
+    testSystem5.addComponent("methane", 8.51863E-1);
+    testSystem5.addComponent("ethane", 1.25248E-1);
+    testSystem5.addComponent("n-pentane", 2.28881E-2);
+    testSystem5.addComponent("nC16", 2.57656E-7);
+    testSystem5.setMixingRule("classic");
+    testSystem5.setPressure(89.03471693706786, "bara");
+    testSystem5.setTemperature(293.15, "K");
+    testSystem5.setTotalFlowRate(1.3025, "kg/sec");
+    testOps = new ThermodynamicOperations(testSystem5);
+    testOps.TPflash();
+    //testSystem5.display();
     
+    neqsim.thermo.system.SystemInterface testSystem6 = testSystem5.phaseToSystem("oil");
+    ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem6);
+    testSystem6.setTotalFlowRate(1.2961e-06, "kg/sec");
+    testOps2.TPflash();
+    testSystem6.initProperties();
+    //testSystem6.display();
+    double beta = testSystem6.getBeta();
+    assertEquals(1.0, beta, 1e-5);
   }
 }
