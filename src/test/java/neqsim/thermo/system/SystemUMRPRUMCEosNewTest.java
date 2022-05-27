@@ -45,6 +45,18 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.init(1);
     fugTest = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     assertTrue(fugTest.checkFugacityCoefficients());
+
+    double fucoef = testSystem.getComponent(0).getLogFugacityCoefficient();
+
+    assertEquals(-0.002884922    , fucoef, 1e-6);
+    
+    
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initProperties();
+    double molvol = testSystem.getMolarVolume();
+    
+    assertEquals(247.09909107115    , molvol, 1e-6);
   }
 
   /**

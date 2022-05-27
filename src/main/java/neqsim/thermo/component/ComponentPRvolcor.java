@@ -72,7 +72,9 @@ public class ComponentPRvolcor extends ComponentPR {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {
+      int numberOfComponents, int type) 
+      { 
+        super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, type);
         Ci = ((PhasePrEosvolcor) phase).calcCi(componentNumber, phase, temp, pres, numberOfComponents);
     if (type >= 2) {
       ((PhasePrEosvolcor) phase).calcCiT(componentNumber, phase, temp, pres,

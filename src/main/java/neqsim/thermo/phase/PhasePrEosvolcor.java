@@ -20,7 +20,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
   double loc_C=0;
   private double CT;
   public double C;
-  public double Ctot = 0, Ci = 0;
+  public double Ctot = 0;
 
   /** Creates new PhaseSrkEos */
   public PhasePrEosvolcor() {
@@ -90,7 +90,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
   // @Override
   public double calcCi(int compNumb, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
-    double Ci = 0.0;
+      double Ci = 0.0;
 
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
