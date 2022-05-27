@@ -48,7 +48,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         return testSystem;
     }
 
-   // @Test
+   @Test
     public void testDynamicCalculation() {
         neqsim.thermo.system.SystemInterface testSystem = getTestSystem();
         
@@ -59,6 +59,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
         valve_1.setOutletPressure(5.0);
         valve_1.setPercentValveOpening(50);
+        valve_1.setCalculateSteadyState(false);
 
         Separator separator_1 = new Separator("sep 1");
         separator_1.addStream(valve_1.getOutStream());
@@ -84,10 +85,13 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
 
         p.add(stream_1);
         p.add(valve_1);
+        
+        /*
         p.add(separator_1);
         p.add(valve_2);
         p.add(valve_3);
         p.add(flowTransmitter);
+        */
         valve_1.setController(flowController);
 
         p.run();
@@ -100,9 +104,17 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
                     + separator_1.getGasOutStream().getPressure());
             p.runTransient();
         }
+        
+        valve_1.setPercentValveOpening(80);
+        for (int i = 0; i < 5; i++) {
+          System.out.println("volume flow " + flowTransmitter.getMeasuredValue()
+                  + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
+                  + separator_1.getGasOutStream().getPressure());
+          p.runTransient();
+      }
     }
 
-    @Test
+   // @Test
     public void testDynamicCalculation2() {
         
         neqsim.thermo.system.SystemInterface testSystem = getTestSystem();
