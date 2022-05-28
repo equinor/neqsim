@@ -21,20 +21,3 @@ jobs:
         with:
           name: unit-tests-jacoco
           path: exportJacoco/jacoco-fast.exec
-
-  integration-tests:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '11'
-      - name: Run tests
-        run: |
-          mvn '-Dtest=*IntegrationTest' verify -Djacoco.destFile=exportJacoco/jacoco-slow-it.exec
-      - name: Upload jacoco exec results
-        uses: actions/upload-artifact@v2
-        with:
-          name: integration-tests-jacoco
-          path: exportJacoco/jacoco-slow-it.exec
