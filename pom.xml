@@ -11,8 +11,8 @@
 		<revision>2.3.3</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1 />
-		<changelist />
+		<sha1/>
+		<changelist/>
 	</properties>
 
 	<repositories>
@@ -83,7 +83,7 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jcommon</artifactId>
-			<version>1.0.23</version>
+			<version>1.0.24</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jfree</groupId>
