@@ -11,8 +11,8 @@
 		<revision>2.3.3</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1 />
-		<changelist />
+		<sha1/>
+		<changelist/>
 	</properties>
 
 	<repositories>
@@ -88,7 +88,7 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
-			<version>1.5.1</version>
+			<version>1.5.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.matrix-toolkits-java</groupId>
