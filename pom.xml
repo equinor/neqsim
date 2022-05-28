@@ -11,8 +11,8 @@
 		<revision>2.3.3</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1 />
-		<changelist />
+		<sha1/>
+		<changelist/>
 	</properties>
 
 	<repositories>
@@ -68,7 +68,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.40</version>
+			<version>0.41</version>
 		</dependency>
 		<dependency>
 			<groupId>com.lowagie</groupId>
