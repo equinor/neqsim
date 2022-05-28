@@ -1,4 +1,4 @@
-name: Jacoco Distributed Exec and Aggregation
+name: Jacoco Distributed Exec and Aggregation2
 
 on:
   push:
