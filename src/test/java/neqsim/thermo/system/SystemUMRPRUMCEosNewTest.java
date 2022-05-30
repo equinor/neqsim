@@ -73,7 +73,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * testCompressibility.
    * </p>
    */
-  // @Test
+  @Test
   @DisplayName("test compressibility of gas phase")
   public void testCompressibility() {
     // testSystem = new neqsim.thermo.system.SystemPr(298.0, 10.0);
@@ -105,7 +105,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * </p>
    */
   @Disabled
-  // @Test
+  @Test
   @DisplayName("test a TPflash2")
   public void testTPflash2() {
     assertEquals(2, testSystem.getNumberOfPhases());
@@ -117,7 +117,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * </p>
    */
   @Disabled
-  // @Test
+  @Test
   @DisplayName("test a TPflash of the fluid (should return two phases)")
   public void testTPflash() {
     assertEquals(2, testSystem.getNumberOfPhases());
@@ -128,7 +128,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * testFugacityCoefficients.
    * </p>
    */
-  // @Test
+  @Test
   @DisplayName("test the fugacity coefficients calculated")
   public void testFugacityCoefficients() {
     assertTrue(testModel.checkFugacityCoefficients());
@@ -145,8 +145,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to pressure")
   public void checkFugacityCoefficientsDP() {
-    // testSystem.init(0);
-    // testSystem.init(3);
+
     assertTrue(testModel.checkFugacityCoefficientsDP());
   }
 
@@ -156,11 +155,9 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * </p>
    */
 
-  // @Test
+   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to temperature")
   public void checkFugacityCoefficientsDT() {
-    // testSystem.init(0);
-    // testSystem.init(3);
     assertTrue(testModel.checkFugacityCoefficientsDT());
   }
 
@@ -169,11 +166,9 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * checkFugacityCoefficientsDn.
    * </p>
    */
-  // @Test
+   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition")
   public void checkFugacityCoefficientsDn() {
-    testSystem.init(0);
-    testSystem.init(3);
     assertTrue(testModel.checkFugacityCoefficientsDn());
   }
 
@@ -182,11 +177,9 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * checkFugacityCoefficientsDn2.
    * </p>
    */
-  // @Test
+   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition (2nd method)")
   public void checkFugacityCoefficientsDn2() {
-    // testSystem.init(0);
-    // testSystem.init(3);
     assertTrue(testModel.checkFugacityCoefficientsDn2());
   }
 
@@ -198,7 +191,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * 
    * @throws Exception
    */
-  // @Test
+   @Test
   @DisplayName("calculate phase envelope using UMR")
   public void checkPhaseEnvelope() throws Exception {
     testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
