@@ -29,14 +29,16 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     // testSystem.addComponent("ethane", 0.1);
     // testSystem.addComponent("n-heptane", 0.2);
     // testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-    testSystem.setMixingRule(1);
-    // testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
-    // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    // testOps.TPflash();
-    testSystem.init(0);
-    testSystem.init(3);
-    // testSystem.initProperties();
+    // testSystem.setMixingRule(1);
+    testSystem.setMixingRule("classic");
     testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
+    // testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.init(0);
+    // testSystem.init(3);
+    testSystem.initProperties();
+    // testSystem.i
   }
 
 
@@ -143,8 +145,8 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to pressure")
   public void checkFugacityCoefficientsDP() {
-    testSystem.init(0);
-    testSystem.init(3);
+    // testSystem.init(0);
+    // testSystem.init(3);
     assertTrue(testModel.checkFugacityCoefficientsDP());
   }
 
