@@ -67,7 +67,7 @@ public class OnshoreMEGprocess {
         inletCompressor.setOutletPressure(70.0, "bara");
 
         Cooler interstageGasCooler =
-                new Cooler("Compressor 1 - interstage cooler", inletCompressor.getOutStream());
+            new Cooler("Compressor 1 - interstage cooler", inletCompressor.getOutletStream());
         interstageGasCooler.setOutTemperature(40.0, "C");
 
         Compressor inletCompressor2ndstage =
@@ -86,7 +86,7 @@ public class OnshoreMEGprocess {
         MEGsplitter1.setSplitFactors(new double[] {0.01, 0.94, 0.05});
 
         StaticMixer MEGmixer1 = new StaticMixer("MEG mixer 1");
-        MEGmixer1.addStream(inletCompressor2ndstage.getOutStream());
+        MEGmixer1.addStream(inletCompressor2ndstage.getOutletStream());
         MEGmixer1.addStream(MEGsplitter1.getSplitStream(0));
 
         Cooler inletGasCooler = new Cooler("dehydration cooler", MEGmixer1.getOutStream());

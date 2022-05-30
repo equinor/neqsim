@@ -101,7 +101,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         expander = new Expander("expander", heatExchanger2.getOutStream());
         expander.setOutletPressure(46.0);
 
-        LTseparator = new Separator("LTseparator", expander.getOutStream());
+        LTseparator = new Separator("LTseparator", expander.getOutletStream());
 
         Splitter splitter = new Splitter("LTsplitter", LTseparator.getGasOutStream(), 2);
         splitter.setSplitFactors(new double[] {0.9, 0.1});
@@ -116,7 +116,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         compressor1.setOutletPressure(65.0);
 
         Recycle recycl = new Recycle("recycler");
-        recycl.addStream(compressor1.getOutStream());
+        recycl.addStream(compressor1.getOutletStream());
 
         valve1 = new ThrottlingValve("valve1", LTseparator.getLiquidOutStream());
         valve1.setOutletPressure(30.0);
@@ -204,7 +204,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         }
         getOperations().run();
 
-        gasExitStream = compressor1.getOutStream();
+        gasExitStream = compressor1.getOutletStream();
         oilExitStream = LTseparator.getLiquidOutStream();
         gasDistColumnExit = distColumn.getGasOutStream();
         liquidDistColumnExit = distColumn.getLiquidOutStream();

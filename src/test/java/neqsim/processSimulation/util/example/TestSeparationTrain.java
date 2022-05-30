@@ -70,7 +70,7 @@ public class TestSeparationTrain {
         thirdStageCompressor.setOutletPressure(secondstagePressure);
 
         Mixer thirdStageMixer = new Mixer();
-        thirdStageMixer.addStream(thirdStageCompressor.getOutStream());
+        thirdStageMixer.addStream(thirdStageCompressor.getOutletStream());
         thirdStageMixer.addStream(secondStageSeparator.getGasOutStream());
 
         Cooler thirdSstageCoooler =
@@ -88,7 +88,7 @@ public class TestSeparationTrain {
 
         Mixer HPgasMixer = new Mixer();
         HPgasMixer.addStream(inletSeparator.getGasOutStream());
-        HPgasMixer.addStream(secondStageCompressor.getOutStream());
+        HPgasMixer.addStream(secondStageCompressor.getOutletStream());
 
         Cooler oilCooler = new Cooler("oilCooler", thirdStageSeparator.getLiquidOutStream());
         oilCooler.setOutTemperature(273.15 + 30.0);

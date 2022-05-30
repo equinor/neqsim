@@ -101,7 +101,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         glycolFeedStream.getThermoSystem().setPressure(firstStageOutPressure);
 
         Mixer glycolMixer = new Mixer("glycol injection mixer");
-        glycolMixer.addStream(firstStageCompressor.getOutStream());
+        glycolMixer.addStream(firstStageCompressor.getOutletStream());
         glycolMixer.addStream(glycolFeedStream);
 
         Cooler mixerAfterCooler =
@@ -116,7 +116,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         secondStageCompressor.setOutletPressure(secondStageOutPressure);
 
         secondStageAfterCooler =
-                new Cooler("second stage after cooler", secondStageCompressor.getOutStream());
+            new Cooler("second stage after cooler", secondStageCompressor.getOutletStream());
         secondStageAfterCooler.setOutTemperature(exportGasTemperature + 273.15);
 
         getOperations().add(inletCooler);
