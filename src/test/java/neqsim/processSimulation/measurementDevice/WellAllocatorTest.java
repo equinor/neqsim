@@ -1,9 +1,5 @@
-/**
- * 
- */
 package neqsim.processSimulation.measurementDevice;
 
-import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -16,7 +12,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  *
  */
-class WellAllocatorTest extends neqsim.NeqSimTest{
+class WellAllocatorTest extends neqsim.NeqSimTest {
 
   /**
    * @throws java.lang.Exception
@@ -25,7 +21,8 @@ class WellAllocatorTest extends neqsim.NeqSimTest{
   static void setUpBeforeClass() throws Exception {}
 
   /**
-   * Test method for {@link neqsim.processSimulation.measurementDevice.WellAllocator#getMeasuredValue(java.lang.String)}.
+   * Test method for
+   * {@link neqsim.processSimulation.measurementDevice.WellAllocator#getMeasuredValue(java.lang.String)}.
    */
   @Test
   void testGetMeasuredValueString() {
@@ -43,12 +40,12 @@ class WellAllocatorTest extends neqsim.NeqSimTest{
     testFluid.setMixingRule(2);
 
     testFluid.addToComponentNames("_well1");
-    
+
     testFluid.setTemperature(24.0, "C");
     testFluid.setPressure(48.0, "bara");
     testFluid.setTotalFlowRate(2500.0, "kg/hr");
-    
-    
+
+
     SystemInterface testFluid2 = testFluid.clone();
 
 
@@ -57,9 +54,9 @@ class WellAllocatorTest extends neqsim.NeqSimTest{
     testFluid.setTotalFlowRate(2500.0, "kg/hr");
 
     Stream stream_1 = new Stream("Stream1", testFluid);
-    
+
     Stream stream_2 = new Stream("Stream2", testFluid2);
-    
+
     Separator sep1 = new Separator("sep1", stream_1);
     sep1.addStream(stream_2);
 
@@ -80,15 +77,15 @@ class WellAllocatorTest extends neqsim.NeqSimTest{
     operations.add(stream_oilExp);
     operations.add(wellAlloc);
     operations.run();
-   
+
     WellAllocatorResponse responsAl = new WellAllocatorResponse(wellAlloc);
-    
+
     System.out.println("name " + responsAl.name);
     System.out.println("gas flow " + responsAl.gasExportRate);
     System.out.println("oil flow " + responsAl.oilExportRate);
     System.out.println("total flow " + responsAl.totalExportRate);
-   // stream_1.displayResult();
-   // stream_1.displayResult();
+    // stream_1.displayResult();
+    // stream_1.displayResult();
   }
 
 }

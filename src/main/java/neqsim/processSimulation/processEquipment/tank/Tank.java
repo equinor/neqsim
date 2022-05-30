@@ -41,6 +41,7 @@ public class Tank extends ProcessEquipmentBaseClass {
   @Deprecated
   public Tank() {
     super("Tank");
+    setCalculateSteadyState(false);
   }
 
   /**
@@ -163,7 +164,7 @@ public class Tank extends ProcessEquipmentBaseClass {
   @Override
   public void run() {
     inletStreamMixer.run();
-    SystemInterface thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
+    SystemInterface thermoSystem2 = inletStreamMixer.getOutStream().getThermoSystem().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
     ops.VUflash(thermoSystem2.getVolume(), thermoSystem2.getInternalEnergy());
     System.out.println("Volume " + thermoSystem2.getVolume() + " internalEnergy "
@@ -228,20 +229,25 @@ public class Tank extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt) {
+    if (getCalculateSteadyState()) {
+      run();
+      return;
+    }
+
     inletStreamMixer.run();
 
     System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
     // double inMoles =
-    // inletStreamMixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles();
+    // inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
     // double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
     // double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
     thermoSystem.init(3);
     gasOutStream.getThermoSystem().init(3);
     liquidOutStream.getThermoSystem().init(3);
-    inletStreamMixer.getOutletStream().getThermoSystem().init(3);
+    inletStreamMixer.getOutStream().getThermoSystem().init(3);
     double volume1 = thermoSystem.getVolume();
     System.out.println("volume1 " + volume1);
-    double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
+    double deltaEnergy = inletStreamMixer.getOutStream().getThermoSystem().getEnthalpy()
         - gasOutStream.getThermoSystem().getEnthalpy()
         - liquidOutStream.getThermoSystem().getEnthalpy();
     System.out.println("enthalph delta " + deltaEnergy);
@@ -258,19 +264,26 @@ public class Tank extends ProcessEquipmentBaseClass {
 
     for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
       double dn = 0.0;
-      for (int k = 0; k < inletStreamMixer.getOutletStream().getThermoSystem()
+      for (int k = 0; k < inletStreamMixer.getOutStream().getThermoSystem()
           .getNumberOfPhases(); k++) {
-        dn += inletStreamMixer.getOutletStream().getThermoSystem().getPhase(k).getComponent(i)
+        dn += inletStreamMixer.getOutStream().getThermoSystem().getPhase(k).getComponent(i)
             .getNumberOfMolesInPhase();
       }
       dn = dn - gasOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase()
           - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase();
       System.out.println("dn " + dn);
-      thermoSystem.addComponent(inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0)
+      thermoSystem.addComponent(inletStreamMixer.getOutStream().getThermoSystem().getPhase(0)
           .getComponent(i).getComponentName(), dn * dt);
     }
+    System.out.println("liquid level " + liquidLevel);
+    liquidVolume =
+        getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
+    gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
+        * separatorLength;
+
 
     System.out.println("total moles " + thermoSystem.getTotalNumberOfMoles());
+
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoOps.VUflash(volume1, newEnergy);
 

@@ -38,8 +38,9 @@ public class Hydrocyclone extends Separator {
    * Constructor for Hydrocyclone.
    * </p>
    *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a
+   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *                    object
    */
   @Deprecated
   public Hydrocyclone(StreamInterface inletStream) {
@@ -60,9 +61,10 @@ public class Hydrocyclone extends Separator {
    * Constructor for Hydrocyclone.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param name        a {@link java.lang.String} object
+   * @param inletStream a
+   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *                    object
    */
   public Hydrocyclone(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -83,7 +85,9 @@ public class Hydrocyclone extends Separator {
    * Getter for the field <code>waterOutStream</code>.
    * </p>
    *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getWaterOutStream() {
     return waterOutStream;
@@ -94,7 +98,9 @@ public class Hydrocyclone extends Separator {
    * getOilOutStream.
    * </p>
    *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getOilOutStream() {
     return liquidOutStream;
@@ -151,8 +157,4 @@ public class Hydrocyclone extends Separator {
   public void displayResult() {
     thermoSystem.display("from here " + getName());
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {}
 }

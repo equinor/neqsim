@@ -312,12 +312,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-        run();
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public FlowSystemInterface getPipe() {
         return null;
     }

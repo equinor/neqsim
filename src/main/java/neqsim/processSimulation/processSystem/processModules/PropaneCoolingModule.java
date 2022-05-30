@@ -136,12 +136,6 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-        getOperations().runTransient(dt);
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public void calcDesign() {
         // design is done here
     }

@@ -5,12 +5,15 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.Objects;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -826,10 +829,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {}
-
-  /** {@inheritDoc} */
-  @Override
   public double getIsentropicEfficiency() {
     return isentropicEfficiency;
   }
@@ -1043,26 +1042,18 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.polytropicHeadMeter = polytropicHeadMeter;
   }
 
-  public double getOutletTemperature() {
-    if (useOutTemperature) {
-      return outTemperature;
-    } else {
-      return getThermoSystem().getTemperature();
-    }
-  }
-
-
   /**
    * <p>
    * Getter for the field <code>outTemperature</code>.
    * </p>
    *
-   * @deprecated use {@link #getOutletTemperature()} instead
    * @return a double
    */
-  @Deprecated
   public double getOutTemperature() {
-    return getOutletTemperature();
+    if (useOutTemperature)
+      return outTemperature;
+    else
+      return getThermoSystem().getTemperature();
   }
 
   /**
@@ -1070,25 +1061,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Setter for the field <code>outTemperature</code>.
    * </p>
    *
-   * @deprecated use {@link #setOutletTemperature(double)} instead
    * @param outTemperature a double
    */
-  @Deprecated
   public void setOutTemperature(double outTemperature) {
     useOutTemperature = true;
     this.outTemperature = outTemperature;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>outTemperature</code>.
-   * </p>
-   *
-   * @param outTemperature a double
-   */
-  public void setOutletTemperature(double temperature) {
-    useOutTemperature = true;
-    this.outTemperature = temperature;
   }
 
   /**
@@ -1174,9 +1151,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   /** {@inheritDoc} */
   @Override
-  public double getExergyChange(String unit, double sourrondingTemperature) {
-    return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)
-        - inStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
+  public double getExergyChange(String unit, double surroundingTemperature) {
+    return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
+        - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
   }
 
   /**

@@ -164,10 +164,5 @@ public class GasScrubberSimple extends Separator {
                 thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
         setLiquidCarryoverFraction(Ktot);
         return gasVel;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {
-    }
+      }
 }

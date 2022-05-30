@@ -33,7 +33,7 @@ public class ProcessSystem extends SimulationBaseClass {
     private static final long serialVersionUID = 1000;
 
     transient Thread thisThread;
-    String[][] signalDB = new String[100][100];
+    String[][] signalDB = new String[1000][100];
     private double time = 0;
     private double surroundingTemperature = 288.15;
     private int timeStepNumber = 0;

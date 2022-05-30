@@ -439,30 +439,30 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     this.useRealKappa = useRealKappa;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void plot() {
-    neqsim.dataPresentation.JFreeChart.graph2b graph =
-        new neqsim.dataPresentation.JFreeChart.graph2b(flow, head,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "head vs flow",
-            "flow", "head");
-    graph.setVisible(true);
-    neqsim.dataPresentation.JFreeChart.graph2b graph2 =
-        new neqsim.dataPresentation.JFreeChart.graph2b(flow, polytropicEfficiency,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "eff vs flow",
-            "flow", "eff");
-    graph2.setVisible(true);
-    neqsim.dataPresentation.JFreeChart.graph2b graph3 =
-        new neqsim.dataPresentation.JFreeChart.graph2b(redflow, redhead,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
-            "red head vs red flow", "red flow", "red head");
-    graph3.setVisible(true);
-    neqsim.dataPresentation.JFreeChart.graph2b graph4 =
-        new neqsim.dataPresentation.JFreeChart.graph2b(redflow, polytropicEfficiency,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
-            "red eff vs red dflow", "red flow", "red eff");
-    graph4.setVisible(true);
-  }
+      /** {@inheritDoc} */
+      @Override
+      public void plot() {
+          neqsim.dataPresentation.JFreeChart.graph2b graph =
+                  new neqsim.dataPresentation.JFreeChart.graph2b(flow, head,
+                          Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
+                          "head vs flow", "flow", "head");
+          graph.setVisible(true);
+          neqsim.dataPresentation.JFreeChart.graph2b graph2 =
+                  new neqsim.dataPresentation.JFreeChart.graph2b(flow, polytropicEfficiency,
+                          Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
+                          "eff vs flow", "flow", "eff");
+          graph2.setVisible(true);
+          neqsim.dataPresentation.JFreeChart.graph2b graph3 =
+                  new neqsim.dataPresentation.JFreeChart.graph2b(redflow, redhead,
+                          Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
+                          "red head vs red flow", "red flow", "red head");
+          graph3.setVisible(true);
+          neqsim.dataPresentation.JFreeChart.graph2b graph4 =
+                  new neqsim.dataPresentation.JFreeChart.graph2b(redflow, polytropicEfficiency,
+                          Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
+                          "red eff vs red dflow", "red flow", "red eff");
+          graph4.setVisible(true);
+      }
 
   /** {@inheritDoc} */
   @Override
@@ -485,7 +485,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     // reducedFlowFitter,reducedHeadFitter,reducedPolytropicEfficiencyFitter )
     return result;
   }
-
+  
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {

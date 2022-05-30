@@ -108,10 +108,6 @@ public class VLSolidTray extends SimpleTray {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {}
-
-    /** {@inheritDoc} */
-    @Override
     public StreamInterface getGasOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
     }

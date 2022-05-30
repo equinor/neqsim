@@ -203,10 +203,6 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     getOutStream().displayResult();
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {}
-
   /**
    * <p>
    * Getter for the field <code>energyInput</code>.
@@ -326,7 +322,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getExergyChange(String unit, double sourrondingTemperature) {
+  public double getExergyChange(String unit, double surroundingTemperature) {
     double entrop = 0.0;
 
     inStream.run();
@@ -334,8 +330,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     outStream.run();
     outStream.getFluid().init(3);
 
-    entrop += outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)
-        - inStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
+    entrop += outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
+        - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
 
     return entrop;
   }

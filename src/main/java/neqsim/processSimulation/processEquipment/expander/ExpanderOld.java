@@ -121,6 +121,8 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
     outStream.setThermoSystem(thermoSystem);
   }
 
+
+
   /** {@inheritDoc} */
   @Override
   public void displayResult() {
@@ -217,8 +219,4 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
     dialog.pack();
     dialog.setVisible(true);
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {}
 }

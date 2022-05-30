@@ -165,141 +165,83 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void testDisplayResult() {}
-
-  @Test
-  void testGetAllUnitNames() {
-
-  }
-
-  @Test
-  void testGetConditionMonitor() {
-
-  }
-
-  @Test
-  void testGetCoolerDuty() {
-
-  }
-
-  @Test
-  void testGetCostEstimator() {
-
-  }
-
-  @Test
-  void testGetEntropyProduction() {
-
-  }
-
-  @Test
-  void testGetExergyChange() {
-
-  }
-
-  @Test
-  void testGetHeaterDuty() {
-
-  }
-
-  @Test
-  void testGetMeasurementDevice() {
-
-  }
-
-  @Test
-  void testGetMechanicalWeight() {
-
-  }
-
-  @Test
-  void testGetPower() {
-
-  }
-
-  @Test
-  void testGetSurroundingTemperature() {
-
-  }
-
-  @Test
-  void testGetSystemMechanicalDesign() {
-
-  }
-
-  @Test
-  void testGetUnit() {
-
-  }
-
-  @Test
-  void testGetUnitOperations() {
-
-  }
-
-  @Test
-  void testOpen() {
-
-  }
-
-  @Test
-  void testPrintLogFile() {
-
-  }
-
-  @Test
-  void testReplaceObject() {
-
-  }
-
-  @Test
-  void testReportMeasuredValues() {
-
-  }
-
-  @Test
-  void testReportResults() {
-
-  }
-
-  @Test
-  void testRun() {
-
-  }
-
-  @Test
-  void testRunAsThread() {
-
-  }
-
-  @Test
-  void testSave() {
-
-  }
-
-  @Test
-  void testSetFluid() {
-
-  }
-
-  @Test
-  void testSetName() {}
-
-  @Test
-  void testSetSystemMechanicalDesign() {
-
-  }
-
-  @Test
-  void testSize() {
-
-  }
-
-  @Test
-  void testView() {}
-
-  @Test
   public void runTEGProcessTest() {
+    neqsim.thermo.system.SystemInterface feedGas =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    feedGas.addComponent("nitrogen", 1.42);
+    feedGas.addComponent("CO2", 0.5339);
+    feedGas.addComponent("methane", 95.2412);
+    feedGas.addComponent("ethane", 2.2029);
+    feedGas.addComponent("propane", 0.3231);
+    feedGas.addComponent("i-butane", 0.1341);
+    feedGas.addComponent("n-butane", 0.0827);
+    feedGas.addComponent("i-pentane", 0.0679);
+    feedGas.addComponent("n-pentane", 0.035);
+    feedGas.addComponent("n-hexane", 0.0176);
+    feedGas.addComponent("benzene", 0.0017);
+    feedGas.addComponent("toluene", 0.0043);
+    feedGas.addComponent("m-Xylene", 0.0031);
+    feedGas.addComponent("water", 0.0);
+    feedGas.addComponent("TEG", 0);
+    feedGas.setMixingRule(10);
+    feedGas.setMultiPhaseCheck(true);
+
+    Stream dryFeedGas = new Stream("dry feed gas", feedGas);
+    dryFeedGas.setFlowRate(25.32, "MSm3/day");
+    dryFeedGas.setTemperature(25.0, "C");
+    dryFeedGas.setPressure(87.12, "bara");
+
+    StreamSaturatorUtil saturatedFeedGas = new StreamSaturatorUtil("water saturator", dryFeedGas);
+
+    Stream waterSaturatedFeedGas =
+        new Stream("water saturated feed gas", saturatedFeedGas.getOutStream());
+
+    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser =
+        new HydrateEquilibriumTemperatureAnalyser(waterSaturatedFeedGas);
+    hydrateTAnalyser.setName("hydrate temperature analyser");
+
+    neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
+    feedTEG.setMolarComposition(
+        new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97});
+
+    Heater feedTPsetterToAbsorber = new Heater("TP of gas to absorber", waterSaturatedFeedGas);
+    feedTPsetterToAbsorber.setOutPressure(87.12, "bara");
+    feedTPsetterToAbsorber.setOutTemperature(27.93, "C");
+
+    Stream feedToAbsorber =
+        new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutStream());
+
+    Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
+    TEGFeed.setFlowRate(14.68 * 1100.0, "kg/hr");
+    TEGFeed.setTemperature(43.4, "C");
+    TEGFeed.setPressure(87.12, "bara");
+
+    SimpleTEGAbsorber absorber = new SimpleTEGAbsorber("TEG absorber");
+    absorber.addGasInStream(feedToAbsorber);
+    absorber.addSolventInStream(TEGFeed);
+    absorber.setNumberOfStages(5);
+    absorber.setStageEfficiency(0.5);
+
+    Stream dehydratedGas = new Stream("dry gas from absorber", absorber.getGasOutStream());
+
+    Stream richTEG = new Stream("rich TEG from absorber", absorber.getSolventOutStream());
+    /*
+     * WaterDewPointAnalyser waterDewPointAnalyser = new WaterDewPointAnalyser(dehydratedGas);
+     * waterDewPointAnalyser.setName("water dew point analyser");
+     */
+    HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser =
+        new HydrateEquilibriumTemperatureAnalyser(dehydratedGas);
+    waterDewPointAnalyser.setReferencePressure(70.0);
+    waterDewPointAnalyser.setName("water dew point analyser");
+
+    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
+    glycol_flash_valve.setOutletPressure(5.5);
+
+    Heater richGLycolHeaterCondenser =
+        new Heater("rich TEG preheater", glycol_flash_valve.getOutStream());
+
+    @Test
+
     neqsim.thermo.system.SystemInterface feedGas =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 1.42);

@@ -247,14 +247,6 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     outStream[1].displayResult();
   }
 
-  /**
-   * <p>
-   * runTransient.
-   * </p>
-   */
-  @Override
-  public void runTransient(double dt) {}
-
   /** {@inheritDoc} */
   @Override
   public void setAproachToEquilibrium(double eff) {

@@ -157,7 +157,7 @@ public class ThreePhaseSeparator extends Separator {
   @Override
   public void run() {
     inletStreamMixer.run();
-    thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
+    thermoSystem = inletStreamMixer.getOutStream().getThermoSystem().clone();
 
     thermoSystem.setMultiPhaseCheck(true);
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -237,10 +237,6 @@ public class ThreePhaseSeparator extends Separator {
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {}
-
-  /** {@inheritDoc} */
-  @Override
   public double getEntropyProduction(String unit) {
     double entrop = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
@@ -258,18 +254,18 @@ public class ThreePhaseSeparator extends Separator {
 
   /** {@inheritDoc} */
   @Override
-  public double getExergyChange(String unit, double sourrondingTemperature) {
+  public double getExergyChange(String unit, double surroundingTemperature) {
     double entrop = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
       inletStreamMixer.getStream(i).getFluid().init(3);
-      entrop += inletStreamMixer.getStream(i).getFluid().getExergy(sourrondingTemperature, unit);
+      entrop += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
     }
     getWaterOutStream().getThermoSystem().init(3);
     getOilOutStream().getThermoSystem().init(3);
     getGasOutStream().getThermoSystem().init(3);
 
-    return getWaterOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)
+    return getWaterOutStream().getThermoSystem().getExergy(surroundingTemperature, unit)
         + getOilOutStream().getThermoSystem().getEntropy(unit)
-        + getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit) - entrop;
+        + getGasOutStream().getThermoSystem().getExergy(surroundingTemperature, unit) - entrop;
   }
 }

@@ -112,11 +112,6 @@ public class SimpleTPoutPipeline extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public FlowSystemInterface getPipe() {
         return null;
     }
