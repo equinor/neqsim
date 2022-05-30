@@ -3,7 +3,6 @@ package neqsim.processSimulation.processEquipment.util;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.Conductivity;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
