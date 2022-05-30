@@ -37,20 +37,20 @@ public class simpleTopSideProcess {
         Mixer mixerHP = new neqsim.processSimulation.processEquipment.mixer.StaticMixer("Mixer HP");
         mixerHP.addStream(stream_1);
 
-        Separator separator = new Separator("Separator 1", mixerHP.getOutStream());
+        Separator separator = new Separator("Separator 1", mixerHP.getOutletStream());
 
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", separator.getLiquidOutStream());
         LP_valve.setOutletPressure(5.0);
 
-        Separator LPseparator = new Separator("Separator 1", LP_valve.getOutStream());
+        Separator LPseparator = new Separator("Separator 1", LP_valve.getOutletStream());
 
         Compressor LPcompressor = new Compressor("LPcompressor", LPseparator.getGasOutStream());
         LPcompressor.setOutletPressure(50.0);
 
-        Heater heaterLP = new Heater("heaterLP", LPcompressor.getOutStream());
+        Heater heaterLP = new Heater("heaterLP", LPcompressor.getOutletStream());
         heaterLP.setOutTemperature(270.25);
 
-        Stream stream_2 = new Stream("cooled gas", heaterLP.getOutStream());
+        Stream stream_2 = new Stream("cooled gas", heaterLP.getOutletStream());
 
         GasScrubberSimple gasScrubber = new GasScrubberSimple("Scrubber", stream_2);
 

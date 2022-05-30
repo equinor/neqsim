@@ -61,7 +61,7 @@ public class TestNeqsim {
         compressor1.setOutletPressure(26.590909);// (20+5*i)
         compressor1.setUsePolytropicCalc(true);
         compressor1.setPolytropicEfficiency(0.64951);
-        Stream stream2 = new Stream("stream2", compressor1.getOutStream());
+        Stream stream2 = new Stream("stream2", compressor1.getOutletStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -90,7 +90,7 @@ public class TestNeqsim {
                 + stream1.getThermoSystem().getPhase(0).getSoundSpeed());
 
         compressor1.solveEfficiency(390.15);
-        compressor1.getOutStream().displayResult();
+        compressor1.getOutletStream().displayResult();
         System.out.println("Hvap " + stream1.getThermoSystem().getHeatOfVaporization() + " POLI "
                 + compressor1.getPolytropicEfficiency() + " dentity "
                 + stream1.getThermoSystem().getDensity() + " cp "
@@ -112,21 +112,23 @@ public class TestNeqsim {
         double GVF = volFlowGas / (volFlowGas + volFlowOil + volFlowLiq);
         System.out.println("inlet stream -  GMF " + GMF + "  GVF " + GVF + " Z IN "
                 + stream1.getThermoSystem().getZ() + " Z OUT "
-                + compressor1.getOutStream().getThermoSystem().getZ());
+            + compressor1.getOutletStream().getThermoSystem().getZ());
         /*
-         * temperature[i] = compressor1.getOutStream().getTemperature(); work [i] =
+         * temperature[i] = compressor1.getOutletStream().getTemperature(); work [i] =
          * compressor1.getTotalWork();
          * 
-         * Cp_Vapour [i] = compressor1.getOutStream().getThermoSystem().getPhase(0).getCp();
-         * Cp_liquid [i] = compressor1.getOutStream().getThermoSystem().getPhase(1).getCp(); Cp [i]
-         * = compressor1.getOutStream().getThermoSystem().getPhase(0).getBeta() * Cp_Vapour [i] +
-         * compressor1.getOutStream().getThermoSystem().getPhase(1).getBeta()* Cp_liquid [i];
+         * Cp_Vapour [i] = compressor1.getOutletStream().getThermoSystem().getPhase(0).getCp();
+         * Cp_liquid [i] = compressor1.getOutletStream().getThermoSystem().getPhase(1).getCp(); Cp
+         * [i] = compressor1.getOutletStream().getThermoSystem().getPhase(0).getBeta() * Cp_Vapour
+         * [i] + compressor1.getOutletStream().getThermoSystem().getPhase(1).getBeta()* Cp_liquid
+         * [i];
          * 
          * Density_Vapour [i] =
-         * compressor1.getOutStream().getThermoSystem().getPhase(0).getDensity(); Density_liquid [i]
-         * = compressor1.getOutStream().getThermoSystem().getPhase(1).getDensity(); Density [i] =
-         * compressor1.getOutStream().getThermoSystem().getWtFraction(0) * Density_Vapour [i] +
-         * compressor1.getOutStream().getThermoSystem().getWtFraction(1)* Density_liquid [i];
+         * compressor1.getOutletStream().getThermoSystem().getPhase(0).getDensity(); Density_liquid
+         * [i] = compressor1.getOutletStream().getThermoSystem().getPhase(1).getDensity(); Density
+         * [i] = compressor1.getOutletStream().getThermoSystem().getWtFraction(0) * Density_Vapour
+         * [i] + compressor1.getOutletStream().getThermoSystem().getWtFraction(1)* Density_liquid
+         * [i];
          */
         // }
 

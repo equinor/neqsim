@@ -55,7 +55,7 @@ public class SubseaWell extends TwoPortEquipment {
     @Override
     public void run() {
         pipeline.run();
-        getOutStream().setFluid(pipeline.getOutStream().getFluid());
+        getOutletStream().setFluid(pipeline.getOutStream().getFluid());
 
         /*
          * System.out.println("stary P " ); SystemInterface fluidIn = (inStream.getFluid()).clone();
@@ -172,30 +172,5 @@ public class SubseaWell extends TwoPortEquipment {
             System.out.println("time " + res.get(i)[0] + " oil production " + res.get(i)[1]
                     + " total production MSm3 oe " + res.get(i)[2]);
         }
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>outStream</code>.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    @Deprecated
-    public StreamInterface getOutStream() {
-        return outStream;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>outStream</code>.
-     * </p>
-     *
-     * @param outStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    @Deprecated
-    public void setOutStream(StreamInterface outStream) {
-        this.outStream = outStream;
-    }
+      }
 }

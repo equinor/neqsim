@@ -135,7 +135,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   @Override
   public void setOutletPressure(double pressure) {
     this.pressure = pressure;
-    getOutStream().getThermoSystem().setPressure(pressure, pressureUnit);
+    getOutletStream().getThermoSystem().setPressure(pressure, pressureUnit);
   }
 
   /**
@@ -149,13 +149,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   public void setOutletPressure(double pressure, String unit) {
     pressureUnit = unit;
     this.pressure = pressure;
-    getOutStream().getThermoSystem().setPressure(pressure, pressureUnit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public StreamInterface getOutStream() {
-    return outStream;
+    getOutletStream().getThermoSystem().setPressure(pressure, pressureUnit);
   }
 
   /** {@inheritDoc} */

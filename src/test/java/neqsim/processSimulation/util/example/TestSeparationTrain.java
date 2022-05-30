@@ -88,7 +88,7 @@ public class TestSeparationTrain {
 
         Mixer HPgasMixer = new Mixer();
         HPgasMixer.addStream(inletSeparator.getGasOutStream());
-        HPgasMixer.addStream(secondStageCompressor.getOutStream());
+        HPgasMixer.addStream(secondStageCompressor.getOutletStream());
 
         Cooler oilCooler = new Cooler("oilCooler", thirdStageSeparator.getLiquidOutStream());
         oilCooler.setOutTemperature(273.15 + 30.0);
@@ -103,7 +103,7 @@ public class TestSeparationTrain {
         double tolerance = 1e-10;
         HPliquidRecycle.setTolerance(tolerance);
         HPliquidRecycle.addStream(gasInletScrubber.getLiquidOutStream());
-        inletSeparator.addStream(HPliquidRecycle.getOutStream());
+        inletSeparator.addStream(HPliquidRecycle.getOutletStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();
