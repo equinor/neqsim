@@ -143,7 +143,7 @@ public class GORfitter extends TwoPortEquipment {
         SystemInterface tempFluid = inStream.getThermoSystem().clone();
 		double flow = tempFluid.getFlowRate("kg/sec");
 		if(flow<1e-6) {
-		  outletStream.setThermoSystem(tempFluid);
+          outStream.setThermoSystem(tempFluid);
 		  return;
 		}
 		if(GOR==0 && tempFluid.hasPhaseType("gas")) {
@@ -154,7 +154,7 @@ public class GORfitter extends TwoPortEquipment {
 	        } catch (Exception e) {
 	            e.printStackTrace();
 	        }
-	        outletStream.setThermoSystem(tempFluid);
+            outStream.setThermoSystem(tempFluid);
 	        return;
 		}
 		if (!getReferenceConditions().equals("actual")) {
