@@ -116,7 +116,7 @@ public class OffshoreProcess3 {
         SetPoint compressorPresSet2 =
                 new SetPoint("comp pres LP set", lpcompressor, "pressure", valve2.getOutletStream());
 
-        Cooler lpgasheater = new Cooler("1st stage gas cooler", lpcompressor.getOutStream());
+        Cooler lpgasheater = new Cooler("1st stage gas cooler", lpcompressor.getOutletStream());
         lpgasheater.setOutTemperature(35.0, "C");
 
         neqsim.thermo.system.SystemInterface coolingWaterSYstm = fluid3.clone();
@@ -137,7 +137,7 @@ public class OffshoreProcess3 {
          */
 
         Cooler lpHeatExchanger =
-                new Cooler("1st stage gas heat exchanger", lpcompressor.getOutStream());
+            new Cooler("1st stage gas heat exchanger", lpcompressor.getOutletStream());
         lpgasheater.setOutTemperature(35.0, "C");
 
         Separator lpscrubber = new Separator("2nd stage scrubber", lpgasheater.getOutletStream());
@@ -160,7 +160,7 @@ public class OffshoreProcess3 {
                 new SetPoint("comp pres set", compressor2stage, "pressure", inletSeparator);
 
         Heater secondndstagecooler =
-                new Heater("2nd stage cooler", compressor2stage.getOutStream());
+            new Heater("2nd stage cooler", compressor2stage.getOutletStream());
         secondndstagecooler.setOutTemperature(290.0);
 
         Separator scrubbberfrom2ndstage =
@@ -194,7 +194,8 @@ public class OffshoreProcess3 {
         exportGasCompressor.setIsentropicEfficiency(0.75);
         exportGasCompressor.setOutletPressure(richGas.getPressure() * 2.5);
 
-        Cooler exportGasCompressorCooler = new Cooler("1st stage export gas cooler",exportGasCompressor.getOutStream());
+        Cooler exportGasCompressorCooler =
+            new Cooler("1st stage export gas cooler", exportGasCompressor.getOutletStream());
         exportGasCompressorCooler.setOutTemperature(35.0, "C");
 
         Compressor exportGasCompressor2 = new Compressor("2nd stage export compressor",exportGasCompressorCooler.getOutStream());
@@ -202,7 +203,8 @@ public class OffshoreProcess3 {
         exportGasCompressor2.setOutletPressure(
                 exportGasCompressorCooler.getOutletStream().getPressure() * 2.5 * 2.5);
 
-        Cooler exportGasCompressorCooler2 = new Cooler("2nd stage export gas cooler",exportGasCompressor2.getOutStream());
+        Cooler exportGasCompressorCooler2 =
+            new Cooler("2nd stage export gas cooler", exportGasCompressor2.getOutletStream());
         exportGasCompressorCooler2.setOutTemperature(35.0, "C");
 
         Stream exportGas = new Stream("export gas",exportGasCompressorCooler2.getOutStream());

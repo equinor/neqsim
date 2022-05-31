@@ -70,7 +70,7 @@ public class TestSeparationTrain {
         thirdStageCompressor.setOutletPressure(secondstagePressure);
 
         Mixer thirdStageMixer = new Mixer();
-        thirdStageMixer.addStream(thirdStageCompressor.getOutStream());
+        thirdStageMixer.addStream(thirdStageCompressor.getOutletStream());
         thirdStageMixer.addStream(secondStageSeparator.getGasOutStream());
 
         Cooler thirdSstageCoooler =
