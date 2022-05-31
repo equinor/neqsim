@@ -64,7 +64,7 @@ public class Expander extends Compressor implements ExpanderInterface {
     @Override
     public void run() {
         // System.out.println("expander running..");
-        thermoSystem = inletStream.getThermoSystem().clone();
+        thermoSystem = inStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoSystem.init(3);

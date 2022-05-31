@@ -108,7 +108,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
         thirdStageCompressor.setOutletPressure(secondstagePressure);
 
         Cooler thirdSstageCoooler =
-                new Cooler("3rd stage cooler", thirdStageCompressor.getOutStream());
+            new Cooler("3rd stage cooler", thirdStageCompressor.getOutletStream());
         thirdSstageCoooler.setOutTemperature(firstStageCompressorAfterCoolerTemperature);
 
         Mixer thirdStageMixer = new Mixer("1st and 2nd stage gas mixer");
@@ -125,7 +125,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
 
         Mixer HPgasMixer = new Mixer("HPgas mixer");
         HPgasMixer.addStream(firstStageSeparator.getGasOutStream());
-        HPgasMixer.addStream(secondStageCompressor.getOutStream());
+        HPgasMixer.addStream(secondStageCompressor.getOutletStream());
         HPgasMixer.addStream(inletSeparator.getGasOutStream());
 
         Cooler inletGasCooler = new Cooler("HP gas cooler", HPgasMixer.getOutStream());

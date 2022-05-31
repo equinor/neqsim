@@ -56,7 +56,7 @@ public class propaneCoolingCycle {
         compressor1.setSpecification("out stream");
         compressor1.setOutletPressure(stream_1.getPressure());
 
-        Heater heater = new Heater("heater", compressor1.getOutStream());
+        Heater heater = new Heater("heater", compressor1.getOutletStream());
         heater.setPressureDrop(0.07);
         heater.setSpecification("out stream");
         heater.setOutStream(stream_1);
