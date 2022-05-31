@@ -119,7 +119,7 @@ public class CompressorChartTest {
   public void test_Run() {
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
-    Stream stream_1 = (Stream) comp1.getOutletStream();
+    Stream stream_1 = (Stream) comp1.getInletStream();
     operations.add(stream_1);
     operations.add(comp1);
     operations.run();
