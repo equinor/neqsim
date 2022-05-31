@@ -284,7 +284,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     /** {@inheritDoc} */
     @Override
     public double getFlowRate(String unit) {
-        return getFluid().getFlowRate(unit);
+        return this.getFluid().getFlowRate(unit);
     }
 
     /** {@inheritDoc} */
