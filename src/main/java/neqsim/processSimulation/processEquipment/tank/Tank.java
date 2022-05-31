@@ -164,7 +164,7 @@ public class Tank extends ProcessEquipmentBaseClass {
   @Override
   public void run() {
     inletStreamMixer.run();
-    SystemInterface thermoSystem2 = inletStreamMixer.getOutStream().getThermoSystem().clone();
+    SystemInterface thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
     ops.VUflash(thermoSystem2.getVolume(), thermoSystem2.getInternalEnergy());
     System.out.println("Volume " + thermoSystem2.getVolume() + " internalEnergy "
