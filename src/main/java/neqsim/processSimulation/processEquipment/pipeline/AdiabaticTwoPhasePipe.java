@@ -93,12 +93,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         return outStream.getThermoSystem();
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getOutStream() {
-        return outStream;
-    }
-
     /**
      * <p>
      * setOutTemperature.

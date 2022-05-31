@@ -100,13 +100,6 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
 
   /** {@inheritDoc} */
   @Override
-  @Deprecated
-  public StreamInterface getOutStream() {
-    return outStream;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void run() {
     System.out.println("expander running..");
     thermoSystem = inStream.getThermoSystem().clone();
