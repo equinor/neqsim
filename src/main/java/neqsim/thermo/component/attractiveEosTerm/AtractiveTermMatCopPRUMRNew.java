@@ -31,12 +31,12 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     }
 
     // add MC parameters manually
-    if (component.getName().equals("ethane...")) {
-      parameters[0] = 0.0;
-      parameters[1] = 0.0;
-      parameters[2] = 0.0;
-      parameters[3] = 0.0;
-      parameters[4] = 0.0;
+    if (component.getName().equals("ethane")) {
+      parameters[0] = 0.498809;
+      parameters[1] = 0.115568;
+      parameters[2] = -0.040775;
+      parameters[3] = -0.057788;
+      parameters[4] = 0.017702;
     }
     if (component.getName().equals("water")) {
       parameters[0] = 0.91256735118818810000000000;
@@ -52,6 +52,14 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
       parameters[2] = 0;
       parameters[3] = 0.0;
       parameters[4] = 0.0;
+    }
+
+    if (component.getName().equals("methane")) {
+      parameters[0] = 0.386575	;
+      parameters[1] = 0.016011;
+      parameters[2] = -0.017371;
+      parameters[3] = 0.011761;
+      parameters[4] = 0.020786;
     }
   }
 
