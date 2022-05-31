@@ -26,7 +26,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
      * Constructor for SimpleFlowLine.
      * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
     @Deprecated
@@ -35,6 +35,13 @@ public class SimpleFlowLine extends TwoPortEquipment {
 
     }
 
+    /**
+     * Constructor for SimpleFlowLine.
+     * 
+     * @param name Name of SimpleFlowLine object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public SimpleFlowLine(String name, StreamInterface inStream) {
         super(name);
         this.inStream = inStream;
