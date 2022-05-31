@@ -1,7 +1,7 @@
 package neqsim.processSimulation.processEquipment.subsea;
 
 import java.util.ArrayList;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.reservoir.SimpleReservoir;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -17,11 +17,9 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  * @author asmund
  * @version $Id: $Id
  */
-public class SubseaWell extends ProcessEquipmentBaseClass {
+public class SubseaWell extends TwoPortEquipment {
     private static final long serialVersionUID = 1000;
 
-    protected StreamInterface inStream;
-    private StreamInterface outStream;
     public double height = 1000.0, length = 1200.0;
     AdiabaticTwoPhasePipe pipeline;
 
@@ -33,10 +31,11 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
      * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
+    @Deprecated
     public SubseaWell(StreamInterface instream) {
         super("SubseaWell");
         this.inStream = instream;
-        setOutStream(instream.clone());
+        setOutletStream(instream.clone());
         pipeline = new AdiabaticTwoPhasePipe("pipeline", instream);
     }
 
@@ -56,7 +55,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
     @Override
     public void run() {
         pipeline.run();
-        getOutStream().setFluid(pipeline.getOutStream().getFluid());
+        getOutletStream().setFluid(pipeline.getOutStream().getFluid());
 
         /*
          * System.out.println("stary P " ); SystemInterface fluidIn = (inStream.getFluid()).clone();
@@ -126,7 +125,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         ThrottlingValve subseaChoke = new ThrottlingValve("subseaChoke", well1.getOutStream());
         subseaChoke.setOutletPressure(90.0);
         subseaChoke.setAcceptNegativeDP(false);
-        SimpleFlowLine flowLine = new SimpleFlowLine(subseaChoke.getOutStream());
+        SimpleFlowLine flowLine = new SimpleFlowLine("flowLine", subseaChoke.getOutStream());
         flowLine.getPipeline().setDiameter(0.4);
         flowLine.getPipeline().setLength(2000.0);
         flowLine.getPipeline().setInletElevation(-100.0);
@@ -163,7 +162,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
 
         ProcessSystem GasOilProcess = ProcessSystem.open("c:/temp/offshorePro.neqsim");
         ((StreamInterface) GasOilProcess.getUnit("well stream"))
-                .setThermoSystem(topsideChoke.getOutStream().getFluid());
+            .setThermoSystem(topsideChoke.getOutStream().getFluid());
         ((StreamInterface) GasOilProcess.getUnit("well stream")).setPressure(70.0, "bara");
         ((StreamInterface) GasOilProcess.getUnit("well stream")).setTemperature(65.0, "C");
         GasOilProcess.run();
@@ -173,28 +172,5 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
             System.out.println("time " + res.get(i)[0] + " oil production " + res.get(i)[1]
                     + " total production MSm3 oe " + res.get(i)[2]);
         }
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>outStream</code>.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    public StreamInterface getOutStream() {
-        return outStream;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>outStream</code>.
-     * </p>
-     *
-     * @param outStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public void setOutStream(StreamInterface outStream) {
-        this.outStream = outStream;
-    }
+      }
 }

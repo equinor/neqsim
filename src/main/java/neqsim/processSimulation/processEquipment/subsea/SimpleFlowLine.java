@@ -1,6 +1,6 @@
 package neqsim.processSimulation.processEquipment.subsea;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -13,11 +13,9 @@ import neqsim.thermo.system.SystemInterface;
  * @author asmund
  * @version $Id: $Id
  */
-public class SimpleFlowLine extends ProcessEquipmentBaseClass {
+public class SimpleFlowLine extends TwoPortEquipment {
     private static final long serialVersionUID = 1000;
 
-    protected StreamInterface inStream;
-    private StreamInterface outStream;
     private double height = 100.0;
     public double length = 520.0;
     double outletTemperature = 313.15;
@@ -28,14 +26,20 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
      * Constructor for SimpleFlowLine.
      * </p>
      *
-     * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
-    public SimpleFlowLine(StreamInterface instream) {
-        super("SimpleFlowLine");
-        this.inStream = instream;
-        setOutStream(instream.clone());
-        pipeline = new AdiabaticTwoPhasePipe("pipeline", instream);
+    @Deprecated
+    public SimpleFlowLine(StreamInterface inStream) {
+        this("SimpleFlowLine", inStream);
+
+    }
+
+    public SimpleFlowLine(String name, StreamInterface inStream) {
+        super(name);
+        this.inStream = inStream;
+        setOutletStream(inStream.clone());
+        pipeline = new AdiabaticTwoPhasePipe("pipeline", inStream);
     }
 
     /**
@@ -53,14 +57,14 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
-        return getOutStream().getThermoSystem();
+      return getOutletStream().getThermoSystem();
     }
 
     /** {@inheritDoc} */
     @Override
     public void run() {
         pipeline.run();
-        getOutStream().setFluid(pipeline.getOutStream().getFluid());
+        getOutletStream().setFluid(pipeline.getOutStream().getFluid());
 
         /*
          * System.out.println("stary P " );
@@ -79,31 +83,8 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
          * 
          * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn); ops.TPflash();
          * 
-         * getOutStream().setFluid(fluidIn);
+         * getOutletStream().setFluid(fluidIn);
          */
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>outStream</code>.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    public StreamInterface getOutStream() {
-        return outStream;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>outStream</code>.
-     * </p>
-     *
-     * @param outStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public void setOutStream(StreamInterface outStream) {
-        this.outStream = outStream;
     }
 
     /**
