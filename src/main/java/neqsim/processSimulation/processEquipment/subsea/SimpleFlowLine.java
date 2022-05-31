@@ -71,7 +71,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
     @Override
     public void run() {
         pipeline.run();
-        getOutletStream().setFluid(pipeline.getOutStream().getFluid());
+        getOutletStream().setFluid(pipeline.getOutletStream().getFluid());
 
         /*
          * System.out.println("stary P " );

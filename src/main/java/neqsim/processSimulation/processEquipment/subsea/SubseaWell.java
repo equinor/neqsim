@@ -55,7 +55,7 @@ public class SubseaWell extends TwoPortEquipment {
     @Override
     public void run() {
         pipeline.run();
-        getOutletStream().setFluid(pipeline.getOutStream().getFluid());
+        getOutletStream().setFluid(pipeline.getOutletStream().getFluid());
 
         /*
          * System.out.println("stary P " ); SystemInterface fluidIn = (inStream.getFluid()).clone();
@@ -122,7 +122,7 @@ public class SubseaWell extends TwoPortEquipment {
         well1.getPipeline().setLength(5500.0);
         well1.getPipeline().setInletElevation(-1000.0);
         well1.getPipeline().setOutletElevation(-100.0);
-        ThrottlingValve subseaChoke = new ThrottlingValve("subseaChoke", well1.getOutStream());
+        ThrottlingValve subseaChoke = new ThrottlingValve("subseaChoke", well1.getOutletStream());
         subseaChoke.setOutletPressure(90.0);
         subseaChoke.setAcceptNegativeDP(false);
         SimpleFlowLine flowLine = new SimpleFlowLine("flowLine", subseaChoke.getOutStream());
@@ -130,13 +130,14 @@ public class SubseaWell extends TwoPortEquipment {
         flowLine.getPipeline().setLength(2000.0);
         flowLine.getPipeline().setInletElevation(-100.0);
         // flowLine.set
-        ThrottlingValve topsideChoke = new ThrottlingValve("topsideChoke", flowLine.getOutStream());
+        ThrottlingValve topsideChoke =
+            new ThrottlingValve("topsideChoke", flowLine.getOutletStream());
         topsideChoke.setOutletPressure(50.0, "bara");
         topsideChoke.setAcceptNegativeDP(false);
 
         Adjuster adjust = new Adjuster("adjust");
         adjust.setActivateWhenLess(true);
-        adjust.setTargetVariable(flowLine.getOutStream(), "pressure", 70.0, "bara");
+        adjust.setTargetVariable(flowLine.getOutletStream(), "pressure", 70.0, "bara");
         adjust.setAdjustedVariable(producedOilStream, "flow rate");
 
         ProcessSystem ops = new ProcessSystem();
