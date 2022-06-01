@@ -684,7 +684,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
             testPipe.run();
             System.out.println("oil flow " + producedOilStream.getFlowRate("kg/hr") + " pressure "
                     + producedOilStream.getPressure("bara") + " pipe out pres "
-                    + testPipe.getOutStream().getFluid().getPressure());
+                + testPipe.getOutletStream().getFluid().getPressure());
         }
     }
 

@@ -293,7 +293,7 @@ public class OnshoreProcess1 {
 
             // // Land plant
             ThreePhaseSeparator slugCatcher =
-                    new ThreePhaseSeparator("slugCatcher", pipeLine1.getOutStream());
+                new ThreePhaseSeparator("slugCatcher", pipeLine1.getOutletStream());
 
             VolumeFlowTransmitter volumeTransmitter2 =
                     new VolumeFlowTransmitter(slugCatcher.getOilOutStream());
