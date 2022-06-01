@@ -26,6 +26,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   ProcessSystem p;
   String _name = "TestProcess";
 
+
   @BeforeEach
   public void setUp() {
     p = new ProcessSystem();
@@ -110,7 +111,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(0, p.size());
   }
 
+
   @Test
+  @SuppressWarnings("deprecation")
   public void testAddUnitsWithNoName() {
     Separator sep = new Separator();
     p.add(sep);
@@ -163,6 +166,145 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(p.equals(sys2));
     Assertions.assertEquals(p, sys2);
   }
+
+  @Test
+  void testDisplayResult() {}
+
+  @Test
+  void testGetAllUnitNames() {
+
+  }
+
+  @Test
+  void testGetConditionMonitor() {
+
+  }
+
+  @Test
+  void testGetCoolerDuty() {
+
+  }
+
+  @Test
+  void testGetCostEstimator() {
+
+  }
+
+  @Test
+  void testGetEntropyProduction() {
+
+  }
+
+  @Test
+  void testGetExergyChange() {
+
+  }
+
+  @Test
+  void testGetHeaterDuty() {
+
+  }
+
+  @Test
+  void testGetMeasurementDevice() {
+
+  }
+
+  @Test
+  void testGetMechanicalWeight() {
+
+  }
+
+
+
+  @Test
+  void testGetPower() {
+
+  }
+
+  @Test
+  void testGetSurroundingTemperature() {
+
+  }
+
+  @Test
+  void testGetSystemMechanicalDesign() {
+
+  }
+
+  @Test
+  void testGetUnit() {
+
+  }
+
+
+  @Test
+  void testGetUnitOperations() {
+
+  }
+
+
+  @Test
+  void testOpen() {
+
+  }
+
+  @Test
+  void testPrintLogFile() {
+
+  }
+
+
+  @Test
+  void testReplaceObject() {
+
+  }
+
+  @Test
+  void testReportMeasuredValues() {
+
+  }
+
+  @Test
+  void testReportResults() {
+
+  }
+
+  @Test
+  void testRun() {
+
+  }
+
+  @Test
+  void testRunAsThread() {
+
+  }
+
+  @Test
+  void testSave() {
+
+  }
+
+  @Test
+  void testSetFluid() {
+
+  }
+
+  @Test
+  void testSetName() {}
+
+  @Test
+  void testSetSystemMechanicalDesign() {
+
+  }
+
+  @Test
+  void testSize() {
+
+  }
+
+  @Test
+  void testView() {}
 
   @Test
   public void runTEGProcessTest() {
