@@ -254,7 +254,7 @@ public class TEGdehydrationProcessDistillationGFA {
         Filter filter = new Filter("filters", flashLiquid);
 
         HeatExchanger heatEx =
-                new HeatExchanger("rich TEG heat exchanger 2", filter.getOutStream());
+            new HeatExchanger("rich TEG heat exchanger 2", filter.getOutletStream());
         heatEx.setGuessOutTemperature(273.15 + 130.0);
         heatEx.setUAvalue(UAvalueRichTEGHeatExchanger_2);
 
