@@ -255,11 +255,11 @@ public class TEGdehydrationProcessDistillationJS {
         Filter fineFilter = new Filter("TEG fine filter", flashLiquid);
         fineFilter.setDeltaP(0.05, "bara");
 
-        Filter carbonFilter = new Filter("activated carbon filter", fineFilter.getOutStream());
+        Filter carbonFilter = new Filter("activated carbon filter", fineFilter.getOutletStream());
         carbonFilter.setDeltaP(0.01, "bara");
 
         HeatExchanger heatEx =
-                new HeatExchanger("rich TEG heat exchanger 2", carbonFilter.getOutStream());
+            new HeatExchanger("rich TEG heat exchanger 2", carbonFilter.getOutletStream());
         heatEx.setGuessOutTemperature(273.15 + 130.0);
         heatEx.setUAvalue(UAvalueRichTEGHeatExchanger_2);
 
