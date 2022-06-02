@@ -42,7 +42,7 @@ public class simpleTopSideProcess {
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", separator.getLiquidOutStream());
         LP_valve.setOutletPressure(5.0);
 
-        Separator LPseparator = new Separator("Separator 1", LP_valve.getOutStream());
+        Separator LPseparator = new Separator("Separator 1", LP_valve.getOutletStream());
 
         Compressor LPcompressor = new Compressor("LPcompressor", LPseparator.getGasOutStream());
         LPcompressor.setOutletPressure(50.0);

@@ -89,7 +89,7 @@ public class TEGdehydrationProcessDistillation {
         glycol_flash_valve.setOutletPressure(4.9);
 
         Heater richGLycolHeaterCondenser =
-                new Heater("rich TEG preheater", glycol_flash_valve.getOutStream());
+            new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
 
         HeatExchanger heatEx2 = new HeatExchanger("rich TEG heat exchanger 1",
                 richGLycolHeaterCondenser.getOutStream());
@@ -126,7 +126,7 @@ public class TEGdehydrationProcessDistillation {
 
         DistillationColumn column = new DistillationColumn(1, true, true);
         column.setName("TEG regeneration column");
-        column.addFeedStream(glycol_flash_valve2.getOutStream(), 0);
+        column.addFeedStream(glycol_flash_valve2.getOutletStream(), 0);
         column.getReboiler().setOutTemperature(273.15 + 206.6);
         column.getCondenser().setOutTemperature(273.15 + 100.0);
         column.getReboiler().addStream(gasToReboiler);
@@ -314,13 +314,14 @@ public class TEGdehydrationProcessDistillation {
                 + richGLycolHeaterCondenser.getOutStream().getTemperature("C"));
         heatEx.displayResult();
         System.out.println("glycol out temperature "
-                + glycol_flash_valve2.getOutStream().getFluid().getTemperature("C"));
+            + glycol_flash_valve2.getOutletStream().getFluid().getTemperature("C"));
         System.out
                 .println("glycol out temperature2 " + heatEx2.getOutStream(0).getTemperature("C"));
         System.out
                 .println("glycol out temperature2 " + heatEx2.getOutStream(1).getTemperature("C"));
 
-        System.out.println("out water rate LP valve" + glycol_flash_valve2.getOutStream().getFluid()
+        System.out.println("out water rate LP valve" + glycol_flash_valve2.getOutletStream()
+            .getFluid()
                 .getPhase(0).getComponent("water").getNumberOfmoles());
         System.out.println("glycol out water rate reboil " + ((Reboiler) column.getReboiler())
                 .getLiquidOutStream().getFluid().getComponent("water").getNumberOfmoles());

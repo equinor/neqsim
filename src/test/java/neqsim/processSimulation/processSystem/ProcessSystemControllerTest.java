@@ -66,7 +66,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
     valve_1.setOutletPressure(5.0);
 
     Separator separator_1 = new Separator("sep 1");
-    separator_1.addStream(valve_1.getOutStream());
+    separator_1.addStream(valve_1.getOutletStream());
 
     VolumeFlowTransmitter flowTransmitter =
         new VolumeFlowTransmitter(separator_1.getGasOutStream());
@@ -94,7 +94,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
       flowController.setControllerSetPoint(65.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
       System.out.println(
-          "flow rate " + valve_1.getOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
+          "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
               + " controller response " + flowController.getResponse() + " valve opening "
               + valve_1.getPercentValveOpening() + " pressure "
               + separator_1.getGasOutStream().getPressure());
@@ -105,7 +105,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
       // stream_1.runTransient(1.0);
       p.runTransient();
       System.out.println(
-          "flow rate " + valve_1.getOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
+          "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
               + " controller response " + flowController.getResponse() + " valve opening "
               + valve_1.getPercentValveOpening() + " pressure "
               + separator_1.getGasOutStream().getPressure());
@@ -117,7 +117,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
       flowController.setControllerSetPoint(75.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
       System.out.println(
-          "flow rate " + valve_1.getOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
+          "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
               + " controller response " + flowController.getResponse() + " valve opening "
               + valve_1.getPercentValveOpening() + " pressure "
               + separator_1.getGasOutStream().getPressure());

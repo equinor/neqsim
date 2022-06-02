@@ -237,10 +237,10 @@ public class TEGdehydrationProcessDistillationGFA {
         glycol_flash_valve.setOutletPressure(flashDrumPressure);
 
         Heater richGLycolHeaterCondenser =
-                new Heater("rich TEG preheater", glycol_flash_valve.getOutStream());
+            new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
 
         HeatExchanger heatEx2 = new HeatExchanger("rich TEG heat exchanger 1",
-                richGLycolHeaterCondenser.getOutStream());
+            richGLycolHeaterCondenser.getOutStream());
         heatEx2.setGuessOutTemperature(273.15 + 62.0);
         heatEx2.setUAvalue(UAvalueRichTEGHeatExchanger_1);
 
@@ -275,7 +275,7 @@ public class TEGdehydrationProcessDistillationGFA {
 
         DistillationColumn column = new DistillationColumn(3, true, true);
         column.setName("TEG regeneration column");
-        column.addFeedStream(glycol_flash_valve2.getOutStream(), 1);
+        column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
         column.getReboiler().setOutTemperature(273.15 + reboilerTemperature);
         column.getCondenser().setOutTemperature(273.15 + condenserTemperature);
         column.getReboiler().addStream(gasToReboiler);

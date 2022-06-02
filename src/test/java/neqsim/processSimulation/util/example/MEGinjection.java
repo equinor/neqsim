@@ -100,7 +100,7 @@ public class MEGinjection {
         onshoreChockeValve.setOutletPressure(70.3);
 
         ThreePhaseSeparator slugCatcher =
-                new ThreePhaseSeparator("slug catcher", onshoreChockeValve.getOutStream());
+            new ThreePhaseSeparator("slug catcher", onshoreChockeValve.getOutletStream());
 
         neqsim.thermo.system.SystemInterface feedMEGOnshore = feedGas.clone();
         feedMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,

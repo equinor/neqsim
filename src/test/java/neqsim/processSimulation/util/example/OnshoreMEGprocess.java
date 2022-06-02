@@ -109,7 +109,7 @@ public class OnshoreMEGprocess {
         presRedValveLT.setOutletPressure(92.0);
 
         ThreePhaseSeparator mpseparator =
-                new ThreePhaseSeparator("low temperature scrubber", presRedValveLT.getOutStream());
+            new ThreePhaseSeparator("low temperature scrubber", presRedValveLT.getOutletStream());
 
         Stream coldGasFromSep = new Stream("gas from cold scrubber", mpseparator.getGasOutStream());
 
@@ -131,7 +131,8 @@ public class OnshoreMEGprocess {
                 new ThrottlingValve("valve to flash drum", richMEGstreamHeater2.getOutStream());
         presRedValve3.setOutletPressure(3.9);
 
-        Separator flashDrumSep = new Separator("rich MEG flash drum", presRedValve3.getOutStream());
+        Separator flashDrumSep =
+            new Separator("rich MEG flash drum", presRedValve3.getOutletStream());
 
         Stream flashGasStream = new Stream("gas from flash drum", flashDrumSep.getGasOutStream());
 
@@ -149,7 +150,7 @@ public class OnshoreMEGprocess {
 
         DistillationColumn column = new DistillationColumn(2, true, true);
         column.setName("MEG regeneration column");
-        column.addFeedStream(presRedValve4.getOutStream(), 0);
+        column.addFeedStream(presRedValve4.getOutletStream(), 0);
         column.getReboiler().setOutTemperature(273.15 + 135.0);
         column.getCondenser().setOutTemperature(273.15 + 105.0);
         column.setTopPressure(1.0);
@@ -273,7 +274,7 @@ public class OnshoreMEGprocess {
 
         System.out.println("MEG flow rate " + richMEGstream.getFluid().getFlowRate("kg/hr"));
         System.out.println("MEG feed to column rate "
-                + presRedValve4.getOutStream().getFluid().getFlowRate("kg/hr"));
+            + presRedValve4.getOutletStream().getFluid().getFlowRate("kg/hr"));
 
         System.out.println("MEG flow rate " + resycleLeanMEG.getFluid().getFlowRate("kg/hr"));
         System.out.println(

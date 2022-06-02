@@ -69,7 +69,7 @@ public class OffshoreProcess3 {
         Stream oilToInletSep = new Stream("oilToInletSep", fluid3.clone());
         oilToInletSep.setFlowRate(1e-10, "kg/hr");
         ThreePhaseSeparator inletSeparator =
-                new ThreePhaseSeparator("1st stage separator", valve.getOutStream());
+            new ThreePhaseSeparator("1st stage separator", valve.getOutletStream());
         inletSeparator.setEntrainment(0.005, "mass", "product", "aqueous", "oil");
         inletSeparator.setEntrainment(500e-6, "mole", "product", "oil", "aqueous");
         inletSeparator.addStream(oilToInletSep);
@@ -86,7 +86,7 @@ public class OffshoreProcess3 {
         waterDPvalve.setOutletPressure(1.01325);
 
         Separator waterStabSep =
-                new Separator("water degasing separator", waterDPvalve.getOutStream());
+            new Separator("water degasing separator", waterDPvalve.getOutletStream());
 
         Stream waterToTreatment =
                 new Stream("water to treatment", waterStabSep.getLiquidOutStream());
@@ -98,7 +98,7 @@ public class OffshoreProcess3 {
         oilToSep.setFlowRate(1e-10, "kg/hr");
 
         ThreePhaseSeparator mpseparator =
-                new ThreePhaseSeparator("2nd stage separator", valve2.getOutStream());
+            new ThreePhaseSeparator("2nd stage separator", valve2.getOutletStream());
         mpseparator.addStream(oilToSep);
 
         ThrottlingValve valvempValve =
@@ -106,7 +106,7 @@ public class OffshoreProcess3 {
         valvempValve.setOutletPressure(2.1);
 
         ThreePhaseSeparator lpseparator =
-                new ThreePhaseSeparator("3rd stage separator", valvempValve.getOutStream());
+            new ThreePhaseSeparator("3rd stage separator", valvempValve.getOutletStream());
         Stream stableOilStream = (Stream) lpseparator.getOilOutStream();
         stableOilStream.setName("stable oil");
 
@@ -114,7 +114,7 @@ public class OffshoreProcess3 {
                 new Compressor("1st stage recompressor", lpseparator.getGasOutStream());
         // lpcompressor.setOutletPressure(15.0);
         SetPoint compressorPresSet2 =
-                new SetPoint("comp pres LP set", lpcompressor, "pressure", valve2.getOutStream());
+            new SetPoint("comp pres LP set", lpcompressor, "pressure", valve2.getOutletStream());
 
         Cooler lpgasheater = new Cooler("1st stage gas cooler", lpcompressor.getOutletStream());
         lpgasheater.setOutTemperature(35.0, "C");
