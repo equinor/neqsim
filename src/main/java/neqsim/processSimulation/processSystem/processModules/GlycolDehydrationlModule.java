@@ -184,13 +184,13 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
         strippingGas.setTemperature(reboilerTemperature, "K");
         strippingGas.setPressure(regenerationPressure, "bara");
-        stripperColumn = new Separator("stripperColumn", reboiler.getOutStream());
+        stripperColumn = new Separator("stripperColumn", reboiler.getOutletStream());
         stripperColumn.addStream(strippingGas);
 
         heatExchanger1 = new Cooler("heatExchanger1", stripperColumn.getLiquidOutStream());
         heatExchanger1.setOutTemperature(100.0);
 
-        HPpump = new Pump("HP lean TEG pump", heatExchanger1.getOutStream());
+        HPpump = new Pump("HP lean TEG pump", heatExchanger1.getOutletStream());
         HPpump.setOutletPressure(gasStreamToAbsorber.getPressure());
 
         heatExchanger2 = new Cooler("heatExchanger2", HPpump.getOutStream());
@@ -199,7 +199,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         heatExchanger3 = new Cooler("heatExchanger3", stripperColumn.getGasOutStream());
         heatExchanger3.setOutTemperature(273.15 + 30.0);
 
-        waterSeparator = new Separator("watersep", heatExchanger3.getOutStream());
+        waterSeparator = new Separator("watersep", heatExchanger3.getOutletStream());
 
         // leanTEGStreamToAbsorber = heatExchanger2.getOutStream();
         // getOperations().add(gasStreamToAbsorber);

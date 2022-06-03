@@ -42,11 +42,11 @@ public class propaneCoolingCycle {
         // cooler.setPressureDrop(0.35);
         cooler.setSpecification("out stream");
 
-        Stream stream_2 = new Stream("stream_2", cooler.getOutStream());
+        Stream stream_2 = new Stream("stream_2", cooler.getOutletStream());
         stream_2.setSpecification("dewP");
         // stream_2.setTemperature(-40.0, "C");
 
-        cooler.setOutStream(stream_2);
+        cooler.setOutletStream(stream_2);
 
         SetPoint setLPpressure = new SetPoint("set", JTvalve, "pressure", stream_2);
 

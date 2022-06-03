@@ -40,7 +40,7 @@ public class simpleTopSideProcess2 {
         Heater cooler1 = new Heater("cooler1", stream_gasFromSep);
         cooler1.setOutTemperature(285.25);
 
-        Separator scrubber = new Separator("Scrubber 1", cooler1.getOutStream());
+        Separator scrubber = new Separator("Scrubber 1", cooler1.getOutletStream());
 
         Recycle recyleOp = new Recycle("resyc");
         recyleOp.addStream(scrubber.getLiquidOutStream());

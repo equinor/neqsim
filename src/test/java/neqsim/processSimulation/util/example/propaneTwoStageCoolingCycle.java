@@ -47,10 +47,10 @@ public class propaneTwoStageCoolingCycle {
         // cooler2.setPressureDrop(0.35);
         cooler2.setSpecification("out stream");
 
-        Stream stream_3 = new Stream("stream_3", cooler2.getOutStream());
+        Stream stream_3 = new Stream("stream_3", cooler2.getOutletStream());
         stream_3.setSpecification("dewP");
         // stream_3.setTemperature(-40.0, "C");
-        cooler2.setOutStream(stream_3);
+        cooler2.setOutletStream(stream_3);
 
         StreamInterface lowHStream2 = new Stream("lowHStream2", stream_3);
 
@@ -120,9 +120,9 @@ public class propaneTwoStageCoolingCycle {
         // System.out.println("compressor isentropic ef " +
         // compressor1.getIsentropicEfficiency());
         System.out.println("cooler2 mass flow "
-                + cooler2.getOutStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
+            + cooler2.getOutletStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
         System.out.println("cooler3 mass flow "
-                + cooler3.getOutStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
+            + cooler3.getOutletStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
 
         System.out.println("delta enthalpy " + (stream_3.getFluid().getEnthalpy()
             - JTvalve2.getOutletStream().getFluid().getEnthalpy()));

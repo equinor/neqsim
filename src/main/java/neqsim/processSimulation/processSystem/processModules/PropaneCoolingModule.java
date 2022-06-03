@@ -88,7 +88,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         cooler.setPressureDrop(0.35);
         cooler.setSpecification("out stream");
 
-        Stream stream_2 = new Stream("stream_2", cooler.getOutStream());
+        Stream stream_2 = new Stream("stream_2", cooler.getOutletStream());
         stream_2.setSpecification("dewT");
         stream_2.getThermoSystem().setTemperature(vaporizerTemperature);
         stream_2.run();
@@ -186,18 +186,18 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
                         .getEnergyInput();
         double evaporatorPressure =
                 ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
-                        .getOutStream().getPressure();
+                .getOutletStream().getPressure();
         double evaporatorTemperature =
                 ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
-                        .getOutStream().getTemperature();
+                .getOutletStream().getTemperature();
 
         double condenserDuty = ((Heater) propaneModule.getOperations().getUnit("propane condenser"))
                 .getEnergyInput();
         double condenserPressure =
-                ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutStream()
+            ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutletStream()
                         .getPressure();
         double condenserTemperature =
-                ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutStream()
+            ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutletStream()
                         .getTemperature();
 
         System.out.println("Compressor work " + compressorWork + " W");

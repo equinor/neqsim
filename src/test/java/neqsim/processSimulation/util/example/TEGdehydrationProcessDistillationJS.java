@@ -213,7 +213,7 @@ public class TEGdehydrationProcessDistillationJS {
         feedTPsetterToAbsorber.setOutTemperature(absorberFeedGasTemperature, "C");
 
         Stream feedToAbsorber =
-                new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutStream());
+            new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
 
         Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
         TEGFeed.setFlowRate(leanTEGFlowRate, "kg/hr");
@@ -241,7 +241,7 @@ public class TEGdehydrationProcessDistillationJS {
             new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
 
         HeatExchanger heatEx2 = new HeatExchanger("rich TEG heat exchanger 1",
-                richGLycolHeaterCondenser.getOutStream());
+            richGLycolHeaterCondenser.getOutletStream());
         heatEx2.setGuessOutTemperature(273.15 + 62.0);
         heatEx2.setUAvalue(UAvalueRichTEGHeatExchanger_1);
 
@@ -290,7 +290,8 @@ public class TEGdehydrationProcessDistillationJS {
         Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
         coolerRegenGas.setOutTemperature(273.15 + regenerationGasCoolerTemperature);
 
-        Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutStream());
+        Separator sepregenGas =
+            new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
         Stream gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
 
@@ -310,7 +311,7 @@ public class TEGdehydrationProcessDistillationJS {
         Heater bufferTank = new Heater("TEG buffer tank", stripper.getSolventOutStream());
         bufferTank.setOutTemperature(273.15 + bufferTankTemperatureTEG);
 
-        Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutStream());
+        Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutletStream());
         hotLeanTEGPump.setOutletPressure(hotTEGpumpPressure);
         hotLeanTEGPump.setIsentropicEfficiency(hotTEGpumpIsentropicEfficiency);
 
@@ -321,7 +322,7 @@ public class TEGdehydrationProcessDistillationJS {
         Heater coolerhOTteg3 = new Heater("lean TEG cooler", heatEx2.getOutStream(1));
         coolerhOTteg3.setOutTemperature(273.15 + leanTEGTemperature);
 
-        Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutStream());
+        Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutletStream());
         hotLeanTEGPump2.setOutletPressure(absorberFeedGasPressure);
         hotLeanTEGPump2.setIsentropicEfficiency(coldTEGpumpIsentropicEfficiency);
 

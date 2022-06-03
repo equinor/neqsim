@@ -49,7 +49,7 @@ public class TestSeparationTrain {
         liquidOutHeater.setOutTemperature(273.15 + 55.0);
 
         ThreePhaseSeparator firstStageSeparator =
-                new ThreePhaseSeparator("1st stage Separator", liquidOutHeater.getOutStream());
+            new ThreePhaseSeparator("1st stage Separator", liquidOutHeater.getOutletStream());
 
         ThrottlingValve valve1 =
                 new ThrottlingValve("snohvit valve", firstStageSeparator.getOilOutStream());
@@ -78,7 +78,7 @@ public class TestSeparationTrain {
         thirdSstageCoooler.setOutTemperature(273.15 + 30.0);
 
         ThreePhaseSeparator thirdStageScrubber = new ThreePhaseSeparator(
-                "Third stage gas resirc scrubber", thirdSstageCoooler.getOutStream());
+            "Third stage gas resirc scrubber", thirdSstageCoooler.getOutletStream());
         secondStageSeparator.addStream(thirdStageScrubber.getOilOutStream());
         secondStageSeparator.addStream(thirdStageScrubber.getWaterOutStream());
 
@@ -97,7 +97,7 @@ public class TestSeparationTrain {
         inletGasCooler.setOutTemperature(273.15 + 30.0);
 
         Separator gasInletScrubber =
-                new Separator("Gas scrubber inlet", inletGasCooler.getOutStream());
+            new Separator("Gas scrubber inlet", inletGasCooler.getOutletStream());
 
         Recycle HPliquidRecycle = new Recycle("HPliquidRecycle");
         double tolerance = 1e-10;

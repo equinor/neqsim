@@ -72,7 +72,7 @@ public class MEGinjection {
         pipeline.setOutTemperature(273.15 + 35.5);
         pipeline.setOutPressure(80.2);
 
-        Stream mixerStream = (Stream) pipeline.getOutStream();
+        Stream mixerStream = (Stream) pipeline.getOutletStream();
         mixerStream.setName("feed gas and MEG");
 
         Adjuster adjuster = new Adjuster("MEG adjuster");

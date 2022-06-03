@@ -152,17 +152,17 @@ public class GasTurbine extends TwoPortEquipment {
     locHeater.setEnergyInput(heatOfCombustion);
     locHeater.run();
 
-    locHeater.getOutStream().getFluid().addComponent("CO2", moleMethane);
-    locHeater.getOutStream().getFluid().addComponent("water", moleMethane * 2.0);
-    locHeater.getOutStream().getFluid().addComponent("methane", -moleMethane);
-    locHeater.getOutStream().getFluid().addComponent("oxygen", -moleMethane * 2.0);
+    locHeater.getOutletStream().getFluid().addComponent("CO2", moleMethane);
+    locHeater.getOutletStream().getFluid().addComponent("water", moleMethane * 2.0);
+    locHeater.getOutletStream().getFluid().addComponent("methane", -moleMethane);
+    locHeater.getOutletStream().getFluid().addComponent("oxygen", -moleMethane * 2.0);
 
     // todo: Init fails because there is less than moleMethane of oxygen
-    locHeater.getOutStream().getFluid().init(3);
+    locHeater.getOutletStream().getFluid().init(3);
     // locHeater.getOutStream().run();
     locHeater.displayResult();
 
-    Expander expander = new Expander("expander", locHeater.getOutStream());
+    Expander expander = new Expander("expander", locHeater.getOutletStream());
     expander.setOutletPressure(1.01325);
     expander.run();
 
