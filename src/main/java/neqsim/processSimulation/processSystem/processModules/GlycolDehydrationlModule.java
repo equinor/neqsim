@@ -166,7 +166,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         valveHP = new ThrottlingValve("valveHP", absorbtionColumn.getLiquidOutStream());
         valveHP.setOutletPressure(flashPressure);
 
-        glycolFlashDrum = new Separator("flash drum", valveHP.getOutStream());
+        glycolFlashDrum = new Separator("flash drum", valveHP.getOutletStream());
 
         valveMP = new ThrottlingValve("valveMP", glycolFlashDrum.getLiquidOutStream());
         valveMP.setOutletPressure(regenerationPressure);
@@ -179,7 +179,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
          * 
          */
 
-        Heater reboiler = new Heater("reboiler", valveMP.getOutStream());
+        Heater reboiler = new Heater("reboiler", valveMP.getOutletStream());
         reboiler.setOutTemperature(reboilerTemperature);
 
         strippingGas.setTemperature(reboilerTemperature, "K");

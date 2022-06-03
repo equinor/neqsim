@@ -110,7 +110,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
                 new ThrottlingValve("1stTo2ndStageOilValve", firstStageSeparator.getOilOutStream());
         valve1.setOutletPressure(secondstagePressure);
 
-        Heater liquidOutHeater2 = new Heater("oil/water heater2", valve1.getOutStream());
+        Heater liquidOutHeater2 = new Heater("oil/water heater2", valve1.getOutletStream());
         liquidOutHeater2.setOutTemperature(separationTemperature);
 
         ThreePhaseSeparator secondStageSeparator =
@@ -120,7 +120,8 @@ public class WellFluidModule extends ProcessModuleBaseClass {
                 new ThrottlingValve("2-3stageOilValve", secondStageSeparator.getLiquidOutStream());
         thirdStageValve.setOutletPressure(thirdstagePressure);
 
-        Heater liquidOutHeater3 = new Heater("oil/water heater3", thirdStageValve.getOutStream());
+        Heater liquidOutHeater3 =
+            new Heater("oil/water heater3", thirdStageValve.getOutletStream());
         liquidOutHeater3.setOutTemperature(separationTemperature);
 
         ThreePhaseSeparator thirdStageSeparator =

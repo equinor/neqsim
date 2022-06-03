@@ -36,14 +36,14 @@ public class propaneTwoStageCoolingCycle {
         ThrottlingValve JTvalve1 = new ThrottlingValve("JTvalve1", stream_1);
         JTvalve1.setOutletPressure(3.0);
 
-        Separator medPresSep = new Separator("medPresSep", JTvalve1.getOutStream());
+        Separator medPresSep = new Separator("medPresSep", JTvalve1.getOutletStream());
 
         ThrottlingValve JTvalve2 = new ThrottlingValve("JTvalve2", medPresSep.getLiquidOutStream());
         JTvalve2.setOutletPressure(1.11325);
 
-        StreamInterface lowHStream = new Stream("lowHStream", JTvalve2.getOutStream());
+        StreamInterface lowHStream = new Stream("lowHStream", JTvalve2.getOutletStream());
 
-        Cooler cooler2 = new Cooler("cooler2", JTvalve2.getOutStream());
+        Cooler cooler2 = new Cooler("cooler2", JTvalve2.getOutletStream());
         // cooler2.setPressureDrop(0.35);
         cooler2.setSpecification("out stream");
 
@@ -91,7 +91,7 @@ public class propaneTwoStageCoolingCycle {
         ThrottlingValve JTvalve3 = new ThrottlingValve("JTvalve3", medPresSep.getLiquidOutStream());
         JTvalve3.setOutletPressure(2.03981146);
         JTvalve3.run();
-        JTvalve3.getOutStream().displayResult();
+        JTvalve3.getOutletStream().displayResult();
         // JTvalve1.getOutStream().displayResult();
         // JTvalve2.getOutStream().displayResult();
         // medPresSep.displayResult();
@@ -125,7 +125,7 @@ public class propaneTwoStageCoolingCycle {
                 + cooler3.getOutStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
 
         System.out.println("delta enthalpy " + (stream_3.getFluid().getEnthalpy()
-                - JTvalve2.getOutStream().getFluid().getEnthalpy()));
+            - JTvalve2.getOutletStream().getFluid().getEnthalpy()));
 
         System.out.println("cooler2 duty " + cooler2.getEnergyInput() / 1.0e3 + " kW");
         System.out.println("cooler3 duty " + cooler3.getEnergyInput() / 1.0e3 + " kW");

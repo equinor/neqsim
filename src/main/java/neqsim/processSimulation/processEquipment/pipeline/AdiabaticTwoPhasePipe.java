@@ -454,7 +454,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         operations.add(pipe);
         operations.run();
         pipe.displayResult();
-        System.out.println("flow " + pipe.getOutStream().getFluid().getFlowRate("MSm3/day"));
+        System.out.println("flow " + pipe.getOutletStream().getFluid().getFlowRate("MSm3/day"));
     }
 
     /**

@@ -84,7 +84,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
 
         ThrottlingValve JTvalve = new ThrottlingValve("JTvalve", refrigerantStream);
 
-        Cooler cooler = new Cooler("propane evaporator", JTvalve.getOutStream());
+        Cooler cooler = new Cooler("propane evaporator", JTvalve.getOutletStream());
         cooler.setPressureDrop(0.35);
         cooler.setSpecification("out stream");
 

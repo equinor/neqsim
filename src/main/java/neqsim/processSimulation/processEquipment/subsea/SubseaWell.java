@@ -125,7 +125,7 @@ public class SubseaWell extends TwoPortEquipment {
         ThrottlingValve subseaChoke = new ThrottlingValve("subseaChoke", well1.getOutletStream());
         subseaChoke.setOutletPressure(90.0);
         subseaChoke.setAcceptNegativeDP(false);
-        SimpleFlowLine flowLine = new SimpleFlowLine("flowLine", subseaChoke.getOutStream());
+        SimpleFlowLine flowLine = new SimpleFlowLine("flowLine", subseaChoke.getOutletStream());
         flowLine.getPipeline().setDiameter(0.4);
         flowLine.getPipeline().setLength(2000.0);
         flowLine.getPipeline().setInletElevation(-100.0);
@@ -163,7 +163,7 @@ public class SubseaWell extends TwoPortEquipment {
 
         ProcessSystem GasOilProcess = ProcessSystem.open("c:/temp/offshorePro.neqsim");
         ((StreamInterface) GasOilProcess.getUnit("well stream"))
-            .setThermoSystem(topsideChoke.getOutStream().getFluid());
+            .setThermoSystem(topsideChoke.getOutletStream().getFluid());
         ((StreamInterface) GasOilProcess.getUnit("well stream")).setPressure(70.0, "bara");
         ((StreamInterface) GasOilProcess.getUnit("well stream")).setTemperature(65.0, "C");
         GasOilProcess.run();
