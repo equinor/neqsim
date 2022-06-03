@@ -22,7 +22,7 @@ public class SystemUMRCPAEoS extends SystemPrEos {
   public SystemUMRCPAEoS() {
     super();
     modelName = "UMR-CPA";
-    //attractiveTermNumber = 1;
+    attractiveTermNumber = 1;
     useVolumeCorrection(false);
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseUMRCPA();
@@ -35,7 +35,7 @@ public class SystemUMRCPAEoS extends SystemPrEos {
   public SystemUMRCPAEoS(double T, double P) {
     super(T, P);
     modelName = "UMR-CPA";
-    //attractiveTermNumber = 19;
+    attractiveTermNumber = 1;
     useVolumeCorrection(false);
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseUMRCPA();
