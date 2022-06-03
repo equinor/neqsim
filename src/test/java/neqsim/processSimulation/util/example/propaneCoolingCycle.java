@@ -38,7 +38,7 @@ public class propaneCoolingCycle {
         ThrottlingValve JTvalve = new ThrottlingValve("JTvalve", stream_1);
         JTvalve.setOutletPressure(1.11325);
 
-        Cooler cooler = new Cooler("cooler", JTvalve.getOutStream());
+        Cooler cooler = new Cooler("cooler", JTvalve.getOutletStream());
         // cooler.setPressureDrop(0.35);
         cooler.setSpecification("out stream");
 
@@ -83,7 +83,7 @@ public class propaneCoolingCycle {
         // operations.displayResult();
         cooler.run();
 
-        JTvalve.getOutStream().displayResult();
+        JTvalve.getOutletStream().displayResult();
         stream_2.displayResult();
 
         System.out.println("compressor work" + compressor1.getEnergy() / 1.0e3 + " kW "

@@ -1,9 +1,7 @@
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.distillation.Condenser;
 import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
-import neqsim.processSimulation.processEquipment.distillation.Reboiler;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
@@ -106,8 +104,8 @@ public class OnshoreMEGprocess {
     ThrottlingValve presRedValveLT = new ThrottlingValve("JT valve", MEGmixer3.getOutletStream());
     presRedValveLT.setOutletPressure(92.0);
 
-    ThreePhaseSeparator mpseparator =
-        new ThreePhaseSeparator("low temperature scrubber", presRedValveLT.getOutletStream());
+        ThreePhaseSeparator mpseparator =
+            new ThreePhaseSeparator("low temperature scrubber", presRedValveLT.getOutletStream());
 
     Stream coldGasFromSep = new Stream("gas from cold scrubber", mpseparator.getGasOutStream());
 
@@ -121,14 +119,15 @@ public class OnshoreMEGprocess {
     richMEGstreamHeater.setOutTemperature(15.0, "C");
 
     Heater richMEGstreamHeater2 =
-        new Heater("column condenser HX", richMEGstreamHeater.getOutStream());
+        new Heater("column condenser HX", richMEGstreamHeater.getOutletStream());
     // richMEGstreamHeater2.setOutTemperature(22.0, "C");
 
     ThrottlingValve presRedValve3 =
-        new ThrottlingValve("valve to flash drum", richMEGstreamHeater2.getOutStream());
+        new ThrottlingValve("valve to flash drum", richMEGstreamHeater2.getOutletStream());
     presRedValve3.setOutletPressure(3.9);
 
-    Separator flashDrumSep = new Separator("rich MEG flash drum", presRedValve3.getOutStream());
+        Separator flashDrumSep =
+            new Separator("rich MEG flash drum", presRedValve3.getOutletStream());
 
     Stream flashGasStream = new Stream("gas from flash drum", flashDrumSep.getGasOutStream());
 
@@ -143,13 +142,13 @@ public class OnshoreMEGprocess {
         new ThrottlingValve("valve to regenerator", columnPreHeater.getOutStream(0));
     presRedValve4.setOutletPressure(1.23);
 
-    DistillationColumn column = new DistillationColumn(2, true, true);
-    column.setName("MEG regeneration column");
-    column.addFeedStream(presRedValve4.getOutStream(), 0);
-    column.getReboiler().setOutTemperature(273.15 + 135.0);
-    column.getCondenser().setOutTemperature(273.15 + 105.0);
-    column.setTopPressure(1.0);
-    column.setBottomPressure(1.23);
+        DistillationColumn column = new DistillationColumn(2, true, true);
+        column.setName("MEG regeneration column");
+        column.addFeedStream(presRedValve4.getOutletStream(), 0);
+        column.getReboiler().setOutTemperature(273.15 + 135.0);
+        column.getCondenser().setOutTemperature(273.15 + 105.0);
+        column.setTopPressure(1.0);
+        column.setBottomPressure(1.23);
 
     Cooler coolerRegenGas =
         new Cooler("regeneration overhead  gas cooler", column.getGasOutStream());
@@ -265,9 +264,9 @@ public class OnshoreMEGprocess {
     System.out.println("Heat ex 2 duty " + richMEGstreamHeater2.getDuty() / 1.0e3 + " kW");
     System.out.println("Heat ex 2 duty2 " + richMEGstreamHeater2.getDuty() / 1.0e3 + " kW");
 
-    System.out.println("MEG flow rate " + richMEGstream.getFluid().getFlowRate("kg/hr"));
-    System.out.println(
-        "MEG feed to column rate " + presRedValve4.getOutStream().getFluid().getFlowRate("kg/hr"));
+        System.out.println("MEG flow rate " + richMEGstream.getFluid().getFlowRate("kg/hr"));
+        System.out.println("MEG feed to column rate "
+            + presRedValve4.getOutletStream().getFluid().getFlowRate("kg/hr"));
 
     System.out.println("MEG flow rate " + resycleLeanMEG.getFluid().getFlowRate("kg/hr"));
     System.out.println("Reboiler duty [kW] " + ((Reboiler) column.getReboiler()).getDuty() / 1.0e3);

@@ -72,7 +72,7 @@ public class TEGAbsorberTest {
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", MPstreamLiq);
         LP_valve.setOutletPressure(1.5);
 
-        ReBoiler reboiler = new ReBoiler("reboiler", LP_valve.getOutStream());
+        ReBoiler reboiler = new ReBoiler("reboiler", LP_valve.getOutletStream());
         reboiler.setReboilerDuty(20000.0);
 
         neqsim.thermo.system.SystemSrkEos testSystem3 =

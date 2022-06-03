@@ -82,7 +82,7 @@ public class TEGdehydrationProcess2 {
         glycol_flash_valve.setOutletPressure(4.9);
 
         Heater richGLycolHeaterCondenser =
-                new Heater("rich TEG preheater", glycol_flash_valve.getOutStream());
+            new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
         richGLycolHeaterCondenser.setOutTemperature(273.15 + 35.5);
 
         Heater richGLycolHeater =

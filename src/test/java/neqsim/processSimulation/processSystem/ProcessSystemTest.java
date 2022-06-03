@@ -380,7 +380,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     glycol_flash_valve.setOutletPressure(5.5);
 
     Heater richGLycolHeaterCondenser =
-        new Heater("rich TEG preheater", glycol_flash_valve.getOutStream());
+        new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
 
     HeatExchanger heatEx2 =
         new HeatExchanger("rich TEG heat exchanger 1", richGLycolHeaterCondenser.getOutStream());
@@ -397,11 +397,11 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Filter fineFilter = new Filter("TEG fine filter", flashLiquid);
     fineFilter.setDeltaP(0.05, "bara");
 
-    Filter carbonFilter = new Filter("activated carbon filter", fineFilter.getOutStream());
+    Filter carbonFilter = new Filter("activated carbon filter", fineFilter.getOutletStream());
     carbonFilter.setDeltaP(0.01, "bara");
 
     HeatExchanger heatEx =
-        new HeatExchanger("rich TEG heat exchanger 2", carbonFilter.getOutStream());
+        new HeatExchanger("rich TEG heat exchanger 2", carbonFilter.getOutletStream());
     heatEx.setGuessOutTemperature(273.15 + 130.0);
     heatEx.setUAvalue(390.0);
 
@@ -424,7 +424,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     DistillationColumn column = new DistillationColumn(1, true, true);
     column.setName("TEG regeneration column");
-    column.addFeedStream(glycol_flash_valve2.getOutStream(), 0);
+    column.addFeedStream(glycol_flash_valve2.getOutletStream(), 0);
     column.getReboiler().setOutTemperature(273.15 + 201.0);
     column.getCondenser().setOutTemperature(273.15 + 92.0);
     column.getReboiler().addStream(gasToReboiler);

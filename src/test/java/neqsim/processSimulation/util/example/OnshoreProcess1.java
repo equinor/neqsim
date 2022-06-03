@@ -272,8 +272,8 @@ public class OnshoreProcess1 {
 
             // Field mixer
             Mixer mixer1 = new Mixer("Field Mixer");
-            mixer1.addStream(valve1.getOutStream());
-            mixer1.addStream(valve2.getOutStream());
+            mixer1.addStream(valve1.getOutletStream());
+            mixer1.addStream(valve2.getOutletStream());
 
             WaterContentAnalyser waterAnalyser3 = new WaterContentAnalyser(mixer1.getOutStream());
             waterAnalyser3.setName("Total Water Analyser");
