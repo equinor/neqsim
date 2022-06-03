@@ -40,9 +40,9 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
      * setIsentropicEfficiency.
      * </p>
      *
-     * @param isentropicEfficientcy a double
+     * @param isentropicEfficiency a double
      */
-    public void setIsentropicEfficiency(double isentropicEfficientcy);
+    public void setIsentropicEfficiency(double isentropicEfficiency);
 
     /**
      * <p>

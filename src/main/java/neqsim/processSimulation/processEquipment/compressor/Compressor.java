@@ -832,8 +832,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   /** {@inheritDoc} */
   @Override
-  public void setIsentropicEfficiency(double isentropicEfficientcy) {
-    this.isentropicEfficiency = isentropicEfficientcy;
+  public void setIsentropicEfficiency(double isentropicEfficiency) {
+    this.isentropicEfficiency = isentropicEfficiency;
   }
 
   /**
