@@ -52,10 +52,10 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
                 setXsitedV(j, 0.0);
                 setXsitedT(j, 0.0);
             }
-            if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-                a = aCPA;
-                b = bCPA;
-            }
+            //if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
+               // a = aCPA;
+               // b = bCPA;
+            //}
             setAttractiveTerm(0);
         }
         // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
@@ -90,10 +90,10 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
                 setXsitedV(j, 0.0);
                 setXsitedT(j, 0.0);
             }
-            if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-                a = aCPA;
-                b = bCPA;
-            }
+            //if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
+               // a = aCPA;
+                //b = bCPA;
+           // }
             setAttractiveTerm(0);
         }
         // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
@@ -169,21 +169,21 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     /** {@inheritDoc} */
     @Override
     public double calca() {
-        if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-            return aCPA;
-        } else {
+        //if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
+            //return aCPA;
+        //} else {
             return super.calca();
-        }
+        //}
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcb() {
-        if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-            return bCPA;
-        } else {
+        //if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
+          //  return bCPA;
+        //} else {
             return super.calcb();
-        }
+       // }
     }
 
     /** {@inheritDoc} */
