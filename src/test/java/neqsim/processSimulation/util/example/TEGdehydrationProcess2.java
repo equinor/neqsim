@@ -58,7 +58,7 @@ public class TEGdehydrationProcess2 {
         StreamSaturatorUtil saturatedFeedGas =
                 new StreamSaturatorUtil("water saturator", dryFeedGas);
         Stream waterSaturatedFeedGas =
-                new Stream("waterSaturatedFeedGas", saturatedFeedGas.getOutStream());
+            new Stream("waterSaturatedFeedGas", saturatedFeedGas.getOutletStream());
         neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
         feedTEG.setMolarComposition(
                 new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.98});

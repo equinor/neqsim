@@ -198,7 +198,7 @@ public class TEGdehydrationProcessDistillationJS {
                 new StreamSaturatorUtil("water saturator", dryFeedGas);
 
         Stream waterSaturatedFeedGas =
-                new Stream("water saturated feed gas", saturatedFeedGas.getOutStream());
+            new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
         HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser =
                 new HydrateEquilibriumTemperatureAnalyser(waterSaturatedFeedGas);

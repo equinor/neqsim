@@ -14,156 +14,105 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class StreamTransition extends TwoPortEquipment {
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    /**
-     * <p>
-     * Constructor for StreamTransition.
-     * </p>
-     */
-    @Deprecated
-    public StreamTransition() {
-        super("StreamTransition");
+  /**
+   * <p>
+   * Constructor for StreamTransition.
+   * </p>
+   */
+  @Deprecated
+  public StreamTransition() {
+    super("StreamTransition");
+  }
+
+  /**
+   * <p>
+   * Constructor for StreamTransition.
+   * </p>
+   *
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   * @param outletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   */
+  @Deprecated
+  public StreamTransition(StreamInterface inletStream, StreamInterface outletStream) {
+    this("StreamTransition", inletStream, outletStream);
+  }
+
+  /**
+   * <p>
+   * Constructor for StreamTransition.
+   * </p>
+   *
+   * @param name
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   * @param outletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   */
+  public StreamTransition(String name, StreamInterface inletStream, StreamInterface outletStream) {
+    super(name);
+    this.inStream = inletStream;
+    this.outStream = outletStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run() {
+    SystemInterface outThermoSystem = null;
+    if (outStream != null) {
+      outThermoSystem = outStream.getFluid().clone();
+    } else {
+      outThermoSystem = inStream.getFluid().clone();
     }
+    outThermoSystem.setEmptyFluid();
 
-    /**
-     * <p>
-     * Constructor for StreamTransition.
-     * </p>
-     *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     * @param outletStream a
-     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    @Deprecated
-    public StreamTransition(StreamInterface inletStream, StreamInterface outletStream) {
-        this("StreamTransition", inletStream, outletStream);
+    // SystemInterface fluid1 = outletStream.getFluid();
+    // SystemInterface fluid2 = inletStream.getFluid();
+
+    for (int i = 0; i < inStream.getFluid().getNumberOfComponents(); i++) {
+      if (outThermoSystem.getPhase(0).hasComponent(inStream.getFluid().getComponent(i).getName())) {
+        outThermoSystem.addComponent(inStream.getFluid().getComponent(i).getName(),
+            inStream.getFluid().getComponent(i).getNumberOfmoles());
+      }
     }
+    // fluid1.init(0);
+    // fluid1.setTemperature(fluid2.getTemperature());
+    // fluid1.setPressure(fluid2.getPressure());
+    outStream.setThermoSystem(outThermoSystem);
+    outStream.run();
+  }
 
-    /**
-     * <p>
-     * Constructor for StreamTransition.
-     * </p>
-     *
-     * @param name
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     * @param outletStream a
-     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    public StreamTransition(String name, StreamInterface inletStream,
-            StreamInterface outletStream) {
-        super(name);
-        this.inStream = inletStream;
-        this.outStream = outletStream;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void displayResult() {
+    outStream.getFluid().display();
+  }
 
-    /**
-     * <p>
-     * Getter for the field <code>inletStream</code>.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    public StreamInterface getInletStream() {
-        return inStream;
-    }
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String[] args) {
+    ProcessSystem offshoreProcessoperations = ProcessSystem.open("c:/temp/offshorePro.neqsim");
+    ProcessSystem TEGprocess = ProcessSystem.open("c:/temp//TEGprocessHX.neqsim");
+    StreamTransition trans =
+        new StreamTransition((StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
+            (StreamInterface) TEGprocess.getUnit("dry feed gas"));
 
-    /**
-     * <p>
-     * Setter for the field <code>inletStream</code>.
-     * </p>
-     *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public void setInletStream(StreamInterface inletStream) {
-        this.inStream = inletStream;
-    }
+    offshoreProcessoperations.run();
+    trans.run();
+    ((StreamInterface) offshoreProcessoperations.getUnit("rich gas")).displayResult();
+    // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
+    trans.displayResult();
+    TEGprocess.run();
+    ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
 
-    /**
-     * <p>
-     * Getter for the field <code>outletStream</code>.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    public StreamInterface getOutletStream() {
-        return outStream;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>outletStream</code>.
-     * </p>
-     *
-     * @param outletStream a
-     *        {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    public void setOutletStream(StreamInterface outletStream) {
-        this.outStream = outletStream;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void run() {
-        SystemInterface outThermoSystem = null;
-        if (outStream != null) {
-            outThermoSystem = outStream.getFluid().clone();
-        } else {
-            outThermoSystem = inStream.getFluid().clone();
-        }
-        outThermoSystem.setEmptyFluid();
-
-        // SystemInterface fluid1 = outletStream.getFluid();
-        // SystemInterface fluid2 = inletStream.getFluid();
-
-        for (int i = 0; i < inStream.getFluid().getNumberOfComponents(); i++) {
-            if (outThermoSystem.getPhase(0)
-                    .hasComponent(inStream.getFluid().getComponent(i).getName())) {
-                outThermoSystem.addComponent(inStream.getFluid().getComponent(i).getName(),
-                        inStream.getFluid().getComponent(i).getNumberOfmoles());
-            }
-        }
-        // fluid1.init(0);
-        // fluid1.setTemperature(fluid2.getTemperature());
-        // fluid1.setPressure(fluid2.getPressure());
-        outStream.setThermoSystem(outThermoSystem);
-        outStream.run();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void displayResult() {
-        outStream.getFluid().display();
-    }
-
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        ProcessSystem offshoreProcessoperations = ProcessSystem.open("c:/temp/offshorePro.neqsim");
-        ProcessSystem TEGprocess = ProcessSystem.open("c:/temp//TEGprocessHX.neqsim");
-        StreamTransition trans = new StreamTransition(
-                (StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
-                (StreamInterface) TEGprocess.getUnit("dry feed gas"));
-
-        offshoreProcessoperations.run();
-        trans.run();
-        ((StreamInterface) offshoreProcessoperations.getUnit("rich gas")).displayResult();
-        // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
-        trans.displayResult();
-        TEGprocess.run();
-        ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
-
-        // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
-    }
+    // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
+  }
 }
