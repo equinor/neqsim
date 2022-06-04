@@ -91,7 +91,7 @@ public class OffshoreProcess {
         mixer.addStream(stream_4);
         mixer.addStream(stream_5);
 
-        NeqStream stream_6 = new NeqStream("after mixer stream", mixer.getOutStream());
+        NeqStream stream_6 = new NeqStream("after mixer stream", mixer.getOutletStream());
 
         Pipeline pipe = new TwoPhasePipeLine("pipe", stream_6);
         pipe.setOutputFileName("c:/tempAsgard.nc");
