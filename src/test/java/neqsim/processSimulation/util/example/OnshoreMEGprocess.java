@@ -60,7 +60,7 @@ public class OnshoreMEGprocess {
                 new StreamSaturatorUtil("water saturator", dryFeedGas);
 
         Stream waterSaturatedFeedGas =
-                new Stream("water saturated feed gas", saturatedFeedGas.getOutStream());
+            new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
         Compressor inletCompressor =
                 new Compressor("Compressor 1 - first stage", waterSaturatedFeedGas);
