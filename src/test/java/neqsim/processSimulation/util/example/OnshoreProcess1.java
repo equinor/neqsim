@@ -323,7 +323,7 @@ public class OnshoreProcess1 {
 
             ThreePhaseSeparator condensateSeparator =
                     new ThreePhaseSeparator("condensateSeparator",
-                            condensateheater1.getOutStream());
+                    condensateheater1.getOutletStream());
 
             // Heater MEGheater1 = new Heater(stream_5);
             // MEGheater1.setName("MEG heater1");
