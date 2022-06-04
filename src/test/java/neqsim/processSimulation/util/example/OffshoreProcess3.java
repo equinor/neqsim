@@ -188,7 +188,7 @@ public class OffshoreProcess3 {
                 new MoleFractionControllerUtil(mpscrubber.getGasOutStream());
         waterRemoval.setMoleFraction("water", 10.0e-6);
 
-        Stream richGas = new Stream("rich gas",waterRemoval.getOutStream());
+        Stream richGas = new Stream("rich gas", waterRemoval.getOutletStream());
 
         Compressor exportGasCompressor = new Compressor("1st stage export compressor",richGas);
         exportGasCompressor.setIsentropicEfficiency(0.75);
