@@ -44,7 +44,7 @@ public class oxygenRemovalWater {
         Heater heater1 = new Heater("heater1", separator.getLiquidOutStream());
         heater1.setOutTemperature(273.15 + 20);
 
-        ThrottlingValve LP_valve = new ThrottlingValve("LPventil", heater1.getOutStream());
+        ThrottlingValve LP_valve = new ThrottlingValve("LPventil", heater1.getOutletStream());
         LP_valve.setOutletPressure(30.0e-3);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =

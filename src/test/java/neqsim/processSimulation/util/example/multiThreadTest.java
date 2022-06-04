@@ -92,7 +92,7 @@ public class multiThreadTest {
         Cooler cooler12 = new Cooler("cooler12", comp12.getOutletStream());
         cooler12.setOutTemperature(283.15 + 30);
 
-        Separator separator3 = new Separator("Separator 122", cooler12.getOutStream());
+        Separator separator3 = new Separator("Separator 122", cooler12.getOutletStream());
 
         Recycle resyc = new Recycle("resyc");
         resyc.addStream(separator3.getLiquidOutStream());

@@ -88,20 +88,6 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
   /**
    * <p>
-   * Getter for the field <code>outStream</code>.
-   * </p>
-   * 
-   * @deprecated use {@link #getOutletStream()} instead
-   *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  @Deprecated
-  public StreamInterface getOutStream() {
-    return outStream;
-  }
-
-  /**
-   * <p>
    * setOutPressure.
    * </p>
    *
@@ -168,10 +154,10 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     }
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     if (getSpecification().equals("out stream")) {
-      getOutStream().setFlowRate(getInletStream().getFlowRate("kg/sec"), "kg/sec");
-      getOutStream().run();
-      temperatureOut = getOutStream().getTemperature();
-      system = getOutStream().getThermoSystem().clone();
+      getOutletStream().setFlowRate(getInletStream().getFlowRate("kg/sec"), "kg/sec");
+      getOutletStream().run();
+      temperatureOut = getOutletStream().getTemperature();
+      system = getOutletStream().getThermoSystem().clone();
     } else if (setTemperature) {
       system.setTemperature(temperatureOut, temperatureUnit);
       testOps.TPflash();
@@ -193,14 +179,14 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     // system.setTemperature(temperatureOut);
     // testOps.TPflash();
     // system.setTemperature(temperatureOut);
-    getOutStream().setThermoSystem(system);
+    getOutletStream().setThermoSystem(system);
   }
 
   /** {@inheritDoc} */
   @Override
   public void displayResult() {
     // System.out.println("heater dH: " + energyInput);
-    getOutStream().displayResult();
+    getOutletStream().displayResult();
   }
 
   /**
@@ -300,8 +286,9 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    *
    * @param outStream the outStream to set
    */
+  @Deprecated
   public void setOutStream(StreamInterface outStream) {
-    this.outStream = outStream;
+    setOutletStream(outStream);
   }
 
   /** {@inheritDoc} */
