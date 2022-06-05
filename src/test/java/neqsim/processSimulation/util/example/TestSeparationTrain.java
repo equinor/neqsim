@@ -69,7 +69,7 @@ public class TestSeparationTrain {
                 new Compressor("thirdStageCompressor", thirdStageSeparator.getGasOutStream());
         thirdStageCompressor.setOutletPressure(secondstagePressure);
 
-        Mixer thirdStageMixer = new Mixer();
+        Mixer thirdStageMixer = new Mixer("thirdStageMixer");
         thirdStageMixer.addStream(thirdStageCompressor.getOutletStream());
         thirdStageMixer.addStream(secondStageSeparator.getGasOutStream());
 
@@ -86,7 +86,7 @@ public class TestSeparationTrain {
                 new Compressor("secondStageCompressor", thirdStageScrubber.getGasOutStream());
         secondStageCompressor.setOutletPressure(inletPressure);
 
-        Mixer HPgasMixer = new Mixer();
+        Mixer HPgasMixer = new Mixer("HPgasMixer");
         HPgasMixer.addStream(inletSeparator.getGasOutStream());
         HPgasMixer.addStream(secondStageCompressor.getOutletStream());
 

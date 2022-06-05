@@ -193,7 +193,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         HPpump = new Pump("HP lean TEG pump", heatExchanger1.getOutletStream());
         HPpump.setOutletPressure(gasStreamToAbsorber.getPressure());
 
-        heatExchanger2 = new Cooler("heatExchanger2", HPpump.getOutStream());
+        heatExchanger2 = new Cooler("heatExchanger2", HPpump.getOutletStream());
         heatExchanger2.setOutTemperature(273.15 + 40.0);
 
         heatExchanger3 = new Cooler("heatExchanger3", stripperColumn.getGasOutStream());

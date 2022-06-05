@@ -61,7 +61,7 @@ public class MasstransferMeOH {
 
         neqsim.processSimulation.processEquipment.util.NeqSimUnit pipeline =
                 new neqsim.processSimulation.processEquipment.util.NeqSimUnit(
-                        mainMixer.getOutStream(), "pipeline", "stratified");
+                mainMixer.getOutletStream(), "pipeline", "stratified");
         pipeline.setLength(123.01);
 
         GasScrubber scrubber = new GasScrubber("gas scrub", pipeline.getOutStream());

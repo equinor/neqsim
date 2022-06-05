@@ -116,7 +116,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
         thirdStageMixer.addStream(secondStageSeparator.getGasOutStream());
 
         Separator thirdStageScrubber =
-                new Separator("recompression scrubber", thirdStageMixer.getOutStream());
+            new Separator("recompression scrubber", thirdStageMixer.getOutletStream());
         secondStageSeparator.addStream(thirdStageScrubber.getLiquidOutStream());
 
         Compressor secondStageCompressor =
@@ -128,7 +128,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
         HPgasMixer.addStream(secondStageCompressor.getOutletStream());
         HPgasMixer.addStream(inletSeparator.getGasOutStream());
 
-        Cooler inletGasCooler = new Cooler("HP gas cooler", HPgasMixer.getOutStream());
+        Cooler inletGasCooler = new Cooler("HP gas cooler", HPgasMixer.getOutletStream());
         inletGasCooler.setOutTemperature(exitGasScrubberTemperature);
 
         gasInletScrubber = new Separator("HP gas scrubber", inletGasCooler.getOutletStream());

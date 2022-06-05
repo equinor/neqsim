@@ -155,7 +155,7 @@ public class TEGdehydrationProcess2 {
         Pump hotLeanTEGPump = new Pump("hot lean TEG pump", stripper.getSolventOutStream());
         hotLeanTEGPump.setOutletPressure(20.0);
 
-        Heater coolerhOTteg = new Heater("hot lean TEG cooler", hotLeanTEGPump.getOutStream());
+        Heater coolerhOTteg = new Heater("hot lean TEG cooler", hotLeanTEGPump.getOutletStream());
         coolerhOTteg.setOutTemperature(273.15 + 116.8);
 
         Heater coolerhOTteg2 =
@@ -168,7 +168,7 @@ public class TEGdehydrationProcess2 {
         Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutletStream());
         hotLeanTEGPump2.setOutletPressure(52.21);
 
-        Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutStream());
+        Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutletStream());
 
         neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
         pureTEG.setMolarComposition(
