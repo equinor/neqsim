@@ -18,37 +18,50 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface MixerInterface extends ProcessEquipmentInterface {
-    /**
-     * <p>
-     * addStream.
-     * </p>
-     *
-     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public void addStream(StreamInterface newStream);
+  /**
+   * <p>
+   * addStream.
+   * </p>
+   *
+   * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   */
+  public void addStream(StreamInterface newStream);
 
-    /**
-     * <p>
-     * getOutStream.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-     */
-    public StreamInterface getOutStream();
+  /**
+   * <p>
+   * getOutStream.
+   * </p>
+   * 
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public StreamInterface getOutletStream();
 
-    /**
-     * <p>
-     * replaceStream.
-     * </p>
-     *
-     * @param i a int
-     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public void replaceStream(int i, StreamInterface newStream);
+  /**
+   * <p>
+   * getOutStream.
+   * </p>
+   * 
+   * @deprecated use {@link #getOutletStream} instead
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  @Deprecated
+  default public StreamInterface getOutStream() {
+    return getOutletStream();
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public SystemInterface getThermoSystem();
+  /**
+   * <p>
+   * replaceStream.
+   * </p>
+   *
+   * @param i a int
+   * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   */
+  public void replaceStream(int i, StreamInterface newStream);
+
+  /** {@inheritDoc} */
+  @Override
+  public SystemInterface getThermoSystem();
 }

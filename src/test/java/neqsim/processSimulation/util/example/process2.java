@@ -41,7 +41,7 @@ public class process2 {
         MixerInterface mixer = new StaticMixer("Mixer 1");
         mixer.addStream(heater.getOutletStream());
 
-        StreamInterface stream_3 = mixer.getOutStream();
+        StreamInterface stream_3 = mixer.getOutletStream();
         stream_3.setName("stream3");
 
         Separator separator = new Separator("Separator 1", stream_3);

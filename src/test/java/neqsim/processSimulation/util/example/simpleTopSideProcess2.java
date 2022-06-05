@@ -32,7 +32,7 @@ public class simpleTopSideProcess2 {
         mixer_inlet.addStream(stream_inlet);
 
         ThreePhaseSeparator separator_inlet =
-                new ThreePhaseSeparator("Separator 1", mixer_inlet.getOutStream());
+            new ThreePhaseSeparator("Separator 1", mixer_inlet.getOutletStream());
 
         Stream stream_gasFromSep =
                 new Stream("stream_gasFromSep", separator_inlet.getGasOutStream());

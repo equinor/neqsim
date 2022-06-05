@@ -61,12 +61,12 @@ public class propaneTwoStageCoolingCycle {
         propMixer.addStream(compressor1.getOutletStream());
         propMixer.addStream(medPresSep.getGasOutStream());
 
-        Compressor compressor2 = new Compressor("compressor2", propMixer.getOutStream());
+        Compressor compressor2 = new Compressor("compressor2", propMixer.getOutletStream());
         compressor2.setOutletPressure(stream_1.getPressure());
 
         Heater cooler3 = new Heater("Heater", compressor2.getOutletStream());
         cooler3.setSpecification("out stream");
-        cooler3.setOutStream(stream_1);
+        cooler3.setOutletStream(stream_1);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

@@ -89,7 +89,7 @@ public class OnshoreMEGprocess {
         MEGmixer1.addStream(inletCompressor2ndstage.getOutletStream());
         MEGmixer1.addStream(MEGsplitter1.getSplitStream(0));
 
-        Cooler inletGasCooler = new Cooler("dehydration cooler", MEGmixer1.getOutStream());
+        Cooler inletGasCooler = new Cooler("dehydration cooler", MEGmixer1.getOutletStream());
         inletGasCooler.setOutTemperature(10.0, "C");
 
         StaticMixer MEGmixer2 = new StaticMixer("MEG mixer 2");
@@ -97,7 +97,7 @@ public class OnshoreMEGprocess {
         MEGmixer2.addStream(MEGsplitter1.getSplitStream(1));
 
         HeatExchanger heatEx =
-                new HeatExchanger("gas-gas heat exchanger", MEGmixer2.getOutStream());
+            new HeatExchanger("gas-gas heat exchanger", MEGmixer2.getOutletStream());
         heatEx.setGuessOutTemperature(273.15 - 10.0);
         heatEx.setUAvalue(30000.0);
 
@@ -105,7 +105,8 @@ public class OnshoreMEGprocess {
         MEGmixer3.addStream(heatEx.getOutStream(0));
         MEGmixer3.addStream(MEGsplitter1.getSplitStream(2));
 
-        ThrottlingValve presRedValveLT = new ThrottlingValve("JT valve", MEGmixer3.getOutStream());
+        ThrottlingValve presRedValveLT =
+            new ThrottlingValve("JT valve", MEGmixer3.getOutletStream());
         presRedValveLT.setOutletPressure(92.0);
 
         ThreePhaseSeparator mpseparator =
@@ -206,7 +207,7 @@ public class OnshoreMEGprocess {
         makeupMixer.addStream(leanMEGtoMixer);
         makeupMixer.addStream(makeupMEG);
 
-        Stream streamToResycle = new Stream("streamToResycle", makeupMixer.getOutStream());
+        Stream streamToResycle = new Stream("streamToResycle", makeupMixer.getOutletStream());
 
         Recycle resycleLeanMEG = new Recycle("lean MEG resycle");
         resycleLeanMEG.addStream(streamToResycle);

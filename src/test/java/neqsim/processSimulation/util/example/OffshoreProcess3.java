@@ -153,7 +153,7 @@ public class OffshoreProcess3 {
         mixermp.addStream(mpseparator.getGasOutStream());
 
         Compressor compressor2stage =
-                new Compressor("2nd stage recompressor", mixermp.getOutStream());
+            new Compressor("2nd stage recompressor", mixermp.getOutletStream());
         compressor2stage.setIsentropicEfficiency(0.75);
         // compressor2stage.setOutletPressure(75.0);
 
@@ -172,7 +172,7 @@ public class OffshoreProcess3 {
         mixer.addStream(scrubbberfrom2ndstage.getGasOutStream());
 
         Heater dewPointScrubberCooler =
-                new Heater("dew point scrubber cooler2", mixer.getOutStream());
+            new Heater("dew point scrubber cooler2", mixer.getOutletStream());
         dewPointScrubberCooler.setOutTemperature(273.15 + 32.3);
 
         Separator mpscrubber =
