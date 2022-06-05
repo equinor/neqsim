@@ -38,15 +38,15 @@ public class propaneCoolingCycle {
         ThrottlingValve JTvalve = new ThrottlingValve("JTvalve", stream_1);
         JTvalve.setOutletPressure(1.11325);
 
-        Cooler cooler = new Cooler("cooler", JTvalve.getOutStream());
+        Cooler cooler = new Cooler("cooler", JTvalve.getOutletStream());
         // cooler.setPressureDrop(0.35);
         cooler.setSpecification("out stream");
 
-        Stream stream_2 = new Stream("stream_2", cooler.getOutStream());
+        Stream stream_2 = new Stream("stream_2", cooler.getOutletStream());
         stream_2.setSpecification("dewP");
         // stream_2.setTemperature(-40.0, "C");
 
-        cooler.setOutStream(stream_2);
+        cooler.setOutletStream(stream_2);
 
         SetPoint setLPpressure = new SetPoint("set", JTvalve, "pressure", stream_2);
 
@@ -56,10 +56,10 @@ public class propaneCoolingCycle {
         compressor1.setSpecification("out stream");
         compressor1.setOutletPressure(stream_1.getPressure());
 
-        Heater heater = new Heater("heater", compressor1.getOutStream());
+        Heater heater = new Heater("heater", compressor1.getOutletStream());
         heater.setPressureDrop(0.07);
         heater.setSpecification("out stream");
-        heater.setOutStream(stream_1);
+        heater.setOutletStream(stream_1);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -83,7 +83,7 @@ public class propaneCoolingCycle {
         // operations.displayResult();
         cooler.run();
 
-        JTvalve.getOutStream().displayResult();
+        JTvalve.getOutletStream().displayResult();
         stream_2.displayResult();
 
         System.out.println("compressor work" + compressor1.getEnergy() / 1.0e3 + " kW "

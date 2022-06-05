@@ -392,7 +392,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         CommonOps_DDRM.mult(XVtransposeQMatksiksiksiXVtranspose, XV, mat4);
 
         DMatrixRMaj dFCPAdVdVdVMatrix = new DMatrixRMaj();
-        dFCPAdVdVdVMatrix.set(QVVV);
+        dFCPAdVdVdVMatrix.setTo(QVVV);
         CommonOps_DDRM.addEquals(dFCPAdVdVdVMatrix, mat1);
         CommonOps_DDRM.addEquals(dFCPAdVdVdVMatrix, mat2);
         CommonOps_DDRM.addEquals(dFCPAdVdVdVMatrix, mat2);

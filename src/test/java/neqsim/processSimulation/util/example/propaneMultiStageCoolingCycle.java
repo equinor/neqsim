@@ -62,7 +62,7 @@ public class propaneMultiStageCoolingCycle {
         JTvalve1.setOutletPressure(5.0);
 
         HeatExchanger heatEx1_et = new HeatExchanger("heatEx1_et", stream_Ethane);
-        heatEx1_et.setFeedStream(1, JTvalve1.getOutStream());
+        heatEx1_et.setFeedStream(1, JTvalve1.getOutletStream());
         heatEx1_et.setSpecification("out stream");
 
         Stream stream_Ethane_out = new Stream("stream_Ethane_out", heatEx1_et.getOutStream(0));
@@ -88,7 +88,7 @@ public class propaneMultiStageCoolingCycle {
         JTvalve2.setOutletPressure(1.5);
 
         HeatExchanger heatEx2 = new HeatExchanger("heatEx2", heatEx1.getOutStream(0));
-        heatEx2.setFeedStream(1, JTvalve2.getOutStream());
+        heatEx2.setFeedStream(1, JTvalve2.getOutletStream());
         heatEx2.setSpecification("out stream");
 
         // Cooler cooler = new Cooler(heatEx2.getOutStream(1));
@@ -103,7 +103,7 @@ public class propaneMultiStageCoolingCycle {
                 new Stream("coldGasFromPropaneCooler", heatEx2.getOutStream(0));
 
         HeatExchanger heatEx22 = new HeatExchanger("heatEx22", heatEx2.getOutStream(0));
-        heatEx22.setFeedStream(1, JTvalve1_et.getOutStream());
+        heatEx22.setFeedStream(1, JTvalve1_et.getOutletStream());
         heatEx22.setSpecification("out stream");
 
         Stream stream_22 = new Stream("stream_22", heatEx22.getOutStream(1));
@@ -142,7 +142,7 @@ public class propaneMultiStageCoolingCycle {
 
         coldGasFromPropaneCooler.displayResult();
         heatEx22stream.getFluid().display();
-        JTvalve2.getOutStream().getFluid().display();
+        JTvalve2.getOutletStream().getFluid().display();
         stream_22.getFluid().display();
 
         // JTvalve1.displayResult();

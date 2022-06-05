@@ -100,12 +100,13 @@ class TPFlashTest {
     testSystem5.setMultiPhaseCheck(true);
     testSystem5.setPressure(90.03461693, "bara");
     testSystem5.setTemperature(293.15, "K");
-    testSystem5.setTotalFlowRate(4.925e-05, "kg/sec");
+    testSystem5.setTotalFlowRate(4.925e-07, "kg/sec");
     testOps = new ThermodynamicOperations(testSystem5);
     testOps.TPflash();
     testSystem5.initProperties();
     double beta = testSystem5.getBeta();
-    assertEquals(0.9999993727123112, beta, 1e-5);
+    assertEquals(6.272876522701802E-7, beta, 1e-5);
+
     
   }
 }
