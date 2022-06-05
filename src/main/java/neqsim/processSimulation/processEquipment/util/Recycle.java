@@ -193,7 +193,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /** {@inheritDoc} */
-    @Override
+    @Deprecated
     public StreamInterface getOutStream() {
         return mixedStream;
     }
