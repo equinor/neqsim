@@ -12,21 +12,21 @@ import neqsim.processSimulation.processEquipment.TwoPortInterface;
  * @version $Id: $Id
  */
 public interface PumpInterface extends ProcessEquipmentInterface, TwoPortInterface {
-  /**
-   * <p>
-   * getEnergy.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getEnergy();
+    /**
+     * <p>
+     * getEnergy.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getEnergy();
 
-  /**
-   * <p>
-   * getPower.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getPower();
+    /**
+     * <p>
+     * getPower.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getPower();
 }
