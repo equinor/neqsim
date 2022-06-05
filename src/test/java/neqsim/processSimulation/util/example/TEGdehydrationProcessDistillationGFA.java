@@ -310,7 +310,7 @@ public class TEGdehydrationProcessDistillationGFA {
         hotLeanTEGPump.setOutletPressure(hotTEGpumpPressure);
         hotLeanTEGPump.setIsentropicEfficiency(hotTEGpumpIsentropicEfficiency);
 
-        heatEx.setFeedStream(1, hotLeanTEGPump.getOutStream());
+        heatEx.setFeedStream(1, hotLeanTEGPump.getOutletStream());
 
         heatEx2.setFeedStream(1, heatEx.getOutStream(1));
 
@@ -324,7 +324,7 @@ public class TEGdehydrationProcessDistillationGFA {
         SetPoint pumpHPPresSet =
                 new SetPoint("HP pump set", hotLeanTEGPump2, "pressure", feedToAbsorber);
 
-        Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutStream());
+        Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutletStream());
 
         neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
         pureTEG.setMolarComposition(

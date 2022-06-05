@@ -130,20 +130,8 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     HPgasMixer.addStream(inletSeparator.getGasOutStream());
 
     Cooler inletGasCooler = new Cooler("HP gas cooler", HPgasMixer.getOutletStream());
-    inletGasCooler.setOutTemperature(exitGasScrubberTemperature);
-
-    gasInletScrubber = new Separator("HP gas scrubber", inletGasCooler.getOutletStream());
-
     Recycle HPliquidRecycle = new Recycle("Resycle");
-    double tolerance = 1e-10;
-    HPliquidRecycle.setTolerance(tolerance);
-    HPliquidRecycle.addStream(gasInletScrubber.getLiquidOutStream());
-    inletSeparator.addStream(HPliquidRecycle.getOutletStream());
 
-    getOperations().add(inletSeparator);
-    getOperations().add(liquidOutHeater);
-    getOperations().add(firstStageSeparator);
-    getOperations().add(valve1);
     getOperations().add(secondStageSeparator);
     getOperations().add(thirdStageValve);
     getOperations().add(thirdStageSeparator);

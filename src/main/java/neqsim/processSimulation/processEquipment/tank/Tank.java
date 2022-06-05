@@ -244,10 +244,10 @@ public class Tank extends ProcessEquipmentBaseClass {
     thermoSystem.init(3);
     gasOutStream.getThermoSystem().init(3);
     liquidOutStream.getThermoSystem().init(3);
-    inletStreamMixer.getOutStream().getThermoSystem().init(3);
+    inletStreamMixer.getOutletStream().getThermoSystem().init(3);
     double volume1 = thermoSystem.getVolume();
     System.out.println("volume1 " + volume1);
-    double deltaEnergy = inletStreamMixer.getOutStream().getThermoSystem().getEnthalpy()
+    double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
         - gasOutStream.getThermoSystem().getEnthalpy()
         - liquidOutStream.getThermoSystem().getEnthalpy();
     System.out.println("enthalph delta " + deltaEnergy);
@@ -264,15 +264,15 @@ public class Tank extends ProcessEquipmentBaseClass {
 
     for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
       double dn = 0.0;
-      for (int k = 0; k < inletStreamMixer.getOutStream().getThermoSystem()
+      for (int k = 0; k < inletStreamMixer.getOutletStream().getThermoSystem()
           .getNumberOfPhases(); k++) {
-        dn += inletStreamMixer.getOutStream().getThermoSystem().getPhase(k).getComponent(i)
+        dn += inletStreamMixer.getOutletStream().getThermoSystem().getPhase(k).getComponent(i)
             .getNumberOfMolesInPhase();
       }
       dn = dn - gasOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase()
           - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase();
       System.out.println("dn " + dn);
-      thermoSystem.addComponent(inletStreamMixer.getOutStream().getThermoSystem().getPhase(0)
+      thermoSystem.addComponent(inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0)
           .getComponent(i).getComponentName(), dn * dt);
     }
     System.out.println("liquid level " + liquidLevel);
