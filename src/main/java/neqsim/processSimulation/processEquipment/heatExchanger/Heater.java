@@ -5,7 +5,7 @@
  */
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -19,12 +19,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface {
+public class Heater extends TwoPortEquipment implements HeaterInterface {
   private static final long serialVersionUID = 1000;
 
   boolean setTemperature = false, setOutPressure = false;
-  private StreamInterface outStream;
-  StreamInterface inStream;
   SystemInterface system;
   protected double temperatureOut = 0, dT = 0.0, pressureOut = 0;
   private boolean setEnergyInput = false;
@@ -82,32 +80,10 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     outStream = new Stream("outStream", system);
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>inStream</code>.
-   * </p>
-   *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  public StreamInterface getInStream() {
-    return inStream;
-  }
-
   /** {@inheritDoc} */
   @Override
   public void setdT(double dT) {
     this.dT = dT;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>outStream</code>.
-   * </p>
-   *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  public StreamInterface getOutStream() {
-    return outStream;
   }
 
   /**
@@ -178,10 +154,10 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     if (getSpecification().equals("out stream")) {
-      getOutStream().setFlowRate(getInStream().getFlowRate("kg/sec"), "kg/sec");
-      getOutStream().run();
-      temperatureOut = getOutStream().getTemperature();
-      system = getOutStream().getThermoSystem().clone();
+      getOutletStream().setFlowRate(getInletStream().getFlowRate("kg/sec"), "kg/sec");
+      getOutletStream().run();
+      temperatureOut = getOutletStream().getTemperature();
+      system = getOutletStream().getThermoSystem().clone();
     } else if (setTemperature) {
       system.setTemperature(temperatureOut, temperatureUnit);
       testOps.TPflash();
@@ -203,14 +179,14 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     // system.setTemperature(temperatureOut);
     // testOps.TPflash();
     // system.setTemperature(temperatureOut);
-    getOutStream().setThermoSystem(system);
+    getOutletStream().setThermoSystem(system);
   }
 
   /** {@inheritDoc} */
   @Override
   public void displayResult() {
     // System.out.println("heater dH: " + energyInput);
-    getOutStream().displayResult();
+    getOutletStream().displayResult();
   }
 
   /**
@@ -310,8 +286,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
    *
    * @param outStream the outStream to set
    */
+  @Deprecated
   public void setOutStream(StreamInterface outStream) {
-    this.outStream = outStream;
+    setOutletStream(outStream);
   }
 
   /** {@inheritDoc} */

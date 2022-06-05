@@ -64,7 +64,7 @@ public class TEGdehydrationProcessDistillation {
                 new StreamSaturatorUtil("water saturator", dryFeedGas);
 
         Stream waterSaturatedFeedGas =
-                new Stream("water saturated feed gas", saturatedFeedGas.getOutStream());
+            new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
         neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
         feedTEG.setMolarComposition(
@@ -89,10 +89,10 @@ public class TEGdehydrationProcessDistillation {
         glycol_flash_valve.setOutletPressure(4.9);
 
         Heater richGLycolHeaterCondenser =
-                new Heater("rich TEG preheater", glycol_flash_valve.getOutStream());
+            new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
 
         HeatExchanger heatEx2 = new HeatExchanger("rich TEG heat exchanger 1",
-                richGLycolHeaterCondenser.getOutStream());
+            richGLycolHeaterCondenser.getOutletStream());
         heatEx2.setGuessOutTemperature(273.15 + 62.0);
         heatEx2.setUAvalue(220.0);
 
@@ -126,7 +126,7 @@ public class TEGdehydrationProcessDistillation {
 
         DistillationColumn column = new DistillationColumn(1, true, true);
         column.setName("TEG regeneration column");
-        column.addFeedStream(glycol_flash_valve2.getOutStream(), 0);
+        column.addFeedStream(glycol_flash_valve2.getOutletStream(), 0);
         column.getReboiler().setOutTemperature(273.15 + 206.6);
         column.getCondenser().setOutTemperature(273.15 + 100.0);
         column.getReboiler().addStream(gasToReboiler);
@@ -136,7 +136,8 @@ public class TEGdehydrationProcessDistillation {
         Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
         coolerRegenGas.setOutTemperature(273.15 + 35.5);
 
-        Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutStream());
+        Separator sepregenGas =
+            new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
         Stream gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
 
@@ -156,7 +157,7 @@ public class TEGdehydrationProcessDistillation {
         Heater bufferTank = new Heater("TEG buffer tank", stripper.getSolventOutStream());
         bufferTank.setOutTemperature(273.15 + 185.0);
 
-        Pump hotLeanTEGPump = new Pump("hot lean TEG pump",bufferTank.getOutStream());// stripper.getSolventOutStream());
+        Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutletStream());// stripper.getSolventOutStream());
         hotLeanTEGPump.setOutletPressure(20.0);
         hotLeanTEGPump.setIsentropicEfficiency(0.75);
 
@@ -167,7 +168,7 @@ public class TEGdehydrationProcessDistillation {
         Heater coolerhOTteg3 = new Heater("lean TEG cooler",heatEx2.getOutStream(1));
         coolerhOTteg3.setOutTemperature(273.15 + 43.0);
 
-        Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump",coolerhOTteg3.getOutStream());
+        Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutletStream());
         hotLeanTEGPump2.setOutletPressure(52.21);
         hotLeanTEGPump2.setIsentropicEfficiency(0.75);
 
@@ -194,7 +195,7 @@ public class TEGdehydrationProcessDistillation {
         makeupMixer.addStream(makeupTEG);
 
         Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-        resycleLeanTEG.addStream(makeupMixer.getOutStream());
+        resycleLeanTEG.addStream(makeupMixer.getOutletStream());
         resycleLeanTEG.setOutletStream(TEGFeed);
         resycleLeanTEG.setPriority(200);
         resycleLeanTEG.setDownstreamProperty("flow rate");
@@ -304,23 +305,24 @@ public class TEGdehydrationProcessDistillation {
         System.out.println("richGLycolHeaterCondenser duty  "
                 + richGLycolHeaterCondenser.getEnergyStream().getDuty() / 1.0e3);
         System.out.println("richGLycolHeaterCondenser temperature out  "
-                + richGLycolHeaterCondenser.getOutStream().getTemperature("C"));
+            + richGLycolHeaterCondenser.getOutletStream().getTemperature("C"));
         richGLycolHeaterCondenser.run();
 
         hotLeanTEGPump.getOutStream().displayResult();
         flashLiquid.displayResult();
 
         System.out.println("Temperature rich TEG out of reflux condenser "
-                + richGLycolHeaterCondenser.getOutStream().getTemperature("C"));
+            + richGLycolHeaterCondenser.getOutletStream().getTemperature("C"));
         heatEx.displayResult();
         System.out.println("glycol out temperature "
-                + glycol_flash_valve2.getOutStream().getFluid().getTemperature("C"));
+            + glycol_flash_valve2.getOutletStream().getFluid().getTemperature("C"));
         System.out
                 .println("glycol out temperature2 " + heatEx2.getOutStream(0).getTemperature("C"));
         System.out
                 .println("glycol out temperature2 " + heatEx2.getOutStream(1).getTemperature("C"));
 
-        System.out.println("out water rate LP valve" + glycol_flash_valve2.getOutStream().getFluid()
+        System.out.println("out water rate LP valve" + glycol_flash_valve2.getOutletStream()
+            .getFluid()
                 .getPhase(0).getComponent("water").getNumberOfmoles());
         System.out.println("glycol out water rate reboil " + ((Reboiler) column.getReboiler())
                 .getLiquidOutStream().getFluid().getComponent("water").getNumberOfmoles());

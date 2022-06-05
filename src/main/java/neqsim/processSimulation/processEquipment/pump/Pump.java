@@ -4,12 +4,10 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -367,7 +365,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
      * Getter for the field <code>isentropicEfficiency</code>.
      * </p>
      *
-     * @return the isentropicEfficientcy
+     * @return the isentropicEfficiency
      */
     public double getIsentropicEfficiency() {
         return isentropicEfficiency;
@@ -378,10 +376,10 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
      * Setter for the field <code>isentropicEfficiency</code>.
      * </p>
      *
-     * @param isentropicEfficientcy the isentropicEfficientcy to set
+     * @param isentropicEfficiency the isentropicEfficiency to set
      */
-    public void setIsentropicEfficiency(double isentropicEfficientcy) {
-        this.isentropicEfficiency = isentropicEfficientcy;
+    public void setIsentropicEfficiency(double isentropicEfficiency) {
+      this.isentropicEfficiency = isentropicEfficiency;
     }
 
     /**

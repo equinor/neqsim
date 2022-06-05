@@ -5,17 +5,14 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.Objects;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -29,12 +26,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author esol
  * @version $Id: $Id
  */
-public class Compressor extends ProcessEquipmentBaseClass implements CompressorInterface {
+public class Compressor extends TwoPortEquipment implements CompressorInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Compressor.class);
   public SystemInterface thermoSystem;
-  public StreamInterface inletStream;
-  public StreamInterface outStream;
   private double outTemperature = 298.15;
   private boolean useOutTemperature = false;
   private CompressorPropertyProfile propertyProfile = new CompressorPropertyProfile();
@@ -149,7 +144,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
   /** {@inheritDoc} */
   @Override
   public void setInletStream(StreamInterface inletStream) {
-    this.inletStream = inletStream;
+    this.inStream = inletStream;
     try {
       this.outStream = inletStream.clone();
     } catch (Exception e) {
@@ -245,23 +240,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     dH = p;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public StreamInterface getOutStream() {
-    return outStream;
-  }
-
-  /**
-   * <p>
-   * getInStream.
-   * </p>
-   *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  public StreamInterface getInStream() {
-    return inletStream;
-  }
-
   /**
    * Calculates polytropic or isentropic efficiency
    *
@@ -331,7 +309,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
   /** {@inheritDoc} */
   @Override
   public void run() {
-    thermoSystem = inletStream.getThermoSystem().clone();
+    thermoSystem = inStream.getThermoSystem().clone();
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
     thermoOps = new ThermodynamicOperations(getThermoSystem());
     getThermoSystem().init(3);
@@ -854,8 +832,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
   /** {@inheritDoc} */
   @Override
-  public void setIsentropicEfficiency(double isentropicEfficientcy) {
-    this.isentropicEfficiency = isentropicEfficientcy;
+  public void setIsentropicEfficiency(double isentropicEfficiency) {
+    this.isentropicEfficiency = isentropicEfficiency;
   }
 
   /**
@@ -1165,14 +1143,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
   @Override
   public double getEntropyProduction(String unit) {
     return outStream.getThermoSystem().getEntropy(unit)
-        - inletStream.getThermoSystem().getEntropy(unit);
+        - inStream.getThermoSystem().getEntropy(unit);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getExergyChange(String unit, double surroundingTemperature) {
     return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
-        - inletStream.getThermoSystem().getExergy(surroundingTemperature, unit);
+        - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
   }
 
   /**
@@ -1228,8 +1206,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
   public int hashCode() {
     final int prime = 31;
     int result = super.hashCode();
-    result = prime * result + Objects.hash(antiSurge, compressorChart, dH, inletEnthalpy,
-        inletStream, isentropicEfficiency, numberOfCompressorCalcSteps, outStream, outTemperature,
+    result = prime * result + Objects.hash(antiSurge, compressorChart, dH, inletEnthalpy, inStream,
+        isentropicEfficiency, numberOfCompressorCalcSteps, outStream, outTemperature,
         polytropicEfficiency, polytropicExponent, polytropicFluidHead, polytropicHead,
         polytropicHeadMeter, polytropicMethod, powerSet, pressure, pressureUnit, speed,
         thermoSystem, useGERG2008, useOutTemperature, usePolytropicCalc,
@@ -1251,7 +1229,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         && Objects.equals(compressorChart, other.compressorChart)
         && Double.doubleToLongBits(dH) == Double.doubleToLongBits(other.dH)
         && Double.doubleToLongBits(inletEnthalpy) == Double.doubleToLongBits(other.inletEnthalpy)
-        && Objects.equals(inletStream, other.inletStream)
+        && Objects.equals(inStream, other.inStream)
         && Double.doubleToLongBits(isentropicEfficiency) == Double
             .doubleToLongBits(other.isentropicEfficiency)
         && numberOfCompressorCalcSteps == other.numberOfCompressorCalcSteps

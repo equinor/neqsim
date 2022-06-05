@@ -69,7 +69,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
         getOperations().run();
 
         gasExitStream = gasInletScrubber.getGasOutStream();
-        oilExitStream = oilCooler.getOutStream();
+        oilExitStream = oilCooler.getOutletStream();
     }
 
     /** {@inheritDoc} */
@@ -84,21 +84,21 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
         liquidOutHeater.setOutTemperature(heatedOilTemperature);
 
         ThreePhaseSeparator firstStageSeparator =
-                new ThreePhaseSeparator("1st stage separator", liquidOutHeater.getOutStream());
+            new ThreePhaseSeparator("1st stage separator", liquidOutHeater.getOutletStream());
 
         ThrottlingValve valve1 =
                 new ThrottlingValve("1stTo2ndStageOilValve", firstStageSeparator.getOilOutStream());
         valve1.setOutletPressure(secondstagePressure);
 
         ThreePhaseSeparator secondStageSeparator =
-                new ThreePhaseSeparator("2nd stage Separator", valve1.getOutStream());
+            new ThreePhaseSeparator("2nd stage Separator", valve1.getOutletStream());
 
         ThrottlingValve thirdStageValve =
                 new ThrottlingValve("2-3stageOilValve", secondStageSeparator.getLiquidOutStream());
         thirdStageValve.setOutletPressure(thirdstagePressure);
 
         ThreePhaseSeparator thirdStageSeparator =
-                new ThreePhaseSeparator("3rd stage Separator", thirdStageValve.getOutStream());
+            new ThreePhaseSeparator("3rd stage Separator", thirdStageValve.getOutletStream());
 
         oilCooler = new Cooler("export oil cooler", thirdStageSeparator.getLiquidOutStream());
         oilCooler.setOutTemperature(exportOilTemperature);
@@ -108,11 +108,11 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
         thirdStageCompressor.setOutletPressure(secondstagePressure);
 
         Cooler thirdSstageCoooler =
-                new Cooler("3rd stage cooler", thirdStageCompressor.getOutStream());
+            new Cooler("3rd stage cooler", thirdStageCompressor.getOutletStream());
         thirdSstageCoooler.setOutTemperature(firstStageCompressorAfterCoolerTemperature);
 
         Mixer thirdStageMixer = new Mixer("1st and 2nd stage gas mixer");
-        thirdStageMixer.addStream(thirdSstageCoooler.getOutStream());
+        thirdStageMixer.addStream(thirdSstageCoooler.getOutletStream());
         thirdStageMixer.addStream(secondStageSeparator.getGasOutStream());
 
         Separator thirdStageScrubber =
@@ -125,13 +125,13 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
 
         Mixer HPgasMixer = new Mixer("HPgas mixer");
         HPgasMixer.addStream(firstStageSeparator.getGasOutStream());
-        HPgasMixer.addStream(secondStageCompressor.getOutStream());
+        HPgasMixer.addStream(secondStageCompressor.getOutletStream());
         HPgasMixer.addStream(inletSeparator.getGasOutStream());
 
         Cooler inletGasCooler = new Cooler("HP gas cooler", HPgasMixer.getOutStream());
         inletGasCooler.setOutTemperature(exitGasScrubberTemperature);
 
-        gasInletScrubber = new Separator("HP gas scrubber", inletGasCooler.getOutStream());
+        gasInletScrubber = new Separator("HP gas scrubber", inletGasCooler.getOutletStream());
 
         Recycle HPliquidRecycle = new Recycle("Resycle");
         double tolerance = 1e-10;

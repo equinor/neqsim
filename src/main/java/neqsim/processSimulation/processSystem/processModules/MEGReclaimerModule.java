@@ -86,7 +86,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         inletValve.setIsoThermal(true);
 
         inletMixer = new Mixer();
-        inletMixer.addStream(inletValve.getOutStream());
+        inletMixer.addStream(inletValve.getOutletStream());
 
         flashSeparator = new Separator("flashSeparator", inletMixer.getOutStream());
 
@@ -98,11 +98,11 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         // MEGrecircHeater.setEnergyInput(5000.0);
         MEGrecircHeater.setOutTemperature(273 + 68.9);
 
-        recircValve = new ThrottlingValve("recircValve", MEGrecircHeater.getOutStream());
+        recircValve = new ThrottlingValve("recircValve", MEGrecircHeater.getOutletStream());
         recircValve.setOutletPressure(reclaimerPressure);
         recircValve.setIsoThermal(true);
 
-        inletMixer.addStream(recircValve.getOutStream());
+        inletMixer.addStream(recircValve.getOutletStream());
 
         vacumCooler = new Heater("vacumCooler", flashSeparator.getGasOutStream());
 

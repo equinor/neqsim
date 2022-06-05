@@ -110,7 +110,7 @@ public class Hydrocyclone extends Separator {
   @Override
   public void run() {
     inletStreamMixer.run();
-    thermoSystem = inletStreamMixer.getOutStream().getThermoSystem().clone();
+    thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
     // double oilInWaterIn = 0.0001; //
     // thermoSystem.getPhase("aqueous").getOilMolarConcentration();

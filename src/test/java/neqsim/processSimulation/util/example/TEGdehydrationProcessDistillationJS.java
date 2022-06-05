@@ -198,7 +198,7 @@ public class TEGdehydrationProcessDistillationJS {
                 new StreamSaturatorUtil("water saturator", dryFeedGas);
 
         Stream waterSaturatedFeedGas =
-                new Stream("water saturated feed gas", saturatedFeedGas.getOutStream());
+            new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
         HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser =
                 new HydrateEquilibriumTemperatureAnalyser(waterSaturatedFeedGas);
@@ -213,7 +213,7 @@ public class TEGdehydrationProcessDistillationJS {
         feedTPsetterToAbsorber.setOutTemperature(absorberFeedGasTemperature, "C");
 
         Stream feedToAbsorber =
-                new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutStream());
+            new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
 
         Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
         TEGFeed.setFlowRate(leanTEGFlowRate, "kg/hr");
@@ -238,10 +238,10 @@ public class TEGdehydrationProcessDistillationJS {
         glycol_flash_valve.setOutletPressure(flashDrumPressure);
 
         Heater richGLycolHeaterCondenser =
-                new Heater("rich TEG preheater", glycol_flash_valve.getOutStream());
+            new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
 
         HeatExchanger heatEx2 = new HeatExchanger("rich TEG heat exchanger 1",
-                richGLycolHeaterCondenser.getOutStream());
+            richGLycolHeaterCondenser.getOutletStream());
         heatEx2.setGuessOutTemperature(273.15 + 62.0);
         heatEx2.setUAvalue(UAvalueRichTEGHeatExchanger_1);
 
@@ -255,11 +255,11 @@ public class TEGdehydrationProcessDistillationJS {
         Filter fineFilter = new Filter("TEG fine filter", flashLiquid);
         fineFilter.setDeltaP(0.05, "bara");
 
-        Filter carbonFilter = new Filter("activated carbon filter", fineFilter.getOutStream());
+        Filter carbonFilter = new Filter("activated carbon filter", fineFilter.getOutletStream());
         carbonFilter.setDeltaP(0.01, "bara");
 
         HeatExchanger heatEx =
-                new HeatExchanger("rich TEG heat exchanger 2", carbonFilter.getOutStream());
+            new HeatExchanger("rich TEG heat exchanger 2", carbonFilter.getOutletStream());
         heatEx.setGuessOutTemperature(273.15 + 130.0);
         heatEx.setUAvalue(UAvalueRichTEGHeatExchanger_2);
 
@@ -280,7 +280,7 @@ public class TEGdehydrationProcessDistillationJS {
 
         DistillationColumn column = new DistillationColumn(1, true, true);
         column.setName("TEG regeneration column");
-        column.addFeedStream(glycol_flash_valve2.getOutStream(), 0);
+        column.addFeedStream(glycol_flash_valve2.getOutletStream(), 0);
         column.getReboiler().setOutTemperature(273.15 + reboilerTemperature);
         column.getCondenser().setOutTemperature(273.15 + condenserTemperature);
         column.getReboiler().addStream(gasToReboiler);
@@ -290,7 +290,8 @@ public class TEGdehydrationProcessDistillationJS {
         Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
         coolerRegenGas.setOutTemperature(273.15 + regenerationGasCoolerTemperature);
 
-        Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutStream());
+        Separator sepregenGas =
+            new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
         Stream gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
 
@@ -310,7 +311,7 @@ public class TEGdehydrationProcessDistillationJS {
         Heater bufferTank = new Heater("TEG buffer tank", stripper.getSolventOutStream());
         bufferTank.setOutTemperature(273.15 + bufferTankTemperatureTEG);
 
-        Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutStream());
+        Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutletStream());
         hotLeanTEGPump.setOutletPressure(hotTEGpumpPressure);
         hotLeanTEGPump.setIsentropicEfficiency(hotTEGpumpIsentropicEfficiency);
 
@@ -321,7 +322,7 @@ public class TEGdehydrationProcessDistillationJS {
         Heater coolerhOTteg3 = new Heater("lean TEG cooler", heatEx2.getOutStream(1));
         coolerhOTteg3.setOutTemperature(273.15 + leanTEGTemperature);
 
-        Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutStream());
+        Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutletStream());
         hotLeanTEGPump2.setOutletPressure(absorberFeedGasPressure);
         hotLeanTEGPump2.setIsentropicEfficiency(coldTEGpumpIsentropicEfficiency);
 
@@ -351,7 +352,7 @@ public class TEGdehydrationProcessDistillationJS {
         makeupMixer.addStream(makeupTEG);
 
         Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-        resycleLeanTEG.addStream(makeupMixer.getOutStream());
+        resycleLeanTEG.addStream(makeupMixer.getOutletStream());
         resycleLeanTEG.setOutletStream(TEGFeed);
         resycleLeanTEG.setPriority(200);
         resycleLeanTEG.setDownstreamProperty("flow rate");

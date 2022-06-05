@@ -60,18 +60,18 @@ public class OnshoreMEGprocess {
                 new StreamSaturatorUtil("water saturator", dryFeedGas);
 
         Stream waterSaturatedFeedGas =
-                new Stream("water saturated feed gas", saturatedFeedGas.getOutStream());
+            new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
         Compressor inletCompressor =
                 new Compressor("Compressor 1 - first stage", waterSaturatedFeedGas);
         inletCompressor.setOutletPressure(70.0, "bara");
 
         Cooler interstageGasCooler =
-                new Cooler("Compressor 1 - interstage cooler", inletCompressor.getOutStream());
+            new Cooler("Compressor 1 - interstage cooler", inletCompressor.getOutletStream());
         interstageGasCooler.setOutTemperature(40.0, "C");
 
         Compressor inletCompressor2ndstage =
-                new Compressor("Compressor 1 - second stage", interstageGasCooler.getOutStream());
+            new Compressor("Compressor 1 - second stage", interstageGasCooler.getOutletStream());
         inletCompressor2ndstage.setOutletPressure(105.0, "bara");
 
         neqsim.thermo.system.SystemInterface feedMEG = feedGas.clone();
@@ -86,18 +86,18 @@ public class OnshoreMEGprocess {
         MEGsplitter1.setSplitFactors(new double[] {0.01, 0.94, 0.05});
 
         StaticMixer MEGmixer1 = new StaticMixer("MEG mixer 1");
-        MEGmixer1.addStream(inletCompressor2ndstage.getOutStream());
+        MEGmixer1.addStream(inletCompressor2ndstage.getOutletStream());
         MEGmixer1.addStream(MEGsplitter1.getSplitStream(0));
 
-        Cooler inletGasCooler = new Cooler("dehydration cooler", MEGmixer1.getOutStream());
+        Cooler inletGasCooler = new Cooler("dehydration cooler", MEGmixer1.getOutletStream());
         inletGasCooler.setOutTemperature(10.0, "C");
 
         StaticMixer MEGmixer2 = new StaticMixer("MEG mixer 2");
-        MEGmixer2.addStream(inletGasCooler.getOutStream());
+        MEGmixer2.addStream(inletGasCooler.getOutletStream());
         MEGmixer2.addStream(MEGsplitter1.getSplitStream(1));
 
         HeatExchanger heatEx =
-                new HeatExchanger("gas-gas heat exchanger", MEGmixer2.getOutStream());
+            new HeatExchanger("gas-gas heat exchanger", MEGmixer2.getOutletStream());
         heatEx.setGuessOutTemperature(273.15 - 10.0);
         heatEx.setUAvalue(30000.0);
 
@@ -105,11 +105,12 @@ public class OnshoreMEGprocess {
         MEGmixer3.addStream(heatEx.getOutStream(0));
         MEGmixer3.addStream(MEGsplitter1.getSplitStream(2));
 
-        ThrottlingValve presRedValveLT = new ThrottlingValve("JT valve", MEGmixer3.getOutStream());
+        ThrottlingValve presRedValveLT =
+            new ThrottlingValve("JT valve", MEGmixer3.getOutletStream());
         presRedValveLT.setOutletPressure(92.0);
 
         ThreePhaseSeparator mpseparator =
-                new ThreePhaseSeparator("low temperature scrubber", presRedValveLT.getOutStream());
+            new ThreePhaseSeparator("low temperature scrubber", presRedValveLT.getOutletStream());
 
         Stream coldGasFromSep = new Stream("gas from cold scrubber", mpseparator.getGasOutStream());
 
@@ -124,14 +125,15 @@ public class OnshoreMEGprocess {
         richMEGstreamHeater.setOutTemperature(15.0, "C");
 
         Heater richMEGstreamHeater2 =
-                new Heater("column condenser HX", richMEGstreamHeater.getOutStream());
+            new Heater("column condenser HX", richMEGstreamHeater.getOutletStream());
         // richMEGstreamHeater2.setOutTemperature(22.0, "C");
 
         ThrottlingValve presRedValve3 =
-                new ThrottlingValve("valve to flash drum", richMEGstreamHeater2.getOutStream());
+            new ThrottlingValve("valve to flash drum", richMEGstreamHeater2.getOutletStream());
         presRedValve3.setOutletPressure(3.9);
 
-        Separator flashDrumSep = new Separator("rich MEG flash drum", presRedValve3.getOutStream());
+        Separator flashDrumSep =
+            new Separator("rich MEG flash drum", presRedValve3.getOutletStream());
 
         Stream flashGasStream = new Stream("gas from flash drum", flashDrumSep.getGasOutStream());
 
@@ -149,7 +151,7 @@ public class OnshoreMEGprocess {
 
         DistillationColumn column = new DistillationColumn(2, true, true);
         column.setName("MEG regeneration column");
-        column.addFeedStream(presRedValve4.getOutStream(), 0);
+        column.addFeedStream(presRedValve4.getOutletStream(), 0);
         column.getReboiler().setOutTemperature(273.15 + 135.0);
         column.getCondenser().setOutTemperature(273.15 + 105.0);
         column.setTopPressure(1.0);
@@ -160,7 +162,7 @@ public class OnshoreMEGprocess {
         coolerRegenGas.setOutTemperature(273.15 + 20.0);
 
         Separator sepregenGas =
-                new Separator("overhead condenser scrubber", coolerRegenGas.getOutStream());
+            new Separator("overhead condenser scrubber", coolerRegenGas.getOutletStream());
 
         Stream gasToFlare =
                 new Stream("gas to flare from regenerator", sepregenGas.getGasOutStream());
@@ -171,7 +173,7 @@ public class OnshoreMEGprocess {
         Cooler bufferTank = new Cooler("MEG buffer tank", column.getLiquidOutStream());
         bufferTank.setOutTemperature(273.15 + 130.0);
 
-        Pump hotLeanMEGPump = new Pump("hot lean MEG pump", bufferTank.getOutStream());
+        Pump hotLeanMEGPump = new Pump("hot lean MEG pump", bufferTank.getOutletStream());
         hotLeanMEGPump.setOutletPressure(105.0);
         hotLeanMEGPump.setIsentropicEfficiency(0.75);
 
@@ -184,7 +186,7 @@ public class OnshoreMEGprocess {
         coolerHotMEG2.setOutTemperature(273.15 + 20.0);
 
         Stream leanMEGtoMixer =
-                new Stream("lean MEG to makeup mixer", coolerHotMEG2.getOutStream());
+            new Stream("lean MEG to makeup mixer", coolerHotMEG2.getOutletStream());
 
         neqsim.thermo.system.SystemInterface pureMEG = feedGas.clone();
         pureMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
@@ -205,7 +207,7 @@ public class OnshoreMEGprocess {
         makeupMixer.addStream(leanMEGtoMixer);
         makeupMixer.addStream(makeupMEG);
 
-        Stream streamToResycle = new Stream("streamToResycle", makeupMixer.getOutStream());
+        Stream streamToResycle = new Stream("streamToResycle", makeupMixer.getOutletStream());
 
         Recycle resycleLeanMEG = new Recycle("lean MEG resycle");
         resycleLeanMEG.addStream(streamToResycle);
@@ -273,7 +275,7 @@ public class OnshoreMEGprocess {
 
         System.out.println("MEG flow rate " + richMEGstream.getFluid().getFlowRate("kg/hr"));
         System.out.println("MEG feed to column rate "
-                + presRedValve4.getOutStream().getFluid().getFlowRate("kg/hr"));
+            + presRedValve4.getOutletStream().getFluid().getFlowRate("kg/hr"));
 
         System.out.println("MEG flow rate " + resycleLeanMEG.getFluid().getFlowRate("kg/hr"));
         System.out.println(
@@ -297,9 +299,9 @@ public class OnshoreMEGprocess {
                 + column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("MEG")
                         * 100.0);
         System.out.println("hydrate temperature 1 "
-                + (inletGasCooler.getOutStream().getHydrateEquilibriumTemperature() - 273.15)
+            + (inletGasCooler.getOutletStream().getHydrateEquilibriumTemperature() - 273.15)
                 + " wt% MEG "
-                + inletGasCooler.getOutStream().getFluid().getPhase("aqueous").getWtFrac("MEG")
+            + inletGasCooler.getOutletStream().getFluid().getPhase("aqueous").getWtFrac("MEG")
                         * 100.0);
 
         operations.save("c:/temp/MEGdehydrationProcess.neqsim");

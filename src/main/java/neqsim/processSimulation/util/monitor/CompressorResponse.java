@@ -40,16 +40,16 @@ public class CompressorResponse {
      */
     public CompressorResponse(Compressor inputCompressor){
         name = inputCompressor.getName();
-        molarMass = inputCompressor.getInStream().getFluid().getMolarMass();
-        suctionMassDensity = inputCompressor.getInStream().getFluid().getDensity("kg/m3");
-        dischargeMassDensity = inputCompressor.getOutStream().getFluid().getDensity("kg/m3");
-        massflow = inputCompressor.getInStream().getFluid().getFlowRate("kg/hr");
-        suctionVolumeFlow = inputCompressor.getInStream().getFluid().getFlowRate("m3/hr");
-        dischargeVolumeFlow = inputCompressor.getOutStream().getFluid().getFlowRate("m3/hr");
-        suctionPressure = inputCompressor.getInStream().getPressure("bara");
-        suctionTemperature = inputCompressor.getInStream().getTemperature("C");
-        dischargeTemperature = inputCompressor.getOutStream().getTemperature("C");
-        dischargePressure = inputCompressor.getOutStream().getPressure("bara");
+        molarMass = inputCompressor.getInletStream().getFluid().getMolarMass();
+        suctionMassDensity = inputCompressor.getInletStream().getFluid().getDensity("kg/m3");
+        dischargeMassDensity = inputCompressor.getOutletStream().getFluid().getDensity("kg/m3");
+        massflow = inputCompressor.getInletStream().getFluid().getFlowRate("kg/hr");
+        suctionVolumeFlow = inputCompressor.getInletStream().getFluid().getFlowRate("m3/hr");
+        dischargeVolumeFlow = inputCompressor.getOutletStream().getFluid().getFlowRate("m3/hr");
+        suctionPressure = inputCompressor.getInletStream().getPressure("bara");
+        suctionTemperature = inputCompressor.getInletStream().getTemperature("C");
+        dischargeTemperature = inputCompressor.getOutletStream().getTemperature("C");
+        dischargePressure = inputCompressor.getOutletStream().getPressure("bara");
         polytropicHead = inputCompressor.getPolytropicFluidHead();
         polytropicEfficiency = inputCompressor.getPolytropicEfficiency();
         power = inputCompressor.getPower("kW");

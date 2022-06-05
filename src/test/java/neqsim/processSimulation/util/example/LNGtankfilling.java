@@ -63,7 +63,7 @@ public class LNGtankfilling {
         valve.setOutletPressure(1.01325 + 0.110);
 
         Tank tank = new neqsim.processSimulation.processEquipment.tank.Tank("tank");
-        tank.addStream(valve.getOutStream());
+        tank.addStream(valve.getOutletStream());
         // tank.addStream(stream_2);
 
         ValveInterface valve2 = new ThrottlingValve("valve2", tank.getGasOutStream());
