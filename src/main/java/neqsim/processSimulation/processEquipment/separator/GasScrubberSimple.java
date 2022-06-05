@@ -23,9 +23,10 @@ public class GasScrubberSimple extends Separator {
     private static final long serialVersionUID = 1000;
 
     SystemInterface gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
-    Stream inletStream;
-    Stream gasOutStream;
-    Stream liquidOutStream;
+    StreamInterface inletStream;
+    StreamInterface gasOutStream;
+    StreamInterface liquidOutStream;
+    String name = new String();
 
     /**
      * <p>
@@ -65,8 +66,7 @@ public class GasScrubberSimple extends Separator {
      * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
     public GasScrubberSimple(String name, StreamInterface inletStream) {
         super(name, inletStream);
@@ -82,12 +82,10 @@ public class GasScrubberSimple extends Separator {
      * Setter for the field <code>inletStream</code>.
      * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
-    @Override
     public void setInletStream(StreamInterface inletStream) {
-        super.setInletStream(inletStream);
+        this.inletStream = inletStream;
 
         thermoSystem = inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(0);
