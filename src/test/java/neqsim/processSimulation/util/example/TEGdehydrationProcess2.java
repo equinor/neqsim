@@ -102,7 +102,7 @@ public class TEGdehydrationProcess2 {
         Mixer mixerTOreboiler = new Mixer("reboil mxer");
         mixerTOreboiler.addStream(richGLycolHeater2.getOutletStream());
 
-        Heater heaterToReboiler = new Heater("heaterToReboiler", mixerTOreboiler.getOutStream());
+        Heater heaterToReboiler = new Heater("heaterToReboiler", mixerTOreboiler.getOutletStream());
         heaterToReboiler.setOutTemperature(273.15 + 206.6);
 
         Separator regenerator2 = new Separator("regenerator2", heaterToReboiler.getOutletStream());
@@ -191,7 +191,7 @@ public class TEGdehydrationProcess2 {
         makeupMixer.addStream(makeupTEG);
 
         Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-        resycleLeanTEG.addStream(makeupMixer.getOutStream());
+        resycleLeanTEG.addStream(makeupMixer.getOutletStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

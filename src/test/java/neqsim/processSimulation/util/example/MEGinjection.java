@@ -119,7 +119,7 @@ public class MEGinjection {
     MEGmixer1.addStream(slugCatcher.getGasOutStream());
     MEGmixer1.addStream(MEGsplitter.getSplitStream(0));
 
-    ThrottlingValve DPvalve1 = new ThrottlingValve("DP valve 1", MEGmixer1.getOutStream());
+    ThrottlingValve DPvalve1 = new ThrottlingValve("DP valve 1", MEGmixer1.getOutletStream());
     DPvalve1.setOutletPressure(70.0);
 
     neqsim.processSimulation.processSystem.ProcessSystem onshoreOperations =

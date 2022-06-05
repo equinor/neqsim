@@ -13,6 +13,7 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -40,6 +41,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
    * Constructor for Mixer.
    * </p>
    */
+  @Deprecated
   public Mixer() {
     super("Mixer");
   }
@@ -74,7 +76,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     try {
       if (getNumberOfInputStreams() == 0) {
-        mixedStream = streams.get(0).clone(); // cloning the first stream
+        mixedStream = (Stream) streams.get(0).clone(); // cloning the first stream
         // mixedStream.getThermoSystem().setNumberOfPhases(2);
         // mixedStream.getThermoSystem().reInitPhaseType();
         // mixedStream.getThermoSystem().init(0);
@@ -137,12 +139,24 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
           }
         }
 
-        numberOfInputStreams++;
+        if (gotComponent) {
+          // System.out.println("adding moles starting....");
+          mixedStream.getThermoSystem().addComponent(index, moles);
+          // mixedStream.getThermoSystem().init_x_y();
+          // System.out.println("adding moles finished");
+        } else {
+          hasAddedNewComponent = true;
+          // System.out.println("ikke gaa hit");
+          mixedStream.getThermoSystem().addComponent(compName, moles);
+        }
       }
     }
+    if (hasAddedNewComponent)
+      mixedStream.getThermoSystem().setMixingRule(mixedStream.getThermoSystem().getMixingRule());
+    // mixedStream.getThermoSystem().init_x_y();
+    // mixedStream.getThermoSystem().initBeta();
+    // mixedStream.getThermoSystem().init(2);
   }
-
-
 
   /**
    * <p>
@@ -182,11 +196,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
   /** {@inheritDoc} */
   @Override
-  @Deprecated
-  public StreamInterface getOutStream() {
-    return mixedStream;
-  }
-
   public StreamInterface getOutletStream() {
     return mixedStream;
   }
@@ -194,7 +203,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    boolean hasAddedNewComponent = false;
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
@@ -226,15 +234,24 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       testOps.TPflash();
       mixedStream.getThermoSystem().init(2);
     } else {
-      hasAddedNewComponent = true;
-      // System.out.println("ikke gaa hit");
+      try {
+        testOps.PHflash(enthalpy, 0);
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+        if (!Double.isNaN(getOutTemperature()))
+          mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+        testOps.TPflash();
+      }
     }
 
-    if (hasAddedNewComponent)
-      mixedStream.getThermoSystem().setMixingRule(mixedStream.getThermoSystem().getMixingRule());
-    // mixedStream.getThermoSystem().init_x_y();
-    // mixedStream.getThermoSystem().initBeta();
-    // mixedStream.getThermoSystem().init(2);
+    // System.out.println("enthalpy: " +
+    // mixedStream.getThermoSystem().getEnthalpy());
+    // System.out.println("enthalpy: " + enthalpy);
+    // System.out.println("temperature: " +
+    // mixedStream.getThermoSystem().getTemperature());
+
+    // System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
+    // outStream.setThermoSystem(mixedStream.getThermoSystem());
   }
 
   /** {@inheritDoc} */

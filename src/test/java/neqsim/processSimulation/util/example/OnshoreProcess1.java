@@ -251,7 +251,8 @@ public class OnshoreProcess1 {
             MEGmixer1.addStream(MEGstream_1);
             MEGmixer1.addStream(snohvitFormationWaterStream);
 
-            ThrottlingValve valve1 = new ThrottlingValve("snohvit valve", MEGmixer1.getOutStream());
+            ThrottlingValve valve1 =
+                new ThrottlingValve("snohvit valve", MEGmixer1.getOutletStream());
             valve1.setOutletPressure(125.0);
 
             // Albatross reservoir stream
@@ -275,12 +276,13 @@ public class OnshoreProcess1 {
             mixer1.addStream(valve1.getOutletStream());
             mixer1.addStream(valve2.getOutletStream());
 
-            WaterContentAnalyser waterAnalyser3 = new WaterContentAnalyser(mixer1.getOutStream());
+            WaterContentAnalyser waterAnalyser3 =
+                new WaterContentAnalyser(mixer1.getOutletStream());
             waterAnalyser3.setName("Total Water Analyser");
 
             // Pipeline
             SimpleTPoutPipeline pipeLine1 =
-                    new SimpleTPoutPipeline("snohvit pipeline", mixer1.getOutStream());
+                new SimpleTPoutPipeline("snohvit pipeline", mixer1.getOutletStream());
             pipeLine1.setOutPressure(55.0);
             pipeLine1.setOutTemperature(273.15 + 5.0);
             pipeLine1.setNumberOfLegs(1);

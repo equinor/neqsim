@@ -63,7 +63,7 @@ public class simpleTopSideProcess {
         mixer.addStream(separator.getGasOutStream());
         mixer.addStream(gasScrubber.getGasOutStream());
 
-        Compressor HPcompressor = new Compressor("HPcompressor", mixer.getOutStream());
+        Compressor HPcompressor = new Compressor("HPcompressor", mixer.getOutletStream());
         HPcompressor.setOutletPressure(200.0);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
