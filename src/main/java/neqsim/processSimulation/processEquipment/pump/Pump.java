@@ -36,6 +36,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * Constructor for Pump.
    * </p>
    */
+  @Deprecated
   public Pump() {
     super("Pump");
   }
@@ -131,13 +132,6 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     return dH;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @Deprecated
-  public StreamInterface getOutStream() {
-    return outStream;
-  }
-
   /**
    * <p>
    * calculateAsCompressor.
@@ -209,10 +203,6 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
       }
     }
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {}
 
   /**
    * <p>
