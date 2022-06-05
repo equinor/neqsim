@@ -59,7 +59,7 @@ public class propaneCoolingCycle {
         Heater heater = new Heater("heater", compressor1.getOutletStream());
         heater.setPressureDrop(0.07);
         heater.setSpecification("out stream");
-        heater.setOutStream(stream_1);
+        heater.setOutletStream(stream_1);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

@@ -59,14 +59,14 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         }
         getOperations().run();
 
-        double volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutStream()
+        double volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutletStream()
                 .getThermoSystem().getVolume();
         double volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))
                 .getOilOutStream().getThermoSystem().getVolume();
 
         double GOR = volGas / volOil;
         System.out.println("GOR " + GOR);
-        outStream = ((Mixer) getOperations().getUnit("well mixer")).getOutStream();
+        outStream = ((Mixer) getOperations().getUnit("well mixer")).getOutletStream();
 
         // ((Heater) getOperations().getUnit("gas heater")).displayResult();
 
@@ -82,14 +82,14 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         ((Separator) getOperations().getUnit("Inlet separator")).addStream(oilStream);
         getOperations().run();
 
-        volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutStream().getThermoSystem()
+        volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutletStream().getThermoSystem()
                 .getVolume();
         volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))
                 .getOilOutStream().getThermoSystem().getVolume();
 
         GOR = volGas / volOil;
         System.out.println("GOR " + GOR);
-        outStream = ((Mixer) getOperations().getUnit("well mixer")).getOutStream();
+        outStream = ((Mixer) getOperations().getUnit("well mixer")).getOutletStream();
     }
 
     /** {@inheritDoc} */
@@ -134,7 +134,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         gasMixer.addStream(secondStageSeparator.getGasOutStream());
         gasMixer.addStream(thirdStageSeparator.getGasOutStream());
 
-        Heater gasHeater = new Heater("gas heater", gasMixer.getOutStream());
+        Heater gasHeater = new Heater("gas heater", gasMixer.getOutletStream());
         gasHeater.setOutTemperature(separationTemperature);
 
         Mixer wellStreamMixer = new Mixer("well mixer");

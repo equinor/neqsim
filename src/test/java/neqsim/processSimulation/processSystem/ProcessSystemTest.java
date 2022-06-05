@@ -461,7 +461,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     hotLeanTEGPump.setOutletPressure(5.0);
     hotLeanTEGPump.setIsentropicEfficiency(0.6);
 
-    heatEx.setFeedStream(1, hotLeanTEGPump.getOutStream());
+    heatEx.setFeedStream(1, hotLeanTEGPump.getOutletStream());
 
     heatEx2.setFeedStream(1, heatEx.getOutStream(1));
 
@@ -475,7 +475,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     SetPoint pumpHPPresSet =
         new SetPoint("HP pump set", hotLeanTEGPump2, "pressure", feedToAbsorber);
 
-    Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutStream());
+    Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutletStream());
 
     neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
     pureTEG.setMolarComposition(
@@ -498,7 +498,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     makeupMixer.addStream(makeupTEG);
 
     Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-    resycleLeanTEG.addStream(makeupMixer.getOutStream());
+    resycleLeanTEG.addStream(makeupMixer.getOutletStream());
     resycleLeanTEG.setOutletStream(TEGFeed);
     resycleLeanTEG.setPriority(200);
     resycleLeanTEG.setDownstreamProperty("flow rate");

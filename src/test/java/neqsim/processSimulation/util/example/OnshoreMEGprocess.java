@@ -178,7 +178,7 @@ public class OnshoreMEGprocess {
         hotLeanMEGPump.setIsentropicEfficiency(0.75);
 
         Stream streamHotPump =
-                new Stream("stream from hot lean MEG pump", hotLeanMEGPump.getOutStream());
+            new Stream("stream from hot lean MEG pump", hotLeanMEGPump.getOutletStream());
 
         columnPreHeater.setFeedStream(1, streamHotPump);
 

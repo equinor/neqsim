@@ -105,7 +105,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         glycolMixer.addStream(glycolFeedStream);
 
         Cooler mixerAfterCooler =
-                new Cooler("glycol mixer after cooler", glycolMixer.getOutStream());
+            new Cooler("glycol mixer after cooler", glycolMixer.getOutletStream());
         mixerAfterCooler.setOutTemperature(glycolScrubberTemperature + 273.15);
 
         glycolScrubber =
@@ -148,7 +148,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         getOperations().run();
 
         gasExitStream = secondStageAfterCooler.getOutletStream();
-        oilExitStream = oilPump.getOutStream();
+        oilExitStream = oilPump.getOutletStream();
         glycolExitStream = glycolScrubber.getLiquidOutStream();
     }
 
