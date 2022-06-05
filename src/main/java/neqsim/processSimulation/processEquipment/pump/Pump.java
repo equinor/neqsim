@@ -351,7 +351,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * Getter for the field <code>isentropicEfficiency</code>.
    * </p>
    *
-   * @return the isentropicEfficientcy
+   * @return the isentropicEfficiency
    */
   public double getIsentropicEfficiency() {
     return isentropicEfficiency;
@@ -362,10 +362,10 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * Setter for the field <code>isentropicEfficiency</code>.
    * </p>
    *
-   * @param isentropicEfficientcy the isentropicEfficientcy to set
+   * @param isentropicEfficiency the isentropicEfficiency to set
    */
-  public void setIsentropicEfficiency(double isentropicEfficientcy) {
-    this.isentropicEfficiency = isentropicEfficientcy;
+  public void setIsentropicEfficiency(double isentropicEfficiency) {
+    this.isentropicEfficiency = isentropicEfficiency;
   }
 
   /**
