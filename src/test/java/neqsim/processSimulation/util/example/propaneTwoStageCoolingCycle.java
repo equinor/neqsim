@@ -57,7 +57,7 @@ public class propaneTwoStageCoolingCycle {
         Compressor compressor1 = new Compressor("compressor1", stream_3);
         compressor1.setOutletPressure(JTvalve1.getOutletPressure());
 
-        Mixer propMixer = new Mixer();
+        Mixer propMixer = new Mixer("propMixer");
         propMixer.addStream(compressor1.getOutletStream());
         propMixer.addStream(medPresSep.getGasOutStream());
 

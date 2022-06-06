@@ -23,6 +23,7 @@ public class StaticMixer extends Mixer {
      * Constructor for StaticMixer.
      * </p>
      */
+    @Deprecated
     public StaticMixer() {}
 
     /**

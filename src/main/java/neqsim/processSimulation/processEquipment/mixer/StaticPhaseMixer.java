@@ -16,6 +16,7 @@ public class StaticPhaseMixer extends StaticMixer {
      * Constructor for StaticPhaseMixer.
      * </p>
      */
+    @Deprecated
     public StaticPhaseMixer() {}
 
     /**

@@ -128,12 +128,6 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return null;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public SystemInterface getFluid() {
-    return getThermoSystem();
-  }
-
   /**
    * <p>
    * setSpecification.

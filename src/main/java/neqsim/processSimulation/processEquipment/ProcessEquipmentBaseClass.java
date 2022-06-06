@@ -47,18 +47,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     super(name);
   }
 
-
-
   /** {@inheritDoc} */
   @Override
   public SystemInterface getThermoSystem() {
     return null;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public SystemInterface getFluid() {
-    return getThermoSystem();
   }
 
   /** {@inheritDoc} */
@@ -98,7 +90,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   @Override
   public void setController(ControllerDeviceInterface controller) {
     this.controller = controller;
-    hasController = true;
+    hasController = controller != null;
   }
 
   /**

@@ -161,7 +161,7 @@ public class TEGdehydrationProcessDistillation {
         hotLeanTEGPump.setOutletPressure(20.0);
         hotLeanTEGPump.setIsentropicEfficiency(0.75);
 
-        heatEx.setFeedStream(1, hotLeanTEGPump.getOutStream());
+        heatEx.setFeedStream(1, hotLeanTEGPump.getOutletStream());
 
         heatEx2.setFeedStream(1, heatEx.getOutStream(1));
 
@@ -172,7 +172,7 @@ public class TEGdehydrationProcessDistillation {
         hotLeanTEGPump2.setOutletPressure(52.21);
         hotLeanTEGPump2.setIsentropicEfficiency(0.75);
 
-        Stream leanTEGtoabs = new Stream("lean TEG to absorber",hotLeanTEGPump2.getOutStream());
+        Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutletStream());
 
         neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
         pureTEG.setMolarComposition(
@@ -280,7 +280,7 @@ public class TEGdehydrationProcessDistillation {
         System.out.println("flow rate from stripping column "
                 + stripper.getLiquidOutStream().getFlowRate("kg/hr"));
         System.out.println("flow rate from pump2  "
-                + hotLeanTEGPump2.getOutStream().getFluid().getFlowRate("kg/hr"));
+            + hotLeanTEGPump2.getOutletStream().getFluid().getFlowRate("kg/hr"));
         System.out.println("makeup TEG  " + makeupTEG.getFluid().getFlowRate("kg/hr"));
 
         TEGFeed.getFluid().display();
@@ -291,12 +291,12 @@ public class TEGdehydrationProcessDistillation {
         System.out.println("wt lean TEG after reboiler "
                 + column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
         System.out.println("temperature from pump "
-                + (hotLeanTEGPump2.getOutStream().getTemperature() - 273.15));
+            + (hotLeanTEGPump2.getOutletStream().getTemperature() - 273.15));
 
         System.out.println("flow rate from reboiler "
                 + ((Reboiler) column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
         System.out.println("flow rate from pump2  "
-                + hotLeanTEGPump2.getOutStream().getFluid().getFlowRate("kg/hr"));
+            + hotLeanTEGPump2.getOutletStream().getFluid().getFlowRate("kg/hr"));
         System.out.println("flow rate to flare  " + gasToFlare.getFluid().getFlowRate("kg/hr"));
 
         System.out.println("condenser duty  "
@@ -308,7 +308,7 @@ public class TEGdehydrationProcessDistillation {
             + richGLycolHeaterCondenser.getOutletStream().getTemperature("C"));
         richGLycolHeaterCondenser.run();
 
-        hotLeanTEGPump.getOutStream().displayResult();
+        hotLeanTEGPump.getOutletStream().displayResult();
         flashLiquid.displayResult();
 
         System.out.println("Temperature rich TEG out of reflux condenser "

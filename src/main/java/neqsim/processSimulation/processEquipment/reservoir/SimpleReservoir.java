@@ -83,12 +83,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * public StreamInterface getOilOutStream() { return oilOutStream; }
      */
 
-    /** {@inheritDoc} */
-    @Override
-    public SystemInterface getFluid() {
-        return thermoSystem;
-    }
-
     /**
      * <p>
      * addGasProducer.
