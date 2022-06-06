@@ -22,22 +22,22 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   public static void setUp() {
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
     testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
-    // testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 10.0);
-    testSystem.addComponent("nitrogen", 1);
+     //testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 10.0);
+    testSystem.addComponent("nitrogen", 0.7);
     //testSystem.addComponent("CO2", 0.01);
     //testSystem.addComponent("methane", 0.68);
-    //testSystem.addComponent("ethane", 0.1);
+    testSystem.addComponent("ethane", 0.3);
     // testSystem.addComponent("n-heptane", 0.2);
     // testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
     // testSystem.setMixingRule(1);
-    testSystem.setMixingRule("classic");
+    testSystem.setMixingRule(1);
     testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     // testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.init(0);
-    // testSystem.init(3);
-    testSystem.initProperties();
+     testSystem.init(3);
+    //testSystem.initProperties();
     // testSystem.i
   }
 
@@ -80,12 +80,13 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     // testSystem = new SystemSrkEos(298.0, 10.0);
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
     testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298, 10);
-    testSystem.addComponent("nitrogen", 1);
+    testSystem.addComponent("nitrogen", 0.7);
     // testSystem.addComponent("CO2", 0.01);
-     testSystem.addComponent("methane", 0.68);
-     testSystem.addComponent("ethane", 0.1);
+     //testSystem.addComponent("methane", 0.68);
+     testSystem.addComponent("ethane", 0.3);
     // testSystem.addComponent("n-heptane", 0.2);
-    testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+    //testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+    testSystem.setMixingRule(0);
     testSystem.init(0);
     // testSystem.init(1);
     testSystem.init(3);
