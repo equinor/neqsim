@@ -34,8 +34,8 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     testSystem.setMixingRule("classic");
     testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     // testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
-    //ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    //testOps.TPflash();
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
     testSystem.init(0);
     testSystem.init(3);
     //testSystem.initProperties();
@@ -94,8 +94,8 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     System.out.println("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
     System.out.println("fugacity of gas phase " + testSystem.getPhase(0).getFugacity(0));
     System.out.println("molar volume liquid is " + testSystem.getPhase(1).getMolarVolume());
-    // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    // testOps.TPflash();
+     //ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+     //testOps.TPflash();
 
     // testSystem.initProperties();
     // assertEquals(0.9711401538454589, testSystem.getPhase(0).getZ(), 0.001);
