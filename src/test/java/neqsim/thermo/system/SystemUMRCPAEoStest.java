@@ -34,8 +34,8 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     testSystem.setMixingRule("classic");
     testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     // testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
-    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.TPflash();
+    //ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    //testOps.TPflash();
     testSystem.init(0);
     testSystem.init(3);
     //testSystem.initProperties();
@@ -86,13 +86,14 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
      //testSystem.addComponent("methane", 0.68);
      //testSystem.addComponent("ethane", 0.1);
     // testSystem.addComponent("n-heptane", 0.2);
-    testSystem.setMixingRule(2);
+    //testSystem.setMixingRule(2);
     testSystem.init(0);
      //testSystem.init(1);
     testSystem.init(3);
     System.out.println("molar volume gas+oil is " + testSystem.getMolarVolume());
     System.out.println("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
     System.out.println("fugacity of gas phase " + testSystem.getPhase(0).getFugacity(0));
+    System.out.println("enthalpy of gas phase is " + testSystem.getPhase(0).getEnthalpy("J/mol"));
     System.out.println("molar volume liquid is " + testSystem.getPhase(1).getMolarVolume());
      //ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
      //testOps.TPflash();
