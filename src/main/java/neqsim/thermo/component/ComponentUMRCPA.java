@@ -138,6 +138,21 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
         }
     }
 
+    @Override
+    public void createComponent(String component_name, double moles, double molesInPhase,
+        int compnumber) {
+          super.createComponent(component_name,  moles,  molesInPhase,
+           compnumber);
+          criticalTemperature = 305.4; 
+          criticalPressure = 135.62; 
+          acentricFactor = 0.1609;
+          associationEnergy = 15056.65;
+          associationVolume= 0.1062;
+
+    }
+  
+
+
     /** {@inheritDoc} */
     @Override
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
