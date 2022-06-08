@@ -94,6 +94,7 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     System.out.println("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
     System.out.println("fugacity of gas phase " + testSystem.getPhase(0).getFugacity(0));
     System.out.println("enthalpy of gas phase is " + testSystem.getPhase(0).getEnthalpy("J/mol"));
+    System.out.println("isochoric heat capacity of gas phase is " + testSystem.getPhase(0).getCv("J/mol"));
     System.out.println("molar volume liquid is " + testSystem.getPhase(1).getMolarVolume());
      //ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
      //testOps.TPflash();
