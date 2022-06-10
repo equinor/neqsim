@@ -146,7 +146,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
           criticalTemperature = 305.4; 
           criticalPressure = 135.62; 
           acentricFactor = 0.1609;
-          associationEnergy = 15056.65;
+          associationEnergy = 15059.15;
           associationVolume= 0.1062;
 
     }
