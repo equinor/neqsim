@@ -1,10 +1,9 @@
 package neqsim.thermo.phase;
 
+import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentPCSAFT;
-import org.apache.commons.math4.analysis.differentiation.*;
 
 /**
  * <p>
@@ -18,7 +17,7 @@ public class PhaseAutoDifferentiation extends PhaseEos {
   private static final long serialVersionUID = 1000;
 
   static Logger logger = LogManager.getLogger(PhaseAutoDifferentiation.class);
-
+  DerivativeStructure funcToBeDifferentiated = null;
   /**
    * <p>
    * Constructor for PhasePCSAFT.
@@ -57,7 +56,7 @@ public class PhaseAutoDifferentiation extends PhaseEos {
 
     if (type == 0) {
       //Setting up function to be dieeferentiad
-      DerivativeStructure funcToBeDifferentiated = getFunctionStruc();
+      funcToBeDifferentiated = getFunctionStruc();
     }
     if (type > 0) {
       for (int i = 0; i < numberOfComponents; i++) {
@@ -73,21 +72,26 @@ public class PhaseAutoDifferentiation extends PhaseEos {
     int order = 2;
     double tRealValue = getTemperature();
     double vRealValue = getVolume();
-    return new DerivativeStrcture(params, order, 0, tRealValue);
+
+    DerivativeStructure tVar = new DerivativeStructure(params, order, 0, tRealValue);
+    DerivativeStructure vVar = new DerivativeStructure(params, order, 1, vRealValue);
+
+    DerivativeStructure tTimesV = tVar.add(vVar.multiply(3.0));
+    return tTimesV;
   }
 
 
   /** {@inheritDoc} */
   @Override
   public double getF() {
-    return 1.0;
+    return funcToBeDifferentiated.getValue();
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdV() {
   
-   return 1.0;
+    return funcToBeDifferentiated.getPartialDerivative(0, 1);
   }
 
   /** {@inheritDoc} */
