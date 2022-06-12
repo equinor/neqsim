@@ -14,8 +14,6 @@ import neqsim.thermo.system.SystemInterface;
 public class NeqHeater extends Heater {
     private static final long serialVersionUID = 1000;
 
-    StreamInterface outStream;
-    StreamInterface inStream;
     SystemInterface system;
     double dH = 0.0;
 
@@ -59,12 +57,6 @@ public class NeqHeater extends Heater {
      */
     public NeqHeater(String name, StreamInterface inStream) {
         super(name, inStream);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getOutStream() {
-        return outStream;
     }
 
     /** {@inheritDoc} */
