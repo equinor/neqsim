@@ -209,8 +209,6 @@
 				<configuration>
 					<show>private</show>
 					<nohelp>true</nohelp>
-					<source>1.8</source>
-					<target>1.8</target>
 				</configuration>
 			</plugin>
 			<plugin>

@@ -13,10 +13,13 @@ public class PhaseAutoDifferentiationTest {
   @BeforeAll
   public static void setUp() {
     phase = new PhaseAutoDifferentiation();
+    phase.addcomponent("methane", 1.0, 1.0, 0);
     phase.setTemperature(300.0);
-    phase.setMolarVolume(1.0);
+    phase.setMolarVolume(100.0);
     phase.numberOfMolesInPhase = 1.0;
-
+    phase.setTotalVolume(100.0);
+    phase.init(1, 1, 0, 1, 1);
+    phase.init(1, 1, 1, 1, 1);
     function = phase.getFunctionStruc();
 
   }
@@ -38,7 +41,7 @@ public class PhaseAutoDifferentiationTest {
 
   @Test
   void testGetF() {
-    assertEquals(303.0, function.getValue(), 1e-6);
+    assertEquals(600.0, function.getValue(), 1e-6);
   }
 
 
