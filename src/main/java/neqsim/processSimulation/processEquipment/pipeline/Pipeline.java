@@ -9,8 +9,7 @@ import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDesign;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -22,12 +21,10 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInterface {
+public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
     private static final long serialVersionUID = 1000;
 
     protected String fileName = "c:/test5.nc";
-    protected StreamInterface outStream;
-    protected StreamInterface inStream;
     protected FlowSystemInterface pipe;
     protected SystemInterface system;
     String flowPattern = "stratified";
@@ -50,16 +47,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      */
     @Deprecated
     public Pipeline() {
-        super("Pipeline");
-    }
-
-    /**
-     * Constructor for Pipeline.
-     * 
-     * @param name
-     */
-    public Pipeline(String name) {
-        super(name);
+        this("Pipeline");
     }
 
     /**
@@ -81,13 +69,22 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      * </p>
      *
      * @param name a {@link java.lang.String} object
+     */
+    public Pipeline(String name) {
+        super(name);
+    }
+
+    /**
+     * <p>
+     * Constructor for Pipeline.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
      * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
     public Pipeline(String name, StreamInterface inStream) {
-        this(name);
-        this.inStream = inStream;
-        outStream = (Stream) inStream.clone();
+        super(name, inStream);
     }
 
     public PipelineMechanicalDesign getMechanicalDesign() {
@@ -98,17 +95,6 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     @Override
     public void setOutputFileName(String name) {
         this.fileName = name;
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>outStream</code>.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    public StreamInterface getOutStream() {
-        return outStream;
     }
 
     /** {@inheritDoc} */

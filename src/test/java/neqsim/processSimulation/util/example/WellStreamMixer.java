@@ -72,7 +72,7 @@ public class WellStreamMixer {
         wellStramMixer.addStream(wellStream_1);
         wellStramMixer.addStream(wellStream_2);
 
-        Stream mixerdStream = new Stream("mixed stream", wellStramMixer.getOutStream());
+        Stream mixerdStream = new Stream("mixed stream", wellStramMixer.getOutletStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();

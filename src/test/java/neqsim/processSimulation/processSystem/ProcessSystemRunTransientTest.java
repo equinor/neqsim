@@ -62,7 +62,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         valve_1.setCalculateSteadyState(false);
 
         Separator separator_1 = new Separator("sep 1");
-        separator_1.addStream(valve_1.getOutStream());
+        separator_1.addStream(valve_1.getOutletStream());
 
         ThrottlingValve valve_2 = new ThrottlingValve("valve_2", separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(1.0);
@@ -141,9 +141,9 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest{
         valve_1.setCalculateSteadyState(false);
         
         Separator separator_1 = new Separator("separator_1");
-        separator_1.addStream(valve_1.getOutStream());
-        separator_1.addStream(purgeValve.getOutStream());
-        separator_1.setCalculateSteadyState(false);
+        separator_1.addStream(valve_1.getOutletStream());
+        separator_1.addStream(purgeValve.getOutletStream());
+        separator_1.setCalculateSteadyState(true);
 
         ThrottlingValve valve_2 = new ThrottlingValve("valve_2", separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(5.0);

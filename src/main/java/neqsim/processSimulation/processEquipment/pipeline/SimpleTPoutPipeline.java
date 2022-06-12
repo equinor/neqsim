@@ -59,12 +59,6 @@ public class SimpleTPoutPipeline extends Pipeline {
         super(name, inStream);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getOutStream() {
-        return outStream;
-    }
-
     /**
      * <p>
      * setOutTemperature.
