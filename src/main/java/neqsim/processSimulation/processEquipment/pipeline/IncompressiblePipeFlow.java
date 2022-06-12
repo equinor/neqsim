@@ -162,7 +162,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
         pipe.setPipeWallRoughness(2e-5);
         pipe.addFittingFromDatabase("Standard elbow (R=1.5D), 90deg");
 
-        IncompressiblePipeFlow pipe2 = new IncompressiblePipeFlow(pipe.getOutStream());
+        IncompressiblePipeFlow pipe2 = new IncompressiblePipeFlow(pipe.getOutletStream());
         pipe2.setLength(1000.0);
         pipe2.setDiameter(0.25);
         pipe2.setPipeWallRoughness(2e-5);

@@ -66,19 +66,19 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
     valve_1.setOutletPressure(5.0);
 
     Separator separator_1 = new Separator("sep 1");
-    separator_1.addStream(valve_1.getOutStream());
+    separator_1.addStream(valve_1.getOutletStream());
 
     VolumeFlowTransmitter flowTransmitter =
         new VolumeFlowTransmitter(separator_1.getGasOutStream());
     flowTransmitter.setUnit("kg/hr");
-    flowTransmitter.setMaximumValue(110.0);
-    flowTransmitter.setMinimumValue(90.0);
+    flowTransmitter.setMaximumValue(150.0);
+    flowTransmitter.setMinimumValue(10.0);
 
     ControllerDeviceInterface flowController = new ControllerDeviceBaseClass();
     flowController.setTransmitter(flowTransmitter);
     flowController.setReverseActing(true);
     flowController.setControllerSetPoint(65.0 + getRandomDistrurbanceFlowRate());
-    flowController.setControllerParameters(0.01, 0.10, 0.100);
+    flowController.setControllerParameters(0.5, 100.100, 0.0);
 
     p.add(stream_1);
     p.add(valve_1);
@@ -90,16 +90,38 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
 
     // transient behaviour
     p.setTimeStep(1.0);
-    for (int i = 0; i < 25; i++) {
+    for (int i = 0; i < 55; i++) {
       flowController.setControllerSetPoint(65.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
       System.out.println(
-          "flow rate " + valve_1.getOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
+          "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
+              + " controller response " + flowController.getResponse() + " valve opening "
+              + valve_1.getPercentValveOpening() + " pressure "
+              + separator_1.getGasOutStream().getPressure());
+    }
+
+    for (int i = 0; i < 100; i++) {
+      flowController.setControllerSetPoint(55.0 + getRandomDistrurbanceFlowRate());
+      // stream_1.runTransient(1.0);
+      p.runTransient();
+      System.out.println(
+          "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
+              + " controller response " + flowController.getResponse() + " valve opening "
+              + valve_1.getPercentValveOpening() + " pressure "
+              + separator_1.getGasOutStream().getPressure());
+    }
+
+    // transient behaviour
+    p.setTimeStep(1.0);
+    for (int i = 0; i < 55; i++) {
+      flowController.setControllerSetPoint(75.0 + getRandomDistrurbanceFlowRate());
+      p.runTransient();
+      System.out.println(
+          "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
               + " controller response " + flowController.getResponse() + " valve opening "
               + valve_1.getPercentValveOpening() + " pressure "
               + separator_1.getGasOutStream().getPressure());
       // p.runTransient();
     }
   }
-
 }

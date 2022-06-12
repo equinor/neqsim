@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -192,15 +193,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /** {@inheritDoc} */
-    @Override
+    @Deprecated
     public StreamInterface getOutStream() {
         return mixedStream;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {
-        run();
     }
 
     /**

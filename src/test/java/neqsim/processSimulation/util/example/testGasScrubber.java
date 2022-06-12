@@ -57,7 +57,7 @@ public class testGasScrubber {
         pipe.setDiameter(0.4);
         pipe.setLength(10);
 
-        StreamInterface stream_3 = pipe.getOutStream();
+        StreamInterface stream_3 = pipe.getOutletStream();
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();
