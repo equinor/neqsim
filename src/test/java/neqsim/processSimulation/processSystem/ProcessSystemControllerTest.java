@@ -59,8 +59,9 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
     neqsim.thermo.system.SystemInterface testSystem = getTestSystem();
 
     Stream stream_1 = new Stream("Stream1", testSystem);
-    stream_1.setFlowRate(100.0 + getRandomDistrurbanceFlowRate(), "kg/hr");
+    stream_1.setFlowRate(200.0 + getRandomDistrurbanceFlowRate(), "kg/hr");
     stream_1.setPressure(10.0, "bara");
+    stream_1.setCalculateSteadyState(false);
 
     ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
     valve_1.setOutletPressure(5.0);
@@ -90,7 +91,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
 
     // transient behaviour
     p.setTimeStep(1.0);
-    for (int i = 0; i < 55; i++) {
+    for (int i = 0; i < 51; i++) {
       flowController.setControllerSetPoint(65.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
       System.out.println(
@@ -102,7 +103,6 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < 100; i++) {
       flowController.setControllerSetPoint(55.0 + getRandomDistrurbanceFlowRate());
-      // stream_1.runTransient(1.0);
       p.runTransient();
       System.out.println(
           "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
@@ -112,8 +112,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
     }
 
     // transient behaviour
-    p.setTimeStep(1.0);
-    for (int i = 0; i < 55; i++) {
+    for (int i = 0; i < 100; i++) {
       flowController.setControllerSetPoint(75.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
       System.out.println(
