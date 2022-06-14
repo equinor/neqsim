@@ -221,6 +221,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
         if (type > 1) {
             initCPAMatrix(type);
+            super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         }
     }
 

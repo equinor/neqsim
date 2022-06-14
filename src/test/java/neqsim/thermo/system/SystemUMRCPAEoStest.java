@@ -22,7 +22,8 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
   public static void setUp() {
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
     //testSystem = new neqsim.thermo.system.SystemSrkCPA(400.0, 500.0);
-    testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(400.0, 500.0);
+    //testSystem = new neqsim.thermo.system.SystemSrkCPA(400.0, 500.0);
+    testSystem = new neqsim.thermo.system.SystemUMRCPAEoS(200, 50.0);
     // testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 10.0);
     //testSystem.addComponent("nitrogen", 1);
     testSystem.addComponent("water", 1);
@@ -31,13 +32,13 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     //testSystem.addComponent("ethane", 0.1);
     // testSystem.addComponent("n-heptane", 0.2);
     // testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-    testSystem.setMixingRule(1);
+    //testSystem.setMixingRule(1);
     testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     // testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.TPflash();
     testSystem.init(0);
-     testSystem.init(3);
+    testOps.TPflash();
+    testSystem.init(3);
     //testSystem.initProperties();
     // testSystem.i
   }
@@ -80,24 +81,27 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     // testSystem = new neqsim.thermo.system.SystemPr(298.0, 10.0);
     // testSystem = new SystemSrkEos(298.0, 10.0);
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
-    testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(400, 500);
+    //testSystem = new neqsim.thermo.system.SystemSrkCPA(400, 500);
+    testSystem = new neqsim.thermo.system.SystemUMRCPAEoS(200, 50.0);
     testSystem.addComponent("water", 1);
     // testSystem.addComponent("CO2", 0.01);
      //testSystem.addComponent("methane", 0.68);
      //testSystem.addComponent("ethane", 0.1);
     // testSystem.addComponent("n-heptane", 0.2);
-    testSystem.setMixingRule(1);
+    //testSystem.setMixingRule(1);
     testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     // testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.TPflash();
     testSystem.init(0);
-     testSystem.init(3);
+    testOps.TPflash();
+    testSystem.init(3);
+    testSystem.init(3);
     System.out.println("molar volume gas+oil is " + testSystem.getMolarVolume());
     System.out.println("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
     System.out.println("fugacity of gas phase " + testSystem.getPhase(0).getFugacity(0));
-    System.out.println("enthalpy of gas phase is " + testSystem.getPhase(0).getEnthalpy("J/mol"));
+    System.out.println("residual enthalpy of gas phase is " + testSystem.getPhase(0).getHresTP());
     System.out.println("isochoric heat capacity of gas phase is " + testSystem.getPhase(0).getCv("J/mol"));
+    System.out.println("internal energy of gas phase is " + testSystem.getPhase(0).getInternalEnergy());
     System.out.println("molar volume liquid is " + testSystem.getPhase(1).getMolarVolume());
     System.out.println("fugacity of gas phase " + testSystem.getPhase(1).getFugacity(0));
     System.out.println("enthalpy of gas phase is " + testSystem.getPhase(1).getEnthalpy("J/mol"));
@@ -115,7 +119,7 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
    * </p>
    */
   @Disabled
-  //@Test
+  @Test
   @DisplayName("test a TPflash2")
   public void testTPflash2() {
     assertEquals(2, testSystem.getNumberOfPhases());
@@ -127,7 +131,7 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
    * </p>
    */
   @Disabled
-  //@Test
+  @Test
   @DisplayName("test a TPflash of the fluid (should return two phases)")
   public void testTPflash() {
     assertEquals(2, testSystem.getNumberOfPhases());
@@ -155,7 +159,8 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to pressure")
   public void checkFugacityCoefficientsDP() {
-
+    //testSystem.init(0);
+    //testSystem.init(3);
     assertTrue(testModel.checkFugacityCoefficientsDP());
   }
 

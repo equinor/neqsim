@@ -164,9 +164,9 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     @Override
     public void setAttractiveTerm(int i) {
         super.setAttractiveTerm(i);
-        if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-            getAttractiveTerm().setm(mCPA);
-        }
+        //if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
+           //getAttractiveTerm().setm(mCPA);
+        //}
     }
 
     /** {@inheritDoc} */
