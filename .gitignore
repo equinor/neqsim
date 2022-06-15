@@ -78,3 +78,6 @@ neqsim.iml
 test_*.ser
 
 .dccache
+
+#Intellij IDEA
+.idea
