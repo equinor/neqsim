@@ -8,5 +8,7 @@
     "java.saveActions.organizeImports": true,
     "editor.tabSize": 2,
     "editor.insertSpaces": true,
-    "editor.detectIndentation": false
+    "editor.detectIndentation": false,
+    "java.checkstyle.version": "10.3",
+    "java.checkstyle.configuration": "https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml"
 }
