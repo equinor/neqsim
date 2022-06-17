@@ -60,8 +60,7 @@ public class SystemPrDanesh extends SystemPrEos {
         this(T, P);
         modelName = "PR-Danesh-EOS";
         attractiveTermNumber = 9;
-        numberOfPhases = 5;
-        maxNumberOfPhases = 5;
+        setNumberOfPhases(5);
         solidPhaseCheck = solidCheck;
 
         for (int i = 0; i < numberOfPhases; i++) {

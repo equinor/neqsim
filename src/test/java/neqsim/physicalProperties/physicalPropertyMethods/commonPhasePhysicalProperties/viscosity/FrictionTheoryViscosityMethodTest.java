@@ -5,9 +5,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class FrictionTheoryViscosityMethodTest {
+public class FrictionTheoryViscosityMethodTest extends neqsim.NeqSimTest{
     static neqsim.thermo.system.SystemInterface testSystem = null;
-
+        
     @BeforeAll
     public static void setUp() {
         testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 42.0);

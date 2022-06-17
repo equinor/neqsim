@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class SystemThermoSetMolarCompositionTest {
+public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest{
     SystemInterface sys;
 
     @BeforeEach
@@ -57,7 +57,7 @@ public class SystemThermoSetMolarCompositionTest {
                     sys.setMolarComposition(new double[] { 1, 1.5, 1.75 });
                 });
         Assertions.assertEquals(
-                "neqsim.util.exception.InvalidInputException: Total flow can not be 0 when setting molar composition",
+            "neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
                 thrown.getMessage());
     }
 
@@ -69,8 +69,8 @@ public class SystemThermoSetMolarCompositionTest {
                     sys.setMolarCompositionPlus(new double[] { 1, 1.5, 1.75 });
                 });
         Assertions.assertEquals(
-                "neqsim.util.exception.InvalidInputException: Total flow can not be 0 when setting molar composition",
-                thrown.getMessage());
+            "neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
+            thrown.getMessage());
     }
 
     @Test
@@ -81,7 +81,7 @@ public class SystemThermoSetMolarCompositionTest {
                     sys.setMolarCompositionOfPlusFluid(new double[] { 1, 1.5, 1.75 });
                 });
         Assertions.assertEquals(
-                "neqsim.util.exception.InvalidInputException: Total flow can not be 0 when setting molar composition",
-                thrown.getMessage());
+            "neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
+            thrown.getMessage());
     }
 }

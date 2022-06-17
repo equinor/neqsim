@@ -14,7 +14,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @since 2.2.3
  * @version $Id: $Id
  */
-public class TestLevenbergMarquardt {
+public class TestLevenbergMarquardt extends neqsim.NeqSimTest{
     /**
      * <p>
      * main.

@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  *
  */
-class ComponentHydrateGFTest {
+class ComponentHydrateGFTest extends neqsim.NeqSimTest{
 	static SystemInterface thermoSystem = null;
 
 	/**

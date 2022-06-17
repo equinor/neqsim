@@ -538,6 +538,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      */
     public double[] getMolarRate();
 
+
+    /**
+     * Returns true if phase exists and is not null
+     * 
+     * @param i Phase number
+     * @return True if phase exists, false if not.
+     */
+    public boolean IsPhase(int i);
+
+
     /**
      * <p>
      * getPhase.
@@ -2273,14 +2283,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
      * generatePDF.
      * </p>
      */
-    public void generatePDF();
+    public neqsim.dataPresentation.iTextPDF.PdfCreator generatePDF();
 
     /**
      * <p>
      * displayPDF.
      * </p>
      */
-    public void displayPDF();
+    default public void displayPDF() {
+      generatePDF().openPDF();
+    }
 
     /**
      * <p>
@@ -2484,4 +2496,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     /** {@inheritDoc} */
     @Override
     public int hashCode();
+    
+    /** {@inheritDoc} */
+    public void addToComponentNames(java.lang.String name);
 }

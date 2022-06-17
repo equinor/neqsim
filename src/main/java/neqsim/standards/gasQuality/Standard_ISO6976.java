@@ -93,7 +93,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 					try {
 						String compName = "inert";
 						String compType = this.thermoSystem.getPhase(0).getComponent(i).getComponentType();
-						if (compType.equals("HC") || compType.equals("TPB") || compType.equals("plus")) {
+						if (compType.equals("HC") || compType.equals("TBP") || compType.equals("plus")) {
 							compName = "n-heptane";
 						} else if (compType.equals("alcohol") || compType.equals("glycol")) {
 							compName = "methanol";

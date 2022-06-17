@@ -6,7 +6,7 @@ import neqsim.standards.StandardInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class Draft_GERG2004Test {
+public class Draft_GERG2004Test extends neqsim.NeqSimTest{
     @Disabled
     @Test
     void testCalculate() {

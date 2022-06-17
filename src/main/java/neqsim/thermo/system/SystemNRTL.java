@@ -56,8 +56,7 @@ public class SystemNRTL extends SystemEos {
     public SystemNRTL(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
-        numberOfPhases = 4;
-        maxNumberOfPhases = 4;
+        setNumberOfPhases(4);
         modelName = "NRTL-GE-model";
         solidPhaseCheck = solidCheck;
 

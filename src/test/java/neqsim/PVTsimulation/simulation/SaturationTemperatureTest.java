@@ -10,7 +10,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  *
  */
-class SaturationTemperatureTest {
+class SaturationTemperatureTest extends neqsim.NeqSimTest{
 
     /**
      * @throws java.lang.Exception

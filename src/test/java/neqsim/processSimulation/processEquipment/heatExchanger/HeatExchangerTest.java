@@ -17,7 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class HeatExchangerTest {
+public class HeatExchangerTest extends neqsim.NeqSimTest{
   static neqsim.thermo.system.SystemInterface testSystem;
   static Stream gasStream;
 
@@ -51,7 +51,7 @@ public class HeatExchangerTest {
     valv1.setOutletPressure(5.0);
 
     Recycle resyc = new Recycle("resyc");
-    resyc.addStream(valv1.getOutStream());
+    resyc.addStream(valv1.getOutletStream());
     resyc.setOutletStream(stream_Cold);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =

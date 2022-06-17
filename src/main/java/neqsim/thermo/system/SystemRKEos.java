@@ -53,9 +53,8 @@ public class SystemRKEos extends SystemEos {
     public SystemRKEos(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 5;
-        numberOfPhases = 4;
+        setNumberOfPhases(4);
         modelName = "RK-EOS";
-        maxNumberOfPhases = 4;
         solidPhaseCheck = solidCheck;
 
         for (int i = 0; i < numberOfPhases; i++) {

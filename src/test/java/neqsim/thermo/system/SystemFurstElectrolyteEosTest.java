@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class SystemFurstElectrolyteEosTest {
+public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest{
     static SystemFurstElectrolyteEos thermoSystem;
 
     /**
