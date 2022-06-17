@@ -129,10 +129,17 @@ public class GORfitter extends TwoPortEquipment {
   public void run() {
     SystemInterface tempFluid = inStream.getThermoSystem().clone();
     double flow = tempFluid.getFlowRate("kg/sec");
+
+    if (GOR < 1e-15) {
+      outStream.setThermoSystem(tempFluid);
+      return;
+    }
+
     if (flow < 1e-6) {
       outStream.setThermoSystem(tempFluid);
       return;
     }
+
     if (GOR == 0 && tempFluid.hasPhaseType("gas")) {
       tempFluid.removePhase(0);
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
