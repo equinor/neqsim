@@ -25,12 +25,14 @@
       "[java]": {
           "editor.defaultFormatter": "redhat.java",
           "editor.formatOnSave": true,
+          "editor.tabSize": 2,
+          "editor.insertSpaces": true,
+          "editor.detectIndentation": false
       },
       "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
       "java.saveActions.organizeImports": true,
-      "editor.tabSize": 2,
-      "editor.insertSpaces": true,
-      "editor.detectIndentation": false
+      "java.checkstyle.version": "10.3",
+      "java.checkstyle.configuration": "https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml"
   },
 
 	

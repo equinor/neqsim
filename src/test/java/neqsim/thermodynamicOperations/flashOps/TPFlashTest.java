@@ -38,8 +38,6 @@ class TPFlashTest {
     testSystem.setMultiPhaseCheck(true);
   }
 
-
-  @Test
   void testRun() {
     testSystem.setMultiPhaseCheck(true);
     testSystem.setPressure(10.0, "bara");
@@ -47,10 +45,8 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    double enthalpy = testSystem.getEnthalpy();
     assertEquals(-430041.49312169873, testSystem.getEnthalpy(), 1e-2);
   }
-
 
   @Test
   void testRun2() {
@@ -60,7 +56,6 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    double enthalpy = testSystem.getEnthalpy();
     assertEquals(-359394.2117634512, testSystem.getEnthalpy(), 1e-2);
   }
 
@@ -72,7 +67,6 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    double enthalpy = testSystem.getEnthalpy();
     assertEquals(-552568.2810227782, testSystem.getEnthalpy(), 1e-2);
   }
 
@@ -84,7 +78,6 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    double enthalpy = testSystem.getEnthalpy();
     assertEquals(-936973.1969586421, testSystem.getEnthalpy(), 1e-2);
   }
 
@@ -106,7 +99,5 @@ class TPFlashTest {
     testSystem5.initProperties();
     double beta = testSystem5.getBeta();
     assertEquals(6.272876522701802E-7, beta, 1e-5);
-
-    
   }
 }
