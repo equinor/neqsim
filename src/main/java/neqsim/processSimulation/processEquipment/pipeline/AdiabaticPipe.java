@@ -86,12 +86,6 @@ public class AdiabaticPipe extends Pipeline {
         insideDiameter = nominalDiameter / 1000.0;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getOutStream() {
-        return outStream;
-    }
-
     /**
      * <p>
      * setOutTemperature.
@@ -244,12 +238,6 @@ public class AdiabaticPipe extends Pipeline {
     @Override
     public void displayResult() {
         system.display();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {
-        run();
     }
 
     /** {@inheritDoc} */

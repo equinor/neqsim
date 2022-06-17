@@ -6,7 +6,7 @@
 package neqsim.processSimulation.processEquipment.valve;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.processEquipment.TwoPortInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -17,36 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author esol
  * @version $Id: $Id
  */
-public interface ValveInterface extends ProcessEquipmentInterface {
-
-    /**
-     * <p>
-     * setOutletPressure.
-     * </p>
-     *
-     * @param pressure a double
-     */
-    public void setOutletPressure(double pressure);
-
-    /**
-     * <p>
-     * setInletStream.
-     * </p>
-     *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public void setInletStream(StreamInterface inletStream);
-
-    /**
-     * <p>
-     * getOutStream.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-     */
-    public StreamInterface getOutStream();
-
+public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterface {
     /**
      * <p>
      * isIsoThermal.
@@ -101,23 +72,6 @@ public interface ValveInterface extends ProcessEquipmentInterface {
      */
     public void setCv(double Cv);
 
-    /**
-     * <p>
-     * getOutletPressure.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getOutletPressure();
-
-    /**
-     * <p>
-     * getInletPressure.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getInletPressure();
 
     /** {@inheritDoc} */
     @Override

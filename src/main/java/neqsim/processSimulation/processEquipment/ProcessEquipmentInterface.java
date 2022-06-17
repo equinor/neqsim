@@ -88,6 +88,17 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
 
   /**
    * <p>
+   * getFluid.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  default public SystemInterface getFluid() {
+    return getThermoSystem();
+  }
+
+  /**
+   * <p>
    * getThermoSystem.
    * </p>
    *
@@ -104,15 +115,6 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
    * @return a double
    */
   public double getMassBalance(String unit);
-
-  /**
-   * <p>
-   * getFluid.
-   * </p>
-   *
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  public SystemInterface getFluid();
 
   /**
    * <p>

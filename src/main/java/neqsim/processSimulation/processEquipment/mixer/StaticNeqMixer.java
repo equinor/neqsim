@@ -24,6 +24,7 @@ public class StaticNeqMixer extends StaticMixer {
      * Constructor for StaticNeqMixer.
      * </p>
      */
+    @Deprecated
     public StaticNeqMixer() {}
 
     /**

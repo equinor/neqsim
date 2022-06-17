@@ -85,24 +85,24 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         inletValve.setOutletPressure(reclaimerPressure);
         inletValve.setIsoThermal(true);
 
-        inletMixer = new Mixer();
-        inletMixer.addStream(inletValve.getOutStream());
+        inletMixer = new Mixer("inletMixer");
+        inletMixer.addStream(inletValve.getOutletStream());
 
-        flashSeparator = new Separator("flashSeparator", inletMixer.getOutStream());
+        flashSeparator = new Separator("flashSeparator", inletMixer.getOutletStream());
 
         MEGRecircPump = new Pump("MEGRecircPump", flashSeparator.getLiquidOutStream());
         MEGRecircPump.setMolarFlow(50.0);
         MEGRecircPump.setOutletPressure(5.0);
 
-        MEGrecircHeater = new Heater("MEGrecircHeater", MEGRecircPump.getOutStream());
+        MEGrecircHeater = new Heater("MEGrecircHeater", MEGRecircPump.getOutletStream());
         // MEGrecircHeater.setEnergyInput(5000.0);
         MEGrecircHeater.setOutTemperature(273 + 68.9);
 
-        recircValve = new ThrottlingValve("recircValve", MEGrecircHeater.getOutStream());
+        recircValve = new ThrottlingValve("recircValve", MEGrecircHeater.getOutletStream());
         recircValve.setOutletPressure(reclaimerPressure);
         recircValve.setIsoThermal(true);
 
-        inletMixer.addStream(recircValve.getOutStream());
+        inletMixer.addStream(recircValve.getOutletStream());
 
         vacumCooler = new Heater("vacumCooler", flashSeparator.getGasOutStream());
 
@@ -125,16 +125,10 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
             getOperations().run();
             flashSeparator.displayResult();
             System.out.println("flow to vacum separator "
-                    + inletMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles());
+                + inletMixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles());
         }
 
         streamToWaterRemoval = flashSeparator.getGasOutStream();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {
-        getOperations().runTransient(dt);
     }
 
     /**

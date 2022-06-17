@@ -23,6 +23,7 @@ public class StaticMixer extends Mixer {
      * Constructor for StaticMixer.
      * </p>
      */
+    @Deprecated
     public StaticMixer() {}
 
     /**
@@ -122,9 +123,5 @@ public class StaticMixer extends Mixer {
         testOps.PHflash(enthalpy, 0);
         // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
         mixedStream.getThermoSystem().init(3);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {}
+      }
 }
