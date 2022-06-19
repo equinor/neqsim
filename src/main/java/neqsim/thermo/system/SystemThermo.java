@@ -1697,12 +1697,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void initThermoProperties() {
-    init(2);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void initProperties() {
     if (!isInitialized) {
       init(0);
