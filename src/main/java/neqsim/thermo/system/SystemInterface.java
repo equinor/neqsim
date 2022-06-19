@@ -2,6 +2,7 @@ package neqsim.thermo.system;
 
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -300,7 +301,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return kappa
    */
-  public double getGamma2();
+  public default double getGamma2() {
+    return getCp() / (getCp() - ThermodynamicConstantsInterface.R * getTotalNumberOfMoles());
+  }
 
   /**
    * method to return heat capacity ratio/adiabatic index/Poisson constant.

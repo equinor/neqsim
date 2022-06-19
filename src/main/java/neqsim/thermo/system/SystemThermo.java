@@ -55,16 +55,25 @@ abstract class SystemThermo implements SystemInterface {
   protected String[][] resultTable = null;
   boolean isInitialized = false;
   protected String fluidInfo = "No Information Available";
-  protected String fluidName = "DefaultName", modelName = "Default";
-  protected boolean numericDerivatives = false, allowPhaseShift = true;
+  protected String fluidName = "DefaultName";
+
+  protected String modelName = "Default";
+
+  protected boolean numericDerivatives = false;
+
+  protected boolean allowPhaseShift = true;
+
   private boolean useTVasIndependentVariables = false;
   protected double criticalPressure = 0;
   private double totalNumberOfMoles = 0;
   public String componentNameTag = "";
-  protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;// new
-                                                                                      // WaxCharacterise(this);
+  protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null; // new
+                                                                                       // WaxCharacterise(this);
   protected double[] beta = new double[6];
-  protected int a, initType = 3;
+  protected int a;
+
+  protected int initType = 3;
+
   private ArrayList<String> componentNames = new ArrayList<String>();
   // protected ArrayList<String> resultArray1 = new ArrayList<String>();
   protected String[] CapeOpenProperties11 = {"molecularWeight", "speedOfSound",
@@ -97,8 +106,14 @@ abstract class SystemThermo implements SystemInterface {
   protected int[] phaseIndex = {0, 1, 2, 3, 4, 5};
   protected ChemicalReactionOperations chemicalReactionOperations = null;
   private int mixingRule = 1;
-  protected boolean chemicalSystem = false, solidPhaseCheck = false, multiPhaseCheck = false,
-      hydrateCheck = false;
+  protected boolean chemicalSystem = false;
+
+  protected boolean solidPhaseCheck = false;
+
+  protected boolean multiPhaseCheck = false;
+
+  protected boolean hydrateCheck = false;
+
   protected boolean checkStability = true;
   protected PhaseInterface[] phaseArray;
   public neqsim.thermo.characterization.Characterise characterization = null;
@@ -605,7 +620,7 @@ abstract class SystemThermo implements SystemInterface {
 
     newSystem.init(0);
     newSystem.setNumberOfPhases(1);
-    newSystem.setPhaseType(0, getPhase(phaseNumber).getPhaseType());// phaseType[phaseNumber]);
+    newSystem.setPhaseType(0, getPhase(phaseNumber).getPhaseType()); // phaseType[phaseNumber]);
     newSystem.init(1);
     return newSystem;
   }
@@ -731,14 +746,16 @@ abstract class SystemThermo implements SystemInterface {
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet =
         database.getResultSet("SELECT * FROM compsalt WHERE SaltName='" + componentName + "'");
-    double val1 = 1e-20, val2 = 1e-20;
+    double val1 = 1e-20;
+    double val2 = 1e-20;
     try {
       dataSet.next();
       String name1 = dataSet.getString("ion1").trim();
-      String name2 = dataSet.getString("ion2").trim();
       val1 = Double.parseDouble(dataSet.getString("stoc1")) * value;
-      val2 = Double.parseDouble(dataSet.getString("stoc2")) * value;
       this.addComponent(name1, val1);
+
+      String name2 = dataSet.getString("ion2").trim();
+      val2 = Double.parseDouble(dataSet.getString("stoc2")) * value;
       this.addComponent(name2, val2);
       logger.info("ok adding salts. Ions: " + name1 + ", " + name2);
     } catch (Exception e) {
@@ -764,10 +781,14 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     SystemInterface refSystem = null;
-    double TC = 0.0, PC = 0.0, m = 0.0, TB = 0.0, acs = 0.0;
+    double TC = 0.0;
+    double PC = 0.0;
+    double m = 0.0;
+    double TB = 0.0;
+    double acs = 0.0;
     // double penelouxC = 0.0;
     double racketZ = 0.0;
-    componentName = (componentName.split("_PC")[0]) + "_PC";// + getFluidName());
+    componentName = (componentName.split("_PC")[0]) + "_PC"; // + getFluidName());
 
     try {
       refSystem = this.getClass().getDeclaredConstructor().newInstance();
@@ -832,7 +853,7 @@ abstract class SystemThermo implements SystemInterface {
       logger.error("error", e);
     }
 
-    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density);// 0.2918-0.0928*
+    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density); // 0.2918-0.0928*
                                                                                                   // acs)*8.314*TC/PC*10.0;
     addComponent(componentName, numberOfMoles, TC, PC, acs);
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
@@ -905,7 +926,11 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     SystemInterface refSystem = null;
-    double TC = 0.0, PC = 0.0, m = 0.0, TB = 0.0, acs = 0.0;
+    double TC = 0.0;
+    double PC = 0.0;
+    double m = 0.0;
+    double TB = 0.0;
+    double acs = 0.0;
     // double penelouxC = 0.0;
     double racketZ = 0.0;
     componentName = (componentName.split("_PC")[0]) + "_PC";// + getFluidName());
@@ -1152,7 +1177,9 @@ abstract class SystemThermo implements SystemInterface {
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet =
         database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"));
-    double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
+    double molarmass = 0.0;
+    double stddens = 0.0;
+    double boilp = 0.0;
     try {
       dataSet.next();
       molarmass = Double.parseDouble(dataSet.getString("molarmass")) / 1000.0;
@@ -1254,7 +1281,9 @@ abstract class SystemThermo implements SystemInterface {
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet =
         database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"));
-    double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
+    double molarmass = 0.0;
+    double stddens = 0.0;
+    double boilp = 0.0;
     try {
       dataSet.next();
       molarmass = Double.parseDouble(dataSet.getString("molarmass")) / 1000.0;
@@ -1353,12 +1382,18 @@ abstract class SystemThermo implements SystemInterface {
       neqsim.util.exception.TooManyIterationsException {
     ComponentInterface[] compArray = getPhase(0).getComponents();
 
-    int i, iterations = 0;
+    int i;
     double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
-    double deriv = 0.0, gbeta = 0.0, gtest = 0.0, betal = 0;
-    double nybeta = 0, midler = 0, minBeta = tolerance, maxBeta = 1.0 - tolerance;
+    double deriv = 0.0;
+    double gbeta = 0.0;
+    double betal = 0;
+    double nybeta = 0;
 
-    double g0 = -1.0, g1 = 1.0;
+    double midler = 0;
+    double minBeta = tolerance;
+    double maxBeta = 1.0 - tolerance;
+    double g0 = -1.0;
+    double g1 = 1.0;
     nybeta = beta[0];
     betal = 1.0 - nybeta;
 
@@ -1392,7 +1427,7 @@ abstract class SystemThermo implements SystemInterface {
     betal = 1.0 - nybeta;
 
     // ' *l = 1.0-nybeta;
-    gtest = 0.0;
+    double gtest = 0.0;
     for (i = 0; i < numberOfComponents; i++) {
       gtest += compArray[i].getz() * (compArray[i].getK() - 1.0)
           / (1.0 - nybeta + nybeta * compArray[i].getK()); // beta
@@ -1412,7 +1447,7 @@ abstract class SystemThermo implements SystemInterface {
       maxBeta = 1.0 - minold;
     }
 
-    iterations = 0;
+    int iterations = 0;
     int maxIterations = 300;
     // System.out.println("gtest: " + gtest);
     double step = 1.0;
@@ -1538,6 +1573,8 @@ abstract class SystemThermo implements SystemInterface {
       case "C/bar":
         conversionFactor = 1.0;
         break;
+      default:
+        break;
     }
     return JTcoef * conversionFactor;
   }
@@ -1563,6 +1600,8 @@ abstract class SystemThermo implements SystemInterface {
         break;
       case "km/hr":
         conversionFactor = 3.6;
+        break;
+      default:
         break;
     }
     return refVel * conversionFactor;
@@ -2280,8 +2319,9 @@ abstract class SystemThermo implements SystemInterface {
    */
   public void setMixingRuleGEmodel(String name) {
     for (PhaseInterface tmpPhase : phaseArray) {
-      if (tmpPhase != null)
+      if (tmpPhase != null) {
         tmpPhase.setMixingRuleGEModel(name);
+      }
     }
   }
 
@@ -2386,6 +2426,8 @@ abstract class SystemThermo implements SystemInterface {
       case "kJ/kg":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
         break;
+      default:
+        break;
     }
     return refExergy * conversionFactor;
   }
@@ -2424,6 +2466,8 @@ abstract class SystemThermo implements SystemInterface {
         break;
       case "kJ/kg":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
+        break;
+      default:
         break;
     }
     return refEnthalpy * conversionFactor;
@@ -2564,6 +2608,8 @@ abstract class SystemThermo implements SystemInterface {
       case "kJ/kg":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
         break;
+      default:
+        break;
     }
     return refEnthalpy * conversionFactor;
   }
@@ -2605,6 +2651,8 @@ abstract class SystemThermo implements SystemInterface {
         break;
       case "kJ/kgK":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
+        break;
+      default:
         break;
     }
     return refEntropy * conversionFactor;
@@ -2911,10 +2959,12 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final void setBeta(double b) {
-    if (b < 0)
+    if (b < 0) {
       b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
-    if (b > 1)
+    }
+    if (b > 1) {
       b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+    }
     beta[0] = b;
     beta[1] = 1.0 - b;
   }
@@ -2922,10 +2972,12 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final void setBeta(int phase, double b) {
-    if (b < 0)
+    if (b < 0) {
       b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
-    if (b > 1)
+    }
+    if (b > 1) {
       b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+    }
     beta[phaseIndex[phase]] = b;
   }
 
@@ -2956,6 +3008,8 @@ abstract class SystemThermo implements SystemInterface {
       case "m3/mol":
         conversionFactor = 1.0 / getTotalNumberOfMoles();
         break;
+      default:
+        break;
     }
     return conversionFactor * getVolume() / 1.0e5;
   }
@@ -2974,6 +3028,8 @@ abstract class SystemThermo implements SystemInterface {
         break;
       case "tons":
         conversionFactor = 1.0e-3;
+        break;
+      default:
         break;
     }
     return conversionFactor * getTotalNumberOfMoles() * getMolarMass();
@@ -3058,6 +3114,8 @@ abstract class SystemThermo implements SystemInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
         break;
+      default:
+        break;
     }
     return refCp * conversionFactor;
   }
@@ -3090,6 +3148,8 @@ abstract class SystemThermo implements SystemInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
         break;
+      default:
+        break;
     }
     return refCv * conversionFactor;
   }
@@ -3109,13 +3169,6 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public double getGamma() {
     return getCp() / getCv();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getGamma2() {
-    double cp0 = getCp();
-    return cp0 / (cp0 - ThermodynamicConstantsInterface.R * totalNumberOfMoles);
   }
 
   /** {@inheritDoc} */
