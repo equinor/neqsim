@@ -81,7 +81,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   public void run() {
     for (int i = 0; i < 2; i++) {
       thermoSystem = inletStream.getThermoSystem().clone();
-      thermoSystem.removeMoles();
+      thermoSystem.setEmptyFluid();
       if (i == 0) {
         for (int k = 0; k < thermoSystem.getNumberOfComponents(); k++) {
           thermoSystem.addComponent(k,
@@ -105,11 +105,6 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {}
-
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {
-    run();
+  public void displayResult() {
   }
 }

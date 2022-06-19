@@ -45,16 +45,16 @@ public class PumpResponse {
      */
     public PumpResponse(Pump inputPump) {
         name = inputPump.getName();
-        molarMass = inputPump.getInStream().getFluid().getMolarMass();
-        suctionMassDensity = inputPump.getInStream().getFluid().getDensity("kg/m3");
-        dischargeMassDensity = inputPump.getOutStream().getFluid().getDensity("kg/m3");
-        massflow = inputPump.getInStream().getFluid().getFlowRate("kg/hr");
-        suctionVolumeFlow = inputPump.getInStream().getFluid().getFlowRate("m3/hr");
-        dischargeVolumeFlow = inputPump.getOutStream().getFluid().getFlowRate("m3/hr");
-        suctionPressure = inputPump.getInStream().getPressure("bara");
-        suctionTemperature = inputPump.getInStream().getTemperature("C");
-        dischargeTemperature = inputPump.getOutStream().getTemperature("C");
-        dischargePressure = inputPump.getOutStream().getPressure("bara");
+        molarMass = inputPump.getInletStream().getFluid().getMolarMass();
+        suctionMassDensity = inputPump.getInletStream().getFluid().getDensity("kg/m3");
+        dischargeMassDensity = inputPump.getOutletStream().getFluid().getDensity("kg/m3");
+        massflow = inputPump.getInletStream().getFluid().getFlowRate("kg/hr");
+        suctionVolumeFlow = inputPump.getInletStream().getFluid().getFlowRate("m3/hr");
+        dischargeVolumeFlow = inputPump.getOutletStream().getFluid().getFlowRate("m3/hr");
+        suctionPressure = inputPump.getInletStream().getPressure("bara");
+        suctionTemperature = inputPump.getInletStream().getTemperature("C");
+        dischargeTemperature = inputPump.getOutletStream().getTemperature("C");
+        dischargePressure = inputPump.getOutletStream().getPressure("bara");
 
         // polytropicHead = inputCompressor.getPolytropicFluidHead();
         // polytropicEfficiency =inputCompressor.getPolytropicEfficiency();

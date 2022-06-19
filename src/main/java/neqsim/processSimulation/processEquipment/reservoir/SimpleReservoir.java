@@ -83,12 +83,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * public StreamInterface getOilOutStream() { return oilOutStream; }
      */
 
-    /** {@inheritDoc} */
-    @Override
-    public SystemInterface getFluid() {
-        return thermoSystem;
-    }
-
     /**
      * <p>
      * addGasProducer.
@@ -683,7 +677,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
             testPipe.run();
             System.out.println("oil flow " + producedOilStream.getFlowRate("kg/hr") + " pressure "
                     + producedOilStream.getPressure("bara") + " pipe out pres "
-                    + testPipe.getOutStream().getFluid().getPressure());
+                + testPipe.getOutletStream().getFluid().getPressure());
         }
     }
 

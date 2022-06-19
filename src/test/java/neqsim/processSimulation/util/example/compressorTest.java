@@ -35,7 +35,7 @@ public class compressorTest {
 
         MixerInterface mixer = new StaticMixer("Mixer 1");
         mixer.addStream(stream_1);
-        StreamInterface stream_3 = mixer.getOutStream();
+        StreamInterface stream_3 = mixer.getOutletStream();
         stream_3.setName("stream3");
 
         Separator separator = new Separator("Separator 1", stream_3);
