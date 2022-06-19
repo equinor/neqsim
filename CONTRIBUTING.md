@@ -22,14 +22,17 @@ This project uses Google Java style formatting rules.
 
 ### Visual Studio Code:  
 
-Install Language Support for Java(TM) by Red Hat and add the following to settings.json.
+Install extensions [Language Support for Java(TM) by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) and [Checkstyle for Java
+](https://marketplace.visualstudio.com/items?itemName=shengchen.vscode-checkstyle) and add the following to settings.json.
  ```   
     "[java]": {
         "editor.defaultFormatter": "redhat.java",
         "editor.formatOnSave": true,
     },
     "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
-    "java.saveActions.organizeImports": true
+    "java.saveActions.organizeImports": true,
+    "java.checkstyle.version": "10.3",
+    "java.checkstyle.configuration": "https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml"
 ```
 
 Note: workspace/project specific settings are located in folder .vscode.
