@@ -43,7 +43,10 @@ abstract class Phase implements PhaseInterface {
   double beta = 1.0;
   private int initType = 0;
   int mixingRuleNumber = 0;
-  double temperature = 0, pressure = 0;
+  double temperature = 0;
+
+  double pressure = 0;
+
   protected PhaseInterface[] refPhase = null;
   int phaseType = 0;
   protected String phaseTypeName = "gas";
@@ -1400,8 +1403,6 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getMolalMeanIonicActivity(int comp1, int comp2) {
-    double act1 = 0.0;
-    double act2 = 0.0;
     int watNumb = 0;
     // double vminus = 0.0, vplus = 0.0;
     double ions = 0.0;
@@ -1418,9 +1419,9 @@ abstract class Phase implements PhaseInterface {
       }
     }
 
-    act1 = Math.pow(getActivityCoefficient(comp1, watNumb),
+    double act1 = Math.pow(getActivityCoefficient(comp1, watNumb),
         Math.abs(getComponent(comp2).getIonicCharge()));
-    act2 = Math.pow(getActivityCoefficient(comp2, watNumb),
+    double act2 = Math.pow(getActivityCoefficient(comp2, watNumb),
         Math.abs(getComponent(comp1).getIonicCharge()));
 
     return Math.pow(act1 * act2, 1.0 / (Math.abs(getComponent(comp1).getIonicCharge())
@@ -1450,9 +1451,8 @@ abstract class Phase implements PhaseInterface {
         ions += getComponent(j).getx();
       }
     }
-    double val = -Math.log(oldFug * getComponent(watNumb).getx() / pureFug)
+    return -Math.log(oldFug * getComponent(watNumb).getx() / pureFug)
         * getComponent(watNumb).getx() / ions;
-    return val;
   }
 
   // public double getOsmoticCoefficient(int watNumb, String refState){
@@ -2022,11 +2022,7 @@ abstract class Phase implements PhaseInterface {
     return getMolarMass() * numberOfMolesInPhase;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * method to get the speed of sound of a phase note: implemented in phaseEos
-   */
+  /** {@inheritDoc} */
   @Override
   public double getSoundSpeed() {
     return 0.0;
