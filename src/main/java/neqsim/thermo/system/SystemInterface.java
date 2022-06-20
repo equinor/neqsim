@@ -406,7 +406,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * Set the flow rate of all components to zero.
-   * 
+   *
    * @deprecated use {@link #setEmptyFluid()} instead.
    */
   @Deprecated
@@ -531,7 +531,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public SystemInterface phaseToSystem(String phaseName);
 
   /**
-   * method to get the total molar flow rate of individual components in a fluid
+   * method to get the total molar flow rate of individual components in a fluid.
    *
    * @return molar flow of individual components in unit mol/sec
    */
@@ -539,8 +539,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
 
   /**
-   * Returns true if phase exists and is not null
-   * 
+   * Returns true if phase exists and is not null.
+   *
    * @param i Phase number
    * @return True if phase exists, false if not.
    */
@@ -579,7 +579,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * Returns the overall mole composition vector in unit mole fraction
+   * Returns the overall mole composition vector in unit mole fraction.
    * </p>
    *
    * @return an array of {@link double} objects
@@ -678,14 +678,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMoleFraction(int phaseNumber);
 
   /**
-   * method to return specific heat capacity (Cv)
+   * method to return specific heat capacity (Cv).
    *
    * @return Cv in unit J/K
    */
   public double getCv();
 
   /**
-   * method to return specific heat capacity (Cp) in a specified unit
+   * method to return specific heat capacity (Cp) in a specified unit.
    *
    * @param unit Supported units are J/K, J/molK, J/kgK and kJ/kgK
    * @return Cp in specified unit
@@ -826,7 +826,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMolarComposition(double[] moles);
 
   /**
-   * return the phase of to specified type if the phase does not exist, the method will return null
+   * return the phase of to specified type if the phase does not exist, the method will return null.
    *
    * @param phaseTypeName the phase type to be returned (gas, oil, aqueous, wax, hydrate are
    *        supported)
@@ -844,7 +844,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setUseTVasIndependentVariables(boolean useTVasIndependentVariables);
 
   /**
-   * method to add true boiling point fraction
+   * method to add true boiling point fraction.
    *
    * @param componentName selected name of the component to be added
    * @param numberOfMoles number of moles to be added
@@ -1189,7 +1189,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void invertPhaseTypes();
 
   /**
-   * method to return fluid volume with Peneloux volume correction
+   * method to return fluid volume with Peneloux volume correction.
    *
    * @return volume in unit m3
    */
@@ -1234,7 +1234,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void useVolumeCorrection(boolean volcor);
 
   /**
-   * method to set the mixing rule for the fluid
+   * method to set the mixing rule for the fluid.
    *
    * @param typename a {@link java.lang.String} object
    */
@@ -1356,7 +1356,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * Calculate thermodynamic properties of the fluid using the init type set in fluid.
-   * 
+   *
    * @see getInitType
    */
   public default void init() {
@@ -1570,7 +1570,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * method to set the temperature of a fluid (same temperature for all phases)
+   * method to set the temperature of a fluid (same temperature for all phases).
    * </p>
    *
    * @param temp a double
@@ -1589,21 +1589,21 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   // public void setPressure(double newPressure, int phaseNumber);
 
   /**
-   * method to set the pressure of a fluid (same pressure for all phases)
+   * method to set the pressure of a fluid (same pressure for all phases).
    *
    * @param pres pressure in unit bara (absolute pressure in bar)
    */
   public void setPressure(double pres);
 
   /**
-   * method to return pressure
+   * method to return pressure.
    *
    * @return pressure in unit bara
    */
   public double getPressure();
 
   /**
-   * method to return pressure in a specified unit
+   * method to return pressure in a specified unit.
    *
    * @param unit Supported units are bara, barg, Pa and MPa
    * @return pressure in specified unit
@@ -1619,8 +1619,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * specify the type for the physical properties you want to use. Type 0 Orginal/default 1 Water 2
-   * Glycol 3 Amine
-   * 
+   * Glycol 3 Amine.
+   *
    * @param type a int
    */
   public void setPhysicalPropertyModel(int type);
@@ -1634,7 +1634,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * method to return pressure of phase
+   * method to return pressure of phase.
    * </p>
    *
    * @param phaseNumber a int
@@ -1643,14 +1643,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getPressure(int phaseNumber);
 
   /**
-   * method to get density of a fluid note: without Peneloux volume correction
+   * method to get density of a fluid note: without Peneloux volume correction.
    *
    * @return density with unit kg/m3
    */
   public double getDensity();
 
   /**
-   * method to get density of a fluid note: with Peneloux volume correction
+   * method to get density of a fluid note: with Peneloux volume correction.
    *
    * @param unit Supported units are kg/m3, mol/m3
    * @return density in specified unit
@@ -1658,7 +1658,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getDensity(String unit);
 
   /**
-   * method to return fluid volume
+   * method to return fluid volume.
    *
    * @return volume in unit m3*1e5
    */
@@ -1683,21 +1683,21 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public boolean isChemicalSystem();
 
   /**
-   * method to return molar volume of the fluid note: without Peneloux volume correction
+   * method to return molar volume of the fluid note: without Peneloux volume correction.
    *
    * @return molar volume volume in unit m3/mol*1e5
    */
   public double getMolarVolume();
 
   /**
-   * method to get the total molar mass of a fluid
+   * method to get the total molar mass of a fluid.
    *
    * @return molar mass in unit kg/mol
    */
   public double getMolarMass();
 
   /**
-   * method to get the total enthalpy of a fluid
+   * method to get the total enthalpy of a fluid.
    *
    * @return molar mass in unit J (Joule)
    */
@@ -1737,14 +1737,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void init_x_y();
 
   /**
-   * method to return total entropy of the fluid
+   * method to return total entropy of the fluid.
    *
    * @return entropy in unit J/K (Joule/Kelvin)
    */
   public double getEntropy();
 
   /**
-   * method to return total entropy of the fluid
+   * method to return total entropy of the fluid.
    *
    * @param unit unit supported units are J/K, J/molK, J/kgK and kJ/kgK
    * @return entropy in specified unit
@@ -1752,14 +1752,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getEntropy(String unit);
 
   /**
-   * method to return temperature
+   * method to return temperature.
    *
    * @return temperature in unit Kelvin
    */
   public double getTemperature();
 
   /**
-   * method to return temperature in a specified unit
+   * method to return temperature in a specified unit.
    *
    * @param unit Supported units are K, C, R
    * @return temperature in specified unit
@@ -1809,7 +1809,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * method to set the phase type of a given phase
+   * method to set the phase type of a given phase.
    * </p>
    *
    * @param phaseToChange a int
@@ -1890,7 +1890,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getGibbsEnergy();
 
   /**
-   * method to return internal energy (U) in unit J
+   * method to return internal energy (U) in unit J.
    *
    * @return internal energy in unit Joule (J)
    */
@@ -1944,7 +1944,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public SystemInterface clone();
 
   /**
-   * method to set mixing rule used for the fluid
+   * method to set mixing rule used for the fluid.
    *
    * @param type The type of mixing rule to be used for the fluid. 1 - classic mixing rule with all
    *        kij set to zero 2 -classic mixing rule with kij from NeqSim database 3- classic mixing
@@ -1984,14 +1984,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getdVdTpn();
 
   /**
-   * method to return specific heat capacity (Cp)
+   * method to return specific heat capacity (Cp).
    *
    * @return Cp in unit J/K
    */
   public double getCp();
 
   /**
-   * method to return specific heat capacity (Cp) in a specified unit
+   * method to return specific heat capacity (Cp) in a specified unit.
    *
    * @param unit Supported units are J/K, J/molK, J/kgK and kJ/kgK
    * @return Cp in specified unit
@@ -1999,7 +1999,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getCp(String unit);
 
   /**
-   * method to return heat capacity ratio/adiabatic index/Poisson constant
+   * method to return heat capacity ratio/adiabatic index/Poisson constant.
    *
    * @return kappa
    */
@@ -2035,21 +2035,21 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * method to return compressibility factor of a fluid compressibility factor is defined in EoS
-   * from PV=ZnRT where V is total volume of fluid
+   * from PV=ZnRT where V is total volume of fluid.
    *
    * @return compressibility factor Z
    */
   public double getZ();
 
   /**
-   * method to return viscosity of a fluid
+   * method to return viscosity of a fluid.
    *
    * @return viscosity in unit kg/msec
    */
   public double getViscosity();
 
   /**
-   * method to return viscosity in a specified unit
+   * method to return viscosity in a specified unit.
    *
    * @param unit Supported units are kg/msec, cP (centipoise)
    * @return viscosity in specified unit
@@ -2057,7 +2057,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getViscosity(String unit);
 
   /**
-   * method to return thermal conductivity
+   * method to return thermal conductivity.
    *
    * @return conductivity in unit W/mK
    * @deprecated use {@link #getThermalConductivity()} instead.
@@ -2066,7 +2066,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getConductivity();
 
   /**
-   * method to return thermal conductivity in a specified unit
+   * method to return thermal conductivity in a specified unit.
    *
    * @param unit Supported units are W/mK, W/cmK
    * @return conductivity in specified unit
@@ -2076,14 +2076,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getConductivity(String unit);
 
   /**
-   * method to return conductivity of a fluid
+   * method to return conductivity of a fluid.
    *
    * @return conductivity in unit W/mK
    */
   public double getThermalConductivity();
 
   /**
-   * method to return thermal conductivity in a specified unit
+   * method to return thermal conductivity in a specified unit.
    *
    * @param unit Supported units are W/mK, W/cmK
    * @return conductivity in specified unit
@@ -2091,7 +2091,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getThermalConductivity(String unit);
 
   /**
-   * method to return interfacial tension between two phases
+   * method to return interfacial tension between two phases.
    *
    * @param phase1 phase type of phase1 as string (valid phases are gas, oil, aqueous)
    * @param phase2 phase type of phase2 as string (valid phases are gas, oil, aqueous)
@@ -2101,7 +2101,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getInterfacialTension(String phase1, String phase2);
 
   /**
-   * method to return interfacial tension between two phases
+   * method to return interfacial tension between two phases.
    *
    * @param phase1 phase number of phase1
    * @param phase2 phase number of phase2
@@ -2171,10 +2171,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void allowPhaseShift(boolean allowPhaseShift);
 
   /**
-   * method to return phase fraction of selected phase
+   * method to return phase fraction of selected phase.
    *
-   * @param phaseTypeName: gas/oil/aqueous
-   * @param unit: mole/volume/weight
+   * @param phaseTypeName gas/oil/aqueous
+   * @param unit mole/volume/weight
    * @return phase: fraction in specified unit
    */
   public double getPhaseFraction(String phaseTypeName, String unit);
@@ -2190,7 +2190,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setPhaseType(String phases, int newPhaseType);
 
   /**
-   * method to set the phase type of a given phase
+   * method to set the phase type of a given phase.
    *
    * @param phaseToChange the phase number of the phase to set phase type
    * @param phaseTypeName the phase type name (valid names are gas or liquid)
@@ -2340,7 +2340,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void addGasToLiquid(double fraction);
 
   /**
-   * method to get the total molar flow rate of a fluid
+   * method to get the total molar flow rate of a fluid.
    *
    * @return molar flow in unit mol/sec
    */
@@ -2472,7 +2472,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * Get physical properties of System.
-   * 
+   *
    * @return System properties
    */
   public SystemProperties getProperties();
