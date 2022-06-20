@@ -982,9 +982,7 @@ abstract class Phase implements PhaseInterface {
     return refCv * conversionFactor;
   }
 
-  /**
-   * {@inheritDoc} returns getCp() / getCv();
-   */
+  /** {@inheritDoc} */
   @Override
   public double getKappa() {
     return getCp() / getCv();
