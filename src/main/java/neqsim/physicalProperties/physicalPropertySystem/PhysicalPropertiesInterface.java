@@ -219,7 +219,7 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
     /**
      * <p>
-     * init.
+     * Initialize / calculate all physical properties of object.
      * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
