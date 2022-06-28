@@ -319,7 +319,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
     setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
 
-    liquidLevel = thermoSystem.getPhase(1).getVolume() * 1e-5 / (liquidVolume + gasVolume);
+    liquidLevel = thermoSystem.getPhase(1).getVolume() / (liquidVolume + gasVolume);
     // System.out.println("liquid level " + liquidLevel);
     liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter()
         * getSeparatorLength();
