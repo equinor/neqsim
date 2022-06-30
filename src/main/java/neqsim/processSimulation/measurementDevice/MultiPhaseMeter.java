@@ -188,7 +188,6 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
                 logger.error(e.getStackTrace());
                 return Double.NaN;
             }
-            // tempFluid.display();
             if (!tempFluid.hasPhaseType("gas")) {
               return Double.NaN;
             }
