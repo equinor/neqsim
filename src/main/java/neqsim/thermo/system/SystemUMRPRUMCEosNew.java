@@ -22,7 +22,7 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
   public SystemUMRPRUMCEosNew() {
     super();
     modelName = "UMR-PRU-MC-EoS-New";
-    attractiveTermNumber = 1;
+    attractiveTermNumber = 19;
     useVolumeCorrection(false);
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrEosvolcor();
@@ -35,7 +35,7 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
   public SystemUMRPRUMCEosNew(double T, double P) {
     super(T, P);
     modelName = "UMR-PRU-MC-EoS-New";
-    attractiveTermNumber = 1;
+    attractiveTermNumber = 19;
     useVolumeCorrection(false);
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrEosvolcor();

@@ -47,7 +47,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     }
 
     if (component.getName().equals("nitrogen")) {
-      parameters[0] = 0.43635	;
+      parameters[0] = 0.43635;
       parameters[1] = 0;
       parameters[2] = 0;
       parameters[3] = 0.0;
@@ -55,7 +55,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     }
 
     if (component.getName().equals("methane")) {
-      parameters[0] = 0.386575	;
+      parameters[0] = 0.386575;
       parameters[1] = 0.016011;
       parameters[2] = -0.017371;
       parameters[3] = 0.011761;
@@ -109,17 +109,17 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
 
     double Tr = temperature / getComponent().getTC();
     double TC = getComponent().getTC();
+    double tcrizatr = TC * Math.sqrt(Tr);
     return 2.0
         * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
-            + +parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+            + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
             + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0)
             + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 4.0)
             + parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 5.0))
-        * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0
-            - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
-            - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC
-            - 2.0 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / Math.sqrt(Tr) / TC
-            - 5.0 / 2.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0));
+        * (-1.0 / 2.0 * parameters[0] / tcrizatr - parameters[1] * (1.0 - Math.sqrt(Tr)) / tcrizatr
+            - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / tcrizatr
+            - 2.0 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / tcrizatr
+            - 5.0 / 2.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / tcrizatr);
 
   }
 
@@ -132,30 +132,28 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
 
     double Tr = temperature / getComponent().getTC();
     double TC = getComponent().getTC();
+    double tcrizatr = TC * Math.sqrt(Tr);
+    double TcT = TC * temperature;
+    double Tc2Trpower32 = TC * TC * Math.pow(Tr, 1.5);
     return 2.0
-        * Math.pow(parameters[0] / Math.sqrt(Tr) / TC / 2.0
-            + parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
-            + 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC
-            + 2.0 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / Math.sqrt(Tr) / TC
-            + 5.0 / 2.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / Math.sqrt(Tr) / TC,
-            2.0)
+        * Math.pow(parameters[0] / tcrizatr / 2.0 + parameters[1] * (1.0 - Math.sqrt(Tr)) / tcrizatr
+            + 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / tcrizatr
+            + 2.0 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / tcrizatr
+            + 5.0 / 2.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / tcrizatr, 2.0)
         + 2.0
             * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
                 + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                 + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0)
                 + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 4.0)
                 + parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 5.0))
-            * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0
-                + parameters[1] / temperature / TC / 2.0
-                + parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
-                + 3.0 / 2.0 * parameters[2] * (1.0 - Math.sqrt(Tr)) / temperature / TC
-                + 3.0 / 4.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-                    / Math.sqrt(Tr * Tr * Tr) / (TC * TC)
-                + 3 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / TC / temperature
-                + 5 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / TC / temperature
-                + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / (TC * TC)
-                    / Math.sqrt(Tr * Tr * Tr)
-                + 5.0 / 4.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / TC / TC);
+            * (parameters[0] / Tc2Trpower32 / 4.0 + parameters[1] / TcT / 2.0
+                + parameters[1] * (1.0 - Math.sqrt(Tr)) / Tc2Trpower32 / 2.0
+                + 3.0 / 2.0 * parameters[2] * (1.0 - Math.sqrt(Tr)) / TcT
+                + 3.0 / 4.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Tc2Trpower32
+                + 3 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / TcT
+                + parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / Tc2Trpower32
+                + 5 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / TcT
+                + 5.0 / 4.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / Tc2Trpower32);
   }
 
 
