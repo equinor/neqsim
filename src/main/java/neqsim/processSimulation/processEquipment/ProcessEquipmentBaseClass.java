@@ -49,24 +49,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void run() {}
-
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {
-    run();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public SystemInterface getThermoSystem() {
     return null;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public SystemInterface getFluid() {
-    return getThermoSystem();
   }
 
   /** {@inheritDoc} */
@@ -106,7 +90,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   @Override
   public void setController(ControllerDeviceInterface controller) {
     this.controller = controller;
-    hasController = true;
+    hasController = controller != null;
   }
 
   /**

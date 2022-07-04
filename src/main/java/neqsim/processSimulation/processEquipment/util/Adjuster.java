@@ -2,6 +2,7 @@ package neqsim.processSimulation.processEquipment.util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -126,12 +127,6 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         this.targetUnit = targetUnit;
         this.targetPhase = targetPhase;
         this.targetComponent = targetComponent;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void runTransient(double dt) {
-        run();
     }
 
     /** {@inheritDoc} */

@@ -73,11 +73,11 @@ public class threePhaseSeparation {
         // waterRemoval.getOutStream();
 
         MoleFractionControllerUtil TEGsaturator =
-                new MoleFractionControllerUtil(waterRemoval.getOutStream());
+            new MoleFractionControllerUtil(waterRemoval.getOutletStream());
         TEGsaturator.setMoleFraction("water", 5.0e-6);
         // TEGsaturator.getOutStream();
 
-        ThrottlingValve LP_valve = new ThrottlingValve("LPventil", TEGsaturator.getOutStream());
+        ThrottlingValve LP_valve = new ThrottlingValve("LPventil", TEGsaturator.getOutletStream());
         LP_valve.setOutletPressure(5.0);
 
         // ThreePhaseSeparator separator2 = new ThreePhaseSeparator("Separator LP",

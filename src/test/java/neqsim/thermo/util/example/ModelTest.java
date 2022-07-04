@@ -66,7 +66,7 @@ public class ModelTest {
         neqsim.thermo.ThermodynamicModelTest testModel =
                 new neqsim.thermo.ThermodynamicModelTest(testSystem);
         testModel.runTest();
-        testSystem.display();
+        // testSystem.display();
 
         testSystem.init(3);
         double cp = testSystem.getPhase(1).getCp();

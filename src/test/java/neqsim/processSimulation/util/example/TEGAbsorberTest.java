@@ -61,7 +61,7 @@ public class TEGAbsorberTest {
         ThrottlingValve TEG_HPLP_valve = new ThrottlingValve("ventil", TEGStreamOut);
         TEG_HPLP_valve.setOutletPressure(10.0);
 
-        Separator MPseparator = new Separator("Separator_MP", TEG_HPLP_valve.getOutStream());
+        Separator MPseparator = new Separator("Separator_MP", TEG_HPLP_valve.getOutletStream());
 
         StreamInterface MPstreamGas = MPseparator.getGasOutStream();
         MPstreamGas.setName("MPGasStream");
@@ -72,7 +72,7 @@ public class TEGAbsorberTest {
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", MPstreamLiq);
         LP_valve.setOutletPressure(1.5);
 
-        ReBoiler reboiler = new ReBoiler("reboiler", LP_valve.getOutStream());
+        ReBoiler reboiler = new ReBoiler("reboiler", LP_valve.getOutletStream());
         reboiler.setReboilerDuty(20000.0);
 
         neqsim.thermo.system.SystemSrkEos testSystem3 =
@@ -86,10 +86,10 @@ public class TEGAbsorberTest {
         Stream mixStream = new Stream("mixStream", testSystem3);
 
         Mixer mix = new Mixer("mixer");
-        mix.addStream(reboiler.getOutStream());
+        mix.addStream(reboiler.getOutletStream());
         mix.addStream(mixStream);
 
-        StreamInterface ReboilLiqStream = mix.getOutStream();
+        StreamInterface ReboilLiqStream = mix.getOutletStream();
         ReboilLiqStream.setName("ReboilLiqStream");
 
         // Stream ReboilGasStream = reboiler.getOutStream();

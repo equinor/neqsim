@@ -76,3 +76,8 @@ neqsim.iml
 .DS_Store
 # Test output - Serialized files
 test_*.ser
+
+.dccache
+
+#Intellij IDEA
+.idea

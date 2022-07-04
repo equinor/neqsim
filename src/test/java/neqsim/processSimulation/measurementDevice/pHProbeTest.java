@@ -1,12 +1,11 @@
 package neqsim.processSimulation.measurementDevice;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.thermo.system.SystemSrkEos;
 
 class pHProbeTest {
 

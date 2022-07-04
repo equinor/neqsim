@@ -1,7 +1,9 @@
 # NeqSim
 
 [![Build Status](https://neqsim.visualstudio.com/neqsim_cicd/_apis/build/status/neqsim_build?branchName=master)](https://neqsim.visualstudio.com/neqsim_cicd/_build/latest?definitionId=1&branchName=master)
-![Build maven](https://github.com/equinor/neqsim/workflows/Build%20maven/badge.svg?branch=master)  
+![Build maven](https://github.com/equinor/neqsim/workflows/Build%20maven/badge.svg?branch=master)
+[![Known Vulnerabilities](https://snyk.io/test/github/equinor/neqsim/badge.svg)](https://snyk.io/test/github/equinor/neqsim)
+
 NeqSim is the main part of the [NeqSim project](https://equinor.github.io/neqsimhome/). NeqSim (Non-Equilibrium Simulator) is a Java library for estimation of fluid behavior and process design for oil and gas production.
 The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of oil and gas.  NeqSim is easilly extended with new models. NeqSim development was initiated at the [Norwegian University of Science and Technology (NTNU)](https://www.ntnu.edu/employees/even.solbraa).
 
@@ -25,8 +27,12 @@ The NeqSim source code is downloaded by cloning the library to your local comput
 ```bash
 git clone https://github.com/equinor/neqsim.git
 cd neqsim
-mvn install
+./mvnw install
 ```
+> **Note**
+> The maven wrapper command is dependend on your OS, for Unix use: ```./mvnw```
+> Windows:
+> ```mvnw.cmd ```
 
 An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).  
 
@@ -35,7 +41,12 @@ An interactive demonstration of how to get started as a NeqSim developer is pres
 The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsim/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project.  
 
 Test coverage can be examined using [jacoco](https://www.eclemma.org/jacoco/) from maven.  
-Generate a coverage report using `mvn jacoco:prepare-agent test install jacoco:report` and see results in target/site/jacoco/index.html.
+Generate a coverage report using `./mvnw jacoco:prepare-agent test install jacoco:report` and see results in target/site/jacoco/index.html.
+> **Note**
+> The maven wrapper command is dependend on your OS, for Unix use: ```./mvnw```
+> Windows:
+> ```mvnw.cmd ```
+
 
 ## Deployment
 

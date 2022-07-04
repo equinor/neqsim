@@ -51,17 +51,18 @@ public class compressorTest_1 {
         logger.info("power " + comp_1.getTotalWork());
 
         logger.info("speed of sound "
-                + comp_1.getOutStream().getThermoSystem().getPhase(0).getSoundSpeed());
-        logger.info("out temperature" + comp_1.getOutStream().getThermoSystem().getTemperature());
-        logger.info("Cp " + comp_1.getOutStream().getThermoSystem().getPhase(0).getCp());
-        logger.info("Cv " + comp_1.getOutStream().getThermoSystem().getPhase(0).getCv());
+            + comp_1.getOutletStream().getThermoSystem().getPhase(0).getSoundSpeed());
+        logger
+            .info("out temperature" + comp_1.getOutletStream().getThermoSystem().getTemperature());
+        logger.info("Cp " + comp_1.getOutletStream().getThermoSystem().getPhase(0).getCp());
+        logger.info("Cv " + comp_1.getOutletStream().getThermoSystem().getPhase(0).getCv());
         logger.info(
-                "molarmass " + comp_1.getOutStream().getThermoSystem().getPhase(0).getMolarMass());
+            "molarmass " + comp_1.getOutletStream().getThermoSystem().getPhase(0).getMolarMass());
 
         double outTemp = 500.1; // temperature in Kelvin
         double efficiency = comp_1.solveEfficiency(outTemp);
         logger.info("compressor polytropic efficiency " + efficiency);
-        logger.info("compressor out temperature " + comp_1.getOutStream().getTemperature());
+        logger.info("compressor out temperature " + comp_1.getOutletStream().getTemperature());
         logger.info("compressor power " + comp_1.getPower() + " J/sec");
         logger.info("compressor head "
                 + comp_1.getPower() / comp_1.getThermoSystem().getTotalNumberOfMoles() + " J/mol");

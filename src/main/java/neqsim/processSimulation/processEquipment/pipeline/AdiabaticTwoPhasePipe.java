@@ -93,12 +93,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         return outStream.getThermoSystem();
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getOutStream() {
-        return outStream;
-    }
-
     /**
      * <p>
      * setOutTemperature.
@@ -312,12 +306,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public void runTransient(double dt) {
-        run();
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public FlowSystemInterface getPipe() {
         return null;
     }
@@ -466,7 +454,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         operations.add(pipe);
         operations.run();
         pipe.displayResult();
-        System.out.println("flow " + pipe.getOutStream().getFluid().getFlowRate("MSm3/day"));
+        System.out.println("flow " + pipe.getOutletStream().getFluid().getFlowRate("MSm3/day"));
     }
 
     /**

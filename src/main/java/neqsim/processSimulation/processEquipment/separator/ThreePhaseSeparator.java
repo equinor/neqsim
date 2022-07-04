@@ -157,7 +157,7 @@ public class ThreePhaseSeparator extends Separator {
   @Override
   public void run() {
     inletStreamMixer.run();
-    thermoSystem = inletStreamMixer.getOutStream().getThermoSystem().clone();
+    thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
     thermoSystem.setMultiPhaseCheck(true);
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -182,6 +182,7 @@ public class ThreePhaseSeparator extends Separator {
     // //gasOutStream.setThermoSystem(gasSystem);
     if (thermoSystem.hasPhaseType("gas")) {
       gasOutStream.setThermoSystemFromPhase(thermoSystem, "gas");
+      gasOutStream.run();
     } else {
       gasOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }
@@ -192,6 +193,7 @@ public class ThreePhaseSeparator extends Separator {
     if (thermoSystem.hasPhaseType("oil")) {
       // thermoSystem.display();
       liquidOutStream.setThermoSystemFromPhase(thermoSystem, "oil");
+      liquidOutStream.run();
       // thermoSystem.display();
     } else {
       liquidOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
@@ -202,13 +204,10 @@ public class ThreePhaseSeparator extends Separator {
     //// waterOutStream.setThermoSystem(waterSystem);
     if (thermoSystem.hasPhaseType("aqueous")) {
       waterOutStream.setThermoSystemFromPhase(thermoSystem, "aqueous");
+      waterOutStream.run();
     } else {
       waterOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }
-    gasOutStream.run();
-    liquidOutStream.run();
-    waterOutStream.run();
-    // //waterOutStream.run();
   }
 
   /** {@inheritDoc} */
@@ -234,10 +233,6 @@ public class ThreePhaseSeparator extends Separator {
     // } finally {
     // }
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {}
 
   /** {@inheritDoc} */
   @Override

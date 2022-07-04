@@ -1,0 +1,23 @@
+name: Jacoco Distributed Exec and Aggregation2
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Run tests
+        run: |
+          mvn '-Dtest=!*IntegrationTest' verify -Djacoco.destFile=exportJacoco/jacoco-fast.exec
+      - name: Upload jacoco exec results
+        uses: actions/upload-artifact@v2
+        with:
+          name: unit-tests-jacoco
+          path: exportJacoco/jacoco-fast.exec
