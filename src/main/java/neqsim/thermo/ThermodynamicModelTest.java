@@ -115,31 +115,33 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   // public boolean checkFugacityCoefficientsDn() {
 
   public boolean checkFugacityCoefficientsDn() {
-    double temp1 = 0, temp2 = 0;
+    double temp1 = 0;
     double sum = 0;
-
-    for (int j = 0; j < system.getPhases()[0].getNumberOfComponents(); j++) {
+    for (int k = 0; k < system.getNumberOfPhases(); k++) {
+    for (int j = 0; j < system.getPhase(k).getNumberOfComponents(); j++) {
       temp1 = 0;
-      temp2 = 0;
+      //temp2 = 0;
       // temp1 +=
       // Math.log(system.getPhases()[0].getComponents()[j].getFugacityCoefficient());
       // temp2 +=
       // Math.log(system.getPhases()[1].getComponents()[j].getFugacityCoefficient());
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        temp1 += system.getPhases()[0].getComponents()[i].getNumberOfMolesInPhase()
-            * system.getPhases()[0].getComponents()[i].getdfugdn(j);
-        temp2 += system.getPhases()[1].getComponents()[i].getNumberOfMolesInPhase()
-            * system.getPhases()[1].getComponents()[i].getdfugdn(j);
+        temp1 += system.getPhase(k).getComponents()[i].getNumberOfMolesInPhase()
+            * system.getPhase(k).getComponents()[i].getdfugdn(j);
+        //temp2 += system.getPhases()[1].getComponents()[i].getNumberOfMolesInPhase()
+            //* system.getPhases()[1].getComponents()[i].getdfugdn(j);
         // System.out.println("fug " +
         // system.getPhases()[1].getComponents()[i].getNumberOfMolesInPhase()*system.getPhases()[1].getComponents()[i].getdfugdn(j));
       }
-
-      sum += Math.abs(temp1) + Math.abs(temp2);
+      
+      
       // System.out.println("test fugdn gas : " + j + " " + temp1 + " name " +
       // system.getPhases()[0].getComponents()[j].getComponentName());
       // System.out.println("test fugdn liq : " + j + " " + temp2);
     }
-    logger.info("Testing composition derivatives of fugacity coefficients...................");
+  }
+  sum += Math.abs(temp1) ;
+  logger.info("Testing composition derivatives of fugacity coefficients...................");
     logger.info("Diffference : " + sum);
     // System.out.println("Testing composition derivatives of fugacity
     // coefficients...................");
@@ -157,32 +159,37 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
    */
   public boolean checkFugacityCoefficientsDn2() {
     // boolean test1 = false, test2 = false;
-    double temp1 = 0, temp2 = 0;
+    double temp1 = 0;
     double sum = 0;
 
-    for (int j = 0; j < system.getPhases()[0].getNumberOfComponents(); j++) {
+    for (int k = 0; k < system.getNumberOfPhases(); k++) {
+    for (int j = 0; j < system.getPhase(k).getNumberOfComponents(); j++) {
       temp1 = 0;
-      temp2 = 0;
+      //temp2 = 0;
       // temp1 +=
       // Math.log(system.getPhases()[0].getComponents()[j].getFugacityCoefficient());
       // temp2 +=
       // Math.log(system.getPhases()[1].getComponents()[j].getFugacityCoefficient());
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        temp1 += system.getPhases()[0].getComponents()[i].getdfugdn(j)
-            - system.getPhases()[0].getComponents()[j].getdfugdn(i);
-        temp2 += system.getPhases()[1].getComponents()[i].getdfugdn(j)
-            - system.getPhases()[1].getComponents()[j].getdfugdn(i);
+      for (int i = 0; i < system.getPhase(k).getNumberOfComponents(); i++) {
+        temp1 += system.getPhase(k).getComponents()[i].getdfugdn(j)
+            - system.getPhase(k).getComponents()[j].getdfugdn(i);
+        //temp2 += system.getPhases()[1].getComponents()[i].getdfugdn(j)
+           // - system.getPhases()[1].getComponents()[j].getdfugdn(i);
       }
-      sum += Math.abs(temp1) + Math.abs(temp2);
+      //sum += Math.abs(temp1) + Math.abs(temp2);
       // System.out.println("test fugdn gas : " + j + " " + temp1);
       // System.out.println("test fugdn liq : " + j + " " + temp2);
     }
-    logger.info("Testing composition derivatives2 of fugacity coefficients...................");
-    logger.info("Diffference : " + sum);
+    
+    //logger.info("Testing composition derivatives2 of fugacity coefficients...................");
+    //logger.info("Diffference : " + sum);
     // System.out.println("Testing composition derivatives2 of fugacity
     // coefficients...................");
     // System.out.println("Difference : " + sum);
-
+  }
+  sum += Math.abs(temp1) ;
+  logger.info("Testing composition derivatives2 of fugacity coefficients...................");
+  logger.info("Diffference : " + sum);  
     return Math.abs(sum) < 1e-10;
   }
 
