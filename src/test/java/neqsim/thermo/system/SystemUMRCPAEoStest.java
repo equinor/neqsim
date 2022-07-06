@@ -23,7 +23,7 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
     //testSystem = new neqsim.thermo.system.SystemSrkCPA(400.0, 500.0);
     //testSystem = new neqsim.thermo.system.SystemSrkCPA(400.0, 500.0);
-    testSystem = new neqsim.thermo.system.SystemUMRCPAEoS(200, 50.0);
+    testSystem = new neqsim.thermo.system.SystemUMRCPAEoS(800, 110);
     // testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 10.0);
     //testSystem.addComponent("nitrogen", 1);
     testSystem.addComponent("water", 1);
@@ -82,7 +82,7 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     // testSystem = new SystemSrkEos(298.0, 10.0);
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
     //testSystem = new neqsim.thermo.system.SystemSrkCPA(400, 500);
-    testSystem = new neqsim.thermo.system.SystemUMRCPAEoS(200, 50.0);
+    testSystem = new neqsim.thermo.system.SystemUMRCPAEoS(800, 110);
     testSystem.addComponent("water", 1);
     // testSystem.addComponent("CO2", 0.01);
      //testSystem.addComponent("methane", 0.68);

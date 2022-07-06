@@ -38,12 +38,20 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
       parameters[3] = -0.057788;
       parameters[4] = 0.017702;
     }
+    //if (component.getName().equals("water")) {
+      //parameters[0] = 0.91256735118818810000000000;
+     // parameters[1] = -0.2872243639795234400000000;
+      //parameters[2] = 0.239526763058374250000000000;
+      //parameters[3] = 0.0;
+      //parameters[4] = 0.0;
+    //}
+
     if (component.getName().equals("water")) {
-      parameters[0] = 0.91256735118818810000000000;
-      parameters[1] = -0.2872243639795234400000000;
-      parameters[2] = 0.239526763058374250000000000;
-      parameters[3] = 0.0;
-      parameters[4] = 0.0;
+      parameters[0] = 0.9130000000000;
+      parameters[1] = -0.2870000000;
+      parameters[2] = 0.239500000000;
+      parameters[3] = -4.0;
+      parameters[4] = 7.0;
     }
 
     if (component.getName().equals("nitrogen")) {
