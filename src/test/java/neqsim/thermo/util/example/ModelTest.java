@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
-import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -27,7 +26,7 @@ public class ModelTest {
 
         //SystemInterface testSystem = new SystemSrkEos(500, 1.0);
         //SystemInterface testSystem = new SystemSrkCPAstatoil(273+150, 1.0);
-        SystemInterface testSystem = new SystemSrkCPA(273+150, 1.0);
+        SystemInterface testSystem = new SystemSrkCPA(273+150, 70);
         //SystemInterface testSystem = new SystemSrkCPAs(273+150, 1.0);
         // SystemInterface testSystem = new SystemElectrolyteCPAstatoil(273.14 + 12,
         // 61.0);
@@ -41,14 +40,14 @@ public class ModelTest {
         //testSystem.addComponent("n-heptane", 1);
          testSystem.addComponent("water", 50);
          //testSystem.addComponent("methane", 10);
-         testSystem.addComponent("ethane", 15);
+         //testSystem.addComponent("ethane", 15);
          testSystem.addComponent("TEG", 9);
          testSystem.addComponent("MEG", 50);
         // testSystem.addComponent("n-octane", 3.1);
         // testSystem.addComponent("Na+", 0.1);
         // testSystem.addComponent("Cl-", 0.1);
         // testSystem.addComponent("MEG", 2.1);
-        // testSystem.addComponent("methanol", 5.3);
+         testSystem.addComponent("methanol", 20);
         /// testSystem.addComponent("MEG", 5.3);
         // testSystem.addComponent("MEG", 10.0);
         // testSystem.addTBPfraction("C8", 10.1, 90.0 / 1000.0, 0.8);
