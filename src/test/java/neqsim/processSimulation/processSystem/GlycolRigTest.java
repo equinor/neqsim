@@ -42,20 +42,19 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     neqsim.thermo.system.SystemInterface feedTEG =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 145.0, 1.2);
     feedTEG.addComponent("nitrogen", 0.00005);
-    feedTEG.addComponent("oxygen", 0.0);
     feedTEG.addComponent("water", 0.19-1*0.00005);
     feedTEG.addComponent("TEG", 0.8);
     feedTEG.setMixingRule(10);
     feedTEG.setMultiPhaseCheck(true);
-    feedTEG.setMolarComposition(new double[] {0.005, 0.000, 0.2-1*0.005, 0.8});
+    feedTEG.setMolarComposition(new double[] {0.001, 0.2-1*0.001, 0.8});
 
     neqsim.thermo.system.SystemInterface strippingGasToStripperFluid = feedTEG.clone();
-    strippingGasToStripperFluid.setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0});
+    strippingGasToStripperFluid.setMolarComposition(new double[] {1.0, 0.0, 0.0});
 
     Stream strippingGas = new Stream("stripgas", strippingGasToStripperFluid);
     strippingGas.setFlowRate(20.0, "kg/hr");
     strippingGas.setTemperature(205.0, "C");
-    strippingGas.setPressure(1.2, "barg");
+    strippingGas.setPressure(0.2, "barg");
 
     Stream gasToReboiler = strippingGas.clone();
     gasToReboiler.setName("gas to reboiler");
@@ -74,6 +73,16 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.getReboiler().addStream(gasToReboiler);
     column.setTopPressure(0.2 + 1.01325);
     column.setBottomPressure(0.2 + 1.01325);
+    
+    WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
+    stripper.addSolventInStream(column.getLiquidOutStream());
+    stripper.addGasInStream(strippingGas);
+    stripper.setNumberOfStages(3);
+    stripper.setStageEfficiency(0.9);
+    
+    Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
+    recycleGasFromStripper.addStream(stripper.getGasOutStream());
+    recycleGasFromStripper.setOutletStream(gasToReboiler);
 
     Heater coolerPipe = new Heater(column.getGasOutStream());
     coolerPipe.setName("heat loss cooling");
@@ -93,30 +102,17 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     recycleGasfEED.addStream(gasHeater.getOutStream());
     recycleGasfEED.setOutletStream(strippingGas);
     recycleGasfEED.setPriority(200);
-
-    Stream liquidToTreatment = new Stream(sepregenGas.getLiquidOutStream());
-    liquidToTreatment.setName("water to treatment");
-    
-  
-
-    WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
-    stripper.addSolventInStream(column.getLiquidOutStream());
-    stripper.addGasInStream(strippingGas);
-    stripper.setNumberOfStages(3);
-    stripper.setStageEfficiency(0.9);
-
-    Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
-    recycleGasFromStripper.addStream(stripper.getGasOutStream());
-    recycleGasFromStripper.setOutletStream(gasToReboiler);
     
     Heater coolerStripper = new Heater(stripper.getSolventOutStream());
     coolerStripper.setName("TEG cooler");
     coolerStripper.setOutTemperature(273.15 + 98.0);
     
+    Stream liquidToTreatment = new Stream(sepregenGas.getLiquidOutStream());
+    liquidToTreatment.setName("water to treatment");
+    
     Mixer TEGWaterMixer = new Mixer("TEG water mixer");
     TEGWaterMixer.addStream(coolerStripper.getOutStream());
     TEGWaterMixer.addStream(liquidToTreatment);
-
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -162,8 +158,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
         + TEGtoRegenerator.getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
     System.out.println("TEG to regenerator "
         + TEGtoRegenerator.getFluid().getComponent("TEG").getTotalFlowRate("kg/hr"));
-    System.out.println("oxygen to regenerator "
-        + TEGtoRegenerator.getFluid().getComponent("oxygen").getTotalFlowRate("kg/hr"));
+    //System.out.println("oxygen to regenerator "
+    //    + TEGtoRegenerator.getFluid().getComponent("oxygen").getTotalFlowRate("kg/hr"));
     System.out.println("nitrogen to regenerator "
         + TEGtoRegenerator.getFluid().getComponent("nitrogen").getTotalFlowRate("kg/hr"));
 
