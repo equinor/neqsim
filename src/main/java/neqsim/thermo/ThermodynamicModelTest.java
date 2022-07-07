@@ -75,7 +75,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
    * @return a boolean
    */
   public boolean checkFugacityCoefficients() {
-    double temp1 = 0, temp2 = 0;
+    double temp1 = 0 ;
     for (int j = 0; j < system.getNumberOfPhases(); j++) {
       for (int i = 0; i < system.getPhase(j).getNumberOfComponents(); i++) {
         temp1 += system.getPhase(j).getComponents()[i].getNumberOfMolesInPhase()
@@ -86,20 +86,20 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
       temp1 -= system.getPhase(j).getGresTP() / (R * system.getTemperature());
     }
     logger.info("Testing fugacity coefficients...................");
-    logger.info("Total fug gas : " + temp1);
-    logger.info("Total fug liq : " + temp2);
+    //logger.info("Total fug gas : " + temp1);
+    //logger.info("Total fug liq : " + temp2);
     // System.out.println("Testing fugacity coefficients...................");
     // System.out.println("Total fug gas : " + temp1);
     // System.out.println("Total fug liq : " + temp2);
-    System.out.println("MOLAR VOLUME 1 " + system.getPhase("gas").getMolarVolume());
+    //System.out.println("MOLAR VOLUME 1 " + system.getPhase("gas").getMolarVolume());
     // System.out.println("MOLAR VOLUME 2 " + system.getPhase("aqueous").getMolarVolume());
-    System.out.println("number of phases " + system.getNumberOfPhases());
-    System.out.println("number of components " + system.getNumberOfComponents());
+    //System.out.println("number of phases " + system.getNumberOfPhases());
+    //System.out.println("number of components " + system.getNumberOfComponents());
     // temp1 -= system.getPhase(j).getGresTP() / (R * system.getTemperature());
     // temp2 -= system.getPhases()[1].getGresTP() / (R * system.getTemperature());
     double sum = Math.abs(temp1);
-    logger.info("Diffference fug gas : " + temp1);
-    logger.info("Difference fug liq : " + temp2);
+    //logger.info("Diffference fug gas : " + temp1);
+    //logger.info("Difference fug liq : " + temp2);
     // System.out.println("Diffference fug gas : " + temp1);
     // System.out.println("Difference fug liq : " + temp2);
     return Math.abs(sum) < 1e-10;
