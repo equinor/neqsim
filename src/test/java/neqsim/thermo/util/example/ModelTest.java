@@ -24,6 +24,7 @@ public class ModelTest {
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemFurstElectrolyteEos(280.15,10.00);
 
+        
         //SystemInterface testSystem = new SystemSrkEos(500, 1.0);
         //SystemInterface testSystem = new SystemSrkCPAstatoil(273+150, 1.0);
         SystemInterface testSystem = new SystemSrkCPA(273+150, 70);
