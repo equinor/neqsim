@@ -187,6 +187,6 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
         + TEGWaterMixer.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0);
     strippingGas.displayResult();
     System.out.println("stripping gas rate " + strippingGas.getFlowRate("kg/hr"));
-
+    Assertions.assertEquals(0.0, waterBalanceColumn, 1e-3);
   }
 }
