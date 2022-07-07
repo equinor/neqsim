@@ -2208,6 +2208,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
         c.put("nC7", "n-heptane");
         c.put("nC8", "n-octane");
         c.put("nC9", "n-nonane");
+        c.put("O2", "oxygen");
         return c;
     }
 }
