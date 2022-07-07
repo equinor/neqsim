@@ -125,7 +125,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
       // Math.log(system.getPhases()[0].getComponents()[j].getFugacityCoefficient());
       // temp2 +=
       // Math.log(system.getPhases()[1].getComponents()[j].getFugacityCoefficient());
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+      for (int i = 0; i < system.getPhase(k).getNumberOfComponents(); i++) {
         temp1 += system.getPhase(k).getComponents()[i].getNumberOfMolesInPhase()
             * system.getPhase(k).getComponents()[i].getdfugdn(j);
         //temp2 += system.getPhases()[1].getComponents()[i].getNumberOfMolesInPhase()
