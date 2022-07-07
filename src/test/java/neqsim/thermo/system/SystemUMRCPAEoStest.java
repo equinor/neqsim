@@ -13,6 +13,7 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
   neqsim.thermo.ThermodynamicModelTest fugTest;
 
+  
   /**
    * <p>
    * setUp.
