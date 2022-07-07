@@ -45,7 +45,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     feedTEG.addComponent("water", 0.19 - 1 * 0.00005);
     feedTEG.addComponent("TEG", 0.8);
     feedTEG.setMixingRule(10);
-    feedTEG.setMolarComposition(new double[] {0.003, 0.2 - 1 * 0.003, 0.8});
+    feedTEG.setMolarComposition(new double[] {0.00000, 0.2 - 1 * 0.00000, 0.8});
 
     neqsim.thermo.system.SystemInterface strippingGasToStripperFluid = feedTEG.clone();
     strippingGasToStripperFluid.setMolarComposition(new double[] {1.0, 0.0, 0.0});

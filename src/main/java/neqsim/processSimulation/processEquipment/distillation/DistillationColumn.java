@@ -106,9 +106,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
             for (int i = 0; i < numberOfTrays; i++) {
                 if (getTray(i).getNumberOfInputStreams() > 0 && i != feedTrayNumber) {
                     getTray(feedTrayNumber).addStream(trays.get(i).getStream(0));
-                    ((Runnable) trays.get(feedTrayNumber)).run();
-                    if (getTray(feedTrayNumber).getStream(0).getFluid().getNumberOfPhases() > 1)
-                        break;
+                    getTray(feedTrayNumber).run();
+                    getTray(feedTrayNumber).removeInputStream(getTray(feedTrayNumber).getNumberOfInputStreams()-1);  
+                    if (getTray(feedTrayNumber).getThermoSystem().getNumberOfPhases() > 1)
+                      break;
+                }
+                else if(i == feedTrayNumber && getTray(i).getNumberOfInputStreams() > 1) {
+                  getTray(feedTrayNumber).addStream(trays.get(i).getStream(1));
+                  ((Runnable) trays.get(feedTrayNumber)).run();
+                  getTray(feedTrayNumber).removeInputStream(getTray(feedTrayNumber).getNumberOfInputStreams()-1);
+                  if (getTray(feedTrayNumber).getThermoSystem().getNumberOfPhases() > 1)
+                    break;
                 }
             }
         }
