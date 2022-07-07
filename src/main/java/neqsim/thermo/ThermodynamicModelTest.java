@@ -235,7 +235,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
    */
   public boolean checkFugacityCoefficientsDT() {
     // boolean test1 = false, test2 = false;
-    double temp1 = 0, temp2 = 0;
+    double temp1 = 0;
     double sum = 0;
     for (int j = 0; j < system.getNumberOfPhases(); j++) {
       for (int i = 0; i < system.getPhase(j).getNumberOfComponents(); i++) {
