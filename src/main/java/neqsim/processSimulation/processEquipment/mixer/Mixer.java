@@ -68,6 +68,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   public void replaceStream(int i, StreamInterface newStream) {
     streams.set(i, newStream);
   }
+  
+  /** {@inheritDoc} */
+  @Override
+  public void removeInputStream(int i) {
+    streams.remove(i);
+  }
 
   /** {@inheritDoc} */
   @Override

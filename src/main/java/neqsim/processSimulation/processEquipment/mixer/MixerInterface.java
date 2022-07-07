@@ -64,4 +64,6 @@ public interface MixerInterface extends ProcessEquipmentInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface getThermoSystem();
+  
+  public void removeInputStream(int i);
 }
