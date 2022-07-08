@@ -311,7 +311,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public void run() {
     thermoSystem = inStream.getThermoSystem().clone();
     
-    if(Math.abs(pressure-thermoSystem.getPressure())<1e-30 && !compressorChart.isUseCompressorChart()) {
+    if(Math.abs(pressure-thermoSystem.getPressure(pressureUnit))<1e-6 && !compressorChart.isUseCompressorChart()) {
       thermoSystem.initProperties();
       outStream.setThermoSystem(getThermoSystem());
       dH = 0.0;
