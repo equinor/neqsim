@@ -45,7 +45,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     feedTEG.addComponent("water", 0.19 - 1 * 0.00005);
     feedTEG.addComponent("TEG", 0.8);
     feedTEG.setMixingRule(10);
-    feedTEG.setMolarComposition(new double[] {0.00000, 0.2 - 1 * 0.00000, 0.8});
+    feedTEG.setMolarComposition(new double[] {0.00003, 0.2 - 1 * 0.00003, 0.8});
 
     neqsim.thermo.system.SystemInterface strippingGasToStripperFluid = feedTEG.clone();
     strippingGasToStripperFluid.setMolarComposition(new double[] {1.0, 0.0, 0.0});
@@ -68,9 +68,9 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.setName("TEG regeneration column");
     column.addFeedStream(TEGtoRegenerator, 1);
     column.getReboiler().setOutTemperature(273.15 + 209.0);
-    column.getCondenser().setOutTemperature(273.15 + 91.0);
+    column.getCondenser().setOutTemperature(273.15 + 94.0);
     column.getReboiler().addStream(gasToReboiler);
-    column.setTopPressure(0.1 + 1.01325);
+    column.setTopPressure(0.2 + 1.01325);
     column.setBottomPressure(0.2 + 1.01325);
 
     WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
