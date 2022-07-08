@@ -90,9 +90,7 @@ public class TVflash extends Flash {
             }
             system.setPressure(nyPres);
             tpFlash.run();
-            // System.out.println(" dQdv " + calcdQdV() + " new pressure " + nyPres + "
-            // error " + Math.abs((nyPres-oldPres)/(nyPres)) + "
-            // numberofphases"+system.getNumberOfPhases());
+            // System.out.println(" dQdv " + calcdQdV() + " new pressure " + nyPres + " error " + Math.abs((nyPres-oldPres)/(nyPres)) + " numberofphases "+system.getNumberOfPhases());
         } while (Math.abs((nyPres - oldPres) / (nyPres)) > 1e-9 && iterations < 1000
                 || iterations < 3);
         return nyPres;

@@ -8,7 +8,7 @@ import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 // import org.ejml.data.DenseMatrix64F;
 import neqsim.thermo.component.ComponentCPAInterface;
-import neqsim.thermo.component.ComponentSrkCPA;
+import neqsim.thermo.component.ComponentUMRCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
 
@@ -20,7 +20,7 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
+public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     /**
      * <p>
      * Getter for the field <code>dFdNtemp</code>.
@@ -33,7 +33,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(PhaseSrkCPA.class);
+    static Logger logger = LogManager.getLogger(PhaseUMRCPA.class);
 
     public CPAMixing cpaSelect = new CPAMixing();
     public CPAMixingInterface cpamix;
@@ -62,20 +62,20 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
     /**
      * <p>
-     * Constructor for PhaseSrkCPA.
+     * Constructor for PhaseUMRCPA.
      * </p>
      */
-    public PhaseSrkCPA() {
+    public PhaseUMRCPA() {
         super();
-        thermoPropertyModelName = "SRK-CPA-EoS";
+        thermoPropertyModelName = "UMR-CPA-EoS";
     }
 
     /** {@inheritDoc} */
     @Override
-    public PhaseSrkCPA clone() {
-        PhaseSrkCPA clonedPhase = null;
+    public PhaseUMRCPA clone() {
+      PhaseUMRCPA clonedPhase = null;
         try {
-            clonedPhase = (PhaseSrkCPA) super.clone();
+            clonedPhase = (PhaseUMRCPA) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
@@ -137,9 +137,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
             for (int i = 0; i < numberOfComponents; i++) {
                 for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-                    ((ComponentSrkCPA) componentArray[i]).setXsite(j, 1.0);
-                    ((ComponentSrkCPA) componentArray[i]).setXsitedV(j, 0.0);
-                    ((ComponentSrkCPA) componentArray[i]).setXsitedT(j, 0.0);
+                    ((ComponentUMRCPA) componentArray[i]).setXsite(j, 1.0);
+                    ((ComponentUMRCPA) componentArray[i]).setXsitedV(j, 0.0);
+                    ((ComponentUMRCPA) componentArray[i]).setXsitedT(j, 0.0);
                 }
             }
 
@@ -264,7 +264,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
         if (type > 2) {
             for (int p = 0; p < numberOfComponents; p++) {
-                lngi[p] = ((ComponentSrkCPA) componentArray[p]).calc_lngi(this);
+                lngi[p] = ((ComponentUMRCPA) componentArray[p]).calc_lngi(this);
             }
         }
 
@@ -499,7 +499,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
         componentArray[compNumber] =
-                new ComponentSrkCPA(componentName, moles, molesInPhase, compNumber);
+                new ComponentUMRCPA(componentName, moles, molesInPhase, compNumber);
     }
 
     /** {@inheritDoc} */
@@ -808,8 +808,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             // temp = ((ComponentSrkCPA) getComponent(k)).calc_lngi(this);
             // temp2 = ((ComponentSrkCPA) getComponent(k)).calc_lngidV(this);
             for (int i = 0; i < getComponent(k).getNumberOfAssociationSites(); i++) {
-                tot2 -= 1.0 * ((ComponentSrkCPA) getComponent(k)).getXsitedV()[i];
-                tot3 += (1.0 - ((ComponentSrkCPA) getComponent(k)).getXsite()[i]) * 1.0;
+                tot2 -= 1.0 * ((ComponentUMRCPA) getComponent(k)).getXsitedV()[i];
+                tot3 += (1.0 - ((ComponentUMRCPA) getComponent(k)).getXsite()[i]) * 1.0;
             }
             tot1 += 1.0 / 2.0 * tot2 * getComponent(k).getNumberOfMolesInPhase();
             tot4 += 0.5 * getComponent(k).getNumberOfMolesInPhase() * tot3;
@@ -830,7 +830,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         for (int i = 0; i < numberOfComponents; i++) {
             htot = 0.0;
             for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-                htot += (1.0 - ((ComponentSrkCPA) componentArray[i]).getXsite()[j]);
+                htot += (1.0 - ((ComponentUMRCPA) componentArray[i]).getXsite()[j]);
             }
             tot += componentArray[i].getNumberOfMolesInPhase() * htot;
         }
@@ -858,7 +858,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
      * @return a double
      */
     public double calc_lngV() {
-        tempTotVol = getTotalVolume();
+        tempTotVol = getMolarVolume();
         // gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume() /
         // ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
         return 1.0 / (2.0 - getB() / (4.0 * tempTotVol)) * getB() / (4.0 * tempTotVol * tempTotVol)
@@ -874,7 +874,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
      * @return a double
      */
     public double calc_lngVV() {
-        tempTotVol = getTotalVolume();
+        tempTotVol = getMolarVolume();
         return 2.0
                 * (640.0 * Math.pow(tempTotVol, 3.0) - 216.0 * getB() * tempTotVol * tempTotVol
                         + 24.0 * Math.pow(getB(), 2.0) * tempTotVol - Math.pow(getB(), 3.0))
@@ -890,7 +890,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
      * @return a double
      */
     public double calc_lngVVV() {
-        tempTotVol = getTotalVolume();
+        tempTotVol = getMolarVolume();
         return 4.0
                 * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(tempTotVol, 4.0) * getB()
                         - 4192.0 * Math.pow(tempTotVol, 3.0) * Math.pow(getB(), 2.0)
@@ -965,7 +965,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             for (int i = 0; i < numberOfComponents; i++) {
                 temp1 = componentArray[i].getNumberOfMolesInPhase();
                 for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-                    ksi = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
+                    ksi = ((ComponentUMRCPA) componentArray[i]).getXsite()[j];
                     ksiMatrixMat.unsafe_set(temp + j, 0, ksi);
                     // ksiMatrix.getMatrix().unsafe_set(temp + j, 0,
                     // ksiMatrix.getMatrix().unsafe_get(temp + j, 0));
@@ -1058,16 +1058,16 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             iter++;
             err = 0.0;
             for (int i = 0; i < totalNumberOfAccociationSites; i++) {
-                old = ((ComponentSrkCPA) componentArray[moleculeNumber[i]])
+                old = ((ComponentUMRCPA) componentArray[moleculeNumber[i]])
                         .getXsite()[assSiteNumber[i]];
                 neeval = 0.0;
                 for (int j = 0; j < totalNumberOfAccociationSites; j++) {
                     neeval += componentArray[moleculeNumber[j]].getNumberOfMolesInPhase()
-                            * delta[i][j] * ((ComponentSrkCPA) componentArray[moleculeNumber[j]])
+                            * delta[i][j] * ((ComponentUMRCPA) componentArray[moleculeNumber[j]])
                                     .getXsite()[assSiteNumber[j]];
                 }
                 neeval = 1.0 / (1.0 + 1.0 / totalVolume * neeval);
-                ((ComponentSrkCPA) componentArray[moleculeNumber[i]]).setXsite(assSiteNumber[i],
+                ((ComponentUMRCPA) componentArray[moleculeNumber[i]]).setXsite(assSiteNumber[i],
                         neeval);
                 err += Math.abs((old - neeval) / neeval);
             }
@@ -1685,7 +1685,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                                 t2 = 1.0 / mVector.get(j, 0);
                             }
                             Klkni[p][i][j] = KlkMatrix.get(i, j) * (t1 + t2
-                                    + ((ComponentSrkCPA) getComponent(p)).calc_lngi(this));
+                                    + ((ComponentUMRCPA) getComponent(p)).calc_lngi(this));
                             Klkni[p][j][i] = Klkni[p][i][j];
                         }
                     }
@@ -1862,7 +1862,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             temp = 0;
             for (int i = 0; i < numberOfComponents; i++) {
                 for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-                    ksiMatrix.set(temp + j, 0, ((ComponentSrkCPA) componentArray[i]).getXsite()[j]);
+                    ksiMatrix.set(temp + j, 0, ((ComponentUMRCPA) componentArray[i]).getXsite()[j]);
                     // ksiMatrix.getMatrix().unsafe_set(temp + j, 0,
                     // ksiMatrix.getMatrix().unsafe_get(temp + j, 0));
                     udotMatrix.set(temp + j, 0, 1.0 / ksiMatrix.get(temp + j, 0) - 1.0);
@@ -1947,12 +1947,12 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             iter++;
             err = 0.0;
             for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
-                old = ((ComponentSrkCPA) getComponent(moleculeNumber[i]))
+                old = ((ComponentUMRCPA) getComponent(moleculeNumber[i]))
                         .getXsite()[assSiteNumber[i]];
                 neeval = 0;
                 for (int j = 0; j < getTotalNumberOfAccociationSites(); j++) {
                     neeval += getComponent(moleculeNumber[j]).getNumberOfMolesInPhase()
-                            * delta[i][j] * ((ComponentSrkCPA) getComponent(moleculeNumber[j]))
+                            * delta[i][j] * ((ComponentUMRCPA) getComponent(moleculeNumber[j]))
                                     .getXsite()[assSiteNumber[j]];
                 }
                 neeval = 1.0 / (1.0 + 1.0 / totalVolume * neeval);

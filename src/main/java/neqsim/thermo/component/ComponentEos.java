@@ -7,6 +7,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.component.attractiveEosTerm.AtractiveTermMatCopPRUMRNew;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermCPAstatoil;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermGERG;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
@@ -176,6 +177,9 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
             } else {
                 setAttractiveParameter(new AttractiveTermSrk(this));
             }
+        } else if (i == 19) {
+          setAttractiveParameter(
+              new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
         } else {
             logger.error("error selecting an alpha formultaion term");
             logger.info("ok setting alpha function");
@@ -225,23 +229,19 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
 
     /** {@inheritDoc} */
     @Override
-    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure) {
-        return (phase.FBT() + phase.FBD() * phase.getAT()) * getBi() + phase.FDT() * getAi()
-                + phase.FD() * getAiT();
+    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+        return (phase.FBT() + phase.FBD() * phase.getAT()) * getBi() + phase.FDT() * getAi() + phase.FD() * getAiT();
     }
 
     /** {@inheritDoc} */
     @Override
-    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure) {
+    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return phase.FnV() + phase.FBV() * getBi() + phase.FDV() * getAi();
     }
 
     /** {@inheritDoc} */
     @Override
-    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure) {
+    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
         return phase.FnB() * (getBi() + comp_Array[j].getBi())
                 + phase.FBD() * (getBi() * comp_Array[j].getAi() + comp_Array[j].getBi() * getAi())

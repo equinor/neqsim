@@ -11,34 +11,34 @@ package neqsim.thermo.system;
  * @version
  */
 
-import neqsim.thermo.phase.PhasePrEosvolcor;
+import neqsim.thermo.phase.PhaseUMRCPA;
 
 /**
  * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
  */
-public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
+public class SystemUMRCPAEoS extends SystemPrEos {
 
 
-  public SystemUMRPRUMCEosNew() {
+  public SystemUMRCPAEoS() {
     super();
-    modelName = "UMR-PRU-MC-EoS-New";
+    modelName = "UMR-CPA";
     attractiveTermNumber = 19;
     useVolumeCorrection(false);
     for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrEosvolcor();
+      phaseArray[i] = new PhaseUMRCPA();
       phaseArray[i].setTemperature(298.15);
       phaseArray[i].setPressure(1.0);
       phaseArray[i].useVolumeCorrection(false);
     }
   }
 
-  public SystemUMRPRUMCEosNew(double T, double P) {
+  public SystemUMRCPAEoS(double T, double P) {
     super(T, P);
-    modelName = "UMR-PRU-MC-EoS-New";
+    modelName = "UMR-CPA";
     attractiveTermNumber = 19;
     useVolumeCorrection(false);
     for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrEosvolcor();
+      phaseArray[i] = new PhaseUMRCPA();
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
       phaseArray[i].useVolumeCorrection(false);
