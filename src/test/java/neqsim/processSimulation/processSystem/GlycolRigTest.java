@@ -70,7 +70,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.getReboiler().setOutTemperature(273.15 + 209.0);
     column.getCondenser().setOutTemperature(273.15 + 94.0);
     column.getReboiler().addStream(gasToReboiler);
-    column.setTopPressure(0.2 + 1.01325);
+    column.setTopPressure(0.1 + 1.01325);
     column.setBottomPressure(0.2 + 1.01325);
 
     WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
