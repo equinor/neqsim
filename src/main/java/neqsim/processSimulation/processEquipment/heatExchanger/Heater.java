@@ -58,7 +58,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /**
    * Constructor for Heater.
    * 
-   * @param name
+   * @param name name of heater
    */
   public Heater(String name) {
     super(name);

@@ -2,7 +2,6 @@ package neqsim.processSimulation.costEstimation;
 
 import java.util.ArrayList;
 import java.util.Objects;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
@@ -34,8 +33,8 @@ public class CostEstimateBaseClass implements java.io.Serializable {
 
     /**
      * 
-     * @param process
-     * @param costFactor
+     * @param process input process
+     * @param costFactor cost factor
      */
     public CostEstimateBaseClass(ProcessSystem process, double costFactor) {
         this(process);

@@ -23,7 +23,7 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
      * Constructor for Reboiler.
      * </p>
      * 
-     * @param name
+     * @param name name of unit operation
      */
     public Reboiler(String name) {
         super(name);

@@ -57,7 +57,7 @@ public class ProcessSystem extends SimulationBaseClass {
     /**
      * Constructor for ProcessSystem.
      * 
-     * @param name
+     * @param name name of process
      */
     public ProcessSystem(String name) {
         super(name);
@@ -466,7 +466,7 @@ public class ProcessSystem extends SimulationBaseClass {
      * runTransient.
      * </p>
      *
-     * @param deltat a double
+     * @param dt differential temperature
      */
     @Override
     public void runTransient(double dt) {

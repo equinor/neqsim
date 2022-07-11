@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.compressor;
 
 import java.util.Arrays;
 import java.util.Objects;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
@@ -105,7 +104,7 @@ public class StoneWallCurve implements java.io.Serializable {
     }
 
     /**
-     * @param isActive
+     * @param isActive true if stone wall curve should be used for compressor calculations
      */
     void setActive(boolean isActive) {
         this.isActive = isActive;

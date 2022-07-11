@@ -2226,6 +2226,9 @@ abstract class SystemThermo implements SystemInterface {
 
 
   /** @{inheritdoc} */
+  /**
+   * @return IsPhase true or false
+   */
   @Override
   public boolean IsPhase(int i) {
     if (i > phaseArray.length) {
@@ -3157,9 +3160,9 @@ abstract class SystemThermo implements SystemInterface {
   /**
    * {@inheritDoc}
    * 
-   * @Override
+   * @return kappa real gas kappa
    *
-   *           method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
+   *         method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
    */
   public double getKappa() {
     return -getCp() / getCv() * getVolume() / getPressure() * getdPdVtn();
@@ -5131,7 +5134,6 @@ abstract class SystemThermo implements SystemInterface {
     this.forcePhaseTypes = forcePhaseTypes;
   }
 
-  /** @{inheritDoc} */
   @Override
   public SystemProperties getProperties() {
     return new SystemProperties(this);

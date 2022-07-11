@@ -18,13 +18,7 @@ public class Condenser extends SimpleTray {
     boolean refluxIsSet = false;
     double duty = 0.0;
 
-    /**
-     * <p>
-     * Constructor for Condenser.
-     * </p>
-     * 
-     * @param name
-     */
+    /** {@inheritDoc} */
     public Condenser(String name) {
         super(name);
     }

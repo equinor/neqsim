@@ -5,7 +5,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 /**
  *
  * @author esol
- * @version
+ *
  */
 public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
 

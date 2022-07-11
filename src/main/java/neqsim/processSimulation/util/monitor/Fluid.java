@@ -49,7 +49,7 @@ public class Fluid extends NamedBaseClass {
   /**
    * Constructor for Fluid.
    * 
-   * @param name
+   * @param name name of fluid
    */
   public Fluid(String name) {
     super(name);
@@ -60,8 +60,8 @@ public class Fluid extends NamedBaseClass {
   /**
    * Constructor for Fluid.
    * 
-   * @param name
-   * @param inputFluid
+   * @param name name of fluid
+   * @param inputFluid input fluid
    */
   public Fluid(String name, SystemInterface inputFluid) {
     this(name);

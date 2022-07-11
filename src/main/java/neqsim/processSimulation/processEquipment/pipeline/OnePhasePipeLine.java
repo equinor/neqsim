@@ -43,7 +43,7 @@ public class OnePhasePipeLine extends Pipeline {
     /**
      * Constructor for OnePhasePipeLine.
      * 
-     * @param name
+     * @param name name of pipe
      */
     public OnePhasePipeLine(String name) {
         super(name);
@@ -52,8 +52,8 @@ public class OnePhasePipeLine extends Pipeline {
     /**
      * Constructor for OnePhasePipeLine.
      * 
-     * @param name
-     * @param inStream
+     * @param name name of pipe
+     * @param inStream input stream
      */
     public OnePhasePipeLine(String name, StreamInterface inStream) {
         super(name, inStream);

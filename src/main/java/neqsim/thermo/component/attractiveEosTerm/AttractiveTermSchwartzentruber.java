@@ -78,8 +78,8 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
     }
 
     /**
-     * @param temperature
-     * @return double
+     * @param temperature temperature in Kelvin
+     * @return double returns the alphacrit
      */
     private double alphaCrit(double temperature) {
         d = 1.0 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
@@ -89,8 +89,8 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
     }
 
     /**
-     * @param temperature
-     * @return double
+     * @param temperature temperature in Kelvin
+     * @return double diff alpha crit with respecct to temperature
      */
     private double diffalphaCritT(double temperature) {
         d = 1.0 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
@@ -104,8 +104,8 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
     }
 
     /**
-     * @param temperature
-     * @return double
+     * @param temperature temperature in Kelvin
+     * @return double double diff alpha crit with respecct to temperature
      */
     private double diffdiffalphaCritT(double temperature) {
         d = 1.0 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
