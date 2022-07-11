@@ -1,9 +1,8 @@
 package neqsim.thermo.system;
 
 /**
- * <p>
- * SystemSrkTwuCoonStatoilEos class.
- * </p>
+ * This class defines a thermodynamic system using the SRK Two Coon model of Statoil equation of
+ * state
  *
  * @author asmund
  * @version $Id: $Id

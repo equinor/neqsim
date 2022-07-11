@@ -5,7 +5,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- * This class defines a thermodynamic system using the SRK EoS amd NRTL for liquids
+ * This class defines a thermodynamic system using the SRK EoS for gas and NRTL for liquids
  * 
  * @author Even Solbraa
  */

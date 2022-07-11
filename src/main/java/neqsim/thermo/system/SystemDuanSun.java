@@ -6,7 +6,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * This class defines a thermodynamic system using the SRK EoS and Pitzer for liquids
+ * This class defines a thermodynamic system using the Duan Sun method used for CO2
  * 
  * @author Even Solbraa
  */
