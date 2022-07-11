@@ -39,8 +39,8 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   /**
    * Constructor for Standard.
    * 
-   * @param name
-   * 
+   * @param name name of standard
+   * @param description description
    */
   public Standard(String name, String description) {
     super(name);
@@ -50,8 +50,9 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   /**
    * Constructor for Standard.
    * 
-   * @param name
-   * @param thermoSyst
+   * @param name name of standard
+   * @param thermoSyst input fluid
+   * @param description description of standard
    */
   public Standard(String name, String description, SystemInterface thermoSyst) {
     this(name, description);

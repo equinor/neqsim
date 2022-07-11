@@ -12,7 +12,7 @@ public class SystemProperties {
     /**
      * Constructur for SystemProperties.
      * 
-     * @param fluid
+     * @param fluid input fluid
      */
     public SystemProperties(SystemInterface fluid) {
         final String[] phaseName = {"gas", "oil", "aqueous"};

@@ -42,7 +42,7 @@ public class SafetyValve extends ThrottlingValve {
     /**
      * Constructor for SafetyValve.
      * 
-     * @param name
+     * @param name name of valve
      */
     public SafetyValve(String name) {
         super(name);

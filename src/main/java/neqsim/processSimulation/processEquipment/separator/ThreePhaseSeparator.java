@@ -62,7 +62,7 @@ public class ThreePhaseSeparator extends Separator {
   /**
    * Constructor for ThreePhaseSeparator.
    * 
-   * @param name
+   * @param name name of separator
    */
   public ThreePhaseSeparator(String name) {
     super(name);

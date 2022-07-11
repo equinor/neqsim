@@ -50,7 +50,7 @@ public class EquilibriumStream extends Stream {
     /**
      * Constructor for EquilibriumStream.
      * 
-     * @param name
+     * @param name name of stream
      */
     public EquilibriumStream(String name) {
         super(name);

@@ -48,8 +48,8 @@ public class ReBoiler extends TwoPortEquipment {
      * Constructor for ReBoiler.
      * </p>
      * 
-     * @param name
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     * @param name name of reboiler
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */
     public ReBoiler(String name, StreamInterface inStream) {

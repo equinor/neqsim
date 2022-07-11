@@ -3,7 +3,6 @@ package neqsim.processSimulation.processEquipment.splitter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -52,7 +51,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /**
    * Constructor for Splitter.
    * 
-   * @param name
+   * @param name name of splitter
    */
   public Splitter(String name) {
     super(name);
@@ -61,8 +60,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /**
    * Constructor for Splitter.
    * 
-   * @param name
-   * @param inStream
+   * @param name name of splitter
+   * @param inStream input stream
    */
   public Splitter(String name, StreamInterface inStream) {
     this(name);

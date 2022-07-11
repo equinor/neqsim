@@ -276,7 +276,7 @@ public class graph2b extends javax.swing.JFrame {
     /**
      * Exit the Application
      * 
-     * @param evt
+     * @param evt The event to exit the form
      */
     private void exitForm(java.awt.event.WindowEvent evt) {// GEN-FIRST:event_exitForm
         this.removeAll();

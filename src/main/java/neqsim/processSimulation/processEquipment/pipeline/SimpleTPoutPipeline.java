@@ -43,7 +43,7 @@ public class SimpleTPoutPipeline extends Pipeline {
     /**
      * Constructor for SimpleTPoutPipeline.
      * 
-     * @param name
+     * @param name name of pipeline
      */
     public SimpleTPoutPipeline(String name) {
         super(name);
@@ -52,8 +52,8 @@ public class SimpleTPoutPipeline extends Pipeline {
     /**
      * Constructor for SimpleTPoutPipeline.
      * 
-     * @param name
-     * @param inStream
+     * @param name name of pipeline
+     * @param inStream the inlet stream
      */
     public SimpleTPoutPipeline(String name, StreamInterface inStream) {
         super(name, inStream);
