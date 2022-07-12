@@ -4111,51 +4111,6 @@ abstract class SystemThermo implements SystemInterface {
     return standard;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public neqsim.dataPresentation.iTextPDF.PdfCreator generatePDF() {
-    neqsim.dataPresentation.iTextPDF.PdfCreator pdfDocument = null;
-    pdfDocument = new neqsim.dataPresentation.iTextPDF.PdfCreator();
-    pdfDocument.getDocument().addTitle("NeqSim Thermo Simulation Report");
-    pdfDocument.getDocument().addKeywords("Temperature ");
-
-    pdfDocument.getDocument().open();
-    try {
-      pdfDocument.getDocument()
-          .add(new com.lowagie.text.Paragraph("Properties of fluid: " + getFluidName(),
-              com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.TIMES_ROMAN, 12)));
-
-      com.lowagie.text.List list = new com.lowagie.text.List(true, 20);
-      list.add(new com.lowagie.text.ListItem("Thermodynamic model: " + getModelName()));
-      list.add(new com.lowagie.text.ListItem("Mixing rule: " + getMixingRuleName()));
-      list.add(new com.lowagie.text.ListItem("Number of phases: " + getNumberOfPhases()));
-      list.add(new com.lowagie.text.ListItem("Status of calculation: ok"));
-      pdfDocument.getDocument().add(list);
-
-      com.lowagie.text.Table resTable =
-          new com.lowagie.text.Table(6, getPhases()[0].getNumberOfComponents() + 30);
-      String[][] tempTable = createTable(getFluidName());
-      for (int i = 0; i < getPhases()[0].getNumberOfComponents() + 30; i++) {
-        for (int j = 0; j < 6; j++) {
-          resTable.addCell(tempTable[i][j]);
-        }
-      }
-      pdfDocument.getDocument().add(resTable);
-
-      com.lowagie.text.Anchor anchor = new com.lowagie.text.Anchor("NeqSim Website",
-          com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.HELVETICA, 12,
-              com.lowagie.text.Font.UNDERLINE, new Color(0, 0, 255)));
-      anchor.setReference("http://www.stud.ntnu.no/~solbraa/neqsim");
-      anchor.setName("NeqSim Website");
-
-      pdfDocument.getDocument().add(anchor);
-    } catch (Exception e) {
-      logger.error("error", e);
-    }
-    pdfDocument.getDocument().close();
-    return pdfDocument;
-  }
-
   /**
    * {@inheritDoc}
    *

@@ -56,8 +56,8 @@ public abstract class BaseOperation implements OperationInterface {
     public void printToFile(String name) {}
 
     /** {@inheritDoc} */
-    @Override
-    public void createNetCdfFile(String name) {}
+   // @Override
+   // public void createNetCdfFile(String name) {}
 
     /** {@inheritDoc} */
     @Override

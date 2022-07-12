@@ -2268,24 +2268,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * generatePDF.
-   * </p>
-   * 
-   * @return PdfCreator PdfCreator
-   */
-  public neqsim.dataPresentation.iTextPDF.PdfCreator generatePDF();
-
-  /**
-   * <p>
-   * displayPDF.
-   * </p>
-   */
-  public default void displayPDF() {
-    generatePDF().openPDF();
-  }
-
-  /**
-   * <p>
    * getMixingRule.
    * </p>
    *

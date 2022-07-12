@@ -109,9 +109,10 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
     }
 
     /** {@inheritDoc} */
+    /*
     @Override
     public void createNetCdfFile(String name) {}
-
+*/
     /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {

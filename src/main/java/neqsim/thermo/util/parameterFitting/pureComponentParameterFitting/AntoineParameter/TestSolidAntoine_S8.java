@@ -72,7 +72,7 @@ public class TestSolidAntoine_S8 {
         optim.solve();
         // optim.runMonteCarloSimulation();
         optim.displayCurveFit();
-        optim.writeToCdfFile("c:/testFit.nc");
-        optim.writeToTextFile("c:/testFit.txt");
+        //optim.writeToCdfFile("c:/testFit.nc");
+        //optim.writeToTextFile("c:/testFit.txt");
     }
 }

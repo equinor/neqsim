@@ -185,7 +185,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
         // optim.runMonteCarloSimulation();
         // optim.displayResult();
         optim.displayCurveFit();
-        optim.writeToCdfFile("c:/testFit.nc");
+        //optim.writeToCdfFile("c:/testFit.nc");
         optim.writeToTextFile("c:/testFit.txt");
     }
 }

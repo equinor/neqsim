@@ -278,7 +278,7 @@ public class TestIonicInteractionParameterFitting {
         // optim.displayCurveFit();
         // optim.displayGraph();
         optim.displayCurveFit();
-        optim.writeToCdfFile("c:/testFit.nc");
+        //optim.writeToCdfFile("c:/testFit.nc");
         optim.writeToTextFile("c:/testFit.txt");
     }
 }
