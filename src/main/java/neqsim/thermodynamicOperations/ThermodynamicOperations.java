@@ -1764,10 +1764,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      *
      * @param name a {@link java.lang.String} object
      */
+     /*
     public void writeNetCDF(String name) {
         fileName = name;
         getOperation().createNetCdfFile(name);
     }
+    */
 
     /**
      * <p>
