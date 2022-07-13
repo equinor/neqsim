@@ -5,7 +5,7 @@ import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- * This class defines a thermodynamic system using the Peng RObinson v. 1978 equation of state
+ * This class defines a thermodynamic system using the Peng Robinson v. 1978 equation of state
  * 
  * @author Even Solbraa
  */

@@ -3,9 +3,8 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
- * <p>
- * SystemFurstElectrolyteEos class.
- * </p>
+ * 
+ * This class defines a thermodynamic system using the electrolyte the Furst Electrolyte Eos.
  *
  * @author Even Solbraa
  * @version $Id: $Id

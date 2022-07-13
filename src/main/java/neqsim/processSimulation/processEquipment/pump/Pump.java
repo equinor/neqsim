@@ -66,7 +66,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   /**
    * Constructor for Pump.
    * 
-   * @param name
+   * @param name name of pump
    */
   public Pump(String name) {
     super(name);
@@ -77,7 +77,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * Constructor for Pump.
    * </p>
    *
-   * @param name
+   * @param name name of pump
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */

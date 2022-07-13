@@ -1,6 +1,5 @@
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.twoPhasePipeFlowVisualization;
 
-import neqsim.dataPresentation.visAD.visAdInterface;
 import neqsim.fluidMechanics.flowSystem.FlowSystem;
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.twoPhaseFlowNodeVisualization.TwoPhaseFlowNodeVisualization;
 
@@ -30,7 +29,6 @@ public class TwoPhasePipeFlowVisualization extends
     public double[][][][] totalVolumetricMassTransferRate;
     double[] xPlace = new double[10];
     double[] timeArray = new double[10];
-    visAdInterface plot;
 
     /**
      * <p>
@@ -162,7 +160,9 @@ public class TwoPhasePipeFlowVisualization extends
     // file.createFile();
     // }
 
+
     /** {@inheritDoc} */
+    /*
     @Override
     public void createNetCdfFile(String name) {
         setPoints();
@@ -206,4 +206,5 @@ public class TwoPhasePipeFlowVisualization extends
         // file.setYvalues(temperaturePoint[0][0], "time","sec");
         file.createFile();
     }
+    */
 }

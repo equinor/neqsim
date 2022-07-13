@@ -57,7 +57,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
   /**
    * Constructor for ExpanderOld.
    * 
-   * @param name
+   * @param name name of expander
    */
   public ExpanderOld(String name) {
     super(name);

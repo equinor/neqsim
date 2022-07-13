@@ -38,7 +38,7 @@ public class Filter extends TwoPortEquipment {
    * Constructor for Filter.
    * </p>
    *
-   * @param name
+   * @param name name of filter
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */

@@ -129,8 +129,11 @@ public class AttractiveTermBaseClass implements AttractiveTermInterface {
     }
 
     /**
-     * @param component
+     * @param component input components
+     * 
+     * 
      */
+
     void setComponent(ComponentEosInterface component) {
         this.component = component;
     }

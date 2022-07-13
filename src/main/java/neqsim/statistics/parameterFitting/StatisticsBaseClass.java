@@ -14,7 +14,6 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import Jama.Matrix;
-import neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot.lineFitPlot;
 
 /**
  * <p>
@@ -690,42 +689,6 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
                 0.5 * chiSquare);
     }
 
-    /**
-     * <p>
-     * displayGraph.
-     * </p>
-     */
-    public void displayGraph() {
-        try {
-            if (sampleSet.getSample(0).getDependentValues().length <= 1) {
-                lineFitPlot plot = new lineFitPlot("test", "test");
-                plot.setXYVals(xVal[0], calcVal);
-                // plot.setXYVals2(xVal[0], calcVal);
-                plot.setLineXYVals(xVal[0], expVal);
-                plot.init();
-            } else {
-                lineFitPlot plot = new lineFitPlot("test", "test");
-                plot.setXYVals(xVal[0], expVal);
-                // plot.setXYVals2(xVal[0], calcVal);
-                plot.setLineXYVals(xVal[0], calcVal);
-                plot.init();
-            }
-        } catch (Exception e) {
-        }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void writeToCdfFile(String name) {
-        neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file =
-                new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
-        file.setOutputFileName(name);
-        file.setXvalues(xVal[0], "x", "sec");
-        file.setYvalues(expVal, "experimental", "meter");
-        file.setYvalues(calcVal, "calculated", "meter");
-        file.createFile();
-    }
-
     /** {@inheritDoc} */
     @Override
     public void writeToTextFile(String name) {
@@ -744,7 +707,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     public void displaySimple() {
         calcAbsDev();
         try {
-            displayGraph();
+            //displayGraph();
         } catch (Exception e) {
             System.out.println("could not display graph");
             e.printStackTrace();
@@ -768,7 +731,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     public void displayCurveFit() {
         calcAbsDev();
         try {
-            displayGraph();
+            //displayGraph();
         } catch (Exception e) {
             System.out.println("could not display graph");
             e.printStackTrace();

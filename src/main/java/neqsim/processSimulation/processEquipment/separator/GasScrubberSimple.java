@@ -53,7 +53,7 @@ public class GasScrubberSimple extends Separator {
     /**
      * Constructor for GasScrubberSimple.
      * 
-     * @param name
+     * @param name name of scrubber
      */
     public GasScrubberSimple(String name) {
         super(name);

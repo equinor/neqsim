@@ -21,7 +21,6 @@ public class PipeFlowVisualization extends
     public double[][][] bulkComposition;
     double[] xPlace = new double[10];
     double[] timeArray = new double[10];
-    neqsim.dataPresentation.visAD.visAdInterface plot;
 
     /**
      * <p>
@@ -101,7 +100,7 @@ public class PipeFlowVisualization extends
         if (name.equals("composition")) {
             points = bulkComposition[0];
         }
-
+/*
         try {
             System.out.println("points: " + points.length);
 
@@ -125,6 +124,7 @@ public class PipeFlowVisualization extends
             System.out.println(e.toString());
             System.out.println("plotting failed");
         }
+        */
     }
 
     /** {@inheritDoc} */
@@ -145,7 +145,7 @@ public class PipeFlowVisualization extends
         if (name.equals("composition")) {
             points = bulkComposition[0];
         }
-
+/*
         try {
             System.out.println("points: " + points.length);
 
@@ -170,9 +170,11 @@ public class PipeFlowVisualization extends
             System.out.println(e.toString());
             System.out.println("plotting failed");
         }
+        */
     }
 
     /** {@inheritDoc} */
+    /*
     @Override
     public void createNetCdfFile(String name) {
         calcPoints(name);
@@ -191,4 +193,5 @@ public class PipeFlowVisualization extends
         }
         file.createFile();
     }
+    */
 }

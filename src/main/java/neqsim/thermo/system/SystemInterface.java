@@ -2001,8 +2001,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to return heat capacity ratio/adiabatic index/Poisson constant.
    *
-   * @return kappa
-   */
+   * @return kappa   */
+   
   public double getKappa();
 
   /**
@@ -2265,22 +2265,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    */
   public void saveToDataBase();
-
-  /**
-   * <p>
-   * generatePDF.
-   * </p>
-   */
-  public neqsim.dataPresentation.iTextPDF.PdfCreator generatePDF();
-
-  /**
-   * <p>
-   * displayPDF.
-   * </p>
-   */
-  public default void displayPDF() {
-    generatePDF().openPDF();
-  }
 
   /**
    * <p>

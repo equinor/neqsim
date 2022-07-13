@@ -428,9 +428,9 @@ public class GERG2008 {
     }
 
     /**
-     * @param x
-     * @param Tr
-     * @param Dr
+     * @param x ...
+     * @param Tr ...
+     * @param Dr ...
      */
     // The following routines are low-level routines that should not be called outside of this code.
     static void ReducingParametersGERG(double[] x, doubleW Tr, doubleW Dr) {
@@ -491,10 +491,10 @@ public class GERG2008 {
     }
 
     /**
-     * @param T
-     * @param D
-     * @param x
-     * @param a0
+     * @param T ...
+     * @param D ...
+     * @param x ...
+     * @param a0 ...
      */
     static void Alpha0GERG(double T, double D, double[] x, doubleW[] a0) {
         // Private Sub Alpha0GERG(T, D, x, a0)
@@ -561,12 +561,12 @@ public class GERG2008 {
     }
 
     /**
-     * @param itau
-     * @param idelta
-     * @param T
-     * @param D
-     * @param x
-     * @param ar
+     * @param itau ...
+     * @param idelta ...
+     * @param T ...
+     * @param D ....
+     * @param x ....
+     * @param ar ...
      */
     static void AlpharGERG(int itau, int idelta, double T, double D, double[] x, doubleW[][] ar) {
         // Private Sub AlpharGERG(itau, idelta, T, D, x, ar)
@@ -715,8 +715,8 @@ public class GERG2008 {
     }
 
     /**
-     * @param lntau
-     * @param x
+     * @param lntau ...
+     * @param x ....
      */
     static void tTermsGERG(double lntau, double[] x) {
         // Private Sub tTermsGERG(lntau, x)
@@ -761,9 +761,9 @@ public class GERG2008 {
     }
 
     /**
-     * @param x
-     * @param Tcx
-     * @param Dcx
+     * @param x composition
+     * @param Tcx temperature in Kelvin
+     * @param Dcx density
      */
     static void PseudoCriticalPointGERG(double[] x, doubleW Tcx, doubleW Dcx) {
         // PseudoCriticalPointGERG(x, Tcx, Dcx)

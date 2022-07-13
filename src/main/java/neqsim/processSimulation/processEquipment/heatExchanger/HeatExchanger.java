@@ -80,7 +80,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     /**
      * Constructor for HeatExchanger.
      * 
-     * @param name
+     * @param name name of heat exchanger
      */
     public HeatExchanger(String name) {
       super(name);
@@ -89,8 +89,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     /**
      * Constructor for HeatExchanger.
      * 
-     * @param name
-     * @param inStream1
+     * @param name name of heat exchanger
+     * @param inStream1 input stream
      */
     public HeatExchanger(String name, StreamInterface inStream1) {
         this(name);
@@ -103,9 +103,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     /**
      * Constructor for HeatExchanger.
      * 
-     * @param name
-     * @param inStream1
-     * @param inStream2
+     * @param name name of heat exchanger
+     * @param inStream1 input stream 1
+     * @param inStream2 input stream 2
      */
     public HeatExchanger(String name, StreamInterface inStream1, StreamInterface inStream2) {
       this(name);
@@ -553,7 +553,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     }
 
     /**
-     * @param flowArrangement
+     * @param flowArrangement name of flow arrangement
      */
     void setFlowArrangement(String flowArrangement) {
         this.flowArrangement = flowArrangement;
