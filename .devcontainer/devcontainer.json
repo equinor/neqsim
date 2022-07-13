@@ -25,20 +25,26 @@
       "[java]": {
           "editor.defaultFormatter": "redhat.java",
           "editor.formatOnSave": true,
+          "editor.tabSize": 2,
+          "editor.insertSpaces": true,
+          "editor.detectIndentation": false
       },
       "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
       "java.saveActions.organizeImports": true,
       "editor.tabSize": 2,
       "editor.insertSpaces": true,
-      "editor.detectIndentation": false
+      "editor.detectIndentation": false,
+      "java.checkstyle.version": "10.3",
+      "java.checkstyle.configuration": "https://raw.githubusercontent.com/checkstyle/checkstyle/master/src/main/resources/google_checks.xml"
   },
 
 	
 // Add the IDs of extensions you want installed when the container is created.
 "extensions": [
   "vscjava.vscode-java-pack",
-  "ms-vscode.test-adapter-converter"
-],
+  "ms-vscode.test-adapter-converter",
+  "shengchen.vscode-checkstyle"
+]
 
 
 // Use 'forwardPorts' to make a list of ports inside the container available locally.

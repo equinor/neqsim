@@ -46,7 +46,7 @@ public class StreamTransition extends TwoPortEquipment {
    * Constructor for StreamTransition.
    * </p>
    *
-   * @param name
+   * @param name name of unit operation
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    * @param outletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}

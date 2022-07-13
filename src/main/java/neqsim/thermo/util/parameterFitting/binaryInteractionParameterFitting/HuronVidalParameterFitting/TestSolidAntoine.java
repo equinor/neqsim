@@ -75,7 +75,7 @@ public class TestSolidAntoine {
         optim.solve();
         // optim.runMonteCarloSimulation();
         optim.displayCurveFit();
-        optim.writeToCdfFile("c:/testFit.nc");
+        //optim.writeToCdfFile("c:/testFit.nc");
         optim.writeToTextFile("c:/testFit.txt");
     }
 }

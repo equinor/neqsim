@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -15,7 +17,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  */
 public class Calculator extends ProcessEquipmentBaseClass {
     private static final long serialVersionUID = 1000;
-
+    static Logger logger = LogManager.getLogger(Calculator.class);
     ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
     private ProcessEquipmentInterface outputVariable;
     String type = "sumTEG";
@@ -76,7 +78,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
         try {
             ((Stream) outputVariable).setFlowRate(sum, "kg/hr");
         } catch (Exception e) {
-            e.printStackTrace();
+          logger.error("error", e.getMessage());
         }
     }
 

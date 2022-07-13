@@ -24,7 +24,7 @@ public interface SimulationInterface extends NamedInterface, Runnable {
    * In this method all thermodynamic and unit operations will be calculated in a steady state
    * calculation.
    *
-   * @return void
+   *
    */
   @Override
   public void run();
@@ -39,7 +39,7 @@ public interface SimulationInterface extends NamedInterface, Runnable {
    * 
    * @param dt is the delta time step (seconds)
    *
-   * @return void
+   *
    */
   public void runTransient(double dt);
 

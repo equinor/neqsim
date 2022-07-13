@@ -8,7 +8,6 @@ import javax.swing.JProgressBar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.dataPresentation.JFreeChart.graph2b;
-import neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -159,6 +158,7 @@ public class pLoadingCurve2 extends BaseOperation {
     }
 
     /** {@inheritDoc} */
+    /*
     @Override
     public void createNetCdfFile(String name) {
         NetCdf2D file = new NetCdf2D();
@@ -175,7 +175,7 @@ public class pLoadingCurve2 extends BaseOperation {
         }
         file.createFile();
     }
-
+*/
     /** {@inheritDoc} */
     @Override
     public double[] get(String name) {

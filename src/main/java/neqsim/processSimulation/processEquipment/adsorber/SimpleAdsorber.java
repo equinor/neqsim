@@ -73,11 +73,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         outStream[1].run();
     }
 
-    /**
-     * Constructor for SimpleAdsorber.
-     * 
-     * @param name
-     */
+    /** {@inheritDoc} */
     public SimpleAdsorber(String name) {
         super(name);
     }
@@ -87,7 +83,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
      * Constructor for SimpleAdsorber.
      * </p>
      * 
-     * @param name
+     * @param name name of the unit operation
      * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
      *        object
      */

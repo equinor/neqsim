@@ -45,7 +45,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     /**
      * Constructor for IncompressiblePipeFlow.
      * 
-     * @param name
+     * @param name name of pipeline
      */
     public IncompressiblePipeFlow(String name) {
         super(name);
@@ -54,8 +54,8 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     /**
      * * Constructor for IncompressiblePipeFlow.
      * 
-     * @param name
-     * @param inStream
+     * @param name name of pipe
+     * @param inStream input stream
      */
     public IncompressiblePipeFlow(String name, StreamInterface inStream) {
         super(name, inStream);

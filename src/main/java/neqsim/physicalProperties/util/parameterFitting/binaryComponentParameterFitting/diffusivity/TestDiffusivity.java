@@ -77,7 +77,7 @@ public class TestDiffusivity {
         // do simulations
         // optim.solve();
         // optim.runMonteCarloSimulation();
-        optim.displayGraph();
+        //optim.displayGraph();
         // optim.writeToTextFile("c:/testFit.txt");
     }
 }

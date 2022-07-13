@@ -59,7 +59,7 @@ public class IronIonSaturationStream extends Stream {
     /**
      * Constructor for IronIonSaturationStream.
      * 
-     * @param name
+     * @param name name of stream
      */
     public IronIonSaturationStream(String name) {
         super(name);
@@ -68,8 +68,8 @@ public class IronIonSaturationStream extends Stream {
     /**
      * Constructor for IronIonSaturationStream.
      * 
-     * @param name
-     * @param stream
+     * @param name name of stream
+     * @param stream input stream
      */
     public IronIonSaturationStream(String name, StreamInterface stream) {
         super(name, stream);

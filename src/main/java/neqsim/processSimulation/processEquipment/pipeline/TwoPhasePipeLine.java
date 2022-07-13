@@ -44,7 +44,7 @@ public class TwoPhasePipeLine extends Pipeline {
     /**
      * Constructor for TwoPhasePipeLine.
      * 
-     * @param name
+     * @param name name of pipeline
      */
     public TwoPhasePipeLine(String name) {
         super(name);

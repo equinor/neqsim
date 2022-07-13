@@ -47,18 +47,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     super(name);
   }
 
-
-
   /** {@inheritDoc} */
   @Override
   public SystemInterface getThermoSystem() {
     return null;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public SystemInterface getFluid() {
-    return getThermoSystem();
   }
 
   /** {@inheritDoc} */
@@ -68,7 +60,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /**
    * Create deep copy.
    * 
-   * @return
+   * @return a deep copy of the unit operation/process equipment
    */
   public ProcessEquipmentInterface copy() {
     byte[] bytes = SerializationUtils.serialize(this);
@@ -98,7 +90,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   @Override
   public void setController(ControllerDeviceInterface controller) {
     this.controller = controller;
-    hasController = true;
+    hasController = controller != null;
   }
 
   /**

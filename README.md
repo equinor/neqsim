@@ -27,8 +27,12 @@ The NeqSim source code is downloaded by cloning the library to your local comput
 ```bash
 git clone https://github.com/equinor/neqsim.git
 cd neqsim
-mvn install
+./mvnw install
 ```
+> **Note**
+> The maven wrapper command is dependend on your OS, for Unix use: ```./mvnw```
+> Windows:
+> ```mvnw.cmd ```
 
 An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).  
 
@@ -37,7 +41,12 @@ An interactive demonstration of how to get started as a NeqSim developer is pres
 The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsim/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project.  
 
 Test coverage can be examined using [jacoco](https://www.eclemma.org/jacoco/) from maven.  
-Generate a coverage report using `mvn jacoco:prepare-agent test install jacoco:report` and see results in target/site/jacoco/index.html.
+Generate a coverage report using `./mvnw jacoco:prepare-agent test install jacoco:report` and see results in target/site/jacoco/index.html.
+> **Note**
+> The maven wrapper command is dependend on your OS, for Unix use: ```./mvnw```
+> Windows:
+> ```mvnw.cmd ```
+
 
 ## Deployment
 

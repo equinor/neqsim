@@ -1764,10 +1764,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      *
      * @param name a {@link java.lang.String} object
      */
+     /*
     public void writeNetCDF(String name) {
         fileName = name;
         getOperation().createNetCdfFile(name);
     }
+    */
 
     /**
      * <p>
@@ -1934,7 +1936,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * @param components Not yet in use.
      * @param onlineFractions Specify fractions per sample instance or null to use static
      *        composition specified in system.
-     * @return
+     * @return Object CalculationResult object
      */
     public CalculationResult propertyFlash(List<Double> Spec1, List<Double> Spec2, int FlashMode,
             List<String> components, List<List<Double>> onlineFractions) {

@@ -29,8 +29,6 @@ public class pTphaseEnvelopeNew extends BaseOperation {
     double[] cricondenTherm = new double[3];
     double[] cricondenBar = new double[3];
     double phaseFraction = 1e-10;
-    neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file1;
-    neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file2;
     int i, j = 0, nummer = 0, iterations = 0, maxNumberOfIterations = 10000;
     double lowPres = 1.0;
     boolean outputToFile = false;
@@ -258,7 +256,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
             }
             // monitor.close();
             mainFrame.setVisible(false);
-
+/*
             if (outputToFile) {
                 String name1 = new String();
                 name1 = fileName + "Dew.nc";
@@ -276,6 +274,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
                 file2.setYvalues(points2[1], "pres", "meter");
                 file2.createFile();
             }
+            */
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -399,10 +398,12 @@ public class pTphaseEnvelopeNew extends BaseOperation {
     }
 
     /** {@inheritDoc} */
+    /*
     @Override
     public void createNetCdfFile(String name) {
         fileName = name;
     }
+    */
 
     /** {@inheritDoc} */
     @Override

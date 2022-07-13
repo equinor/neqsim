@@ -5,7 +5,7 @@ import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- * This class defines a thermodynamic system using the SRK equation of state
+ * This class defines a thermodynamic system using the GERG water equation of state
  * 
  * @author Even Solbraa
  */

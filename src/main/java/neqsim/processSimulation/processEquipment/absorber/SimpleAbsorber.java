@@ -54,7 +54,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
 
     /**
      * 
-     * @param name
+     * @param name name of absorber
      */
     public SimpleAbsorber(String name) {
         super(name);
@@ -65,8 +65,9 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
      * Constructor for SimpleAbsorber.
      * </p>
      *
-     * @param name
-     * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param name name of absorber
+     * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public SimpleAbsorber(String name, StreamInterface inStream1) {
         super(name);

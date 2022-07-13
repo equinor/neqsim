@@ -221,6 +221,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
         if (type > 1) {
             initCPAMatrix(type);
+            super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         }
     }
 
@@ -857,7 +858,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
      * @return a double
      */
     public double calc_lngV() {
-        tempTotVol = getMolarVolume();
+        tempTotVol = getTotalVolume();
         // gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume() /
         // ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
         return 1.0 / (2.0 - getB() / (4.0 * tempTotVol)) * getB() / (4.0 * tempTotVol * tempTotVol)
@@ -873,7 +874,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
      * @return a double
      */
     public double calc_lngVV() {
-        tempTotVol = getMolarVolume();
+        tempTotVol = getTotalVolume();
         return 2.0
                 * (640.0 * Math.pow(tempTotVol, 3.0) - 216.0 * getB() * tempTotVol * tempTotVol
                         + 24.0 * Math.pow(getB(), 2.0) * tempTotVol - Math.pow(getB(), 3.0))
@@ -889,7 +890,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
      * @return a double
      */
     public double calc_lngVVV() {
-        tempTotVol = getMolarVolume();
+        tempTotVol = getTotalVolume();
         return 4.0
                 * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(tempTotVol, 4.0) * getB()
                         - 4192.0 * Math.pow(tempTotVol, 3.0) * Math.pow(getB(), 2.0)

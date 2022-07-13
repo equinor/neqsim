@@ -76,7 +76,7 @@ public interface StatisticsInterface {
      *
      * @param name a {@link java.lang.String} object
      */
-    public void writeToCdfFile(String name);
+    //public void writeToCdfFile(String name);
 
     /**
      * <p>

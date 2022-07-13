@@ -47,7 +47,7 @@ public class TwoPhaseSeparator extends Separator {
     /**
      * Constructor for TwoPhaseSeparator.
      * 
-     * @param name
+     * @param name name of separator
      */
     public TwoPhaseSeparator(String name) {
         super(name);
