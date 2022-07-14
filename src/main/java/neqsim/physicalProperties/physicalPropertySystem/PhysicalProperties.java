@@ -119,6 +119,17 @@ public abstract class PhysicalProperties
         return viscosityCalc;
     }
 
+     /** {@inheritDoc} */
+     @Override
+     public void setDensityModel(String model) {
+      if ("Peneloux volume shift".equals(model)) {
+          densityCalc = new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density.Density(this);
+      }
+      else if ("Costald".equals(model)) {
+        densityCalc = new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density.Costald(this);
+      }
+     }
+
     /** {@inheritDoc} */
     @Override
     public void setConductivityModel(String model) {
