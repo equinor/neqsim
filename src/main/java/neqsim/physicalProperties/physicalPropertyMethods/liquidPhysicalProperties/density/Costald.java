@@ -58,12 +58,12 @@ public class Costald extends
   }
 
   /**
-   * {@inheritDoc} NB! Still not implemented Returns the density of the phase using the Oostald
-   * method. Unit: kg/m^3
+   * {@inheritDoc} Densities of compressed liquid mixtures. Unit: kg/m^3
    */
   @Override
   public double calcDensity() {
-    // This class need to be changed to the Costald method
+    // Densitites of compressed liquid mixture. Method book "The properties of Gases and Liquids" Bruce E. Poling
+    //5.26 
     double tempVar = 0.0;
     double ascFactMix = 0.0;
     double criticalVolumeMix1 = 0.0;
@@ -81,7 +81,7 @@ public class Costald extends
     double A; //PolynomialA
     double B; //PolynomialB
 
-    //The constants of Aalto et al. (1996)
+    //The constants of Aalto et al. (1996); 
     double a0 = -170.335;
     double a1 = -28.578;
     double a2 = 124.809;
@@ -133,9 +133,10 @@ public class Costald extends
     volumeLiquidMolarSaturated = criticalVolumeMix*Math.pow((0.29056 - 0.08775*ascFactMix), 
     Math.pow(1 -(liquidPhase.getPhase().getTemperature()/criticalTemperatureMix),0.28571429));
 
-    return 116.43*(A 
+    return 1/(volumeLiquidMolarSaturated*(A 
     + Math.pow(C,Math.pow((D - (liquidPhase.getPhase().getTemperature()/criticalTemperatureMix)),B))
     *((liquidPhase.getPhase().getPressure()/pressureMixPseudocritical) - pressurePseudoReducedVapour))
-    /(A + C*((liquidPhase.getPhase().getPressure()/pressureMixPseudocritical) - pressurePseudoReducedVapour));
+    /(A + C*((liquidPhase.getPhase().getPressure()/pressureMixPseudocritical) - pressurePseudoReducedVapour))*1e-6
+    /liquidPhase.getPhase().getMolarMass());
   }
 }

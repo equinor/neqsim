@@ -24,6 +24,6 @@ public class CostaldTest {
     testSystem.getPhase("oil").getPhysicalProperties().setDensityModel("Costald");
     double costaldDensity = testSystem.getPhase("oil").getPhysicalProperties().calcDensity();
     double costaldVolume = costaldDensity;
-    assertEquals(99.05, costaldVolume, 1e-3);
+    assertEquals(628.6198, costaldVolume, 1e-3);
   }
 }
