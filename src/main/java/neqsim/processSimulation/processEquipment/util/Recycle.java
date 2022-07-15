@@ -459,4 +459,10 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         this.outletStream = outletStream;
         lastIterationStream = this.outletStream.clone();
     }
+    
+    /** {@inheritDoc} */
+    @Override
+    public void removeInputStream(int i) {
+      streams.remove(i);
+    }
 }

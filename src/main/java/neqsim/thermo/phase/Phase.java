@@ -1741,12 +1741,14 @@ abstract class Phase implements PhaseInterface {
           return componentArray[i];
         }
       }
-      logger.error("could not find component... " + name + " ..returning null");
+      logger.error("could not find component " + name + ", returning null");
+      throw new Exception("component not in fluid... " + name);
     } catch (Exception e) {
-      logger.error("component not found.... " + name);
-      logger.error("returning first component..." + componentArray[0].getName(), e);
+      logger.debug(e.getMessage());
+      logger.error("component not found... " + name);
+      logger.error("returning first component... " + componentArray[0].getName(), e);
     }
-    return componentArray[0];
+    return null;
   }
 
   /** {@inheritDoc} */
