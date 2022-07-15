@@ -1742,7 +1742,7 @@ abstract class Phase implements PhaseInterface {
         }
       }
       logger.error("could not find component... " + name + " ..returning null");
-      throw new Exception("component not in fluid..."+name);
+      throw new Exception("component not in fluid..." + name);
     } catch (Exception e) {
       logger.debug(e.getMessage());
       logger.error("component not found.... " + name);
