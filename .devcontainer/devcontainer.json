@@ -23,7 +23,7 @@
   "settings": {
       "java.configuration.updateBuildConfiguration": "interactive",
       "[java]": {
-          "editor.defaultFormatter": "redhat.java",
+          "editor.defaultFormatter": "ilkka.google-java-format",
           "editor.formatOnSave": true,
           "editor.tabSize": 2,
           "editor.insertSpaces": true,
