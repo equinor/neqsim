@@ -193,15 +193,15 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     }
 
     /**
-     * @param temperature
-     * @return double
+     * @param temperature temperature of fluid
+     * @return double reduced temperature T/TC
      */
     double reducedTemperature(double temperature) {
         return temperature / criticalTemperature;
     }
 
     /**
-     * @param pressure
+     * @param pressure pressure in unit bara
      * @return double
      */
     double reducedPressure(double pressure) {

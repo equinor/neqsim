@@ -11,7 +11,6 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -92,6 +91,7 @@ public class HPTphaseEnvelope extends BaseOperation {
     /** {@inheritDoc} */
     @Override
     public void displayResult() {
+      /*
         try {
             mainFrame.setVisible(false);
             visAd3DPlot plot =
@@ -102,6 +102,7 @@ public class HPTphaseEnvelope extends BaseOperation {
         } catch (Exception e) {
             logger.error("plotting failed");
         }
+        */
     }
 
     /** {@inheritDoc} */
@@ -115,9 +116,10 @@ public class HPTphaseEnvelope extends BaseOperation {
     }
 
     /** {@inheritDoc} */
+    /*
     @Override
     public void createNetCdfFile(String name) {}
-
+*/
     /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {

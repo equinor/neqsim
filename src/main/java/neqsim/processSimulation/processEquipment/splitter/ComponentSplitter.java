@@ -35,7 +35,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   /**
    * Constructor for Splitter.
    * 
-   * @param name
+   * @param name name of splitter
    */
   public ComponentSplitter(String name) {
     super(name);
@@ -49,7 +49,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
-   * @param i a int
+   *
    */
   public ComponentSplitter(String name, StreamInterface inletStream) {
     this(name);

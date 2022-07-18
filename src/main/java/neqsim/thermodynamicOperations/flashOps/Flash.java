@@ -456,9 +456,10 @@ abstract class Flash extends BaseOperation {
     public void printToFile(String name) {}
 
     /** {@inheritDoc} */
+    /*
     @Override
     public void createNetCdfFile(String name) {}
-
+*/
     /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {

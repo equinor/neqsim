@@ -30,7 +30,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Compressor extends TwoPortEquipment implements CompressorInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Compressor.class);
     public SystemInterface thermoSystem;

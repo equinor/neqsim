@@ -39,7 +39,7 @@ public class Cooler extends Heater {
     /**
      * Constructor for Cooler.
      * 
-     * @param name
+     * @param name name of cooler
      */
     public Cooler(String name) {
         super(name);

@@ -460,10 +460,10 @@ public class DETAIL {
     }
 
     /**
-     * @param T
-     * @param D
-     * @param x
-     * @param a0
+     * @param T ...
+     * @param D ...
+     * @param x ...
+     * @param a0 ...
      */
     static void Alpha0Detail(double T, double D, double[] x, doubleW[] a0) {
         // Private Sub Alpha0Detail(T, D, x, a0)
@@ -534,11 +534,11 @@ public class DETAIL {
     }
 
     /**
-     * @param itau
-     * @param idel
-     * @param T
-     * @param D
-     * @param ar
+     * @param itau ....
+     * @param idel ...
+     * @param T ...
+     * @param D ...
+     * @param ar ...
      */
     static void AlpharDetail(int itau, int idel, double T, double D, doubleW[][] ar) {
         // Private Sub AlpharDetail(itau, idel, T, D, ar)

@@ -51,7 +51,7 @@ public class NeqStream extends Stream {
     /**
      * Constructor for NeqStream.
      * 
-     * @param name
+     * @param name name of stream
      */
     public NeqStream(String name) {
         super(name);
@@ -60,8 +60,8 @@ public class NeqStream extends Stream {
     /**
      * Constructor for NeqStream.
      * 
-     * @param name
-     * @param stream
+     * @param name name of stream
+     * @param stream input stream
      */
     public NeqStream(String name, StreamInterface stream) {
         super(name, stream);

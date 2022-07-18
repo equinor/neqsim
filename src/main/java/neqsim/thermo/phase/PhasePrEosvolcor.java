@@ -12,7 +12,7 @@ import neqsim.thermo.component.ComponentPRvolcor;
 /**
  *
  * @author Even Solbraa
- * @version
+ *
  */
 public class PhasePrEosvolcor extends PhasePrEos {
 

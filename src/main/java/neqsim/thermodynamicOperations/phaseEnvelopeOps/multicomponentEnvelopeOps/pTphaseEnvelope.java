@@ -42,8 +42,6 @@ public class pTphaseEnvelope extends BaseOperation {
     double[] cricondenBarX = new double[100];
     double[] cricondenBarY = new double[100];
     double phaseFraction = 1e-10;
-    neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file1;
-    neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file2;
     int i, j = 0, nummer = 0, iterations = 0, maxNumberOfIterations = 10000;
     double gibbsEnergy = 0, gibbsEnergyOld = 0;
     double Kold, deviation = 0, g0 = 0, g1 = 0, lowPres = 1.0;
@@ -493,7 +491,7 @@ public class pTphaseEnvelope extends BaseOperation {
                 // double nef = 0.;
                 // logger.error("error", e2);
             }
-
+/*
             try {
                 if (outputToFile) {
                     // update this
@@ -517,6 +515,7 @@ public class pTphaseEnvelope extends BaseOperation {
                 // double nef = 0.;
                 logger.error("error", e3);
             }
+            */
         } catch (Exception e4) {
             // double nef = 0.;
             logger.error("error", e4);
@@ -724,10 +723,12 @@ public class pTphaseEnvelope extends BaseOperation {
     }
 
     /** {@inheritDoc} */
+    /*
     @Override
     public void createNetCdfFile(String name) {
         fileName = name;
     }
+    */
 
     /**
      * Getter for property bubblePointFirst.

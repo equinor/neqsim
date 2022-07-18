@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
-
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -52,7 +51,7 @@ public class NeqGasScrubber extends Separator {
     /**
      * Constructor for NeqGasScrubber.
      * 
-     * @param name
+     * @param name name of unit operation
      */
     public NeqGasScrubber(String name) {
         super(name);

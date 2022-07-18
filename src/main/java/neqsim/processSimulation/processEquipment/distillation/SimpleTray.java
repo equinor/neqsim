@@ -25,7 +25,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
      * Constructor for SimpleTray.
      * </p>
      * 
-     * @param name
+     * @param name name of tray
      */
     public SimpleTray(String name) {
         super(name);

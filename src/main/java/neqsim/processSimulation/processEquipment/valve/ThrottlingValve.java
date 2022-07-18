@@ -54,7 +54,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   /**
    * * Constructor for ThrottlingValve.
    * 
-   * @param name
+   * @param name name of valve
    */
   public ThrottlingValve(String name) {
     super(name);

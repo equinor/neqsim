@@ -5,7 +5,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- * This class defines a thermodynamic system using the SRK equation of state
+ * This class defines a thermodynamic system using the Desmukh Mather thermodyanmic model
  * 
  * @author Even Solbraa
  */
