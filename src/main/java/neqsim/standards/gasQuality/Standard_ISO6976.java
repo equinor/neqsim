@@ -147,28 +147,26 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 	}
 
 	/**
-	 * <p>
-	 * Constructor for Standard_ISO6976.
-	 * </p>
-	 *
-	 * @param thermoSystem                       a
-	 *                                           {@link neqsim.thermo.system.SystemInterface}
-	 *                                           object
-	 * @param volumetricReferenceTemperaturedegC a double
-	 * @param energyReferenceTemperaturedegC     a double
-	 * @param calculationType                    a {@link java.lang.String} object
-	 */
+     * <p>
+     * Constructor for Standard_ISO6976.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param volumetricReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
+     * @param energyReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
+     * @param calculationType a {@link java.lang.String} object
+     */
 	public Standard_ISO6976(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC,
 			double energyReferenceTemperaturedegC, String calculationType) {
 		this(thermoSystem);
 		this.referenceType = calculationType;
 		volRefT = volumetricReferenceTemperaturedegC;
-		energyRefT = energyReferenceTemperaturedegC;
+        energyRefT = energyReferenceTemperaturedegC;
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	public void calculate() {
+    public void calculate() {
 		Zmix0 = 1.0;
 		Zmix15 = 1.0;
 		Zmix20 = 1.0;
@@ -218,9 +216,12 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
 	/** {@inheritDoc} */
 	@Override
-	public double getValue(String returnParameter, java.lang.String returnUnit) {
-		if (returnParameter.equals("GCV")) {
-			returnParameter = "SuperiorCalorificValue";
+    public double getValue(String returnParameter, java.lang.String returnUnit) {
+
+      checkReferenceCondition();
+
+      if (returnParameter.equals("GCV")) {
+        returnParameter = "SuperiorCalorificValue";
 		}
 		if (returnParameter.equals("LCV")) {
 			returnParameter = "InferiorCalorificValue";
@@ -237,6 +238,10 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 		} else if (getVolRefT() == 20) {
 			returnValue = Zmix20;
 		}
+        else {
+          returnValue = Zmix15;
+        }
+
 
 		if (returnParameter.equals("CompressionFactor")) {
 			return returnValue;
@@ -332,7 +337,22 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 		}
 	}
 
-	/** {@inheritDoc} */
+    public void checkReferenceCondition() {
+
+      Double[] validvalues = {0.0, 15.0, 15.55, 20.0};
+
+      if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(energyRefT)::equals)) {
+        energyRefT = 25.0;
+        logger.error("energy reference temperature not in valid range...setting it to 25C");
+      }
+      if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(volRefT)::equals)) {
+        volRefT = 15.0;
+        logger.error("volume reference temperature not in valid range...setting it to 15C");
+      }
+
+    }
+
+    /** {@inheritDoc} */
 	@Override
 	public double getValue(String returnParameter) {
 		return getValue(returnParameter, "");

@@ -142,8 +142,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
      * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-     * @param volumetricReferenceTemperaturedegC a double
-     * @param energyReferenceTemperaturedegC a double
+     * @param volumetricReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
+     * @param energyReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
      * @param calculationType a {@link java.lang.String} object
      */
     public Standard_ISO6976_2016(SystemInterface thermoSystem,
@@ -213,7 +213,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     /** {@inheritDoc} */
     @Override
     public double getValue(String returnParameter, java.lang.String returnUnit) {
-        if (returnParameter.equals("GCV")) {
+      checkReferenceCondition();
+      if (returnParameter.equals("GCV")) {
             returnParameter = "SuperiorCalorificValue";
         }
         if (returnParameter.equals("LCV")) {
@@ -228,9 +229,12 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
             returnValue = Zmix15;
         } else if (getVolRefT() == 15.55) {
             returnValue = Zmix60F;
-        } else if (getVolRefT() == 20) {
+          } else if (getVolRefT() == 20) {
             returnValue = Zmix20;
-        }
+          }
+          else {
+            returnValue = Zmix15;
+          }
 
         if (returnParameter.equals("CompressionFactor")) {
             return returnValue;
