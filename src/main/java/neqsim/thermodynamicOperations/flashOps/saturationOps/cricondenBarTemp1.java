@@ -238,15 +238,6 @@ public class cricondenBarTemp1 implements java.io.Serializable {
 
     /**
      * <p>
-     * createNetCdfFile.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void createNetCdfFile(String name) {}
-
-    /**
-     * <p>
      * getThermoSystem.
      * </p>
      *

@@ -54,15 +54,6 @@ public interface OperationInterface extends Runnable, java.io.Serializable {
 
     /**
      * <p>
-     * createNetCdfFile.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    //public void createNetCdfFile(String name);
-
-    /**
-     * <p>
      * printToFile.
      * </p>
      *
