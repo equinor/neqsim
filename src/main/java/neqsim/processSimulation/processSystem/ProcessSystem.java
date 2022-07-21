@@ -454,7 +454,7 @@ public class ProcessSystem extends SimulationBaseClass {
       ((ProcessEquipmentInterface) unitOperations.get(i)).setCalculationIdentifier(id);
     }
 
-    setCalculationIdentifier(calcIdentifier);
+    setCalculationIdentifier(id);
   }
 
   /**
