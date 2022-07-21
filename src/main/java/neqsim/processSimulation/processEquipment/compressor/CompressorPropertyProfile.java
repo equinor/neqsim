@@ -10,6 +10,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class CompressorPropertyProfile implements Serializable {
   private static final long serialVersionUID = 1L;
+
   private ArrayList<SystemInterface> fluid = new ArrayList<SystemInterface>();
   private boolean isActive = false;
 

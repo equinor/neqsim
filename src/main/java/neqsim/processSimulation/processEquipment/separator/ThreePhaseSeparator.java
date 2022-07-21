@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.separator;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -155,8 +156,8 @@ public class ThreePhaseSeparator extends Separator {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    inletStreamMixer.run();
+  public void run(UUID id) {
+    inletStreamMixer.run(id);
     thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
     thermoSystem.setMultiPhaseCheck(true);
@@ -204,10 +205,11 @@ public class ThreePhaseSeparator extends Separator {
     //// waterOutStream.setThermoSystem(waterSystem);
     if (thermoSystem.hasPhaseType("aqueous")) {
       waterOutStream.setThermoSystemFromPhase(thermoSystem, "aqueous");
-      waterOutStream.run();
+      waterOutStream.run(id);
     } else {
       waterOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
