@@ -3,6 +3,7 @@
  *
  * Created on 21. august 2001, 20:44
  */
+
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import java.util.UUID;
@@ -43,7 +44,7 @@ public class OnePhasePipeLine extends Pipeline {
 
   /**
    * Constructor for OnePhasePipeLine.
-   * 
+   *
    * @param name name of pipe
    */
   public OnePhasePipeLine(String name) {
@@ -52,7 +53,7 @@ public class OnePhasePipeLine extends Pipeline {
 
   /**
    * Constructor for OnePhasePipeLine.
-   * 
+   *
    * @param name name of pipe
    * @param inStream input stream
    */
@@ -75,7 +76,6 @@ public class OnePhasePipeLine extends Pipeline {
     super.run(id);
     setCalculationIdentifier(oldid);
     pipe.solveSteadyState(10);
-    setCalculationIdentifier(id);
     // pipe.print();
     outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem());
     setCalculationIdentifier(id);
