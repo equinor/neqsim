@@ -28,6 +28,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   SystemInterface thermoSystem;
 
   double oilVolume = 0.0, gasVolume = 0.0, waterVolume = 0.0;
+  // todo: set calculationids of wells
+
   ArrayList<Well> gasProducer = new ArrayList<Well>();
   ArrayList<Well> oilProducer = new ArrayList<Well>();
   ArrayList<Well> gasInjector = new ArrayList<Well>();
@@ -345,16 +347,16 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     System.out.println("water volume " + thermoSystem.getPhase("aqueous").getVolume("m3"));
 
     for (int i = 0; i < gasProducer.size(); i++) {
-      gasProducer.get(i).getStream().run();
+      gasProducer.get(i).getStream().run(id);
     }
     for (int i = 0; i < oilProducer.size(); i++) {
-      oilProducer.get(i).getStream().run();
+      oilProducer.get(i).getStream().run(id);
     }
     for (int i = 0; i < waterInjector.size(); i++) {
-      waterInjector.get(i).getStream().run();
+      waterInjector.get(i).getStream().run(id);
     }
     for (int i = 0; i < gasInjector.size(); i++) {
-      gasInjector.get(i).getStream().run();
+      gasInjector.get(i).getStream().run(id);
     }
 
     // gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));

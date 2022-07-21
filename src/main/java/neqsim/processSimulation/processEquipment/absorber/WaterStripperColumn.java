@@ -26,6 +26,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class WaterStripperColumn extends SimpleAbsorber {
   private static final long serialVersionUID = 1000;
 
+  // todo: get CalculationIDs of streams
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   protected double pressure = 0;
   protected int numberOfInputStreams = 0;

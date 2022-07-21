@@ -370,6 +370,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
 
       for (int i = 0; i < numberOfTrays; i++) {
+        // todo: set calculation ids of child elements of trays
         ((SimpleTray) trays.get(i)).setCalculationIdentifier(id);
       }
     }
