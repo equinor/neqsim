@@ -78,11 +78,12 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
   /** {@inheritDoc} */
   @Override
   public void initializeModule() {
+    UUID id = UUID.randomUUID();
     isInitializedModule = true;
 
     refrigerantStream.getThermoSystem().setTemperature(condenserTemperature);
     ((Stream) refrigerantStream).setSpecification("bubT");
-    refrigerantStream.run();
+    refrigerantStream.run(id);
 
     ThrottlingValve JTvalve = new ThrottlingValve("JTvalve", refrigerantStream);
 
@@ -93,7 +94,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     Stream stream_2 = new Stream("stream_2", cooler.getOutletStream());
     stream_2.setSpecification("dewT");
     stream_2.getThermoSystem().setTemperature(vaporizerTemperature);
-    stream_2.run();
+    stream_2.run(id);
 
     cooler.setOutletStream(stream_2);
     JTvalve.setOutletPressure(stream_2.getPressure());

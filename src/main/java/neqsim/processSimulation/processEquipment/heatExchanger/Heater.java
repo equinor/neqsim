@@ -312,16 +312,12 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** {@inheritDoc} */
   @Override
   public double getExergyChange(String unit, double surroundingTemperature) {
-    double entrop = 0.0;
-
     inStream.run();
     inStream.getFluid().init(3);
     outStream.run();
     outStream.getFluid().init(3);
 
-    entrop += outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
+    return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
         - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
-
-    return entrop;
   }
 }

@@ -371,8 +371,6 @@ public class ProcessSystem extends SimulationBaseClass {
     return processThread;
   }
 
-
-
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -400,7 +398,7 @@ public class ProcessSystem extends SimulationBaseClass {
       for (int i = 0; i < unitOperations.size(); i++) {
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
-            ((Runnable) unitOperations.get(i)).run();
+            ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
           } catch (Exception e) {
             // String error = e.getMessage();
             e.printStackTrace();
@@ -409,7 +407,7 @@ public class ProcessSystem extends SimulationBaseClass {
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
             && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
           try {
-            ((Runnable) unitOperations.get(i)).run();
+            ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
           } catch (Exception e) {
             // String error = e.getMessage();
             e.printStackTrace();

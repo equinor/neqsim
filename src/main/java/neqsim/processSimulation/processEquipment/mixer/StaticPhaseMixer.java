@@ -1,5 +1,7 @@
 package neqsim.processSimulation.processEquipment.mixer;
 
+import java.util.UUID;
+
 /**
  * <p>
  * StaticPhaseMixer class.
@@ -103,7 +105,7 @@ public class StaticPhaseMixer extends StaticMixer {
 
     /** {@inheritDoc} */
     @Override
-    public void run() {
+    public void run(UUID id) {
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
         }
@@ -117,5 +119,6 @@ public class StaticPhaseMixer extends StaticMixer {
         mixStream();
 
         mixedStream.getThermoSystem().init(3);
+        setCalculationIdentifier(id);
     }
 }
