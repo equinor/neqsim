@@ -158,11 +158,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         }
       }
     }
-    if (hasAddedNewComponent)
+    if (hasAddedNewComponent) {
       mixedStream.getThermoSystem().setMixingRule(mixedStream.getThermoSystem().getMixingRule());
-    // mixedStream.getThermoSystem().init_x_y();
-    // mixedStream.getThermoSystem().initBeta();
-    // mixedStream.getThermoSystem().init(2);
+      // mixedStream.getThermoSystem().init_x_y();
+      // mixedStream.getThermoSystem().initBeta();
+      // mixedStream.getThermoSystem().init(2);
+    }
   }
 
   /**
@@ -236,8 +237,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       // System.out.println("filan temp " + mixedStream.getTemperature());
     }
     if (isSetOutTemperature) {
-      if (!Double.isNaN(getOutTemperature()))
+      if (!Double.isNaN(getOutTemperature())) {
         mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+      }
       testOps.TPflash();
       mixedStream.getThermoSystem().init(2);
     } else {
@@ -245,8 +247,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         testOps.PHflash(enthalpy, 0);
       } catch (Exception e) {
         logger.error(e.getMessage());
-        if (!Double.isNaN(getOutTemperature()))
+        if (!Double.isNaN(getOutTemperature())) {
           mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+        }
         testOps.TPflash();
       }
     }
@@ -265,7 +268,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   /** {@inheritDoc} */
   @Override
   public void displayResult() {
-    SystemInterface thermoSystem = mixedStream.getThermoSystem();
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
@@ -274,9 +276,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new FlowLayout());
 
+    SystemInterface thermoSystem = mixedStream.getThermoSystem();
     thermoSystem.initPhysicalProperties();
     String[][] table = new String[50][5];
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";
@@ -355,6 +357,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
     }
 
+    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);
@@ -467,12 +470,15 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (!super.equals(obj))
+    }
+    if (!super.equals(obj)) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     Mixer other = (Mixer) obj;
     return isSetOutTemperature == other.isSetOutTemperature
         && Objects.equals(mixedStream, other.mixedStream)

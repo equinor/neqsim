@@ -19,13 +19,15 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
   private static final long serialVersionUID = 1000;
 
   double heatInput = 0.0;
-  private double temperature = Double.NaN, trayPressure = -1.0;
+  private double temperature = Double.NaN;
+
+  private double trayPressure = -1.0;
 
   /**
    * <p>
    * Constructor for SimpleTray.
    * </p>
-   * 
+   *
    * @param name name of tray
    */
   public SimpleTray(String name) {
@@ -131,8 +133,9 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
       mixedStream.getThermoSystem().init(0);
 
       mixStream();
-      if (trayPressure > 0)
+      if (trayPressure > 0) {
         mixedStream.setPressure(trayPressure, "bara");
+      }
       enthalpy = calcMixStreamEnthalpy();
       // System.out.println("temp guess " + guessTemperature());
       if (!isSetOutTemperature()) {
@@ -143,16 +146,18 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
       // System.out.println("filan temp " + mixedStream.getTemperature());
     }
     if (isSetOutTemperature()) {
-      if (!Double.isNaN(getOutTemperature()))
+      if (!Double.isNaN(getOutTemperature())) {
         mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+      }
       testOps.TPflash();
       mixedStream.getThermoSystem().init(2);
     } else {
       try {
         testOps.PHflash(enthalpy, 0);
       } catch (Exception e) {
-        if (!Double.isNaN(getOutTemperature()))
+        if (!Double.isNaN(getOutTemperature())) {
           mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+        }
         testOps.TPflash();
       }
     }

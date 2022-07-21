@@ -398,7 +398,7 @@ public class ProcessSystem extends SimulationBaseClass {
       for (int i = 0; i < unitOperations.size(); i++) {
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
+            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
           } catch (Exception e) {
             // String error = e.getMessage();
             e.printStackTrace();
@@ -407,7 +407,7 @@ public class ProcessSystem extends SimulationBaseClass {
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
             && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
+            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
           } catch (Exception e) {
             // String error = e.getMessage();
             e.printStackTrace();
@@ -451,12 +451,7 @@ public class ProcessSystem extends SimulationBaseClass {
     } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
 
     for (int i = 0; i < unitOperations.size(); i++) {
-      if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
-        if (!((neqsim.processSimulation.processEquipment.util.Adjuster) unitOperations.get(i))
-            .solved()) {
-          isConverged = false;
-        }
-      }
+      ((ProcessEquipmentInterface) unitOperations.get(i)).setCalculationIdentifier(id);
     }
 
     setCalculationIdentifier(calcIdentifier);
