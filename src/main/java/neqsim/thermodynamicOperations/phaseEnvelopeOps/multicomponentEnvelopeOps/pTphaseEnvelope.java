@@ -722,14 +722,6 @@ public class pTphaseEnvelope extends BaseOperation {
         }
     }
 
-    /** {@inheritDoc} */
-    /*
-    @Override
-    public void createNetCdfFile(String name) {
-        fileName = name;
-    }
-    */
-
     /**
      * Getter for property bubblePointFirst.
      *
