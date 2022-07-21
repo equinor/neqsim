@@ -1,5 +1,6 @@
 package neqsim.processSimulation.controllerDevice;
 
+import java.util.UUID;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 
 /**
@@ -11,105 +12,118 @@ import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
  * @version $Id: $Id
  */
 public interface ControllerDeviceInterface extends java.io.Serializable {
-    /**
-     * <p>
-     * getMeasuredValue.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getMeasuredValue();
+  /**
+   * <p>
+   * getMeasuredValue.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getMeasuredValue();
 
-    /**
-     * <p>
-     * setControllerSetPoint.
-     * </p>
-     *
-     * @param signal a double
-     */
-    public void setControllerSetPoint(double signal);
+  /**
+   * <p>
+   * setControllerSetPoint.
+   * </p>
+   *
+   * @param signal a double
+   */
+  public void setControllerSetPoint(double signal);
 
-    /**
-     * <p>
-     * getUnit.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getUnit();
+  /**
+   * <p>
+   * getUnit.
+   * </p>
+   *
+   * @return a {@link java.lang.String} object
+   */
+  public String getUnit();
 
-    /**
-     * <p>
-     * setUnit.
-     * </p>
-     *
-     * @param unit a {@link java.lang.String} object
-     */
-    public void setUnit(String unit);
+  /**
+   * <p>
+   * setUnit.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   */
+  public void setUnit(String unit);
 
-    /**
-     * <p>
-     * setTransmitter.
-     * </p>
-     *
-     * @param device a {@link neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface}
-     *        object
-     */
-    public void setTransmitter(MeasurementDeviceInterface device);
+  /**
+   * <p>
+   * setTransmitter.
+   * </p>
+   *
+   * @param device a {@link neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface}
+   *        object
+   */
+  public void setTransmitter(MeasurementDeviceInterface device);
 
-    /**
-     * <p>
-     * run.
-     * </p>
-     *
-     * @param signal a double
-     * @param dt a double
-     */
-    public void runTransient(double signal, double dt);
+  /**
+   * <p>
+   * run.
+   * </p>
+   *
+   * @param signal a double
+   * @param dt a double
+   */
+  public default void runTransient(double signal, double dt) {
+    runTransient(signal, dt, UUID.randomUUID());
+  }
 
-    /**
-     * <p>
-     * getResponse.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getResponse();
+  /**
+   * <p>
+   * run.
+   * </p>
+   * 
+   * @param signal a double
+   * @param dt a double
+   * @param id
+   */
+  public void runTransient(double signal, double dt, UUID id);
 
-    /**
-     * <p>
-     * isReverseActing.
-     * </p>
-     *
-     * @return a boolean
-     */
-    public boolean isReverseActing();
+  /**
+   * <p>
+   * getResponse.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getResponse();
 
-    /**
-     * <p>
-     * setReverseActing.
-     * </p>
-     *
-     * @param reverseActing a boolean
-     */
-    public void setReverseActing(boolean reverseActing);
+  /**
+   * <p>
+   * isReverseActing.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isReverseActing();
 
-    /**
-     * <p>
-     * setControllerParameters.
-     * </p>
-     *
-     * @param Ksp a double
-     * @param Ti a double
-     * @param Td a double
-     */
-    public void setControllerParameters(double Ksp, double Ti, double Td);
+  /**
+   * <p>
+   * setReverseActing.
+   * </p>
+   *
+   * @param reverseActing a boolean
+   */
+  public void setReverseActing(boolean reverseActing);
 
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o);
+  /**
+   * <p>
+   * setControllerParameters.
+   * </p>
+   *
+   * @param Ksp a double
+   * @param Ti a double
+   * @param Td a double
+   */
+  public void setControllerParameters(double Ksp, double Ti, double Td);
 
-    /** {@inheritDoc} */
-    @Override
-    public int hashCode();
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object o);
+
+  /** {@inheritDoc} */
+  @Override
+  public int hashCode();
 }

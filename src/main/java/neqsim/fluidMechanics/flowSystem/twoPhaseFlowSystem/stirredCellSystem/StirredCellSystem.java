@@ -1,5 +1,6 @@
 package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.stirredCellSystem;
 
+import java.util.UUID;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -71,7 +72,7 @@ public class StirredCellSystem
 
   /** {@inheritDoc} */
   @Override
-  public void solveTransient(int solverType) {
+  public void solveTransient(int solverType, UUID id) {
     getTimeSeries().init(this);
     display =
         new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.twoPhasePipeFlowVisualization.TwoPhasePipeFlowVisualization(
@@ -91,6 +92,7 @@ public class StirredCellSystem
       flowSolver.solveTDMA();
       display.setNextData(this, this.getTimeSeries().getTime(i));
     }
+    calcIdentifier = id;
   }
 
   /**

@@ -242,13 +242,14 @@ public class Tank extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {
+  public void runTransient(double dt, UUID id) {
     if (getCalculateSteadyState()) {
-      run();
+      run(id);
+      increaseTime(dt);
       return;
     }
 
-    inletStreamMixer.run();
+    inletStreamMixer.run(id);
 
     System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
     // double inMoles =
@@ -309,6 +310,7 @@ public class Tank extends ProcessEquipmentBaseClass {
         * separatorLength;
     gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
         * separatorLength;
+    setCalculationIdentifier(id);
   }
 
   /**

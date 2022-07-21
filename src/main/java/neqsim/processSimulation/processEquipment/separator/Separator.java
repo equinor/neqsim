@@ -281,13 +281,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {
+  public void runTransient(double dt, UUID id) {
     if (getCalculateSteadyState()) {
-      run();
+      run(id);
+      increaseTime(dt);
       return;
     }
 
-    inletStreamMixer.run();
+    inletStreamMixer.run(id);
 
     // System.out.println("moles out" +
     // liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
@@ -327,6 +328,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         * getSeparatorLength();
     gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
         * getInternalDiameter() * getSeparatorLength();
+    setCalculationIdentifier(id);
   }
 
   /**

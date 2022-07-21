@@ -254,8 +254,8 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {
-    pipe.solveTransient(2);
+  public void runTransient(double dt, UUID id) {
+    pipe.solveTransient(2, id);
   }
 
   /** {@inheritDoc} */

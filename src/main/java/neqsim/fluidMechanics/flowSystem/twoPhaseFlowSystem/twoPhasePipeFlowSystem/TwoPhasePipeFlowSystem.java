@@ -1,5 +1,7 @@
 package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhasePipeFlowSystem;
 
+import java.util.UUID;
+
 /**
  * <p>
  * TwoPhasePipeFlowSystem class.
@@ -96,10 +98,11 @@ public class TwoPhasePipeFlowSystem
 
   /** {@inheritDoc} */
   @Override
-  public void solveTransient(int type) {
+  public void solveTransient(int type, UUID id) {
     // pipeSolver pipeSolve = new pipeSolver(this, getSystemLength(),
     // getTotalNumberOfNodes());
     // pipeSolve.solveTDMA();
+    calcIdentifier = id;
   }
 
   /**

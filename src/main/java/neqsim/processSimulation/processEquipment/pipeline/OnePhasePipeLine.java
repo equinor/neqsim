@@ -78,11 +78,6 @@ public class OnePhasePipeLine extends Pipeline {
     setCalculationIdentifier(id);
     // pipe.print();
     outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem());
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {
-    super.runTransient(dt);
+    setCalculationIdentifier(id);
   }
 }

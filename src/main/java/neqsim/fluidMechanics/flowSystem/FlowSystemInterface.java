@@ -3,8 +3,10 @@
  *
  * Created on 11. desember 2000, 17:17
  */
+
 package neqsim.fluidMechanics.flowSystem;
 
+import java.util.UUID;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowSolver.FlowSolverInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
@@ -22,346 +24,358 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface FlowSystemInterface {
-    /**
-     * <p>
-     * init.
-     * </p>
-     */
-    public void init();
+  /**
+   * <p>
+   * init.
+   * </p>
+   */
+  public void init();
 
-    /**
-     * <p>
-     * setNodes.
-     * </p>
-     */
-    public void setNodes();
+  /**
+   * <p>
+   * setNodes.
+   * </p>
+   */
+  public void setNodes();
 
-    /**
-     * <p>
-     * solveTransient.
-     * </p>
-     *
-     * @param type a int
-     */
-    public void solveTransient(int type);
+  /**
+   * <p>
+   * solveTransient.
+   * </p>
+   *
+   * @param type a int
+   */
+  public default void solveTransient(int type) {
+    solveTransient(type, UUID.randomUUID());
+  }
 
-    /**
-     * <p>
-     * getTimeSeries.
-     * </p>
-     *
-     * @return a {@link neqsim.fluidMechanics.util.timeSeries.TimeSeries} object
-     */
-    public TimeSeries getTimeSeries();
+  /**
+   * <p>
+   * solveTransient.
+   * </p>
+   *
+   * @param type a int
+   * @param id an UUID
+   */
+  public void solveTransient(int type, UUID id);
 
-    /**
-     * <p>
-     * getDisplay.
-     * </p>
-     *
-     * @return a
-     *         {@link neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualizationInterface}
-     *         object
-     */
-    public FlowSystemVisualizationInterface getDisplay();
+  /**
+   * <p>
+   * getTimeSeries.
+   * </p>
+   *
+   * @return a {@link neqsim.fluidMechanics.util.timeSeries.TimeSeries} object
+   */
+  public TimeSeries getTimeSeries();
 
-    /**
-     * <p>
-     * getFileWriter.
-     * </p>
-     *
-     * @param i a int
-     * @return a {@link neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterInterface}
-     *         object
-     */
-    public FileWriterInterface getFileWriter(int i);
+  /**
+   * <p>
+   * getDisplay.
+   * </p>
+   *
+   * @return a
+   *         {@link neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualizationInterface}
+   *         object
+   */
+  public FlowSystemVisualizationInterface getDisplay();
 
-    /**
-     * <p>
-     * getSolver.
-     * </p>
-     *
-     * @return a {@link neqsim.fluidMechanics.flowSolver.FlowSolverInterface} object
-     */
-    public FlowSolverInterface getSolver();
+  /**
+   * <p>
+   * getFileWriter.
+   * </p>
+   *
+   * @param i a int
+   * @return a {@link neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterInterface}
+   *         object
+   */
+  public FileWriterInterface getFileWriter(int i);
 
-    /**
-     * <p>
-     * getInletTemperature.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getInletTemperature();
+  /**
+   * <p>
+   * getSolver.
+   * </p>
+   *
+   * @return a {@link neqsim.fluidMechanics.flowSolver.FlowSolverInterface} object
+   */
+  public FlowSolverInterface getSolver();
 
-    /**
-     * <p>
-     * getInletPressure.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getInletPressure();
+  /**
+   * <p>
+   * getInletTemperature.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getInletTemperature();
 
-    /**
-     * <p>
-     * setNumberOfLegs.
-     * </p>
-     *
-     * @param numberOfLegs a int
-     */
-    public void setNumberOfLegs(int numberOfLegs);
+  /**
+   * <p>
+   * getInletPressure.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getInletPressure();
 
-    /**
-     * <p>
-     * getNumberOfLegs.
-     * </p>
-     *
-     * @return a int
-     */
-    public int getNumberOfLegs();
+  /**
+   * <p>
+   * setNumberOfLegs.
+   * </p>
+   *
+   * @param numberOfLegs a int
+   */
+  public void setNumberOfLegs(int numberOfLegs);
 
-    /**
-     * <p>
-     * setNumberOfNodesInLeg.
-     * </p>
-     *
-     * @param numberOfNodesInLeg a int
-     */
-    public void setNumberOfNodesInLeg(int numberOfNodesInLeg);
+  /**
+   * <p>
+   * getNumberOfLegs.
+   * </p>
+   *
+   * @return a int
+   */
+  public int getNumberOfLegs();
 
-    /**
-     * <p>
-     * getNumberOfNodesInLeg.
-     * </p>
-     *
-     * @param i a int
-     * @return a int
-     */
-    public int getNumberOfNodesInLeg(int i);
+  /**
+   * <p>
+   * setNumberOfNodesInLeg.
+   * </p>
+   *
+   * @param numberOfNodesInLeg a int
+   */
+  public void setNumberOfNodesInLeg(int numberOfNodesInLeg);
 
-    /**
-     * <p>
-     * setLegHeights.
-     * </p>
-     *
-     * @param legHeights an array of {@link double} objects
-     */
-    public void setLegHeights(double[] legHeights);
+  /**
+   * <p>
+   * getNumberOfNodesInLeg.
+   * </p>
+   *
+   * @param i a int
+   * @return a int
+   */
+  public int getNumberOfNodesInLeg(int i);
 
-    /**
-     * <p>
-     * getLegHeights.
-     * </p>
-     *
-     * @return an array of {@link double} objects
-     */
-    public double[] getLegHeights();
+  /**
+   * <p>
+   * setLegHeights.
+   * </p>
+   *
+   * @param legHeights an array of {@link double} objects
+   */
+  public void setLegHeights(double[] legHeights);
 
-    /**
-     * <p>
-     * setLegPositions.
-     * </p>
-     *
-     * @param legPositions an array of {@link double} objects
-     */
-    public void setLegPositions(double[] legPositions);
+  /**
+   * <p>
+   * getLegHeights.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
+  public double[] getLegHeights();
 
-    /**
-     * <p>
-     * createSystem.
-     * </p>
-     */
-    public void createSystem();
+  /**
+   * <p>
+   * setLegPositions.
+   * </p>
+   *
+   * @param legPositions an array of {@link double} objects
+   */
+  public void setLegPositions(double[] legPositions);
 
-    /**
-     * <p>
-     * getNode.
-     * </p>
-     *
-     * @param i a int
-     * @return a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
-     */
-    public FlowNodeInterface getNode(int i);
+  /**
+   * <p>
+   * createSystem.
+   * </p>
+   */
+  public void createSystem();
 
-    /**
-     * <p>
-     * getSystemLength.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getSystemLength();
+  /**
+   * <p>
+   * getNode.
+   * </p>
+   *
+   * @param i a int
+   * @return a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
+   */
+  public FlowNodeInterface getNode(int i);
 
-    /**
-     * <p>
-     * setLegOuterHeatTransferCoefficients.
-     * </p>
-     *
-     * @param coefs an array of {@link double} objects
-     */
-    public void setLegOuterHeatTransferCoefficients(double[] coefs);
+  /**
+   * <p>
+   * getSystemLength.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getSystemLength();
 
-    /**
-     * <p>
-     * setLegWallHeatTransferCoefficients.
-     * </p>
-     *
-     * @param coefs an array of {@link double} objects
-     */
-    public void setLegWallHeatTransferCoefficients(double[] coefs);
+  /**
+   * <p>
+   * setLegOuterHeatTransferCoefficients.
+   * </p>
+   *
+   * @param coefs an array of {@link double} objects
+   */
+  public void setLegOuterHeatTransferCoefficients(double[] coefs);
 
-    /**
-     * <p>
-     * setEquipmentGeometry.
-     * </p>
-     *
-     * @param equipmentGeometry an array of
-     *        {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} objects
-     */
-    public void setEquipmentGeometry(GeometryDefinitionInterface[] equipmentGeometry);
+  /**
+   * <p>
+   * setLegWallHeatTransferCoefficients.
+   * </p>
+   *
+   * @param coefs an array of {@link double} objects
+   */
+  public void setLegWallHeatTransferCoefficients(double[] coefs);
 
-    /**
-     * <p>
-     * getTotalNumberOfNodes.
-     * </p>
-     *
-     * @return a int
-     */
-    public int getTotalNumberOfNodes();
+  /**
+   * <p>
+   * setEquipmentGeometry.
+   * </p>
+   *
+   * @param equipmentGeometry an array of
+   *        {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} objects
+   */
+  public void setEquipmentGeometry(GeometryDefinitionInterface[] equipmentGeometry);
 
-    /**
-     * <p>
-     * calcFluxes.
-     * </p>
-     */
-    public void calcFluxes();
+  /**
+   * <p>
+   * getTotalNumberOfNodes.
+   * </p>
+   *
+   * @return a int
+   */
+  public int getTotalNumberOfNodes();
 
-    /**
-     * <p>
-     * setEndPressure.
-     * </p>
-     *
-     * @param inletPressure a double
-     */
-    public void setEndPressure(double inletPressure);
+  /**
+   * <p>
+   * calcFluxes.
+   * </p>
+   */
+  public void calcFluxes();
 
-    /**
-     * <p>
-     * setInletThermoSystem.
-     * </p>
-     *
-     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public void setInletThermoSystem(SystemInterface thermoSystem);
+  /**
+   * <p>
+   * setEndPressure.
+   * </p>
+   *
+   * @param inletPressure a double
+   */
+  public void setEndPressure(double inletPressure);
 
-    /**
-     * <p>
-     * solveSteadyState.
-     * </p>
-     *
-     * @param type a int
-     */
-    public void solveSteadyState(int type);
+  /**
+   * <p>
+   * setInletThermoSystem.
+   * </p>
+   *
+   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public void setInletThermoSystem(SystemInterface thermoSystem);
 
-    /**
-     * <p>
-     * getFlowNodes.
-     * </p>
-     *
-     * @return an array of {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} objects
-     */
-    public FlowNodeInterface[] getFlowNodes();
+  /**
+   * <p>
+   * solveSteadyState.
+   * </p>
+   *
+   * @param type a int
+   */
+  public void solveSteadyState(int type);
 
-    /**
-     * <p>
-     * print.
-     * </p>
-     */
-    public void print();
+  /**
+   * <p>
+   * getFlowNodes.
+   * </p>
+   *
+   * @return an array of {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} objects
+   */
+  public FlowNodeInterface[] getFlowNodes();
 
-    /**
-     * <p>
-     * setLegOuterTemperatures.
-     * </p>
-     *
-     * @param temps an array of {@link double} objects
-     */
-    public void setLegOuterTemperatures(double[] temps);
+  /**
+   * <p>
+   * print.
+   * </p>
+   */
+  public void print();
 
-    /**
-     * <p>
-     * getTotalMolarMassTransferRate.
-     * </p>
-     *
-     * @param component a int
-     * @return a double
-     */
-    public double getTotalMolarMassTransferRate(int component);
+  /**
+   * <p>
+   * setLegOuterTemperatures.
+   * </p>
+   *
+   * @param temps an array of {@link double} objects
+   */
+  public void setLegOuterTemperatures(double[] temps);
 
-    /**
-     * <p>
-     * getTotalMolarMassTransferRate.
-     * </p>
-     *
-     * @param component a int
-     * @param lastNode a int
-     * @return a double
-     */
-    public double getTotalMolarMassTransferRate(int component, int lastNode);
+  /**
+   * <p>
+   * getTotalMolarMassTransferRate.
+   * </p>
+   *
+   * @param component a int
+   * @return a double
+   */
+  public double getTotalMolarMassTransferRate(int component);
 
-    /**
-     * <p>
-     * getTotalPressureDrop.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getTotalPressureDrop();
+  /**
+   * <p>
+   * getTotalMolarMassTransferRate.
+   * </p>
+   *
+   * @param component a int
+   * @param lastNode a int
+   * @return a double
+   */
+  public double getTotalMolarMassTransferRate(int component, int lastNode);
 
-    /**
-     * <p>
-     * getTotalPressureDrop.
-     * </p>
-     *
-     * @param lastNode a int
-     * @return a double
-     */
-    public double getTotalPressureDrop(int lastNode);
+  /**
+   * <p>
+   * getTotalPressureDrop.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getTotalPressureDrop();
 
-    /**
-     * <p>
-     * setInitialFlowPattern.
-     * </p>
-     *
-     * @param flowPattern a {@link java.lang.String} object
-     */
-    public void setInitialFlowPattern(String flowPattern);
+  /**
+   * <p>
+   * getTotalPressureDrop.
+   * </p>
+   *
+   * @param lastNode a int
+   * @return a double
+   */
+  public double getTotalPressureDrop(int lastNode);
 
-    /**
-     * <p>
-     * setFlowPattern.
-     * </p>
-     *
-     * @param flowPattern a {@link java.lang.String} object
-     */
-    public void setFlowPattern(String flowPattern);
+  /**
+   * <p>
+   * setInitialFlowPattern.
+   * </p>
+   *
+   * @param flowPattern a {@link java.lang.String} object
+   */
+  public void setInitialFlowPattern(String flowPattern);
 
-    /**
-     * <p>
-     * setEquilibriumMassTransfer.
-     * </p>
-     *
-     * @param test a boolean
-     */
-    public void setEquilibriumMassTransfer(boolean test);
+  /**
+   * <p>
+   * setFlowPattern.
+   * </p>
+   *
+   * @param flowPattern a {@link java.lang.String} object
+   */
+  public void setFlowPattern(String flowPattern);
 
-    /**
-     * <p>
-     * setEquilibriumHeatTransfer.
-     * </p>
-     *
-     * @param test a boolean
-     */
-    public void setEquilibriumHeatTransfer(boolean test);
+  /**
+   * <p>
+   * setEquilibriumMassTransfer.
+   * </p>
+   *
+   * @param test a boolean
+   */
+  public void setEquilibriumMassTransfer(boolean test);
+
+  /**
+   * <p>
+   * setEquilibriumHeatTransfer.
+   * </p>
+   *
+   * @param test a boolean
+   */
+  public void setEquilibriumHeatTransfer(boolean test);
 }

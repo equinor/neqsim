@@ -436,10 +436,11 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {
-    time = getTime() + dt;
+  public void runTransient(double dt, UUID id) {
+    increaseTime(dt);
     if (thermoSystem.getPressure("bara") < lowPressureLimit) {
       System.out.println("low pressure reservoir limit reached");
+      setCalculationIdentifier(id);
       return;
     }
     gasProductionTotal += getGasProdution("Sm3/sec") * dt;
@@ -484,14 +485,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
       for (int k = 0; k < gasProducer.size(); k++) {
         gasProducer.get(k).getStream().getFluid()
             .setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
-        gasProducer.get(k).getStream().run();
+        gasProducer.get(k).getStream().run(id);
       }
     }
     if (thermoSystem.hasPhaseType("oil")) {
       for (int k = 0; k < oilProducer.size(); k++) {
         oilProducer.get(k).getStream().getFluid()
             .setMolarComposition(thermoSystem.getPhase("oil").getMolarComposition());
-        oilProducer.get(k).getStream().run();
+        oilProducer.get(k).getStream().run(id);
       }
     }
     /*
@@ -501,10 +502,10 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * waterInjector.get(k).getStream().run(); }
      */
     for (int k = 0; k < waterInjector.size(); k++) {
-      waterInjector.get(k).getStream().run();
+      waterInjector.get(k).getStream().run(id);
     }
     for (int k = 0; k < gasInjector.size(); k++) {
-      gasInjector.get(k).getStream().run();
+      gasInjector.get(k).getStream().run(id);
     }
     /*
      * double totalVolume = 0; for (int i = 0; i < getReservoirFluid().getNumberOfPhases(); i++) {
@@ -516,7 +517,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     // getReservoirFluid().getPhase("oil").getVolume("m3")/1.0e6 + " water volume "+
     // getReservoirFluid().getPhase("aqueous").getVolume("m3")/1.0e6);
     // oilOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("oil").getMolarComposition());
-    // oilOutStream.run();
+    // oilOutStream.run(id);
 
     // thermoSystem.display();
     for (int k = 0; k < gasProducer.size(); k++) {
@@ -533,6 +534,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     for (int k = 0; k < gasInjector.size(); k++) {
       gasInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
     }
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

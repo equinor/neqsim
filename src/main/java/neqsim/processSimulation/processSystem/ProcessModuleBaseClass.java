@@ -5,6 +5,7 @@
  */
 package neqsim.processSimulation.processSystem;
 
+import java.util.UUID;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
@@ -111,8 +112,8 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {
-    getOperations().runTransient(dt);
+  public void runTransient(double dt, UUID id) {
+    getOperations().runTransient(dt, id);
   }
 
   // TODO: Check if all the equipment is solved correctly

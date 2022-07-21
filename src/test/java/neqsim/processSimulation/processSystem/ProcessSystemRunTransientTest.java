@@ -199,7 +199,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
       // "+separatorLevelTransmitter.getMeasuredValue());
       p.runTransient();
       for (SimulationInterface sim : p.getUnitOperations()) {
-        assertEquals(sim.getCalculationIdentifier(), p.getCalculationIdentifier());
+        assertEquals(p.getCalculationIdentifier(), sim.getCalculationIdentifier());
       }
     }
 
@@ -210,7 +210,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
       // separator_1.getGasOutStream().getFlowRate("kg/hr"));
       p.runTransient();
       for (SimulationInterface sim : p.getUnitOperations()) {
-        assertEquals(sim.getCalculationIdentifier(), p.getCalculationIdentifier());
+        assertEquals(p.getCalculationIdentifier(), sim.getCalculationIdentifier());
       }
     }
   }

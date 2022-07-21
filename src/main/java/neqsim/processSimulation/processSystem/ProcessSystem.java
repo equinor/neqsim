@@ -463,7 +463,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    */
   public void runTransient() {
-    runTransient(getTimeStep());
+    runTransient(getTimeStep(), UUID.randomUUID());
   }
 
   /**
@@ -471,16 +471,29 @@ public class ProcessSystem extends SimulationBaseClass {
    * runTransient.
    * </p>
    *
-   * @param dt differential temperature
+   * @param dt Delta time
+   */
+  public void runTransient(double dt) {
+    runTransient(dt, UUID.randomUUID());
+  }
+
+  /**
+   * <p>
+   * runTransient.
+   * </p>
+   *
+   * @param dt Delta time
+   * @param id Calculation identifier
    */
   @Override
-  public void runTransient(double dt) {
+  public void runTransient(double dt, UUID id) {
     setTimeStep(dt);
     increaseTime(dt);
 
     for (int i = 0; i < unitOperations.size(); i++) {
-      unitOperations.get(i).runTransient(dt);
+      unitOperations.get(i).runTransient(dt, id);
     }
+
     timeStepNumber++;
     signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()];
     for (int i = 0; i < measurementDevices.size(); i++) {
@@ -490,6 +503,7 @@ public class ProcessSystem extends SimulationBaseClass {
           Double.toString(measurementDevices.get(i).getMeasuredValue());
       signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
     }
+    setCalculationIdentifier(id);
   }
 
   @Override
