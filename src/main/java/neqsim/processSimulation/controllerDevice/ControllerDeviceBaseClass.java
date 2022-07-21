@@ -21,6 +21,8 @@ import neqsim.util.NamedBaseClass;
 public class ControllerDeviceBaseClass extends NamedBaseClass implements ControllerDeviceInterface {
   private static final long serialVersionUID = 1000;
 
+  protected UUID calcIdentifier;
+
   private String unit = "[?]";
   private MeasurementDeviceInterface transmitter = null;
   private double controllerSetPoint = 0.0;
@@ -69,6 +71,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     // System.out.println("error " + error + " %");
     // error = device.getMeasuredPercentValue()-controlValue;
     // double regulatorSignal = error*1.0;
+    calcIdentifier = id;
   }
 
   /** {@inheritDoc} */
