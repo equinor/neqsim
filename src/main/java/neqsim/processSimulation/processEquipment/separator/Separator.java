@@ -347,9 +347,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     gasOutStream.getThermoSystem().setPressure(pres);
     liquidOutStream.getThermoSystem().setPressure(pres);
 
-    inletStreamMixer.run();
-    gasOutStream.run();
-    liquidOutStream.run();
+    UUID id = UUID.randomUUID();
+
+    inletStreamMixer.run(id);
+    gasOutStream.run(id);
+    liquidOutStream.run(id);
   }
 
   /**
