@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.splitter;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -78,7 +79,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     for (int i = 0; i < 2; i++) {
       thermoSystem = inletStream.getThermoSystem().clone();
       thermoSystem.setEmptyFluid();
@@ -101,6 +102,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
           new ThermodynamicOperations(splitStream[i].getThermoSystem());
       thermoOps.TPflash();
     }
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

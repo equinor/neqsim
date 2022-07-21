@@ -5,6 +5,7 @@
  */
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -140,7 +141,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     system = inStream.getThermoSystem().clone();
     system.init(3);
     double oldH = system.getEnthalpy();
@@ -155,7 +156,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     if (getSpecification().equals("out stream")) {
       getOutletStream().setFlowRate(getInletStream().getFlowRate("kg/sec"), "kg/sec");
-      getOutletStream().run();
+      getOutletStream().run(id);
       temperatureOut = getOutletStream().getTemperature();
       system = getOutletStream().getThermoSystem().clone();
     } else if (setTemperature) {
@@ -180,6 +181,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     // testOps.TPflash();
     // system.setTemperature(temperatureOut);
     getOutletStream().setThermoSystem(system);
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

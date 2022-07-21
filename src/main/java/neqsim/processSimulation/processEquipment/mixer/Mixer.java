@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -208,7 +209,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
@@ -258,6 +259,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
     // outStream.setThermoSystem(mixedStream.getThermoSystem());
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

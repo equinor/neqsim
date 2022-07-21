@@ -1,7 +1,7 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
-
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -226,7 +226,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
     /** {@inheritDoc} */
     @Override
-    public void run() {
+    public void run(UUID id) {
         iterations++;
         /*
          * if(firstTime || iterations>maxIterations) { firstTime=false; return;
@@ -279,6 +279,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
         // System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
         // outStream.setThermoSystem(mixedStream.getThermoSystem());
+        setCalculationIdentifier(id);
     }
 
     /**

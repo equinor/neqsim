@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.powerGeneration;
 
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
@@ -128,30 +129,32 @@ public class GasTurbine extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    double heatOfCombustion = inStream.LCV() * inStream.getFlowRate("mole/sec");
+  public void run(UUID id) {
     thermoSystem = inStream.getThermoSystem().clone();
     airStream.setFlowRate(thermoSystem.getFlowRate("mole/sec") * airGasRatio, "mole/sec");
     airStream.setPressure(1.01325);
-    airStream.run();
+    airStream.run(id);
 
     airCompressor.setInletStream(airStream);
     airCompressor.setOutletPressure(combustionpressure);
-    airCompressor.run();
+    airCompressor.run(id);
     compressorPower = airCompressor.getPower();
     StreamInterface outStreamAir = airCompressor.getOutletStream().clone();
     outStreamAir.getFluid().addFluid(thermoSystem);
     // outStreamAir.getFluid().setTemperature(800.0);
     // outStreamAir.getFluid().createDatabase(true);
+
+
+    outStreamAir.run(id);
+
+    double heatOfCombustion = inStream.LCV() * inStream.getFlowRate("mole/sec");
+    Heater locHeater = new Heater("locHeater", outStreamAir);
+    locHeater.setEnergyInput(heatOfCombustion);
+    locHeater.run(id);
+
     double moleMethane = outStreamAir.getFluid().getComponent("methane").getNumberOfmoles();
     // double moleEthane = outStreamAir.getFluid().getComponent("ethane").getNumberOfmoles();
     // double molePropane = outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
-
-    outStreamAir.run();
-    Heater locHeater = new Heater("locHeater", outStreamAir);
-    locHeater.setEnergyInput(heatOfCombustion);
-    locHeater.run();
-
     locHeater.getOutletStream().getFluid().addComponent("CO2", moleMethane);
     locHeater.getOutletStream().getFluid().addComponent("water", moleMethane * 2.0);
     locHeater.getOutletStream().getFluid().addComponent("methane", -moleMethane);
@@ -159,20 +162,21 @@ public class GasTurbine extends TwoPortEquipment {
 
     // todo: Init fails because there is less than moleMethane of oxygen
     locHeater.getOutletStream().getFluid().init(3);
-    // locHeater.getOutStream().run();
+    // locHeater.getOutStream().run(id);
     locHeater.displayResult();
 
     Expander expander = new Expander("expander", locHeater.getOutletStream());
     expander.setOutletPressure(1.01325);
-    expander.run();
+    expander.run(id);
 
     Cooler cooler1 = new Cooler("cooler1", expander.getOutletStream());
     cooler1.setOutTemperature(288.15);
-    cooler1.run();
+    cooler1.run(id);
 
     expanderPower = expander.getPower();
 
     power = expanderPower - compressorPower;
     this.heat = cooler1.getDuty();
+    setCalculationIdentifier(id);
   }
 }

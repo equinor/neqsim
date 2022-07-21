@@ -7,6 +7,7 @@ package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.UUID;
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -194,8 +195,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    inletStreamMixer.run();
+  public void run(UUID id) {
+    inletStreamMixer.run(id);
     thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
     thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
 
@@ -212,12 +213,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       liquidOutStream.setThermoSystem(thermoSystem2.getEmptySystemClone());
     }
     if (thermoSystem2.hasPhaseType("gas")) {
-      gasOutStream.run();
+      gasOutStream.run(id);
     } else {
       gasOutStream.getFluid().init(3);
     }
     if (thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil")) {
-      liquidOutStream.run();
+      liquidOutStream.run(id);
     } else {
       liquidOutStream.getFluid().init(3);
     }
@@ -263,6 +264,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       e.printStackTrace();
     }
     thermoSystem = thermoSystem2;
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

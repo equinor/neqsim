@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.tank;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -170,8 +171,8 @@ public class Tank extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    inletStreamMixer.run();
+  public void run(UUID id) {
+    inletStreamMixer.run(id);
     SystemInterface thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
     ops.VUflash(thermoSystem2.getVolume(), thermoSystem2.getInternalEnergy());
@@ -229,6 +230,8 @@ public class Tank extends ProcessEquipmentBaseClass {
     gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
         * separatorLength;
     System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
+
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

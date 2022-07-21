@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
+import java.util.UUID;
 import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -126,7 +127,7 @@ public class GORfitter extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     SystemInterface tempFluid = inStream.getThermoSystem().clone();
     double flow = tempFluid.getFlowRate("kg/sec");
 
@@ -211,6 +212,7 @@ public class GORfitter extends TwoPortEquipment {
     else {
       GVF = Double.NaN;
     }
+    setCalculationIdentifier(id);
     return;
   }
 

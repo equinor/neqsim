@@ -4,6 +4,7 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -100,15 +101,15 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     System.out.println("expander running..");
     thermoSystem = inStream.getThermoSystem().clone();
     thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoSystem.init(3);
-    double hinn = thermoSystem.getEnthalpy();
     double entropy = thermoSystem.getEntropy();
-    thermoSystem.setPressure(pressure);
     System.out.println("entropy inn.." + entropy);
+    double hinn = thermoSystem.getEnthalpy();
+    thermoSystem.setPressure(pressure);
     thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
     outStream.setThermoSystem(thermoSystem);

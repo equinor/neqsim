@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processSystem.processModules;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
@@ -62,14 +63,15 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public void run() {
+    public void run(UUID id) {
         if (!isInitializedModule) {
             initializeModule();
         }
-        getOperations().run();
+        getOperations().run(id);
 
         gasExitStream = gasInletScrubber.getGasOutStream();
         oilExitStream = oilCooler.getOutletStream();
+        setCalculationIdentifier(id);
     }
 
     /** {@inheritDoc} */
