@@ -159,7 +159,6 @@ public class TwoPhaseReactorFlowSystem
         pipe.solveSteadyState(2);
         // pipe.calcFluxes();
         // pipe.getDisplay().displayResult("temperature");
-        pipe.getDisplay().createNetCdfFile("c:/temp5.nc");
         // pipe.displayResults();
         // testOps.TPflash();
         // testOps.displayResult();
