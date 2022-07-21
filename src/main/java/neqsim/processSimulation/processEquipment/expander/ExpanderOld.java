@@ -57,7 +57,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
 
   /**
    * Constructor for ExpanderOld.
-   * 
+   *
    * @param name name of expander
    */
   public ExpanderOld(String name) {
@@ -69,7 +69,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
    * Constructor for ExpanderOld.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name name of expander
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
@@ -113,9 +113,8 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
     thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
     outStream.setThermoSystem(thermoSystem);
+    setCalculationIdentifier(id);
   }
-
-
 
   /** {@inheritDoc} */
   @Override
@@ -130,7 +129,6 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
 
     thermoSystem.initPhysicalProperties();
     String[][] table = new String[20][5];
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";
@@ -207,6 +205,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
     }
 
+    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);
