@@ -67,7 +67,7 @@ public class TwoPhaseReactorFlowSystem
 
   /** {@inheritDoc} */
   @Override
-  public void solveSteadyState(int solverType) {
+  public void solveSteadyState(int type, UUID id) {
     double[] times = {0.0};
     display = new TwoPhasePipeFlowVisualization(this.getTotalNumberOfNodes(), 1);
     getTimeSeries().setTimes(times);
@@ -80,7 +80,7 @@ public class TwoPhaseReactorFlowSystem
     flowSolver =
         new neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.TwoPhaseFixedStaggeredGridSolver(
             this, getSystemLength(), this.getTotalNumberOfNodes(), false);
-    flowSolver.setSolverType(solverType);
+    flowSolver.setSolverType(type);
     flowSolver.solveTDMA();
     getTimeSeries().init(this);
     display.setNextData(this);

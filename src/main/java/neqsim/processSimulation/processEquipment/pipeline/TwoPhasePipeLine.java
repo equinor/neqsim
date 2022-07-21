@@ -77,7 +77,7 @@ public class TwoPhasePipeLine extends Pipeline {
     UUID oldid = getCalculationIdentifier();
     super.run(id);
     setCalculationIdentifier(oldid);
-    pipe.solveSteadyState(2);
+    pipe.solveSteadyState(2, id);
     setCalculationIdentifier(id);
     pipe.print();
   }

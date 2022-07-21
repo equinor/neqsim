@@ -64,10 +64,13 @@ public class StirredCellSystem
 
   /** {@inheritDoc} */
   @Override
-  public void solveSteadyState(int solverType) {
+  public void solveSteadyState(int type, UUID id) {
+    // todo: double[] times = {0.0}; ?
     flowSolver =
         new neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.stirredCellSolver.StirredCellSolver(
             this, getSystemLength(), getTotalNumberOfNodes(), false);
+    calcIdentifier = id;
+    // todo: getTimeSeries().init(this);
   }
 
   /** {@inheritDoc} */

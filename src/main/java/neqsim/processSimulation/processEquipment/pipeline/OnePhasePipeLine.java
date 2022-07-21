@@ -75,7 +75,7 @@ public class OnePhasePipeLine extends Pipeline {
     UUID oldid = getCalculationIdentifier();
     super.run(id);
     setCalculationIdentifier(oldid);
-    pipe.solveSteadyState(10);
+    pipe.solveSteadyState(10, id);
     // pipe.print();
     outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem());
     setCalculationIdentifier(id);

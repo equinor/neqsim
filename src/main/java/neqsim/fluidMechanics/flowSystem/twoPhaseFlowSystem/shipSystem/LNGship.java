@@ -127,7 +127,8 @@ public class LNGship
 
   /** {@inheritDoc} */
   @Override
-  public void solveSteadyState(int solverType) {
+  public void solveSteadyState(int type, UUID id) {
+    // todo: double[] times = {0.0}; ?
     try {
       if (!isSetInitialTemperature()) {
         thermoOperations.bubblePointTemperatureFlash();
@@ -136,6 +137,8 @@ public class LNGship
       e.printStackTrace();
     }
     logger.info("temperature start " + getThermoSystem().getTemperature());
+    // todo: getTimeSeries().init(this);
+    calcIdentifier = id;
   }
 
   /** {@inheritDoc} */

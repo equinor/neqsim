@@ -274,9 +274,23 @@ public interface FlowSystemInterface {
    * solveSteadyState.
    * </p>
    *
-   * @param type a int
+   * @param type a int 1: just mass, 2: mass and energy, 3: mass, energy and energy impulse and
+   *        components
    */
-  public void solveSteadyState(int type);
+  public default void solveSteadyState(int type) {
+    solveSteadyState(type, UUID.randomUUID());
+  }
+
+  /**
+   * <p>
+   * solveSteadyState.
+   * </p>
+   *
+   * @param type a int 1: just mass, 2: mass and energy, 3: mass, energy and energy impulse and
+   *        components
+   * @param id a UUID
+   */
+  public void solveSteadyState(int type, UUID id);
 
   /**
    * <p>

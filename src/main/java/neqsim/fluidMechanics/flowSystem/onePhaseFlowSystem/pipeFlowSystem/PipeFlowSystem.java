@@ -60,9 +60,7 @@ public class PipeFlowSystem
 
   /** {@inheritDoc} */
   @Override
-  public void solveSteadyState(int solverType) { // should set solve-type: int 1-bare masse og
-                                                 // impuls 2 energi og
-                                                 // impuls 3 energi impuls og komponenter
+  public void solveSteadyState(int type, UUID id) {
     double[] times = {0.0};
     display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), 1);
     getTimeSeries().setTimes(times);
@@ -77,10 +75,11 @@ public class PipeFlowSystem
     flowSolver =
         new neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.onePhasePipeFlowSolver.OnePhaseFixedStaggeredGrid(
             this, getSystemLength(), getTotalNumberOfNodes(), false);
-    flowSolver.setSolverType(solverType);
+    flowSolver.setSolverType(type);
     flowSolver.solveTDMA();
     getTimeSeries().init(this);
     display.setNextData(this);
+    calcIdentifier = id;
   }
 
   /** {@inheritDoc} */
