@@ -291,7 +291,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * </p>
    *
    * @param dt a double
-   * @param id
+   * @param id Calculation identifier
    */
   public void runController(double dt, UUID id) {
     if (hasController) {

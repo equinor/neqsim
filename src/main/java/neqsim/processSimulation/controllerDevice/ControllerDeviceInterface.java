@@ -64,7 +64,7 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
    * </p>
    *
    * @param signal a double
-   * @param dt a double
+   * @param dt Delta time [s]
    */
   public default void runTransient(double signal, double dt) {
     runTransient(signal, dt, UUID.randomUUID());
@@ -74,10 +74,10 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
    * <p>
    * run.
    * </p>
-   * 
+   *
    * @param signal a double
-   * @param dt a double
-   * @param id
+   * @param dt Delta time [s]
+   * @param id Calculation identifier
    */
   public void runTransient(double signal, double dt, UUID id);
 

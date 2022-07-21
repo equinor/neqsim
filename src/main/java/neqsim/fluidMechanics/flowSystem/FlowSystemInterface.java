@@ -55,7 +55,7 @@ public interface FlowSystemInterface {
    * </p>
    *
    * @param type a int
-   * @param id an UUID
+   * @param id Calculation identifier
    */
   public void solveTransient(int type, UUID id);
 
@@ -288,7 +288,7 @@ public interface FlowSystemInterface {
    *
    * @param type a int 1: just mass, 2: mass and energy, 3: mass, energy and energy impulse and
    *        components
-   * @param id a UUID
+   * @param id Calculation identifier
    */
   public void solveSteadyState(int type, UUID id);
 

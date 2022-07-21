@@ -471,18 +471,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * runTransient.
    * </p>
    *
-   * @param dt Delta time
-   */
-  public void runTransient(double dt) {
-    runTransient(dt, UUID.randomUUID());
-  }
-
-  /**
-   * <p>
-   * runTransient.
-   * </p>
-   *
-   * @param dt Delta time
+   * @param dt Delta time [s]
    * @param id Calculation identifier
    */
   @Override

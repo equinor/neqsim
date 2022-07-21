@@ -86,7 +86,7 @@ public interface SimulationInterface extends NamedInterface, Runnable {
    * This method calculates thermodynamic and unit operations using difference equations if
    * available and calculateSteadyState is true. Use setCalculateSteadyState to set the parameter.
    *
-   * @param dt is the delta time step (seconds)
+   * @param dt Delta time [s]
    */
   public default void runTransient(double dt) {
     runTransient(dt, UUID.randomUUID());
@@ -99,8 +99,8 @@ public interface SimulationInterface extends NamedInterface, Runnable {
    * This method calculates thermodynamic and unit operations using difference equations if
    * available and calculateSteadyState is true. Use setCalculateSteadyState to set the parameter.
    *
-   * @param dt is the delta time step (seconds)
-   * @param id
+   * @param dt Delta time [s]
+   * @param id Calculation identifier
    */
   public default void runTransient(double dt, UUID id) {
     if (getCalculateSteadyState()) {
