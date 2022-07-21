@@ -208,7 +208,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
       // outStream[1].getThermoSystem().addComponent("CO2",(20.0-outStream[1].getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase()),0);
       outStream[1].getThermoSystem().addComponent("MDEA", -error * factor);
       outStream[1].getThermoSystem().addComponent("water", -error * 10.0 * factor);
-      outStream[1].run(id);
+      outStream[1].run();
       error = absorptionEfficiency - ((outStream[1].getThermoSystem().getPhase(1)
           .getComponent("CO2").getNumberOfMolesInPhase()
           + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-")
@@ -222,7 +222,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     } while (Math.abs(error) > 1e-4 && iter < 30
         && outStream[1].getThermoSystem().getPhase(1).getBeta() > 0
         && outStream[0].getThermoSystem().getPhase(1).getBeta() > 0);
-
+    outStream[1].setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 
