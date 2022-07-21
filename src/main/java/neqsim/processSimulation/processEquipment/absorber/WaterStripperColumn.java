@@ -37,7 +37,11 @@ public class WaterStripperColumn extends SimpleAbsorber {
   private StreamInterface solventOutStream;
   protected String name = "mixer";
   protected StreamInterface outStream;
-  private double waterDewPointTemperature = 263.15, dewPressure = 70.0, kwater = 1e-4;
+  private double waterDewPointTemperature = 263.15;
+  private double dewPressure = 70.0;
+
+  private double kwater = 1e-4;
+
   int solventStreamNumber = 0;
 
   /**
@@ -328,58 +332,56 @@ public class WaterStripperColumn extends SimpleAbsorber {
           gasOutStream.setThermoSystem(tempSystem);
           gasOutStream.run(id);
         }
-        setCalculationIdentifier(id);
-        return;
+      } else {
+        kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx()
+            / mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
+
+        double Ntheoretical = calcNumberOfTheoreticalStages();
+        // System.out.println("number of theoretical stages " +
+        // getNumberOfTheoreticalStages());
+        absorptionEffiency = calcEa();
+
+        x0 = calcX0();
+        double revA = 1.0 / absorptionEffiency;
+
+        double x1 = x2 - (Math.pow(revA, Ntheoretical + 1) - revA)
+            / (Math.pow(revA, Ntheoretical + 1) - 1.0) * (x2 - x0);
+
+        double xMean = mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
+        double molesWaterToMove =
+            (xMean - x1) * mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase();
+        // System.out.println("mole water to move " + molesWaterToMove);
+
+        StreamInterface stream = mixedStream.clone();
+        stream.setName("test");
+        stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
+        stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
+        stream.getThermoSystem().initBeta();
+        stream.getThermoSystem().init_x_y();
+        stream.getThermoSystem().init(2);
+        mixedStream = stream;
+        // stream.getThermoSystem().display();
+
+        SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
+        SystemInterface gasTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[0]);
+        gasTemp.init(2);
+        gasOutStream.setThermoSystem(gasTemp);
+
+        tempSystem = mixedStream.getThermoSystem().clone();
+        SystemInterface liqTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[1]);
+        liqTemp.init(2);
+        solventOutStream.setThermoSystem(liqTemp);
+        solventOutStream.run(id);
+        // System.out.println("Gas from water stripper " +
+        // gasOutStream.getFlowRate("kg/hr") + " kg/hr");
+
+        // System.out.println("TEG from water stripper " +
+        // solventOutStream.getFlowRate("kg/hr") + " kg/hr");
       }
-
-      kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx()
-          / mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
-
-      double Ntheoretical = calcNumberOfTheoreticalStages();
-      // System.out.println("number of theoretical stages " +
-      // getNumberOfTheoreticalStages());
-      absorptionEffiency = calcEa();
-
-      x0 = calcX0();
-      double revA = 1.0 / absorptionEffiency;
-
-      double x1 = x2 - (Math.pow(revA, Ntheoretical + 1) - revA)
-          / (Math.pow(revA, Ntheoretical + 1) - 1.0) * (x2 - x0);
-
-      double xMean = mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
-      double molesWaterToMove =
-          (xMean - x1) * mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase();
-      // System.out.println("mole water to move " + molesWaterToMove);
-
-      StreamInterface stream = mixedStream.clone();
-      stream.setName("test");
-      stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
-      stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
-      stream.getThermoSystem().initBeta();
-      stream.getThermoSystem().init_x_y();
-      stream.getThermoSystem().init(2);
-      mixedStream = stream;
-      // stream.getThermoSystem().display();
-
-      SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
-      SystemInterface gasTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[0]);
-      gasTemp.init(2);
-      gasOutStream.setThermoSystem(gasTemp);
-
-      tempSystem = mixedStream.getThermoSystem().clone();
-      SystemInterface liqTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[1]);
-      liqTemp.init(2);
-      solventOutStream.setThermoSystem(liqTemp);
-      solventOutStream.run(id);
-      // System.out.println("Gas from water stripper " +
-      // gasOutStream.getFlowRate("kg/hr") + " kg/hr");
-
-      // System.out.println("TEG from water stripper " +
-      // solventOutStream.getFlowRate("kg/hr") + " kg/hr");
+      setCalculationIdentifier(id);
     } catch (Exception e) {
       e.printStackTrace();
     }
-    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
