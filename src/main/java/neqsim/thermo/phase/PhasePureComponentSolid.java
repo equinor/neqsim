@@ -15,35 +15,35 @@ package neqsim.thermo.phase;
  * @version $Id: $Id
  */
 public class PhasePureComponentSolid extends PhaseSolid {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for PhasePureComponentSolid.
-     * </p>
-     */
-    public PhasePureComponentSolid() {
-        super();
+  /**
+   * <p>
+   * Constructor for PhasePureComponentSolid.
+   * </p>
+   */
+  public PhasePureComponentSolid() {
+    super();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PhasePureComponentSolid clone() {
+    PhasePureComponentSolid clonedPhase = null;
+    try {
+      clonedPhase = (PhasePureComponentSolid) super.clone();
+    } catch (Exception e) {
+      logger.error("Cloning failed.", e);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public PhasePureComponentSolid clone() {
-        PhasePureComponentSolid clonedPhase = null;
-        try {
-            clonedPhase = (PhasePureComponentSolid) super.clone();
-        } catch (Exception e) {
-            logger.error("Cloning failed.", e);
-        }
+    return clonedPhase;
+  }
 
-        return clonedPhase;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) {
-        super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-        phaseTypeName = "solid";
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+      double beta) {
+    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    phaseTypeName = "solid";
+  }
 }

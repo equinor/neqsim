@@ -166,7 +166,7 @@ public class TPflash extends Flash {
    * </p>
    */
   public void resetK() {
-    
+
     for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       lnK[i] = lnOldK[i];
       system.getPhase(0).getComponents()[i].setK(Math.exp(lnK[i]));
@@ -403,7 +403,7 @@ public class TPflash extends Flash {
         gibbsEnergy = system.getGibbsEnergy();
 
         if ((gibbsEnergy - gibbsEnergyOld) / Math.abs(gibbsEnergyOld) > 1e-3
-            && !system.isChemicalSystem() && timeFromLastGibbsFail>0) {
+            && !system.isChemicalSystem() && timeFromLastGibbsFail > 0) {
           resetK();
           timeFromLastGibbsFail = 0;
           // logger.info("gibbs decrease " + (gibbsEnergy - gibbsEnergyOld) /

@@ -17,12 +17,12 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface FluidBoundaryNodeInterface {
-    /**
-     * <p>
-     * getBulkSystem.
-     * </p>
-     *
-     * @return a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public SystemInterface getBulkSystem();
+  /**
+   * <p>
+   * getBulkSystem.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public SystemInterface getBulkSystem();
 }

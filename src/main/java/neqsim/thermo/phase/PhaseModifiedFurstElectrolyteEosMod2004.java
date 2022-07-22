@@ -20,16 +20,40 @@ import neqsim.thermo.component.ComponentModifiedFurstElectrolyteEos;
  */
 public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
   private static final long serialVersionUID = 1000;
-  double gammaold = 0, alphaLRdTdV = 0;
-  double W = 0, WT = 0, WTT = 0, eps = 0, epsdV = 0, epsdVdV = 0, epsIonic = 0, bornX = 0,
-      epsIonicdV = 0, epsIonicdVdV = 0, alphaLR2 = 0, alphaLRdT = 0.0, alphaLRdTdT = 0.0,
-      alphaLRdV = 0.0, XLR = 0, solventDiElectricConstant = 0, solventDiElectricConstantdT = 0.0,
-      solventDiElectricConstantdTdT = 0, shieldingParameter = 0;
-  double gamma = 0, diElectricConstantdV = 0, diElectricConstantdVdV = 0, alphaLRdVdV = 0,
-      diElectricConstantdT = 0, diElectricConstantdTdT = 0.0, diElectricConstantdTdV = 0;
+  static Logger logger = LogManager.getLogger(PhaseModifiedFurstElectrolyteEos.class);
+
+  double gammaold = 0;
+  double alphaLRdTdV = 0;
+  double W = 0;
+  double WT = 0;
+  double WTT = 0;
+  double eps = 0;
+  double epsdV = 0;
+  double epsdVdV = 0;
+  double epsIonic = 0;
+  double bornX = 0;
+  double epsIonicdV = 0;
+  double epsIonicdVdV = 0;
+  double alphaLR2 = 0;
+  double alphaLRdT = 0.0;
+  double alphaLRdTdT = 0.0;
+  double alphaLRdV = 0.0;
+  double XLR = 0;
+  double solventDiElectricConstant = 0;
+  double solventDiElectricConstantdT = 0.0;
+  double solventDiElectricConstantdTdT = 0;
+  double shieldingParameter = 0;
+  double gamma = 0;
+  double diElectricConstantdV = 0;
+  double diElectricConstantdVdV = 0;
+  double alphaLRdVdV = 0;
+  double diElectricConstantdT = 0;
+  double diElectricConstantdTdT = 0.0;
+  double diElectricConstantdTdV = 0;
   neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface electrolyteMixingRule;
-  double sr2On = 1.0, lrOn = 1.0, bornOn = 1.0;
-  static Logger logger = LogManager.getLogger(PhaseModifiedFurstElectrolyteEosMod2004.class);
+  double sr2On = 1.0;
+  double lrOn = 1.0;
+  double bornOn = 1.0;
   // double gammLRdV=0.0;
   // PhaseInterface[] refPhase; // = new PhaseInterface[10];
 
@@ -184,7 +208,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * @return a double
    */
   public double calcSolventDiElectricConstant(double temperature) {
-    double ans1 = 0.0, ans2 = 1e-50;
+    double ans1 = 0.0;
+    double ans2 = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
         ans1 += componentArray[i].getNumberOfMolesInPhase()
@@ -204,7 +229,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * @return a double
    */
   public double calcSolventDiElectricConstantdT(double temperature) {
-    double ans1 = 0.0, ans2 = 1e-50;
+    double ans1 = 0.0;
+    double ans2 = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
         ans1 += componentArray[i].getNumberOfMolesInPhase()
@@ -224,7 +250,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * @return a double
    */
   public double calcSolventDiElectricConstantdTdT(double temperature) {
-    double ans1 = 0.0, ans2 = 1e-50;
+    double ans1 = 0.0;
+    double ans2 = 1e-50;
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
         ans1 += componentArray[i].getNumberOfMolesInPhase()
@@ -408,7 +435,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    */
   public double calcShieldingParameter() {
     // if(phaseType==1) return 0.0;
-    double df = 0, f = 0;
+    double df = 0;
+    double f = 0;
     int ions = 0;
     int iterations = 0;
     gamma = 1e10;
@@ -485,8 +513,12 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
       BonV = 1.0 - 1.0e-6;
     }
     double BonVold = BonV;
-    double Btemp = 0, h = 0, dh = 0, dhh = 0;
-    double d1 = 0, d2 = 0;
+    double Btemp = 0;
+    double h = 0;
+    double dh = 0;
+    double dhh = 0;
+    double d1 = 0;
+    double d2 = 0;
     Btemp = getB();
     if (Btemp <= 0) {
       logger.info("b negative in volume calc");

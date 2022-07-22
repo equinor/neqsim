@@ -24,15 +24,28 @@ abstract class Flash extends BaseOperation {
 
   public double[] minGibsPhaseLogZ;
   public double[] minGibsLogFugCoef;
-  int i = 0, j = 0, iterations = 0, maxNumberOfIterations = 100;
-  double gibbsEnergy = 0, gibbsEnergyOld = 0;
-  double Kold = 0, deviation = 0, g0 = 0, g1 = 0;
-  double lnOldOldOldK[], lnOldOldK[], lnK[], lnOldK[];
-  double oldoldDeltalnK[], oldDeltalnK[], deltalnK[];
-  double tm[];
+  int i = 0;
+  int j = 0;
+  int iterations = 0;
+  int maxNumberOfIterations = 100;
+  double gibbsEnergy = 0;
+  double gibbsEnergyOld = 0;
+  double Kold = 0;
+  double deviation = 0;
+  double g0 = 0;
+  double g1 = 0;
+  double[] lnOldOldOldK;
+  double[] lnOldOldK;
+  double[] lnK;
+  double[] lnOldK;
+  double[] oldoldDeltalnK;
+  double[] oldDeltalnK;
+  double[] deltalnK;
+  double[] tm;
   int lowestGibbsEnergyPhase = 0;
   sysNewtonRhapsonTPflash secondOrderSolver;
-  protected boolean solidCheck = false, stabilityCheck = false;
+  protected boolean solidCheck = false;
+  protected boolean stabilityCheck = false;
   boolean findLowesGibsPhaseIsChecked = false;
 
   /**
@@ -94,7 +107,8 @@ abstract class Flash extends BaseOperation {
     Matrix f = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
     Matrix df = null;
     int maxiterations = 50;
-    double fNorm = 1.0e10, fNormOld = 0.0;
+    double fNorm = 1.0e10;
+    double fNormOld = 0.0;
     for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
       d[i] = minGibsPhaseLogZ[i] + minGibsLogFugCoef[i];
     }
@@ -166,8 +180,11 @@ abstract class Flash extends BaseOperation {
             break;
           }
           if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis) {
-            double vec1 = 0.0, vec2 = 0.0, prod1 = 0.0, prod2 = 0.0;
+            double vec1 = 0.0;
 
+            double vec2 = 0.0;
+            double prod1 = 0.0;
+            double prod2 = 0.0;
             for (i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
               vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
               vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);

@@ -17,10 +17,10 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version $Id: $Id
  */
 public class FluidBoundaryReactiveSolver extends FluidBoundarySolver {
-    /**
-     * <p>
-     * Constructor for FluidBoundaryReactiveSolver.
-     * </p>
-     */
-    public FluidBoundaryReactiveSolver() {}
+  /**
+   * <p>
+   * Constructor for FluidBoundaryReactiveSolver.
+   * </p>
+   */
+  public FluidBoundaryReactiveSolver() {}
 }

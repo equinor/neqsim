@@ -15,12 +15,12 @@ package neqsim.util.unit;
  * @version $Id: $Id
  */
 public class TimeUnit extends neqsim.util.unit.BaseUnit {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for TimeUnit.
-     * </p>
-     */
-    public TimeUnit() {}
+  /**
+   * <p>
+   * Constructor for TimeUnit.
+   * </p>
+   */
+  public TimeUnit() {}
 }

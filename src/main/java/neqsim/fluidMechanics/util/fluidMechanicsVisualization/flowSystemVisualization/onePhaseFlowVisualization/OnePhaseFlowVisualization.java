@@ -15,23 +15,23 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisuali
  * @version $Id: $Id
  */
 public class OnePhaseFlowVisualization extends
-        neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
-    /**
-     * <p>
-     * Constructor for OnePhaseFlowVisualization.
-     * </p>
-     */
-    public OnePhaseFlowVisualization() {}
+    neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
+  /**
+   * <p>
+   * Constructor for OnePhaseFlowVisualization.
+   * </p>
+   */
+  public OnePhaseFlowVisualization() {}
 
-    /**
-     * <p>
-     * Constructor for OnePhaseFlowVisualization.
-     * </p>
-     *
-     * @param nodes a int
-     * @param timeSteps a int
-     */
-    public OnePhaseFlowVisualization(int nodes, int timeSteps) {
-        super(nodes, timeSteps);
-    }
+  /**
+   * <p>
+   * Constructor for OnePhaseFlowVisualization.
+   * </p>
+   *
+   * @param nodes a int
+   * @param timeSteps a int
+   */
+  public OnePhaseFlowVisualization(int nodes, int timeSteps) {
+    super(nodes, timeSteps);
+  }
 }

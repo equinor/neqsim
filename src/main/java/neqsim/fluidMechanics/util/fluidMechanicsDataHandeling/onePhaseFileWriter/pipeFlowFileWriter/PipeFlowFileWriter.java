@@ -17,12 +17,12 @@ import neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.onePhaseFileWriter
  * @version $Id: $Id
  */
 public class PipeFlowFileWriter extends OnePhaseFileWriter {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for PipeFlowFileWriter.
-     * </p>
-     */
-    public PipeFlowFileWriter() {}
+  /**
+   * <p>
+   * Constructor for PipeFlowFileWriter.
+   * </p>
+   */
+  public PipeFlowFileWriter() {}
 }

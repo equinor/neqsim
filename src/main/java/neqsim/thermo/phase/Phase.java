@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * @author Even Solbraa
  */
-
 abstract class Phase implements PhaseInterface {
   private static final long serialVersionUID = 1000;
 
@@ -69,8 +68,7 @@ abstract class Phase implements PhaseInterface {
    *
    * @param phase a {@link neqsim.thermo.phase.Phase} object
    */
-  public Phase(Phase phase) {
-  }
+  public Phase(Phase phase) {}
 
   /** {@inheritDoc} */
   @Override
@@ -168,15 +166,15 @@ abstract class Phase implements PhaseInterface {
     if (numberOfMolesInPhase < 0.0 || getComponent(component).getNumberOfMolesInPhase() < 0.0) {
       String msg = "Negative number of moles in phase.";
       logger.error(msg);
-      neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException(this,
-          "addMolesChemReac", msg);
+      neqsim.util.exception.InvalidInputException e =
+          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", msg);
       throw new RuntimeException(e);
     }
     if (getComponent(component).getNumberOfMolesInPhase() < 0.0) {
       String msg = "Negative number of moles of component " + component;
       logger.error(msg);
-      neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException(this,
-          "addMolesChemReac", msg);
+      neqsim.util.exception.InvalidInputException e =
+          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", msg);
       throw new RuntimeException(e);
     }
   }
@@ -281,7 +279,8 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public final double getPressure(String unit) {
-    neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(getPressure(), "bara");
+    neqsim.util.unit.PressureUnit presConversion =
+        new neqsim.util.unit.PressureUnit(getPressure(), "bara");
     return presConversion.getValue(unit);
   }
 
@@ -504,11 +503,11 @@ abstract class Phase implements PhaseInterface {
    * calcA.
    * </p>
    *
-   * @param comp        a int
-   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param comp a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure    a double
-   * @param numbcomp    a int
+   * @param pressure a double
+   * @param numbcomp a int
    * @return a double
    */
   public double calcA(int comp, PhaseInterface phase, double temperature, double pressure,
@@ -1210,7 +1209,7 @@ abstract class Phase implements PhaseInterface {
    * </p>
    *
    * @param onlyPure a boolean
-   * @param name     a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    */
   public void initRefPhases(boolean onlyPure, String name) {
     refPhase = new PhaseInterface[numberOfComponents];
@@ -1264,7 +1263,7 @@ abstract class Phase implements PhaseInterface {
    * getLogPureComponentFugacity.
    * </p>
    *
-   * @param k    a int
+   * @param k a int
    * @param pure a boolean
    * @return a double
    */
@@ -1452,8 +1451,8 @@ abstract class Phase implements PhaseInterface {
         ions += getComponent(j).getx();
       }
     }
-    return -Math.log(oldFug * getComponent(watNumb).getx() / pureFug)
-        * getComponent(watNumb).getx() / ions;
+    return -Math.log(oldFug * getComponent(watNumb).getx() / pureFug) * getComponent(watNumb).getx()
+        / ions;
   }
 
   // public double getOsmoticCoefficient(int watNumb, String refState){
@@ -1815,8 +1814,7 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
-      String[][] mixRule, double[][] intparam) {
-  }
+      String[][] mixRule, double[][] intparam) {}
 
   /** {@inheritDoc} */
   @Override
@@ -1901,8 +1899,7 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRuleGEModel(String name) {
-  }
+  public void setMixingRuleGEModel(String name) {}
 
   /** {@inheritDoc} */
   @Override
@@ -2093,7 +2090,8 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity_AGA8() {
-    neqsim.thermo.util.GERG.NeqSimAGA8Detail test = new neqsim.thermo.util.GERG.NeqSimAGA8Detail(this);
+    neqsim.thermo.util.GERG.NeqSimAGA8Detail test =
+        new neqsim.thermo.util.GERG.NeqSimAGA8Detail(this);
     return test.getDensity();
   }
 

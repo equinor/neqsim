@@ -18,21 +18,21 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidBoundaryNodeReactive extends FluidBoundaryNode {
-    /**
-     * <p>
-     * Constructor for FluidBoundaryNodeReactive.
-     * </p>
-     */
-    public FluidBoundaryNodeReactive() {}
+  /**
+   * <p>
+   * Constructor for FluidBoundaryNodeReactive.
+   * </p>
+   */
+  public FluidBoundaryNodeReactive() {}
 
-    /**
-     * <p>
-     * Constructor for FluidBoundaryNodeReactive.
-     * </p>
-     *
-     * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public FluidBoundaryNodeReactive(SystemInterface system) {
-        super(system);
-    }
+  /**
+   * <p>
+   * Constructor for FluidBoundaryNodeReactive.
+   * </p>
+   *
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public FluidBoundaryNodeReactive(SystemInterface system) {
+    super(system);
+  }
 }

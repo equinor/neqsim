@@ -17,29 +17,29 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidBoundaryNode implements FluidBoundaryNodeInterface {
-    protected SystemInterface system;
+  protected SystemInterface system;
 
-    /**
-     * <p>
-     * Constructor for FluidBoundaryNode.
-     * </p>
-     */
-    public FluidBoundaryNode() {}
+  /**
+   * <p>
+   * Constructor for FluidBoundaryNode.
+   * </p>
+   */
+  public FluidBoundaryNode() {}
 
-    /**
-     * <p>
-     * Constructor for FluidBoundaryNode.
-     * </p>
-     *
-     * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public FluidBoundaryNode(SystemInterface system) {
-        this.system = system.clone();
-    }
+  /**
+   * <p>
+   * Constructor for FluidBoundaryNode.
+   * </p>
+   *
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public FluidBoundaryNode(SystemInterface system) {
+    this.system = system.clone();
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public SystemInterface getBulkSystem() {
-        return system;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public SystemInterface getBulkSystem() {
+    return system;
+  }
 }

@@ -24,70 +24,70 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidBoundarySystemReactive extends FluidBoundarySystem {
-    /**
-     * <p>
-     * Constructor for FluidBoundarySystemReactive.
-     * </p>
-     */
-    public FluidBoundarySystemReactive() {}
+  /**
+   * <p>
+   * Constructor for FluidBoundarySystemReactive.
+   * </p>
+   */
+  public FluidBoundarySystemReactive() {}
 
-    /**
-     * <p>
-     * Constructor for FluidBoundarySystemReactive.
-     * </p>
-     *
-     * @param boundary a
-     *        {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface}
-     *        object
-     */
-    public FluidBoundarySystemReactive(FluidBoundaryInterface boundary) {
-        super(boundary);
-        reactive = true;
+  /**
+   * <p>
+   * Constructor for FluidBoundarySystemReactive.
+   * </p>
+   *
+   * @param boundary a
+   *        {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface}
+   *        object
+   */
+  public FluidBoundarySystemReactive(FluidBoundaryInterface boundary) {
+    super(boundary);
+    reactive = true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void createSystem() {
+    nodes = new FluidBoundaryNodeReactive[numberOfNodes];
+    super.createSystem();
+
+    for (int i = 0; i < numberOfNodes; i++) {
+      nodes[i] = new FluidBoundaryNodeReactive(boundary.getInterphaseSystem());
     }
+    System.out.println("system created...");
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void createSystem() {
-        nodes = new FluidBoundaryNodeReactive[numberOfNodes];
-        super.createSystem();
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String[] args) {
+    SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
+    PipeData pipe1 = new PipeData(10.0, 0.025);
 
-        for (int i = 0; i < numberOfNodes; i++) {
-            nodes[i] = new FluidBoundaryNodeReactive(boundary.getInterphaseSystem());
-        }
-        System.out.println("system created...");
-    }
+    testSystem.addComponent("methane", 0.061152181, 0);
+    testSystem.addComponent("water", 0.1862204876, 1);
+    testSystem.chemicalReactionInit();
+    testSystem.setMixingRule(2);
+    testSystem.init_x_y();
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
-        PipeData pipe1 = new PipeData(10.0, 0.025);
+    FlowNodeInterface test = new StratifiedFlowNode(testSystem, pipe1);
+    test.setInterphaseModelType(10);
 
-        testSystem.addComponent("methane", 0.061152181, 0);
-        testSystem.addComponent("water", 0.1862204876, 1);
-        testSystem.chemicalReactionInit();
-        testSystem.setMixingRule(2);
-        testSystem.init_x_y();
+    test.initFlowCalc();
+    test.calcFluxes();
 
-        FlowNodeInterface test = new StratifiedFlowNode(testSystem, pipe1);
-        test.setInterphaseModelType(10);
-
-        test.initFlowCalc();
-        test.calcFluxes();
-
-        test.getFluidBoundary().setEnhancementType(0);
-        test.calcFluxes();
-        /*
-         * test.getFluidBoundary().getEnhancementFactor().getNumericInterface(). createSystem();
-         * test.getFluidBoundary().getEnhancementFactor().getNumericInterface().solve();
-         * System.out.println("enhancement " +
-         * test.getFluidBoundary().getEnhancementFactor().getNumericInterface().
-         * getEnhancementFactor(0));
-         **/
-    }
+    test.getFluidBoundary().setEnhancementType(0);
+    test.calcFluxes();
+    /*
+     * test.getFluidBoundary().getEnhancementFactor().getNumericInterface(). createSystem();
+     * test.getFluidBoundary().getEnhancementFactor().getNumericInterface().solve();
+     * System.out.println("enhancement " +
+     * test.getFluidBoundary().getEnhancementFactor().getNumericInterface().
+     * getEnhancementFactor(0));
+     **/
+  }
 }

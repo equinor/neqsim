@@ -22,27 +22,27 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @since 2.2.3
  */
 public class TestISO1982 {
-    static Logger logger = LogManager.getLogger(TestISO1982.class);
+  static Logger logger = LogManager.getLogger(TestISO1982.class);
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkEos(290.15, 30.00);
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String args[]) {
+    SystemInterface testSystem = new SystemSrkEos(290.15, 30.00);
 
-        testSystem.addComponent("methane", 50);
-        testSystem.addComponent("ethane", 50);
-        testSystem.addComponent("propane", 50);
-        testSystem.createDatabase(true);
-        testSystem.setMixingRule(2);
+    testSystem.addComponent("methane", 50);
+    testSystem.addComponent("ethane", 50);
+    testSystem.addComponent("propane", 50);
+    testSystem.createDatabase(true);
+    testSystem.setMixingRule(2);
 
-        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        testOps.TPflash();
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
 
-        logger.info("ISO calc: " + testSystem.getStandard("ISO1982").getValue("Energy", "KJ/Sm3"));
-    }
+    logger.info("ISO calc: " + testSystem.getStandard("ISO1982").getValue("Energy", "KJ/Sm3"));
+  }
 }

@@ -107,10 +107,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
               dataSet2.close();
             } catch (Exception e) {
               logger.error(e.getMessage());
-            }
-          }
-          // System.out.println(names);
-          // System.out.println(stocCoef);
           nameArray = new String[names.size()];
           coefArray = new double[nameArray.length];
           for (int i = 0; i < nameArray.length; i++) {
