@@ -1,5 +1,7 @@
 package neqsim.processSimulation.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -22,6 +24,8 @@ public class shtokman_MEG {
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String args[]) {
+    Logger logger = LogManager.getLogger(shtokman_MEG.class);
+
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 42.0), 130.00);
     testSystem.addComponent("methane", 1.0);
