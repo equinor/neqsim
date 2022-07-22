@@ -21,6 +21,9 @@ import neqsim.util.NamedBaseClass;
 public class ControllerDeviceBaseClass extends NamedBaseClass implements ControllerDeviceInterface {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * Unique identifier of which solve/run call was last called successfully.
+   */
   protected UUID calcIdentifier;
 
   private String unit = "[?]";
@@ -55,7 +58,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double percentSignal, double dt, UUID id) {
+  public void runTransient(double initResponse, double dt, UUID id) {
     if (isReverseActing()) {
       propConstant = -1;
     }
@@ -67,7 +70,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
     TintValue += Ksp / Tint * error * dt;
     double TderivValue = Ksp * Tderiv * (error - oldError) / dt;
-    response = percentSignal + propConstant * (Ksp * error + TintValue + TderivValue);
+    response = initResponse + propConstant * (Ksp * error + TintValue + TderivValue);
     // System.out.println("error " + error + " %");
     // error = device.getMeasuredPercentValue()-controlValue;
     // double regulatorSignal = error*1.0;

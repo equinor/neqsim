@@ -320,9 +320,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return getThermoSystem().getPressure();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     thermoSystem = inStream.getThermoSystem().clone();

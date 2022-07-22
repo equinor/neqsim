@@ -22,6 +22,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public abstract class FlowSystem implements FlowSystemInterface, java.io.Serializable {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * Unique identifier of which solve/run call was last called successfully.
+   */
   protected UUID calcIdentifier;
 
   protected FlowNodeInterface[] flowNode;

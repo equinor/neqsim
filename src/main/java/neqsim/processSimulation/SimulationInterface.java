@@ -61,7 +61,7 @@ public interface SimulationInterface extends NamedInterface, Runnable {
    * run
    * </p>
    * In this method all thermodynamic and unit operations will be calculated in a steady state
-   * calculation.
+   * calculation. Sets calc identifier UUID.
    */
   @Override
   public default void run() {
@@ -73,7 +73,7 @@ public interface SimulationInterface extends NamedInterface, Runnable {
    * run
    * </p>
    * In this method all thermodynamic and unit operations will be calculated in a steady state
-   * calculation.
+   * calculation. Sets calc identifier UUID.
    *
    * @param value Calc identifier UUID to set.
    */
@@ -85,6 +85,7 @@ public interface SimulationInterface extends NamedInterface, Runnable {
    * </p>
    * This method calculates thermodynamic and unit operations using difference equations if
    * available and calculateSteadyState is true. Use setCalculateSteadyState to set the parameter.
+   * Sets calc identifier UUID.
    *
    * @param dt Delta time [s]
    */
@@ -98,6 +99,7 @@ public interface SimulationInterface extends NamedInterface, Runnable {
    * </p>
    * This method calculates thermodynamic and unit operations using difference equations if
    * available and calculateSteadyState is true. Use setCalculateSteadyState to set the parameter.
+   * Sets calc identifier UUID.
    *
    * @param dt Delta time [s]
    * @param id Calculation identifier

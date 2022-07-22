@@ -60,26 +60,28 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
-   * run.
+   * runTransient.
    * </p>
+   * Calculates controller output. Sets calc identifier UUID.
    *
-   * @param signal a double
+   * @param initResponse Init value for response calculation
    * @param dt Delta time [s]
    */
-  public default void runTransient(double signal, double dt) {
-    runTransient(signal, dt, UUID.randomUUID());
+  public default void runTransient(double initResponse, double dt) {
+    runTransient(initResponse, dt, UUID.randomUUID());
   }
 
   /**
    * <p>
-   * run.
+   * runTransient.
    * </p>
+   * Calculates controller output. Sets calc identifier UUID.
    *
-   * @param signal a double
+   * @param initResponse Init value for response calculation
    * @param dt Delta time [s]
    * @param id Calculation identifier
    */
-  public void runTransient(double signal, double dt, UUID id);
+  public void runTransient(double initResponse, double dt, UUID id);
 
   /**
    * <p>

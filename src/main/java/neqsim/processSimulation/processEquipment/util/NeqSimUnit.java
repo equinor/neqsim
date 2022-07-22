@@ -75,6 +75,7 @@ public class NeqSimUnit extends TwoPortEquipment {
       runStratified();
     }
     // outStream.setThermoSystem(thermoSystem);
+    outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 

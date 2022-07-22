@@ -9,6 +9,9 @@ import neqsim.util.NamedBaseClass;
 public abstract class SimulationBaseClass extends NamedBaseClass implements SimulationInterface {
   private static final long serialVersionUID = 1L;
 
+  /**
+   * Unique identifier of which solve/run call was last called successfully.
+   */
   protected UUID calcIdentifier;
   protected boolean calculateSteadyState = true;
   protected double time = 0;
