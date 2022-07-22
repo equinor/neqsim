@@ -55,7 +55,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     chemicalReactionList.clear();
     ArrayList<String> names = new ArrayList<String>();
     ArrayList<String> stocCoef = new ArrayList<String>();
-    double r = 0, refT = 0, actH;
+    double r = 0;
+    double refT = 0;
+    double actH;
     double[] K = new double[4];
     boolean useReaction = false;
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
