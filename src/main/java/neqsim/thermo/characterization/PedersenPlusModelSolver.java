@@ -135,7 +135,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
    */
   public void setfvecCD() {
     double densTBO =
-        characterizeClass.PVTsimDensities[characterizeClass.getFirstPlusFractionNumber() - 6];// 0.71;//characterizeClass.getDensLastTBP();
+        characterizeClass.PVTsimDensities[characterizeClass.getFirstPlusFractionNumber() - 6]; // 0.71;//characterizeClass.getDensLastTBP();
     fvecCD.set(0, 0, (characterizeClass.getCoef(2) + characterizeClass.getCoef(3)
         * Math.log(characterizeClass.getFirstPlusFractionNumber() - 1)) - densTBO);
     double temp = 0.0, temp2 = 0;
