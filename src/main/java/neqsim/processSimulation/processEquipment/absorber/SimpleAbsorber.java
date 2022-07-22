@@ -22,7 +22,8 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   StreamInterface[] outStream = new Stream[2];
   StreamInterface[] inStream = new Stream[2];
   SystemInterface system;
-  protected double temperatureOut = 0, dT = 0.0;
+  protected double temperatureOut = 0;
+  protected double dT = 0.0;
   private int numberOfStages = 5;
   private double numberOfTheoreticalStages = 3.0;
   double absorptionEfficiency = 0.5;
@@ -54,7 +55,10 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * 
+   * <p>
+   * Constructor for SimpleAbsorber.
+   * </p>
+   *
    * @param name name of absorber
    */
   public SimpleAbsorber(String name) {

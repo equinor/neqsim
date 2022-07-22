@@ -27,7 +27,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class SimpleTEGAbsorber extends SimpleAbsorber {
   private static final long serialVersionUID = 1000;
 
-  ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
+  protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   protected double pressure = 0;
   protected int numberOfInputStreams = 0;
   protected StreamInterface mixedStream;
