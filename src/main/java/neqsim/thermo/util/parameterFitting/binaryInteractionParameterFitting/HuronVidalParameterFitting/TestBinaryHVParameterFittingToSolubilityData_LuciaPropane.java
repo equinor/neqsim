@@ -38,27 +38,26 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane {
     NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
     ResultSet dataSet = database.getResultSet(
         "SELECT * FROM LuciaData8 WHERE Component='nitrogen' AND Temperature>270.0 AND L2>0.000000001"); // AND
-                                                                                                        // Temperature<600
-                                                                                                        // AND
-                                                                                                        // Pressure<7000000000
-                                                                                                        // AND
-                                                                                                        // L2<>NULL
-                                                                                                        // AND
-                                                                                                        // L2>0.000000001
-                                                                                                        // ORDER
-                                                                                                        // BY
+                                                                                                         // Temperature<600
+                                                                                                         // AND
+                                                                                                         // Pressure<7000000000
+                                                                                                         // AND
+                                                                                                         // L2<>NULL
+                                                                                                         // AND
+                                                                                                         // L2>0.000000001
+                                                                                                         // ORDER
+                                                                                                         // BY
                                                                                                          // Temperature,Pressure");
-                                                                                                         // //
-                                                                                                        // AND
-                                                                                                        // Reference='Houghton1957'
-                                                                                                        // AND
-                                                                                                        // Reference<>'Nighswander1989'
-                                                                                                        // AND
-                                                                                                        // Temperature>278.15
-                                                                                                        // AND
-                                                                                                        // Temperature<383.15
-                                                                                                        // AND
-                                                                                                        // Pressure<60.01325");
+                                                                                                         // AND
+                                                                                                         // Reference='Houghton1957'
+                                                                                                         // AND
+                                                                                                         // Reference<>'Nighswander1989'
+                                                                                                         // AND
+                                                                                                         // Temperature>278.15
+                                                                                                         // AND
+                                                                                                         // Temperature<383.15
+                                                                                                         // AND
+                                                                                                         // Pressure<60.01325");
 
     try {
       int p = 0;
@@ -98,31 +97,30 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane {
 
     dataSet = database.getResultSet(
         "SELECT * FROM LuciaData8 WHERE Component='nitrogen' AND ID>=1014 AND ID<=1045 AND Temperature<373.0"); // AND
-                                                                                                               // ID<3000
-                                                                                                               // AND
-                                                                                                               // Temperature>250
-                                                                                                               // AND
-                                                                                                               // Pressure<7000000000
-                                                                                                               // AND
-                                                                                                               // Temperature<600
-                                                                                                               // AND
-                                                                                                               // Y<>NULL
-                                                                                                               // AND
-                                                                                                               // Y>0.0000000001
-                                                                                                               // ORDER
-                                                                                                               // BY
+                                                                                                                // ID<3000
+                                                                                                                // AND
+                                                                                                                // Temperature>250
+                                                                                                                // AND
+                                                                                                                // Pressure<7000000000
+                                                                                                                // AND
+                                                                                                                // Temperature<600
+                                                                                                                // AND
+                                                                                                                // Y<>NULL
+                                                                                                                // AND
+                                                                                                                // Y>0.0000000001
+                                                                                                                // ORDER
+                                                                                                                // BY
                                                                                                                 // Temperature,Pressure");
-                                                                                                                // //
-                                                                                                               // AND
-                                                                                                               // Reference='Houghton1957'
-                                                                                                               // AND
-                                                                                                               // Reference<>'Nighswander1989'
-                                                                                                               // AND
-                                                                                                               // Temperature>278.15
-                                                                                                               // AND
-                                                                                                               // Temperature<383.15
-                                                                                                               // AND
-                                                                                                               // Pressure<60.01325");
+                                                                                                                // AND
+                                                                                                                // Reference='Houghton1957'
+                                                                                                                // AND
+                                                                                                                // Reference<>'Nighswander1989'
+                                                                                                                // AND
+                                                                                                                // Temperature>278.15
+                                                                                                                // AND
+                                                                                                                // Temperature<383.15
+                                                                                                                // AND
+                                                                                                                // Pressure<60.01325");
     try {
       int p = 0;
       logger.info("adding....");

@@ -445,7 +445,7 @@ public class TPmultiflash extends TPflash {
           df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
               system.getPhases()[0].getNumberOfComponents());
           identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents()); // ,
-                                                                                                    // system.getPhases()[0].getNumberOfComponents());
+                                                                                                     // system.getPhases()[0].getNumberOfComponents());
           // secondOrderStabilityAnalysis = true;
           // }
 
@@ -465,10 +465,10 @@ public class TPmultiflash extends TPflash {
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
                 df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                     * clonedSystem.get(0).getPhases()[1].getComponents()[i].getdfugdn(k)); // *
-                                                                                          // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                                                                                           // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               } else {
                 df.set(i, k, 0); // *
-                                // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                                 // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               }
             }
           }
@@ -773,7 +773,7 @@ public class TPmultiflash extends TPflash {
           df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
               system.getPhases()[0].getNumberOfComponents());
           identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents()); // ,
-                                                                                                    // system.getPhases()[0].getNumberOfComponents());
+                                                                                                     // system.getPhases()[0].getNumberOfComponents());
           // secondOrderStabilityAnalysis = true;
           // }
 
@@ -792,10 +792,10 @@ public class TPmultiflash extends TPflash {
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
                 df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                     * (clonedSystem.get(j)).getPhases()[1].getComponents()[i].getdfugdn(k)); // *
-                                                                                            // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                                                                                             // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               } else {
                 df.set(i, k, 0); // *
-                                // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                                 // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               }
             }
           }

@@ -13,9 +13,21 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class sysNewtonRhapson implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  int neq = 0, iter = 0;
-  int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
-  double beta = 0, ds = 0, dTmax = 1, dPmax = 1, avscp = 0.1, TC1 = 0, TC2 = 0, PC1 = 0, PC2 = 0;
+  int neq = 0;
+  int iter = 0;
+  int ic02p = -100;
+  int ic03p = -100;
+  int testcrit = 0;
+  int npCrit = 0;
+  double beta = 0;
+  double ds = 0;
+  double dTmax = 1;
+  double dPmax = 1;
+  double avscp = 0.1;
+  double TC1 = 0;
+  double TC2 = 0;
+  double PC1 = 0;
+  double PC2 = 0;
   Matrix Jac;
   Matrix fvec;
   Matrix u;
@@ -459,11 +471,12 @@ public class sysNewtonRhapson implements java.io.Serializable {
    *
    * @param args an array of {@link java.lang.String} objects
    */
-  public static void main(String args[]) {
+  public static void main(String[] args) {
     /*
      * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4};
      * test.setx(constants); while (test.nonsol()>1.0e-8) { constants=test.getx();
      * System.out.println(constants[0]+" "+constants[1]); } test.nonsol(); constants=test.getf();
      * System.out.println(constants[0]+" "+constants[1]); System.exit(0);
-     */ }
+     */
+  }
 }

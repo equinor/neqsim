@@ -20,11 +20,17 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
-  double hcpatot = 1.0, hcpatotdT = 0.0, hcpatotdTdT = 0.0;
+  double hcpatot = 1.0;
+  double hcpatotdT = 0.0;
+  double hcpatotdTdT = 0.0;
   int cpaon = 1;
-
   int totalNumberOfAccociationSites = 0;
-  double gcpav = 0.0, lngcpa = 0.0, gcpavv = 1.0, gcpavvv = 0.0, gcpa = 0.0;
+  double gcpav = 0.0;
+  double lngcpa = 0.0;
+  double gcpavv = 1.0;
+  double gcpavvv = 0.0;
+  double gcpa = 0.0;
+
   int[][][] selfAccociationScheme = null;
   int[][][][] crossAccociationScheme = null;
   static Logger logger = LogManager.getLogger(PhasePCSAFTa.class);
@@ -383,7 +389,9 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
       BonV = 1.0 - 1.0e-6;
     }
     double BonVold = BonV;
-    double Btemp = 0, h = 0, dh = 0;
+    double Btemp = 0;
+    double h = 0;
+    double dh = 0;
     // double gvvv = 0, fvvv = 0, dhh = 0, d2 = 0;
     double d1 = 0;
     Btemp = getB();

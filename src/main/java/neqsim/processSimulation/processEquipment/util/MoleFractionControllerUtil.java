@@ -21,7 +21,9 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   SystemInterface thermoSystem;
   ThermodynamicOperations thermoOps;
   String compName = null;
-  double moleFrac = 1.0, molesChange = 0.0, moleFractionReductionRatio = 0.0;
+  double moleFrac = 1.0;
+  double molesChange = 0.0;
+  double moleFractionReductionRatio = 0.0;
   boolean moleFractionReduction = false;
 
   /**

@@ -64,21 +64,21 @@ public class TPgradientFlash extends Flash {
    */
   public void setfvec() {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      fvec.set(i, 0, Math
-          .log(localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
+      fvec.set(i, 0,
+          Math.log(localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
               * localSystem.getPhases()[0].getComponents()[i].getx() * localSystem.getPressure())
-          - Math.log(tempSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
+              - Math.log(tempSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                   * tempSystem.getPhases()[0].getComponents()[i].getx() * tempSystem.getPressure())
               - tempSystem.getPhases()[0].getComponents()[i].getMolarMass()
                   * neqsim.thermo.ThermodynamicConstantsInterface.gravity * deltaHeight
                   / neqsim.thermo.ThermodynamicConstantsInterface.R
                   / tempSystem.getPhase(0).getTemperature()
-              + tempSystem.getPhases()[0].getComponents()[i].getMolarMass() * (tempSystem
-                  .getPhases()[0].getEnthalpy()
-                  / tempSystem.getPhases()[0].getNumberOfMolesInPhase()
-                  / tempSystem.getPhase(0).getMolarMass()
-                  - tempSystem.getPhases()[0].getComponents()[i]
-                      .getEnthalpy(tempSystem.getPhase(0).getTemperature())
+              + tempSystem.getPhases()[0].getComponents()[i].getMolarMass()
+                  * (tempSystem.getPhases()[0].getEnthalpy()
+                      / tempSystem.getPhases()[0].getNumberOfMolesInPhase()
+                      / tempSystem.getPhase(0).getMolarMass()
+                      - tempSystem.getPhases()[0].getComponents()[i]
+                          .getEnthalpy(tempSystem.getPhase(0).getTemperature())
                           / tempSystem.getPhases()[0].getComponent(i).getNumberOfMolesInPhase()
                           / tempSystem.getPhase(0).getComponent(i).getMolarMass())
                   * deltaT / tempSystem.getPhase(0).getTemperature()
@@ -100,8 +100,9 @@ public class TPgradientFlash extends Flash {
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-        dij = i == j ? 1.0 : 0.0;// Kroneckers delta
-        tempJ = 1.0 / (localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
+        dij = i == j ? 1.0 : 0.0; // Kroneckers delta
+        tempJ = 1.0
+            / (localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                 * localSystem.getPhases()[0].getComponents()[i].getx() * localSystem.getPressure())
             * (localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient() * dij
                 * localSystem.getPressure()

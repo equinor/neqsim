@@ -1,7 +1,5 @@
 package neqsim.processSimulation.util.example;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
@@ -22,8 +20,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @since 2.2.3
  */
 public class multiThreadTest {
-  static Logger logger = LogManager.getLogger(multiThreadTest.class);
-
   /**
    * This method is just meant to test the thermo package.
    *
@@ -130,7 +126,7 @@ public class multiThreadTest {
         processThread1.join(1000);
         processThread2.join(1000);
       } catch (Exception e) {
-        logger.error(e.getMessage());
+        e.printStackTrace();
       }
     }
     // } while (processThread1.isAlive()); // && processThread2.isAlive());

@@ -21,11 +21,12 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
 public class FluidBoundarySolver implements FluidBoundarySolverInterface {
   FluidBoundarySystemInterface boundary;
   double xNew[][];
-  protected Matrix[] solMatrix, diffMatrix;
-  protected double a[];
-  protected double b[];
-  protected double c[];
-  protected double r[];
+  protected Matrix[] solMatrix;
+  protected Matrix[] diffMatrix;
+  protected double[] a;
+  protected double[] b;
+  protected double[] c;
+  protected double[] r;
   boolean reactive = false;
 
   /**
@@ -103,8 +104,8 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
         double dx = xinterphase - xbulk;
         double last = boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[j].getx();
         if (reactive) {
-          boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponents()[j]
-              .setx(last - dx - reacRates.get(j, 0)
+          boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponents()[j].setx(last - dx
+              - reacRates.get(j, 0)
                   / boundary.getNode(i).getBulkSystem().getPhases()[1].getPhysicalProperties()
                       .getEffectiveDiffusionCoefficient(j)
                   * Math.pow(boundary.getNodeLength(), 2.0));
@@ -234,7 +235,8 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
   @Override
   public void solve() {
     // double d[];
-    int iter = 0, iterTop = 0;
+    int iter = 0;
+    int iterTop = 0;
     double maxDiff = 0;
     // double maxDiffOld = 0;
     double diff = 0;

@@ -42,7 +42,10 @@ public class LinearProgrammingChemicalEquilibrium
   ComponentInterface[] components;
   double[] numbering;
   String[] elements;
-  int changes = 0, minChanges = 0, maxChanges = 0;
+  int changes = 0;
+  int minChanges = 0;
+  int maxChanges = 0;
+
   ChemicalReactionOperations operations;
 
   /**
@@ -353,11 +356,12 @@ public class LinearProgrammingChemicalEquilibrium
    */
   public double[] generateInitialEstimates(SystemInterface system, double[] bVector,
       double inertMoles, int phase) {
-    int i, j;
+    int i;
+    int j;
     double rhs = 0.0;
     Matrix mutemp =
         new Matrix(chemRefPot, 1).times(1.0 / (R * system.getPhase(phase).getTemperature())).copy();
-    double v[] = new double[components.length + 1];
+    double[] v = new double[components.length + 1];
     for (i = 0; i < components.length; i++) {
       v[i + 1] = mutemp.get(0, i);
     }
@@ -386,7 +390,7 @@ public class LinearProgrammingChemicalEquilibrium
     }
 
     int compNumb = system.getPhase(phase).getNumberOfComponents();
-    double lp_solution[] = new double[compNumb];
+    double[] lp_solution = new double[compNumb];
     double[] temp = optimal.getPoint();
     for (i = 0; i < compNumb - (compNumb - components.length); i++) {
       lp_solution[i] = temp[i + 1];

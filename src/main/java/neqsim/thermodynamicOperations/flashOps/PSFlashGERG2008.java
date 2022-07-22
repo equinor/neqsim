@@ -58,10 +58,12 @@ public class PSFlashGERG2008 extends QfuncFlash {
     /** {@inheritDoc} */
     @Override
     public double solveQ() {
-        double oldTemp = system.getTemperature(), nyTemp = system.getTemperature();
-        int iterations = 1;
-        double error = 1.0, erorOld = 10.0e10;
-        double factor = 0.8;
+      double oldTemp = system.getTemperature();
+      double nyTemp = system.getTemperature();
+      int iterations = 1;
+      double error = 1.0;
+      double erorOld = 10.0e10;
+      double factor = 0.8;
 
         boolean correctFactor = true;
         double newCorr = 1.0;

@@ -22,11 +22,15 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   double[] nVector;
   double[] n_mol;
   double d_n_t = 0;
-  int NSPEC = 2, NELE = 2;
+  int NSPEC = 2;
+  int NELE = 2;
   double R = 8.314;
   Matrix x_solve;
   double y_solve;
-  double n_t = 0.0, agemo = 0, kronDelt = 0;
+  double n_t = 0.0;
+  double agemo = 0;
+  double kronDelt = 0;
+
   ComponentInterface[] components;
   double[][] M_matrix = new double[NSPEC][NSPEC];
   Matrix M_Jama_matrix;
@@ -36,16 +40,16 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   Matrix dn_matrix;
   Matrix AMU_matrix;
   Matrix Alambda_matrix;
-  double d_n[] = new double[NSPEC];
-  double logactivityVec[] = new double[NSPEC];
+  double[] d_n = new double[NSPEC];
+  double[] logactivityVec = new double[NSPEC];
   double[] n0;
   double[][] A_matrix;
-  double chem_ref[];
+  double[] chem_ref;
   int waterNumb = 0;
   int upMoles = 0;
   // double chem_pot_dilute[];
   /// double chem_pot_pure[];
-  double b_element[];
+  double[] b_element;
   Matrix b_matrix;
 
   Matrix A_solve;
@@ -65,7 +69,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
    * @param phase a int
    */
-  public ChemicalEquilibrium(double[][] A_matrix, double b_element[], SystemInterface system,
+  public ChemicalEquilibrium(double[][] A_matrix, double[] b_element, SystemInterface system,
       ComponentInterface[] components, int phase) {
     this.system = system;
     phasenumb = phase;
@@ -269,7 +273,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * @return a boolean
    */
   public boolean solve() {
-    double error = 1e10, errOld = 1e10, thisError = 0;
+    double error = 1e10;
+    double errOld = 1e10;
+    double thisError = 0;
     double p = 1.0;
     // boolean negN = false;
     double maxError = 1e-8;
@@ -374,12 +380,14 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    */
   public double step() {
     double step = 1.0;
-    int i, check = 0;
+    int i;
+    int check = 0;
     double[] n_omega = new double[NSPEC];
     double[] chem_pot_omega = new double[NSPEC];
     double[] chem_pot = new double[NSPEC];
-    double G_1 = 0.0, G_0 = 0.0;
+    double G_1 = 0.0;
 
+    double G_0 = 0.0;
     for (i = 0; i < NSPEC; i++) {
       n_omega[i] = n_mol[i] + d_n[i];
       // System.out.println("nomega " + n_omega[i] );

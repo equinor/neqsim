@@ -14,9 +14,21 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
-    int neq = 0, iter = 0;
-    int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
-    double beta = 0, ds = 0, dTmax = 1, dPmax = 1, avscp = 0.1, TC1 = 0, TC2 = 0, PC1 = 0, PC2 = 0;
+    int neq = 0;
+    int iter = 0;
+    int ic02p = -100;
+    int ic03p = -100;
+    int testcrit = 0;
+    int npCrit = 0;
+    double beta = 0;
+    double ds = 0;
+    double dTmax = 1;
+    double dPmax = 1;
+    double avscp = 0.1;
+    double TC1 = 0;
+    double TC2 = 0;
+    double PC1 = 0;
+    double PC2 = 0;
     Matrix Jac;
     Matrix fvec;
     Matrix u;
@@ -50,19 +62,19 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
      * @param numberOfComponents a int
      */
     public sysNewtonRhapsonTPflashNew(SystemInterface system, int numberOfPhases,
-            int numberOfComponents) {
-        this.system = system;
-        this.numberOfComponents = numberOfComponents;
-        neq = numberOfComponents + 1;
-        Jac = new Matrix(neq, neq);
-        fvec = new Matrix(neq, 1);
-        u = new Matrix(neq, 1);
-        Xgij = new Matrix(neq, 4);
-        setu();
-        uold = u.copy();
-        // System.out.println("Spec : " +speceq);
-        solver = new newtonRhapson();
-        solver.setOrder(3);
+        int numberOfComponents) {
+      this.system = system;
+      this.numberOfComponents = numberOfComponents;
+      neq = numberOfComponents + 1;
+      Jac = new Matrix(neq, neq);
+      fvec = new Matrix(neq, 1);
+      u = new Matrix(neq, 1);
+      Xgij = new Matrix(neq, 4);
+      setu();
+      uold = u.copy();
+      // System.out.println("Spec : " +speceq);
+      solver = new newtonRhapson();
+      solver.setOrder(3);
     }
 
     /**
@@ -71,19 +83,19 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
      * </p>
      */
     public void setfvec() {
-        for (int i = 0; i < numberOfComponents; i++) {
-            fvec.set(i, 0, u.get(i, 0)
-                    + Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient()
-                            / system.getPhases()[0].getComponents()[i].getFugacityCoefficient()));
-        }
+      for (int i = 0; i < numberOfComponents; i++) {
+        fvec.set(i, 0,
+            u.get(i, 0) + Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient()
+                / system.getPhases()[0].getComponents()[i].getFugacityCoefficient()));
+      }
 
-        double fsum = 0.0;
-        for (int i = 0; i < numberOfComponents; i++) {
-            fsum = fsum + system.getPhases()[1].getComponents()[i].getx()
-                    - system.getPhases()[0].getComponents()[i].getx();
-        }
-        fvec.set(numberOfComponents, 0, fsum);
-        // fvec.print(0,20);
+      double fsum = 0.0;
+      for (int i = 0; i < numberOfComponents; i++) {
+        fsum = fsum + system.getPhases()[1].getComponents()[i].getx()
+            - system.getPhases()[0].getComponents()[i].getx();
+      }
+      fvec.set(numberOfComponents, 0, fsum);
+      // fvec.print(0,20);
     }
 
     /**
@@ -92,16 +104,18 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
      * </p>
      */
     public void setJac() {
-        Jac.timesEquals(0.0);
-        double dij = 0.0;
-        double[] dxidlnk = new double[numberOfComponents];
-        double[] dyidlnk = new double[numberOfComponents];
+      Jac.timesEquals(0.0);
+      double dij = 0.0;
+      double[] dxidlnk = new double[numberOfComponents];
+      double[] dyidlnk = new double[numberOfComponents];
 
-        double[] dxidbeta = new double[numberOfComponents];
-        double[] dyidbeta = new double[numberOfComponents];
+      double[] dxidbeta = new double[numberOfComponents];
+      double[] dyidbeta = new double[numberOfComponents];
 
-        double tempJ = 0.0, sumdyidbeta = 0, sumdxidbeta = 0;
-        int nofc = numberOfComponents;
+      double tempJ = 0.0;
+      double sumdyidbeta = 0;
+      double sumdxidbeta = 0;
+      int nofc = numberOfComponents;
         for (int i = 0; i < numberOfComponents; i++) {
             dxidlnk[i] = -system.getBeta() * system.getPhases()[0].getComponents()[i].getx()
                     * system.getPhases()[1].getComponents()[i].getx()

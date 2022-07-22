@@ -117,7 +117,8 @@ public abstract class NonEquilibriumFluidBoundary
    * </p>
    */
   public void setfvecMassTrans() {
-    double sumx = 0, sumy = 0;
+    double sumx = 0;
+    double sumy = 0;
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
       fvec.set(i, 0, Math
           .log((interphaseSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
@@ -156,7 +157,8 @@ public abstract class NonEquilibriumFluidBoundary
    * </p>
    */
   public void setfvecMassTrans2() {
-    double sumx = 0.0, sumy = 0.0;
+    double sumx = 0.0;
+    double sumy = 0.0;
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
       fvec.set(i, 0, Math
           .log((interphaseSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
@@ -232,7 +234,8 @@ public abstract class NonEquilibriumFluidBoundary
    * </p>
    */
   public void setJacMassTrans() {
-    double dij = 0, tempJ = 0;
+    double dij = 0;
+    double tempJ = 0;
     Jac.timesEquals(0.0);
 
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents() - 1; i++) {
@@ -300,7 +303,8 @@ public abstract class NonEquilibriumFluidBoundary
    * </p>
    */
   public void setJacMassTrans2() {
-    double dij = 0, tempJ = 0;
+    double dij = 0;
+    double tempJ = 0;
     Jac.timesEquals(0.0);
 
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -595,9 +599,12 @@ public abstract class NonEquilibriumFluidBoundary
     // interphaseSystem = bulkSystem.clone();
     initInterphaseSystem();
     init();
-    int iterOuter = 0, iterInner = 0;
-    double totalFluxOld = totalFlux, heatFlux = 0, oldHeatFlux = 0.0;
+    int iterOuter = 0;
+    int iterInner = 0;
+    double totalFluxOld = totalFlux;
 
+    double heatFlux = 0;
+    double oldHeatFlux = 0.0;
     if (heatTransferCalc) {
       this.heatTransSolve();
       heatFlux = this.getInterphaseHeatFlux(0);

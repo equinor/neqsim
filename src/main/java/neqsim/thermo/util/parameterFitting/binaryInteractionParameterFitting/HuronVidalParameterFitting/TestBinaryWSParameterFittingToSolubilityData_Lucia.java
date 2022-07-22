@@ -38,15 +38,15 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
     NeqSimDataBase database = new NeqSimDataBase();
     ResultSet dataSet = database.getResultSet(
         "SELECT * FROM LuciaData WHERE Component='methane' AND Temperature<520 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure"); // AND
-                                                                                                                                              // Reference='Houghton1957'
-                                                                                                                                              // AND
-                                                                                                                                              // Reference<>'Nighswander1989'
-                                                                                                                                              // AND
-                                                                                                                                              // Temperature>278.15
-                                                                                                                                              // AND
-                                                                                                                                              // Temperature<383.15
-                                                                                                                                              // AND
-                                                                                                                                              // Pressure<60.01325");
+                                                                                                                                               // Reference='Houghton1957'
+                                                                                                                                               // AND
+                                                                                                                                               // Reference<>'Nighswander1989'
+                                                                                                                                               // AND
+                                                                                                                                               // Temperature>278.15
+                                                                                                                                               // AND
+                                                                                                                                               // Temperature<383.15
+                                                                                                                                               // AND
+                                                                                                                                               // Pressure<60.01325");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM LuciaData WHERE
     // Component='CO2' AND Temperature>250 AND Temperature<420 AND L2<>NULL AND
     // L2>0.00000001 ORDER BY Temperature,Pressure"); // AND Reference='Houghton1957'
@@ -116,15 +116,15 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
 
     dataSet = database.getResultSet(
         "SELECT * FROM LuciaData WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure"); // AND
-                                                                                                                                                        // Reference='Houghton1957'
-                                                                                                                                                        // AND
-                                                                                                                                                        // Reference<>'Nighswander1989'
-                                                                                                                                                        // AND
-                                                                                                                                                        // Temperature>278.15
-                                                                                                                                                        // AND
-                                                                                                                                                        // Temperature<383.15
-                                                                                                                                                        // AND
-                                                                                                                                                        // Pressure<60.01325");
+                                                                                                                                                         // Reference='Houghton1957'
+                                                                                                                                                         // AND
+                                                                                                                                                         // Reference<>'Nighswander1989'
+                                                                                                                                                         // AND
+                                                                                                                                                         // Temperature>278.15
+                                                                                                                                                         // AND
+                                                                                                                                                         // Temperature<383.15
+                                                                                                                                                         // AND
+                                                                                                                                                         // Pressure<60.01325");
     // dataSet = database.getResultSet( "SELECT * FROM LuciaData WHERE
     // Component='CO2' AND ID<3000 AND Temperature>250 AND Temperature<420 AND
     // Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure"); // AND
