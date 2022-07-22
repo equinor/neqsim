@@ -54,7 +54,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
   double sr2On = 1.0;
   double lrOn = 1.0;
   double bornOn = 1.0;
-≈  // double gammLRdV=0.0;
+  // double gammLRdV=0.0;
   // PhaseInterface[] refPhase;// = new PhaseInterface[10];
 
   /**
