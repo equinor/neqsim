@@ -19,7 +19,6 @@ import neqsim.thermo.phase.PhaseUMRCPA;
  */
 public class SystemUMRCPAEoS extends SystemPrEos {
 
-
   public SystemUMRCPAEoS() {
     super();
     modelName = "UMR-CPA";

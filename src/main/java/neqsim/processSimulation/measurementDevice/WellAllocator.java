@@ -17,7 +17,6 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
     name = "Well Allocator";
   }
 
-
   public WellAllocator(StreamInterface stream) {
     name = "Well Allocator";
     this.wellStream = stream;
@@ -27,7 +26,6 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
     this(stream);
     name = streamname;
   }
-
 
   public void setExportGasStream(StreamInterface stream) {
     this.exportGasStream = stream;

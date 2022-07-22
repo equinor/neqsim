@@ -716,7 +716,6 @@ public interface FlowNodeInterface extends Cloneable {
     display("");
   }
 
-
   /**
    * <p>
    * display.

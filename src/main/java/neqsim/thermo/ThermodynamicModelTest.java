@@ -149,7 +149,6 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
     return Math.abs(sum) < 1e-10;
   }
 
-
   /**
    * <p>
    * checkFugacityCoefficientsDn2.

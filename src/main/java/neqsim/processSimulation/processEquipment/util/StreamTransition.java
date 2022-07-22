@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
@@ -60,7 +61,7 @@ public class StreamTransition extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     SystemInterface outThermoSystem = null;
     if (outStream != null) {
       outThermoSystem = outStream.getFluid().clone();
@@ -82,7 +83,8 @@ public class StreamTransition extends TwoPortEquipment {
     // fluid1.setTemperature(fluid2.getTemperature());
     // fluid1.setPressure(fluid2.getPressure());
     outStream.setThermoSystem(outThermoSystem);
-    outStream.run();
+    outStream.run(id);
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

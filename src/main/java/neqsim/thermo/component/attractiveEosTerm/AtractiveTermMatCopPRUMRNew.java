@@ -164,7 +164,6 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
                 + 5.0 / 4.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / Tc2Trpower32);
   }
 
-
   @Override
   public double diffaT(double temperature) {
     if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0

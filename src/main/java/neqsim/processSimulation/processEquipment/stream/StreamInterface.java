@@ -50,6 +50,10 @@ public interface StreamInterface extends ProcessEquipmentInterface {
      */
     public double getPressure(String unit);
 
+    /** {@inheritDoc} */
+    @Override
+    public double getPressure();
+
     /**
      * <p>
      * runTPflash.
@@ -67,6 +71,15 @@ public interface StreamInterface extends ProcessEquipmentInterface {
      */
     public double getTemperature(String unit);
 
+    /**
+     * <p>
+     * getTemperature.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getTemperature();
+
     /** {@inheritDoc} */
     @Override
     public void setName(String name);
@@ -80,15 +93,6 @@ public interface StreamInterface extends ProcessEquipmentInterface {
      * @return a double
      */
     public double CCT(String unit);
-
-    /**
-     * <p>
-     * getTemperature.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getTemperature();
 
     /**
      * <p>
@@ -138,10 +142,6 @@ public interface StreamInterface extends ProcessEquipmentInterface {
      * @return a double
      */
     public double getMolarRate();
-
-    /** {@inheritDoc} */
-    @Override
-    public double getPressure();
 
     /**
      * <p>

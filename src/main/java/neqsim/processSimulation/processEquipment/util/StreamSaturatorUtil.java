@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -35,7 +36,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
   /**
    * Constructor for StreamSaturatorUtil.
-   * 
+   *
    * @param name name of unit opeation
    * @param inStream input stream
    */
@@ -61,7 +62,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     boolean changeBack = false;
     thermoSystem = inStream.getThermoSystem().clone();
     if (multiPhase && !thermoSystem.doMultiPhaseCheck()) {
@@ -75,6 +76,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
       thermoSystem.setMultiPhaseCheck(false);
     }
     outStream.setThermoSystem(thermoSystem);
+    setCalculationIdentifier(id);
   }
 
   /**
