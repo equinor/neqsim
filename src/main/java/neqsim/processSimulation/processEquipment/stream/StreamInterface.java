@@ -3,6 +3,7 @@
  *
  * Created on 21. august 2001, 22:49
  */
+
 package neqsim.processSimulation.processEquipment.stream;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;

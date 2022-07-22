@@ -92,7 +92,7 @@ public class TestBinaryHVParameterFittingToDewPointData {
         // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162
         // , 13.0150379323}; // HV
         // double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0, -1.824E0}; // HV
-        // double parameterGuess[] = {-7.132E2, -3.933E2};//, 3.96E0, 9.602E-1}; //,
+        // double parameterGuess[] = {-7.132E2, -3.933E2}; //, 3.96E0, 9.602E-1}; //,
         // 1.239}; //WS
         sample.setReference(Double.toString(testSystem.getPressure()));
         function.setInitialGuess(parameterGuess);

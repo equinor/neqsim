@@ -401,7 +401,7 @@ public class ProcessSystem extends SimulationBaseClass {
             ((ProcessEquipmentInterface) unitOperations.get(i)).run();
           } catch (Exception e) {
             // String error = e.getMessage();
-            e.printStackTrace();
+            logger.error(e.getMessage());
           }
         }
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
@@ -410,7 +410,7 @@ public class ProcessSystem extends SimulationBaseClass {
             ((ProcessEquipmentInterface) unitOperations.get(i)).run();
           } catch (Exception e) {
             // String error = e.getMessage();
-            e.printStackTrace();
+            logger.error(e.getMessage());
           }
         }
       }
@@ -610,7 +610,7 @@ public class ProcessSystem extends SimulationBaseClass {
       logger.info("process file saved to:  " + filePath);
     } catch (Exception e) {
       logger.error(e.toString());
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
   }
 
@@ -629,7 +629,7 @@ public class ProcessSystem extends SimulationBaseClass {
       // logger.info("process file open ok: " + filePath);
     } catch (Exception e) {
       // logger.error(e.toString());
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
     return null;
   }

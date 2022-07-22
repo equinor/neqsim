@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -12,6 +14,7 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  */
 public class PipelineDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PipelineDesignStandard.class);
 
   double safetyFactor = 1.0;
 
@@ -45,11 +48,11 @@ public class PipelineDesignStandard extends DesignStandard {
             safetyFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
           }
         }
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     } finally {
       try {
         if (dataSet != null) {
@@ -57,7 +60,7 @@ public class PipelineDesignStandard extends DesignStandard {
         }
       } catch (Exception e) {
         System.out.println("error closing database.....GasScrubberDesignStandard");
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
     }
   }

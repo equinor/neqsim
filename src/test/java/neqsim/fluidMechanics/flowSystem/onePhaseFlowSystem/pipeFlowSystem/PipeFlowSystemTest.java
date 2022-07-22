@@ -92,7 +92,7 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
   void testSolveTransient() {
     testInit();
     // transient solver
-    double[] times = {0, 10000, 20000};// , 30000, 40000, 50000};//, 60000, 70000, 80000,
+    double[] times = {0, 10000, 20000}; // , 30000, 40000, 50000}; //, 60000, 70000, 80000,
     // 90000};
     pipe.getTimeSeries().setTimes(times);
 
@@ -112,9 +112,9 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     testSystem3.addComponent("ethane", 1221.10);
     testSystem3.init(0);
 
-    SystemInterface[] systems = {testSystem, testSystem2, testSystem2};// , testSystem2,
+    SystemInterface[] systems = {testSystem, testSystem2, testSystem2}; // , testSystem2,
     // testSystem2,
-    // testSystem2};//,testSystem2,testSystem2,testSystem2,testSystem2,testSystem2};
+    // testSystem2}; //,testSystem2,testSystem2,testSystem2,testSystem2,testSystem2};
     pipe.getTimeSeries().setInletThermoSystems(systems);
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(10);
     // double[] outletFlowRates = {0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,

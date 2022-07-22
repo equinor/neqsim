@@ -25,20 +25,32 @@ public class pLoadingCurve2 extends BaseOperation {
   static Logger logger = LogManager.getLogger(pLoadingCurve2.class);
 
   SystemInterface system;
-  int i, j = 0, nummer = 0, iterations = 0, maxNumberOfIterations = 10000;
-  double gibbsEnergy = 0, gibbsEnergyOld = 0;
-  double Kold, deviation = 0, g0 = 0, g1 = 0;
-  double lnOldOldK[], lnK[];
-  double lnOldK[];
-  double oldDeltalnK[], deltalnK[];
-  double tm[] = {1, 1};
+  int i;
+  int j = 0;
+  int nummer = 0;
+  int iterations = 0;
+  int maxNumberOfIterations = 10000;
+  double gibbsEnergy = 0;
+  double gibbsEnergyOld = 0;
+  double Kold;
+  double deviation = 0;
+  double g0 = 0;
+  double g1 = 0;
+  double lnOldOldK[];
+  double lnK[];
+  double[] lnOldK;
+  double oldDeltalnK[];
+  double deltalnK[];
+  double[] tm = {1, 1};
   double beta = 1e-5;
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
   JProgressBar monitor;
   JFrame mainFrame;
   JPanel mainPanel;
 
-  double temp = 0, pres = 0, startPres = 0;
+  double temp = 0;
+  double pres = 0;
+  double startPres = 0;
   double[][] points = new double[35][];
 
   boolean moreLines = false;
@@ -115,7 +127,7 @@ public class pLoadingCurve2 extends BaseOperation {
       for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
         points[k + 3][i] = system.getPhases()[1].getComponents()[k].getx();
         points[k + 3 + system.getPhases()[1].getNumberOfComponents()][i] =
-            system.getPhase(1).getActivityCoefficient(k, 1);// ,1);
+            system.getPhase(1).getActivityCoefficient(k, 1); // ,1);
       }
       logger.info(
           "point: " + points[0][i] + " tot pres  " + points[1][i] + " CO2 pres  " + points[2][i]);

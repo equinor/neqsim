@@ -44,7 +44,11 @@ public class PVrefluxflash extends Flash {
   @Override
   public void run() {
     int iter = 0;
-    double f_func = 0.0, f_func_old = 0.0, df_func_dt = 0, t_old = 0, t_oldold = 0.0;
+    double f_func = 0.0;
+    double f_func_old = 0.0;
+    double df_func_dt = 0;
+    double t_old = 0;
+    double t_oldold = 0.0;
     tpFlash.run();
     double dt = 1.0;
     do {
@@ -54,8 +58,8 @@ public class PVrefluxflash extends Flash {
       t_oldold = t_old;
       t_old = system.getTemperature();
 
-      f_func = refluxSpec - (1.0 / system.getBeta(refluxPhase) - 1.0);// system.getPhase(refluxPhase).getVolume()
-                                                                      // / system.getVolume();
+      f_func = refluxSpec - (1.0 / system.getBeta(refluxPhase) - 1.0); // system.getPhase(refluxPhase).getVolume()
+                                                                       // / system.getVolume();
       df_func_dt = (f_func - f_func_old) / (t_old - t_oldold);
 
       // err = Math.abs(f_func);

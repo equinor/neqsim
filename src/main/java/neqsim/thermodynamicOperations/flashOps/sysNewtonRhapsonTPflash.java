@@ -99,7 +99,7 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
     double tempJ = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-        dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+        dij = i == j ? 1.0 : 0.0; // Kroneckers delta
         tempJ = 1.0 / system.getBeta()
             * (dij / system.getPhase(0).getComponents()[i].getx() - 1.0
                 + system.getPhase(0).getComponents()[i].getdfugdx(j))

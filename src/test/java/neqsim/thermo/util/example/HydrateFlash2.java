@@ -118,9 +118,10 @@ public class HydrateFlash2 {
          * testOps2.hydrateFormationTemperature(2); //testOps2.dewPointTemperatureFlash();
          * //testOps.freezingPointTemperatureFlash(); //testOps.bubblePointPressureFlash(false);
          * //testOps.hydrateFormationPressure(); //testOps2.hydrateFormationTemperature(2); //
-         * testOps.TPflash(); // testSystem.display(); } catch(Exception e){ e.printStackTrace();
-         * System.out.println(e.toString()); } /* //testSystem2.display(); int phase = 0; double x1
-         * = testSystem2.getPhase(0).getMolarVolume()*testSystem2.getBeta(0); double x2 =
+         * testOps.TPflash(); // testSystem.display(); } catch(Exception e){
+         * logger.error(e.getMessage()); System.out.println(e.toString()); } /*
+         * //testSystem2.display(); int phase = 0; double x1 =
+         * testSystem2.getPhase(0).getMolarVolume()*testSystem2.getBeta(0); double x2 =
          * testSystem2.getPhase(1).getMolarVolume()*testSystem2.getBeta(1);
          *
          * double x3 = x1/(x1+x2); double x4 = x2/(x1+x2); System.out.println("vol gas % " +

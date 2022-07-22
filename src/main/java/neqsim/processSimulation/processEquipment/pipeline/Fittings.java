@@ -2,6 +2,8 @@ package neqsim.processSimulation.processEquipment.pipeline;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -13,6 +15,7 @@ import java.util.ArrayList;
  */
 public class Fittings implements Serializable {
     private static final long serialVersionUID = 1000;
+    static Logger logger = LogManager.getLogger(Fittings.class);
 
     ArrayList<Fitting> fittingList = new ArrayList<Fitting>();
 
@@ -82,13 +85,13 @@ public class Fittings implements Serializable {
                 System.out.printf("LtoD " + LtoD);
             } catch (Exception e) {
                 System.out.println("error in comp");
-                e.printStackTrace();
+                logger.error(e.getMessage());
             } finally {
                 try {
                     dataSet.close();
                 } catch (Exception e) {
                     System.out.println("error closing database.....");
-                    e.printStackTrace();
+                    logger.error(e.getMessage());
                 }
             }
         }
