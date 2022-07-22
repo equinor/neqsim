@@ -331,6 +331,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         && !compressorChart.isUseCompressorChart()) {
       thermoSystem.initProperties();
       outStream.setThermoSystem(getThermoSystem());
+      outStream.setCalculationIdentifier(id);
       dH = 0.0;
       polytropicFluidHead = 0.0;
       polytropicHeadMeter = 0.0;
@@ -436,7 +437,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           }
         }
         outStream.setThermoSystem(getThermoSystem());
-
+        outStream.setCalculationIdentifier(id);
+        setCalculationIdentifier(id);
         return;
       }
     }
@@ -656,6 +658,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
     thermoSystem.initProperties();
     outStream.setThermoSystem(getThermoSystem());
+    outStream.setCalculationIdentifier(id);
 
     polytropicFluidHead =
         getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
