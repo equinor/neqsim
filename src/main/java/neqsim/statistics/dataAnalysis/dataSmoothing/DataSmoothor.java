@@ -3,6 +3,7 @@
  *
  * Created on 31. januar 2001, 21:27
  */
+
 package neqsim.statistics.dataAnalysis.dataSmoothing;
 
 import Jama.Matrix;

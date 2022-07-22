@@ -3,6 +3,7 @@
  *
  * Created on 13. august 2001, 13:12
  */
+
 package neqsim.physicalProperties.interfaceProperties;
 
 import org.apache.logging.log4j.LogManager;
