@@ -66,7 +66,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   /**
    * Constructor for Stream.
-   * 
+   *
    * @param name name of stream
    */
   public Stream(String name) {
@@ -75,7 +75,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   /**
    * Constructor for Stream.
-   * 
+   *
    * @param name name of stream
    * @param stream input stream
    */
@@ -181,8 +181,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     } catch (Exception e) {
       e.printStackTrace(System.err);
     }
-    if (stream != null)
-      clonedSystem.setStream((Stream) stream.clone());;
+    if (stream != null) {
+      clonedSystem.setStream((Stream) stream.clone());
+    }
     clonedSystem.thermoSystem = getThermoSystem().clone();
     return clonedSystem;
   }
@@ -461,10 +462,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (unit.equals("bara") || unit.equals("bar")) {
       return ops.get("cricondenbar")[1];
     } else {
-      if (unit.equals("C"))
+      if (unit.equals("C")) {
         return ops.get("cricondenbar")[0] - 273.15;
-      else
+      } else {
         return ops.get("cricondenbar")[0];
+      }
     }
     // return ops.get
     // ops.getJfreeChart();
@@ -481,10 +483,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (unit.equals("bara") || unit.equals("bar")) {
       return ops.get("cricondentherm")[1];
     } else {
-      if (unit.equals("C"))
+      if (unit.equals("C")) {
         return ops.get("cricondentherm")[0] - 273.15;
-      else
+      } else {
         return ops.get("cricondentherm")[0];
+      }
     }
     // return ops.get
     // ops.getJfreeChart();
