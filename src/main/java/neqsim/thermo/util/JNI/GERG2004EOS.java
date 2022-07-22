@@ -3,6 +3,7 @@
  *
  * Created on 19. september 2006, 12:18
  */
+
 package neqsim.thermo.util.JNI;
 
 /**

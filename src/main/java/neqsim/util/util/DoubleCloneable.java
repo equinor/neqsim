@@ -3,6 +3,7 @@
  *
  * Created on 3. juni 2001, 20:19
  */
+
 package neqsim.util.util;
 
 /**

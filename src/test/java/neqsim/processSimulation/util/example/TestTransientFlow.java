@@ -3,6 +3,7 @@
  *
  * Created on 8. oktober 2006, 13:13
  */
+
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;

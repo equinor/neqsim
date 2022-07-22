@@ -1,6 +1,3 @@
-/**
- * 
- */
 package neqsim.processSimulation.processEquipment.mixer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
