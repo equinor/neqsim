@@ -344,7 +344,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                                         * pipe.getNode(j).getBulkSystem().getPhases()[phase]
                                                 .getMolarMass()
                                         / pipe.getNode(j).getBulkSystem().getPhases()[phase]
-                                                .getComponents()[comp].getMolarMass());// pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
+                                .getComponents()[comp].getMolarMass()); // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
                                                                                        // +
                                                                                        // 0.5*diff4Matrix[p].get(j,0));
             }
@@ -389,10 +389,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             oldMass[phase][0] = 1.0 / timeStep * pipe.getNode(0).getGeometry().getArea()
                     * pipe.getNode(0).getGeometry().getNodeLength();
 
-            a[0] = 0.0;// Math.max(Fw,0);
-            c[0] = 1.0;// Math.max(-Fe,0);
-            b[0] = 1.0;// a[0] + c[0] + (Fe - Fw) + oldMass[0];
-            r[0] = 0.0;// oldMass[0]*oldDensity[0];
+            a[0] = 0.0; // Math.max(Fw,0);
+            c[0] = 1.0; // Math.max(-Fe,0);
+            b[0] = 1.0; // a[0] + c[0] + (Fe - Fw) + oldMass[0];
+            r[0] = 0.0; // oldMass[0]*oldDensity[0];
 
             // setter ligningen paa rett form
             a[0] = -a[0];
@@ -436,10 +436,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             oldMass[phase][i] = 0.0;
         }
 
-        a[i] = 1;// Math.max(Fw,0);
-        c[i] = 0;// Math.max(-Fe,0);
-        b[i] = 1;// a[i] + c[i] + (Fe - Fw) + oldMass[phase][i];
-        r[i] = 0;// oldMass[phase][i]*oldDensity[phase][i];
+        a[i] = 1; // Math.max(Fw,0);
+        c[i] = 0; // Math.max(-Fe,0);
+        b[i] = 1; // a[i] + c[i] + (Fe - Fw) + oldMass[phase][i];
+        r[i] = 0; // oldMass[phase][i]*oldDensity[phase][i];
         // setter ligningen paa rett form
         a[i] = -a[i];
         c[i] = -c[i];
@@ -470,10 +470,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             oldMass[phase][0] = 1.0 / timeStep * pipe.getNode(0).getGeometry().getArea()
                     * pipe.getNode(0).getGeometry().getNodeLength();
 
-            a[0] = 0.0;// Math.max(Fw,0);
-            c[0] = 1.0;// Math.max(-Fe,0);
-            b[0] = 1.0;// a[0] + c[0] + (Fe - Fw) + oldMass[0];
-            r[0] = 0.0;// oldMass[0]*oldDensity[0];
+            a[0] = 0.0; // Math.max(Fw,0);
+            c[0] = 1.0; // Math.max(-Fe,0);
+            b[0] = 1.0; // a[0] + c[0] + (Fe - Fw) + oldMass[0];
+            r[0] = 0.0; // oldMass[0]*oldDensity[0];
 
             // setter ligningen paa rett form
             a[0] = -a[0];
@@ -612,7 +612,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             }
 
             a[i] = Math.max(Fw, 0);
-            c[i] = Math.max(-Fe, 0);// - Fe/2.0;
+            c[i] = Math.max(-Fe, 0); // - Fe/2.0;
             b[i] = a[i] + c[i] + (Fe - Fw) - SP + oldImpuls[phase][i];
             r[i] = SU + oldImpuls[phase][i] * oldVelocity[phase][i];
             // setter ligningen paa rett form
@@ -749,10 +749,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         double fw = pipe.getNode(i - 1).getGeometry().getNodeLength()
                 / (pipe.getNode(i).getGeometry().getNodeLength()
                         + pipe.getNode(i - 1).getGeometry().getNodeLength());
-        double Ae = pipe.getNode(i).getArea(phase);// 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea()
+        double Ae = pipe.getNode(i).getArea(phase); // 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea()
                                                    // +
                                                    // fe/pipe.getNode(i+1).getGeometry().getArea());
-        double Aw = pipe.getNode(i - 1).getArea(phase);// 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea()
+        double Aw = pipe.getNode(i - 1).getArea(phase); // 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea()
                                                        // +
                                                        // fw/pipe.getNode(i-1).getGeometry().getArea());
         double vertposchange = (1 - fw) * (pipe.getNode(i).getVerticalPositionOfNode()
@@ -773,7 +773,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                         * pipe.getNode(i).getInterphaseContactLength(phase)
                         * (pipe.getNode(i).getGeometry().getNodeLength()
                                 / pipe.getNode(i).getVelocity(phase));
-        double SP = 0;// -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
+        double SP = 0; // -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
         double Fw =
                 Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[phase].getPhysicalProperties()
@@ -847,7 +847,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             // System.out.println("vel: " +
             // pipe.getNode(i).getVelocityOut(phase).doubleValue() + " fe " + Fe);
             a[i] = Math.max(Fw, 0);
-            c[i] = Math.max(-Fe, 0);// - Fe/2.0;
+            c[i] = Math.max(-Fe, 0); // - Fe/2.0;
             b[i] = a[i] + c[i] + (Fe - Fw) - sign * pipe.getNode(i).getArea(phase)
                     * pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
                     / pipe.getNode(i).getVelocity() * pipe.getNode(i).getGeometry().getNodeLength();
@@ -857,7 +857,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             c[i] = -c[i];
         }
 
-        a[numberOfNodes - 1] = -1.0;// -1.0;
+        a[numberOfNodes - 1] = -1.0; // -1.0;
         b[numberOfNodes - 1] = 1.0;
         c[numberOfNodes - 1] = 0;
         SU = pipe.getNode(numberOfNodes - 2).getBulkSystem().getPhases()[phase]
@@ -868,7 +868,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                 / (pipe.getNode(numberOfNodes - 1).getBulkSystem().getPhases()[phase]
                         .getPhysicalProperties().getDensity()
                         * pipe.getNode(numberOfNodes - 1).getVelocityIn(phase).doubleValue());
-        r[numberOfNodes - 1] = 0;// SU;
+        r[numberOfNodes - 1] = 0; // SU;
     }
 
     /**
@@ -917,7 +917,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                     * pipe.getNode(i).getInterphaseContactLength(phase)
                     * (pipe.getNode(i).getGeometry().getNodeLength()
                             / pipe.getNode(i).getVelocity(phase));
-            // double SP = 0;//
+            // double SP = 0; //
             // -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
             a[i] = Math.max(Fw, 0);
@@ -948,7 +948,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                 * pipe.getNode(i).getInterphaseContactLength(phase)
                 * (pipe.getNode(i).getGeometry().getNodeLength()
                         / pipe.getNode(i).getVelocity(phase));
-        // double SP = 0;//
+        // double SP = 0; //
         // -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
         if (dynamic) {
@@ -959,10 +959,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             oldComp[phase][i] = 0.0;
         }
 
-        a[i] = 1.0;// Math.max(Fw,0);
-        c[i] = 0.0;// Math.max(-Fe,0);
-        b[i] = 1.0;// a[i] + c[i] + (Fe - Fw) + oldComp[phase][i];
-        r[i] = 0.0;// SU + oldComp[phase][i]*oldComposition[phase][componentNumber][i];
+        a[i] = 1.0; // Math.max(Fw,0);
+        c[i] = 0.0; // Math.max(-Fe,0);
+        b[i] = 1.0; // a[i] + c[i] + (Fe - Fw) + oldComp[phase][i];
+        r[i] = 0.0; // SU + oldComp[phase][i]*oldComposition[phase][componentNumber][i];
         // setter ligningen paa rett form
         a[i] = -a[i];
         c[i] = -c[i];
@@ -1163,7 +1163,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             // initVelocity();
             // this.setVelocities();*/
             System.out.println("iter: " + iterTop + " maxdiff " + maxDiff);
-        } while (Math.abs(maxDiff) > 1e-7 && iterTop < 1);// diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
+          } while (Math.abs(maxDiff) > 1e-7 && iterTop < 1); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
 
         for (int phase = 0; phase < 2; phase++) {
             for (int p = 0; p < pipe.getNode(0).getBulkSystem().getPhases()[0]

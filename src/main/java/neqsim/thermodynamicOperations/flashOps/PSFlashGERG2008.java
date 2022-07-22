@@ -2,7 +2,6 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -97,7 +96,7 @@ public class PSFlashGERG2008 extends QfuncFlash {
 
             system.setTemperature(nyTemp);
             erorOld = error;
-            error = Math.abs(calcdQdT());// Math.abs((nyTemp - oldTemp) / (nyTemp));
+            error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
         } while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
         return nyTemp;
     }

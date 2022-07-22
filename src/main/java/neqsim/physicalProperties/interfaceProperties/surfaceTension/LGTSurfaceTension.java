@@ -123,7 +123,7 @@ public class LGTSurfaceTension extends SurfaceTension {
 
             localSystem.init_x_y();
             localSystem.init(3);
-            // localSystem.init(3);//need to be fixed
+            // localSystem.init(3); //need to be fixed
             // System.out.println("pressure " + localSystem.getPressure());
             for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
                 mu_inter[j][i] = localSystem.getPhase(0).getComponent(i)
@@ -186,7 +186,7 @@ public class LGTSurfaceTension extends SurfaceTension {
                 break;
             }
             surdenstemp += Math.sqrt(2.0 * kappa * mu_times_den[j])
-                    * del_den_interface[referenceComponentNumber];// *
+                * del_den_interface[referenceComponentNumber]; // *
                                                                   // thermo.ThermodynamicConstantsInterface.avagadroNumber;
             // System.out.println("surdenstemp " + surdenstemp + " kappa " + kappa + "
             // mu_times_den[j] " + mu_times_den[j] + " z " + z_step[j]);

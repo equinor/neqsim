@@ -34,9 +34,12 @@ public class DiffusivityFunction extends LevenbergMarquardtFunction {
         // 1);
         // system.getPhases()[0].getPhysicalProperties().getMixingRule().setViscosityGij(value, 1,
         // 0);
-        // system.getPhase(1).getComponent(0).setLiquidViscosityModel(i);//system.getPhases()[1].getComponent(0).setMolarMass(i);//getPhysicalProperties().getMixingRule().setViscosityGij(value,
+        // system.getPhase(1).getComponent(0).setLiquidViscosityModel(i);
+        // //system.getPhases()[1].getComponent(0).setMolarMass(i);
+        // //getPhysicalProperties().getMixingRule().setViscosityGij(value,
         // 1, 0);
-        // system.getPhase(0).getComponent(0).setLiquidViscosityModel(i);//MolarMass(i);//system.getPhase(1).getPhysicalProperties().getMixingRule().setViscosityGij(value,
+        // system.getPhase(0).getComponent(0).setLiquidViscosityModel(i); //MolarMass(i);
+        // //system.getPhase(1).getPhysicalProperties().getMixingRule().setViscosityGij(value,
         // 0, 1);
     }
 }

@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -12,6 +14,7 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  */
 public class AdsorptionDehydrationDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(AdsorptionDehydrationDesignStandard.class);
 
   private double molecularSieveWaterCapacity = 20;
 
@@ -41,10 +44,10 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
           }
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     } finally {
       try {
         if (dataSet != null) {
@@ -52,7 +55,7 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
         }
       } catch (Exception e) {
         System.out.println("error closing database.....GasScrubberDesignStandard");
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
     }
   }

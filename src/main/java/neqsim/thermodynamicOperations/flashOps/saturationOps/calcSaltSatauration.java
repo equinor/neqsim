@@ -73,7 +73,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
             double addnumb = 0.0;
             // logger.info("testing");
 
-            system.addComponent(name1, 0.001);// *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
+            system.addComponent(name1, 0.001); // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
             system.addComponent(name2, 0.001);
             // system.init(1);
             system.init(0);
@@ -88,7 +88,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
                             * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0,
                             stoc2);
 
-            system.addComponent(name1, -2 * 0.001);// *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
+            system.addComponent(name1, -2 * 0.001); // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
             system.addComponent(name2, -2 * 0.001);
             // system.init(1);
             system.init(0);
@@ -103,7 +103,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
                             * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0,
                             stoc2);
 
-            system.addComponent(name1, 0.001);// *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
+            system.addComponent(name1, 0.001); // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
             system.addComponent(name2, 0.001);
             // system.init(1);
             system.init(0);
@@ -123,7 +123,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
             err = (kspcalc - ksp);
             addnumb = -(err / diff);
             logger.info("kspcalc " + kspcalc + " err " + err + " add " + addnumb);
-            system.addComponent(name1, iter / 100.0 * addnumb);// *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
+            system.addComponent(name1, iter / 100.0 * addnumb); // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
             system.addComponent(name2, iter / 100.0 * addnumb);
             // system.init(1);
             system.init(0);

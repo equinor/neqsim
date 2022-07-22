@@ -3,6 +3,7 @@
  *
  * Created on 2. oktober 2000, 22:22
  */
+
 package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
@@ -114,7 +115,7 @@ abstract class Flash extends BaseOperation {
     // System.out.println("sumw1 " + sumw[1]);
 
     int start = 0;
-    int end = 1;// clonedSystem.getNumberOfPhases()-1;
+    int end = 1; // clonedSystem.getNumberOfPhases()-1;
     int mult = 1;
     // if (sumw[1] > sumw[0]) {
     if (lowestGibbsEnergyPhase == 0) {
@@ -209,7 +210,7 @@ abstract class Flash extends BaseOperation {
             for (int k = 0; k < clonedSystem.getPhases()[0].getNumberOfComponents(); k++) {
               double kronDelt = (i == k) ? 1.5 : 0.0; // adding 0.5 to diagonal
               df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
-                  * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k));// *
+                  * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k)); // *
                                                                            // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
             }
           }

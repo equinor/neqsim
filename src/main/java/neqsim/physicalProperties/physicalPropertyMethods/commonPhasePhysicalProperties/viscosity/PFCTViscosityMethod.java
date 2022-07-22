@@ -3,6 +3,7 @@
  *
  * Created on 1. august 2001, 12:44
  */
+
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
 import neqsim.thermo.system.SystemInterface;
@@ -102,7 +103,7 @@ public class PFCTViscosityMethod extends Viscosity {
                 * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
         referenceSystem.init(1);
         double molDens = 1.0 / referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
-        double critMolDens = 10.15;// 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
+        double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
         double redDens = molDens / critMolDens;
 
         alfaMix = 1.0 + 7.475e-5 * Math.pow(redDens, 4.265) * Math.pow(Mmix, 0.8579);
@@ -144,7 +145,7 @@ public class PFCTViscosityMethod extends Viscosity {
         referenceSystem.init(1);
         double molDens = 1.0 / referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
         // System.out.println("mol dens " + molDens);
-        double critMolDens = 10.15;// 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
+        double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
         double redMolDens = (molDens - critMolDens) / critMolDens;
         // System.out.println("gv1 " +GVcoef[0]);
 

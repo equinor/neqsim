@@ -159,7 +159,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     double reynoldsNumber = velocity * insideDiameter / system.getKinematicViscosity("m2/sec");
     double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
     double dp = 2.0 * frictionFactor * length * Math.pow(system.getFlowRate("kg/sec"), 2.0)
-        / insideDiameter / system.getDensity("kg/m3");// * () *
+        / insideDiameter / system.getDensity("kg/m3"); // * () *
                                                       // neqsim.thermo.ThermodynamicConstantsInterface.R
     // / system.getMolarMass() * system.getTemperature() / Math.pow(insideDiameter,
     // 5.0);

@@ -24,7 +24,7 @@ public class CompGradientFlash {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkEos(273.15 + 0, 80.0);// 30.01325);
+      SystemInterface testSystem = new SystemSrkEos(273.15 + 0, 80.0); // 30.01325);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testSystem.addComponent("methane", 11.0);

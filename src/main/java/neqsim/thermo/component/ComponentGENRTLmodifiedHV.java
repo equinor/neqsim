@@ -3,6 +3,7 @@
  *
  * Created on 18. juli 2000, 18:36
  */
+
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
@@ -394,7 +395,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
               * Gmatrix[componentNumber][f] / (sum * sum);
         }
         dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
-            - Etemp * Gmatrix[componentNumber][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;// E/(C*C)*dCdn[p]*(tau2-D/C)
+            - Etemp * Gmatrix[componentNumber][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp; // E/(C*C)*dCdn[p]*(tau2-D/C)
                                                                                           // +
                                                                                           // E/C*(-dDdn[p]/C
                                                                                           // +

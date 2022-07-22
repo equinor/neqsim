@@ -189,7 +189,7 @@ public class TEGdehydrationProcessDistillationAaHa {
         Heater bufferTank = new Heater("TEG buffer tank", stripper.getLiquidOutStream());
         bufferTank.setOutTemperature(273.15 + 191.0);
 
-        Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutletStream());// stripper.getSolventOutStream());
+        Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutletStream()); // stripper.getSolventOutStream());
         hotLeanTEGPump.setOutletPressure(5.0);
         hotLeanTEGPump.setIsentropicEfficiency(0.6);
 

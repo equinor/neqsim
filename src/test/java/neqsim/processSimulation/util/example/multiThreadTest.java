@@ -1,5 +1,7 @@
 package neqsim.processSimulation.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
@@ -9,6 +11,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>multiThreadTest class.</p>
@@ -18,6 +21,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @since 2.2.3
  */
 public class multiThreadTest {
+  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+
     /**
      * This method is just meant to test the thermo package.
      *
@@ -124,10 +129,10 @@ public class multiThreadTest {
                 processThread1.join(1000);
                 processThread2.join(1000);
             } catch (Exception e) {
-                e.printStackTrace();
+              logger.error(e.getMessage());
             }
         }
-        // } while (processThread1.isAlive());// && processThread2.isAlive());
+        // } while (processThread1.isAlive()); // && processThread2.isAlive());
 
         System.out.println("Time taken for simulation = " + (System.currentTimeMillis() - time));
 

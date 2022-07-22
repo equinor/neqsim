@@ -29,7 +29,7 @@ public class TestUMRPRUMC {
         // SystemInterface testSystem = new SystemUMRPRUMCEos(273.15 + 20, 10.0);
         SystemInterface testSystem = new SystemSrkEos(273.15 + 20, 15.0);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 20, 1.0);
-        // testSystem.getCharacterization().setTBPModel("PedersenPR");//(RiaziDaubert
+        // testSystem.getCharacterization().setTBPModel("PedersenPR"); //(RiaziDaubert
         // PedersenPR PedersenSRK
         // testSystem.addComponent("CO2", 0.1)
         testSystem.addComponent("nitrogen", 1.1472);

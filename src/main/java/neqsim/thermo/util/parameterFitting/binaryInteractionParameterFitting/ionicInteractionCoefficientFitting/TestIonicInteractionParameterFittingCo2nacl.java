@@ -40,13 +40,13 @@ public class TestIonicInteractionParameterFittingCo2nacl {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND
     // Reference='Lemoine2000'
-    // double guess[] = {-0.0000110329, -0.1238487876};//Na+
-    // double guess[] = {0.0000258505};//Na+ all temp
-    // double guess[] = {0.0000080642};//Na+ 40
-    // double guess[] = {0.0000542456};//Na+ 80
-    // double guess[] = { -0.0000442947, -0.1933846606};//k+
-    // double guess[] = {-0.00000650867};//k+ 40
-    double guess[] = {0.0000267226};// k+ 80
+    // double guess[] = {-0.0000110329, -0.1238487876}; //Na+
+    // double guess[] = {0.0000258505}; //Na+ all temp
+    // double guess[] = {0.0000080642}; //Na+ 40
+    // double guess[] = {0.0000542456}; //Na+ 80
+    // double guess[] = { -0.0000442947, -0.1933846606}; //k+
+    // double guess[] = {-0.00000650867}; //k+ 40
+    double guess[] = {0.0000267226}; // k+ 80
 
     try {
       int i = 0;

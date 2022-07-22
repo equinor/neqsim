@@ -17,9 +17,9 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
     static Logger logger = LogManager.getLogger(PotentialTheoryAdsorption.class);
 
     SystemInterface system;
-    double[] eps0;// = 7.458;//7.630; // J/mol
-    double[] z0;// = 3.284;// * 1e-3; // m^3/kg
-    double[] beta;// = 2.0;
+    double[] eps0; // = 7.458; //7.630; // J/mol
+    double[] z0; // = 3.284; // * 1e-3; // m^3/kg
+    double[] beta; // = 2.0;
     int integrationSteps = 500;
     double totalSurfaceExcess;
     double[][] compositionSurface, fugacityField;
@@ -173,7 +173,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
                 eps0[comp] = 7.2;
                 beta[comp] = 2.0;
                 z0[comp] = 3.2;
-                // e.printStackTrace();
+                // logger.error(e.getMessage());
             } finally {
                 try {
                     if (dataSet != null) {

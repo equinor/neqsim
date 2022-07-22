@@ -115,7 +115,7 @@ public class pLoadingCurve2 extends BaseOperation {
       for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
         points[k + 3][i] = system.getPhases()[1].getComponents()[k].getx();
         points[k + 3 + system.getPhases()[1].getNumberOfComponents()][i] =
-            system.getPhase(1).getActivityCoefficient(k, 1);// ,1);
+            system.getPhase(1).getActivityCoefficient(k, 1); // ,1);
       }
       logger.info(
           "point: " + points[0][i] + " tot pres  " + points[1][i] + " CO2 pres  " + points[2][i]);

@@ -102,7 +102,7 @@ public class PSFlash extends QfuncFlash {
       tpFlash.run();
       system.init(2);
       erorOld = error;
-      error = Math.abs(calcdQdT());// Math.abs((nyTemp - oldTemp) / (nyTemp));
+      error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
       // if(error>erorOld) factor *= -1.0;
       // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
       // " error "+ error + " correction " + newCorr + " factor "+ factor);

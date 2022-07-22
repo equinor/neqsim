@@ -3,6 +3,7 @@
  *
  * Created on 22. januar 2001, 23:01
  */
+
 package neqsim.statistics.parameterFitting;
 
 import neqsim.thermo.system.SystemInterface;
@@ -99,7 +100,7 @@ public class SampleValue implements Cloneable {
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
     public void setThermodynamicSystem(SystemInterface system) {
-        this.system = system;// system.clone();
+      this.system = system; // system.clone();
         thermoOps = new ThermodynamicOperations(system);
         this.getFunction().setThermodynamicSystem(this.system);
     }

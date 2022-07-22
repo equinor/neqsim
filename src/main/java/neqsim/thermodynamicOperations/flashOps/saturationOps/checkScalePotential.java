@@ -188,7 +188,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                     double scalePotentialFactor = kspReac / ksp;
                     logger.info("Scale potential factor " + scalePotentialFactor);
 
-                    resultTable[numb][0] = saltName;// name1+ " " +name2;
+                    resultTable[numb][0] = saltName; // name1+ " " +name2;
                     resultTable[numb][1] = Double.toString(scalePotentialFactor);
                     resultTable[numb][2] = "";
                     // double maxn = scalePotentialFactor/(stoc1*stoc2);

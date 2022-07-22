@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -12,6 +14,7 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  */
 public class MaterialPipeDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(MaterialPipeDesignStandard.class);
 
   /**
    * <p>
@@ -158,12 +161,12 @@ public class MaterialPipeDesignStandard extends DesignStandard {
           // temperatureDeratingFactor has to be implemented
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
 
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     } finally {
       try {
         if (dataSet != null) {
@@ -171,7 +174,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
         }
       } catch (Exception e) {
         System.out.println("error closing database.....GasScrubberDesignStandard");
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
     }
   }

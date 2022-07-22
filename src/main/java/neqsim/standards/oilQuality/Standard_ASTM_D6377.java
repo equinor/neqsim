@@ -1,8 +1,11 @@
 package neqsim.standards.oilQuality;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>
@@ -14,6 +17,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
+  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+
   String unit = "bara";
   double RVP = 1.0;
 
@@ -37,7 +42,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     try {
       this.thermoOps.bubblePointPressureFlash(false);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
 
     // double TVP = this.thermoSystem.getPressure();
@@ -47,7 +52,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     try {
       this.thermoOps.TVflash(liquidVolume * 4.0);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
 
     RVP = (0.752 * (100.0 * this.thermoSystem.getPressure()) + 6.07) / 100.0;

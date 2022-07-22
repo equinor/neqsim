@@ -3,6 +3,7 @@
  *
  * Created on 18. juli 2000, 18:32
  */
+
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;
@@ -149,7 +150,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         double val = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             val += getComponent(i).getNumberOfMolesInPhase()
-                    * (getComponent(i).getLogFugacityCoefficient());// +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
+                * (getComponent(i).getLogFugacityCoefficient()); // +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
         }
         return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
     }

@@ -18,7 +18,7 @@ public class SystemSrkPenelouxEos extends SystemSrkEos {
     public SystemSrkPenelouxEos() {
         super();
         modelName = "SRK-Peneloux-EOS";
-        getCharacterization().setTBPModel("PedersenSRK");// (RiaziDaubert PedersenPR PedersenSRK
+        getCharacterization().setTBPModel("PedersenSRK"); // (RiaziDaubert PedersenPR PedersenSRK
         attractiveTermNumber = 0;
 
         for (int i = 0; i < numberOfPhases; i++) {

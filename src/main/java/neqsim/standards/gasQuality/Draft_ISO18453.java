@@ -1,8 +1,11 @@
 package neqsim.standards.gasQuality;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>
@@ -14,8 +17,12 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Draft_ISO18453 extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
-  String dewPointTemperatureUnit = "C", pressureUnit = "bar";
-  double dewPointTemperature = 273.0, dewPointTemperatureSpec = -12.0;
+  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+
+  String dewPointTemperatureUnit = "C";
+  String pressureUnit = "bar";
+  double dewPointTemperature = 273.0;
+  double dewPointTemperatureSpec = -12.0;
   double specPressure = 70.0;
   double initTemperature = 273.15;
   SystemInterface thermoSystem;
@@ -60,7 +67,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
     try {
       this.thermoOps.waterDewPointTemperatureFlash();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
     dewPointTemperature = this.thermoSystem.getTemperature() - 273.15;
   }

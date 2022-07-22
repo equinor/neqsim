@@ -160,7 +160,7 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
                 // Following line added by Neeraj
                 system.setPressure(system.getPressure() - (funk - 1) / deriv);
                 // Following line commented out by Neeraj
-                // system.setPressure(system.getPressure()*ytotal);// +
+                // system.setPressure(system.getPressure()*ytotal); // +
                 // 0.5*(ytotal*system.getPressure()-system.getPressure()));
                 if (system.getPressure() < 0) {
                     system.setPressure(oldChemPres / 2.0);

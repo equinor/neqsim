@@ -3,13 +3,12 @@
  *
  * Created on 8. april 2000, 23:38
  */
+
 package neqsim.thermo.phase;
 
 import java.util.ArrayList;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -1464,7 +1463,8 @@ abstract class Phase implements PhaseInterface {
   // double ions=0.0;
   // for(int j=0;j<this.numberOfComponents;j++){
   // if(getComponent(j).getIonicCharge()!=0) ions +=
-  // getComponent(j).getNumberOfMolesInPhase()/getComponent(watNumb).getNumberOfMolesInPhase()/getComponent(watNumb).getMolarMass();//*Math.abs(getComponent(j).getIonicCharge());
+  // getComponent(j).getNumberOfMolesInPhase()/getComponent(watNumb).getNumberOfMolesInPhase()/getComponent(watNumb).getMolarMass();
+  // //*Math.abs(getComponent(j).getIonicCharge());
   // }
   // double val = - Math.log(oldFug*getComponent(watNumb).getx()/pureFug) *
   // 1.0/ions/getComponent(watNumb).getMolarMass();

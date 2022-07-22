@@ -23,7 +23,7 @@ public class Standard_ISO6578Test extends neqsim.NeqSimTest{
         testSystem.setMixingRule(2);
 
         testSystem.init(0);
-        Standard_ISO6578 standard = new Standard_ISO6578(testSystem);// testSystem);
+        Standard_ISO6578 standard = new Standard_ISO6578(testSystem); // testSystem);
         standard.calculate();
         //testSystem.display();
 

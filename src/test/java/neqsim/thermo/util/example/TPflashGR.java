@@ -52,7 +52,8 @@ public class TPflashGR {
 
         String[] components = new String[] {"water", "nitrogen", "CO2", "methane", "ethane",
                 "propane", "i-butane", "n-butane", "i-pentane", "n-pentane", "C6", "C7", "C8", "C9",
-                "C10"};// ,"CHCmp_6","CHCmp_7","CHCmp_8"};//,"CHCmp_9","CHCmp_10","CHCmp_11","CHCmp_12","CHCmp_13"};
+            "C10"}; // ,"CHCmp_6","CHCmp_7","CHCmp_8"};
+                    // //,"CHCmp_9","CHCmp_10","CHCmp_11","CHCmp_12","CHCmp_13"};
         double[] fractions1 = new double[] {0.691986417509639, 0.001518413245518, 0.004876419074493,
                 0.177034951950947, 0.016102566295901, 0.008162056735947, 0.002489557955828,
                 0.008657117478144, 0.006116331881632, 0.007300146475110, 0.008772462741648,

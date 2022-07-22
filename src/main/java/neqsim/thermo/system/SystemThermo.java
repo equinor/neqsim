@@ -654,7 +654,7 @@ abstract class SystemThermo implements SystemInterface {
 
     newSystem.setNumberOfPhases(1);
     // newSystem.setPhaseType(0,
-    // getPhase(phaseNumber1).getPhaseType());//phaseType[phaseNumber]);
+    // getPhase(phaseNumber1).getPhaseType()); //phaseType[phaseNumber]);
     newSystem.init(1);
     return newSystem;
   }
@@ -863,7 +863,7 @@ abstract class SystemThermo implements SystemInterface {
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
     // System.out.println("watson " + Kwatson);
     double CF = Math.pow((12.8 - Kwatson) * (10.0 - Kwatson) / (10.0 * acs), 2.0);
-    double acsKeslerLee = acs;// characterization.getTBPModel().calcAcentricFactorKeslerLee(molarMass*1000.0,
+    double acsKeslerLee = acs; // characterization.getTBPModel().calcAcentricFactorKeslerLee(molarMass*1000.0,
                               // density);
     double cpa = (-0.33886 + 0.02827 * Kwatson - 0.26105 * CF + 0.59332 * acsKeslerLee * CF)
         * 4.18682 * molarMass * 1e3;
@@ -886,9 +886,10 @@ abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setRacketZCPA(racketZ);
       getPhase(i).getComponent(componentName).setIsTBPfraction(true);
       getPhase(i).getComponent(componentName).setParachorParameter(
-          characterization.getTBPModel().calcParachorParameter(molarMass, density));// 59.3+2.34*molarMass*1000.0);//0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
+          characterization.getTBPModel().calcParachorParameter(molarMass, density)); // 59.3+2.34*molarMass*1000.0);
+                                                                                     // //0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
       getPhase(i).getComponent(componentName).setCriticalViscosity(
-          characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density));// 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
+          characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density)); // 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
                                                                                              // 1.0/6.0)*1e-7);
       getPhase(i).getComponent(componentName).setTriplePointTemperature(
           374.5 + 0.02617 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
@@ -937,7 +938,7 @@ abstract class SystemThermo implements SystemInterface {
     double acs = 0.0;
     // double penelouxC = 0.0;
     double racketZ = 0.0;
-    componentName = (componentName.split("_PC")[0]) + "_PC";// + getFluidName());
+    componentName = (componentName.split("_PC")[0]) + "_PC"; // + getFluidName());
 
     try {
       refSystem = this.getClass().getDeclaredConstructor().newInstance();
@@ -948,10 +949,10 @@ abstract class SystemThermo implements SystemInterface {
       refSystem.setNumberOfPhases(1);
       refSystem.setPhaseType(0, "liquid");
       molarMass = 1000 * molarMass;
-      TC = criticalTemperature;// characterization.getTBPModel().calcTC(molarMass, density);
-      PC = criticalPressure;// characterization.getTBPModel().calcPC(molarMass, density);
+      TC = criticalTemperature; // characterization.getTBPModel().calcTC(molarMass, density);
+      PC = criticalPressure; // characterization.getTBPModel().calcPC(molarMass, density);
       m = characterization.getTBPModel().calcm(molarMass, density);
-      acs = acentricFactor;// acentracentrcharacterization.getTBPModel().calcAcentricFactor(molarMass,
+      acs = acentricFactor; // acentracentrcharacterization.getTBPModel().calcAcentricFactor(molarMass,
                            // density);
       TB = characterization.getTBPModel().calcTB(molarMass, density);
       molarMass /= 1000.0;
@@ -998,13 +999,13 @@ abstract class SystemThermo implements SystemInterface {
       logger.error("error", e);
     }
 
-    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density);// 0.2918-0.0928*
+    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density); // 0.2918-0.0928*
                                                                                                   // acs)*8.314*TC/PC*10.0;
     addComponent(componentName, numberOfMoles, TC, PC, acs);
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
     // System.out.println("watson " + Kwatson);
     double CF = Math.pow((12.8 - Kwatson) * (10.0 - Kwatson) / (10.0 * acs), 2.0);
-    double acsKeslerLee = acs;// characterization.getTBPModel().calcAcentricFactorKeslerLee(molarMass*1000.0,
+    double acsKeslerLee = acs; // characterization.getTBPModel().calcAcentricFactorKeslerLee(molarMass*1000.0,
                               // density);
     double cpa = (-0.33886 + 0.02827 * Kwatson - 0.26105 * CF + 0.59332 * acsKeslerLee * CF)
         * 4.18682 * molarMass * 1e3;
@@ -1027,9 +1028,10 @@ abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setRacketZCPA(racketZ);
       getPhase(i).getComponent(componentName).setIsTBPfraction(true);
       getPhase(i).getComponent(componentName).setParachorParameter(
-          characterization.getTBPModel().calcParachorParameter(molarMass, density));// 59.3+2.34*molarMass*1000.0);//0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
+          characterization.getTBPModel().calcParachorParameter(molarMass, density)); // 59.3+2.34*molarMass*1000.0);
+                                                                                     // //0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
       getPhase(i).getComponent(componentName).setCriticalViscosity(
-          characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density));// 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
+          characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density)); // 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
                                                                                              // 1.0/6.0)*1e-7);
       getPhase(i).getComponent(componentName).setTriplePointTemperature(
           374.5 + 0.02617 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
@@ -1057,7 +1059,7 @@ abstract class SystemThermo implements SystemInterface {
   public void addPlusFraction(String componentName, double numberOfMoles, double molarMass,
       double density) {
     addTBPfraction(componentName, numberOfMoles, molarMass, density);
-    componentName = (componentName + "_" + "PC");// getFluidName());
+    componentName = (componentName + "_" + "PC"); // getFluidName());
     for (int i = 0; i < numberOfPhases; i++) {
       // System.out.println("comp " + componentName);
       getPhase(i).getComponent(componentName).setIsPlusFraction(true);
@@ -1520,7 +1522,7 @@ abstract class SystemThermo implements SystemInterface {
       }
       step = gbeta / deriv;
       // System.out.println("step : " + step);
-    } while (((Math.abs(step)) >= 1.0e-10 && iterations < maxIterations));// &&
+    } while (((Math.abs(step)) >= 1.0e-10 && iterations < maxIterations)); // &&
     // (Math.abs(nybeta)-Math.abs(maxBeta))>0.1);
 
     // System.out.println("beta: " + nybeta + " iterations: " + iterations);
@@ -2358,7 +2360,7 @@ abstract class SystemThermo implements SystemInterface {
   public final void setMixingRule(int type) {
     mixingRule = type;
     if (numberOfPhases < 4) {
-      resetPhysicalProperties();// initPhysicalProperties();
+      resetPhysicalProperties(); // initPhysicalProperties();
     }
     for (int i = 0; i < maxNumberOfPhases; i++) {
       if (IsPhase(i)) {
@@ -3287,7 +3289,7 @@ abstract class SystemThermo implements SystemInterface {
     /// 30][7];
     // String[] names = {"", "Feed", "Phase 1", "Phase 2", "Phase 3", "Phase 4",
     /// "Unit"};
-    table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
+    table[0][0] = ""; // getPhases()[0].getPhaseTypeName(); //"";
 
     for (int i = 0; i < getPhases()[0].getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 7; j++) {

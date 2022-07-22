@@ -1,5 +1,7 @@
 package neqsim.standards.gasQuality;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -13,9 +15,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
+  static Logger logger = LogManager.getLogger(BestPracticeHydrocarbonDewPoint.class);
+
   private static final long serialVersionUID = 1L;
-  String dewPointTemperatureUnit = "C", pressureUnit = "bar";
-  double dewPointTemperature = 273.0, dewPointTemperatureSpec = -12.0;
+  String dewPointTemperatureUnit = "C";
+  String pressureUnit = "bar";
+  double dewPointTemperature = 273.0;
+  double dewPointTemperatureSpec = -12.0;
   double specPressure = 50.0;
   double initTemperature = 273.15 - 20.0;
   SystemInterface thermoSystem;
@@ -55,7 +61,7 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     try {
       this.thermoOps.dewPointTemperatureFlash();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
     dewPointTemperature = this.thermoSystem.getTemperature() - 273.15;
   }

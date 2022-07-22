@@ -138,7 +138,7 @@ public class TwoPhasePipeFlowSystem
                                     // leg
     double[] height = {0, 0, 0, 0, 0, 0};
     double[] length = {0.0, 1.7, 3.5, 5.0, 7.5, 10.4};
-    double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0};// , 278.0, 275.0,
+    double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0}; // , 278.0, 275.0,
                                                                            // 275.0, 275.0,
                                                                            // 275.0};
     double[] roughness = {1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5};

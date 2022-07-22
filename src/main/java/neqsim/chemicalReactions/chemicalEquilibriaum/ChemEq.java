@@ -342,7 +342,7 @@ public class ChemEq implements java.io.Serializable {
         NSPEC = n_mol.length;
         NELE = A_matrix.length;
 
-        NNOT = NELE + 1;// 4;
+        NNOT = NELE + 1; // 4;
         b_cal = new double[NELE];
         b_vector = new double[NNOT];
         second_term = new double[NELE];

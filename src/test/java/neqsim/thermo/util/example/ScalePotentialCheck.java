@@ -3,6 +3,7 @@
  *
  * Created on 19. desember 2005, 14:39
  */
+
 package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
@@ -44,13 +45,13 @@ public class ScalePotentialCheck {
         // testSystem.addComponent("MEG", 0.1);
         // testSystem.addComponent("MDEA", 1);
         testSystem.addComponent("water", 1, "kg/sec");
-        // testSystem.addComponent("Mg++", 0.07);// * 24.31);
+        // testSystem.addComponent("Mg++", 0.07); // * 24.31);
         testSystem.addComponent("Na+", 4e-5);
         testSystem.addComponent("Cl-", 4e-5);
         // testSystem.addComponent("Hg++", 4e-7);
         testSystem.addComponent("OH-", 220e-5);
         testSystem.addComponent("Fe++", 110.1e-5);
-        // testSystem.addComponent("OH-", 0.07*2);// * 17.001);
+        // testSystem.addComponent("OH-", 0.07*2); // * 17.001);
         // testSystem.addComponent("Cl-", (1000 - 100) * 1e-3);
         // testSystem.addComponent("Ca++",0.002);
         // testSystem.addComponent("CO3--",14.0E-6);

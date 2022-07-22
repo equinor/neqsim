@@ -23,7 +23,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     protected boolean pseudocomponents = true;
     int firstPlusFractionNumber = 1;
     int lastPlusFractionNumber = 80;
-    int numberOfPseudocomponents = 5;// (lastPlusFractionNumber-firstPlusFractionNumber)*50;
+    int numberOfPseudocomponents = 5; // (lastPlusFractionNumber-firstPlusFractionNumber)*50;
     int length = 0;
     double[] coefs = {4.4660105006, -1.1266303727, 0.80, 0.0408709562};
     double[] SRKcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
@@ -151,7 +151,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
             if (coefs.length == 3) {
                 double Dtot = 0.0;
                 for (int i = getFirstPlusFractionNumber(); i < getLastPlusFractionNumber(); i++) {
-                    Dtot += (getDensPlus() - this.getCoef(2)) / Math.log(i);// (this.getCoef(2)+this.getCoef(3)*Math.log(i)-this.getCoef(2))/Math.log(i);
+                  Dtot += (getDensPlus() - this.getCoef(2)) / Math.log(i); // (this.getCoef(2)+this.getCoef(3)*Math.log(i)-this.getCoef(2))/Math.log(i);
                 }
                 double lengthPlus =
                         this.getLastPlusFractionNumber() - this.getFirstPlusFractionNumber();

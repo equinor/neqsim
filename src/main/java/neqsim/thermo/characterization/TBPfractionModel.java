@@ -77,7 +77,7 @@ public class TBPfractionModel implements java.io.Serializable {
         public double calcCriticalVolume(double molarMass, double density) {
             double TC = calcTC(molarMass, density);
             double PC = calcPC(molarMass, density);
-            double acs = calcAcentricFactor(molarMass, density);// thermoSystem.getPhase(thermoSystem.getPhaseIndex(0)).getComponent(0).getAcentricFactor();
+            double acs = calcAcentricFactor(molarMass, density); // thermoSystem.getPhase(thermoSystem.getPhaseIndex(0)).getComponent(0).getAcentricFactor();
             double criticaVol = (0.2918 - 0.0928 * acs) * 8.314 * TC / PC * 10.0;
             if (criticaVol < 0) {
                 // logger.info("acentric factor in calc critVol " + acs);
@@ -262,7 +262,7 @@ public class TBPfractionModel implements java.io.Serializable {
             return 5.0 / 9.0 * 554.4
                     * Math.exp(
                             -1.3478e-4 * molarMass - 0.61641 * density + 0.0 * molarMass * density)
-                    * Math.pow(molarMass, 0.2998) * Math.pow(density, 1.0555);// Math.pow(sig1, b) *
+                * Math.pow(molarMass, 0.2998) * Math.pow(density, 1.0555); // Math.pow(sig1, b) *
                                                                               // Math.pow(sig2, c);
         }
 
@@ -274,7 +274,7 @@ public class TBPfractionModel implements java.io.Serializable {
             return 0.068947 * 4.5203e4
                     * Math.exp(
                             -1.8078e-3 * molarMass + -0.3084 * density + 0.0 * molarMass * density)
-                    * Math.pow(molarMass, -0.8063) * Math.pow(density, 1.6015);// Math.pow(sig1, b)
+                * Math.pow(molarMass, -0.8063) * Math.pow(density, 1.6015); // Math.pow(sig1, b)
                                                                                // * Math.pow(sig2,
                                                                                // c);
         }
@@ -292,7 +292,7 @@ public class TBPfractionModel implements java.io.Serializable {
             return 5.0 / 9.0
                     * (1928.3 - 1.695e5 * Math.pow(molarMass, -0.03522) * Math.pow(density, 3.266)
                             * Math.exp(-4.922e-3 * molarMass - 4.7685 * density
-                                    + 3.462e-3 * molarMass * density));// 97.58*Math.pow(molarMass,0.3323)*Math.pow(density,0.04609);
+                        + 3.462e-3 * molarMass * density)); // 97.58*Math.pow(molarMass,0.3323)*Math.pow(density,0.04609);
         }
 
         @Override

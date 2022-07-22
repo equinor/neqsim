@@ -50,7 +50,7 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
             } catch (Exception e) {
                 logger.error(e.toString());
             }
-            return (system.getPressure());// *system.getPhases()[0].getComponent(0).getx());
+            return (system.getPressure()); // *system.getPhases()[0].getComponent(0).getx());
         }
 
         if (type == 1) {
@@ -81,13 +81,13 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
         if (type == 3) {
             system.init(0);
             system.init(1);
-            return system.getPhase(1).getActivityCoefficient(0);// system.getPhase(0).getComponent(0).getFugacityCoefficient();
+            return system.getPhase(1).getActivityCoefficient(0); // system.getPhase(0).getComponent(0).getFugacityCoefficient();
         }
 
         if (type == 4) {
             system.init(0);
             system.init(1);
-            return system.getPhase(1).getActivityCoefficient(1);// system.getPhase(0).getComponent(0).getFugacityCoefficient();
+            return system.getPhase(1).getActivityCoefficient(1); // system.getPhase(0).getComponent(0).getFugacityCoefficient();
         }
 
         return (0);

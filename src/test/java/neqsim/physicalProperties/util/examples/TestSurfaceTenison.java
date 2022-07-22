@@ -33,7 +33,7 @@ public class TestSurfaceTenison {
 
         // SystemInterface testSystem = new SystemPrEos(273.15 + 30, 1);
         // SystemInterface testSystem = new SystemSrkCPAs(273.65, 30.3);
-        // testSystem.getCharacterization().setTBPModel("PedersenSRK");//(RiaziDaubert
+        // testSystem.getCharacterization().setTBPModel("PedersenSRK"); //(RiaziDaubert
         // PedersenPR PedersenSRK
         // testSystem.getCharacterization().setLumpingModel("no"); //"abLumping";
         // testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(3);

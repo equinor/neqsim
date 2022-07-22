@@ -150,7 +150,7 @@ public class sysNewtonRhapson implements java.io.Serializable {
         }
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
-                dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+              dij = i == j ? 1.0 : 0.0; // Kroneckers delta
                 tempJ = dij + system.getPhases()[1].getComponents()[i].getdfugdx(j) * dyidlnk[j]
                         - system.getPhases()[0].getComponents()[i].getdfugdx(j) * dxidlnk[j];
                 Jac.set(i, j, tempJ);

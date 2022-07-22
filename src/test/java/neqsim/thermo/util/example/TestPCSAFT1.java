@@ -30,11 +30,11 @@ public class TestPCSAFT1 {
 
         // double[] compositions = {0.5108, 1.8922, 86.6295, 6.1903, 2.7941, 0.4635,
         // 0.7524, 0.0160, 0.2109, 0.1837, 0.0055, 0.0164, 0.0094, 0.0402, 0.0221,
-        // 0.0503};//, 0.0297, 0.0866, 0.03262, 0.0039, 0.0317, 0.0209, 0.0006, 0.0008,
+        // 0.0503}; //, 0.0297, 0.0866, 0.03262, 0.0039, 0.0317, 0.0209, 0.0006, 0.0008,
         // 0.0023};
         // String[] componentName = {"nitrogen", "CO2", "methane", "ethane", "propane",
         // "i-butane", "n-butane", "22-dim-C3", "iC5", "n-pentane", "22-dim-C4", "c-C5",
-        // "23-dim-C4", "2-m-C5", "3-m-C5", "n-hexane"};//, "n-heptane", "c-C6",
+        // "23-dim-C4", "2-m-C5", "3-m-C5", "n-hexane"}; //, "n-heptane", "c-C6",
         // "benzene", "n-octane", "c-C7", "toluene", "c-C8"};
 
         String[] componentName = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",

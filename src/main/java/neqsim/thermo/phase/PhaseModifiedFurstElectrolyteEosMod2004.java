@@ -3,6 +3,7 @@
  *
  * Created on 26. februar 2001, 17:54
  */
+
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
@@ -30,7 +31,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
   double sr2On = 1.0, lrOn = 1.0, bornOn = 1.0;
   static Logger logger = LogManager.getLogger(PhaseModifiedFurstElectrolyteEosMod2004.class);
   // double gammLRdV=0.0;
-  // PhaseInterface[] refPhase;// = new PhaseInterface[10];
+  // PhaseInterface[] refPhase; // = new PhaseInterface[10];
 
   /**
    * <p>
@@ -542,7 +543,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
     }
 
-    // if(phaseType==0) System.out.println("density " + getDensity());//"BonV: " +
+    // if(phaseType==0) System.out.println("density " + getDensity()); //"BonV: " +
     // BonV + " "+" itert: " + iterations +" " + " phase " + phaseType+ " " + h + "
     // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
     // + fVV());
@@ -655,7 +656,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     double Y = getSolventDiElectricConstant() - 1.0;
     double dXdf = getEpsIonicdVdV() * -3.0 / 2.0 / Math.pow(getEpsIonic() / 2.0 + 1.0, 2.0)
         + getEpsIonicdV() * getEpsIonicdV() * 3.0 / 2.0 / Math.pow(getEpsIonic() / 2.0 + 1.0, 3.0);
-    return Y * dXdf;// + Y*dXdf;
+    return Y * dXdf; // + Y*dXdf;
   }
 
   /** {@inheritDoc} */
@@ -763,7 +764,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * @return a double
    */
   public double dFLRdV() {
-    return (FLRV() + dFdAlphaLR() * alphaLRdV) * 1e-5;// + FLRGammaLR()*gammLRdV +
+    return (FLRV() + dFdAlphaLR() * alphaLRdV) * 1e-5; // + FLRGammaLR()*gammLRdV +
                                                       // 0*FLRXLR()*XLRdGammaLR()*gammLRdV)*1e-5;
   }
 

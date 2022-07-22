@@ -47,7 +47,7 @@ public class TwoPhaseReactorFlowSystem
   public void init() {
     for (int j = 0; j < getTotalNumberOfNodes(); j++) {
       flowNode[j].setInterphaseModelType(1);
-      flowNode[j].getGeometry();// setPackingType()
+      flowNode[j].getGeometry(); // setPackingType()
       flowNode[j].initFlowCalc();
       flowNode[j].init();
     }

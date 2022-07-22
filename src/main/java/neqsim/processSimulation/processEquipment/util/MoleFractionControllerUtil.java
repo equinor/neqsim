@@ -129,7 +129,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
             (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
       }
       double molesChange = deltaFrac * thermoSystem.getTotalNumberOfMoles();
-      thermoSystem.addComponent(compName, molesChange);// deltaFrac*thermoSystem.getTotalNumberOfMoles());
+      thermoSystem.addComponent(compName, molesChange); // deltaFrac*thermoSystem.getTotalNumberOfMoles());
       thermoOps.TPflash();
     }
     outStream.setThermoSystem(thermoSystem);

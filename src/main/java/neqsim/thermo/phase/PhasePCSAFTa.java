@@ -410,7 +410,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
       d1 = -h / dh;
       // d2 = -dh / dhh;
-      BonV += d1;// (1.0+0.5*-1.0);
+      BonV += d1; // (1.0+0.5*-1.0);
       // if(Math.abs(d1/d2)<=1.0){
       // BonV += d1*(1.0+0.5*d1/d2);
       // } else if(d1/d2<-1){
@@ -449,7 +449,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
       // if(phaseType==0)
       // System.out.println("density " +
-      // getDensity());//"BonV: " + BonV + "
+      // getDensity()); //"BonV: " + BonV + "
       // "+" itert: " +
       // iterations +" " + " phase " +
       // phaseType+ " " + h +

@@ -29,10 +29,10 @@ public class TestCharacterizationCondensate1 {
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 30, 50);
         // SystemInterface testSystem = new SystemSrkCPAs(293.65, 79.3);
-        testSystem.getCharacterization().setTBPModel("PedersenSRK");// (RiaziDaubert PedersenPR
+        testSystem.getCharacterization().setTBPModel("PedersenSRK"); // (RiaziDaubert PedersenPR
                                                                     // PedersenSRK
         testSystem.getCharacterization().setPlusFractionModel("heavyOil");
-        // testSystem.getCharacterization().setTBPModel("PedersenSRK");//(RiaziDaubert
+        // testSystem.getCharacterization().setTBPModel("PedersenSRK"); //(RiaziDaubert
         // PedersenPR PedersenSRK
 
         // testSystem.addComponent("C20", 0.006, 430, 12, 0.9); //TC PC OMEGA

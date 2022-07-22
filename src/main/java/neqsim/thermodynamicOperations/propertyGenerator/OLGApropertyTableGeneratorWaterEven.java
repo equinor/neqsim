@@ -317,7 +317,7 @@ public class OLGApropertyTableGeneratorWaterEven
                                         + thermoSystem.getPhase("oil").getBeta()
                                                 * thermoSystem.getPhase("oil").getMolarMass());
                     } else {
-                        props[k][i][j] = 1.0;// thermoSystem.getPhase(phaseNumb).getBeta() *
+                      props[k][i][j] = 1.0; // thermoSystem.getPhase(phaseNumb).getBeta() *
                                              // thermoSystem.getPhase(phaseNumb).getMolarMass() /
                                              // thermoSystem.getMolarMass();
                     }
@@ -368,13 +368,14 @@ public class OLGApropertyTableGeneratorWaterEven
                                                 / (pressures[i - 1] - pressures[i - 2])
                                                 * (pressures[i] - pressures[i - 1]);
                                 // } //else if (j < 2) {
-                                // props[k][i][j] = 0;//props[k][i - 1][j] + (props[k][i - 1][j] -
+                                // props[k][i][j] = 0; //props[k][i - 1][j] + (props[k][i - 1][j] -
                                 // props[k][i -
                                 // 2][j]) / (pressures[i - 1] - pressures[i - 2]) * (pressures[i] -
                                 // pressures[i
                                 // - 1]);
                                 // } else {
-                                // props[k][i][j] = 0;//props[k][i - 1][j - 1] + (props[k][i][j - 1]
+                                // props[k][i][j] = 0; //props[k][i - 1][j - 1] + (props[k][i][j -
+                                // 1]
                                 // -
                                 // props[k][i][j - 2]) / (temperatures[j - 1] - temperatures[j - 2])
                                 // *
@@ -395,7 +396,7 @@ public class OLGApropertyTableGeneratorWaterEven
                                 props[k][i][j] = 0;
                             }
                             k++;
-                        } while (k < 9);// names[k] = "GAS DENSITY";
+                          } while (k < 9); // names[k] = "GAS DENSITY";
                         // units[k] = "KG/M3";
                     }
                     /*
@@ -494,7 +495,7 @@ public class OLGApropertyTableGeneratorWaterEven
                              * 1]); } props[k][i][j] = 0.0;
                              */
                             k++;
-                        } while (k < 17);// names[k] = "GAS DENSITY";
+                          } while (k < 17); // names[k] = "GAS DENSITY";
                         // units[k] = "KG/M3";
                     }
                     // setOilProperties();
@@ -583,7 +584,7 @@ public class OLGApropertyTableGeneratorWaterEven
                              * 1]); } props[k][i][j] = 0.0;
                              */
                             k++;
-                        } while (k < 26);// names[k] = "GAS DENSITY";
+                          } while (k < 26); // names[k] = "GAS DENSITY";
                         // units[k] = "KG/M3";
                     }
                 }
@@ -747,7 +748,7 @@ public class OLGApropertyTableGeneratorWaterEven
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);
             for (int j = 0; j < temperatures.length; j++) {
-                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);// +
+              logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // +
                                                                                                 // "
                                                                                                 // ROG
                                                                                                 // "

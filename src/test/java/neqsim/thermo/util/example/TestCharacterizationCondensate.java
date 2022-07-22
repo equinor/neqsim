@@ -28,7 +28,7 @@ public class TestCharacterizationCondensate {
 
         testSystem.setFluidName("AsgardB");
 
-        // testSystem.getCharacterization().setTBPModel("PedersenSRKHeavyOil");//(RiaziDaubert
+        // testSystem.getCharacterization().setTBPModel("PedersenSRKHeavyOil"); //(RiaziDaubert
         // PedersenPR PedersenSRK
         // testSystem.getCharacterization().setPlusFractionModel("heavyOil");
         // testSystem.getCharacterization().setLumpingModel("PVTlumpingModel");

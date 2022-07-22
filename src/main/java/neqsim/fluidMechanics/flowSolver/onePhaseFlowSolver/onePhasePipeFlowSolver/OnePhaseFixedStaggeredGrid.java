@@ -3,6 +3,7 @@
  *
  * Created on 17. januar 2001, 21:10
  */
+
 package neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.onePhasePipeFlowSolver;
 
 import Jama.Matrix;
@@ -292,7 +293,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                         .setx(sol4Matrix[p].get(j, 0)
                                 * pipe.getNode(j).getBulkSystem().getPhases()[0].getMolarMass()
                                 / pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p]
-                                        .getMolarMass());// pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
+                            .getMolarMass()); // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
                                                          // +
                                                          // 0.5*diff4Matrix[p].get(j,0));
             }
@@ -441,7 +442,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                 oldImpuls[i] = 0.0;
             }
             a[i] = Math.max(Fw, 0);
-            c[i] = Math.max(-Fe, 0);// - Fe/2.0;
+            c[i] = Math.max(-Fe, 0); // - Fe/2.0;
 
             b[i] = a[i] + c[i] + (Fe - Fw) - SP + oldImpuls[i];
             // System.out.println("Fe-Fw: " +(Fe - Fw) + " Fe: " + Fe);
@@ -563,11 +564,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         double fw = pipe.getNode(i - 1).getGeometry().getNodeLength()
                 / (pipe.getNode(i).getGeometry().getNodeLength()
                         + pipe.getNode(i - 1).getGeometry().getNodeLength());
-        double Ae = pipe.getNode(i).getGeometry().getArea();// 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea()
+        double Ae = pipe.getNode(i).getGeometry().getArea(); // 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea()
                                                             // +
                                                             // fe/pipe.getNode(i+1).getGeometry().getArea());
 
-        double Aw = pipe.getNode(i - 1).getGeometry().getArea();// 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea()
+        double Aw = pipe.getNode(i - 1).getGeometry().getArea(); // 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea()
                                                                 // +
                                                                 // fw/pipe.getNode(i-1).getGeometry().getArea());
 
@@ -584,7 +585,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                                 - pipe.getNode(i).getBulkSystem().getTemperature())
                         / (pipe.getNode(i).getGeometry().getDiameter())
                         * pipe.getNode(i).getGeometry().getNodeLength();
-        double SP = 0;// -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
+        double SP = 0; // -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
         double Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity()
                 * pipe.getNode(i).getVelocityIn().doubleValue();
@@ -808,7 +809,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
             }
 
             // System.out.println("maxDiff " + maxDiff);
-        } while (Math.abs(maxDiff) > 1e-10 && iterTop < 100);// diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
+          } while (Math.abs(maxDiff) > 1e-10 && iterTop < 100); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
 
         initFinalResults();
     }

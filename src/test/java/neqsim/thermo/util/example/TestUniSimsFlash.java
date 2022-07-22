@@ -23,7 +23,7 @@ public class TestUniSimsFlash {
      */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 15.01325);
-        // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 15.0, 25.0);//
+        // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 15.0, 25.0); //
         testSystem.addComponent("CO2", 0.0214);
         testSystem.addComponent("nitrogen", 0.00892);
         testSystem.addComponent("methane", 0.858);

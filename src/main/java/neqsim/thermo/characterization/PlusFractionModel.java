@@ -241,7 +241,7 @@ public class PlusFractionModel implements java.io.Serializable {
         if (coefs.length == 3) {
           double Dtot = 0.0;
           for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
-            Dtot += (densPlus - this.getCoef(2)) / Math.log(i);// (this.getCoef(2)+this.getCoef(3)*Math.log(i)-this.getCoef(2))/Math.log(i);
+            Dtot += (densPlus - this.getCoef(2)) / Math.log(i); // (this.getCoef(2)+this.getCoef(3)*Math.log(i)-this.getCoef(2))/Math.log(i);
           }
           double lengthPlus = lastPlusFractionNumber - firstPlusFractionNumber;
           // System.out.println("length plus " + lengthPlus);

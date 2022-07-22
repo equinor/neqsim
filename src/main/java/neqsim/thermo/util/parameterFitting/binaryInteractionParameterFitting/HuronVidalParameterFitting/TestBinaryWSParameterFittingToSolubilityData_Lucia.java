@@ -37,7 +37,7 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
     ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM LuciaData WHERE Component='methane' AND Temperature<520 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure");// AND
+        "SELECT * FROM LuciaData WHERE Component='methane' AND Temperature<520 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure"); // AND
                                                                                                                                               // Reference='Houghton1957'
                                                                                                                                               // AND
                                                                                                                                               // Reference<>'Nighswander1989'
@@ -49,7 +49,7 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
                                                                                                                                               // Pressure<60.01325");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM LuciaData WHERE
     // Component='CO2' AND Temperature>250 AND Temperature<420 AND L2<>NULL AND
-    // L2>0.00000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957'
+    // L2>0.00000001 ORDER BY Temperature,Pressure"); // AND Reference='Houghton1957'
     // AND Reference<>'Nighswander1989' AND Temperature>278.15 AND
     // Temperature<383.15 AND Pressure<60.01325");
 
@@ -105,7 +105,7 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
         // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162
         // , 13.0150379323}; // HV
         // double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0, -1.824E0}; // HV
-        // double parameterGuess[] = {-7.132E2, -3.933E2};//, 3.96E0, 9.602E-1}; //,
+        // double parameterGuess[] = {-7.132E2, -3.933E2}; //, 3.96E0, 9.602E-1}; //,
         // 1.239}; //WS
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
@@ -115,7 +115,7 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
     }
 
     dataSet = database.getResultSet(
-        "SELECT * FROM LuciaData WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure");// AND
+        "SELECT * FROM LuciaData WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure"); // AND
                                                                                                                                                         // Reference='Houghton1957'
                                                                                                                                                         // AND
                                                                                                                                                         // Reference<>'Nighswander1989'
@@ -127,7 +127,7 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
                                                                                                                                                         // Pressure<60.01325");
     // dataSet = database.getResultSet( "SELECT * FROM LuciaData WHERE
     // Component='CO2' AND ID<3000 AND Temperature>250 AND Temperature<420 AND
-    // Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure");// AND
+    // Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure"); // AND
     // Reference='Houghton1957' AND Reference<>'Nighswander1989' AND
     // Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
 
@@ -188,7 +188,7 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
         // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162
         // , 13.0150379323}; // HV
         // double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0, -1.824E0}; // HV
-        // double parameterGuess[] = {-7.132E2, -3.933E2};//, 3.96E0, 9.602E-1}; //,
+        // double parameterGuess[] = {-7.132E2, -3.933E2}; //, 3.96E0, 9.602E-1}; //,
         // 1.239}; //WS
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);

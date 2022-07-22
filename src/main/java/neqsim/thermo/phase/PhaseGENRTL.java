@@ -3,6 +3,7 @@
  *
  * Created on 17. juli 2000, 20:51
  */
+
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;
@@ -109,7 +110,7 @@ public class PhaseGENRTL extends PhaseGE {
                             temperature, pressure, phasetype, alpha, Dij, intparam, mixRule));
         }
 
-        return R * temperature * numberOfMolesInPhase * GE;// phase.getNumberOfMolesInPhase()*
+        return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
     }
 
     /** {@inheritDoc} */

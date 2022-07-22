@@ -3,6 +3,7 @@
  *
  * Created on 15. mars 2001, 14:17
  */
+
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import java.util.UUID;
@@ -331,7 +332,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
       NTU = UAvalue / Cmin;
 
       thermalEffectiveness = calcThermalEffectivenes(NTU, Cr);
-      // double corrected_Entalphy = dEntalphy;// *
+      // double corrected_Entalphy = dEntalphy; // *
       // inStream[1].getThermoSystem().getNumberOfMoles() /
       // inStream[0].getThermoSystem().getNumberOfMoles();
       dEntalphy = thermalEffectiveness * dEntalphy;

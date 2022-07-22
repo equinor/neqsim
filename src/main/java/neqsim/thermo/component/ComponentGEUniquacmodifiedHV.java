@@ -3,6 +3,7 @@
  *
  * Created on 18. juli 2000, 20:24
  */
+
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
@@ -37,7 +38,7 @@ abstract class ComponentGEUniquacmodifiedHV extends ComponentGEUniquac {
         // PhaseGEInterface phaseny = (PhaseGEInterface) phase.getPhase();
         // PhaseGEInterface GEPhase = phaseny.getGEphase();
 
-        return 1;// super.getGamma(GEPhase, numberOfComponents, temperature, pressure,
+        return 1; // super.getGamma(GEPhase, numberOfComponents, temperature, pressure,
                  // phasetype);
     }
 }

@@ -49,7 +49,8 @@ public class CVDFunction extends LevenbergMarquardtFunction {
             }
         } while (Math.abs(maxPres - minPres) > 1e-5);
         /*
-         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) { e.printStackTrace(); }
+         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
+         * logger.error(e.getMessage()); }
          */
         saturationVolume = system.getVolume();
         saturationPressure = system.getPressure();

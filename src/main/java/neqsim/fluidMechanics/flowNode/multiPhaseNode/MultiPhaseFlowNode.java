@@ -281,7 +281,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     /** {@inheritDoc} */
     @Override
     public void update() {
-        double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0);// getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
+      double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0); // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
                                                                          // getPrandtlNumber(0),
                                                                          // this) *
                                                                          // (getInterphaseSystem().getPhase(0).getTemperature()
@@ -290,7 +290,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
                                                                          // *
                                                                          // getInterphaseContactArea();
 
-        double heatFluxLiquid = getFluidBoundary().getInterphaseHeatFlux(1);// getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(1,
+        double heatFluxLiquid = getFluidBoundary().getInterphaseHeatFlux(1); // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(1,
                                                                             // getPrandtlNumber(1),
                                                                             // this) *
                                                                             // (getInterphaseSystem().getPhase(1).getTemperature()
@@ -335,10 +335,10 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
         for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
                 .getNumberOfComponents(); componentNumber++) {
             double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-                    * getInterphaseContactArea();// getInterphaseContactLength(0)*getGeometry().getNodeLength();
+                * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
 
             double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-                    * getInterphaseContactArea();// getInterphaseContactLength(0)*getGeometry().getNodeLength();
+                * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
 
             getBulkSystem().getPhase(0).addMoles(componentNumber,
                     this.flowDirection[0] * gasMolarRate);

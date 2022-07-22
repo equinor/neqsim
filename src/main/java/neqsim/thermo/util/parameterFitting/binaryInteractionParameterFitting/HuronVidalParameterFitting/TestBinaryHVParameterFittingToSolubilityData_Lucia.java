@@ -37,7 +37,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
     ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature<520 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure");// AND
+        "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature<520 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure"); // AND
                                                                                                                                                  // Reference='Houghton1957'
                                                                                                                                                  // AND
                                                                                                                                                  // Reference<>'Nighswander1989'
@@ -50,18 +50,18 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
     // Component='CO2' AND Temperature>250 AND Temperature<420 AND
     // Pressure<700000000 AND L2 IS NOT NULL AND L2>0.000000001 ORDER BY
-    // Temperature,Pressure");// AND Reference='Houghton1957' AND
+    // Temperature,Pressure"); // AND Reference='Houghton1957' AND
     // Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15
     // AND Pressure<60.01325");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
     // Component='propane' AND Temperature>250 AND Temperature<420 AND
     // Pressure<700000000 AND L2<>NULL AND L2>0.000000001 ORDER BY
-    // Temperature,Pressure");// AND Reference='Houghton1957' AND
+    // Temperature,Pressure"); // AND Reference='Houghton1957' AND
     // Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15
     // AND Pressure<60.01325");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
     // Component='methane' AND ID1>662 AND ID1<760 AND Temperature<520 AND L2<>NULL
-    // AND L2>0.0000000001 ORDER BY Temperature,Pressure");// AND
+    // AND L2>0.0000000001 ORDER BY Temperature,Pressure"); // AND
     // Reference='Houghton1957' AND Reference<>'Nighswander1989' AND
     // Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
@@ -122,8 +122,8 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
         // double parameterGuess[] = {1193.8840735911, 69.2494254233, -7.8323508140,
         // 4.5299137720}; // H2S MDEA
         // double parameterGuess[] ={5251.7374371982, -3121.2788585048, -0.8420253536,
-        // -0.5123316046};//;//,0.03};//co2 scsrk-ny
-        // double parameterGuess[] ={-1584, 3517, 3.9121943388, -0.44,-0.1};//propane
+        // -0.5123316046}; //; //,0.03}; //co2 scsrk-ny
+        // double parameterGuess[] ={-1584, 3517, 3.9121943388, -0.44,-0.1}; //propane
         // double parameterGuess[] = { 5607, 0.897598343, -123.6011438188,
         // -6.5496550381, 2.1378539395}; // HV methan570
         double parameterGuess[] =
@@ -132,7 +132,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
         // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162
         // , 13.0150379323}; // HV
         // double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0, -1.824E0}; // HV
-        // double parameterGuess[] = {-7.132E2, -3.933E2};//, 3.96E0, 9.602E-1}; //,
+        // double parameterGuess[] = {-7.132E2, -3.933E2}; //, 3.96E0, 9.602E-1}; //,
         // 1.239}; //WS
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
@@ -143,7 +143,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
     }
 
     dataSet = database.getResultSet(
-        "SELECT * FROM LuciaData8 WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure");// AND
+        "SELECT * FROM LuciaData8 WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure"); // AND
                                                                                                                                                            // Reference='Houghton1957'
                                                                                                                                                            // AND
                                                                                                                                                            // Reference<>'Nighswander1989'
@@ -156,7 +156,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
     // dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
     // Component='CO2' AND ID<3000 AND Temperature>250 AND Pressure<700000000 AND
     // Temperature<420 AND Y IS NOT NULL AND Y>0.0000000001 ORDER BY
-    // Temperature,Pressure");// AND Reference='Houghton1957' AND
+    // Temperature,Pressure"); // AND Reference='Houghton1957' AND
     // Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15
     // AND Pressure<60.01325");
     // dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
@@ -223,14 +223,14 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
         // -3.3157456878};
         // double parameterGuess[] = {5640.0, -3793.0, -5.89, 8.9}; // HV CO2
         // double parameterGuess[] ={5251.7374371982, -3121.2788585048, -0.8420253536,
-        // -0.5123316046};//;//,0.03};//co2 scsrk-ny
+        // -0.5123316046}; //; //,0.03}; //co2 scsrk-ny
         double parameterGuess[] =
             {6114.2013874102, -188.264597921, -10.7239107857559, 2.310651690177652}; // HV
                                                                                      // methane
         // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162
         // , 13.0150379323}; // HV
         // double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0, -1.824E0}; // HV
-        // double parameterGuess[] = {-7.132E2, -3.933E2};//, 3.96E0, 9.602E-1}; //,
+        // double parameterGuess[] = {-7.132E2, -3.933E2}; //, 3.96E0, 9.602E-1}; //,
         // 1.239}; //WS
         function.setInitialGuess(parameterGuess);
         sample.setDescription(Double.toString(testSystem.getTemperature()));

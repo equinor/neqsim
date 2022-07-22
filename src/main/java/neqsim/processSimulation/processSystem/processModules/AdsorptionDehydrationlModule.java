@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.adsorber.SimpleAdsorber;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -18,12 +20,17 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  */
 public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(AdsorptionDehydrationlModule.class);
 
-  protected StreamInterface gasStreamToAdsorber = null, gasStreamFromAdsorber = null;
+  protected StreamInterface gasStreamToAdsorber = null;
+  protected StreamInterface gasStreamFromAdsorber = null;
   protected SimpleAdsorber[] adsorber = null;
-  double regenerationCycleTime = 1.0, waterDewPontTemperature = 273.15 - 10.0, designFlow = 1.0,
-      designAdsorptionTemperature = 298.0, designRegenerationTemperature = 440.0,
-      designAdsorptionPressure = 60.0;
+  double regenerationCycleTime = 1.0;
+  double waterDewPontTemperature = 273.15 - 10.0;
+  double designFlow = 1.0;
+  double designAdsorptionTemperature = 298.0;
+  double designRegenerationTemperature = 440.0;
+  double designAdsorptionPressure = 60.0;
   int numberOfAdorptionBeds = 3;
   double adsorberInternalDiameter = 1.0;
   double adsorbentFillingHeight = 3.0;
@@ -98,7 +105,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
       this.gasStreamFromAdsorber = (Stream) this.gasStreamToAdsorber.clone();
       this.gasStreamFromAdsorber.setName("Stream from Adsorber");
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
   }
 
@@ -154,7 +161,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
 
     double waterLoadingCycle = regenerationCycleTime * designFlow * 42.29489667
         * tempStream.getThermoSystem().getPhase(0).getComponent("water").getx()
-        * tempStream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass();// 360.0;
+        * tempStream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass(); // 360.0;
                                                                                         // //
                                                                                         // kg/cycle
                                                                                         // this

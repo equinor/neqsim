@@ -3,6 +3,7 @@
  *
  * Created on 3. juni 2000, 14:38
  */
+
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
@@ -1010,7 +1011,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
      * @return a double
      */
     public double getdUdSdSVn() {
-        return 1.0 / (FTT() * R * getTemperature());// noe feil her
+      return 1.0 / (FTT() * R * getTemperature()); // noe feil her
     }
 
     /**

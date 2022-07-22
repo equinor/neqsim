@@ -247,7 +247,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
                 }
                 dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
                         - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp)
-                        + 2.0 * Ftemp - Gtemp;// E/(C*C)*dCdn[p]*(tau2-D/C)
+                    + 2.0 * Ftemp - Gtemp; // E/(C*C)*dCdn[p]*(tau2-D/C)
                                               // +
                                               // E/C*(-dDdn[p]/C
                                               // +

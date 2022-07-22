@@ -24,7 +24,7 @@ public class HeatOfVaporization {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-        SystemInterface testSystem = new SystemSrkCPAstatoil(288.15000000, 0.001);//
+      SystemInterface testSystem = new SystemSrkCPAstatoil(288.15000000, 0.001); //
         testSystem.addComponent("TEG", 1);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);

@@ -108,9 +108,9 @@ public class ComponentGeDuanSun extends ComponentGE {
             // System.out.println("method GE1" + tau);
 
             // System.out.println("error in NRTL here ......");
-            G = Math.exp(-alpha * tau);// comp_Array[j].getb()*Math.exp(-alpha*tau);
+            G = Math.exp(-alpha * tau); // comp_Array[j].getb()*Math.exp(-alpha*tau);
             dGdt = dtaudt * -alpha * G;
-            G2 = Math.exp(-alpha * tau2);// comp_Array[this.getComponentNumber()].getb()*Math.exp(-alpha*tau2);
+            G2 = Math.exp(-alpha * tau2); // comp_Array[this.getComponentNumber()].getb()*Math.exp(-alpha*tau2);
             dG2dt = dtau2dt * -alpha * G2;
 
             A += tau * G * comp_Array[j].getx();
@@ -138,7 +138,7 @@ public class ComponentGeDuanSun extends ComponentGE {
                 dtaudt = -tau / temperature;
 
                 // System.out.println("error in NRTL comp here....");
-                G = Math.exp(-alpha * tau);// comp_Array[l].getb()*Math.exp(-alpha*tau);
+                G = Math.exp(-alpha * tau); // comp_Array[l].getb()*Math.exp(-alpha*tau);
                 dGdt = dtaudt * -alpha * G;
                 Gmatrix[l][j] = G;
                 tauMatrix[l][j] = tau;
@@ -228,7 +228,7 @@ public class ComponentGeDuanSun extends ComponentGE {
                 }
                 dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
                         - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp)
-                        + 2.0 * Ftemp - Gtemp;// E/(C*C)*dCdn[p]*(tau2-D/C)
+                    + 2.0 * Ftemp - Gtemp; // E/(C*C)*dCdn[p]*(tau2-D/C)
                                               // +
                                               // E/C*(-dDdn[p]/C
                                               // +
@@ -411,15 +411,15 @@ public class ComponentGeDuanSun extends ComponentGE {
 
             if (componentName.equals("CO2")) {
                 fugacityCoefficient =
-                        activinf * K[0] * gamma * (1000 / 18.02) / phase.getPressure();// +25.689/(gamma*K[0]))/
+                    activinf * K[0] * gamma * (1000 / 18.02) / phase.getPressure(); // +25.689/(gamma*K[0]))/
                                                                                        // phase.getPressure();
             } else if (componentName.equals("nitrogen")) {
                 fugacityCoefficient =
-                        activinf * K[1] * gamma * (1000 / 18.02) / phase.getPressure();// +50.585/(gamma*K[1]))/
+                    activinf * K[1] * gamma * (1000 / 18.02) / phase.getPressure(); // +50.585/(gamma*K[1]))/
                                                                                        // phase.getPressure();
             } else if (componentName.equals("oxygen")) {
                 fugacityCoefficient =
-                        activinf * K[2] * gamma * (1000 / 18.02) / phase.getPressure();// +46.9157/(gamma*K[2]))/
+                    activinf * K[2] * gamma * (1000 / 18.02) / phase.getPressure(); // +46.9157/(gamma*K[2]))/
                                                                                        // phase.getPressure();
             } else if (componentName.contentEquals("water")) {
                 fugacityCoefficient = activinf * K[3] * (1000 / 18.02) / phase.getPressure();
@@ -427,7 +427,7 @@ public class ComponentGeDuanSun extends ComponentGE {
                 fugacityCoefficient = activinf * K[3] / phase.getPressure();
             }
             // fugacityCoefficient = activinf * getHenryCoef(phase.getTemperature()) /
-            // phase.getPressure();//gamma* benyttes ikke
+            // phase.getPressure(); //gamma* benyttes ikke
             gammaRefCor = activinf;
         }
         logFugacityCoefficient = Math.log(fugacityCoefficient);

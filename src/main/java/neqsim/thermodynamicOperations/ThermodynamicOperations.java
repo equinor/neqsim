@@ -1798,7 +1798,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = new String[resultTable[0].length];// {"", "", ""};
+    String[] names = new String[resultTable[0].length]; // {"", "", ""};
     for (int i = 0; i < names.length; i++) {
       names[i] = "";
     }

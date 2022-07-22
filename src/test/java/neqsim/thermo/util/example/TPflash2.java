@@ -22,7 +22,7 @@ public class TPflash2 {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 80.0, 1.01325);//
+      SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 80.0, 1.01325); //
         testSystem.addComponent("nitrogen", 8.71604938);
         // testSystem.addComponent("oxygen", 22.71604938);
         testSystem.addComponent("water", 110.234567901);

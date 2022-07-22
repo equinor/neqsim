@@ -154,7 +154,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         - 0.029725 * redDens * redDens * redDens;
     double condIntRef =
         (1.18653 * nstarRef * (CpID - 2.5 * neqsim.thermo.ThermodynamicConstantsInterface.R)
-            * Ffunc) / (referenceSystem.getMolarMass());// *1e3;
+            * Ffunc) / (referenceSystem.getMolarMass()); // *1e3;
 
     double nstarMix = calcMixLPViscosity();
     double FfuncMix = 1.0 + 0.053432 * redDens - 0.030182 * redDens * redDens
@@ -162,7 +162,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     double CpIDmix = phase.getPhase().getCp0();
     double condIntMix =
         (1.18653 * nstarMix * (CpIDmix - 2.5 * neqsim.thermo.ThermodynamicConstantsInterface.R)
-            * FfuncMix) / (Mmix / 1.0e3);// *1e3;
+            * FfuncMix) / (Mmix / 1.0e3); // *1e3;
 
     double refConductivity = getRefComponentConductivity(T0, P0);
 

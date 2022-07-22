@@ -381,7 +381,7 @@ public class GERG2008 {
             }
         }
 
-        doubleW Mm = new doubleW(0.0d);// , R, RT;
+        doubleW Mm = new doubleW(0.0d); // , R, RT;
         double R, RT;
         // Calculate molar mass
         MolarMassGERG(x, Mm);

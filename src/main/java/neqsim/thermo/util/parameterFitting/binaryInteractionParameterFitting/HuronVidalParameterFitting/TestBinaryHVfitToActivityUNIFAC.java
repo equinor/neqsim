@@ -54,8 +54,8 @@ public class TestBinaryHVfitToActivityUNIFAC implements Cloneable {
             // System.out.println("activity " + activ);
 
             // double parameterGuess[] ={4600.679072303, -1200.64471708, -3.89,
-            // 1.9};//Piperazine - water
-            double parameterGuess[] = {-460.679072303, 120.64471708, -3.89, 1.9};// Piuperazine
+            // 1.9}; //Piperazine - water
+            double parameterGuess[] = {-460.679072303, 120.64471708, -3.89, 1.9}; // Piuperazine
                                                                                  // -AceticAcid
             function.setInitialGuess(parameterGuess);
             double sample1[] = {numb / 1000.0, testSystem.getTemperature()};

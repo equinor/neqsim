@@ -41,11 +41,11 @@ public class TestFurstIonicParameterFunction {
     // double[] guess = { 0.0000001116, 0.0000053822, 0.0000691846, 0.0000049520,
     // -0.0000000605, -0.0000216352};
     // double[] guess = {0.0000000640, 0.0000011845 , 0.0000209744, 0.0000089071,
-    // -0.0000000272, 0.0000019014};//cpa-el
+    // -0.0000000272, 0.0000019014}; //cpa-el
     double[] guess =
         {0.0000000752, 0.0000037242, 0.0000250998, 0.0000198635, -0.0000000311, -0.0000006630};
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
-    // Description IN ('NaCl')");//,'LiCl','Sr2Br','Sr2I')");
+    // Description IN ('NaCl')"); //,'LiCl','Sr2Br','Sr2I')");
     ResultSet dataSet = database
         .getResultSet("SELECT * FROM ionicData WHERE ion1<>'H3Oplus2' ORDER BY ion1,ion2,x2");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE

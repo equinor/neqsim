@@ -154,9 +154,9 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
                 .getNumberOfComponents(); componentNumber++) {
             if (componentNumber == 1) {
                 double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-                        * getInterphaseContactArea();// getInterphaseContactLength(0)*getGeometry().getNodeLength();
+                    * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
                 double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-                        * getInterphaseContactArea();// getInterphaseContactLength(0)*getGeometry().getNodeLength();
+                    * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
                 System.out.println("liquidMolarRate" + liquidMolarRate);
                 // getBulkSystem().getPhase(0).addMoles(componentNumber,
                 // this.flowDirection[0]*gasMolarRate);
@@ -184,11 +184,11 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
                 * getInterphaseContactArea();
         double liquid_dT = -this.flowDirection[1] * heatFlux / getBulkSystem().getPhase(1).getCp();
         double gas_dT = this.flowDirection[0] * heatFlux / getBulkSystem().getPhase(0).getCp();
-        liquid_dT += 0.0;// getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1,
+        liquid_dT += 0.0; // getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1,
                          // this)*(getBulkSystem().getPhase(1).getTemperature()-pipe.getOuterTemperature())
                          // * getWallContactLength(1) *
                          // getGeometry().getNodeLength()/getBulkSystem().getPhase(1).getCp();
-        liquid_dT += 0.0;// getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0,
+        liquid_dT += 0.0; // getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0,
                          // this)*
                          // (getBulkSystem().getPhase(0).getTemperature()-pipe.getOuterTemperature())*
                          // getWallContactLength(0) *

@@ -114,7 +114,7 @@ public class ComponentGEWilson extends ComponentGE {
     public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {
         double param1 = 0.0; // ((ComponentWaxWilson)
                              // phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
-        double param2 = 0.0;// ((ComponentWaxWilson)
+        double param2 = 0.0; // ((ComponentWaxWilson)
                             // phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
         if (comp1 == comp2) {
             return 1.0;

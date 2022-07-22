@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
 
@@ -13,6 +15,7 @@ import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
  */
 public class SeparatorDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(SeparatorDesignStandard.class);
 
   /**
    * <p>
@@ -74,12 +77,12 @@ public class SeparatorDesignStandard extends DesignStandard {
           }
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
 
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     } finally {
       try {
         if (dataSet != null) {
@@ -87,7 +90,7 @@ public class SeparatorDesignStandard extends DesignStandard {
         }
       } catch (Exception e) {
         System.out.println("error closing database.....GasScrubberDesignStandard");
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
     }
   }
@@ -150,10 +153,11 @@ public class SeparatorDesignStandard extends DesignStandard {
     // select correct residensetime from database
     // to be implmented
     if (name.equals("API12J")) {
-      if (dens < 0.85)
+      if (dens < 0.85) {
         retTime = 60.0;
-      else if (dens > 0.93)
+      } else if (dens > 0.93) {
         retTime = 180.0;
+      }
     }
     return retTime;
   }

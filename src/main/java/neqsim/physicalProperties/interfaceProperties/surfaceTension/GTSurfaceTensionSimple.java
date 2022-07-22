@@ -70,7 +70,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         localSystem = system.clone();
 
         double surdenstemp = 0.0;
-        int referenceComponentNumber = getComponentWithHighestBoilingpoint();// 2;//localSystem.getPhase(0).getNumberOfComponents()
+        int referenceComponentNumber = getComponentWithHighestBoilingpoint(); // 2;
+                                                                              // //localSystem.getPhase(0).getNumberOfComponents()
                                                                              // - 1;
         double[] del_den_interface = new double[localSystem.getPhase(0).getNumberOfComponents()];
         double[] del_den_interface_old =
@@ -271,7 +272,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
                 for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
                     if (i != referenceComponentNumber) {
                         err += Math.abs(ans2.getEntry(pp, 0) * 1e5) / totalDens;
-                        del_den_interface[i] += 1e5 * ans2.getEntry(pp, 0);// * (iterations) / (10.0
+                        del_den_interface[i] += 1e5 * ans2.getEntry(pp, 0); // * (iterations) /
+                                                                            // (10.0
                                                                            // + iterations);
                         pp++;
                     }
@@ -306,7 +308,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
                 break;
             }
             surdenstemp += Math.sqrt(2.0 * kappa * mu_times_den[j])
-                    * del_den_interface[referenceComponentNumber];// *
+                * del_den_interface[referenceComponentNumber]; // *
                                                                   // thermo.ThermodynamicConstantsInterface.avagadroNumber;
         }
 
@@ -318,7 +320,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
             // System.out.println("z " + z_step[j] + " density " + j + " " +
             // den_interface[j][0] + " mu_times_den[j] " + mu_times_den[j]+ "
             // pressure_interface[j] " + pressure_interface[j] + " "+
-            // pressure_interface[0]);// + " " + den_interface[j][1] + " " +
+            // pressure_interface[0]); // + " " + den_interface[j][1] + " " +
             // den_interface[j][0] / den_interface[j][1]);
         }
 
