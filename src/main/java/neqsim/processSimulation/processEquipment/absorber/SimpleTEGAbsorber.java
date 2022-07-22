@@ -348,9 +348,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   @Override
   public void run() {
     try {
-      double y0 = 0.0, y1 = 0.0, y0TEG = 0.0;
+      double y1 = 0.0;
       // double yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
-      double absorptionEffiency = 0.0;
       mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
       mixedStream.getThermoSystem().setNumberOfPhases(2);
       mixedStream.getThermoSystem().reInitPhaseType();
@@ -371,10 +370,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       calcNumberOfTheoreticalStages();
       // System.out.println("number of theoretical stages " +
       // getNumberOfTheoreticalStages());
-      absorptionEffiency = calcEa();
+      double absorptionEffiency = calcEa();
 
-      y0 = calcY0();
-      y0TEG = calcY0TEG();
+      double y0 = calcY0();
+      double y0TEG = calcY0TEG();
       y1 = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx()
           - absorptionEffiency
               * (gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx() - y0);
