@@ -18,13 +18,22 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 public class Adjuster extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
 
-  ProcessEquipmentInterface adjustedEquipment = null, targetEquipment = null;
-  String adjustedVarialble = "", targetVariable = "", targetPhase = "", targetComponent = "";
+  ProcessEquipmentInterface adjustedEquipment = null;
+  ProcessEquipmentInterface targetEquipment = null;
+
+  String adjustedVarialble = "";
+  String targetVariable = "";
+  String targetPhase = "";
+  String targetComponent = "";
+
   double targetValue = 0.0;
   String targetUnit = "";
   private double tolerance = 1e-6;
-  double inputValue = 0.0, oldInputValue = 0.0;
-  private double error = 1e6, oldError = 1.0e6;
+  double inputValue = 0.0;
+  double oldInputValue = 0.0;
+  private double error = 1e6;
+  private double oldError = 1.0e6;
+
   int iterations = 0;
   private boolean activateWhenLess = false;
 
@@ -193,10 +202,11 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    if (Math.abs(error) < tolerance)
+    if (Math.abs(error) < tolerance) {
       return true;
-    else
+    } else {
       return false;
+    }
   }
 
   /** {@inheritDoc} */
