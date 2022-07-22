@@ -18,7 +18,8 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
   double LNGdensity = 0.0;
   String densityUnit = "kg/m^3";
-  double KMcorrectionFactor1 = 0.0, KMcorrectionFactor2 = 0.0;
+  double KMcorrectionFactor1 = 0.0;
+  double KMcorrectionFactor2 = 0.0;
   double[] Vi = null;
   boolean use6578volumeCorrectionFactors = true;
   double[] temperatures = {105.0, 110.0, 115.0, 120.0, 125.0, 130.0, 135.0};
@@ -71,11 +72,12 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
           {1.31, 1.5, 1.72, 1.99, 2.33, 2.77, 3.31, 3.95, 4.74},
           {1.38, 1.59, 1.83, 2.12, 2.48, 2.95, 3.51, 4.19, 5.03},
           {1.47, 1.68, 1.93, 2.24, 2.63, 3.12, 3.72, 4.45, 5.34}};
-  BicubicInterpolatingFunction pcs1 = null, pcs2 = null;
+  BicubicInterpolatingFunction pcs1 = null;
+  BicubicInterpolatingFunction pcs2 = null;
   LinearInterpolator liearInterpol = new LinearInterpolator();
-  double[] Vitemperatures = ISO6578temperatures;// {-180.0, -175.0, -170.0, -165.0, -160.0,
-                                                // -155.0, -150.0, -145.0,
-                                                // -140.0};
+  double[] Vitemperatures = ISO6578temperatures; // {-180.0, -175.0, -170.0, -165.0, -160.0,
+                                                 // -155.0, -150.0, -145.0,
+                                                 // -140.0};
   double[] Vimethane =
       {0.035771, 0.036315, 0.036891, 0.037500, 0.038149, 0.038839, 0.039580, 0.040375, 0.041237};
   double[] Viethane =
@@ -199,7 +201,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
       try {
         Vi[i] = function.value(thermoSystem.getTemperature());
       } catch (Exception e) {
-        // e.printStackTrace();
+        // logger.error(e.getMessage());
         // System.out.println("volume "+
         // (thermoSystem.getPhase(0).getMolarVolume())/10e4);
         Vi[i] = thermoSystem.getPhase(1).getMolarVolume() / 100.0;
@@ -211,14 +213,15 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
       Vmix += thermoSystem.getPhase(0).getComponent(i).getx() * Vi[i];
     }
 
-    double xn2 = 0.0, xch4 = 0.0;
+    double xn2 = 0.0;
+    double xch4 = 0.0;
     try {
       KMcorrectionFactor1 = pcs1.value(thermoSystem.getPhase(0).getMolarMass() * 1000.0,
           thermoSystem.getTemperature());
       KMcorrectionFactor2 = pcs2.value(thermoSystem.getPhase(0).getMolarMass() * 1000.0,
           thermoSystem.getTemperature());
     } catch (Exception e) {
-      /// e.printStackTrace();
+      /// logger.error(e.getMessage());
       KMcorrectionFactor1 = 0.0;
       KMcorrectionFactor2 = 0.0;
     }

@@ -36,7 +36,7 @@ public class TestCPAStatoil {
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
-                "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MEG' AND Temperature<500.0");// AND
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MEG' AND Temperature<500.0"); // AND
                                                                                                               // VapourPressure>0.00000000001
                                                                                                               // AND
                                                                                                               // Reference='Stull1947'");
@@ -64,10 +64,10 @@ public class TestCPAStatoil {
 
                 // double guess[] =
                 // {((ComponentSrk)testSystem.getPhase(0).getComponent(0)).geta(),((ComponentSrk)testSystem.getPhase(0).getComponent(0)).getb(),testSystem.getPhase(0).getComponent(0).getAcentricFactor(),0.04567};
-                double guess[] = {0.7892765953, -1.0606510837, 2.2071936510};// water CPA statoil
-                // double guess[] ={0.8581331725*0, -1.0053180150*0, 1.2736063639*0};//MEG CPA
+                double guess[] = {0.7892765953, -1.0606510837, 2.2071936510}; // water CPA statoil
+                // double guess[] ={0.8581331725*0, -1.0053180150*0, 1.2736063639*0}; //MEG CPA
                 // statoil
-                // double guess[] ={ 1.0008858863, 1.8649645470, -4.6720397496};//TEG CPA
+                // double guess[] ={ 1.0008858863, 1.8649645470, -4.6720397496}; //TEG CPA
                 // statoil
                 function.setInitialGuess(guess);
 

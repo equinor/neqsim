@@ -114,7 +114,7 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
         sample.setReference(Double.toString(testSystem.getTemperature()));
         // double parameterGuess[] = {5601.2391787479, -3170.8329162571, -1.7069851770,
         // -0.5058509407}; // HV CO2
-        double parameterGuess[] = {3626.0, -2241.0, 3.91, -3.16};// ; // HV CO2
+        double parameterGuess[] = {3626.0, -2241.0, 3.91, -3.16}; // ; // HV CO2
         function.setInitialGuess(parameterGuess);
         sample.setDescription(Double.toString(testSystem.getTemperature()));
         sampleList.add(sample);

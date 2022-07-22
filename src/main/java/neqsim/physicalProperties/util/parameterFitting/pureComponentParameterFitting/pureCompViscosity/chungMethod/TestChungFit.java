@@ -35,7 +35,7 @@ public class TestChungFit {
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet("SELECT * FROM purecomponentviscosity");// WHERE
+        ResultSet dataSet = database.getResultSet("SELECT * FROM purecomponentviscosity"); // WHERE
                                                                                           // ComponentName='MDEA*'");
 
         try {

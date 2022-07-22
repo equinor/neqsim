@@ -44,7 +44,7 @@ public class AmineViscosity extends Viscosity {
                 / liquidPhase.getPhase().getMolarMass();
         double viscA = -12.197 - 8.905 * wtFracA;
         double viscB = 1438.717 + 4218.749 * wtFracA;
-        double logviscosity = viscA + viscB / liquidPhase.getPhase().getTemperature();// //N-sek/m2
+        double logviscosity = viscA + viscB / liquidPhase.getPhase().getTemperature(); // //N-sek/m2
         // System.out.println("visc " + Math.exp(logviscosity));
         return Math.exp(logviscosity);
     }

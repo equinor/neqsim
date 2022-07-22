@@ -58,7 +58,7 @@ public class PumpResponse {
 
         // polytropicHead = inputCompressor.getPolytropicFluidHead();
         // polytropicEfficiency =inputCompressor.getPolytropicEfficiency();
-        power = inputPump.getPower("W");// "kW");
+        power = inputPump.getPower("W"); // "kW");
         // speed = inputPump.getSpeed();
         // if(inputCompressor.getAntiSurge().isActive()){
         // internalVolumeFlow =

@@ -89,7 +89,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
                     * Math.log(((ComponentGEUniquac) componentArray[i]).getGamma(phase,
                             numberOfComponents, temperature, pressure, phasetype));
         }
-        return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();// phase.getNumberOfMolesInPhase()*
+        return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase(); // phase.getNumberOfMolesInPhase()*
     }
 
     /**

@@ -3,6 +3,7 @@
  *
  * Created on 8. august 2001, 14:52
  */
+
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySolver.fluidBoundaryReactiveSolver;
 
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySolver.FluidBoundarySolver;
@@ -16,10 +17,10 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version $Id: $Id
  */
 public class FluidBoundaryReactiveSolver extends FluidBoundarySolver {
-    /**
-     * <p>
-     * Constructor for FluidBoundaryReactiveSolver.
-     * </p>
-     */
-    public FluidBoundaryReactiveSolver() {}
+  /**
+   * <p>
+   * Constructor for FluidBoundaryReactiveSolver.
+   * </p>
+   */
+  public FluidBoundaryReactiveSolver() {}
 }

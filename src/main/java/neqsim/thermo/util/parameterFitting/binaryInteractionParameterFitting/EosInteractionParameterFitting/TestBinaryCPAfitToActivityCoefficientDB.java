@@ -64,8 +64,8 @@ public class TestBinaryCPAfitToActivityCoefficientDB implements Cloneable {
                 // function.setDatabaseParameters();
                 // double guess[] = {-1466.3924707953, 1197.4327552750, 5.9188456398,
                 // -7.2410712156, 0.2127650110};
-                double guess[] = {-0.241488376, -0.344136439, 0.0004315217};// ,0.02};//,
-                                                                            // -55};//,-30};
+                double guess[] = {-0.241488376, -0.344136439, 0.0004315217}; // ,0.02}; //,
+                                                                             // -55}; //,-30};
 
                 function.setInitialGuess(guess);
                 sampleList.add(sample);

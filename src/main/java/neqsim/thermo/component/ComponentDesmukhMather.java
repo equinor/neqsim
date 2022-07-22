@@ -102,7 +102,7 @@ public class ComponentDesmukhMather extends ComponentGE {
         for (int i = 0; i < phase.getNumberOfComponents(); i++) {
             if (!phase.getComponent(i).getComponentName().equals("water")) {
                 temp += 2.0 * ((PhaseDesmukhMather) phase).getBetaDesMatij(i, getComponentNumber())
-                        * phase.getComponent(i).getMolality(phase);// phase.getComponent(i).getMolarity(phase);
+                    * phase.getComponent(i).getMolality(phase); // phase.getComponent(i).getMolarity(phase);
             }
         }
         // System.out.println("molality MDEA "+

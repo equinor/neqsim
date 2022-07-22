@@ -80,7 +80,7 @@ public class AttractiveTermCPAstatoil extends AttractiveTermSrk {
         double temp1 = 1.0 - Math.sqrt(Tr);
         double var = 1.0 + parameters[0] * temp1 + parameters[1] * temp1 * temp1
                 + parameters[2] * temp1 * temp1 * temp1;
-        return var * var;// Math.pow(1.0+parameters[0]*(1.0-Math.sqrt(Tr))+parameters[1]*temp1*temp1+parameters[2]*temp1*temp1*temp1,2.0);
+        return var * var; // Math.pow(1.0+parameters[0]*(1.0-Math.sqrt(Tr))+parameters[1]*temp1*temp1+parameters[2]*temp1*temp1*temp1,2.0);
     }
 
     /** {@inheritDoc} */
