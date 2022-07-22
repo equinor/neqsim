@@ -1,5 +1,8 @@
 package neqsim.processSimulation.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 import neqsim.processSimulation.measurementDevice.MolarMassAnalyser;
 import neqsim.processSimulation.measurementDevice.PressureTransmitter;
@@ -25,6 +28,8 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @since 2.2.3
  */
 public class OnshoreProcess1 {
+  static Logger logger = LogManager.getLogger(ChemicalReactionOperations.class);
+
   /**
    * This method is just meant to test the thermo package.
    *
@@ -562,7 +567,7 @@ public class OnshoreProcess1 {
               * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getMolarMass() * 3600.0
           + " kg gas/hr");
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
   }
 }
