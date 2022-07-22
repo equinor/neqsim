@@ -22,11 +22,14 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   double Q = 0.0;
   int n = 0;
   double xComp = 0.0;
-  double QComp = 0.0, QMix = 0.0;
-  public double[] QMixdN = null;// , xMixdN = null;
+  double QComp = 0.0;
+  double QMix = 0.0;
+  public double[] QMixdN = null; // , xMixdN = null;
   double[] lnGammaMixdn = new double[MAX_NUMBER_OF_COMPONENTS];
-  double lnGammaComp = 0.0, lnGammaMix = 0.0;
-  double lnGammaCompdT = 0.0, lnGammaMixdT = 0.0;
+  double lnGammaComp = 0.0;
+  double lnGammaMix = 0.0;
+  double lnGammaCompdT = 0.0;
+  double lnGammaMixdT = 0.0;
   private double lnGammaCompdTdT = 0.0;
   private double lnGammaMixdTdT = 0.0;
   int groupIndex = 0;
@@ -242,12 +245,15 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   /** {@inheritDoc} */
   // @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     UNIFACgroup other = (UNIFACgroup) obj;
     return subGroup == other.subGroup;
     /*
@@ -267,7 +273,6 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
      * Double.doubleToLongBits(other.xComp);
      */
   }
-
 
   /**
    * Getter for property xComp.
@@ -326,7 +331,10 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    */
   public double calcQMix(PhaseGEUnifac phase) {
     ComponentGEUnifac component;
-    double temp = 0.0, temp2 = 0.0, tempVar, numberOfMoles;
+    double temp = 0.0;
+    double temp2 = 0.0;
+    double tempVar;
+    double numberOfMoles;
     UNIFACgroup unifacGroup;
     int numberOfGrups = 0;
     for (int j = 0; j < phase.getNumberOfComponents(); j++) {
@@ -360,7 +368,12 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     ComponentGEUnifac component;
     UNIFACgroup unifacGroup;
     // calcXMixdN(phase);
-    double temp, temp2, tempVar, tempdn, temp2dn, tempVardn = 0.0;
+    double temp;
+    double temp2;
+    double tempVar;
+    double tempdn;
+    double temp2dn;
+    double tempVardn = 0.0;
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       temp = 0.0;
       temp2 = 0.0;

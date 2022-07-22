@@ -3,6 +3,7 @@
  *
  * Created on 11. juli 2000, 21:00
  */
+
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,312 +22,309 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  * @version $Id: $Id
  */
 public class PhaseGE extends Phase implements PhaseGEInterface {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    EosMixingRules mixSelect = new EosMixingRules();
-    EosMixingRulesInterface mixRuleEos;
+  EosMixingRules mixSelect = new EosMixingRules();
+  EosMixingRulesInterface mixRuleEos;
 
-    static Logger logger = LogManager.getLogger(PhaseGE.class);
+  static Logger logger = LogManager.getLogger(PhaseGE.class);
 
-    /**
-     * <p>
-     * Constructor for PhaseGE.
-     * </p>
-     */
-    public PhaseGE() {
-        super();
-        phaseTypeName = "liquid";
-        componentArray = new ComponentGEInterface[MAX_NUMBER_OF_COMPONENTS];
-        useVolumeCorrection = false;
+  /**
+   * <p>
+   * Constructor for PhaseGE.
+   * </p>
+   */
+  public PhaseGE() {
+    super();
+    phaseTypeName = "liquid";
+    componentArray = new ComponentGEInterface[MAX_NUMBER_OF_COMPONENTS];
+    useVolumeCorrection = false;
+  }
+
+  /**
+   * <p>
+   * init.
+   * </p>
+   *
+   * @param temperature a double
+   * @param pressure a double
+   * @param totalNumberOfMoles a double
+   * @param beta a double
+   * @param numberOfComponents a int
+   * @param type a int
+   * @param phase a int
+   */
+  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+      int numberOfComponents, int type, int phase) {
+    if (totalNumberOfMoles <= 0) {
+      new neqsim.util.exception.InvalidInputException(this, "init", "totalNumberOfMoles",
+          "must be larger than zero.");
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type);
+    }
+    this.getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, type);
+
+    double sumHydrocarbons = 0.0, sumAqueous = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()
+          || getComponent(i).isIsTBPfraction()) {
+        sumHydrocarbons += getComponent(i).getx();
+      } else {
+        sumAqueous += getComponent(i).getx();
+      }
     }
 
-    /**
-     * <p>
-     * init.
-     * </p>
-     *
-     * @param temperature a double
-     * @param pressure a double
-     * @param totalNumberOfMoles a double
-     * @param beta a double
-     * @param numberOfComponents a int
-     * @param type a int
-     * @param phase a int
-     */
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-            int numberOfComponents, int type, int phase) {
-        if (totalNumberOfMoles <= 0) {
-          new neqsim.util.exception.InvalidInputException(this, "init", "totalNumberOfMoles",
-              "must be larger than zero.");
-        }
-        for (int i = 0; i < numberOfComponents; i++) {
-            componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type);
-        }
-        this.getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, type);
+    if (sumHydrocarbons > sumAqueous) {
+      phaseTypeName = "oil";
+    } else {
+      phaseTypeName = "aqueous";
+    }
+  }
 
-        double sumHydrocarbons = 0.0, sumAqueous = 0.0;
-        for (int i = 0; i < numberOfComponents; i++) {
-            if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()
-                    || getComponent(i).isIsTBPfraction()) {
-                sumHydrocarbons += getComponent(i).getx();
-            } else {
-                sumAqueous += getComponent(i).getx();
-            }
-        }
-
-        if (sumHydrocarbons > sumAqueous) {
-            phaseTypeName = "oil";
-        } else {
-            phaseTypeName = "aqueous";
-        }
+  /** {@inheritDoc} */
+  @Override
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase,
+      double beta) {
+    super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
+    if (initType != 0) {
+      getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, phase);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase,
-            double beta) {
-        super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
-        if (initType != 0) {
-            getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, phase);
-        }
-
-        double sumHydrocarbons = 0.0, sumAqueous = 0.0;
-        for (int i = 0; i < numberOfComponents; i++) {
-            if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()
-                    || getComponent(i).isIsTBPfraction()) {
-                sumHydrocarbons += getComponent(i).getx();
-            } else {
-                sumAqueous += getComponent(i).getx();
-            }
-        }
-
-        if (sumHydrocarbons > sumAqueous) {
-            phaseTypeName = "oil";
-        } else {
-            phaseTypeName = "aqueous";
-        }
-
-        // calc liquid density
-
-        if (initType > 1) {
-            // Calc Cp /Cv
-            // Calc enthalpy/entropys
-        }
+    double sumHydrocarbons = 0.0, sumAqueous = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()
+          || getComponent(i).isIsTBPfraction()) {
+        sumHydrocarbons += getComponent(i).getx();
+      } else {
+        sumAqueous += getComponent(i).getx();
+      }
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setMixingRule(int type) {
-        mixingRuleDefined = true;
-        super.setMixingRule(2);
-        mixRuleEos = mixSelect.getMixingRule(2, this);
+    if (sumHydrocarbons > sumAqueous) {
+      phaseTypeName = "oil";
+    } else {
+      phaseTypeName = "aqueous";
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void resetMixingRule(int type) {
-        mixingRuleDefined = true;
-        super.setMixingRule(2);
-        mixRuleEos = mixSelect.resetMixingRule(2, this);
+    // calc liquid density
+
+    if (initType > 1) {
+      // Calc Cp /Cv
+      // Calc enthalpy/entropys
     }
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double molarVolume(double pressure, double temperature, double A, double B, int phase) {
-        return 1;
+  /** {@inheritDoc} */
+  @Override
+  public void setMixingRule(int type) {
+    mixingRuleDefined = true;
+    super.setMixingRule(2);
+    mixRuleEos = mixSelect.getMixingRule(2, this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void resetMixingRule(int type) {
+    mixingRuleDefined = true;
+    super.setMixingRule(2);
+    mixRuleEos = mixSelect.resetMixingRule(2, this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double molarVolume(double pressure, double temperature, double A, double B, int phase) {
+    return 1;
+  }
+
+  /**
+   * <p>
+   * molarVolumeAnalytic.
+   * </p>
+   *
+   * @param pressure a double
+   * @param temperature a double
+   * @param A a double
+   * @param B a double
+   * @param phase a int
+   * @return a double
+   */
+  public double molarVolumeAnalytic(double pressure, double temperature, double A, double B,
+      int phase) {
+    return 1;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addcomponent(String componentName, double moles, double molesInPhase,
+      int compNumber) {
+    super.addcomponent(molesInPhase);
+  }
+
+  /**
+   * <p>
+   * setAlpha.
+   * </p>
+   *
+   * @param alpha an array of {@link double} objects
+   */
+  public void setAlpha(double[][] alpha) {}
+
+  /**
+   * <p>
+   * setDij.
+   * </p>
+   *
+   * @param Dij an array of {@link double} objects
+   */
+  public void setDij(double[][] Dij) {}
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure, int phasetype) {
+    logger.error("this getExxess should never be used.......");
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getGibbsEnergy() {
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExessGibbsEnergy() {
+    logger.error("this getExxess should never be used.......");
+    return 0;
+  }
+
+  /**
+   * <p>
+   * setDijT.
+   * </p>
+   *
+   * @param DijT an array of {@link double} objects
+   */
+  public void setDijT(double[][] DijT) {}
+
+  /** {@inheritDoc} */
+  @Override
+  public double getActivityCoefficientSymetric(int k) {
+    return ((ComponentGEInterface) getComponent(k)).getGamma();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getActivityCoefficient(int k) {
+    return ((ComponentGEInterface) getComponent(k)).getGamma();
+  }
+
+  /**
+   * <p>
+   * getActivityCoefficientInfDilWater.
+   * </p>
+   *
+   * @param k a int
+   * @param p a int
+   * @return a double
+   */
+  public double getActivityCoefficientInfDilWater(int k, int p) {
+    if (refPhase == null) {
+      initRefPhases(false, getComponent(p).getName());
     }
+    refPhase[k].setTemperature(temperature);
+    refPhase[k].setPressure(pressure);
+    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getPhaseType(), 1.0);
+    ((PhaseGEInterface) refPhase[k]).getExessGibbsEnergy(refPhase[k], 2,
+        refPhase[k].getTemperature(), refPhase[k].getPressure(), refPhase[k].getPhaseType());
+    return ((ComponentGEInterface) refPhase[k].getComponent(0)).getGamma();
+  }
 
-    /**
-     * <p>
-     * molarVolumeAnalytic.
-     * </p>
-     *
-     * @param pressure a double
-     * @param temperature a double
-     * @param A a double
-     * @param B a double
-     * @param phase a int
-     * @return a double
-     */
-    public double molarVolumeAnalytic(double pressure, double temperature, double A, double B,
-            int phase) {
-        return 1;
+  /**
+   * <p>
+   * getActivityCoefficientInfDil.
+   * </p>
+   *
+   * @param k a int
+   * @return a double
+   */
+  public double getActivityCoefficientInfDil(int k) {
+    PhaseInterface dilphase = (PhaseInterface) this.clone();
+    dilphase.addMoles(k, -(1.0 - 1e-10) * dilphase.getComponent(k).getNumberOfMolesInPhase());
+    dilphase.getComponent(k).setx(1e-10);
+    dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1,
+        dilphase.getPhaseType(), 1.0);
+    ((PhaseGEInterface) dilphase).getExessGibbsEnergy(dilphase, 2, dilphase.getTemperature(),
+        dilphase.getPressure(), dilphase.getPhaseType());
+    return ((ComponentGEInterface) dilphase.getComponent(0)).getGamma();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getEnthalpy() {
+    return getCp() * temperature * numberOfMolesInPhase;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getEntropy() {
+    return getCp() * Math.log(temperature / ThermodynamicConstantsInterface.referenceTemperature);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCp() {
+    double tempVar = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      tempVar += componentArray[i].getx() * componentArray[i].getPureComponentCpLiquid(temperature);
     }
+    return tempVar;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void addcomponent(String componentName, double moles, double molesInPhase,
-            int compNumber) {
-        super.addcomponent(molesInPhase);
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getCv() {
+    // Cv is assumed equal to Cp
+    return getCp();
+  }
 
-    /**
-     * <p>
-     * setAlpha.
-     * </p>
-     *
-     * @param alpha an array of {@link double} objects
-     */
-    public void setAlpha(double[][] alpha) {}
+  // return speed of sound in water constant 1470.0 m/sec
+  /** {@inheritDoc} */
+  @Override
+  public double getZ() {
+    double densityIdealGas = pressure * 1e5 / 8.314 / temperature * getMolarMass();
+    return densityIdealGas / getDensity("kg/m3");
+  }
 
-    /**
-     * <p>
-     * setDij.
-     * </p>
-     *
-     * @param Dij an array of {@link double} objects
-     */
-    public void setDij(double[][] Dij) {}
+  // return speed of sound in water constant 1470.0 m/sec
+  /** {@inheritDoc} */
+  @Override
+  public double getSoundSpeed() {
+    return 1470.0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-            double temperature, double pressure, int phasetype) {
-        logger.error("this getExxess should never be used.......");
-        return 0;
-    }
+  // return speed of JT coefficient of water at K/bar (assumed constant)
+  /** {@inheritDoc} */
+  @Override
+  public double getJouleThomsonCoefficient() {
+    return -0.125 / 10.0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getGibbsEnergy() {
-        return 0;
-    }
+  /**
+   * {@inheritDoc}
+   *
+   * note: at the moment return density of water (997 kg/m3)
+   */
+  @Override
+  public double getDensity() {
+    return 997.0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getExessGibbsEnergy() {
-        logger.error("this getExxess should never be used.......");
-        return 0;
-    }
-
-    /**
-     * <p>
-     * setDijT.
-     * </p>
-     *
-     * @param DijT an array of {@link double} objects
-     */
-    public void setDijT(double[][] DijT) {}
-
-    /** {@inheritDoc} */
-    @Override
-    public double getActivityCoefficientSymetric(int k) {
-        return ((ComponentGEInterface) getComponent(k)).getGamma();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public double getActivityCoefficient(int k) {
-        return ((ComponentGEInterface) getComponent(k)).getGamma();
-    }
-
-    /**
-     * <p>
-     * getActivityCoefficientInfDilWater.
-     * </p>
-     *
-     * @param k a int
-     * @param p a int
-     * @return a double
-     */
-    public double getActivityCoefficientInfDilWater(int k, int p) {
-        if (refPhase == null) {
-            initRefPhases(false, getComponent(p).getName());
-        }
-        refPhase[k].setTemperature(temperature);
-        refPhase[k].setPressure(pressure);
-        refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getPhaseType(), 1.0);
-        ((PhaseGEInterface) refPhase[k]).getExessGibbsEnergy(refPhase[k], 2,
-                refPhase[k].getTemperature(), refPhase[k].getPressure(),
-                refPhase[k].getPhaseType());
-        return ((ComponentGEInterface) refPhase[k].getComponent(0)).getGamma();
-    }
-
-    /**
-     * <p>
-     * getActivityCoefficientInfDil.
-     * </p>
-     *
-     * @param k a int
-     * @return a double
-     */
-    public double getActivityCoefficientInfDil(int k) {
-        PhaseInterface dilphase = (PhaseInterface) this.clone();
-        dilphase.addMoles(k, -(1.0 - 1e-10) * dilphase.getComponent(k).getNumberOfMolesInPhase());
-        dilphase.getComponent(k).setx(1e-10);
-        dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1,
-                dilphase.getPhaseType(), 1.0);
-        ((PhaseGEInterface) dilphase).getExessGibbsEnergy(dilphase, 2, dilphase.getTemperature(),
-                dilphase.getPressure(), dilphase.getPhaseType());
-        return ((ComponentGEInterface) dilphase.getComponent(0)).getGamma();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public double getEnthalpy() {
-        return getCp() * temperature * numberOfMolesInPhase;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public double getEntropy() {
-        return getCp()
-                * Math.log(temperature / ThermodynamicConstantsInterface.referenceTemperature);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public double getCp() {
-        double tempVar = 0.0;
-        for (int i = 0; i < numberOfComponents; i++) {
-            tempVar += componentArray[i].getx()
-                    * componentArray[i].getPureComponentCpLiquid(temperature);
-        }
-        return tempVar;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public double getCv() {
-        // Cv is assumed equal to Cp
-        return getCp();
-    }
-
-    // return speed of sound in water constant 1470.0 m/sec
-    /** {@inheritDoc} */
-    @Override
-    public double getZ() {
-        double densityIdealGas = pressure * 1e5 / 8.314 / temperature * getMolarMass();
-        return densityIdealGas / getDensity("kg/m3");
-    }
-
-    // return speed of sound in water constant 1470.0 m/sec
-    /** {@inheritDoc} */
-    @Override
-    public double getSoundSpeed() {
-        return 1470.0;
-    }
-
-    // return speed of JT coefficient of water at K/bar (assumed constant)
-    /** {@inheritDoc} */
-    @Override
-    public double getJouleThomsonCoefficient() {
-        return -0.125 / 10.0;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * note: at the moment return density of water (997 kg/m3)
-     */
-    @Override
-    public double getDensity() {
-        return 997.0;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public double getMolarVolume() {
-        return 1.0 / (getDensity() / getMolarMass()) * 1.0e5;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getMolarVolume() {
+    return 1.0 / (getDensity() / getMolarMass()) * 1.0e5;
+  }
 }

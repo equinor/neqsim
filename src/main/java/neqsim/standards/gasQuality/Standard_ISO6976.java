@@ -31,23 +31,49 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   String referenceType = "volume"; // mass volume molar
   String energyUnit = "KJ/Nm3";
   double energy = 1.0;
-  double Zmix0 = 1.0, Zmix15 = 1.0, Zmix20 = 1.0;
-  double Zair0 = 0.99941, Zair15 = 0.99958, Zair20 = 0.99963;
+  double Zmix0 = 1.0;
+  double Zmix15 = 1.0;
+  double Zmix20 = 1.0;
+  double Zair0 = 0.99941;
+  double Zair15 = 0.99958;
+  double Zair20 = 0.99963;
   double averageCarbonNumber = 0.0;
   int[] carbonNumber;
   double[] M;
-  double[] Z0, Z15, Z20;
-  double[] bsqrt0, bsqrt15, bsqrt20;
-  double[] Hsup0, Hsup15, Hsup20, Hsup25, Hsup60F;
-  double[] Hinf0, Hinf15, Hinf20, Hinf25, Hinf60F;
+  double[] Z0;
+  double[] Z15;
+  double[] Z20;
+  double[] bsqrt0;
+  double[] bsqrt15;
+  double[] bsqrt20;
+  double[] Hsup0;
+  double[] Hsup15;
+  double[] Hsup20;
+  double[] Hsup25;
+  double[] Hsup60F;
+  double[] Hinf0;
+  double[] Hinf15;
+  double[] Hinf20;
+  double[] Hinf25;
+  double[] Hinf60F;
   double Mmix = 0.0;
-  double HsupIdeal0 = 0.0, HsupIdeal15 = 0.0, HsupIdeal20 = 0.0, HsupIdeal25 = 0.0,
-      HsupIdeal60F = 0.0;
-  double HinfIdeal0 = 0.0, HinfIdeal15 = 0.0, HinfIdeal20 = 0.0, HinfIdeal25 = 0.0,
-      HinfIdeal60F = 0.0;
-  double wobbeIdeal = 0.0, wobbeReal = 0.0;
-  double relDensIdeal = 0.0, relDensReal = 0.0;
-  double densIdeal = 0.0, densReal = 0.0;
+  double HsupIdeal0 = 0.0;
+  double HsupIdeal15 = 0.0;
+  double HsupIdeal20 = 0.0;
+  double HsupIdeal25 = 0.0;
+  double HsupIdeal60F = 0.0;
+  double HinfIdeal0 = 0.0;
+  double HinfIdeal15 = 0.0;
+  double HinfIdeal20 = 0.0;
+  double HinfIdeal25 = 0.0;
+  double HinfIdeal60F = 0.0;
+  double wobbeIdeal = 0.0;
+  double wobbeReal = 0.0;
+  double relDensIdeal = 0.0;
+  double relDensReal = 0.0;
+  double densIdeal = 0.0;
+  double densReal = 0.0;
+
   static Logger logger = LogManager.getLogger(Standard_ISO6976.class);
 
   public Standard_ISO6976(SystemInterface thermoSystem) {
@@ -242,7 +268,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
       returnValue = Zmix15;
     }
 
-
     if (returnParameter.equals("CompressionFactor")) {
       return returnValue;
     }
@@ -387,7 +412,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     nf.applyPattern("#.#####E0");
     String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
     // String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
-    table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
+    table[0][0] = ""; // getPhases()[0].getPhaseTypeName(); //"";
 
     for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {

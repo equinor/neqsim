@@ -3,6 +3,7 @@
  *
  * Created on 7. mai 2001, 19:20
  */
+
 package neqsim.thermo;
 
 import org.apache.logging.log4j.LogManager;
@@ -148,7 +149,6 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
     // System.out.println("Difference : " + sum);
     return Math.abs(sum) < 1e-10;
   }
-
 
   /**
    * <p>

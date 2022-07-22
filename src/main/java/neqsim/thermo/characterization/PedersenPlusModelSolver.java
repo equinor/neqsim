@@ -16,9 +16,13 @@ import neqsim.thermo.system.SystemInterface;
 public class PedersenPlusModelSolver implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
   int iter = 0;
-  Matrix JacAB, JacCD;
-  Matrix fvecAB, fvecCD;
-  Matrix solAB, solCD, dx;
+  Matrix JacAB;
+  Matrix JacCD;
+  Matrix fvecAB;
+  Matrix fvecCD;
+  Matrix solAB;
+  Matrix solCD;
+  Matrix dx;
   int numberOfComponents = 0;
   PlusFractionModel.PedersenPlusModel characterizeClass;
   SystemInterface system = null;
@@ -65,7 +69,8 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
    * </p>
    */
   public void setfvecAB() {
-    double zSum = 0.0, mSum = 0.0;
+    double zSum = 0.0;
+    double mSum = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
         .getLastPlusFractionNumber(); i++) {
       double ztemp = Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * (i));
@@ -92,7 +97,8 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
     double tempJ = 0.0;
 
     for (int j = 0; j < 2; j++) {
-      double nTot = 0.0, nTot2 = 0.0;
+      double nTot = 0.0;
+      double nTot2 = 0.0;
       for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
           .getLastPlusFractionNumber(); i++) {
         nTot += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
@@ -107,7 +113,11 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
     }
 
     for (int j = 0; j < 2; j++) {
-      double mTot1 = 0.0, mTot2 = 0.0, zSum2 = 0.0, zSum = 0.0, zSum3 = 0.0;
+      double mTot1 = 0.0;
+      double mTot2 = 0.0;
+      double zSum2 = 0.0;
+      double zSum = 0.0;
+      double zSum3 = 0.0;
       for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
           .getLastPlusFractionNumber(); i++) {
         mTot1 += (characterizeClass.PVTsimMolarMass[i - 6] / 1000.0)
@@ -135,10 +145,12 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
    */
   public void setfvecCD() {
     double densTBO =
-        characterizeClass.PVTsimDensities[characterizeClass.getFirstPlusFractionNumber() - 6];// 0.71;//characterizeClass.getDensLastTBP();
+        characterizeClass.PVTsimDensities[characterizeClass.getFirstPlusFractionNumber() - 6]; // 0.71;
+                                                                                               // //characterizeClass.getDensLastTBP();
     fvecCD.set(0, 0, (characterizeClass.getCoef(2) + characterizeClass.getCoef(3)
         * Math.log(characterizeClass.getFirstPlusFractionNumber() - 1)) - densTBO);
-    double temp = 0.0, temp2 = 0;
+    double temp = 0.0;
+    double temp2 = 0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
         .getLastPlusFractionNumber(); i++) {
       temp += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * (i))
@@ -161,7 +173,9 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
     JacCD.set(0, 0, 1);
     JacCD.set(0, 1, Math.log(characterizeClass.getFirstPlusFractionNumber() - 1));
 
-    double temp = 0.0, temp2 = 0, temp3 = 0;
+    double temp = 0.0;
+    double temp2 = 0;
+    double temp3 = 0;
     // double deriv = 0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
         .getLastPlusFractionNumber(); i++) {

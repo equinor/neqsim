@@ -3,9 +3,11 @@
  *
  * Created on 12. mars 2001, 19:48
  */
+
 package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
+import java.util.UUID;
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -21,134 +23,143 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GasScrubber extends Separator {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
-    ArrayList<SeparatorSection> scrubberSection = null;
-    StreamInterface inletStream;
-    StreamInterface gasOutStream;
-    StreamInterface liquidOutStream;
-    String name = new String();
+  SystemInterface thermoSystem;
 
-    /**
-     * <p>
-     * Constructor for GasScrubber.
-     * </p>
-     */
-    @Deprecated
-    public GasScrubber() {
-        this("GasScrubber");
-    }
+  SystemInterface gasSystem;
 
-    /**
-     * <p>
-     * Constructor for GasScrubber.
-     * </p>
-     *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-     */
-    @Deprecated
-    public GasScrubber(StreamInterface inletStream) {
-        this("GasScrubber", inletStream);
-    }
+  SystemInterface waterSystem;
 
-    /**
-     * Constructor for GasScrubber.
-     * 
-     * @param name name of gas scrubber
-     */
-    public GasScrubber(String name) {
-        super(name);
-        this.setOrientation("vertical");
-    }
+  SystemInterface liquidSystem;
 
-    /**
-     * <p>
-     * Constructor for GasScrubber.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-     */
-    public GasScrubber(String name, StreamInterface inletStream) {
-        super(name, inletStream);
-        this.setOrientation("vertical");
-    }
+  SystemInterface thermoSystemCloned;
 
-    public GasScrubberMechanicalDesign getMechanicalDesign() {
-        return new GasScrubberMechanicalDesign(this);
-    }
+  ArrayList<SeparatorSection> scrubberSection = null;
+  StreamInterface inletStream;
+  StreamInterface gasOutStream;
+  StreamInterface liquidOutStream;
+  String name = new String();
 
-    /**
-     * <p>
-     * Setter for the field <code>inletStream</code>.
-     * </p>
-     *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-     */
-    public void setInletStream(StreamInterface inletStream) {
-        this.inletStream = inletStream;
+  /**
+   * <p>
+   * Constructor for GasScrubber.
+   * </p>
+   */
+  @Deprecated
+  public GasScrubber() {
+    this("GasScrubber");
+  }
 
-        thermoSystem = inletStream.getThermoSystem().clone();
-        gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
-        gasOutStream = new Stream("gasOutStream", gasSystem);
+  /**
+   * <p>
+   * Constructor for GasScrubber.
+   * </p>
+   *
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+   */
+  @Deprecated
+  public GasScrubber(StreamInterface inletStream) {
+    this("GasScrubber", inletStream);
+  }
 
-        thermoSystem = inletStream.getThermoSystem().clone();
-        liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-        liquidOutStream = new Stream("liquidOutStream", liquidSystem);
-    }
+  /**
+   * Constructor for GasScrubber.
+   * 
+   * @param name name of gas scrubber
+   */
+  public GasScrubber(String name) {
+    super(name);
+    this.setOrientation("vertical");
+  }
 
-    /**
-     * <p>
-     * addScrubberSection.
-     * </p>
-     *
-     * @param type a {@link java.lang.String} object
-     */
-    public void addScrubberSection(String type) {
-        scrubberSection.add(new SeparatorSection("section" + scrubberSection.size() + 1, type, this));
-    }
+  /**
+   * <p>
+   * Constructor for GasScrubber.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+   */
+  public GasScrubber(String name, StreamInterface inletStream) {
+    super(name, inletStream);
+    this.setOrientation("vertical");
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getLiquidOutStream() {
-        return liquidOutStream;
-    }
+  public GasScrubberMechanicalDesign getMechanicalDesign() {
+    return new GasScrubberMechanicalDesign(this);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getGasOutStream() {
-        return gasOutStream;
-    }
+  /**
+   * <p>
+   * Setter for the field <code>inletStream</code>.
+   * </p>
+   *
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+   */
+  public void setInletStream(StreamInterface inletStream) {
+    this.inletStream = inletStream;
 
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getGas() {
-        return getGasOutStream();
-    }
+    thermoSystem = inletStream.getThermoSystem().clone();
+    gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
+    gasOutStream = new Stream("gasOutStream", gasSystem);
 
-    /** {@inheritDoc} */
-    @Override
-    public StreamInterface getLiquid() {
-        return getLiquidOutStream();
-    }
+    thermoSystem = inletStream.getThermoSystem().clone();
+    liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
+    liquidOutStream = new Stream("liquidOutStream", liquidSystem);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void run() {
-        thermoSystem = inletStream.getThermoSystem().clone();
-        gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
-        gasSystem.setNumberOfPhases(1);
-        gasOutStream.setThermoSystem(gasSystem);
+  /**
+   * <p>
+   * addScrubberSection.
+   * </p>
+   *
+   * @param type a {@link java.lang.String} object
+   */
+  public void addScrubberSection(String type) {
+    scrubberSection.add(new SeparatorSection("section" + scrubberSection.size() + 1, type, this));
+  }
 
-        thermoSystem = inletStream.getThermoSystem().clone();
-        liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-        liquidSystem.setNumberOfPhases(1);
-        liquidOutStream.setThermoSystem(liquidSystem);
-    }
+  /** {@inheritDoc} */
+  @Override
+  public StreamInterface getLiquidOutStream() {
+    return liquidOutStream;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void displayResult() {
-    }
+  /** {@inheritDoc} */
+  @Override
+  public StreamInterface getGasOutStream() {
+    return gasOutStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public StreamInterface getGas() {
+    return getGasOutStream();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public StreamInterface getLiquid() {
+    return getLiquidOutStream();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run(UUID id) {
+    thermoSystem = inletStream.getThermoSystem().clone();
+    gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
+    gasSystem.setNumberOfPhases(1);
+    gasOutStream.setThermoSystem(gasSystem);
+
+    thermoSystem = inletStream.getThermoSystem().clone();
+    liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
+    liquidSystem.setNumberOfPhases(1);
+    liquidOutStream.setThermoSystem(liquidSystem);
+    setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void displayResult() {}
 }

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package neqsim.thermodynamicOperations.flashOps;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,7 +32,7 @@ class TVFlashTest {
     testSystem.setTotalFlowRate(1.0, "kg/sec");
     testOps.TPflash();
     testSystem.initProperties();
-    
+
     testSystem2 = new neqsim.thermo.system.SystemUMRPRUMCEos(293.15, 0.1);
     testSystem2.addComponent("methane", 8.5E-1);
     testSystem2.addComponent("ethane", 1.5E-1);
@@ -49,24 +46,23 @@ class TVFlashTest {
     testOps.TPflash();
     testSystem2.initProperties();
   }
-  
+
   @Test
   void testTVflash() {
     double total_rig_volume = 0.998;
-    
-    for(int i=0;i<50;i++) {
+
+    for (int i = 0; i < 50; i++) {
       testSystem.addFluid(testSystem2);
       ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
       try {
-      testOps.TVflash(total_rig_volume, "m3");
-      }
-      catch(Exception e) {
+        testOps.TVflash(total_rig_volume, "m3");
+      } catch (Exception e) {
         System.out.println("error iterations " + i);
         e.printStackTrace();
       }
-   }
+    }
     assertEquals(235263.80103781424, testSystem.getEnthalpy(), 1e-2);
   }
-    
-  }
+
+}
 

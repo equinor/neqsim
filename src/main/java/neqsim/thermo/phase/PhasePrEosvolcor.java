@@ -38,11 +38,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   }
 
-
   public double getCT() {
     return CT;
   }
-
 
   public double getCTT() {
     return 0;
@@ -69,8 +67,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
   // note that in future the next thre lines should be modified to handle various mixing rules for
   // the translation
 
-
-
   public double getcij(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
     return ((((ComponentPRvolcor) compArray).getc()) + (((ComponentPRvolcor) compArray2).getc()))
         * 0.5;
@@ -85,7 +81,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
     // return (compi.getcTT() + compj.getcTT()) * 0.5;
     return 0;
   }
-
 
   // @Override
   public double calcCi(int compNumb, PhaseInterface phase, double temperature, double pressure,
@@ -102,7 +97,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return Ci;
   }
 
-
   public double calcCij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
       double pressure, int numbcomp) {
     double cij = 0.0;
@@ -112,8 +106,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return (2.0 * cij - ((ComponentPRvolcor) compArray[compNumb]).getCi()
         - ((ComponentPRvolcor) compArray[compNumbj]).getCi()) / phase.getNumberOfMolesInPhase();
   }
-
-
 
   public double calcCiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
@@ -129,8 +121,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return CiT;
   }
 
-
-
   public double calcCT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
     return 0.0;
   }
@@ -144,15 +134,13 @@ public class PhasePrEosvolcor extends PhasePrEos {
     for (int j = 0; j < numbcomp; j++) {
         C += compArray[i].getNumberOfMolesInPhase()
                 * compArray[j].getNumberOfMolesInPhase()
-                * getcij(compArray[i], compArray[j]);// (compArray[i].getb()+compArray[j].getb())/2;
+            * getcij(compArray[i], compArray[j]); // (compArray[i].getb()+compArray[j].getb())/2;
     }
   }
   C /= phase.getNumberOfMolesInPhase();
   Ctot = C;
   return C;
   }
-
-
 
   private double loc_C() {
     return calcC(this, temperature, pressure, numberOfComponents) ;
@@ -165,8 +153,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
   public double getC() {
     return loc_C();
   }
-
-
 
   @Override
   public double gV() {
@@ -227,8 +213,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
     // return 1.0 / (R * getB() * (delta1 - delta2)) * (2.0 / (val1 * val1 * val1) - 2.0 / (val2 *
     // val2 * val2));
   }
-
-
 
   // derivative of small g with regards to b
   // problem with the loc_b in gb(),gc()-->it says that it is not visible and I think this is
@@ -317,7 +301,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return -1.0 / (val * val);
   }
 
-
   // Below are the partial derivatives of F with regards to model parameters
 
   @Override
@@ -382,7 +365,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return FTT() + 2.0 * FDT() * getAT() + FD() * getATT() + 2 * FTC() * getCT()
         + FCC() * getCT() * getCT() + FC() * getCTT() + 2 * FCD() * getCT() * getAT();
   }
-
 
   @Override
   public PhasePrEosvolcor clone() {

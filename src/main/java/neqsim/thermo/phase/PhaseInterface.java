@@ -3,6 +3,7 @@
  *
  * Created on 3. juni 2000, 14:45
  */
+
 package neqsim.thermo.phase;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -77,6 +78,13 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos.
    *
+   * @return Joule Thomson coefficient in K/bar
+   */
+  public double getJouleThomsonCoefficient();
+
+  /**
+   * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos.
+   *
    * @param unit Supported units are K/bar, C/bar
    * @return Joule Thomson coefficient in specified unit
    */
@@ -95,6 +103,13 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    */
   public void resetPhysicalProperties();
+
+  /**
+   * method to return phase volume note: without Peneloux volume correction.
+   *
+   * @return volume in unit m3*1e5
+   */
+  public double getVolume();
 
   /**
    * method to return fluid volume.
@@ -142,6 +157,38 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
+   * getdrhodN.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getdrhodN();
+
+  /**
+   * <p>
+   * setInitType.
+   * </p>
+   *
+   * @param initType a int
+   */
+  public void setInitType(int initType);
+
+  /**
+   * <p>
+   * init.
+   * </p>
+   *
+   * @param totalNumberOfMoles a double
+   * @param numberOfComponents a int
+   * @param type a int. Use 0 to init, and 1 to reset.
+   * @param phase a int
+   * @param beta a double
+   */
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+      double beta);
+
+  /**
+   * <p>
    * init.
    * </p>
    */
@@ -149,12 +196,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * getdrhodN.
+   * initPhysicalProperties.
    * </p>
-   *
-   * @return a double
    */
-  public double getdrhodN();
+  public void initPhysicalProperties();
 
   /**
    * <p>
@@ -227,36 +272,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   public double getMoleFraction();
-
-  /**
-   * <p>
-   * init.
-   * </p>
-   *
-   * @param totalNumberOfMoles a double
-   * @param numberOfComponents a int
-   * @param type a int. Use 0 to init, and 1 to reset.
-   * @param phase a int
-   * @param beta a double
-   */
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta);
-
-  /**
-   * <p>
-   * initPhysicalProperties.
-   * </p>
-   */
-  public void initPhysicalProperties();
-
-  /**
-   * <p>
-   * setInitType.
-   * </p>
-   *
-   * @param initType a int
-   */
-  public void setInitType(int initType);
 
   /**
    * <p>
@@ -366,6 +381,16 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getFugacity(int compNumb);
 
   /**
+   * <p>
+   * getFugacity.
+   * </p>
+   *
+   * @param compName a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getFugacity(String compName);
+
+  /**
    * method to return phase volume note: without Peneloux volume correction.
    *
    * @return volume in unit m3*1e5
@@ -455,13 +480,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public void setBeta(double beta);
 
   /**
-   * method to return phase volume note: without Peneloux volume correction.
-   *
-   * @return volume in unit m3*1e5
-   */
-  public double getVolume();
-
-  /**
    * <p>
    * setProperties.
    * </p>
@@ -531,10 +549,30 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * getComponent.
    * </p>
    *
+   * @param name a {@link java.lang.String} object
+   * @return a {@link neqsim.thermo.component.ComponentInterface} object
+   */
+  public ComponentInterface getComponent(String name);
+
+  /**
+   * <p>
+   * getComponent.
+   * </p>
+   *
    * @param i a int
    * @return a {@link neqsim.thermo.component.ComponentInterface} object
    */
   public ComponentInterface getComponent(int i);
+
+  /**
+   * <p>
+   * getActivityCoefficient.
+   * </p>
+   *
+   * @param k a int
+   * @return a double
+   */
+  public double getActivityCoefficient(int k);
 
   /**
    * <p>
@@ -588,10 +626,30 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    *
    * @param k a int
+   * @return a double
+   */
+  public double getPureComponentFugacity(int k);
+
+  /**
+   * <p>
+   * getPureComponentFugacity.
+   * </p>
+   *
+   * @param k a int
    * @param pure a boolean
    * @return a double
    */
   public double getPureComponentFugacity(int k, boolean pure);
+
+  /**
+   * <p>
+   * addMolesChemReac.
+   * </p>
+   *
+   * @param component a int
+   * @param dn a double
+   */
+  public void addMolesChemReac(int component, double dn);
 
   /**
    * <p>
@@ -620,13 +678,13 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * getComponent.
+   * specify the type model for the physical properties you want to use. Type: 0 Orginal/default 1
+   * Water 2 Glycol 3 Amine
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @return a {@link neqsim.thermo.component.ComponentInterface} object
+   * @param type a int
    */
-  public ComponentInterface getComponent(String name);
+  public void setPhysicalProperties(int type);
 
   /**
    * <p>
@@ -661,16 +719,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param temperature in unit Kelvin
    */
   public void setTemperature(double temperature);
-
-  /**
-   * <p>
-   * addMolesChemReac.
-   * </p>
-   *
-   * @param component a int
-   * @param dn a double
-   */
-  public void addMolesChemReac(int component, double dn);
 
   /**
    * <p>
@@ -1040,16 +1088,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * specify the type model for the physical properties you want to use. Type: 0 Orginal/default 1
-   * Water 2 Glycol 3 Amine
-   * </p>
-   *
-   * @param type a int
-   */
-  public void setPhysicalProperties(int type);
-
-  /**
-   * <p>
    * getPseudoCriticalPressure.
    * </p>
    *
@@ -1092,13 +1130,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param k a int
    */
   public void setNumberOfComponents(int k);
-
-  /**
-   * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos.
-   *
-   * @return Joule Thomson coefficient in K/bar
-   */
-  public double getJouleThomsonCoefficient();
 
   /**
    * <p>
@@ -1163,15 +1194,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public void setMolarVolume(double molarVolume);
 
-  /**
-   * <p>
-   * getPureComponentFugacity.
-   * </p>
-   *
-   * @param k a int
-   * @return a double
-   */
-  public double getPureComponentFugacity(int k);
   // public double getInfiniteDiluteFugacity(int k);
 
   /**
@@ -1212,15 +1234,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public int getNumberOfIonicComponents();
 
-  /**
-   * <p>
-   * getFugacity.
-   * </p>
-   *
-   * @param compName a {@link java.lang.String} object
-   * @return a double
-   */
-  public double getFugacity(String compName);
   // double calcA2(PhaseInterface phase, double temperature, double pressure, int
   // numbcomp);
   // double calcB2(PhaseInterface phase, double temperature, double pressure, int
@@ -1676,16 +1689,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   public double getLogInfiniteDiluteFugacity(int k);
-
-  /**
-   * <p>
-   * getActivityCoefficient.
-   * </p>
-   *
-   * @param k a int
-   * @return a double
-   */
-  public double getActivityCoefficient(int k);
 
   /**
    * <p>

@@ -18,7 +18,7 @@ public class SystemDesmukhMather extends SystemEos {
         attractiveTermNumber = 0;
         phaseArray[0] = new PhaseSrkEos();
         for (int i = 1; i < numberOfPhases; i++) {
-            phaseArray[i] = new PhaseDesmukhMather();// modifiedWS();
+          phaseArray[i] = new PhaseDesmukhMather(); // modifiedWS();
         }
     }
 
@@ -38,7 +38,7 @@ public class SystemDesmukhMather extends SystemEos {
         phaseArray[0].setTemperature(T);
         phaseArray[0].setPressure(P);
         for (int i = 1; i < numberOfPhases; i++) {
-            phaseArray[i] = new PhaseDesmukhMather();// new PhaseGENRTLmodifiedWS();
+          phaseArray[i] = new PhaseDesmukhMather(); // new PhaseGENRTLmodifiedWS();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
         }
@@ -64,7 +64,7 @@ public class SystemDesmukhMather extends SystemEos {
         phaseArray[0].setTemperature(T);
         phaseArray[0].setPressure(P);
         for (int i = 1; i < numberOfPhases; i++) {
-            phaseArray[i] = new PhaseDesmukhMather();// new PhaseGENRTLmodifiedWS();
+          phaseArray[i] = new PhaseDesmukhMather(); // new PhaseGENRTLmodifiedWS();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
         }

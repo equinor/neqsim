@@ -162,7 +162,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
                         .contains(((ComponentGEUnifac) getComponent(i)).getUnifacGroup(j))) {
                     unifacGroups.add(((ComponentGEUnifac) getComponent(i)).getUnifacGroup(j));
                 } else
-                    ;// System.out.println("no");
+                  ; // System.out.println("no");
             }
         }
 

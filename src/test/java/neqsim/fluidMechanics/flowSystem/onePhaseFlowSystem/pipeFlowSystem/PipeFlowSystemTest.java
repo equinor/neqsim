@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.thermo.system.SystemInterface;
 
-
 public class PipeFlowSystemTest extends neqsim.NeqSimTest {
   FlowSystemInterface pipe;
 
@@ -72,7 +71,7 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
       pipe.getNode(i).setWallFrictionFactor(0, 0.00725);
     }
     pipe.solveSteadyState(10);
-    //System.out.println("pressure out set friction "
+    // System.out.println("pressure out set friction "
   }
 
   @Test
@@ -80,12 +79,12 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     testInit();
     pipe.solveSteadyState(10);
     for (int i = 0; i < pipe.getFlowNodes().length; i++) {
-      //System.out.println("wall friction " + pipe.getNode(i).getWallFrictionFactor(0));
+      // System.out.println("wall friction " + pipe.getNode(i).getWallFrictionFactor(0));
     }
 
-   // System.out.println("pressure out calc friction "
-    //    + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
- 
+    // System.out.println("pressure out calc friction "
+    // + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
+
     // pipe.print();
   }
 
@@ -93,7 +92,7 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
   void testSolveTransient() {
     testInit();
     // transient solver
-    double[] times = {0, 10000, 20000};// , 30000, 40000, 50000};//, 60000, 70000, 80000,
+    double[] times = {0, 10000, 20000}; // , 30000, 40000, 50000}; //, 60000, 70000, 80000,
     // 90000};
     pipe.getTimeSeries().setTimes(times);
 
@@ -113,9 +112,9 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     testSystem3.addComponent("ethane", 1221.10);
     testSystem3.init(0);
 
-    SystemInterface[] systems = {testSystem, testSystem2, testSystem2};// , testSystem2,
+    SystemInterface[] systems = {testSystem, testSystem2, testSystem2}; // , testSystem2,
     // testSystem2,
-    // testSystem2};//,testSystem2,testSystem2,testSystem2,testSystem2,testSystem2};
+    // testSystem2}; //,testSystem2,testSystem2,testSystem2,testSystem2,testSystem2};
     pipe.getTimeSeries().setInletThermoSystems(systems);
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(10);
     // double[] outletFlowRates = {0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
@@ -126,7 +125,6 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     // pipe.getDisplay().displayResult("composition");
     // pipe.getDisplay().displayResult("pressure");
     // pipe.getDisplay().displayResult("composition");
-    // pipe.getDisplay().createNetCdfFile("c:/temp5.nc");
     // pipe.getDisplay(1).displayResult();
   }
 }

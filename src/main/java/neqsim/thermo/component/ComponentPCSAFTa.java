@@ -156,7 +156,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         for (int i = 0; i < numberOfAssociationSites; i++) {
             xi += Math.log(xsite[i]);
         }
-        return (xi - ((PhaseCPAInterface) phase).getHcpatot() / 2.0 * dlogghsSAFTdi);// calc_lngi(phase));
+        return (xi - ((PhaseCPAInterface) phase).getHcpatot() / 2.0 * dlogghsSAFTdi); // calc_lngi(phase));
     }
 
     /**

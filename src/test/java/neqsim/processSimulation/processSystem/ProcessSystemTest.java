@@ -26,7 +26,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   ProcessSystem p;
   String _name = "TestProcess";
 
-
   @BeforeEach
   public void setUp() {
     p = new ProcessSystem();
@@ -110,7 +109,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     p.removeUnit("Separator");
     Assertions.assertEquals(0, p.size());
   }
-
 
   @Test
   @SuppressWarnings("deprecation")
@@ -215,8 +213,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   }
 
-
-
   @Test
   void testGetPower() {
 
@@ -237,12 +233,10 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   }
 
-
   @Test
   void testGetUnitOperations() {
 
   }
-
 
   @Test
   void testOpen() {
@@ -253,7 +247,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   void testPrintLogFile() {
 
   }
-
 
   @Test
   void testReplaceObject() {
@@ -457,7 +450,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Heater bufferTank = new Heater("TEG buffer tank", stripper.getLiquidOutStream());
     bufferTank.setOutTemperature(273.15 + 191.0);
 
-    Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutletStream());// stripper.getSolventOutStream());
+    Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutletStream()); // stripper.getSolventOutStream());
     hotLeanTEGPump.setOutletPressure(5.0);
     hotLeanTEGPump.setIsentropicEfficiency(0.6);
 
