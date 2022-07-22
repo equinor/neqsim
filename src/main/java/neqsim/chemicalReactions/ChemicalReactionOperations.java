@@ -32,7 +32,6 @@ public class ChemicalReactionOperations
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(ChemicalReactionOperations.class);
 
-
   SystemInterface system;
   ComponentInterface[] components;
   ChemicalReactionList reactionList = new ChemicalReactionList();
