@@ -3,10 +3,10 @@
  *
  * Created on 8. april 2000, 23:15
  */
+
 package neqsim.thermo.component;
 
 import java.util.LinkedHashMap;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;

@@ -1,14 +1,8 @@
-/**
- * 
- */
 package neqsim.thermodynamicOperations.flashOps;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
@@ -27,7 +21,8 @@ class WaxFlashTest {
    */
   @BeforeEach
   void setUp() throws Exception {
-    NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/programming/neqsim/src/main/resources/data/neqsimtestdatabase");
+    NeqSimDataBase.setConnectionString(
+        "jdbc:derby:C:/Users/esol/OneDrive - Equinor/programming/neqsim/src/main/resources/data/neqsimtestdatabase");
     NeqSimDataBase.setCreateTemporaryTables(true);
 
     testSystem = new SystemSrkEos(273.0 + 30, 50.0);
@@ -51,7 +46,7 @@ class WaxFlashTest {
     testSystem.setMultiphaseWaxCheck(true);
     NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimthermodatabase");
     NeqSimDataBase.setCreateTemporaryTables(false);
-    //testSystem.display();
+    // testSystem.display();
   }
 
   /**
@@ -62,10 +57,10 @@ class WaxFlashTest {
   void testRun() {
     testOps = new ThermodynamicOperations(testSystem);
     try {
-        testOps.calcWAT();
-        testOps.TPflash();
+      testOps.calcWAT();
+      testOps.TPflash();
     } catch (Exception e) {
-        e.printStackTrace();
+      e.printStackTrace();
     }
     double waxVolumeFrac = 0;
     if (testSystem.hasPhaseType("wax")) {
