@@ -5,7 +5,7 @@ import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- * This class defines a thermodynamic system using the SRK equation of state
+ * This class defines a thermodynamic system using the CSP SRK equation of state
  *
  * @author Even Solbraa
  */

@@ -25,7 +25,16 @@ public interface PhysicalPropertiesInterface extends Cloneable {
      * @return a double
      */
     public double getPureComponentViscosity(int i);
-
+    
+    /**
+     * <p>
+     * setDensityModel.
+     * </p>
+     *
+     * @param model a {@link java.lang.String} object
+     */
+    public void setDensityModel(String model);
+    
     /**
      * <p>
      * setMixingRule.

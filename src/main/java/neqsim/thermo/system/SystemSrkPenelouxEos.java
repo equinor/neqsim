@@ -5,7 +5,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkPenelouxEos;
 
 /**
- * This class defines a thermodynamic system using the SRK equation of state
+ * This class defines a thermodynamic system using the SRK Peneloux equation of state
  * 
  * @author Even Solbraa
  */

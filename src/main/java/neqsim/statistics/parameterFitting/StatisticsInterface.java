@@ -14,94 +14,85 @@ package neqsim.statistics.parameterFitting;
  * @version $Id: $Id
  */
 public interface StatisticsInterface {
-    /**
-     * <p>
-     * createNewRandomClass.
-     * </p>
-     *
-     * @return a {@link neqsim.statistics.parameterFitting.StatisticsBaseClass} object
-     */
-    public StatisticsBaseClass createNewRandomClass();
+  /**
+   * <p>
+   * createNewRandomClass.
+   * </p>
+   *
+   * @return a {@link neqsim.statistics.parameterFitting.StatisticsBaseClass} object
+   */
+  public StatisticsBaseClass createNewRandomClass();
 
-    /**
-     * <p>
-     * solve.
-     * </p>
-     */
-    public void solve();
+  /**
+   * <p>
+   * solve.
+   * </p>
+   */
+  public void solve();
 
-    /**
-     * <p>
-     * init.
-     * </p>
-     */
-    public void init();
+  /**
+   * <p>
+   * init.
+   * </p>
+   */
+  public void init();
 
-    /**
-     * <p>
-     * getSampleSet.
-     * </p>
-     *
-     * @return a {@link neqsim.statistics.parameterFitting.SampleSet} object
-     */
-    public SampleSet getSampleSet();
+  /**
+   * <p>
+   * getSampleSet.
+   * </p>
+   *
+   * @return a {@link neqsim.statistics.parameterFitting.SampleSet} object
+   */
+  public SampleSet getSampleSet();
 
-    /**
-     * <p>
-     * displayResult.
-     * </p>
-     */
-    public void displayResult();
+  /**
+   * <p>
+   * displayResult.
+   * </p>
+   */
+  public void displayResult();
 
-    /**
-     * <p>
-     * displayCurveFit.
-     * </p>
-     */
-    public void displayCurveFit();
+  /**
+   * <p>
+   * displayCurveFit.
+   * </p>
+   */
+  public void displayCurveFit();
 
-    /**
-     * <p>
-     * writeToTextFile.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void writeToTextFile(String name);
+  /**
+   * <p>
+   * writeToTextFile.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
+  public void writeToTextFile(String name);
 
-    /**
-     * <p>
-     * writeToCdfFile.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public void writeToCdfFile(String name);
+  /**
+   * <p>
+   * getNumberOfTuningParameters.
+   * </p>
+   *
+   * @return a int
+   */
+  public int getNumberOfTuningParameters();
 
-    /**
-     * <p>
-     * getNumberOfTuningParameters.
-     * </p>
-     *
-     * @return a int
-     */
-    public int getNumberOfTuningParameters();
+  /**
+   * <p>
+   * setNumberOfTuningParameters.
+   * </p>
+   *
+   * @param numberOfTuningParameters a int
+   */
+  public void setNumberOfTuningParameters(int numberOfTuningParameters);
 
-    /**
-     * <p>
-     * setNumberOfTuningParameters.
-     * </p>
-     *
-     * @param numberOfTuningParameters a int
-     */
-    public void setNumberOfTuningParameters(int numberOfTuningParameters);
-
-    /**
-     * <p>
-     * runMonteCarloSimulation.
-     * </p>
-     *
-     * @param numberOfRuns a int
-     */
-    public void runMonteCarloSimulation(int numberOfRuns);
+  /**
+   * <p>
+   * runMonteCarloSimulation.
+   * </p>
+   *
+   * @param numberOfRuns a int
+   */
+  public void runMonteCarloSimulation(int numberOfRuns);
 }

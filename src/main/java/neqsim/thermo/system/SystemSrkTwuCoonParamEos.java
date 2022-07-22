@@ -1,7 +1,7 @@
 package neqsim.thermo.system;
 
 /**
- * This class defines a thermodynamic system using the SRK equation of state
+ * This class defines a thermodynamic system using the SRK Two Coon Param equation of state
  * 
  * @author Even Solbraa
  */

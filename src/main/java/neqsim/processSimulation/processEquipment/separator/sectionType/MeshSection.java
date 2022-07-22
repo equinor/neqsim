@@ -14,7 +14,6 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 public class MeshSection extends SeparatorSection {
     private static final long serialVersionUID = 1000;
 
-
     /**
      * <p>
      * Constructor for MeshSection.

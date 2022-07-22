@@ -71,9 +71,9 @@ nbdist/
 src/main/java/neqsim/util/database/NeqSimDataBase2.java
 
 neqsim.iml
+.classpath
 
 .DS_Store
-
 # Test output - Serialized files
 test_*.ser
 
