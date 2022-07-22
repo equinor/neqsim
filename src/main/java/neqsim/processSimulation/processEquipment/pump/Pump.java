@@ -209,7 +209,6 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         double hout = hinn + dH;
         thermoOps.PHflash(hout, 0);
         thermoSystem.init(3);
-        setCalculationIdentifier(id);
       }
     }
 
@@ -219,6 +218,8 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     // thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
     outStream.setThermoSystem(thermoSystem);
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
 
     // outStream.run(id);
   }
