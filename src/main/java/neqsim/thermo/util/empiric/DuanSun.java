@@ -657,8 +657,8 @@ public class DuanSun {
       thermoOPs.TPflash();
       // fluid1.init(0);
       fluid1.display();
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     // fluid1.setMolarComposition(new double[] {0.5, 0.5, 0.0, 0.0});
     fluid1.init(1);
@@ -666,8 +666,8 @@ public class DuanSun {
       thermoOPs.TPflash();
       // fluid1.init(0);
       fluid1.display();
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     String fluidname = "" + "";
     fluid1.saveObjectToFile(fluidname, fluidname);

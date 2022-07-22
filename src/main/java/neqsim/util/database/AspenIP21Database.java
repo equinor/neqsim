@@ -71,8 +71,8 @@ public class AspenIP21Database
         if (ctx != null) {
           ctx.close();
         }
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
     return null;

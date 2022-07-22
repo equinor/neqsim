@@ -342,8 +342,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       try {
         temp += bulkSystem.getPhase(phase).getComponent(j).getx()
             * binaryMassTransferCoefficient[phase][i][j];
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
     return temp;

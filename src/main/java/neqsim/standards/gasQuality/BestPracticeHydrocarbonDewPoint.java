@@ -60,8 +60,8 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     this.thermoSystem.setPressure(specPressure);
     try {
       this.thermoOps.dewPointTemperatureFlash();
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     dewPointTemperature = this.thermoSystem.getTemperature() - 273.15;
   }

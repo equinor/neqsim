@@ -129,8 +129,8 @@ public class multiThreadTest {
       try {
         processThread1.join(1000);
         processThread2.join(1000);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
     // } while (processThread1.isAlive()); // && processThread2.isAlive());

@@ -76,13 +76,13 @@ public class SeparatorDesignStandard extends DesignStandard {
                 + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
           }
         }
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
 
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     } finally {
       try {
         if (dataSet != null) {

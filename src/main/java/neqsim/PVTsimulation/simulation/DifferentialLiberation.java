@@ -108,8 +108,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
       getThermoSystem().setPressure(pressures[i]);
       try {
         thermoOps.TPflash();
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
       totalVolume[i] = getThermoSystem().getVolume();
       liquidVolume[i] = getThermoSystem().getVolume();
@@ -121,8 +121,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
           getThermoSystem().setPressure(pressures[i]);
           try {
             thermoOps.TPflash();
-          } catch (Exception e) {
-            logger.error(e.getMessage());
+          } catch (Exception ex) {
+            logger.error(ex.getMessage());
           }
         }
         gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume()
@@ -165,8 +165,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
     getThermoSystem().setTemperature(288.15);
     try {
       thermoOps.TPflash();
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     VoilStd = getThermoSystem().getPhase(1).getVolume();
     totalGasStandardVolume += getThermoSystem().getPhase(0).getVolume();

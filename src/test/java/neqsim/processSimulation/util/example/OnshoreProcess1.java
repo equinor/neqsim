@@ -565,8 +565,8 @@ public class OnshoreProcess1 {
           + slugCatcher.getGasOutStream().getThermoSystem().getTotalNumberOfMoles()
               * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getMolarMass() * 3600.0
           + " kg gas/hr");
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 }

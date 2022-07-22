@@ -418,8 +418,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // .getDensity()/ 3.14 / vtemp);
       // System.out.println("diameter " + d);
       setCalculationIdentifier(id);
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     // System.out.println("rich TEG from absorber " +
     // getSolventOutStream().getFlowRate("kg/hr"));

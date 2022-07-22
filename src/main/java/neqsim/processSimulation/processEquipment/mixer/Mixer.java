@@ -89,8 +89,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         // mixedStream.getThermoSystem().init(0);
         // mixedStream.getThermoSystem().init(3);
       }
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
 
     numberOfInputStreams++;
@@ -245,8 +245,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     } else {
       try {
         testOps.PHflash(enthalpy, 0);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
         if (!Double.isNaN(getOutTemperature())) {
           mixedStream.getThermoSystem().setTemperature(getOutTemperature());
         }

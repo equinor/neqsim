@@ -78,8 +78,8 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
     try {
       thermoOps.hydrateFormationTemperature();
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     return tempFluid.getTemperature(unit);
   }

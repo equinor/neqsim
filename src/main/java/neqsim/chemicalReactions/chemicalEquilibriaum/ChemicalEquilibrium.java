@@ -316,8 +316,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         // Print statement added by Neeraj
         // System.out.println("Error " + error);
       } while (((errOld > maxError && Math.abs(error) > maxError) && p < 350) || p < 2);
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
       return false;
     }
     // System.out.println("iter " + p);

@@ -58,8 +58,8 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
     try {
       this.thermoOps.TPflash();
       thermoSystem.display();
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 

@@ -72,8 +72,8 @@ public class SystemMechanicalDesign implements java.io.Serializable {
               .getMechanicalDesign().getWeightTotal();
           numberOfModules++;
         }
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
   }

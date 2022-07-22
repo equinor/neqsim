@@ -40,8 +40,8 @@ class ComponentHydrateGFTest extends neqsim.NeqSimTest {
     try {
       thermoSystem.setHydrateCheck(true);
       testOps.hydrateFormationTemperature();
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
       assertTrue(false);
       return;
     }

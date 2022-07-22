@@ -120,15 +120,15 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       calcSaturationConditions();
       try {
         thermoOps.TPflash();
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
     try {
       // getThermoSystem().setPressure(400);
       // thermoOps.bubblePointPressureFlash(false);
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     saturationVolume = getThermoSystem().getVolume();
     saturationPressure = getThermoSystem().getPressure();
@@ -141,8 +141,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       getThermoSystem().setPressure(pressures[i]);
       try {
         thermoOps.TPflash();
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
       getThermoSystem().initPhysicalProperties();
       // getThermoSystem().display();

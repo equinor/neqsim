@@ -71,8 +71,8 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
       for (int i = 0; i < splitStream.length; i++) {
         splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
       }
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 

@@ -301,8 +301,8 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
           * outStream.getThermoSystem().getPhase(phase).getMolarMass()
           / outStream.getThermoSystem().getPhase(phase).getPhysicalProperties().getDensity()
           / (3.14 * pipeDiameters[node] * pipeDiameters[node] / 4.0);
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     } finally {
     }
     return 0.0;

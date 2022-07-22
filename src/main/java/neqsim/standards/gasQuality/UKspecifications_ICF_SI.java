@@ -108,8 +108,8 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
       System.out.println("propane number "
           + (nitrogenCalc + ans2.getEntry(1, 0)) / thermoSystem.getTotalNumberOfMoles() * 100.0);
       return nitrogenCalc + ans2.getEntry(1, 0);
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     return 1.0;
   }

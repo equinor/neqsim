@@ -70,8 +70,8 @@ public class CostEstimateBaseClass implements java.io.Serializable {
           cost += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
               .getMechanicalDesign().getCostEstimate().getTotaltCost();
         }
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
     return cost;

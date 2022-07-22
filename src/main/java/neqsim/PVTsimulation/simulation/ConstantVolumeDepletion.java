@@ -116,8 +116,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       getThermoSystem().setPressure(pressures[i]);
       try {
         thermoOps.TPflash();
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
       // getThermoSystem().display();
       totalVolume[i] = getThermoSystem().getVolume();
@@ -130,8 +130,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
           getThermoSystem().setPressure(pressures[i]);
           try {
             thermoOps.TPflash();
-          } catch (Exception e) {
-            logger.error(e.getMessage());
+          } catch (Exception ex) {
+            logger.error(ex.getMessage());
           }
         }
 

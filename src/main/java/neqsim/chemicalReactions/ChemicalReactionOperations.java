@@ -98,8 +98,8 @@ public class ChemicalReactionOperations
       try {
         initCalc =
             new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, 1);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
       setComponents();
       Amatrix = initCalc.getA();
@@ -446,8 +446,8 @@ public class ChemicalReactionOperations
       bVector = calcBVector();
       try {
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phase);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
       return solver.solve();
     }

@@ -68,8 +68,8 @@ public class TPflash {
     try {
       // om.writeValue(new File("c:/temp/person2.yaml"),
       // testSystem.getPhase(0).getComponent(0));
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
 
     testSystem.display();

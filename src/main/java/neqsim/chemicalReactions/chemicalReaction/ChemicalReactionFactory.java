@@ -65,10 +65,9 @@ public class ChemicalReactionFactory {
 
       // System.out.println("reaction added ok...");
       dataSet.close();
-    } catch (Exception e) {
-      logger.error(e.getMessage());
-      String err = e.toString();
-      System.out.println("could not add reacton: " + err);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      System.out.println("could not add reacton: " + ex.toString());
     }
     try {
       database.getConnection().close();

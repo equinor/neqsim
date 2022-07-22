@@ -122,8 +122,8 @@ public class GasTurbine extends TwoPortEquipment {
     this.inStream = inletStream;
     try {
       this.outStream = inletStream.clone();
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 

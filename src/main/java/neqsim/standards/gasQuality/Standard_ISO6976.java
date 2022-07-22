@@ -165,8 +165,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
       try {
         dataSet.close();
         database.getConnection().close();
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
     // logger.info("ok adding components in " + getName());

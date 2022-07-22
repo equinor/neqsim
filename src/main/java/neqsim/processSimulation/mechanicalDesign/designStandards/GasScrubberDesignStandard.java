@@ -56,13 +56,13 @@ public class GasScrubberDesignStandard extends DesignStandard {
             designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
           }
         }
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
 
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     } finally {
       try {
         if (dataSet != null) {

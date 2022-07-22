@@ -104,8 +104,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
       }
       this.gasStreamFromAdsorber = (Stream) this.gasStreamToAdsorber.clone();
       this.gasStreamFromAdsorber.setName("Stream from Adsorber");
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 

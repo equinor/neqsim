@@ -102,13 +102,13 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
               names.add(dataSet2.getString("compname").trim());
               stocCoef.add((dataSet2.getString("stoccoef")).trim());
             } while (dataSet2.next());
-          } catch (Exception e) {
-            logger.error(e.getMessage());
+          } catch (Exception ex) {
+            logger.error(ex.getMessage());
           } finally {
             try {
               dataSet2.close();
-            } catch (Exception e) {
-              logger.error(e.getMessage());
+            } catch (Exception ex) {
+              logger.error(ex.getMessage());
             }
           }
           nameArray = new String[names.size()];
@@ -129,8 +129,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     } finally {
       try {
         dataSet.close();
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
     try {

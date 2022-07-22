@@ -183,8 +183,8 @@ public class BaseContract implements ContractInterface {
       if (!(spesifications[i] == null)) {
         try {
           spesifications[i].getStandard().calculate();
-        } catch (Exception e) {
-          logger.error(e.getMessage());
+        } catch (Exception ex) {
+          logger.error(ex.getMessage());
         }
         spesifications[i].getStandard().setSalesContract(this);
         System.out.println("Type: " + spesifications[i].getDescription() + " Standard "
