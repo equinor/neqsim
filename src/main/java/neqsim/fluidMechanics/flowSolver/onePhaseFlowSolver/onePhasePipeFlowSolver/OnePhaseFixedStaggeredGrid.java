@@ -102,21 +102,21 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       for (int i = 0; i < numberOfNodes - 1; i++) {
         // setting temperatures
         pipe.getNode(i).init();
-        pipe.getNode(i + 1).getBulkSystem().setTemperature((4.0
-            * pipe.getNode(i).calcTotalHeatTransferCoefficient(0)
-            * (pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature()
-                - pipe.getNode(i).getBulkSystem().getPhases()[0].getTemperature())
-            / (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp()
-                / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
-                / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass()
-                * pipe.getNode(i + 1).getVelocity()
-                * pipe.getNode(i + 1).getGeometry().getDiameter()
-                * pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getDensity())
-            + pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getJouleThomsonCoefficient()
-                * dpdx)
-            * (pipe.getNode(i + 1).getGeometry().getNodeLength()
-                + pipe.getNode(i).getGeometry().getNodeLength())
-            * 0.5 + pipe.getNode(i).getBulkSystem().getTemperature());
+        pipe.getNode(i + 1).getBulkSystem()
+            .setTemperature((4.0 * pipe.getNode(i).calcTotalHeatTransferCoefficient(0)
+                * (pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature()
+                    - pipe.getNode(i).getBulkSystem().getPhases()[0].getTemperature())
+                / (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp()
+                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
+                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass()
+                    * pipe.getNode(i + 1).getVelocity()
+                    * pipe.getNode(i + 1).getGeometry().getDiameter()
+                    * pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getDensity())
+                + pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getJouleThomsonCoefficient()
+                    * dpdx)
+                * (pipe.getNode(i + 1).getGeometry().getNodeLength()
+                    + pipe.getNode(i).getGeometry().getNodeLength())
+                * 0.5 + pipe.getNode(i).getBulkSystem().getTemperature());
         if (pipe.getNode(i + 1).getBulkSystem().getTemperature() < 10.5) {
           pipe.getNode(i + 1).getBulkSystem().setTemperature(10.5);
         }
@@ -128,16 +128,17 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         // System.out
         // .println("presbef : " + pipe.getNode(i + 1).getBulkSystem().getPressure());
         oldPres = pipe.getNode(i + 1).getBulkSystem().getPressure();
-        pipe.getNode(i + 1).getBulkSystem().setPressure(-pipe.getNode(i).getWallFrictionFactor()
-            * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()
-            * pipe.getNode(i).getVelocity() * pipe.getNode(i).getVelocity()
-            / pipe.getNode(i).getGeometry().getDiameter() / 2.0
-            * (pipe.getNode(i).getGeometry().getNodeLength()) / 1e5
-            - gravity * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()
-                * (pipe.getNode(i + 1).getVerticalPositionOfNode()
-                    - pipe.getNode(i).getVerticalPositionOfNode())
-                / 1e5
-            + pipe.getNode(i).getBulkSystem().getPressure());
+        pipe.getNode(i + 1).getBulkSystem()
+            .setPressure(-pipe.getNode(i).getWallFrictionFactor()
+                * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()
+                * pipe.getNode(i).getVelocity() * pipe.getNode(i).getVelocity()
+                / pipe.getNode(i).getGeometry().getDiameter() / 2.0
+                * (pipe.getNode(i).getGeometry().getNodeLength()) / 1e5
+                - gravity * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()
+                    * (pipe.getNode(i + 1).getVerticalPositionOfNode()
+                        - pipe.getNode(i).getVerticalPositionOfNode())
+                    / 1e5
+                + pipe.getNode(i).getBulkSystem().getPressure());
         // if(pipe.getNode(i+1).getBulkSystem().getPressure()<10.5)
         // pipe.getNode(i+1).getBulkSystem().setPressure(1.0);
         err += (oldPres - pipe.getNode(i + 1).getBulkSystem().getPressure());
@@ -280,9 +281,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           .getNumberOfComponents(); p++) {
         pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].setx(
             sol4Matrix[p].get(j, 0) * pipe.getNode(j).getBulkSystem().getPhases()[0].getMolarMass()
-                / pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getMolarMass());// pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
-                                                                                                    // +
-                                                                                                    // 0.5*diff4Matrix[p].get(j,0));
+                / pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getMolarMass()); // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
+                                                                                                     // +
+                                                                                                     // 0.5*diff4Matrix[p].get(j,0));
       }
 
       pipe.getNode(j).getBulkSystem().getPhases()[0].normalize();
@@ -550,13 +551,13 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     double fw = pipe.getNode(i - 1).getGeometry().getNodeLength()
         / (pipe.getNode(i).getGeometry().getNodeLength()
             + pipe.getNode(i - 1).getGeometry().getNodeLength());
-    double Ae = pipe.getNode(i).getGeometry().getArea();// 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea()
-                                                        // +
-                                                        // fe/pipe.getNode(i+1).getGeometry().getArea());
+    double Ae = pipe.getNode(i).getGeometry().getArea(); // 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea()
+                                                         // +
+                                                         // fe/pipe.getNode(i+1).getGeometry().getArea());
 
-    double Aw = pipe.getNode(i - 1).getGeometry().getArea();// 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea()
-                                                            // +
-                                                            // fw/pipe.getNode(i-1).getGeometry().getArea());
+    double Aw = pipe.getNode(i - 1).getGeometry().getArea(); // 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea()
+                                                             // +
+                                                             // fw/pipe.getNode(i-1).getGeometry().getArea());
 
     double vertposchange = (1 - fw) * (pipe.getNode(i).getVerticalPositionOfNode()
         - pipe.getNode(i - 1).getVerticalPositionOfNode());

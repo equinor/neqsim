@@ -107,22 +107,23 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
               dataSet2.close();
             } catch (Exception e) {
               logger.error(e.getMessage());
-          nameArray = new String[names.size()];
-          coefArray = new double[nameArray.length];
-          for (int i = 0; i < nameArray.length; i++) {
-            coefArray[i] = Double.parseDouble(stocCoef.get(i));
-            nameArray[i] = names.get(i);
-          }
+              nameArray = new String[names.size()];
+              coefArray = new double[nameArray.length];
+              for (int i = 0; i < nameArray.length; i++) {
+                coefArray[i] = Double.parseDouble(stocCoef.get(i));
+                nameArray[i] = names.get(i);
+              }
 
-          ChemicalReaction reaction =
-              new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT);
-          chemicalReactionList.add(reaction);
-          // System.out.println("reaction added ok...");
+              ChemicalReaction reaction =
+                  new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT);
+              chemicalReactionList.add(reaction);
+              // System.out.println("reaction added ok...");
+            }
+          }
         }
       } while (dataSet.next());
     } catch (Exception e) {
-      String err = e.toString();
-      System.out.println("could not add reacton: " + err);
+      System.out.println("could not add reacton: " + e.toString());
     } finally {
       try {
         dataSet.close();
@@ -275,8 +276,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             R * phase.getTemperature() * Math.log(reaction.getK(phase));
         reactionNumber++;
       }
-    } catch (Exception er) {
-      er.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
 
     /*

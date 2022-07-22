@@ -127,7 +127,7 @@ public class IronIonSaturationStream extends Stream {
       thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"),
           "FeCO3", "Fe++");
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());
     }
     reactiveThermoSystem.display();
     System.out.println("number of phases: " + reactiveThermoSystem.getNumberOfPhases());

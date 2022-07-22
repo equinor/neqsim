@@ -104,8 +104,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
                 ("SELECT * FROM iso6976constants WHERE ComponentName='" + compName + "'"));
             M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
             dataSet.next();
-          } catch (Exception er) {
-            er.printStackTrace();
+          } catch (Exception ex) {
+            logger.error(ex.getMessage());
           }
           componentsNotDefinedByStandard
               .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
