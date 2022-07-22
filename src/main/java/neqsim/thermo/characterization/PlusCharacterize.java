@@ -15,6 +15,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class PlusCharacterize implements java.io.Serializable, CharacteriseInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PlusCharacterize.class);
+
   double[] TBPfractions = null;
   boolean firsttime = true;
   double MPlus = 300.0;
@@ -32,7 +34,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   double[] PRcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
   double[] plusCoefs = {0.0007774204804, -0.02390179};
   SystemInterface system = null;
-  static Logger logger = LogManager.getLogger(PlusCharacterize.class);
 
   public PlusCharacterize() {}
 

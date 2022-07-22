@@ -1,5 +1,7 @@
 package neqsim.chemicalReactions.chemicalEquilibriaum;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -14,6 +16,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ChemicalEquilibrium implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ChemicalEquilibrium.class);
 
   SystemInterface system;
   double[] nVector;
@@ -225,7 +228,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     try {
       x_solve = A_solve.solve(b_solve);
     } catch (Exception e) {
-      // e.printStackTrace();
+      // logger.error(e.getMessage());
       // System.out.println("\nError x " +
       // system.getPhase(phasenumb).getComponent(0).getx());
       // System.out.println("Error T " + system.getTemperature());
@@ -313,8 +316,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         // Print statement added by Neeraj
         // System.out.println("Error " + error);
       } while (((errOld > maxError && Math.abs(error) > maxError) && p < 350) || p < 2);
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
       return false;
     }
     // System.out.println("iter " + p);

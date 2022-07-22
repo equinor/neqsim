@@ -3,6 +3,8 @@ package neqsim.standards.gasQuality;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -15,6 +17,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
+  static Logger logger = LogManager.getLogger(UKspecifications_ICF_SI.class);
+
   String componentName = "";
   String unit = "-";
   Standard_ISO6976 iso6976 = null;
@@ -104,8 +108,8 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
       System.out.println("propane number "
           + (nitrogenCalc + ans2.getEntry(1, 0)) / thermoSystem.getTotalNumberOfMoles() * 100.0);
       return nitrogenCalc + ans2.getEntry(1, 0);
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     return 1.0;
   }

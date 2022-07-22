@@ -118,8 +118,8 @@ public class LNGship
       } else {
         thermoOperations.bubblePointTemperatureFlash();
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     getThermoSystem().init(0);
 
@@ -155,8 +155,8 @@ public class LNGship
       if (!isSetInitialTemperature()) {
         thermoOperations.bubblePointTemperatureFlash();
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     logger.info("temperature start " + getThermoSystem().getTemperature());
     // todo: getTimeSeries().init(this);
@@ -222,8 +222,8 @@ public class LNGship
           if (!(j == 0 && isSetInitialTemperature())) {
             thermoOperations.bubblePointTemperatureFlash();
           }
-        } catch (Exception e) {
-          e.printStackTrace();
+        } catch (Exception ex) {
+          logger.error(ex.getMessage());
         }
         double[] xgas = new double[getThermoSystem().getPhase(0).getNumberOfComponents()];
 
@@ -317,8 +317,8 @@ public class LNGship
     try {
       thermoOperations.bubblePointTemperatureFlash();
       calcIdentifier = id;
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 

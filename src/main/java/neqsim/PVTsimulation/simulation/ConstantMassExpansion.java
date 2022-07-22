@@ -1,6 +1,8 @@
 package neqsim.PVTsimulation.simulation;
 
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.PVTsimulation.util.parameterfitting.CMEFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
@@ -17,6 +19,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class ConstantMassExpansion extends BasePVTsimulation {
+  static Logger logger = LogManager.getLogger(ConstantMassExpansion.class);
+
   double[] relativeVolume = null;
   double[] totalVolume = null;
   private double[] liquidRelativeVolume = null;
@@ -75,7 +79,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
-     * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) { e.printStackTrace(); }
+     * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
+     * logger.error(e.getMessage()); }
      */
     saturationVolume = getThermoSystem().getVolume();
     saturationPressure = getThermoSystem().getPressure();
@@ -115,15 +120,15 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       calcSaturationConditions();
       try {
         thermoOps.TPflash();
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
     try {
       // getThermoSystem().setPressure(400);
       // thermoOps.bubblePointPressureFlash(false);
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     saturationVolume = getThermoSystem().getVolume();
     saturationPressure = getThermoSystem().getPressure();
@@ -136,8 +141,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       getThermoSystem().setPressure(pressures[i]);
       try {
         thermoOps.TPflash();
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
       getThermoSystem().initPhysicalProperties();
       // getThermoSystem().display();

@@ -542,7 +542,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         // }
         // Xi = 1.0/(1.0+1.0/phase.getTotalVolume()*temp);
         // } catch(Exception e){
-        // e.printStackTrace();
+        // logger.error(e.getMessage());
         // }
         // return Xi;
         // }

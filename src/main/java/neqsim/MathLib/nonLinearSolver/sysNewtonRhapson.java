@@ -477,5 +477,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
      * test.setx(constants); while (test.nonsol()>1.0e-8) { constants=test.getx();
      * System.out.println(constants[0]+" "+constants[1]); } test.nonsol(); constants=test.getf();
      * System.out.println(constants[0]+" "+constants[1]); System.exit(0);
-     */ }
+     */
+  }
 }

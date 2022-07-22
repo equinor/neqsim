@@ -250,9 +250,9 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
   public void initTemperature(int phase) {
     for (int i = 0; i < numberOfNodes; i++) {
       pipe.getNode(i).init();
-      pipe.getNode(i).getBulkSystem().setTemperature(pipe.getNode(i).getBulkSystem()
-          .getTemperature(phase)
-          + 0.8 * diffMatrix.get(i, 0) / (pipe.getNode(i).getBulkSystem().getPhases()[phase].getCp()
+      pipe.getNode(i).getBulkSystem().setTemperature(
+          pipe.getNode(i).getBulkSystem().getTemperature(phase) + 0.8 * diffMatrix.get(i, 0)
+              / (pipe.getNode(i).getBulkSystem().getPhases()[phase].getCp()
                   / pipe.getNode(i).getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()
                   / pipe.getNode(i).getBulkSystem().getPhases()[phase].getMolarMass()),
           phase);

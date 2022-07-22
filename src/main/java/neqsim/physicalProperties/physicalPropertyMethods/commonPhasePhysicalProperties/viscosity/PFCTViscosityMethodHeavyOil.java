@@ -83,11 +83,11 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
     double Mmtemp = 0.0;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < phase.getPhase().getNumberOfComponents(); j++) {
-        double tempVar = phase.getPhase().getComponent(i).getx()
-            * phase.getPhase().getComponent(j).getx()
-            * Math.pow(Math
-                .pow(phase.getPhase().getComponent(i).getTC()
-                    / phase.getPhase().getComponent(i).getPC(), 1.0 / 3.0)
+        double tempVar =
+            phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
+                * Math.pow(Math
+                    .pow(phase.getPhase().getComponent(i).getTC()
+                        / phase.getPhase().getComponent(i).getPC(), 1.0 / 3.0)
                     + Math.pow(phase.getPhase().getComponent(j).getTC()
                         / phase.getPhase().getComponent(j).getPC(), 1.0 / 3.0),
                     3.0);

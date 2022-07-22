@@ -9,6 +9,8 @@ package neqsim.processSimulation.processEquipment.separator;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -32,6 +34,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Separator.class);
 
   SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned,
       thermoSystem2;
@@ -74,7 +77,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /**
    * Constructor for Separator.
-   * 
+   *
    * @param name Name of separator
    */
   public Separator(String name) {
@@ -261,8 +264,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           * getInternalDiameter() * getSeparatorLength();
       // System.out.println("moles out" +
       // liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     thermoSystem = thermoSystem2;
     setCalculationIdentifier(id);

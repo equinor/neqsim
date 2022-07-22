@@ -271,9 +271,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
   public void initTemperature(int phase) {
     for (int i = 0; i < numberOfNodes; i++) {
       pipe.getNode(i).init();
-      pipe.getNode(i).getBulkSystem().setTemperature(pipe.getNode(i).getBulkSystem()
-          .getTemperature(phase)
-          + 0.8 * diffMatrix.get(i, 0) / (pipe.getNode(i).getBulkSystem().getPhases()[phase].getCp()
+      pipe.getNode(i).getBulkSystem().setTemperature(
+          pipe.getNode(i).getBulkSystem().getTemperature(phase) + 0.8 * diffMatrix.get(i, 0)
+              / (pipe.getNode(i).getBulkSystem().getPhases()[phase].getCp()
                   / pipe.getNode(i).getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()
                   / pipe.getNode(i).getBulkSystem().getPhases()[phase].getMolarMass()),
           phase);
@@ -564,7 +564,8 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       SU = -Amean
           * (pipe.getNode(i).getBulkSystem().getPressure()
               - pipe.getNode(i - 1).getBulkSystem().getPressure())
-          * 1e5 + Amean * gravity * meanDensity * vertposchange
+          * 1e5
+          + Amean * gravity * meanDensity * vertposchange
           + pipe.getNode(i - 1).getWallContactLength(phase) * nodeLength * meanDensity * meanFrik
               * Math.abs(meanVelocity) * meanVelocity / 8.0
           - pipe.getNode(i - 1).getInterphaseContactLength(0) * nodeLength * meanDensity
@@ -613,7 +614,8 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     SU = -Amean
         * (pipe.getNode(i).getBulkSystem().getPressure()
             - pipe.getNode(i - 1).getBulkSystem().getPressure())
-        * 1e5 - Amean * gravity * meanDensity * vertposchange
+        * 1e5
+        - Amean * gravity * meanDensity * vertposchange
         + pipe.getNode(i - 1).getWallContactLength(phase) * nodeLength * meanDensity * meanFrik
             * Math.abs(meanVelocity) * meanVelocity / 8.0
         - pipe.getNode(i - 1).getInterphaseContactLength(0) * nodeLength * meanDensity

@@ -175,7 +175,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         eps0[comp] = 7.2;
         beta[comp] = 2.0;
         z0[comp] = 3.2;
-        // e.printStackTrace();
+        // logger.error(e.getMessage());
       } finally {
         try {
           if (dataSet != null) {

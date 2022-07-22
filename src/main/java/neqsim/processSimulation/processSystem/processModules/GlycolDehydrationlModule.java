@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
@@ -23,17 +25,13 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  */
 public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(GlycolDehydrationlModule.class);
 
   protected StreamInterface gasStreamToAbsorber = null;
-
   protected StreamInterface strippingGas = null;
-
   protected StreamInterface gasStreamFromAbsorber = null;
-
   protected StreamInterface gasFromStripper = null;
-
   protected StreamInterface leanTEGStreamToAbsorber = null;
-
   protected SimpleTEGAbsorber absorbtionColumn = null;
   // protected DistillationColumn stripperColumn = null;
   protected Separator stripperColumn = null;
@@ -52,21 +50,14 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   double numberOfTheoreticalEquilibriumStages = 2;
   private double flashPressure = 5.0;
   double designStandardGasFlowRate = 20.0;
-
   double maxAbsorberDesignPressure = 70.0;
-
   double designGasFeedTemperature = 273.15 + 30.0;
   double leanGlycolMolarFraction = 0.95;
-
   double leanGlycolwtFraction = 0.99;
-
   double leanGlycolMolarFlowRate = 1.0;
-
   double maxglycolFlowRate = 1;
-
   String glycolTypeName = "TEG";
   double reboilerTemperature = 273.15 + 204.0;
-
   double regenerationPressure = 1.4;
 
   public GlycolDehydrationlModule(String name) {
@@ -175,8 +166,8 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
       this.leanTEGStreamToAbsorber.getThermoSystem().addComponent("TEG",
           leanGlycolMolarFlowRate * leanGlycolMolarFraction);
       this.leanTEGStreamToAbsorber.getThermoSystem().setTotalFlowRate(maxglycolFlowRate, "kg/hr");
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 

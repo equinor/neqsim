@@ -1,5 +1,7 @@
 package neqsim.processSimulation.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -15,6 +17,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @since 2.2.3
  */
 public class shtokman_MEG {
+  static Logger logger = LogManager.getLogger(shtokman_MEG.class);
+
   /**
    * This method is just meant to test the thermo package.
    *
@@ -57,7 +61,7 @@ public class shtokman_MEG {
       // stream_2.getThermoSystem().setTemperature(250.0);
       // ops.dewPointTemperatureFlash();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());
     }
     System.out.println("temp " + stream_2.getThermoSystem().getTemperature());
     operations.displayResult();

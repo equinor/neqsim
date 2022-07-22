@@ -7,6 +7,8 @@
 package neqsim.chemicalReactions.chemicalReaction;
 
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -17,6 +19,8 @@ import java.util.ArrayList;
  * @version $Id: $Id
  */
 public class ChemicalReactionFactory {
+  static Logger logger = LogManager.getLogger(ChemicalReactionFactory.class);
+
   public ChemicalReactionFactory() {}
 
   /**
@@ -61,10 +65,9 @@ public class ChemicalReactionFactory {
 
       // System.out.println("reaction added ok...");
       dataSet.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-      String err = e.toString();
-      System.out.println("could not add reacton: " + err);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      System.out.println("could not add reacton: " + ex.toString());
     }
     try {
       database.getConnection().close();

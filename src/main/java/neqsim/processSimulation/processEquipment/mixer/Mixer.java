@@ -29,13 +29,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Mixer.class);
 
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   private int numberOfInputStreams = 0;
   protected StreamInterface mixedStream;
   private boolean isSetOutTemperature = false;
   private double outTemperature = Double.NaN;
-  static Logger logger = LogManager.getLogger(Mixer.class);
 
   /**
    * <p>
@@ -89,8 +89,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         // mixedStream.getThermoSystem().init(0);
         // mixedStream.getThermoSystem().init(3);
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
 
     numberOfInputStreams++;
@@ -245,8 +245,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     } else {
       try {
         testOps.PHflash(enthalpy, 0);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
         if (!Double.isNaN(getOutTemperature())) {
           mixedStream.getThermoSystem().setTemperature(getOutTemperature());
         }

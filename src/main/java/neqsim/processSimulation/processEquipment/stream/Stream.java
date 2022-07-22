@@ -7,6 +7,8 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.thermo.system.SystemInterface;
@@ -22,6 +24,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Stream.class);
 
   protected SystemInterface thermoSystem;
 
@@ -138,8 +141,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
       thermoOps.hydrateFormationTemperature();
       return copySystem.getTemperature();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     return 0.0;
   }
@@ -167,8 +170,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         thermoOps.freezingPointTemperatureFlash();
       }
       return copySystem.getTemperature();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     return 0.0;
   }
@@ -330,15 +333,15 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     } else if (getSpecification().equals("dewP")) {
       try {
         thermoOps.dewPointTemperatureFlash();
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
         thermoOps.TPflash();
       }
     } else if (getSpecification().equals("dewT")) {
       try {
         thermoOps.dewPointPressureFlash();
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
         thermoOps.TPflash();
       }
     } else if (getSpecification().equals("gas quality")) {
@@ -351,29 +354,29 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         double enthalpySpec =
             getGasQuality() * gasEnthalpy + (1.0 - getGasQuality()) * liquidEnthalpy;
         thermoOps.PHflash(enthalpySpec);
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
         thermoOps.TPflash();
       }
     } else if (getSpecification().equals("bubP")) {
       try {
         thermoOps.bubblePointTemperatureFlash();
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
         thermoOps.TPflash();
       }
     } else if (getSpecification().equals("bubT")) {
       try {
         thermoOps.bubblePointPressureFlash(false);
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
         thermoOps.TPflash();
       }
     } else if (getSpecification().equals("PH")) {
       try {
         thermoOps.PHflash(getThermoSystem().getEnthalpy(), 0);
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
         thermoOps.TPflash();
       }
     } else {

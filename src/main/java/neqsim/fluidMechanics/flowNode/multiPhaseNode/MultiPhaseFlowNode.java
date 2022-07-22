@@ -311,12 +311,13 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
         * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
         * getWallContactLength(0) * getGeometry().getNodeLength()
         / getBulkSystem().getPhase(0).getCp();
-    double fluxwallinternal = getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1,
-        this) * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature())
-        * getWallContactLength(1) * getGeometry().getNodeLength()
-        + getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
-            * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
-            * getWallContactLength(0) * getGeometry().getNodeLength();
+    double fluxwallinternal =
+        getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
+            * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature())
+            * getWallContactLength(1) * getGeometry().getNodeLength()
+            + getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
+                * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
+                * getWallContactLength(0) * getGeometry().getNodeLength();
 
     double JolprK = 3.14 * 0.2032 * 0.0094 * getGeometry().getNodeLength() * 7500 * 500;
     double fluxOut = -50.0 * 3.14 * (0.2032 + 0.01) * getGeometry().getNodeLength()

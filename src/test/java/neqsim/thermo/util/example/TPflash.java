@@ -1,5 +1,7 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -14,6 +16,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @since 2.2.3
  */
 public class TPflash {
+  static Logger logger = LogManager.getLogger(TPflash.class);
+
   /**
    * <p>
    * main.
@@ -64,8 +68,8 @@ public class TPflash {
     try {
       // om.writeValue(new File("c:/temp/person2.yaml"),
       // testSystem.getPhase(0).getComponent(0));
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
 
     testSystem.display();

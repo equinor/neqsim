@@ -1,6 +1,8 @@
 package neqsim.PVTsimulation.simulation;
 
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.PVTsimulation.util.parameterfitting.CVDFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
@@ -17,6 +19,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class ConstantVolumeDepletion extends BasePVTsimulation {
+  static Logger logger = LogManager.getLogger(ConstantVolumeDepletion.class);
+
   private double[] relativeVolume = null;
   double[] totalVolume = null;
   double[] liquidVolumeRelativeToVsat = null;
@@ -27,7 +31,6 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   private double[] Zgas = null;
   private double[] cummulativeMolePercDepleted = null;
   double[] temperatures = null;
-
   double[] pressure = null;
 
   /**
@@ -82,7 +85,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
-     * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) { e.printStackTrace(); }
+     * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
+     * logger.error(e.getMessage()); }
      */
     saturationVolume = getThermoSystem().getVolume();
     saturationPressure = getThermoSystem().getPressure();
@@ -112,8 +116,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       getThermoSystem().setPressure(pressures[i]);
       try {
         thermoOps.TPflash();
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
       // getThermoSystem().display();
       totalVolume[i] = getThermoSystem().getVolume();
@@ -126,8 +130,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
           getThermoSystem().setPressure(pressures[i]);
           try {
             thermoOps.TPflash();
-          } catch (Exception e) {
-            e.printStackTrace();
+          } catch (Exception ex) {
+            logger.error(ex.getMessage());
           }
         }
 

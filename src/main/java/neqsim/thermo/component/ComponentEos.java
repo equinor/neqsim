@@ -378,7 +378,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
       // getVoli()/R/temperature + " dFdNdV " + comp_Array[i].dFdNdV(phase,
       // numberOfComponents, temperature, pressure));
       dfugdn[i] = (this.dFdNdN(i, phase, numberOfComponents, temperature, pressure)
-          + 1.0 / phase.getNumberOfMolesInPhase() - getVoli() / R / temperature
+          + 1.0 / phase.getNumberOfMolesInPhase()
+          - getVoli() / R / temperature
               * (-R * temperature
                   * comp_Array[i].dFdNdV(phase, numberOfComponents, temperature, pressure)
                   + R * temperature / phase.getTotalVolume()));

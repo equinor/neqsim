@@ -1,5 +1,7 @@
 package neqsim.processSimulation.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 import neqsim.processSimulation.measurementDevice.MolarMassAnalyser;
 import neqsim.processSimulation.measurementDevice.PressureTransmitter;
@@ -25,6 +27,8 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @since 2.2.3
  */
 public class OnshoreProcess1 {
+  static Logger logger = LogManager.getLogger(OnshoreProcess1.class);
+
   /**
    * This method is just meant to test the thermo package.
    *
@@ -493,24 +497,24 @@ public class OnshoreProcess1 {
       operations.displayResult();
       operations.reportMeasuredValues();
 
-      double wateraqphase = slugCatcher.getWaterOutStream().getThermoSystem()
-          .getTotalNumberOfMoles()
+      double wateraqphase =
+          slugCatcher.getWaterOutStream().getThermoSystem().getTotalNumberOfMoles()
               * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("water")
                   .getMolarMass()
               * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("water")
                   .getx()
               * 3600.0;
 
-      System.out.println("kg water in gas phase from slug catcher " + slugCatcher.getGasOutStream()
-          .getThermoSystem().getTotalNumberOfMoles()
+      System.out.println("kg water in gas phase from slug catcher "
+          + slugCatcher.getGasOutStream().getThermoSystem().getTotalNumberOfMoles()
               * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water")
                   .getMolarMass()
               * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water")
                   .getx()
               * 3600.0
           + " kg/hr");
-      System.out.println("kg water in condensate phase from slug catcher " + slugCatcher
-          .getOilOutStream().getThermoSystem().getTotalNumberOfMoles()
+      System.out.println("kg water in condensate phase from slug catcher "
+          + slugCatcher.getOilOutStream().getThermoSystem().getTotalNumberOfMoles()
               * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("water")
                   .getMolarMass()
               * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("water")
@@ -524,16 +528,16 @@ public class OnshoreProcess1 {
               .getMolarMass()
           * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("MEG").getx()
           * 3600.0;
-      System.out.println("kg MEG in gas phase from slug catcher " + slugCatcher.getGasOutStream()
-          .getThermoSystem().getTotalNumberOfMoles()
+      System.out.println("kg MEG in gas phase from slug catcher "
+          + slugCatcher.getGasOutStream().getThermoSystem().getTotalNumberOfMoles()
               * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("MEG")
                   .getMolarMass()
               * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("MEG")
                   .getx()
               * 3600.0
           + " kg/hr");
-      System.out.println("kg MEG in condensate phase from slug catcher " + slugCatcher
-          .getOilOutStream().getThermoSystem().getTotalNumberOfMoles()
+      System.out.println("kg MEG in condensate phase from slug catcher "
+          + slugCatcher.getOilOutStream().getThermoSystem().getTotalNumberOfMoles()
               * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("MEG")
                   .getMolarMass()
               * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("MEG")
@@ -549,20 +553,20 @@ public class OnshoreProcess1 {
           + volumeTransmitter3.getMeasuredValue() / 1.0e6 + " MSm^3/day");
       System.out.println("gas rate from slug catcher "
           + volumeTransmitter3.getMeasuredValue() / 1.0e6 + " MSm^3/day");
-      System.out.println("water in gas phase from slug catcher " + slugCatcher.getGasOutStream()
-          .getThermoSystem().getTotalNumberOfMoles()
+      System.out.println("water in gas phase from slug catcher "
+          + slugCatcher.getGasOutStream().getThermoSystem().getTotalNumberOfMoles()
               * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water")
                   .getMolarMass()
               * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water")
                   .getx()
               * 3600.0 / (volumeTransmitter3.getMeasuredValue() / 24.0) * 1000.0
           + " gr water/Sm^3 gas");
-      System.out.println("gas rate " + slugCatcher.getGasOutStream().getThermoSystem()
-          .getTotalNumberOfMoles()
+      System.out.println("gas rate "
+          + slugCatcher.getGasOutStream().getThermoSystem().getTotalNumberOfMoles()
               * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getMolarMass() * 3600.0
           + " kg gas/hr");
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 }

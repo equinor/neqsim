@@ -102,8 +102,8 @@ public class CriticalPointFlash extends Flash {
 
         tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase()
             - 1.0 / system.getPhase(0).getNumberOfMolesInPhase()
-            + (system.getPhase(0).getComponent(i).getdfugdn(j) + system.getPhase(0).getComponent(i)
-                .getdfugdp()
+            + (system.getPhase(0).getComponent(i).getdfugdn(j)
+                + system.getPhase(0).getComponent(i).getdfugdp()
                     * system.getPhase(0).getComponent(j).getVoli() * system.getPhase(0).getdPdVTn()
                     * -1.0));
 

@@ -168,8 +168,7 @@ public class HydrateFlash {
      * ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2); try {
      * testOps2.waterDewPointTemperatureFlash();
      *
-     * } catch (Exception e) { e.printStackTrace(); System.out.println(e.toString()); }
-     * testSystem2.display();
+     * } catch (Exception e) { logger.error(e.getMessage()) } testSystem2.display();
      *
      */
   }

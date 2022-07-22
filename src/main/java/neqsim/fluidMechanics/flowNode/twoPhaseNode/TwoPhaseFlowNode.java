@@ -347,10 +347,11 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     // System.out.println("Cp " + getBulkSystem().getPhase(1).getCp());
     // System.out.println("liq dT " + liquid_dT);
     // System.out.println("gas dT " + gas_dT);
-    double fluxwallinternal = getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1,
-        this) * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature())
-        * getWallContactLength(1) * getGeometry().getNodeLength()
-        + getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
+    double fluxwallinternal =
+        getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
+            * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature())
+            * getWallContactLength(1) * getGeometry().getNodeLength()
+            + getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
                 * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
                 * getWallContactLength(0) * getGeometry().getNodeLength();
 

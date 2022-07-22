@@ -2,6 +2,8 @@ package neqsim.thermo.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
@@ -14,6 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 class ComponentHydrateGFTest extends neqsim.NeqSimTest {
   static SystemInterface thermoSystem = null;
+  static Logger logger = LogManager.getLogger(ComponentHydrateGFTest.class);
 
   /**
    * @throws java.lang.Exception
@@ -37,8 +40,8 @@ class ComponentHydrateGFTest extends neqsim.NeqSimTest {
     try {
       thermoSystem.setHydrateCheck(true);
       testOps.hydrateFormationTemperature();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
       assertTrue(false);
       return;
     }

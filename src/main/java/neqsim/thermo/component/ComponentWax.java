@@ -55,7 +55,7 @@ public class ComponentWax extends ComponentSolid {
             refPhase.setTemperature(phase1.getTemperature());
         } catch (Exception e) {
             // System.out.println("compname " + componentName);
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         refPhase.setPressure(phase1.getPressure());
         refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, 0, 1.0);

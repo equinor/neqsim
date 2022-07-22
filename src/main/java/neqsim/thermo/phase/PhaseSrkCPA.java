@@ -920,9 +920,10 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    */
   public double calc_lngVVV() {
     tempTotVol = getTotalVolume();
-    return 4.0 * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(tempTotVol, 4.0) * getB()
-        - 4192.0 * Math.pow(tempTotVol, 3.0) * Math.pow(getB(), 2.0)
-        + 528.0 * Math.pow(getB(), 3.0) * tempTotVol * tempTotVol
+    return 4.0
+        * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(tempTotVol, 4.0) * getB()
+            - 4192.0 * Math.pow(tempTotVol, 3.0) * Math.pow(getB(), 2.0)
+            + 528.0 * Math.pow(getB(), 3.0) * tempTotVol * tempTotVol
             - 36.0 * tempTotVol * Math.pow(getB(), 4.0) - 30720.0 * Math.pow(tempTotVol, 5.0))
         * getB() / (Math.pow(tempTotVol, 3.0)) / Math.pow(-8.0 * tempTotVol + getB(), 3.0)
         / Math.pow(-4.0 * tempTotVol + getB(), 3.0);

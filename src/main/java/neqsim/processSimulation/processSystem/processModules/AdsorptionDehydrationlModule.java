@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.adsorber.SimpleAdsorber;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -18,6 +20,7 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  */
 public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(AdsorptionDehydrationlModule.class);
 
   protected StreamInterface gasStreamToAdsorber = null;
   protected StreamInterface gasStreamFromAdsorber = null;
@@ -101,8 +104,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
       }
       this.gasStreamFromAdsorber = (Stream) this.gasStreamToAdsorber.clone();
       this.gasStreamFromAdsorber.setName("Stream from Adsorber");
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 
@@ -159,12 +162,10 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     double waterLoadingCycle = regenerationCycleTime * designFlow * 42.29489667
         * tempStream.getThermoSystem().getPhase(0).getComponent("water").getx()
         * tempStream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass(); // 360.0;
-                                                                                         // //
                                                                                          // kg/cycle
                                                                                          // this
                                                                                          // needs
-                                                                                         // to
-                                                                                         // be
+                                                                                         // to be
                                                                                          // calculated
     double usefulDesiccantCapacity = 10.0; // 10%
     double bulkDensityDesiccant = 750.0; // 10%

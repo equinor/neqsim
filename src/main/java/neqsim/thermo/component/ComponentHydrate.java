@@ -429,11 +429,11 @@ public class ComponentHydrate extends Component {
    * @return a double
    */
   public double getPot(double radius, int struccture, int cavityType, PhaseInterface phase) {
-    double pot = 2.0 * coordNumb[struccture][cavityType]
-        * this.getLennardJonesEnergyParameterHydrate()
-        * ((Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 12.0)
-            / (Math.pow(cavRadius[struccture][cavityType], 11.0) * radius)
-            * (delt(10.0, radius, struccture, cavityType, this)
+    double pot =
+        2.0 * coordNumb[struccture][cavityType] * this.getLennardJonesEnergyParameterHydrate()
+            * ((Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 12.0)
+                / (Math.pow(cavRadius[struccture][cavityType], 11.0) * radius)
+                * (delt(10.0, radius, struccture, cavityType, this)
                     + this.getSphericalCoreRadiusHydrate() / cavRadius[struccture][cavityType]
                         * delt(11.0, radius, struccture, cavityType, this)))
                 - (Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 6.0)

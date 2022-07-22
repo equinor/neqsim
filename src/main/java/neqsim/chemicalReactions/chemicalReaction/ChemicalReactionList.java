@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -26,6 +28,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ChemicalReactionList.class);
 
   ArrayList<ChemicalReaction> chemicalReactionList = new ArrayList<ChemicalReaction>();
   String[] reactiveComponentList;
@@ -99,17 +102,15 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
               names.add(dataSet2.getString("compname").trim());
               stocCoef.add((dataSet2.getString("stoccoef")).trim());
             } while (dataSet2.next());
-          } catch (Exception e) {
-            e.printStackTrace();
+          } catch (Exception ex) {
+            logger.error(ex.getMessage());
           } finally {
             try {
               dataSet2.close();
-            } catch (Exception e) {
-              e.printStackTrace();
+            } catch (Exception ex) {
+              logger.error(ex.getMessage());
             }
           }
-          // System.out.println(names);
-          // System.out.println(stocCoef);
           nameArray = new String[names.size()];
           coefArray = new double[nameArray.length];
           for (int i = 0; i < nameArray.length; i++) {
@@ -124,13 +125,12 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         }
       } while (dataSet.next());
     } catch (Exception e) {
-      String err = e.toString();
-      System.out.println("could not add reacton: " + err);
+      System.out.println("could not add reacton: " + e.toString());
     } finally {
       try {
         dataSet.close();
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
     try {
@@ -278,8 +278,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             R * phase.getTemperature() * Math.log(reaction.getK(phase));
         reactionNumber++;
       }
-    } catch (Exception er) {
-      er.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
 
     /*

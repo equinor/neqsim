@@ -216,9 +216,10 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     daHSSAFTdN = ((4.0 - 6.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 2.0)
         - (4.0 * getNSAFT() - 3 * Math.pow(getNSAFT(), 2.0)) * 2.0 * (1.0 - getNSAFT()) * (-1.0))
         / Math.pow(1.0 - getNSAFT(), 4.0);
-    daHSSAFTdNdN = (-6.0 * Math.pow(1.0 - getNSAFT(), 2.0)
-        + 2.0 * (1.0 - getNSAFT()) * (4.0 - 6 * getNSAFT())) / Math.pow(1.0 - getNSAFT(), 4.0)
-        + ((8.0 - 12.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 3.0)
+    daHSSAFTdNdN =
+        (-6.0 * Math.pow(1.0 - getNSAFT(), 2.0) + 2.0 * (1.0 - getNSAFT()) * (4.0 - 6 * getNSAFT()))
+            / Math.pow(1.0 - getNSAFT(), 4.0)
+            + ((8.0 - 12.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 3.0)
                 + (8.0 - 6.0 * Math.pow(getNSAFT(), 2.0)) * 3.0 * Math.pow(1.0 - getNSAFT(), 2.0))
                 / Math.pow(1.0 - getNSAFT(), 6.0);
     daHSSAFTdNdNdN = -36 / Math.pow((1 - getNSAFT()), 3)
@@ -370,11 +371,12 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
             / Math.pow(temp1, 2.0));
 
     double temp4 = -Math.pow(F2dispZHC, 2.0);
-    double dZdndn = getmSAFT() * ((-4.0 * Math.pow(1.0 - getNSAFT(), 4.0)
-        - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 - 4.0 * getNSAFT()))
-        / Math.pow(1.0 - getNSAFT(), 8.0)
-            + ((32.0 - 16.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 5.0) - 5.0
-                * Math.pow(1.0 - getNSAFT(), 4.0) * (-1.0)
+    double dZdndn = getmSAFT()
+        * ((-4.0 * Math.pow(1.0 - getNSAFT(), 4.0)
+            - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 - 4.0 * getNSAFT()))
+            / Math.pow(1.0 - getNSAFT(), 8.0)
+            + ((32.0 - 16.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 5.0)
+                - 5.0 * Math.pow(1.0 - getNSAFT(), 4.0) * (-1.0)
                     * (32.0 * getNSAFT() - 8.0 * Math.pow(getNSAFT(), 2.0)))
                 / Math.pow(1.0 - getNSAFT(), 10.0))
         + (1.0 - getmSAFT())
@@ -401,10 +403,10 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    * @return a double
    */
   public double calcF2dispZHCdNdNdN() {
-    double temp = -6 * Math.pow((getmSAFT() * (8.0 - 4.0 * getNSAFT())
-        / Math.pow((1.0 - getNSAFT()), 4)
-        + 4 * getmSAFT() * (8.0 * getNSAFT()
-            - 2.0 * Math.pow(getNSAFT(), 2) / Math.pow((1.0 - getNSAFT()), 5) + (1.0 - getmSAFT())
+    double temp = -6 * Math.pow(
+        (getmSAFT() * (8.0 - 4.0 * getNSAFT()) / Math.pow((1.0 - getNSAFT()), 4) + 4 * getmSAFT()
+            * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2) / Math.pow((1.0 - getNSAFT()), 5)
+                + (1.0 - getmSAFT())
                     * (20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2)
                         - 8 * Math.pow(getNSAFT(), 3))
                     / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))
@@ -466,10 +468,12 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
                     * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
                         - 2 * Math.pow(getNSAFT(), 4))
                     / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 4)))
-            / Math.pow(1.0
-                + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2))
-                    / Math.pow((1.0 - getNSAFT()), 4)
-                        + ((1.0 - getmSAFT()) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2)
+            / Math
+                .pow(
+                    1.0 + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2))
+                        / Math.pow((1.0 - getNSAFT()), 4)
+                        + ((1.0 - getmSAFT())
+                            * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2)
                                 + 12 * Math.pow(getNSAFT(), 3) - 2 * Math.pow(getNSAFT(), 4))
                             / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))),
                     3)
@@ -511,10 +515,12 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
                 * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3)
                     - 2 * Math.pow(getNSAFT(), 4))
                 / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 5)))
-            / Math.pow((1.0
-                + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2))
-                    / Math.pow((1.0 - getNSAFT()), 4)
-                        + (1.0 - getmSAFT()) * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2)
+            / Math
+                .pow(
+                    (1.0 + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2))
+                        / Math.pow((1.0 - getNSAFT()), 4)
+                        + (1.0 - getmSAFT())
+                            * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2)
                                 + 12 * Math.pow(getNSAFT(), 3) - 2 * Math.pow(getNSAFT(), 4))
                             / (Math.pow((1.0 - getNSAFT()), 2) * Math.pow((2.0 - getNSAFT()), 2))),
                     2);
@@ -565,11 +571,11 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-        temp1 += getComponent(i).getNumberOfMolesInPhase()
-            * getComponent(j).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-            * getComponent(j).getmSAFTi()
-            * Math.sqrt(getComponent(i).getEpsikSAFT() / temperature
-                * getComponent(j).getEpsikSAFT() / temperature)
+        temp1 +=
+            getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
+                * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
+                * Math.sqrt(getComponent(i).getEpsikSAFT() / temperature
+                    * getComponent(j).getEpsikSAFT() / temperature)
                 * (1.0 - mixRule.getBinaryInteractionParameter(i, j)) * Math.pow(
                     0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0);
       }
@@ -589,12 +595,12 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp1 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-        temp1 += getComponent(i).getNumberOfMolesInPhase()
-            * getComponent(j).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-            * getComponent(j).getmSAFTi()
-            * Math.sqrt(getComponent(i).getEpsikSAFT() / temperature
-                * getComponent(j).getEpsikSAFT() / temperature)
-            * (1.0 - mixRule.getBinaryInteractionParameter(i, j))
+        temp1 +=
+            getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
+                * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
+                * Math.sqrt(getComponent(i).getEpsikSAFT() / temperature
+                    * getComponent(j).getEpsikSAFT() / temperature)
+                * (1.0 - mixRule.getBinaryInteractionParameter(i, j))
                 * Math.pow(
                     0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0)
                 * (-1 / temperature);
@@ -614,12 +620,12 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     double temp1 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-        temp1 += getComponent(i).getNumberOfMolesInPhase()
-            * getComponent(j).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-            * getComponent(j).getmSAFTi()
-            * (getComponent(i).getEpsikSAFT() / temperature * getComponent(j).getEpsikSAFT()
-                / temperature)
-            * Math.pow(1.0 - mixRule.getBinaryInteractionParameter(i, j), 2)
+        temp1 +=
+            getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
+                * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
+                * (getComponent(i).getEpsikSAFT()
+                    / temperature * getComponent(j).getEpsikSAFT() / temperature)
+                * Math.pow(1.0 - mixRule.getBinaryInteractionParameter(i, j), 2)
                 * Math.pow(
                     0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0)
                 * (-2 / temperature);
@@ -937,9 +943,11 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   /** {@inheritDoc} */
   @Override
   public double dF_HC_SAFTdVdVdV() {
-    return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdNdNdN * getDnSAFTdV() * getDnSAFTdV()
-        * getDnSAFTdV() + getmSAFT() * daHSSAFTdNdN * 2.0 * dnSAFTdV * dnSAFTdVdV
-        + getmSAFT() * daHSSAFTdNdN * dnSAFTdV * dnSAFTdVdV + getmSAFT() * daHSSAFTdN * dnSAFTdVdVdV
+    return getNumberOfMolesInPhase()
+        * (getmSAFT() * daHSSAFTdNdNdN * getDnSAFTdV() * getDnSAFTdV() * getDnSAFTdV()
+            + getmSAFT() * daHSSAFTdNdN * 2.0 * dnSAFTdV * dnSAFTdVdV
+            + getmSAFT() * daHSSAFTdNdN * dnSAFTdV * dnSAFTdVdV
+            + getmSAFT() * daHSSAFTdN * dnSAFTdVdVdV
             - 2.0 * getMmin1SAFT() * Math.pow(getGhsSAFT(), -3.0) * Math.pow(getDgHSSAFTdN(), 3.0)
                 * getDnSAFTdV() * getDnSAFTdV() * getDnSAFTdV()
             + getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * 2.0 * getDgHSSAFTdN() * dgHSSAFTdNdN

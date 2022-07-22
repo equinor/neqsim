@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -12,6 +14,7 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  */
 public class MaterialPlateDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(MaterialPlateDesignStandard.class);
 
   /**
    * <p>
@@ -94,13 +97,13 @@ public class MaterialPlateDesignStandard extends DesignStandard {
                 (Double.parseDouble(dataSet.getString("divisionClass2"))) * 0.00689475729; // MPa
           }
         }
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
 
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     } finally {
       try {
         if (dataSet != null) {
@@ -108,7 +111,7 @@ public class MaterialPlateDesignStandard extends DesignStandard {
         }
       } catch (Exception e) {
         System.out.println("error closing database.....GasScrubberDesignStandard");
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
     }
   }

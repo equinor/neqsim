@@ -1,5 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,7 @@ import neqsim.util.database.NeqSimDataBase;
  *
  */
 class WaxFlashTest {
+  static Logger logger = LogManager.getLogger(WaxFlashTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
@@ -59,8 +62,8 @@ class WaxFlashTest {
     try {
       testOps.calcWAT();
       testOps.TPflash();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     double waxVolumeFrac = 0;
     if (testSystem.hasPhaseType("wax")) {
