@@ -6,6 +6,8 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.thermo.system.SystemInterface;
@@ -21,6 +23,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Stream.class);
 
   protected SystemInterface thermoSystem;
 

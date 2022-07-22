@@ -29,13 +29,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Mixer.class);
 
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   private int numberOfInputStreams = 0;
   protected StreamInterface mixedStream;
   private boolean isSetOutTemperature = false;
   private double outTemperature = Double.NaN;
-  static Logger logger = LogManager.getLogger(Mixer.class);
 
   /**
    * <p>

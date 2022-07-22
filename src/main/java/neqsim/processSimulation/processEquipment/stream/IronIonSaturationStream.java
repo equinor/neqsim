@@ -7,6 +7,8 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -20,6 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class IronIonSaturationStream extends Stream {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(IronIonSaturationStream.class);
 
   protected SystemInterface reactiveThermoSystem;
 

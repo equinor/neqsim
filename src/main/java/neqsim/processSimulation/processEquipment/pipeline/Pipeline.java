@@ -7,6 +7,8 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
@@ -25,6 +27,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Pipeline.class);
 
   protected String fileName = "c:/test5.nc";
   protected FlowSystemInterface pipe;

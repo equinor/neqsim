@@ -10,6 +10,8 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -26,6 +28,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class SimpleTEGAbsorber extends SimpleAbsorber {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(SimpleTEGAbsorber.class);
 
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   protected double pressure = 0;

@@ -20,6 +20,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Splitter extends ProcessEquipmentBaseClass implements SplitterInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Splitter.class);
+
   SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
   StreamInterface inletStream;
   StreamInterface[] splitStream;
