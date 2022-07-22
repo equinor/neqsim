@@ -26,7 +26,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class WaterStripperColumn extends SimpleAbsorber {
   private static final long serialVersionUID = 1000;
 
-  // todo: get CalculationIDs of streams
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   protected double pressure = 0;
   protected int numberOfInputStreams = 0;
@@ -366,12 +365,16 @@ public class WaterStripperColumn extends SimpleAbsorber {
         SystemInterface gasTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[0]);
         gasTemp.init(2);
         gasOutStream.setThermoSystem(gasTemp);
+        gasOutStream.setCalculationIdentifier(id);
 
         tempSystem = mixedStream.getThermoSystem().clone();
         SystemInterface liqTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[1]);
         liqTemp.init(2);
         solventOutStream.setThermoSystem(liqTemp);
         solventOutStream.run(id);
+
+        mixedStream.setCalculationIdentifier(id);
+
         // System.out.println("Gas from water stripper " +
         // gasOutStream.getFlowRate("kg/hr") + " kg/hr");
 

@@ -27,8 +27,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
   SystemInterface thermoSystem;
 
-  double oilVolume = 0.0, gasVolume = 0.0, waterVolume = 0.0;
-  // todo: set calculationids of wells
+  double oilVolume = 0.0;
+  double gasVolume = 0.0;
+  double waterVolume = 0.0;
 
   ArrayList<Well> gasProducer = new ArrayList<Well>();
   ArrayList<Well> oilProducer = new ArrayList<Well>();
@@ -360,7 +361,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     // gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));
-    // gasOutStream.run();
+    // gasOutStream.run(id);
 
     setCalculationIdentifier(id);
   }
@@ -620,8 +621,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
           .println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
       System.out
           .println("total produced  " + reservoirOps.getProductionTotal("MSm3 oe") + " MSm3 oe");
-      if (reservoirOps.getFluid().getPressure() < 50.0)
+      if (reservoirOps.getFluid().getPressure() < 50.0) {
         break;
+      }
     }
     System.out.println("GOR gas  " + reservoirOps.getGasProducer(0).getGOR());
     // System.out.println("GOR oil " + reservoirOps.getOilProducer(0).getGOR());
@@ -688,10 +690,12 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * @return a double
    */
   public double getGasProductionTotal(String unit) {
-    if (unit.equals("MSm3"))
+    if (unit.equals("MSm3")) {
       return gasProductionTotal / 1e6;
-    if (unit.equals("GSm3"))
+    }
+    if (unit.equals("GSm3")) {
       return gasProductionTotal / 1e9;
+    }
     return gasProductionTotal;
   }
 
@@ -704,8 +708,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * @return a double
    */
   public double getOilProductionTotal(String unit) {
-    if (unit.equals("MSm3"))
+    if (unit.equals("MSm3")) {
       return oilProductionTotal / 1e6;
+    }
     return oilProductionTotal;
   }
 
@@ -719,8 +724,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    */
   public double getProductionTotal(String unit) {
     double prod = getOilProductionTotal("Sm3") + getGasProductionTotal("Sm3") / 1.0e3;
-    if (unit.equals("MSm3 oe"))
+    if (unit.equals("MSm3 oe")) {
       return prod / 1e6;
+    }
     return prod;
   }
 
@@ -733,8 +739,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * @return a double
    */
   public double getOOIP(String unit) {
-    if (unit.equals("MSm3"))
+    if (unit.equals("MSm3")) {
       return OOIP / 1.0e6;
+    }
     return OOIP;
   }
 
@@ -747,8 +754,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * @return a double
    */
   public double getOGIP(String unit) {
-    if (unit.equals("GSm3"))
+    if (unit.equals("GSm3")) {
       return OGIP / 1.0e9;
+    }
     return OGIP;
   }
 

@@ -27,8 +27,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class SimpleTEGAbsorber extends SimpleAbsorber {
   private static final long serialVersionUID = 1000;
 
-  // todo: get CalculationIDs of streams
-  protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
+  ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   protected double pressure = 0;
   protected int numberOfInputStreams = 0;
   protected StreamInterface mixedStream;
@@ -85,6 +84,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    *        object
    */
   public void addGasInStream(StreamInterface newStream) {
+    // todo: fail if gasInStream is not null?
     gasInStream = (Stream) newStream;
     gasOutStream = (Stream) newStream.clone();
     addStream(newStream);
@@ -99,6 +99,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    *        object
    */
   public void addSolventInStream(StreamInterface newStream) {
+    // todo: fail if solventInStream is not null?
     solventInStream = (Stream) newStream;
     solventOutStream = (Stream) newStream.clone();
     addStream(newStream);
@@ -114,6 +115,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    *        object
    */
   public void replaceSolventInStream(StreamInterface newStream) {
+    // todo: fails if solventStreamNumber is 0, i.e. no solventinstream set?
     solventInStream = (Stream) newStream;
     streams.set(solventStreamNumber, solventInStream);
   }
@@ -367,14 +369,15 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase());
       // System.out.println("total moles water " +
       // mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles());
-      StreamInterface stream = mixedStream.clone();
-      stream.setName("test");
-      stream.getThermoSystem().addComponent("water", -molesWaterToMove, 0);
-      stream.getThermoSystem().addComponent("water", molesWaterToMove, 1);
-      stream.getThermoSystem().initBeta();
-      stream.getThermoSystem().init_x_y();
-      stream.getThermoSystem().init(2);
-      mixedStream = stream;
+      StreamInterface newMixedStream = mixedStream.clone();
+      newMixedStream.setName("test");
+      newMixedStream.getThermoSystem().addComponent("water", -molesWaterToMove, 0);
+      newMixedStream.getThermoSystem().addComponent("water", molesWaterToMove, 1);
+      newMixedStream.getThermoSystem().initBeta();
+      newMixedStream.getThermoSystem().init_x_y();
+      newMixedStream.getThermoSystem().init(2);
+      mixedStream = newMixedStream;
+      mixedStream.setCalculationIdentifier(id);
 
       // stream.getThermoSystem().display();
 
@@ -398,7 +401,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
 
       // double Ks = 0.055;
       getSolventOutStream().getThermoSystem().initPhysicalProperties();
+      getSolventOutStream().setCalculationIdentifier(id);
       getGasOutStream().getThermoSystem().initPhysicalProperties();
+      getGasOutStream().setCalculationIdentifier(id);
 
       // double vtemp = Ks * Math.sqrt((getSolventOutStream().getThermoSystem().getPhase(0)
       // .getPhysicalProperties().getDensity() -

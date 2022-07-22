@@ -276,10 +276,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       setDownstreamProperties();
       testOps.TPflash();
     }
+    mixedStream.setCalculationIdentifier(id);
     setError(massBalanceCheck());
     System.out.println(name + " recycle error: " + getError());
     lastIterationStream = (Stream) mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
+    outletStream.setCalculationIdentifier(id);
     // System.out.println("flow rate new in recycle " +
     // outletStream.getFlowRate("kg/hr"));
 

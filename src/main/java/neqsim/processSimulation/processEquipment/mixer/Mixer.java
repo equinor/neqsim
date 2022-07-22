@@ -30,7 +30,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   private static final long serialVersionUID = 1000;
 
-  // todo: set calculationids of streams
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   private int numberOfInputStreams = 0;
   protected StreamInterface mixedStream;
@@ -230,10 +229,10 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
       enthalpy = calcMixStreamEnthalpy();
       // System.out.println("temp guess " + guessTemperature());
-      if (!isSetOutTemperature) {
-        mixedStream.getThermoSystem().setTemperature(guessTemperature());
-      } else {
+      if (isSetOutTemperature) {
         mixedStream.setTemperature(outTemperature, "K");
+      } else {
+        mixedStream.getThermoSystem().setTemperature(guessTemperature());
       }
       // System.out.println("filan temp " + mixedStream.getTemperature());
     }
@@ -254,6 +253,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         testOps.TPflash();
       }
     }
+    mixedStream.setCalculationIdentifier(id);
 
     // System.out.println("enthalpy: " +
     // mixedStream.getThermoSystem().getEnthalpy());

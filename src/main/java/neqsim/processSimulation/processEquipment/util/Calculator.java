@@ -76,6 +76,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
     outputVariable.getFluid().setTotalFlowRate(sum, "kg/hr");
     try {
       ((Stream) outputVariable).setFlowRate(sum, "kg/hr");
+      outputVariable.setCalculationIdentifier(id);
     } catch (Exception e) {
       logger.error("error", e.getMessage());
     }
