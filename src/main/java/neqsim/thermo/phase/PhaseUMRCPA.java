@@ -37,28 +37,54 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
-  double gcpavv = 0.0, gcpavvv = 0.0, gcpa = 0.0, hcpatot = 1.0, FCPA = 0.0, dFCPAdTdV,
-      dFCPAdTdT = 0.0, dFCPAdT = 0, dFCPAdV = 0, dFCPAdVdV = 0.0, dFCPAdVdVdV = 0.0;
-  double gcpav = 0.0, tempTotVol = 0;
+  double gcpavv = 0.0;
+  double gcpavvv = 0.0;
+  double gcpa = 0.0;
+  double hcpatot = 1.0;
+  double FCPA = 0.0;
+  double dFCPAdTdV;
+  double dFCPAdTdT = 0.0;
+  double dFCPAdT = 0;
+  double dFCPAdV = 0;
+  double dFCPAdVdV = 0.0;
+  double dFCPAdVdVdV = 0.0;
+  double gcpav = 0.0;
+  double tempTotVol = 0;
   private double[] dFdNtemp = {0, 0};
-  int cpaon = 1, oldTotalNumberOfAccociationSites = 0;
+  int cpaon = 1;
+  int oldTotalNumberOfAccociationSites = 0;
   int totalNumberOfAccociationSites = 0;
   int[][][] selfAccociationScheme = null;
   int[][][][] crossAccociationScheme = null;
   int[] activeAccosComp = null; // new int[100];
   private double[] lngi;
-  int[] moleculeNumber = null, assSiteNumber = null;
-  private double[][] gvector = null, delta = null, deltaNog = null, deltadT = null,
-      deltadTdT = null;
+  int[] moleculeNumber = null;
+  int[] assSiteNumber = null;
+  private double[][] gvector = null;
+  private double[][] delta = null;
+  private double[][] deltaNog = null;
+  private double[][] deltadT = null;
+  private double[][] deltadTdT = null;
   double[][][] Klkni = null;
-  private SimpleMatrix KlkTVMatrix = null, KlkTTMatrix = null, KlkTMatrix = null,
-      udotTimesmMatrix = null, mVector = null, udotMatrix = null, uMatrix = null,
-      QMatksiksiksi = null, KlkVVVMatrix = null, KlkVVMatrix = null, udotTimesmiMatrix = null,
-      ksiMatrix = null, KlkMatrix = null, hessianMatrix = null, hessianInvers = null,
-      KlkVMatrix = null;
-  private DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null; // new
-                                                                                  // DenseMatrix64F(getTotalNumberOfAccociationSites(),
-                                                                                  // 1);
+  private SimpleMatrix KlkTVMatrix = null;
+  private SimpleMatrix KlkTTMatrix = null;
+  private SimpleMatrix KlkTMatrix = null;
+  private SimpleMatrix udotTimesmMatrix = null;
+  private SimpleMatrix mVector = null;
+  private SimpleMatrix udotMatrix = null;
+  private SimpleMatrix uMatrix = null;
+  private SimpleMatrix QMatksiksiksi = null;
+  private SimpleMatrix KlkVVVMatrix = null;
+  private SimpleMatrix KlkVVMatrix = null;
+  private SimpleMatrix udotTimesmiMatrix = null;
+  private SimpleMatrix ksiMatrix = null;
+  private SimpleMatrix KlkMatrix = null;
+  private SimpleMatrix hessianMatrix = null;
+  private SimpleMatrix hessianInvers = null;
+  private SimpleMatrix KlkVMatrix = null;
+  private DMatrixRMaj corr2Matrix = null;
+  private DMatrixRMaj corr3Matrix = null;
+  private DMatrixRMaj corr4Matrix = null;
 
   /**
    * <p>
@@ -245,7 +271,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     }
 
     int temp = 0;
-    double tempVar1, tempVar2;
+    double tempVar1;
+    double tempVar2;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
         tempVar1 = ksiMatrix.get(temp + j, 0);
@@ -286,7 +313,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     }
 
     double totalVolume = getTotalVolume();
-    double totalVolume2 = totalVolume * totalVolume, totalVolume3 = totalVolume2 * totalVolume;
+    double totalVolume2 = totalVolume * totalVolume;
+    double totalVolume3 = totalVolume2 * totalVolume;
     double gdv1 = getGcpav() - 1.0 / totalVolume;
     double gdv2 = gdv1 * gdv1;
     double gdv3 = gdv2 * gdv1;
@@ -332,7 +360,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
           if (type > 2) {
             for (int p = 0; p < numberOfComponents; p++) {
-              double t1 = 0.0, t2 = 0.0;
+              double t1 = 0.0;
+              double t2 = 0.0;
               if (moleculeNumber[i] == p) {
                 t1 = 1.0 / mVector.get(i, 0);
               }
@@ -667,8 +696,11 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     }
     double BonVold;
     double BonV2;
-    double h = 0, dh = 0, dhh = 0;
-    double d1 = 0, d2 = 0;
+    double h = 0;
+    double dh = 0;
+    double dhh = 0;
+    double d1 = 0;
+    double d2 = 0;
     double Btemp = getB();
     if (Btemp < 0) {
       logger.info("b negative in volume calc");
@@ -795,7 +827,10 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * @return double[]
    */
   double[] calcdFdNtemp() {
-    double tot1 = 0.0, tot2 = 0.0, tot3 = 0.0, tot4 = 0.0;
+    double tot1 = 0.0;
+    double tot2 = 0.0;
+    double tot3 = 0.0;
+    double tot4 = 0.0;
     // double temp, temp2;
     for (int k = 0; k < getNumberOfComponents(); k++) {
       tot2 = 0.0;
@@ -924,7 +959,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     // ksiMatrix.print();
     // second order method not working correctly and not used t the moment b ecause of numerical
     // stability
-    int temp = 0, iter = 0;
+    int temp = 0;
+    int iter = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
         mVectorMat.unsafe_set(temp + j, 0, componentArray[i].getNumberOfMolesInPhase());
@@ -935,7 +971,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     DMatrixRMaj mat1 = KlkMatrix.getMatrix();
     double Klk = 0.0;
     double totvolume = getTotalVolume();
-    double tempVari, tempVarj;
+    double tempVari;
+    double tempVarj;
     for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
       tempVari = mVectorMat.unsafe_get(i, 0);
       for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
@@ -953,7 +990,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       temp = 0;
       double ksi = 0;
 
-      double temp1, temp2;
+      double temp1;
+      double temp2;
       for (int i = 0; i < numberOfComponents; i++) {
         temp1 = componentArray[i].getNumberOfMolesInPhase();
         for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
@@ -1041,11 +1079,13 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * @return a boolean
    */
   public boolean solveX2(int maxIter) {
-    double err = .0, totalVolume = getTotalVolume();
+    double err = .0;
+    double totalVolume = getTotalVolume();
     int iter = 0;
     // if (delta == null) {
     // initCPAMatrix(1);
-    double old = 0.0, neeval = 0.0;
+    double old = 0.0;
+    double neeval = 0.0;
     // }
     do {
       iter++;
@@ -1113,7 +1153,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       logger.error("error", e);
     }
     double BonVold = BonV;
-    double Btemp = 0, h = 1;
+    double Btemp = 0;
+    double h = 1;
     // double Dtemp = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
     // double d1 = 0, d2 = 0;
     Btemp = getB();
@@ -1199,9 +1240,13 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       BonV = 0.9999;
     }
     double BonVold = BonV;
-    double Btemp = 0, h = 0, dh = 0, dhh = 0;
+    double Btemp = 0;
+    double h = 0;
+    double dh = 0;
+    double dhh = 0;
     // double gvvv = 0, fvvv = 0;
-    double d1 = 0, d2 = 0;
+    double d1 = 0;
+    double d2 = 0;
     Btemp = getB();
     if (Btemp < 0) {
       logger.info("b negative in volume calc");
@@ -1523,14 +1568,16 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     setMolarVolume(Z * R * temperature / pressure);
     // super.molarVolume(pressure,temperature, A, B, phase);
     int iterations = 0;
-    double err = 0.0, dErrdV = 0.0;
+    double err = 0.0;
+    double dErrdV = 0.0;
     double deltaV = 0;
 
     do {
       A = calcA(this, temperature, pressure, numberOfComponents);
       B = calcB(this, temperature, pressure, numberOfComponents);
 
-      double dFdV = dFdV(), dFdVdV = dFdVdV();
+      double dFdV = dFdV();
+      double dFdVdV = dFdVdV();
       // double dFdVdVdV = dFdVdVdV();
       // double factor1 = 1.0e0, factor2 = 1.0e0;
       err = -R * temperature * dFdV + R * temperature / getMolarVolume() - pressure;
@@ -1616,7 +1663,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     }
 
     double totalVolume = getTotalVolume();
-    double totalVolume2 = totalVolume * totalVolume, totalVolume3 = totalVolume2 * totalVolume;
+    double totalVolume2 = totalVolume * totalVolume;
+    double totalVolume3 = totalVolume2 * totalVolume;
     double gdv1 = getGcpav() - 1.0 / totalVolume;
     double gdv2 = gdv1 * gdv1;
     double gdv3 = gdv2 * gdv1;
@@ -1658,7 +1706,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
           if (type > 2) {
             for (int p = 0; p < numberOfComponents; p++) {
-              double t1 = 0.0, t2 = 0.0;
+              double t1 = 0.0;
+              double t2 = 0.0;
               if (moleculeNumber[i] == p) {
                 t1 = 1.0 / mVector.get(i, 0);
               }
@@ -1820,7 +1869,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     DMatrixRMaj mat2 = ksiMatrix.getMatrix();
     // second order method not working correctly and not used t the moment b ecause of numerical
     // stability
-    int temp = 0, iter = 0;
+    int temp = 0;
+    int iter = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
         mVector.set(temp + j, 0, componentArray[i].getNumberOfMolesInPhase());
@@ -1922,7 +1972,9 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     int iter = 0;
     // if (delta == null) {
     // initCPAMatrix(1);
-    double old = 0.0, neeval = 0.0, totalVolume = getTotalVolume();
+    double old = 0.0;
+    double neeval = 0.0;
+    double totalVolume = getTotalVolume();
     // }
     do {
       iter++;
@@ -1984,8 +2036,11 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       BonV = 0.9999;
     }
     double BonVold;
-    double h = 0, dh = 0, dhh = 0;
-    double d1 = 0, d2 = 0;
+    double h = 0;
+    double dh = 0;
+    double dhh = 0;
+    double d1 = 0;
+    double d2 = 0;
     double Btemp = getB();
     if (Btemp < 0) {
       logger.info("b negative in volume calc");

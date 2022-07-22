@@ -14,12 +14,19 @@ public class PlusFractionModel implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
   private String name = "";
   private SystemInterface system = null;
-  double MPlus = 0.0, zPlus = 0.0, densPlus = 0.0;
+  double MPlus = 0.0;
+  double zPlus = 0.0;
+  double densPlus = 0.0;
   int firstPlusFractionNumber = 1;
   int lastPlusFractionNumber = 80;
   int plusComponentNumber = 0;
   private double maxPlusMolarMass = 1000.0;
-  double[] z, M, dens, TC, PC, acs;
+  double[] z;
+  double[] M;
+  double[] dens;
+  double[] TC;
+  double[] PC;
+  double[] acs;
 
   /**
    * <p>
@@ -139,7 +146,8 @@ public class PlusFractionModel implements java.io.Serializable {
     @Override
     public int getFirstTBPFractionNumber() {
       int firstTBPNumber = 0;
-      double M = 1e10, Mmin = 1e10;
+      double M = 1e10;
+      double Mmin = 1e10;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getPhase(0).getComponent(i).isIsTBPfraction()) {
           M = system.getPhase(0).getComponent(i).getMolarMass();
@@ -253,7 +261,8 @@ public class PlusFractionModel implements java.io.Serializable {
       }
 
       // double zSum = 0.0;
-      double mSum = 0.0, densSum = 0.0;
+      double mSum = 0.0;
+      double densSum = 0.0;
       int iter = 0;
       do {
         iter++;

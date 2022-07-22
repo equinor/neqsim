@@ -101,7 +101,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   /** {@inheritDoc} */
   @Override
   public void setfvecMassTrans() {
-    double sumx = 0, sumy = 0;
+    double sumx = 0;
+    double sumy = 0;
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
       fvec.set(i, 0, Math
           .log((interphaseSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
@@ -138,7 +139,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   /** {@inheritDoc} */
   @Override
   public void setfvecMassTrans2() {
-    double sumx = 0.0, sumy = 0.0;
+    double sumx = 0.0;
+    double sumy = 0.0;
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
       fvec.set(i, 0, Math
           .log((interphaseSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
@@ -214,7 +216,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   /** {@inheritDoc} */
   @Override
   public void setJacMassTrans() {
-    double dij = 0, tempJ = 0;
+    double dij = 0;
+    double tempJ = 0;
     Jac.timesEquals(0.0);
 
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 1; i++) {
@@ -279,7 +282,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   /** {@inheritDoc} */
   @Override
   public void setJacMassTrans2() {
-    double dij = 0, tempJ = 0;
+    double dij = 0;
+    double tempJ = 0;
     Jac.timesEquals(0.0);
 
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {

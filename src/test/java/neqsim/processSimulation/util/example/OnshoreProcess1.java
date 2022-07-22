@@ -31,7 +31,7 @@ public class OnshoreProcess1 {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
-  public static void main(String args[]) {
+  public static void main(String[] args) {
     try {
       double totalProductionRate = 222.5808099 * 3600.0; // kg/time
       double formationWater = 0.02; // m^3/day
@@ -53,35 +53,102 @@ public class OnshoreProcess1 {
       double reservoirPressureSnohvit = 264.4; // bar
       double snohvitFormationWaterFlowRate = formationWater * 1000.0 / 3600.0 / 0.018 / 24.0;
       // molefractions
-      double nitrogen_s = 2.525, CO2_s = 5.262, methane_s = 81.006, ethane_s = 5.027,
-          propane_s = 2.534, ibutane_s = 0.4, nbutane_s = 0.83, benzene_s = 0.078, toluene_s = 0.09,
-          mXylene_s = 0.061, water_s = 4.0;
-      double C6_s = 0.352, C7_s = 0.469, C8_s = 0.407, C9_s = 0.203, C10_s = 0.086, C11_s = 0.063,
-          C12_s = 0.062, C13_s = 0.049, C14_s = 0.033, C15_s = 0.025, C16_s = 0.015, C17_s = 0.015,
-          C18_s = 0.010, C19_s = 0.007, C20plus_s = 0.031;
-      double C6_M_s = 85.0, C7_M_s = 90.7, C8_M_s = 104.1, C9_M_s = 119.8, C10_M_s = 133.0,
-          C11_M_s = 147.0, C12_M_s = 159.0, C13_M_s = 173.0, C14_M_s = 188.0, C15_M_s = 202.0,
-          C16_M_s = 213.0, C17_M_s = 230.0, C18_M_s = 247.0, C19_M_s = 258.0, C20plus_M_s = 315.0;
-      double C6_d_s = 0.668, C7_d_s = 0.745, C8_d_s = 0.767, C9_d_s = 0.776, C10_d_s = 0.783,
-          C11_d_s = 0.787, C12_d_s = 0.799, C13_d_s = 0.811, C14_d_s = 0.821, C15_d_s = 0.828,
-          C16_d_s = 0.836, C17_d_s = 0.834, C18_d_s = 0.835, C19_d_s = 0.845, C20plus_d_s = 0.872;
+      double nitrogen_s = 2.525;
+      double CO2_s = 5.262;
+      double methane_s = 81.006;
+      double ethane_s = 5.027;
+      double propane_s = 2.534;
+      double ibutane_s = 0.4;
+      double nbutane_s = 0.83;
+      double benzene_s = 0.078;
+      double toluene_s = 0.09;
+      double mXylene_s = 0.061;
+      double water_s = 4.0;
+      double C6_s = 0.352;
+      double C7_s = 0.469;
+      double C8_s = 0.407;
+      double C9_s = 0.203;
+      double C10_s = 0.086;
+      double C11_s = 0.063;
+      double C12_s = 0.062;
+      double C13_s = 0.049;
+      double C14_s = 0.033;
+      double C15_s = 0.025;
+      double C16_s = 0.015;
+      double C17_s = 0.015;
+      double C18_s = 0.010;
+      double C19_s = 0.007;
+      double C20plus_s = 0.031;
+      double C6_M_s = 85.0;
+      double C7_M_s = 90.7;
+      double C8_M_s = 104.1;
+      double C9_M_s = 119.8;
+      double C10_M_s = 133.0;
+      double C11_M_s = 147.0;
+      double C12_M_s = 159.0;
+      double C13_M_s = 173.0;
+      double C14_M_s = 188.0;
+      double C15_M_s = 202.0;
+      double C16_M_s = 213.0;
+      double C17_M_s = 230.0;
+      double C18_M_s = 247.0;
+      double C19_M_s = 258.0;
+      double C20plus_M_s = 315.0;
+      double C6_d_s = 0.668;
 
+      double C7_d_s = 0.745;
+      double C8_d_s = 0.767;
+      double C9_d_s = 0.776;
+      double C10_d_s = 0.783;
+      double C11_d_s = 0.787;
+      double C12_d_s = 0.799;
+      double C13_d_s = 0.811;
+      double C14_d_s = 0.821;
+      double C15_d_s = 0.828;
+      double C16_d_s = 0.836;
+      double C17_d_s = 0.834;
+      double C18_d_s = 0.835;
+      double C19_d_s = 0.845;
+      double C20plus_d_s = 0.872;
       // Albatross reservoir system
       double reservoirGasMolarMassAlbatross = 0.022; // kg/mol
       double reservoirGasFlowAlbatross = (1.0 - productionSplit) * totalProductionRate; // kg/time
       double reservoirTemperatureAlbatross = 273.15 + 65.0; // K
       double reservoirPressureAlbatross = 210.0; // bar
       // molefractions
-      double nitrogen_a = 0.1, CO2_a = 7.0, methane_a = 80.43, ethane_a = 4.99, propane_a = 2.51,
-          ibutane_a = 0.39, nbutane_a = 0.82, benzene_a = 0.077, toluene_a = 0.089,
-          mXylene_a = 0.06, water_a = 2.0;
-      double C6_a = 0.352, C7_a = 0.91, C8_a = 0.317, C9_a = 0.142, C10_a = 0.141, C11_a = 0.063,
-          C12_a = 0.062;
-      double C6_M_a = 85.0, C7_M_a = 90.7, C8_M_a = 104.1, C9_M_a = 119.8, C10_M_a = 133.0,
-          C11_M_a = 147.0, C12_M_a = 159.0;
-      double C6_d_a = 0.668, C7_d_a = 0.745, C8_d_a = 0.767, C9_d_a = 0.776, C10_d_a = 0.783,
-          C11_d_a = 0.787, C12_d_a = 0.799;
+      double nitrogen_a = 0.1;
+      double CO2_a = 7.0;
+      double methane_a = 80.43;
+      double ethane_a = 4.99;
+      double propane_a = 2.51;
+      double ibutane_a = 0.39;
+      double nbutane_a = 0.82;
+      double benzene_a = 0.077;
+      double toluene_a = 0.089;
+      double mXylene_a = 0.06;
+      double water_a = 2.0;
+      double C6_a = 0.352;
+      double C7_a = 0.91;
+      double C8_a = 0.317;
+      double C9_a = 0.142;
+      double C10_a = 0.141;
+      double C11_a = 0.063;
+      double C12_a = 0.062;
+      double C6_M_a = 85.0;
+      double C7_M_a = 90.7;
+      double C8_M_a = 104.1;
+      double C9_M_a = 119.8;
+      double C10_M_a = 133.0;
+      double C11_M_a = 147.0;
+      double C12_M_a = 159.0;
+      double C6_d_a = 0.668;
 
+      double C7_d_a = 0.745;
+      double C8_d_a = 0.767;
+      double C9_d_a = 0.776;
+      double C10_d_a = 0.783;
+      double C11_d_a = 0.787;
+      double C12_d_a = 0.799;
       neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(
           reservoirTemperatureSnohvit, reservoirPressureSnohvit);
       neqsim.thermo.system.SystemInterface testSystem3 = new neqsim.thermo.system.SystemSrkEos(

@@ -42,8 +42,10 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
       setSuperCritical(true);
     }
 
-    int iterations = 0, maxNumberOfIterations = 500;
-    double yold = 0, ytotal = 1;
+    int iterations = 0;
+    int maxNumberOfIterations = 500;
+    double yold = 0;
+    double ytotal = 1;
     // double deriv = 0, funk = 0;
     boolean chemSolved = true;
     // logger.info("starting");
@@ -53,7 +55,8 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
     system.setBeta(1, 1.0 - 1e-10);
     system.setBeta(0, 1e-10);
 
-    double oldPres = 0, oldChemPres = 1;
+    double oldPres = 0;
+    double oldChemPres = 1;
     if (system.isChemicalSystem()) {
       system.getChemicalReactionOperations().solveChemEq(1, 0);
       system.getChemicalReactionOperations().solveChemEq(1, 1);

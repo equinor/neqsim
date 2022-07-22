@@ -19,12 +19,12 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
   double dn[][];
   int iter = 0;
   Matrix[] diff4Matrix;
-  double xNew[][][];
+  double[][][] xNew;
   protected double oldMass[][];
   protected double oldComp[][];
   protected double oldDensity[][];
   protected double oldVelocity[][];
-  protected double oldComposition[][][];
+  protected double[][][] oldComposition;
   protected double oldInternalEnergy[][];
   protected double oldImpuls[][];
   protected double oldEnergy[][];
@@ -518,9 +518,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    */
   public void setImpulsMatrixTDMA(int phase) {
     double sign = (phase == 0) ? 1.0 : -1.0;
-    double SU = 0.0, SP = 0.0;
-    double Fw = 0.0, Fe = 0.0;
+    double SU = 0.0;
+    double SP = 0.0;
+    double Fw = 0.0;
 
+    double Fe = 0.0;
     pipe.getNode(0).initFlowCalc();
     pipe.getNode(0).init();
     pipe.getNode(0).setVelocityIn(phase, pipe.getNode(0).getVelocity(phase));
@@ -981,8 +983,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
   /** {@inheritDoc} */
   @Override
   public void solveTDMA() {
-    double d[];
-    int iter = 0, iterTop = 0;
+    double[] d;
+    int iter = 0;
+    int iterTop = 0;
     double maxDiff = 1e10;
     // double maxDiffOld = 1e10;
     double diff = 0;

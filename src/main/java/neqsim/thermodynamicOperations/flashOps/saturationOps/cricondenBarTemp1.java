@@ -14,9 +14,22 @@ import neqsim.thermo.system.SystemInterface;
 public class cricondenBarTemp1 implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
 
-  int neq = 0, iter = 0;
-  int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
-  double beta = 0, ds = 0, dTmax = 1, dPmax = 1, avscp = 0.1, TC1 = 0, TC2 = 0, PC1 = 0, PC2 = 0;
+  int neq = 0;
+  int iter = 0;
+  int ic02p = -100;
+  int ic03p = -100;
+  int testcrit = 0;
+  int npCrit = 0;
+  double beta = 0;
+  double ds = 0;
+  double dTmax = 1;
+  double dPmax = 1;
+  double avscp = 0.1;
+  double TC1 = 0;
+  double TC2 = 0;
+  double PC1 = 0;
+  double PC2 = 0;
+
   Matrix Jac;
   Matrix fvec;
   Matrix u;
@@ -64,7 +77,8 @@ public class cricondenBarTemp1 implements java.io.Serializable {
    * </p>
    */
   public void setfvec() {
-    double xtot = 0.0, dQdT = 0;
+    double xtot = 0.0;
+    double dQdT = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       xtot += system.getPhase(1).getComponent(i).getx();
       dQdT -= system.getPhase(1).getComponent(i).getx()

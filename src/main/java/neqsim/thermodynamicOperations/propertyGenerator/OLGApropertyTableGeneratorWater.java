@@ -28,22 +28,34 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
   static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorWater.class);
 
   BicubicInterpolator interpolationFunc = new BicubicInterpolator();
-  SystemInterface thermoSystem = null, gasSystem = null, oilSystem = null, waterSystem = null;
+  SystemInterface thermoSystem = null;
+  SystemInterface gasSystem = null;
+  SystemInterface oilSystem = null;
+  SystemInterface waterSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double[] pressures, temperatureLOG, temperatures, pressureLOG = null;
-  double[] bubP, bubT, dewP, bubPLOG, dewPLOG;
-  Matrix XMatrixgas, XMatrixoil, XMatrixwater;
+  double[] pressures;
+  double[] temperatureLOG;
+  double[] temperatures;
+  double[] pressureLOG = null;
+  double[] bubP;
+  double[] bubT;
+  double[] dewP;
+  double[] bubPLOG;
+  double[] dewPLOG;
+  Matrix XMatrixgas;
+  Matrix XMatrixoil;
+  Matrix XMatrixwater;
   double[][] ROG = null;
-  // double[][] ROL, CPG, CPHL, HG, HHL, TCG, TCHL, VISG, VISHL, SIGGHL, SEG,
-  // SEHL, RS;
-  double TC, PC;
+  double TC;
+  double PC;
   double RSWTOB;
   double[][][] props;
   int nProps;
   String[] names;
   Matrix[] xcoef = new Matrix[9];
   String[] units;
-  int temperatureSteps, pressureSteps;
+  int temperatureSteps;
+  int pressureSteps;
   boolean continuousDerivativesExtrapolation = true;
   boolean hasGasValues = false;
   boolean hasOilValues = false;
@@ -230,12 +242,13 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
    * </p>
    */
   public void initCalc() {
-    double stdTemp = 288.15, stdPres = 1.01325;
+    double stdTemp = 288.15;
+    double stdPres = 1.01325;
     // double GOR, GLR;
-    double molfracs[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
-    double MW[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
-    double dens[] = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
-    String components[] = new String[thermoSystem.getPhase(0).getNumberOfComponents()];
+    double[] molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
+    double[] MW = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
+    double[] dens = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
+    String[] components = new String[thermoSystem.getPhase(0).getNumberOfComponents()];
 
     for (int i = 0; i < molfracs.length; i++) {
       molfracs[i] = thermoSystem.getPhase(0).getComponent(i).getz();

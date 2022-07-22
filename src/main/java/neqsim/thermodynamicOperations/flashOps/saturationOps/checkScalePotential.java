@@ -48,7 +48,8 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt");
     resultTable = new String[10][3];
-    double stoc1 = 1e-20, stoc2 = 1e-20;
+    double stoc1 = 1e-20;
+    double stoc2 = 1e-20;
     String saltName = "";
     String name1 = "";
     String name2 = "";

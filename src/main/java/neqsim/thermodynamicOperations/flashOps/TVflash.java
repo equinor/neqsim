@@ -79,7 +79,8 @@ public class TVflash extends Flash {
    * @return a double
    */
   public double solveQ() {
-    double oldPres = system.getPressure(), nyPres = system.getPressure();
+    double oldPres = system.getPressure();
+    double nyPres = system.getPressure();
     double iterations = 1;
     do {
       iterations++;

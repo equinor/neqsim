@@ -29,7 +29,9 @@ public class graph2b extends javax.swing.JFrame {
   private static final long serialVersionUID = 1000;
 
   XYDataset xyData;
-  String titl, xaxtitle, yaxtitle;
+  String titl;
+  String xaxtitle;
+  String yaxtitle;
 
   /**
    * <p>
@@ -50,8 +52,9 @@ public class graph2b extends javax.swing.JFrame {
    */
   public graph2b(double[][] points) {
     String[] seriesNames = new String[points.length];
-    for (int i = 0; i < points.length; i++)
+    for (int i = 0; i < points.length; i++) {
       seriesNames[i] = "";
+    }
     String tit = "";
     String xaxis = "";
     String yaxis = "";
@@ -300,7 +303,7 @@ public class graph2b extends javax.swing.JFrame {
    *
    * @param args the command line arguments
    */
-  public static void main(String args[]) {
+  public static void main(String[] args) {
     new graph2b().setVisible(true);
   }
 

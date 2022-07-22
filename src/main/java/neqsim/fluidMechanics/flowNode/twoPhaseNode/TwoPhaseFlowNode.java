@@ -99,8 +99,10 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
     phaseFraction[0] = 1.0 - 1.0e-10;
     phaseFraction[1] = 1.0 - phaseFraction[0];
-    double f = 0, fOld = 0, betaOld = 0;
+    double f = 0;
 
+    double fOld = 0;
+    double betaOld = 0;
     // double df = 0
     int iterations = 0;
     double step = 100.0;
@@ -209,7 +211,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
   /** {@inheritDoc} */
   @Override
-  public void setFluxes(double dn[]) {
+  public void setFluxes(double[] dn) {
     for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
       getBulkSystem().getPhases()[0].addMoles(i, -dn[i]);
       getBulkSystem().getPhases()[1].addMoles(i, +dn[i]);

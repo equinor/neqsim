@@ -18,12 +18,26 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(sysNewtonRhapsonPhaseEnvelope.class);
 
-  double sumx = 0, sumy = 0;
-  int neq = 0, iter = 0, iter2 = 0;
-  int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
-  double beta = 0, ds = 0, dTmax = 10, dPmax = 10, TC1 = 0, TC2 = 0, PC1 = 0, PC2 = 0,
-      specVal = 0.0;
-  int lc = 0, hc = 0;
+  double sumx = 0;
+  double sumy = 0;
+  int neq = 0;
+  int iter = 0;
+  int iter2 = 0;
+  int ic02p = -100;
+  int ic03p = -100;
+  int testcrit = 0;
+  int npCrit = 0;
+  double beta = 0;
+  double ds = 0;
+  double dTmax = 10;
+  double dPmax = 10;
+  double TC1 = 0;
+  double TC2 = 0;
+  double PC1 = 0;
+  double PC2 = 0;
+  double specVal = 0.0;
+  int lc = 0;
+  int hc = 0;
   double sumlnKvals;
   Matrix Jac;
   Matrix fvec;
@@ -677,7 +691,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    *
    * @param args an array of {@link java.lang.String} objects
    */
-  public static void main(String args[]) {
+  public static void main(String[] args) {
     /*
      * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4};
      * test.setx(constants); while (test.nonsol()>1.0e-8) { constants=test.getx();

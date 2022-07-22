@@ -25,25 +25,91 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
-  double gcpavv = 0.0, gcpavvv = 0.0, gcpa = 0.0, hcpatot = 1.0, FCPA = 0.0, dFCPAdTdV,
-      dFCPAdTdT = 0.0, dFCPAdT = 0, dFCPAdV = 0, dFCPAdVdV = 0.0, dFCPAdVdVdV = 0.0;
+  double gcpavv = 0.0;
+
+  double gcpavvv = 0.0;
+
+  double gcpa = 0.0;
+
+  double hcpatot = 1.0;
+
+  double FCPA = 0.0;
+
+  double dFCPAdTdV;
+
+  double dFCPAdTdT = 0.0;
+
+  double dFCPAdT = 0;
+
+  double dFCPAdV = 0;
+
+  double dFCPAdVdV = 0.0;
+
+  double dFCPAdVdVdV = 0.0;
+
   private double gcpav = 0.0;
-  int cpaon = 1, oldTotalNumberOfAccociationSites = 0;
+  int cpaon = 1;
+
+  int oldTotalNumberOfAccociationSites = 0;
+
   private int totalNumberOfAccociationSites = 0;
   int[][][] selfAccociationScheme = null;
   int[][][][] crossAccociationScheme = null;
-  int[] moleculeNumber = null, assSiteNumber = null;
-  private double[][] gvector = null, delta = null, deltaNog = null, deltadT = null,
-      deltadTdT = null;
+  int[] moleculeNumber = null;
+
+  int[] assSiteNumber = null;
+
+  private double[][] gvector = null;
+
+  private double[][] delta = null;
+
+  private double[][] deltaNog = null;
+
+  private double[][] deltadT = null;
+
+  private double[][] deltadTdT = null;
+
   private double[][][] Klkni = null;
-  private DMatrixRMaj KlkTVMatrix = null, KlkTTMatrix = null, KlkTMatrix = null,
-      udotTimesmMatrix = null, mVector = null, udotMatrix = null, uMatrix = null,
-      QMatksiksiksi = null, KlkVVVMatrix = null, KlkVVMatrix = null, udotTimesmiMatrix = null,
-      ksiMatrix = null, KlkMatrix = null, hessianMatrix = null, hessianInvers = null,
-      KlkVMatrix = null;
-  DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null; // new
-                                                                          // DenseMatrix64F(getTotalNumberOfAccociationSites(),
-                                                                          // 1);
+  private DMatrixRMaj KlkTVMatrix = null;
+
+  private DMatrixRMaj KlkTTMatrix = null;
+
+  private DMatrixRMaj KlkTMatrix = null;
+
+  private DMatrixRMaj udotTimesmMatrix = null;
+
+  private DMatrixRMaj mVector = null;
+
+  private DMatrixRMaj udotMatrix = null;
+
+  private DMatrixRMaj uMatrix = null;
+
+  private DMatrixRMaj QMatksiksiksi = null;
+
+  private DMatrixRMaj KlkVVVMatrix = null;
+
+  private DMatrixRMaj KlkVVMatrix = null;
+
+  private DMatrixRMaj udotTimesmiMatrix = null;
+
+  private DMatrixRMaj ksiMatrix = null;
+
+  private DMatrixRMaj KlkMatrix = null;
+
+  private DMatrixRMaj hessianMatrix = null;
+
+  private DMatrixRMaj hessianInvers = null;
+
+  private DMatrixRMaj KlkVMatrix = null;
+
+  DMatrixRMaj corr2Matrix = null;
+
+  DMatrixRMaj corr3Matrix = null;
+
+  DMatrixRMaj corr4Matrix = null;
+
+  // DenseMatrix64F(getTotalNumberOfAccociationSites(),
+  // 1);
   static Logger logger = LogManager.getLogger(PhaseSrkCPA_proceduralMatrices.class);
 
   /**
@@ -293,7 +359,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
           if (type > 2) {
             for (int p = 0; p < numberOfComponents; p++) {
-              double t1 = 0.0, t2 = 0.0;
+              double t1 = 0.0;
+              double t2 = 0.0;
               if (moleculeNumber[i] == p) {
                 t1 = 1.0 / mVector.get(i, 0);
               }
@@ -808,7 +875,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     DMatrixRMaj mat2 = ksiMatrix;
     // second order method not working correctly and not used t the moment b ecause of numerical
     // stability
-    int temp = 0, iter = 0;
+    int temp = 0;
+    int iter = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
         mVector.set(temp + j, 0, getComponent(i).getNumberOfMolesInPhase());
@@ -910,7 +978,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     int iter = 0;
     // if (delta == null) {
     // initCPAMatrix(1);
-    double old = 0.0, neeval = 0.0;
+    double old = 0.0;
+    double neeval = 0.0;
     // }
     do {
       iter++;
@@ -979,7 +1048,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
       logger.error("error", e);
     }
     double BonVold = BonV;
-    double Btemp = 0, h = 1;
+    double Btemp = 0;
+    double h = 1;
     // double Dtemp = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
     // double d1 = 0, d2 = 0;
     Btemp = getB();
@@ -1058,8 +1128,11 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
       BonV = 0.9999;
     }
     double BonVold;
-    double h = 0, dh = 0, dhh = 0;
-    double d1 = 0, d2 = 0;
+    double h = 0;
+    double dh = 0;
+    double dhh = 0;
+    double d1 = 0;
+    double d2 = 0;
     double Btemp = getB();
     if (Btemp < 0) {
       logger.info("b negative in volume calc");
@@ -1199,9 +1272,13 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
       BonV = 0.9999;
     }
     double BonVold = BonV;
-    double Btemp = 0, h = 0, dh = 0, dhh = 0;
+    double Btemp = 0;
+    double h = 0;
+    double dh = 0;
+    double dhh = 0;
     // double fvvv = 0, gvvv = 0;
-    double d1 = 0, d2 = 0;
+    double d1 = 0;
+    double d2 = 0;
     Btemp = getB();
     if (Btemp < 0) {
       logger.info("b negative in volume calc");
@@ -1317,14 +1394,16 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     setMolarVolume(Z * R * temperature / pressure);
     // super.molarVolume(pressure,temperature, A, B, phase);
     int iterations = 0;
-    double err = 0.0, dErrdV = 0.0;
+    double err = 0.0;
+    double dErrdV = 0.0;
     double deltaV = 0;
 
     do {
       A = calcA(this, temperature, pressure, numberOfComponents);
       B = calcB(this, temperature, pressure, numberOfComponents);
 
-      double dFdV = dFdV(), dFdVdV = dFdVdV();
+      double dFdV = dFdV();
+      double dFdVdV = dFdVdV();
       // double dFdVdVdV = dFdVdVdV();
       // double factor1 = 1.0e0, factor2 = 1.0e0;
       err = -R * temperature * dFdV + R * temperature / getMolarVolume() - pressure;

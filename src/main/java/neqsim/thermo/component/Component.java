@@ -18,52 +18,98 @@ abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
 
   double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
-  protected int index, componentNumber, attractiveTermNumber = 0, numberOfAssociationSites = 0;
-  protected double logFugacityCoefficient = 0.0, associationVolume = 0.0, associationEnergy = 0.0,
-      aCPA = 0.0, bCPA = 0.0, mCPA = 0.0, srkacentricFactor = 0.0;
-  protected String componentName = "default", referenceStateType = "solvent",
-      associationScheme = "0", antoineLiqVapPresType = null;
-  private String formulae = "", CASnumber = "";
+  protected int index;
+  protected int componentNumber;
+  protected int attractiveTermNumber = 0;
+  protected int numberOfAssociationSites = 0;
+  protected double logFugacityCoefficient = 0.0;
+  protected double associationVolume = 0.0;
+  protected double associationEnergy = 0.0;
+  protected double aCPA = 0.0;
+  protected double bCPA = 0.0;
+  protected double mCPA = 0.0;
+  protected double srkacentricFactor = 0.0;
+  protected String componentName = "default";
+  protected String referenceStateType = "solvent";
+  protected String associationScheme = "0";
+  protected String antoineLiqVapPresType = null;
+  private String formulae = "";
+  private String CASnumber = "";
   protected Element elements = null;
-  protected boolean isTBPfraction = false, isPlusFraction = false, isNormalComponent = true,
-      isIon = false;
+  protected boolean isTBPfraction = false;
+  protected boolean isPlusFraction = false;
+  protected boolean isNormalComponent = true;
+  protected boolean isIon = false;
   private boolean isHydrateFormer = false;
   private boolean waxFormer = false;
   private String componentType = "Component";
-  protected double qPure = 0, voli = 1.0;
+  protected double qPure = 0;
+  protected double voli = 1.0;
   protected int calcActivity = 1;
   protected boolean solidCheck = false;
-  protected double dqPuredT = 0, dqPuredTdT = 0;
+  protected double dqPuredT = 0;
+  protected double dqPuredTdT = 0;
   private double racketZCPA = 0;
   private double criticalCompressibilityFactor = 0.0;
-  private double volumeCorrectionConst = 0.0, volumeCorrectionT = 0.0, volumeCorrectionT_CPA = 0.0;
-  protected double criticalPressure, criticalTemperature, molarMass, acentricFactor,
-      numberOfMoles = 0.0, numberOfMolesInPhase = 0.0, normalLiquidDensity = 0;
-  protected double reducedPressure, reducedTemperature, fugacityCoefficient, debyeDipoleMoment = 0,
-      viscosityCorrectionFactor = 0, criticalVolume = 0, racketZ = 0;
-  protected double gibbsEnergyOfFormation = 0, criticalViscosity = 0.0;
-  protected double referencePotential = 0, viscosityFrictionK = 1.0;
+  private double volumeCorrectionConst = 0.0;
+  private double volumeCorrectionT = 0.0;
+  private double volumeCorrectionT_CPA = 0.0;
+  protected double criticalPressure;
+  protected double criticalTemperature;
+  protected double molarMass;
+  protected double acentricFactor;
+  protected double numberOfMoles = 0.0;
+  protected double numberOfMolesInPhase = 0.0;
+  protected double normalLiquidDensity = 0;
+  protected double reducedPressure;
+  protected double reducedTemperature;
+  protected double fugacityCoefficient;
+  protected double debyeDipoleMoment = 0;
+  protected double viscosityCorrectionFactor = 0;
+  protected double criticalVolume = 0;
+  protected double racketZ = 0;
+  protected double gibbsEnergyOfFormation = 0;
+  protected double criticalViscosity = 0.0;
+  protected double referencePotential = 0;
+  protected double viscosityFrictionK = 1.0;
   protected int liquidViscosityModel = 0;
   protected int ionicCharge = 0;
   private double referenceEnthalpy = 0.0;
-  protected double parachorParameter = 0.0, normalBoilingPoint = 0, sphericalCoreRadius = 0.384,
-      standardDensity = 0, AntoineASolid = 0.0, AntoineBSolid = 0.0, AntoineCSolid = 0.0;
+  protected double parachorParameter = 0.0;
+  protected double normalBoilingPoint = 0;
+  protected double sphericalCoreRadius = 0.384;
+  protected double standardDensity = 0;
+  protected double AntoineASolid = 0.0;
+  protected double AntoineBSolid = 0.0;
+  protected double AntoineCSolid = 0.0;
   protected double[] liquidViscosityParameter = new double[4];
   protected double[] liquidConductivityParameter = new double[3];
   protected double[] henryCoefParameter = new double[4];
   protected double[] dielectricParameter = new double[5];
-  protected double[] schwartzentruberParams = new double[3], matiascopemanParams = new double[3],
-      matiascopemanParamsPR = new double[3], TwuCoonParams = new double[3],
-      matiascopemanSolidParams = new double[3], matiascopemanParamsUMRPRU = new double[5];
-  protected double lennardJonesMolecularDiameter = 0, lennardJonesEnergyParameter = 0,
-      stokesCationicDiameter = 0, paulingAnionicDiameter = 0;
-  protected double K, z;
+  protected double[] schwartzentruberParams = new double[3];
+  protected double[] matiascopemanParams = new double[3];
+  protected double[] matiascopemanParamsPR = new double[3];
+  protected double[] TwuCoonParams = new double[3];
+  protected double[] matiascopemanSolidParams = new double[3];
+  protected double[] matiascopemanParamsUMRPRU = new double[5];
+  protected double lennardJonesMolecularDiameter = 0;
+  protected double lennardJonesEnergyParameter = 0;
+  protected double stokesCationicDiameter = 0;
+  protected double paulingAnionicDiameter = 0;
+  protected double K;
+  protected double z;
   protected double x = 0;
   private int orginalNumberOfAssociationSites = 0;
-  protected double dfugdt = 0.1, dfugdp = 0.1;
+  protected double dfugdt = 0.1;
+  protected double dfugdp = 0.1;
   protected double[] dfugdn = new double[MAX_NUMBER_OF_COMPONENTS];
   public double[] dfugdx = new double[MAX_NUMBER_OF_COMPONENTS];
-  double AntoineA = 0, AntoineB = 0, AntoineC = 0, AntoineD = 0, AntoineE = 0;
+  double AntoineA = 0;
+  double AntoineB = 0;
+  double AntoineC = 0;
+  double AntoineD = 0;
+  double AntoineE = 0;
+
   private double CpA = 100.0;
   private double CpB = 0;
   private double CpC = 0;
@@ -72,11 +118,16 @@ abstract class Component implements ComponentInterface {
   private double[] CpSolid = new double[5];
   private double[] CpLiquid = new double[5];
   private double heatOfFusion = 0.0;
-  double triplePointDensity = 10.0, triplePointPressure = 0.0;
+  double triplePointDensity = 10.0;
+  double triplePointPressure = 0.0;
+
   private double triplePointTemperature = 1000.0;
   double meltingPointTemperature = 110.0;
   private double idealGasEnthalpyOfFormation = 0.0;
-  double idealGasGibsEnergyOfFormation = 0.0, idealGasAbsoluteEntropy = 0.0;
+  double idealGasGibsEnergyOfFormation = 0.0;
+
+  double idealGasAbsoluteEntropy = 0.0;
+
   double Hsub = 0.0;
   double[] solidDensityCoefs = new double[5];
   double[] liquidDensityCoefs = new double[5];
@@ -1188,7 +1239,8 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporTemperature(double pres) {
-    double nyPres = 0, nyTemp = criticalTemperature * 0.7;
+    double nyPres = 0;
+    double nyTemp = criticalTemperature * 0.7;
     int iter = 0;
     do {
       iter++;
@@ -1343,7 +1395,8 @@ abstract class Component implements ComponentInterface {
   @Override
   public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
-    double temp1 = 0.0, temp2 = 0.0;
+    double temp1 = 0.0;
+    double temp2 = 0.0;
     double dp = phase.getPressure() / 1.0e5;
     temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setPressure(phase.getPressure() - dp);
@@ -1361,7 +1414,8 @@ abstract class Component implements ComponentInterface {
   @Override
   public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
-    double temp1 = 0.0, temp2 = 0.0;
+    double temp1 = 0.0;
+    double temp2 = 0.0;
     double dt = phase.getTemperature() / 1.0e6;
     temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setTemperature(phase.getTemperature() - dt);
@@ -1748,8 +1802,9 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isIsIon() {
-    if (componentType.equals("ion"))
+    if (componentType.equals("ion")) {
       setIsIon(true);
+    }
     return isIon;
   }
 

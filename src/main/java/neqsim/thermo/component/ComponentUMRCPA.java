@@ -375,7 +375,8 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       xi += 1.0 / xsite[i] * xsitedT[i];
     }
 
-    double tot1 = 0.0, tot2 = 0.0;
+    double tot1 = 0.0;
+    double tot2 = 0.0;
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       tot2 = 0.0;
       for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) {
@@ -639,7 +640,8 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public double getSurfaceTenisionInfluenceParameter(double temperature) {
-    double AA = 0, BB = 0;
+    double AA = 0;
+    double BB = 0;
     if (componentName.equals("water")) {
       double TR = 1.0 - temperature / getTC();
       AA = -2.2367E-16;

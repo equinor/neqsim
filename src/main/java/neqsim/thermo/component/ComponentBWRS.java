@@ -272,7 +272,8 @@ public class ComponentBWRS extends ComponentSrk {
    */
   public double getFexpdn(PhaseInterface phase, int numberOfComponentphases, double temperature,
       double pressure) {
-    double oldTemp = 0.0, temp = 0.0;
+    double oldTemp = 0.0;
+    double temp = 0.0;
     oldTemp = -getBE(0) / (2.0 * getGammaBWRS())
         * getELdn(phase, numberOfComponentphases, temperature, pressure);
 

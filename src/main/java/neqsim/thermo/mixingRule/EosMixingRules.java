@@ -35,17 +35,49 @@ import neqsim.util.database.NeqSimDataBase;
 public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
 
-  public double Atot = 0, Btot = 0, Ai = 0, Bi = 0;
-  public double A, B;
+  public double Atot = 0;
+
+  public double Btot = 0;
+
+  public double Ai = 0;
+
+  public double Bi = 0;
+
+  public double A;
+
+  public double B;
+
   public String mixingRuleGEModel = "NRTL";
   public String mixingRuleName = "no (kij=0)";
-  public double intparam[][], intparamT[][], WSintparam[][], intparamij[][], intparamji[][];
+  public double intparam[][];
+
+  public double intparamT[][];
+
+  public double WSintparam[][];
+
+  public double intparamij[][];
+
+  public double intparamji[][];
+
   public int intparamTType[][];
-  double[][] HVDij, HValpha, HVDijT;
-  double[][] NRTLDij, NRTLalpha, NRTLDijT;
+  double[][] HVDij;
+
+  double[][] HValpha;
+
+  double[][] HVDijT;
+
+  double[][] NRTLDij;
+
+  double[][] NRTLalpha;
+
+  double[][] NRTLDijT;
+
   double[][][] wij;
   int[][] wijCalcOrFitted;
-  String[][] classicOrHV, classicOrWS;
+  String[][] classicOrHV;
+
+  String[][] classicOrWS;
+
   public double nEOSkij = 3.0;
   /** Constant <code>calcEOSInteractionParameters=false</code> */
   public static boolean calcEOSInteractionParameters = false;
@@ -205,7 +237,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      double aij = 0.0, A = 0.0;
+      double aij = 0.0;
+      double A = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
       for (int i = 0; i < numbcomp; i++) {
@@ -337,7 +370,9 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      double aij = 0, sqrtaij = 0, tempPow = 0;
+      double aij = 0;
+      double sqrtaij = 0;
+      double tempPow = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
       A = 0.0;
@@ -568,7 +603,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
       double A = 0.0;
-      double aij = 0.0, aij2 = 0.0;
+      double aij = 0.0;
+      double aij2 = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
       for (int j = 0; j < numbcomp; j++) {
@@ -587,7 +623,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     public double calcAiTT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
       double A = 0.0;
-      double aij = 0.0, aij2 = 0.0;
+      double aij = 0.0;
+      double aij2 = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
       for (int j = 0; j < numbcomp; j++) {
@@ -605,7 +642,10 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      double aij = 0.0, aij2 = 0.0, aij3 = 0.0, aij4 = 0.0;
+      double aij = 0.0;
+      double aij2 = 0.0;
+      double aij3 = 0.0;
+      double aij4 = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       A = 0.0;
       for (int i = 0; i < numbcomp; i++) {
@@ -865,7 +905,9 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
       double A = 0.0;
-      double aij = 0.0, aij2 = 0.0, aij3 = 0;
+      double aij = 0.0;
+      double aij2 = 0.0;
+      double aij3 = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       double[] asqrt = new double[numbcomp];
       for (int j = 0; j < numbcomp; j++) {
@@ -1146,13 +1188,67 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
     PhaseInterface orgPhase;
     PhaseGE gePhase;
-    double Q = 0, QT = 0, DDE2;
-    double alpha_mix = 0, dadt = 0, b_mix = 0, dbdt = 0, bdert = 0, d2adt2 = 0, d2bdt2 = 0;
-    double[] ader, adert, qf1, d2qp;
-    double[] qPure, qPuredT, qPuredTdT;
-    double[][] ad2, qf2, qft, bd2;
-    double hwfc = 0, gex = 0;
-    double[] oneSubAlf, abf, bc, abft2, abft, QFTD, BDER, BDERT;
+    double Q = 0;
+
+    double QT = 0;
+
+    double DDE2;
+
+    double alpha_mix = 0;
+
+    double dadt = 0;
+
+    double b_mix = 0;
+
+    double dbdt = 0;
+
+    double bdert = 0;
+
+    double d2adt2 = 0;
+
+    double d2bdt2 = 0;
+
+    double[] ader;
+
+    double[] adert;
+
+    double[] qf1;
+
+    double[] d2qp;
+
+    double[] qPure;
+
+    double[] qPuredT;
+
+    double[] qPuredTdT;
+
+    double[][] ad2;
+
+    double[][] qf2;
+
+    double[][] qft;
+
+    double[][] bd2;
+
+    double hwfc = 0;
+
+    double gex = 0;
+
+    double[] oneSubAlf;
+
+    double[] abf;
+
+    double[] bc;
+
+    double[] abft2;
+
+    double[] abft;
+
+    double[] QFTD;
+
+    double[] BDER;
+
+    double[] BDERT;
 
     public SRKHuronVidal2(PhaseInterface phase, double[][] HValpha, double[][] HVDij,
         String[][] mixRule) {
@@ -1440,13 +1536,71 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   public class WongSandlerMixingRule extends SRKHuronVidal2 {
     private static final long serialVersionUID = 1000;
 
-    double Q = 0, QT = 0, DDE2;
-    double alpha_mix = 0, dadt = 0, b_mix = 0, dbdt = 0, bdert = 0, d2adt2 = 0, d2bdt2 = 0;
-    double[] ader, adert, qf1, d2qp;
-    double[] qPure, qPuredT, qPuredTdT;
-    double[][] ad2, qf2, qft, bd2;
-    double hwfc = 0, gex = 0, hex = 0, cpex = 0;
-    double[] oneSubAlf, abf, bc, abft2, abft, QFTD, BDER, BDERT;
+    double Q = 0;
+
+    double QT = 0;
+
+    double DDE2;
+
+    double alpha_mix = 0;
+
+    double dadt = 0;
+
+    double b_mix = 0;
+
+    double dbdt = 0;
+
+    double bdert = 0;
+
+    double d2adt2 = 0;
+
+    double d2bdt2 = 0;
+
+    double[] ader;
+
+    double[] adert;
+
+    double[] qf1;
+
+    double[] d2qp;
+
+    double[] qPure;
+
+    double[] qPuredT;
+
+    double[] qPuredTdT;
+
+    double[][] ad2;
+
+    double[][] qf2;
+
+    double[][] qft;
+
+    double[][] bd2;
+
+    double hwfc = 0;
+
+    double gex = 0;
+
+    double hex = 0;
+
+    double cpex = 0;
+
+    double[] oneSubAlf;
+
+    double[] abf;
+
+    double[] bc;
+
+    double[] abft2;
+
+    double[] abft;
+
+    double[] QFTD;
+
+    double[] BDER;
+
+    double[] BDERT;
 
     public WongSandlerMixingRule(PhaseInterface phase, double[][] WSalpha, double[][] WSDij,
         String[][] mixRule) {
@@ -1997,7 +2151,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                 || phase.getComponent(l).isIsTBPfraction()) {
               throw new Exception("no interaction coefficient for TBP fractions");
             }
-            int templ = l, tempk = k;
+            int templ = l;
+            int tempk = k;
             if (NeqSimDataBase.createTemporaryTables()) {
               dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
                   + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName()

@@ -14,7 +14,9 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentGeDuanSun extends ComponentGE {
   private static final long serialVersionUID = 1000;
 
-  double r = 0, q = 0;
+  double r = 0;
+
+  double q = 0;
 
   /**
    * <p>
@@ -57,20 +59,42 @@ public class ComponentGeDuanSun extends ComponentGE {
       double pressure, int phasetype, double[][] HValpha, double[][] HVgij) {
     double type = phase.getInitType();
     // double ny = 0, Djj = 0, Dii = 0, gij = 0, gjj = 0, gji = 0, gii = 0, F2T = 0, tot2 = 0;
-    double A = 0, B = 0, C = 0, D = 0, E = 0, F = 0, tau = 0, tau2 = 0, G = 0, G2 = 0, alpha = 0,
-        Dij = 0, Dji = 0;
+    double A = 0;
+    double B = 0;
+    double C = 0;
+    double D = 0;
+    double E = 0;
+    double F = 0;
+    double tau = 0;
+    double tau2 = 0;
+    double G = 0;
+    double G2 = 0;
+    double alpha = 0;
+    double Dij = 0;
+    double Dji = 0;
     // int i, k, delta = 0;
-    int j, l = 0;
+    int j;
 
-    double dAdT = 0, dBdT = 0, dCdT = 0, dDdT = 0;
+    int l = 0;
+    double dAdT = 0;
+    double dBdT = 0;
+    double dCdT = 0;
+    double dDdT = 0;
     // double dEdT, dFdT = 0;
-    double dtaudt = 0, dtau2dt = 0, dGdt = 0, dG2dt = 0;
+    double dtaudt = 0;
+    double dtau2dt = 0;
+    double dGdt = 0;
+    double dG2dt = 0;
     double[][] Gmatrix = new double[numberOfComponents][numberOfComponents];
     double[][] tauMatrix = new double[numberOfComponents][numberOfComponents];
     dlngammadn = new double[numberOfComponents];
     ComponentInterface[] comp_Array = phase.getcomponentArray();
     // double lngammaold = 0, dlngammadtold = 0;
-    double dA2dTetter = 0, dA3dTetter = 0, dA4dTetter = 0, dA5dTetter = 0, dA6dTetter = 0;
+    double dA2dTetter = 0;
+    double dA3dTetter = 0;
+    double dA4dTetter = 0;
+    double dA5dTetter = 0;
+    double dA6dTetter = 0;
     // for(int w=0;w<3;w++){
     F = 0;
     dBdT = 0;
@@ -84,7 +108,7 @@ public class ComponentGeDuanSun extends ComponentGE {
     dA4dTetter = 0;
     dA5dTetter = 0;
     dA6dTetter = 0;
-    double dA2dT = 0, dA3dT = 0, dA4dT = 0, dA5dT = 0, dA6dT = 0;
+    double dA2dT = 0;
 
     // PhaseGEEosInterface phaseny = (PhaseGEEosInterface) phase.getPhase();
     // PhaseGEInterface GEPhase = phaseny.getGEphase();
@@ -94,6 +118,10 @@ public class ComponentGeDuanSun extends ComponentGE {
     // PhaseGEInterface GEphase = new PhaseGEInterface();
     // PhaseGEInterface phaseny = (PhaseGEInterface) phase.getPhase();
 
+    double dA3dT = 0;
+    double dA4dT = 0;
+    double dA5dT = 0;
+    double dA6dT = 0;
     for (j = 0; j < numberOfComponents; j++) {
       Dij = HVgij[this.getComponentNumber()][j];
       Dji = HVgij[j][this.getComponentNumber()];
@@ -309,7 +337,7 @@ public class ComponentGeDuanSun extends ComponentGE {
           * (CB * Math.log((phase.getPressure() + BB) / (BB + 1000.0)) + EPS)));
 
       // Average partial molar volume
-      double Vm[] = {0.0, 0.0, 0.0};
+      double[] Vm = {0.0, 0.0, 0.0};
       Vm[0] =
           41.84
               * (0.1 * 7.29 + (100 * 0.92) / (2600 + phase.getPressure())
@@ -325,7 +353,7 @@ public class ComponentGeDuanSun extends ComponentGE {
                   / ((2600 + phase.getPressure()) * (phase.getTemperature() - 288.0))
               + 0.3943 * BORN);
 
-      double Poynteff[] = {0.0, 0.0, 0.0};
+      double[] Poynteff = {0.0, 0.0, 0.0};
       Poynteff[0] =
           Vm[0] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
       Poynteff[1] =
@@ -333,7 +361,7 @@ public class ComponentGeDuanSun extends ComponentGE {
       Poynteff[2] =
           Vm[2] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
 
-      double K[] = {0.0, 0.0, 0.0, 0.0};
+      double[] K = {0.0, 0.0, 0.0, 0.0};
       double a1 = 0.0;
       double a2 = 0.0;
       double a3 = 0.0;

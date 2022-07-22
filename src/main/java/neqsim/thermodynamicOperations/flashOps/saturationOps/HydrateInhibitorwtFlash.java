@@ -58,8 +58,9 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
   public void run() {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     int iter = 0;
-    double error = 1.0, oldError = 1.0,
-        oldC = system.getPhase(0).getComponent(inhibitor).getNumberOfmoles();
+    double error = 1.0;
+    double oldError = 1.0;
+    double oldC = system.getPhase(0).getComponent(inhibitor).getNumberOfmoles();
     double derrordC = 1.0;
     do {
       iter++;
@@ -122,7 +123,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
    *
    * @param args an array of {@link java.lang.String} objects
    */
-  public static void main(String args[]) {
+  public static void main(String[] args) {
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 0, 100.0);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

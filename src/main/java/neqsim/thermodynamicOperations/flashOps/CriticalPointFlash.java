@@ -22,8 +22,8 @@ public class CriticalPointFlash extends Flash {
   SimpleMatrix Nmatrix = null;
   SimpleMatrix fmatrix = null;
   int numberOfComponents;
-  double Vc0, Tc0;
-  // SystemInterface clonedsystem;
+  double Vc0;
+  double Tc0;
 
   /**
    * <p>
@@ -181,7 +181,9 @@ public class CriticalPointFlash extends Flash {
     // system.display();
 
     for (int k = 0; k < 13; k++) {
-      double detM, olddetM, ddetdT;
+      double detM;
+      double olddetM;
+      double ddetdT;
       double dT = 0.1;
       calcMmatrix();
       // int i = Mmatrix.eig().getNumberOfEigenvalues();
@@ -215,7 +217,8 @@ public class CriticalPointFlash extends Flash {
       // iter < 3));
 
       double dVc = Vc0 / 100.0;
-      double ddetdV, oldVal;
+      double ddetdV;
+      double oldVal;
       system.init(3);
       double valstart = calcdpd();
       iter = 0;

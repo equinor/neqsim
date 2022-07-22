@@ -119,8 +119,12 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     Compressor compressor = (Compressor) getProcessEquipment();
     double Fg = 1.0;
 
-    double emptyVesselWeight = 0.0, internalsWeight = 0.0, externalNozzelsWeight = 0.0;
-    double pipingWeight = 0.0, structualWeight = 0.0, electricalWeight = 0.0;
+    double emptyVesselWeight = 0.0;
+    double internalsWeight = 0.0;
+    double externalNozzelsWeight = 0.0;
+    double pipingWeight = 0.0;
+    double structualWeight = 0.0;
+    double electricalWeight = 0.0;
     double totalSkidWeight = 0.0;
 
     // double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
@@ -151,7 +155,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     // double bubVelocity = 1; // 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity
     double Ar = 1.0; // ((Separator)
                      // getProcessEquipment()).getThermoSystem().getPhase(1).getVolume()
-                    // / 1e5 / bubVelocity;
+                     // / 1e5 / bubVelocity;
     double Daim = Math.sqrt(Ar / 4.0);
     double Length2 = 4.0 * Daim;
 

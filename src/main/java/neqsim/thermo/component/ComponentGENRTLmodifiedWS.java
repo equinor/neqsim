@@ -72,18 +72,58 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
       double pressure, int phasetype, double[][] WSalpha, double[][] WSgij, double[][] WSgijT,
       double[][] intparam, String[][] mixRule) {
     double type = phase.getInitType();
-    double A = 0, B = 0, C = 0, D = 0, E = 0, F = 0, ny = 0, tau = 0, tau2 = 0, G = 0, G2 = 0,
-        alpha = 0, Dij = 0, Djj = 0, Dji = 0, Dii = 0, DijT = 0, DjjT = 0, DjiT = 0, DiiT = 0,
-        gij = 0, gjj = 0, gji = 0, gii = 0, F2T = 0, tot2 = 0;
-    int i, j, l, k, delta = 0;
-    double dAdT = 0, dBdT = 0, dEdT, dCdT = 0, dFdT = 0, dDdT = 0;
-    double dtaudt = 0, dtau2dt = 0, dGdt = 0, dG2dt = 0;
+    double A = 0;
+    double B = 0;
+    double C = 0;
+    double D = 0;
+    double E = 0;
+    double F = 0;
+    double ny = 0;
+    double tau = 0;
+    double tau2 = 0;
+    double G = 0;
+    double G2 = 0;
+    double alpha = 0;
+    double Dij = 0;
+    double Djj = 0;
+    double Dji = 0;
+    double Dii = 0;
+    double DijT = 0;
+    double DjjT = 0;
+    double DjiT = 0;
+    double DiiT = 0;
+    double gij = 0;
+    double gjj = 0;
+    double gji = 0;
+    double gii = 0;
+    double F2T = 0;
+    double tot2 = 0;
+    int i;
+    int j;
+    int l;
+    int k;
+    int delta = 0;
+    double dAdT = 0;
+    double dBdT = 0;
+    double dEdT;
+    double dCdT = 0;
+    double dFdT = 0;
+    double dDdT = 0;
+    double dtaudt = 0;
+    double dtau2dt = 0;
+    double dGdt = 0;
+    double dG2dt = 0;
     double[][] Gmatrix = new double[numberOfComponents][numberOfComponents];
     double[][] tauMatrix = new double[numberOfComponents][numberOfComponents];
     dlngammadn = new double[numberOfComponents];
     ComponentInterface[] comp_Array = phase.getcomponentArray();
-    double lngammaold = 0, dlngammadtold = 0, dA2dTetter = 0, dA3dTetter = 0, dA4dTetter = 0,
-        dA5dTetter = 0, dA6dTetter = 0;
+    double lngammaold = 0;
+    double dlngammadtold = 0;
+    double dA2dTetter = 0;
+    double dA3dTetter = 0;
+    double dA4dTetter = 0;
+    double dA5dTetter = 0;
+    double dA6dTetter = 0;
     // for(int w=0;w<3;w++){
     F = 0;
     dFdT = 0;
@@ -98,7 +138,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
     dA4dTetter = 0;
     dA5dTetter = 0;
     dA6dTetter = 0;
-    double dA2dT = 0, dA3dT = 0, dA4dT = 0, dA5dT = 0, dA6dT = 0;
+    double dA2dT = 0;
 
     // PhaseGEEosInterface phaseny = (PhaseGEEosInterface) phase.getPhase();
     // PhaseGEInterface GEPhase = phaseny.getGEphase();
@@ -108,6 +148,10 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
     // PhaseGEInterface GEphase = new PhaseGEInterface();
     // PhaseGEInterface phaseny = (PhaseGEInterface) phase.getPhase();
 
+    double dA3dT = 0;
+    double dA4dT = 0;
+    double dA5dT = 0;
+    double dA6dT = 0;
     for (j = 0; j < numberOfComponents; j++) {
       Dij = WSgij[this.getComponentNumber()][j];
       // System.out.println("Dij" + Dij);

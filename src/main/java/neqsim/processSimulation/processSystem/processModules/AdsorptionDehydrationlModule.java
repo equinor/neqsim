@@ -19,11 +19,15 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
 
-  protected StreamInterface gasStreamToAdsorber = null, gasStreamFromAdsorber = null;
+  protected StreamInterface gasStreamToAdsorber = null;
+  protected StreamInterface gasStreamFromAdsorber = null;
   protected SimpleAdsorber[] adsorber = null;
-  double regenerationCycleTime = 1.0, waterDewPontTemperature = 273.15 - 10.0, designFlow = 1.0,
-      designAdsorptionTemperature = 298.0, designRegenerationTemperature = 440.0,
-      designAdsorptionPressure = 60.0;
+  double regenerationCycleTime = 1.0;
+  double waterDewPontTemperature = 273.15 - 10.0;
+  double designFlow = 1.0;
+  double designAdsorptionTemperature = 298.0;
+  double designRegenerationTemperature = 440.0;
+  double designAdsorptionPressure = 60.0;
   int numberOfAdorptionBeds = 3;
   double adsorberInternalDiameter = 1.0;
   double adsorbentFillingHeight = 3.0;
@@ -155,13 +159,13 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     double waterLoadingCycle = regenerationCycleTime * designFlow * 42.29489667
         * tempStream.getThermoSystem().getPhase(0).getComponent("water").getx()
         * tempStream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass(); // 360.0;
-                                                                                        // //
-                                                                                        // kg/cycle
-                                                                                        // this
-                                                                                        // needs
-                                                                                        // to
-                                                                                        // be
-                                                                                        // calculated
+                                                                                         // //
+                                                                                         // kg/cycle
+                                                                                         // this
+                                                                                         // needs
+                                                                                         // to
+                                                                                         // be
+                                                                                         // calculated
     double usefulDesiccantCapacity = 10.0; // 10%
     double bulkDensityDesiccant = 750.0; // 10%
 

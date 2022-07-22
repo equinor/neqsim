@@ -16,7 +16,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(addIonToScaleSaturation.class);
-  String saltName = "", scaleSaltName = "", nameOfIonToBeAdded = "";
+  String saltName = "";
+  String scaleSaltName = "";
+  String nameOfIonToBeAdded = "";
   int phaseNumber = 1;
   String[][] resultTable = null;
 
@@ -54,7 +56,8 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt");
     resultTable = new String[10][3];
-    double stoc1 = 1e-20, stoc2 = 1e-20;
+    double stoc1 = 1e-20;
+    double stoc2 = 1e-20;
     String saltName = "";
     String name1 = "";
     String name2 = "";
@@ -104,7 +107,8 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
           numb++;
           logger.info("reaction added: " + name1 + " " + name2);
           logger.info("theoretic Ksp = " + ksp);
-          double oldScalePotentialFactor = 1.0, error = 1.0;
+          double oldScalePotentialFactor = 1.0;
+          double error = 1.0;
           int iterations = 0;
           do {
             iterations++;
