@@ -201,19 +201,18 @@ public class GORfitter extends TwoPortEquipment {
       e.printStackTrace();
     }
     outStream.setThermoSystem(tempFluid);
-    if(!tempFluid.hasPhaseType("gas")) {
+    if (!tempFluid.hasPhaseType("gas")) {
       GVF = 0.0;
-    }
-    else if(tempFluid.hasPhaseType("gas") && tempFluid.hasPhaseType("oil")) {
-    GVF = tempFluid.getPhase("gas").getCorrectedVolume()
-        / (tempFluid.getPhase("oil").getCorrectedVolume()
-            + tempFluid.getPhase("gas").getCorrectedVolume());
-    }
-    else {
+    } else if (tempFluid.hasPhaseType("gas") && tempFluid.hasPhaseType("oil")) {
+      GVF = tempFluid.getPhase("gas").getCorrectedVolume()
+          / (tempFluid.getPhase("oil").getCorrectedVolume()
+              + tempFluid.getPhase("gas").getCorrectedVolume());
+    } else {
       GVF = Double.NaN;
     }
+
+    outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
-    return;
   }
 
   /**

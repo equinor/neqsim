@@ -124,6 +124,7 @@ public class StaticNeqMixer extends StaticMixer {
     // System.out.println("enthalpy: " + enthalpy);
     // System.out.println("temperature: " +
     // mixedStream.getThermoSystem().getTemperature());
+    mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 }

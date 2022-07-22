@@ -104,6 +104,7 @@ public class VLSolidTray extends SimpleTray {
 
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
     // outStream.setThermoSystem(mixedStream.getThermoSystem());
+    mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 

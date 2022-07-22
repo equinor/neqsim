@@ -72,7 +72,9 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     getOperations().run(id);
 
     gasExitStream = gasInletScrubber.getGasOutStream();
+    gasExitStream.setCalculationIdentifier(id);
     oilExitStream = oilCooler.getOutletStream();
+    oilExitStream.setCalculationIdentifier(id);
 
     setCalculationIdentifier(id);
   }

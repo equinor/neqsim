@@ -139,6 +139,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     testOps.TPflash();
     // system.setMultiPhaseCheck(false);
     outStream.setThermoSystem(system);
+    outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 

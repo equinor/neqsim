@@ -315,17 +315,15 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * @return a double
    */
   public double calcNTU(double y0, double y1, double yb, double ymix) {
-    double NTU = Math.log((yb - ymix) / (y1 - y0));
-    return NTU;
+    return Math.log((yb - ymix) / (y1 - y0));
   }
 
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     try {
-      double y0 = 0.0, y1 = 0.0;
+      double y1 = 0.0;
       // double yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
-      double absorptionEffiency = 0.0;
       mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
       mixedStream.getThermoSystem().setNumberOfPhases(2);
       mixedStream.getThermoSystem().reInitPhaseType();
@@ -346,9 +344,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       calcNumberOfTheoreticalStages();
       // System.out.println("number of theoretical stages " +
       // getNumberOfTheoreticalStages());
-      absorptionEffiency = calcEa();
+      double absorptionEffiency = calcEa();
 
-      y0 = calcY0();
+      double y0 = calcY0();
       if (isSetWaterInDryGas) {
         y1 = waterInDryGas;
         setNumberOfTheoreticalStages(2.0);

@@ -71,6 +71,7 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
     if (!refluxIsSet) {
       UUID oldid = getCalculationIdentifier();
       super.run(id);
+      mixedStream.setCalculationIdentifier(oldid);
       setCalculationIdentifier(oldid);
     } else {
       SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
@@ -88,6 +89,8 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
 
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
     duty = mixedStream.getFluid().getEnthalpy() - calcMixStreamEnthalpy0();
+
+    mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 }

@@ -27,7 +27,11 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
 
   /** {@inheritDoc} */
   public void setCalculationIdentifier(UUID value) {
-    this.calcIdentifier = value;
+    if (this.calcIdentifier == null || this.calcIdentifier != value) {
+      this.calcIdentifier = value;
+    } else {
+      this.calcIdentifier = value;
+    }
   }
 
   /** {@inheritDoc} */

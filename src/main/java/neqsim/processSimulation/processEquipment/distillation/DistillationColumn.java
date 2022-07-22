@@ -288,13 +288,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    double dp = 0.0;
     if (bottomTrayPressure < 0) {
       bottomTrayPressure = getTray(feedTrayNumber).getStream(0).getPressure();
     }
     if (topTrayPressure < 0) {
       topTrayPressure = getTray(feedTrayNumber).getStream(0).getPressure();
     }
+
+    double dp = 0.0;
     if (numberOfTrays > 1) {
       dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
     }
@@ -366,7 +367,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // massBalanceCheck();
       gasOutStream.setThermoSystem(
           trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
+      gasOutStream.setCalculationIdentifier(id);
       liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+      liquidOutStream.setCalculationIdentifier(id);
 
       for (int i = 0; i < numberOfTrays; i++) {
         // todo: set calculation ids of child elements of trays

@@ -79,6 +79,7 @@ public class ReBoiler extends TwoPortEquipment {
     // // testOps.TPflash();
     // // system.setTemperature(temperatureOut);
     // outStream.setThermoSystem(system);
+    outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 

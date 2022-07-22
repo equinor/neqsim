@@ -303,6 +303,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     System.out.println("flow rate " + system.getFlowRate(maxflowunit));
     // system.setMultiPhaseCheck(false);
     outStream.setThermoSystem(system);
+    outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 

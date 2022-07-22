@@ -22,11 +22,16 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 public class WellFluidModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
 
-  protected StreamInterface feedStream = null, outStream = null;
+  protected StreamInterface feedStream = null;
+  protected StreamInterface outStream = null;
+
   // ThreePhaseSeparator thirdStageSeparator = null;
   Cooler oilCooler;
   double secondstagePressure = 15.00; // bar'
-  double inletPressure = 55.0, gasfactor = 0.1;
+  double inletPressure = 55.0;
+
+  double gasfactor = 0.1;
+
   double thirdstagePressure = 1.01325;
   double separationTemperature = 273.15 + 15;
   double exitGasScrubberTemperature = 273.15 + 30;
@@ -94,6 +99,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     System.out.println("GOR " + GOR);
     outStream = ((Mixer) getOperations().getUnit("well mixer")).getOutletStream();
 
+    outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 

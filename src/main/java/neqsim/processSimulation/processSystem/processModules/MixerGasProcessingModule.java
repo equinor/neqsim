@@ -149,8 +149,11 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     getOperations().run(id);
 
     gasExitStream = secondStageAfterCooler.getOutletStream();
+    gasExitStream.setCalculationIdentifier(id);
     oilExitStream = oilPump.getOutletStream();
+    oilExitStream.setCalculationIdentifier(id);
     glycolExitStream = glycolScrubber.getLiquidOutStream();
+    glycolExitStream.setCalculationIdentifier(id);
 
     setCalculationIdentifier(id);
   }

@@ -215,6 +215,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     // Cv =
     // inletStream.getThermoSystem().getTotalNumberOfMoles()/Math.sqrt(inletStream.getPressure()-outStream.getPressure());
     // molarFlow = inletStream.getThermoSystem().getTotalNumberOfMoles();
+    outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 

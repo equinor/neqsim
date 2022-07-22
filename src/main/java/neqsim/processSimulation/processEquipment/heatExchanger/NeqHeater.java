@@ -84,6 +84,8 @@ public class NeqHeater extends Heater {
     // testOps.TPflash();
     // system.setTemperature(temperatureOut);
     outStream.setThermoSystem(system);
+
+    outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 

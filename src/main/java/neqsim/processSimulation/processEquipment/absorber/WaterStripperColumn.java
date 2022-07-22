@@ -293,8 +293,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    * @return a double
    */
   public double calcNTU(double y0, double y1, double yb, double ymix) {
-    double NTU = Math.log((yb - ymix) / (y1 - y0));
-    return NTU;
+    return Math.log((yb - ymix) / (y1 - y0));
   }
 
   /** {@inheritDoc} */

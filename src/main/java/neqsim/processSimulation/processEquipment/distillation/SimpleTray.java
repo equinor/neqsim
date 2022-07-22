@@ -161,7 +161,9 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         testOps.TPflash();
       }
     }
+
     setTemperature(mixedStream.getTemperature());
+    mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 

@@ -236,6 +236,7 @@ public class AdiabaticPipe extends Pipeline {
     }
     // system.setMultiPhaseCheck(false);
     outStream.setThermoSystem(system);
+    outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 

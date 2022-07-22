@@ -206,9 +206,16 @@ public class DPCUModule extends ProcessModuleBaseClass {
     getOperations().run(id);
 
     gasExitStream = compressor1.getOutletStream();
+    gasExitStream.setCalculationIdentifier(id);
+
     oilExitStream = LTseparator.getLiquidOutStream();
+    oilExitStream.setCalculationIdentifier(id);
+
     gasDistColumnExit = distColumn.getGasOutStream();
+    gasDistColumnExit.setCalculationIdentifier(id);
+
     liquidDistColumnExit = distColumn.getLiquidOutStream();
+    liquidDistColumnExit.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
 
