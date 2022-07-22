@@ -17,7 +17,7 @@ import neqsim.util.database.NeqSimDataBase;
 abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
 
-  double[] surfTensInfluenceParam = { 0.28367, -0.05164, -0.81594, 1.06810, -1.1147 };
+  double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
   protected int index, componentNumber, attractiveTermNumber = 0, numberOfAssociationSites = 0;
   protected double logFugacityCoefficient = 0.0, associationVolume = 0.0, associationEnergy = 0.0,
       aCPA = 0.0, bCPA = 0.0, mCPA = 0.0, srkacentricFactor = 0.0;
@@ -94,11 +94,11 @@ abstract class Component implements ComponentInterface {
    * </p>
    *
    * @param number a int
-   * @param TC     a double
-   * @param PC     a double
-   * @param M      a double
-   * @param a      a double
-   * @param moles  a double
+   * @param TC a double
+   * @param PC a double
+   * @param M a double
+   * @param a a double
+   * @param moles a double
    */
   public Component(int number, double TC, double PC, double M, double a, double moles) {
     criticalPressure = PC;
@@ -114,9 +114,9 @@ abstract class Component implements ComponentInterface {
    * </p>
    *
    * @param component_name a {@link java.lang.String} object
-   * @param moles          a double
-   * @param molesInPhase   a double
-   * @param compnumber     a int
+   * @param moles a double
+   * @param molesInPhase a double
+   * @param compnumber a int
    */
   public Component(String component_name, double moles, double molesInPhase, int compnumber) {
     createComponent(component_name, moles, molesInPhase, compnumber);
@@ -182,7 +182,8 @@ abstract class Component implements ComponentInterface {
             dataSet = database
                 .getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
           } else {
-            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            dataSet =
+                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
           }
           dataSet.next();
           dataSet.getString("ID");
@@ -192,7 +193,8 @@ abstract class Component implements ComponentInterface {
             dataSet.close();
             // logger.info("no parameters in tempcomp -- trying comp.. " +
             // component_name);
-            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            dataSet =
+                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
             dataSet.next();
           } catch (Exception e2) {
             throw new RuntimeException(e2);
@@ -301,9 +303,12 @@ abstract class Component implements ComponentInterface {
         TwuCoonParams[1] = Double.parseDouble(dataSet.getString("TwuCoon2"));
         TwuCoonParams[2] = Double.parseDouble(dataSet.getString("TwuCoon3"));
 
-        liquidConductivityParameter[0] = Double.parseDouble(dataSet.getString("liquidConductivity1"));
-        liquidConductivityParameter[1] = Double.parseDouble(dataSet.getString("liquidConductivity2"));
-        liquidConductivityParameter[2] = Double.parseDouble(dataSet.getString("liquidConductivity3"));
+        liquidConductivityParameter[0] =
+            Double.parseDouble(dataSet.getString("liquidConductivity1"));
+        liquidConductivityParameter[1] =
+            Double.parseDouble(dataSet.getString("liquidConductivity2"));
+        liquidConductivityParameter[2] =
+            Double.parseDouble(dataSet.getString("liquidConductivity3"));
 
         if (this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPA")
             || this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPAs")) {
@@ -327,13 +332,16 @@ abstract class Component implements ComponentInterface {
         idealGasAbsoluteEntropy = Double.parseDouble(dataSet.getString("AbsoluteEntropy"));
 
         for (int i = 0; i < 5; i++) {
-          solidDensityCoefs[i] = Double.parseDouble((dataSet.getString("solidDensityCoefs" + (i + 1))));
+          solidDensityCoefs[i] =
+              Double.parseDouble((dataSet.getString("solidDensityCoefs" + (i + 1))));
         }
         for (int i = 0; i < 5; i++) {
-          liquidDensityCoefs[i] = Double.parseDouble((dataSet.getString("liquidDensityCoefs" + (i + 1))));
+          liquidDensityCoefs[i] =
+              Double.parseDouble((dataSet.getString("liquidDensityCoefs" + (i + 1))));
         }
         for (int i = 0; i < 5; i++) {
-          heatOfVaporizationCoefs[i] = Double.parseDouble((dataSet.getString("heatOfVaporizationCoefs" + (i + 1))));
+          heatOfVaporizationCoefs[i] =
+              Double.parseDouble((dataSet.getString("heatOfVaporizationCoefs" + (i + 1))));
         }
         // disse maa settes inn fra database ssociationsites
         numberOfAssociationSites = Integer.parseInt(dataSet.getString("associationsites"));
@@ -355,7 +363,8 @@ abstract class Component implements ComponentInterface {
           mCPA = Double.parseDouble(dataSet.getString("mCPA_PR"));
         } else {
           // System.out.println("srk-cpa");
-          associationVolume = Double.parseDouble(dataSet.getString("associationboundingvolume_SRK"));
+          associationVolume =
+              Double.parseDouble(dataSet.getString("associationboundingvolume_SRK"));
           aCPA = Double.parseDouble(dataSet.getString("aCPA_SRK"));
           bCPA = Double.parseDouble(dataSet.getString("bCPA_SRK"));
           mCPA = Double.parseDouble(dataSet.getString("mCPA_SRK"));
@@ -363,8 +372,9 @@ abstract class Component implements ComponentInterface {
 
         criticalViscosity = Double.parseDouble(dataSet.getString("criticalViscosity"));
         if (criticalViscosity < 1e-20) {
-          criticalViscosity = 7.94830 * Math.sqrt(1e3 * molarMass) * Math.pow(criticalPressure, 2.0 / 3.0)
-              / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
+          criticalViscosity =
+              7.94830 * Math.sqrt(1e3 * molarMass) * Math.pow(criticalPressure, 2.0 / 3.0)
+                  / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
         }
         mSAFTi = Double.parseDouble(dataSet.getString("mSAFT"));
         sigmaSAFTi = Double.parseDouble(dataSet.getString("sigmaSAFT")) / 1.0e10;
@@ -373,8 +383,9 @@ abstract class Component implements ComponentInterface {
             Double.parseDouble(dataSet.getString("associationboundingvolume_PCSAFT")));
         setAssociationEnergySAFT(Double.parseDouble(dataSet.getString("associationenergy_PCSAFT")));
         if (Math.abs(criticalViscosity) < 1e-12) {
-          criticalViscosity = 7.94830 * Math.sqrt(molarMass * 1e3) * Math.pow(criticalPressure, 2.0 / 3.0)
-              / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
+          criticalViscosity =
+              7.94830 * Math.sqrt(molarMass * 1e3) * Math.pow(criticalPressure, 2.0 / 3.0)
+                  / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
         }
         // System.out.println("crit visc " + criticalViscosity);
         if (normalLiquidDensity == 0) {
@@ -506,8 +517,7 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {
-  }
+      int numberOfComponents, int type) {}
 
   /** {@inheritDoc} */
   @Override
@@ -791,10 +801,8 @@ abstract class Component implements ComponentInterface {
   /**
    * {@inheritDoc}
    *
-   * Calculates the pure comonent solid vapor pressure (bar) with the C-C
-   * equation, based on Hsub
-   * Should only be used in the valid temperature range below the triple point
-   * (specified in
+   * Calculates the pure comonent solid vapor pressure (bar) with the C-C equation, based on Hsub
+   * Should only be used in the valid temperature range below the triple point (specified in
    * component database).
    */
   @Override
@@ -806,10 +814,8 @@ abstract class Component implements ComponentInterface {
   /**
    * {@inheritDoc}
    *
-   * Calculates the DT of pure comonent solid vapor pressure (bar) with the C-C
-   * equation, based on
-   * Hsub Should only be used in the valid temperature range below the triple
-   * point (specified in
+   * Calculates the DT of pure comonent solid vapor pressure (bar) with the C-C equation, based on
+   * Hsub Should only be used in the valid temperature range below the triple point (specified in
    * component database).
    */
   @Override
@@ -821,8 +827,7 @@ abstract class Component implements ComponentInterface {
   /**
    * {@inheritDoc}
    *
-   * Calculates the pure component solid density in kg/liter Should only be used
-   * in the valid
+   * Calculates the pure component solid density in kg/liter Should only be used in the valid
    * temperature range (specified in component database).
    */
   @Override
@@ -837,10 +842,8 @@ abstract class Component implements ComponentInterface {
   /**
    * {@inheritDoc}
    *
-   * Calculates the pure component liquid density in kg/liter Should only be used
-   * in the valid
-   * temperature range (specified in component database). This method seems to
-   * give bad results at
+   * Calculates the pure component liquid density in kg/liter Should only be used in the valid
+   * temperature range (specified in component database). This method seems to give bad results at
    * the moment
    */
   @Override
@@ -940,8 +943,8 @@ abstract class Component implements ComponentInterface {
   @Override
   public double fugcoef(PhaseInterface phase) {
     fugacityCoefficient = 1.0; // this.fugcoef(phase, phase.getNumberOfComponents(),
-                              // phase.getTemperature(),
-                              // phase.getPressure());
+                               // phase.getTemperature(),
+                               // phase.getPressure());
     logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -950,7 +953,7 @@ abstract class Component implements ComponentInterface {
   @Override
   public double logfugcoefdT(PhaseInterface phase) {
     dfugdt = 0.0; // this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(),
-                 // phase.getTemperature(), phase.getPressure());
+                  // phase.getTemperature(), phase.getPressure());
     return dfugdt;
   }
 
@@ -958,7 +961,7 @@ abstract class Component implements ComponentInterface {
   @Override
   public double logfugcoefdP(PhaseInterface phase) {
     dfugdp = 0.0; // this.fugcoefDiffPres(phase, phase.getNumberOfComponents(),
-                 // phase.getTemperature(), phase.getPressure());
+                  // phase.getTemperature(), phase.getPressure());
     return dfugdp;
   }
 
@@ -1073,7 +1076,7 @@ abstract class Component implements ComponentInterface {
    * getFugacitydN.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -1121,7 +1124,7 @@ abstract class Component implements ComponentInterface {
    * getChemicalPotentialdP.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -1480,7 +1483,7 @@ abstract class Component implements ComponentInterface {
    * Setter for the field <code>matiascopemanParamsPR</code>.
    * </p>
    *
-   * @param index               a int
+   * @param index a int
    * @param matiascopemanParams a double
    */
   public void setMatiascopemanParamsPR(int index, double matiascopemanParams) {
@@ -1811,8 +1814,7 @@ abstract class Component implements ComponentInterface {
   /**
    * {@inheritDoc}
    *
-   * Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT
-   * + C4*T
+   * Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT + C4*T
    */
   @Override
   public double getHenryCoef(double temperature) {
@@ -1852,8 +1854,7 @@ abstract class Component implements ComponentInterface {
   /**
    * Setter for property matiascopemanSolidParams.
    *
-   * @param matiascopemanSolidParams New value of property
-   *                                 matiascopemanSolidParams.
+   * @param matiascopemanSolidParams New value of property matiascopemanSolidParams.
    */
   public void setMatiascopemanSolidParams(double[] matiascopemanSolidParams) {
     this.matiascopemanSolidParams = matiascopemanSolidParams;
