@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>
@@ -17,7 +16,7 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
  */
 public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
-  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+  static Logger logger = LogManager.getLogger(Standard_ASTM_D6377.class);
 
   String unit = "bara";
   double RVP = 1.0;

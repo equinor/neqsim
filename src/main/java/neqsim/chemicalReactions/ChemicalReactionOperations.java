@@ -18,7 +18,6 @@ import neqsim.chemicalReactions.kinetics.Kinetics;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>
@@ -31,7 +30,7 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
 public class ChemicalReactionOperations
     implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+  static Logger logger = LogManager.getLogger(ChemicalReactionOperations.class);
 
 
   SystemInterface system;

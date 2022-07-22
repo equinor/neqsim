@@ -7,7 +7,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>
@@ -19,7 +18,7 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
  */
 public class Draft_GERG2004 extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
-  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+  static Logger logger = LogManager.getLogger(Draft_GERG2004.class);
 
   double specPressure = 70.0;
   double initTemperature = 273.15;

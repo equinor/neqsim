@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>
@@ -15,14 +14,19 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
  * @version $Id: $Id
  */
 public class DifferentialLiberation extends BasePVTsimulation {
-  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+  static Logger logger = LogManager.getLogger(DifferentialLiberation.class);
 
   double VoilStd = 0.0;
   double[] relativeVolume = null;
-  double[] totalVolume = null, liquidVolumeRelativeToVsat = null, liquidVolume = null;
+  double[] totalVolume = null;
+  double[] liquidVolumeRelativeToVsat = null;
+  double[] liquidVolume = null;
   private double[] oilDensity = null;
   private double[] gasStandardVolume = null;
-  double saturationVolume = 0, saturationPressure = 0;
+  double saturationVolume = 0;
+
+  double saturationPressure = 0;
+
   boolean saturationConditionFound = false;
   private double[] Bo;
   private double[] Bg;

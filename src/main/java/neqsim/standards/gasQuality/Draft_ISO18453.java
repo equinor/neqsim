@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>
@@ -17,7 +16,7 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
  */
 public class Draft_ISO18453 extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
-  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+  static Logger logger = LogManager.getLogger(Draft_ISO18453.class);
 
   String dewPointTemperatureUnit = "C";
   String pressureUnit = "bar";

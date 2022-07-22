@@ -16,7 +16,6 @@ import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>
@@ -28,7 +27,7 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
  * @since 2.2.3
  */
 public class OnshoreProcess1 {
-  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+  static Logger logger = LogManager.getLogger(OnshoreProcess1.class);
 
   /**
    * This method is just meant to test the thermo package.

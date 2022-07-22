@@ -18,11 +18,11 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
   static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
 
   String comp1, comp2;
-  /** Constant <code>Kcomplex=0.133736021815520500</code> */
+  /** Constant <code>Kcomplex=0.133736021815520500</code>. */
   public static double Kcomplex = 0.133736021815520500;
-  /** Constant <code>HrefComplex=4598.717135</code> */
+  /** Constant <code>HrefComplex=4598.717135</code>. */
   public static double HrefComplex = 4598.717135;
-  /** Constant <code>TrefComplex=244.19</code> */
+  /** Constant <code>TrefComplex=244.19</code>. */
   public static double TrefComplex = 244.19;
 
   /**

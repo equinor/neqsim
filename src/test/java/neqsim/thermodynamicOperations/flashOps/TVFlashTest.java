@@ -6,13 +6,12 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * Test TVFlash
  */
 class TVFlashTest {
-  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+  static Logger logger = LogManager.getLogger(TVFlashTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static neqsim.thermo.system.SystemInterface testSystem2 = null;

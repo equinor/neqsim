@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>
@@ -17,7 +16,7 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
  * @since 2.2.3
  */
 public class TPflash {
-  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+  static Logger logger = LogManager.getLogger(TPflash.class);
 
   /**
    * <p>

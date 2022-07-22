@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
 
 /**
  * <p>
@@ -16,7 +15,7 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
  * @version $Id: $Id
  */
 public class DuanSun {
-  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+  static Logger logger = LogManager.getLogger(DuanSun.class);
 
   double[] c = new double[] {0.1, 0.2, 0.3, 0.4, 0.5};
   double[] d = new double[] {0.1, 0.2, 0.3, 0.4, 0.5};
