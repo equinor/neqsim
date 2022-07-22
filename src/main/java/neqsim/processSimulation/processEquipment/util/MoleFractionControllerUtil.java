@@ -21,7 +21,9 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   SystemInterface thermoSystem;
   ThermodynamicOperations thermoOps;
   String compName = null;
-  double moleFrac = 1.0, molesChange = 0.0, moleFractionReductionRatio = 0.0;
+  double moleFrac = 1.0;
+  double molesChange = 0.0;
+  double moleFractionReductionRatio = 0.0;
   boolean moleFractionReduction = false;
 
   /**
@@ -129,7 +131,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
             (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
       }
       double molesChange = deltaFrac * thermoSystem.getTotalNumberOfMoles();
-      thermoSystem.addComponent(compName, molesChange);// deltaFrac*thermoSystem.getTotalNumberOfMoles());
+      thermoSystem.addComponent(compName, molesChange); // deltaFrac*thermoSystem.getTotalNumberOfMoles());
       thermoOps.TPflash();
     }
     outStream.setThermoSystem(thermoSystem);

@@ -37,7 +37,7 @@ public class TestIonicInteractionParameterFittingPiperazine {
     NeqSimDataBase database = new NeqSimDataBase();
 
     double guess[] = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
-    ResultSet dataSet = database.getResultSet("SELECT * FROM CO2waterMDEAPiperazine");// WHERE
+    ResultSet dataSet = database.getResultSet("SELECT * FROM CO2waterMDEAPiperazine"); // WHERE
                                                                                       // Temperature<393.15
                                                                                       // AND
                                                                                       // PressureCO2<4");
@@ -64,7 +64,7 @@ public class TestIonicInteractionParameterFittingPiperazine {
         double sample1[] = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
             / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()};
         double standardDeviation1[] = {0.01};
-        double stddev = pressure;// Double.parseDouble(dataSet.getString("StandardDeviation"))
+        double stddev = pressure; // Double.parseDouble(dataSet.getString("StandardDeviation"))
         SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
         function.setInitialGuess(guess);
         // function.setBounds(bounds);

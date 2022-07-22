@@ -426,7 +426,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       // 1).print(10, 10);
       // Matrix tempMatrix20 = miMatrix.getMatrix(assSites, assSites, 0,
       // totalNumberOfAccociationSites -
-      // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));//
+      // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));
       // ksiMatrix.transpose().times(KlkTMatrix.times(ksiMatrix)).times(-0.5);
       // System.out.println("dQdn ");
       // tempMatrix20.print(10, 10);
@@ -443,7 +443,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       // System.out.println("temp4 matrix");
       // tempMatrix4.print(10, 10);
       // Matrix tempMatrix5 = amatrix.minus(tempMatrix4);
-      SimpleMatrix tempMatrix6 = hessianInvers.mult(tempMatrix5);// .scale(-1.0);
+      SimpleMatrix tempMatrix6 = hessianInvers.mult(tempMatrix5); // .scale(-1.0);
       // System.out.println("dXdni");
       // tempMatrix4.print(10, 10);
       // tempMatrix5.print(10, 10);
@@ -584,8 +584,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
      * double tot = 0.0; double ans = 0.0; for (int i = 0; i < numberOfComponents; i++) { tot = 0.0;
      * for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) { double xai =
      * ((ComponentSrkCPA) getComponent(i)).getXsite()[j]; double xaidT = ((ComponentSrkCPA)
-     * getComponent(i)).getXsitedT()[j]; tot += 1.0 / xai * xaidT - 0.5 * xaidT;// - 1.0 / 2.0 * xai
-     * + 1.0 / 2.0); } ans += getComponent(i).getNumberOfMolesInPhase() * tot; }
+     * getComponent(i)).getXsitedT()[j]; tot += 1.0 / xai * xaidT - 0.5 * xaidT; // - 1.0 / 2.0 *
+     * xai + 1.0 / 2.0); } ans += getComponent(i).getNumberOfMolesInPhase() * tot; }
      * System.out.println("dFCPAdT1  " + ans + " dfcpa2 " +dFCPAdT); return ans;
      */
     return dFCPAdT;
@@ -732,7 +732,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       CommonOps_DDRM.mult(hessianInvers.getDDRM(), corr3Matrix, corr4Matrix);
       // SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
       // corrMatrix =
-      // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));//.scale(-1.0);
+      // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix))); //.scale(-1.0);
       temp = 0;
       // System.out.println("print SimpleMatrix ...");
       // corrMatrix.print(10, 10);
@@ -1009,7 +1009,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     // getMolarVolume());
     // if(iterations>=100) throw new util.exception.TooManyIterationsException();
     // System.out.println("error in volume " +
-    // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
+    // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV())); // + "
     // firstterm " + (R*temperature/molarVolume) + " second " +
     // R*temperature*dFdV());
 
@@ -1146,7 +1146,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     // getMolarVolume());
     // if(iterations>=100) throw new util.exception.TooManyIterationsException();
     // System.out.println("error in volume " +
-    // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
+    // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV())); // + "
     // firstterm " + (R*temperature/molarVolume) + " second " +
     // R*temperature*dFdV());
     // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh + " B
@@ -1288,7 +1288,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     // getMolarVolume());
     // if(iterations>=100) throw new util.exception.TooManyIterationsException();
     // System.out.println("error in volume " +
-    // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
+    // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV())); // + "
     // firstterm " + (R*temperature/molarVolume) + " second " +
     // R*temperature*dFdV());
     // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh + " B

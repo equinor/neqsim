@@ -40,7 +40,7 @@ public class TestCPAParameterFittingToSolubilityData {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // binarysolubilitydata WHERE ComponentSolute='methane' AND
     // ComponentSolvent='water' AND Temperature>278.0 AND Temperature<350.0");
-    double parameterGuess[] = {-0.27686, 0.001121};// , 0.000117974}; //cpa
+    double parameterGuess[] = {-0.27686, 0.001121}; // , 0.000117974}; //cpa
 
     try {
       int p = 0;

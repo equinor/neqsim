@@ -20,8 +20,12 @@ import neqsim.thermo.system.SystemInterface;
 public class TPgradientFlash extends Flash {
   private static final long serialVersionUID = 1000;
 
-  SystemInterface localSystem = null, tempSystem = null;
-  double temperature = 0.0, height = 0.0, deltaHeight = 0.0;
+  SystemInterface localSystem = null;
+  SystemInterface tempSystem = null;
+  double temperature = 0.0;
+  double height = 0.0;
+  double deltaHeight = 0.0;
+
   double deltaT = 0.0;
   Matrix Jac;
   Matrix fvec;
@@ -61,10 +65,9 @@ public class TPgradientFlash extends Flash {
    */
   public void setfvec() {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      fvec.set(i, 0, Math
-          .log(localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
+      fvec.set(i, 0, Math.log(localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
               * localSystem.getPhases()[0].getComponents()[i].getx() * localSystem.getPressure())
-          - Math.log(tempSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
+              - Math.log(tempSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                   * tempSystem.getPhases()[0].getComponents()[i].getx() * tempSystem.getPressure())
               - tempSystem.getPhases()[0].getComponents()[i].getMolarMass()
                   * neqsim.thermo.ThermodynamicConstantsInterface.gravity * deltaHeight
@@ -97,7 +100,7 @@ public class TPgradientFlash extends Flash {
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-        dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+        dij = i == j ? 1.0 : 0.0; // Kroneckers delta
         tempJ = 1.0 / (localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                 * localSystem.getPhases()[0].getComponents()[i].getx() * localSystem.getPressure())
             * (localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient() * dij

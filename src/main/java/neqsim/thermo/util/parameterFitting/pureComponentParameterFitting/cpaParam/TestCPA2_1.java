@@ -38,7 +38,7 @@ public class TestCPA2_1 {
         // ResultSet dataSet = database.getResultSet( "SELECT * FROM
         // PureComponentVapourPressures WHERE ComponentName='water'");
         // double guess[] = {23939.4738048507, 1.5971863018, 0.63623134978,
-        // 0.00292037583};//, 1002.0};
+        // 0.00292037583}; //, 1002.0};
         // double guess[] = {1.453, 0.9894, 1.0669, 0.0787}; // water - srk-cpa
         // double guess[] = {1.4563608786, 1.3855596964, 0.6641553237, 0.0464737892};
         // water - pr-cpa
@@ -47,7 +47,7 @@ public class TestCPA2_1 {
         // double guess[] = {5.2261531848, 10.4652138885, 0.6690350867, 0.0197428805};
 
         // double guess[] = {5.14, 1.08190, 0.6744, 0.0141}; // MEG - srk-cpa
-        double guess[] = {1.4515, 0.67359, 0.0692};// , 0.01787};//co2
+        double guess[] = {1.4515, 0.67359, 0.0692}; // , 0.01787}; //co2
         double bounds[][] = {{0, 3.0055}, {0, 8.0055}, {0.00001, 10.001}, {-1.0015, 1.0015},
                 {-320.0015, 320.0015}, {-320.901, 320.900195}, {-1.0, 1000}, {-0.800001, 0.8},
                 {-80000.01, 20000.8}, {-0.01, 10.6}, {-0.01, 0.0015}, {-0.01, 0.0015}};
@@ -114,7 +114,7 @@ public class TestCPA2_1 {
                 // SystemInterface testSystem = new SystemSrkEos(280, 0.001);
                 double temp = testSystem.getTemperature();
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
-                testSystem.setPressure(1.0);// Double.parseDouble(dataSet.getString("VapourPressure")));
+                testSystem.setPressure(1.0); // Double.parseDouble(dataSet.getString("VapourPressure")));
                 // testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.setTemperature(temp);
                 testSystem.setMixingRule(1);

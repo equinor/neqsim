@@ -24,25 +24,50 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
 
-  protected StreamInterface gasStreamToAbsorber = null, strippingGas = null,
-      gasStreamFromAbsorber = null, gasFromStripper = null, leanTEGStreamToAbsorber = null;
+  protected StreamInterface gasStreamToAbsorber = null;
+
+  protected StreamInterface strippingGas = null;
+
+  protected StreamInterface gasStreamFromAbsorber = null;
+
+  protected StreamInterface gasFromStripper = null;
+
+  protected StreamInterface leanTEGStreamToAbsorber = null;
+
   protected SimpleTEGAbsorber absorbtionColumn = null;
   // protected DistillationColumn stripperColumn = null;
   protected Separator stripperColumn = null;
   Heater reboiler = null;
   protected Pump HPpump = null;
-  protected Separator glycolFlashDrum = null, waterSeparator = null;
-  protected ThrottlingValve valveHP = null, valveMP = null;
-  Cooler heatExchanger1 = null, heatExchanger2 = null, heatExchanger3 = null;
+  protected Separator glycolFlashDrum = null;
+  protected Separator waterSeparator = null;
+  protected ThrottlingValve valveHP = null;
+  protected ThrottlingValve valveMP = null;
+
+  Cooler heatExchanger1 = null;
+  Cooler heatExchanger2 = null;
+  Cooler heatExchanger3 = null;
+
   double waterDewPontSpecification = 273.15 - 10.0;
   double numberOfTheoreticalEquilibriumStages = 2;
   private double flashPressure = 5.0;
-  double designStandardGasFlowRate = 20.0, maxAbsorberDesignPressure = 70.0;
+  double designStandardGasFlowRate = 20.0;
+
+  double maxAbsorberDesignPressure = 70.0;
+
   double designGasFeedTemperature = 273.15 + 30.0;
-  double leanGlycolMolarFraction = 0.95, leanGlycolwtFraction = 0.99, leanGlycolMolarFlowRate = 1.0,
-      maxglycolFlowRate = 1;
+  double leanGlycolMolarFraction = 0.95;
+
+  double leanGlycolwtFraction = 0.99;
+
+  double leanGlycolMolarFlowRate = 1.0;
+
+  double maxglycolFlowRate = 1;
+
   String glycolTypeName = "TEG";
-  double reboilerTemperature = 273.15 + 204.0, regenerationPressure = 1.4;
+  double reboilerTemperature = 273.15 + 204.0;
+
+  double regenerationPressure = 1.4;
 
   public GlycolDehydrationlModule(String name) {
     super(name);
@@ -91,8 +116,10 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
    * @return a double
    */
   public double solveAbsorptionFactor(double Ea) {
-    double A = 7.0, Aold = 7.0;
-    double error = 1.0, errorOld = 1.0;
+    double A = 7.0;
+    double Aold = 7.0;
+    double error = 1.0;
+    double errorOld = 1.0;
     int iter = 0;
     do {
       iter++;
@@ -279,8 +306,10 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
     double dn = 1.0
         * tempStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase();
-    double error = 1.0, oldError = 0.0;
-    double oldNumberOfMoles = 0.0, numberOfMoles = 0.0;
+    double error = 1.0;
+    double oldError = 0.0;
+    double oldNumberOfMoles = 0.0;
+    double numberOfMoles = 0.0;
     int iter = 0;
     do {
       iter++;
@@ -290,8 +319,8 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
       numberOfMoles =
           tempStream.getThermoSystem().getPhase(0).getComponent("TEG").getNumberOfmoles();
       oldError = error;
-      error = (tempStream.getThermoSystem().getPhase(0).getComponent("water").getx() - y0);// /
-                                                                                           // y0;
+      error = (tempStream.getThermoSystem().getPhase(0).getComponent("water").getx() - y0); // /
+                                                                                            // y0;
 
       double derrordn = (error - oldError) / (numberOfMoles - oldNumberOfMoles);
       if (iter < 2) {
@@ -347,9 +376,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     double yN = gasStreamToAbsorber.getThermoSystem().getPhase(0).getComponent("water").getx();
 
     // Estimates K value
-    double K = calcKglycol();// gasStreamToAbsorber.getThermoSystem().getPhase(1).getComponent("water").getFugacityCoefficient()
-                             // /
-                             // gasStreamToAbsorber.getThermoSystem().getPhase(0).getComponent("water").getFugacityCoefficient();
+    double K = calcKglycol(); // gasStreamToAbsorber.getThermoSystem().getPhase(1).getComponent("water").getFugacityCoefficient()
+                              // /
+                              // gasStreamToAbsorber.getThermoSystem().getPhase(0).getComponent("water").getFugacityCoefficient();
     gasStreamFromAbsorber = gasStreamToAbsorber.clone();
     // gasStreamFromAbsorber.getThermoSystem().addComponent("water", 1.0);
     gasStreamFromAbsorber.getThermoSystem().setTemperature(waterDewPontSpecification);

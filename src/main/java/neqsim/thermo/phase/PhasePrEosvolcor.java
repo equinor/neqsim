@@ -134,7 +134,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     for (int j = 0; j < numbcomp; j++) {
         C += compArray[i].getNumberOfMolesInPhase()
                 * compArray[j].getNumberOfMolesInPhase()
-                * getcij(compArray[i], compArray[j]);// (compArray[i].getb()+compArray[j].getb())/2;
+            * getcij(compArray[i], compArray[j]); // (compArray[i].getb()+compArray[j].getb())/2;
     }
   }
   C /= phase.getNumberOfMolesInPhase();

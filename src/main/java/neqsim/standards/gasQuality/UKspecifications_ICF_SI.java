@@ -15,7 +15,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
-  String componentName = "", unit = "-";
+  String componentName = "";
+  String unit = "-";
   Standard_ISO6976 iso6976 = null;
   double propaneNumber = 0.0;
 
@@ -84,8 +85,8 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   public double calcPropaneNumber() {
     double avgCarbon = iso6976.getAverageCarbonNumber();
 
-    double[][] Amatrix = {{1.0, 1.0}, {1.0, 3.0}};// {thermoSystem.getNumberOfMoles(),
-                                                  // thermoSystem.getNumberOfMoles()*iso6976.getAverageCarbonNumber()}};
+    double[][] Amatrix = {{1.0, 1.0}, {1.0, 3.0}}; // {thermoSystem.getNumberOfMoles(),
+                                                   // thermoSystem.getNumberOfMoles()*iso6976.getAverageCarbonNumber()}};
     double[] bmatrix = {(thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()),
         avgCarbon * (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts())};
 
@@ -129,7 +130,8 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     }
     localIso6976.removeInertsButNitrogen();
 
-    double newWI = targetWI / 1.01, oldWI = 0.0;
+    double newWI = targetWI / 1.01;
+    double oldWI = 0.0;
     double dn2 = 0.1;
     // double dWIdN2;
     int iter = 0;
