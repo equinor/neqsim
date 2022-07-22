@@ -43,7 +43,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   Heater heater;
   Separator separator2;
 
-
   /**
    * <p>
    * Constructor for DistillationColumn.

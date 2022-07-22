@@ -268,7 +268,6 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
      */
   }
 
-
   /**
    * Getter for property xComp.
    *

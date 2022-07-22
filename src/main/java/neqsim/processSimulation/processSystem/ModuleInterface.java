@@ -65,7 +65,6 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
      */
     public void setPreferedThermodynamicModel(String preferedThermodynamicModel);
 
-
     /**
      * <p>
      * initializeStreams.

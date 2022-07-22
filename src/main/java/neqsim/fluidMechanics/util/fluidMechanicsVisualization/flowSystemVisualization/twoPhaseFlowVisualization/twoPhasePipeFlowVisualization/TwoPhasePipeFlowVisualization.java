@@ -157,7 +157,6 @@ public class TwoPhasePipeFlowVisualization extends
   // file.createFile();
   // }
 
-
   /*
    * public void createNetCdfFile(String name) { setPoints();
    * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file = new

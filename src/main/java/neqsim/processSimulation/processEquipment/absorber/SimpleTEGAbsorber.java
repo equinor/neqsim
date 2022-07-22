@@ -42,7 +42,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   private boolean isSetWaterInDryGas = false;
   private double waterInDryGas = 30e-6;
 
-
   /**
    * <p>
    * Constructor for SimpleTEGAbsorber.

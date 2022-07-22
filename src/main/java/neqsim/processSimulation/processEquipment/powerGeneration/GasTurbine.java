@@ -144,7 +144,6 @@ public class GasTurbine extends TwoPortEquipment {
     // outStreamAir.getFluid().setTemperature(800.0);
     // outStreamAir.getFluid().createDatabase(true);
 
-
     outStreamAir.run(id);
 
     double heatOfCombustion = inStream.LCV() * inStream.getFlowRate("mole/sec");

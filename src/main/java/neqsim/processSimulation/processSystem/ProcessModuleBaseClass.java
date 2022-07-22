@@ -129,6 +129,12 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return null;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public String getSpecification() {
+    return null;
+  }
+
   /**
    * <p>
    * setSpecification.
@@ -138,12 +144,6 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    * @param value a double
    */
   public void setSpecification(String specificationName, double value) {}
-
-  /** {@inheritDoc} */
-  @Override
-  public String getSpecification() {
-    return null;
-  }
 
   /** {@inheritDoc} */
   @Override

@@ -216,7 +216,6 @@ public class GORfitter extends TwoPortEquipment {
     return;
   }
 
-
   /**
    * <p>
    * main.

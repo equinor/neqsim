@@ -155,7 +155,6 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     }
   
 
-
     /** {@inheritDoc} */
     @Override
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,

@@ -14,14 +14,11 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
-
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
@@ -551,28 +548,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public SystemInterface phaseToSystem(PhaseInterface newPhase) {
-    for (int i = 0; i < newPhase.getNumberOfComponents(); i++) {
-      newPhase.getComponents()[i]
-          .setNumberOfmoles(newPhase.getComponents()[i].getNumberOfMolesInPhase());
-    }
-
-    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      phaseArray[i] = newPhase.clone();
-    }
-
-    setTotalNumberOfMoles(newPhase.getNumberOfMolesInPhase());
-    this.init(0);
-    setNumberOfPhases(1);
-    setPhaseType(0, newPhase.getPhaseType());
-    initBeta();
-    init_x_y();
-    this.init(1);
-    return this;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public SystemInterface getEmptySystemClone() {
     int phaseNumber = 0;
 
@@ -593,6 +568,28 @@ abstract class SystemThermo implements SystemInterface {
     newSystem.init(0);
     // newSystem.init(1);
     return newSystem;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SystemInterface phaseToSystem(PhaseInterface newPhase) {
+    for (int i = 0; i < newPhase.getNumberOfComponents(); i++) {
+      newPhase.getComponents()[i]
+          .setNumberOfmoles(newPhase.getComponents()[i].getNumberOfMolesInPhase());
+    }
+
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      phaseArray[i] = newPhase.clone();
+    }
+
+    setTotalNumberOfMoles(newPhase.getNumberOfMolesInPhase());
+    this.init(0);
+    setNumberOfPhases(1);
+    setPhaseType(0, newPhase.getPhaseType());
+    initBeta();
+    init_x_y();
+    this.init(1);
+    return this;
   }
 
   /** {@inheritDoc} */
@@ -1740,17 +1737,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void initProperties() {
-    if (!isInitialized) {
-      init(0);
-      setNumberOfPhases(1);
-    }
-    initThermoProperties();
-    initPhysicalProperties();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void init(int type, int phase) {
     isInitialized = true;
     if (numericDerivatives) {
@@ -2150,6 +2136,17 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public void initProperties() {
+    if (!isInitialized) {
+      init(0);
+      setNumberOfPhases(1);
+    }
+    initThermoProperties();
+    initPhysicalProperties();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void initPhysicalProperties() {
     for (int i = 0; i < numberOfPhases; i++) {
       getPhase(i).initPhysicalProperties();
@@ -2229,9 +2226,6 @@ abstract class SystemThermo implements SystemInterface {
   }
 
   /** @{inheritdoc} */
-  /**
-   * @return IsPhase true or false
-   */
   @Override
   public boolean IsPhase(int i) {
     if (i > phaseArray.length) {
@@ -2250,6 +2244,50 @@ abstract class SystemThermo implements SystemInterface {
           + ". Current number of phases are " + getNumberOfPhases());
     }
     return phaseArray[phaseIndex[i]];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PhaseInterface getPhase(String phaseTypeName) {
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
+        return getPhase(i);
+      }
+    }
+    throw new RuntimeException();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getPhaseNumberOfPhase(String phaseTypeName) {
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getPhaseIndexOfPhase(String phaseTypeName) {
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
+        return phaseIndex[i];
+      }
+    }
+    return phaseIndex[0];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PhaseInterface getPhaseOfType(String phaseName) {
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (getPhase(i).getPhaseTypeName().equals(phaseName)) {
+        return getPhase(i);
+      }
+    }
+    return null;
   }
 
   /** {@inheritDoc} */
@@ -2300,6 +2338,21 @@ abstract class SystemThermo implements SystemInterface {
     criticalPressure = PC;
   }
 
+  /**
+   * <p>
+   * setMixingRuleGEmodel.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
+  public void setMixingRuleGEmodel(String name) {
+    for (PhaseInterface tmpPhase : phaseArray) {
+      if (tmpPhase != null) {
+        tmpPhase.setMixingRuleGEModel(name);
+      }
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public final void setMixingRule(int type) {
@@ -2312,21 +2365,6 @@ abstract class SystemThermo implements SystemInterface {
         getPhase(i).setMixingRule(type);
         getPhase(i).initPhysicalProperties();
         // getPhase(i).getPhysicalProperties().getMixingRule().initMixingRules(getPhase(i));
-      }
-    }
-  }
-
-  /**
-   * <p>
-   * setMixingRuleGEmodel.
-   * </p>
-   *
-   * @param name a {@link java.lang.String} object
-   */
-  public void setMixingRuleGEmodel(String name) {
-    for (PhaseInterface tmpPhase : phaseArray) {
-      if (tmpPhase != null) {
-        tmpPhase.setMixingRuleGEModel(name);
       }
     }
   }
@@ -2767,6 +2805,12 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public final void setTemperature(double newTemperature, int phase) {
+    getPhase(phaseIndex[phase]).setTemperature(newTemperature);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setTemperature(double newTemperature, String unit) {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       if (unit.equals("K")) {
@@ -2889,12 +2933,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final void setTemperature(double newPressure, int phase) {
-    getPhase(phaseIndex[phase]).setTemperature(newPressure);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public final double getTemperature() {
     return phaseArray[0].getTemperature();
   }
@@ -2902,7 +2940,8 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final double getTemperature(String unit) {
-    neqsim.util.unit.TemperatureUnit tempConversion = new neqsim.util.unit.TemperatureUnit(getTemperature(), "K");
+    neqsim.util.unit.TemperatureUnit tempConversion =
+        new neqsim.util.unit.TemperatureUnit(getTemperature(), "K");
     return tempConversion.getValue(unit);
   }
 
@@ -2921,7 +2960,8 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final double getPressure(String unit) {
-    neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(getPressure(), "bara");
+    neqsim.util.unit.PressureUnit presConversion =
+        new neqsim.util.unit.PressureUnit(getPressure(), "bara");
     return presConversion.getValue(unit);
   }
 
@@ -3207,18 +3247,6 @@ abstract class SystemThermo implements SystemInterface {
     }
   }
 
-  /**
-   * <p>
-   * write.
-   * </p>
-   *
-   * @return a {@link java.lang.String} object
-   */
-  public String write() {
-    // create a String description of the system
-    return "";
-  }
-
   /** {@inheritDoc} */
   @Override
   public void normalizeBeta() {
@@ -3229,12 +3257,6 @@ abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < numberOfPhases; i++) {
       beta[phaseIndex[i]] /= tot;
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void display() {
-    display(this.getFluidName());
   }
 
   /** {@inheritDoc} */
@@ -3453,6 +3475,12 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public void display() {
+    display(this.getFluidName());
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void display(String name) {
     JFrame dialog = new JFrame("System-Report");
     Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
@@ -3473,6 +3501,18 @@ abstract class SystemThermo implements SystemInterface {
 
     // dialog.pack();
     dialog.setVisible(true);
+  }
+
+  /**
+   * <p>
+   * write.
+   * </p>
+   *
+   * @return a {@link java.lang.String} object
+   */
+  public String write() {
+    // create a String description of the system
+    return "";
   }
 
   /** {@inheritDoc} */
@@ -4571,50 +4611,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public PhaseInterface getPhase(String phaseTypeName) {
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
-        return getPhase(i);
-      }
-    }
-    throw new RuntimeException();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int getPhaseNumberOfPhase(String phaseTypeName) {
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
-        return i;
-      }
-    }
-    return 0;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int getPhaseIndexOfPhase(String phaseTypeName) {
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
-        return phaseIndex[i];
-      }
-    }
-    return phaseIndex[0];
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public PhaseInterface getPhaseOfType(String phaseName) {
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals(phaseName)) {
-        return getPhase(i);
-      }
-    }
-    return null;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double calcHenrysConstant(String component) {
     if (numberOfPhases != 2) {
       logger.error("Can't calculate Henrys constant - two phases must be present.");
@@ -4659,21 +4655,21 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public boolean isImplementedTemperatureDeriativesofFugacity() {
-    return implementedTemperatureDeriativesofFugacity;
+  public boolean isImplementedCompositionDeriativesofFugacity() {
+    return implementedCompositionDeriativesofFugacity;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setImplementedTemperatureDeriativesofFugacity(
-      boolean implementedTemperatureDeriativesofFugacity) {
-    this.implementedTemperatureDeriativesofFugacity = implementedTemperatureDeriativesofFugacity;
+  public void isImplementedCompositionDeriativesofFugacity(boolean isImpl) {
+    this.implementedCompositionDeriativesofFugacity = isImpl;
   }
 
   /** {@inheritDoc} */
   @Override
-  public boolean isImplementedPressureDeriativesofFugacity() {
-    return implementedPressureDeriativesofFugacity;
+  public void setImplementedCompositionDeriativesofFugacity(
+      boolean implementedCompositionDeriativesofFugacity) {
+    this.implementedCompositionDeriativesofFugacity = implementedCompositionDeriativesofFugacity;
   }
 
   /** {@inheritDoc} */
@@ -4685,15 +4681,21 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public boolean isImplementedCompositionDeriativesofFugacity() {
-    return implementedCompositionDeriativesofFugacity;
+  public boolean isImplementedPressureDeriativesofFugacity() {
+    return implementedPressureDeriativesofFugacity;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setImplementedCompositionDeriativesofFugacity(
-      boolean implementedCompositionDeriativesofFugacity) {
-    this.implementedCompositionDeriativesofFugacity = implementedCompositionDeriativesofFugacity;
+  public boolean isImplementedTemperatureDeriativesofFugacity() {
+    return implementedTemperatureDeriativesofFugacity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setImplementedTemperatureDeriativesofFugacity(
+      boolean implementedTemperatureDeriativesofFugacity) {
+    this.implementedTemperatureDeriativesofFugacity = implementedTemperatureDeriativesofFugacity;
   }
 
   /** {@inheritDoc} */
@@ -4720,19 +4722,19 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void setMolarComposition(double[] molefractions) {
-    setMolarComposition(molefractions, "");
+    setMolarFractions(molefractions, "");
   }
 
   /** {@inheritDoc} */
   @Override
   public void setMolarCompositionPlus(double[] molefractions) {
-    setMolarComposition(molefractions, "Plus");
+    setMolarFractions(molefractions, "Plus");
   }
 
   /** {@inheritDoc} */
   @Override
   public void setMolarCompositionOfPlusFluid(double[] molefractions) {
-    setMolarComposition(molefractions, "PlusFluid");
+    setMolarFractions(molefractions, "PlusFluid");
   }
 
   /** {@inheritDoc} */
@@ -5003,12 +5005,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void isImplementedCompositionDeriativesofFugacity(boolean isImpl) {
-    implementedCompositionDeriativesofFugacity = isImpl;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void addCapeOpenProperty(String propertyName) {
     String[] tempString = new String[CapeOpenProperties11.length + 1];
     System.arraycopy(CapeOpenProperties11, 0, tempString, 0, CapeOpenProperties11.length);
@@ -5074,7 +5070,7 @@ abstract class SystemThermo implements SystemInterface {
     return new SystemProperties(this);
   }
 
-  private void setMolarComposition(double[] molefractions, String type) {
+  private void setMolarFractions(double[] molefractions, String type) {
     double totalFlow = getTotalNumberOfMoles();
     if (totalFlow < 1e-100) {
       String msg = "must be larger than 0 (1e-100) when setting molar composition";

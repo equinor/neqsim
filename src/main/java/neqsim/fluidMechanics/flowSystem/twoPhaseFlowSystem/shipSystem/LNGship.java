@@ -553,17 +553,6 @@ public class LNGship
 
   /**
    * <p>
-   * Setter for the field <code>initialTemperature</code>.
-   * </p>
-   *
-   * @param setInitialTemperature the setInitialTemperature to set
-   */
-  public void setInitialTemperature(boolean setInitialTemperature) {
-    this.setInitialTemperature = setInitialTemperature;
-  }
-
-  /**
-   * <p>
    * Getter for the field <code>initialTemperature</code>.
    * </p>
    *
@@ -586,6 +575,13 @@ public class LNGship
   }
 
   /**
-   * @return the thermoSystem
+   * <p>
+   * Setter for the field <code>initialTemperature</code>.
+   * </p>
+   *
+   * @param setInitialTemperature the setInitialTemperature to set
    */
+  public void setInitialTemperature(boolean setInitialTemperature) {
+    this.setInitialTemperature = setInitialTemperature;
+  }
 }

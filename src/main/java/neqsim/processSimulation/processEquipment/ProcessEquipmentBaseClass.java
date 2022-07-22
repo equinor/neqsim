@@ -167,17 +167,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /**
    * <p>
-   * isSetEnergyStream.
-   * </p>
-   *
-   * @return a boolean
-   */
-  public boolean isSetEnergyStream() {
-    return isSetEnergyStream;
-  }
-
-  /**
-   * <p>
    * Setter for the field <code>energyStream</code>.
    * </p>
    *
@@ -185,6 +174,17 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    */
   public void setEnergyStream(boolean isSetEnergyStream) {
     this.isSetEnergyStream = isSetEnergyStream;
+  }
+
+  /**
+   * <p>
+   * isSetEnergyStream.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isSetEnergyStream() {
+    return isSetEnergyStream;
   }
 
   /** {@inheritDoc} */

@@ -242,7 +242,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
       returnValue = Zmix15;
     }
 
-
     if (returnParameter.equals("CompressionFactor")) {
       return returnValue;
     }

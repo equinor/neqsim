@@ -234,6 +234,23 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
   /**
    * <p>
+   * Getter for the field <code>oilProducer</code>.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
+   */
+  public Well getOilProducer(String name) {
+    for (int i = 0; i < oilProducer.size(); i++) {
+      if (oilProducer.get(i).getName().equals(name)) {
+        return oilProducer.get(i);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * <p>
    * Getter for the field <code>waterInjector</code>.
    * </p>
    *
@@ -258,23 +275,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
   /**
    * <p>
-   * Getter for the field <code>oilProducer</code>.
-   * </p>
-   *
-   * @param name a {@link java.lang.String} object
-   * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
-   */
-  public Well getOilProducer(String name) {
-    for (int i = 0; i < oilProducer.size(); i++) {
-      if (oilProducer.get(i).getName().equals(name)) {
-        return oilProducer.get(i);
-      }
-    }
-    return null;
-  }
-
-  /**
-   * <p>
    * setReservoirFluid.
    * </p>
    *
@@ -295,7 +295,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     // thermoSystem.display();
     SystemInterface thermoSystem2 = thermoSystem.clone();
 
-    thermoSystem.setEmptyFluid();// (1.0e-10);
+    thermoSystem.setEmptyFluid(); // (1.0e-10);
     // thermoSystem.init(1);
     // thermoSystem.display();
     // System.out.println("number of phases " + thermoSystem.getNumberOfPhases());

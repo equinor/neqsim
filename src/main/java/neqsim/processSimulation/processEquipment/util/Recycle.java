@@ -65,6 +65,17 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * Setter for the field <code>downstreamProperty</code>.
    * </p>
    *
+   * @param property a {@link java.util.ArrayList} object
+   */
+  public void setDownstreamProperty(ArrayList<String> property) {
+    this.downstreamProperty = property;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>downstreamProperty</code>.
+   * </p>
+   *
    * @param property a {@link java.lang.String} object
    */
   public void setDownstreamProperty(String property) {
@@ -425,17 +436,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   public ArrayList<String> getDownstreamProperty() {
     return downstreamProperty;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>downstreamProperty</code>.
-   * </p>
-   *
-   * @param upstreamProperty a {@link java.util.ArrayList} object
-   */
-  public void setDownstreamProperty(ArrayList<String> upstreamProperty) {
-    this.downstreamProperty = upstreamProperty;
   }
 
   /**

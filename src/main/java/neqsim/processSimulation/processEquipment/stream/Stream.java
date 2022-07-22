@@ -195,8 +195,20 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   /** {@inheritDoc} */
   @Override
+  public double getTemperature(String unit) {
+    return getFluid().getTemperature(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getPressure() {
     return thermoSystem.getPressure();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPressure(String unit) {
+    return getFluid().getPressure(unit);
   }
 
   /** {@inheritDoc} */
@@ -283,18 +295,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   @Override
   public double getFlowRate(String unit) {
     return this.getFluid().getFlowRate(unit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getPressure(String unit) {
-    return getFluid().getPressure(unit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getTemperature(String unit) {
-    return getFluid().getTemperature(unit);
   }
 
   /** {@inheritDoc} */

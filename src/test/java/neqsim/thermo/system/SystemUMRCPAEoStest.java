@@ -43,8 +43,6 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     // testSystem.i
   }
 
-
-
   /**
    * <p>
    * testFugasities.
@@ -60,7 +58,6 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     double fucoef = testSystem.getComponent(0).getLogFugacityCoefficient();
 
     assertEquals(-0.002884922, fucoef, 1e-6);
-
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
@@ -198,7 +195,6 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
   public void checkFugacityCoefficientsDn2() {
     assertTrue(testModel.checkFugacityCoefficientsDn2());
   }
-
 
   /**
    * <p>
