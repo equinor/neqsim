@@ -96,7 +96,7 @@ public class cricondenBarTemp1 implements java.io.Serializable {
 
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
-                dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+              dij = i == j ? 1.0 : 0.0; // Kroneckers delta
                 tempJ = 1.0 / system.getBeta()
                         * (dij / system.getPhases()[0].getComponents()[i].getx() - 1.0
                                 + system.getPhases()[0].getComponents()[i].getdfugdx(j))

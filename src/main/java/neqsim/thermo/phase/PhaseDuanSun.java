@@ -98,7 +98,7 @@ public class PhaseDuanSun extends PhaseGE {
                             numberOfComponents, temperature, pressure, phasetype, salinity));
         }
 
-        return R * temperature * numberOfMolesInPhase * GE;// phase.getNumberOfMolesInPhase()*
+        return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
     }
 
     /** {@inheritDoc} */

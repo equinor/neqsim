@@ -103,12 +103,11 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
         double dx = xinterphase - xbulk;
         double last = boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[j].getx();
         if (reactive) {
-          boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponents()[j]
-              .setx(last - dx
-                  - reacRates.get(j, 0)
-                      / boundary.getNode(i).getBulkSystem().getPhases()[1].getPhysicalProperties()
-                          .getEffectiveDiffusionCoefficient(j)
-                      * Math.pow(boundary.getNodeLength(), 2.0));
+          boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponents()[j].setx(last - dx
+              - reacRates.get(j, 0)
+                  / boundary.getNode(i).getBulkSystem().getPhases()[1].getPhysicalProperties()
+                      .getEffectiveDiffusionCoefficient(j)
+                  * Math.pow(boundary.getNodeLength(), 2.0));
         } else {
           boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponents()[j]
               .setx(xinterphase - dx * ((double) (i + 1) / boundary.getNumberOfNodes()));
@@ -172,7 +171,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
 
     a[0] = 0.0;
     c[0] = 0.0;
-    b[0] = 1.0;// boundary.getNode(0).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
+    b[0] = 1.0; // boundary.getNode(0).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
     r[0] =
         boundary.getNode(0).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
     System.out.println("b0 :" + b[0]);
@@ -205,7 +204,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
     int i = boundary.getNumberOfNodes() - 1;
     a[i] = 0.0;
     c[i] = 0.0;
-    b[i] = 1.0;// boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
+    b[i] = 1.0; // boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
     r[i] =
         boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
     System.out.println("bn :" + b[i]);

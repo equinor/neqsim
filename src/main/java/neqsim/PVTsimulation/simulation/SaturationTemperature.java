@@ -91,7 +91,7 @@ public class SaturationTemperature extends BasePVTsimulation {
         tempSystem.addTBPfraction("C9", 0.14, 129.5 / 1000.0, 0.7454);
         tempSystem.addTBPfraction("C10", 0.08, 135.3 / 1000.0, 0.7864);
          //tempSystem.createDatabase(true);
-        tempSystem.setMixingRule(2);// "HV", "UNIFAC_UMRPRU");
+         tempSystem.setMixingRule(2); // "HV", "UNIFAC_UMRPRU");
         tempSystem.init(0);
         tempSystem.init(1);
        // tempSystem.saveFluid(928);

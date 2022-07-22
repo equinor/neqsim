@@ -197,7 +197,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     @Override
     public double calcb() {
         //if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-          //  return bCPA;
+        // return bCPA;
         //} else {
             return super.calcb();
        // }
@@ -357,7 +357,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
          * phase.getComponent(k).getNumberOfMolesInPhase() * tot3; }
          */
         // System.out.println("dFCPAdndV " + (xi - tot1 - tot4));
-        return xi + tempar[0] * calc_lngi(phase) + tempar[1] * calc_lngidV(phase);// - tot1 - tot4;
+        return xi + tempar[0] * calc_lngi(phase) + tempar[1] * calc_lngidV(phase); // - tot1 - tot4;
     }
 
     /**

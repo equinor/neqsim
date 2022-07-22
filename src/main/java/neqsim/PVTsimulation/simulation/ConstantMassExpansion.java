@@ -139,7 +139,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
             relativeVolume[i] = totalVolume[i] / saturationVolume;
             density[i] = getThermoSystem().getPhase(0).getDensity("kg/m3");
             gasVolume[i] = getThermoSystem().getPhase(0).getNumberOfMolesInPhase()
-                    * getThermoSystem().getPhase(0).getMolarMass() / density[i];// getThermoSystem().getPhase(0).getVolume();
+                * getThermoSystem().getPhase(0).getMolarMass() / density[i]; // getThermoSystem().getPhase(0).getVolume();
             gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume()
                     * getThermoSystem().getPhase(0).getPressure() / 1.01325
                     / getThermoSystem().getPhase(0).getZ() * 288.15

@@ -76,7 +76,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       volumeSafetyFactor =
           ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
               .getVolumetricDesignFactor();
-      retentionTime = 120.0;// ((SeparatorDesignStandard)
+      retentionTime = 120.0; // ((SeparatorDesignStandard)
                             // getDesignStandard().get("separator process
                             // design")).getLiquidRetentionTime("API12J", this);
     } else {
@@ -93,7 +93,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     dialogContentPane.setLayout(new BorderLayout());
 
     String[] names = {"Name", "Value", "Unit"};
-    String[][] table = new String[16][3];// createTable(getProcessEquipment().getName());
+    String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 
     table[1][0] = "Separator Inner Diameter";
     table[1][1] = Double.toString(getInnerDiameter());

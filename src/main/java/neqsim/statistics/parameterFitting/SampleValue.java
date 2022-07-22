@@ -100,7 +100,7 @@ public class SampleValue implements Cloneable {
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
     public void setThermodynamicSystem(SystemInterface system) {
-        this.system = system;// system.clone();
+      this.system = system; // system.clone();
         thermoOps = new ThermodynamicOperations(system);
         this.getFunction().setThermodynamicSystem(this.system);
     }

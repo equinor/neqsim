@@ -97,7 +97,7 @@ public class TPgradientFlash extends Flash {
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-        dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+        dij = i == j ? 1.0 : 0.0; // Kroneckers delta
         tempJ = 1.0 / (localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
                 * localSystem.getPhases()[0].getComponents()[i].getx() * localSystem.getPressure())
             * (localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient() * dij

@@ -86,9 +86,9 @@ public class ComponentGeNRTL extends ComponentGE {
             // System.out.println("method GE1" + tau);
 
             // System.out.println("error in NRTL here ......");
-            G = Math.exp(-alpha * tau);// comp_Array[j].getb()*Math.exp(-alpha*tau);
+            G = Math.exp(-alpha * tau); // comp_Array[j].getb()*Math.exp(-alpha*tau);
             dGdt = dtaudt * -alpha * G;
-            G2 = Math.exp(-alpha * tau2);// comp_Array[this.getComponentNumber()].getb()*Math.exp(-alpha*tau2);
+            G2 = Math.exp(-alpha * tau2); // comp_Array[this.getComponentNumber()].getb()*Math.exp(-alpha*tau2);
             dG2dt = dtau2dt * -alpha * G2;
 
             A += tau * G * comp_Array[j].getx();
@@ -116,7 +116,7 @@ public class ComponentGeNRTL extends ComponentGE {
                 dtaudt = -tau / temperature;
 
                 // System.out.println("error in NRTL comp here....");
-                G = Math.exp(-alpha * tau);// comp_Array[l].getb()*Math.exp(-alpha*tau);
+                G = Math.exp(-alpha * tau); // comp_Array[l].getb()*Math.exp(-alpha*tau);
                 dGdt = dtaudt * -alpha * G;
                 Gmatrix[l][j] = G;
                 tauMatrix[l][j] = tau;
@@ -206,7 +206,7 @@ public class ComponentGeNRTL extends ComponentGE {
                 }
                 dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
                         - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp)
-                        + 2.0 * Ftemp - Gtemp;// E/(C*C)*dCdn[p]*(tau2-D/C)
+                    + 2.0 * Ftemp - Gtemp; // E/(C*C)*dCdn[p]*(tau2-D/C)
                                               // +
                                               // E/C*(-dDdn[p]/C
                                               // +

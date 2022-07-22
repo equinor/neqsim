@@ -68,7 +68,7 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
 
             for (int i = 0; i < experimentalData[0].length; i++) {
                 ViscosityFunction function = new ViscosityFunction();
-                double guess[] = {1.0};// getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
+                double guess[] = {1.0}; // getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
                 function.setInitialGuess(guess);
 
                 SystemInterface tempSystem = getThermoSystem().clone();

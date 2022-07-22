@@ -127,7 +127,7 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
 
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
-                dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+              dij = i == j ? 1.0 : 0.0; // Kroneckers delta
                 tempJ = dij + system.getPhases()[1].getComponents()[i].getdfugdx(j) * dyidlnk[j]
                         - system.getPhases()[0].getComponents()[i].getdfugdx(j) * dxidlnk[j];
                 Jac.set(i, j, tempJ);
@@ -186,7 +186,7 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
             dx = Jac.solve(fvec);
             u.minusEquals(dx);
             // System.out.println("feilen: "+dx.norm2());
-        } while (dx.norm2() / u.norm2() > 1.e-10);// && Double.isNaN(dx.norm2()));
+          } while (dx.norm2() / u.norm2() > 1.e-10); // && Double.isNaN(dx.norm2()));
         // System.out.println("iter: "+iter);
         init();
     }

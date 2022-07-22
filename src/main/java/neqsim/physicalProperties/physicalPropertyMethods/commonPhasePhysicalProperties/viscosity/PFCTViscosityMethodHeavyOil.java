@@ -105,7 +105,7 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
         // double molDens = 1.0 /
         // referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
         double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0;
-        double critMolDens = 10.15;// 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
+        double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
         double redDens = molDens / critMolDens;
 
         alfaMix = 1.0 + 7.378e-3 * Math.pow(redDens, 1.847) * Math.pow(Mmix, 0.5173);
@@ -176,7 +176,7 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
         // referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
         double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0; // mol/dm^3
         // System.out.println("mol dens " + molDens);
-        double critMolDens = 10.15;// 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
+        double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
         double redMolDens = (molDens - critMolDens) / critMolDens;
         // System.out.println("gv1 " +GVcoef[0]);
 

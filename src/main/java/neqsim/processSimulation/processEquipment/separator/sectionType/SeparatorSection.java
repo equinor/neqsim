@@ -18,7 +18,7 @@ public class SeparatorSection extends NamedBaseClass {
     private double efficiency = 0.95;
     public Separator separator = null;
     private boolean calcEfficiency = false;
-    private double pressureDrop = 33 / 5.0 * 1e-3;// bar
+    private double pressureDrop = 33 / 5.0 * 1e-3; // bar
     String type;
     public double outerDiameter = 1.0;
 

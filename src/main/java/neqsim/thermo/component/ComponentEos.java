@@ -610,7 +610,7 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
         // double scale2 = getAttractiveTerm().alpha(temperature) * 1e-5 * Math.pow(b * 1e-5, 2.0 /
         // 3.0) * (AA * TR + BB);
         // System.out.println("scale2 " + scale2);
-        return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB);/// Math.pow(ThermodynamicConstantsInterface.avagadroNumber,
+        return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB); /// Math.pow(ThermodynamicConstantsInterface.avagadroNumber,
                                                                           /// 2.0 / 3.0);
     }
 
@@ -699,7 +699,7 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
         return dFdNdN(compNumb2, phase, phase.getNumberOfComponents(), phase.getTemperature(),
                 phase.getPressure())
                 - dFdNdT(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-                        phase.getPressure()) * 1.0 / phase.FTT();// *
+                phase.getPressure()) * 1.0 / phase.FTT(); // *
         // phase.getComponent(compNumb2).getF;
     }
 

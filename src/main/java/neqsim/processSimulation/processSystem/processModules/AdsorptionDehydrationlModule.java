@@ -154,7 +154,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
 
     double waterLoadingCycle = regenerationCycleTime * designFlow * 42.29489667
         * tempStream.getThermoSystem().getPhase(0).getComponent("water").getx()
-        * tempStream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass();// 360.0;
+        * tempStream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass(); // 360.0;
                                                                                         // //
                                                                                         // kg/cycle
                                                                                         // this

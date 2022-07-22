@@ -23,7 +23,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   int n = 0;
   double xComp = 0.0;
   double QComp = 0.0, QMix = 0.0;
-  public double[] QMixdN = null;// , xMixdN = null;
+  public double[] QMixdN = null; // , xMixdN = null;
   double[] lnGammaMixdn = new double[MAX_NUMBER_OF_COMPONENTS];
   double lnGammaComp = 0.0, lnGammaMix = 0.0;
   double lnGammaCompdT = 0.0, lnGammaMixdT = 0.0;

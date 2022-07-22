@@ -36,13 +36,13 @@ public class OnshoreProcess1 {
             double productionSplit = 0.999; // 1.0 means only snohvit
 
             // MEG injection rate
-            double injectionRate = 6.3;// m^3/time
+            double injectionRate = 6.3; // m^3/time
             double wtFracMEG = 0.9;
             double molMEG = wtFracMEG * injectionRate * 1.117 * 1000.0 / 3600.0 / 0.062;
             double molwater = (1.0 - wtFracMEG) * injectionRate * 1.0 * 1000.0 / 3600.0 / 0.018;
 
             // Snohvit reservoir system
-            double reservoirGasMolarMassSnohvit = 0.02186;// kg/mol
+            double reservoirGasMolarMassSnohvit = 0.02186; // kg/mol
             double reservoirGasFlowSnohvit = productionSplit * totalProductionRate; // kg/time
                                                                                     // Designbasis:
                                                                                     // 223.04
@@ -67,7 +67,7 @@ public class OnshoreProcess1 {
                     C19_d_s = 0.845, C20plus_d_s = 0.872;
 
             // Albatross reservoir system
-            double reservoirGasMolarMassAlbatross = 0.022;// kg/mol
+            double reservoirGasMolarMassAlbatross = 0.022; // kg/mol
             double reservoirGasFlowAlbatross = (1.0 - productionSplit) * totalProductionRate; // kg/time
             double reservoirTemperatureAlbatross = 273.15 + 65.0; // K
             double reservoirPressureAlbatross = 210.0; // bar

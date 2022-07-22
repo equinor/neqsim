@@ -159,7 +159,7 @@ public class ComponentPR extends ComponentEos {
         if (componentName.equals("MEG")) {
             return 0.00000000000000000007101030813216131;
         }
-        return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB);/// Math.pow(ThermodynamicConstantsInterface.avagadroNumber,
+        return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB); /// Math.pow(ThermodynamicConstantsInterface.avagadroNumber,
                                                                           /// 2.0 / 3.0);
     }
 }

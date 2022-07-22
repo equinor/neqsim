@@ -82,10 +82,10 @@ public class Conductivity extends
                  */
             }
             double wigthFraci = liquidPhase.getPhase().getWtFrac(i);
-            conductivity += wigthFraci * pureComponentConductivity[i];/// tempVar;
+            conductivity += wigthFraci * pureComponentConductivity[i]; /// tempVar;
             // conductivity = conductivity +
             // liquidPhase.getPhase().getComponents()[i].getx() *
-            // pureComponentConductivity[i];///tempVar;
+            // pureComponentConductivity[i]; ///tempVar;
         }
 
         return conductivity;

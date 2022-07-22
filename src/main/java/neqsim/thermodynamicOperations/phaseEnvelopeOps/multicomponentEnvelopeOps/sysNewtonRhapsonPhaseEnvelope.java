@@ -262,7 +262,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
                             - system.getBeta())
                     * system.getBeta() * system.getPhase(0).getComponents()[i].getK();
             for (int j = 0; j < numberOfComponents; j++) {
-                dij = i == j ? 1.0 : 0.0;// Kroneckers deltaget
+              dij = i == j ? 1.0 : 0.0; // Kroneckers deltaget
                 tempJ = -dij + dij * dlnydlnK - dij * dlnxdlnK;
                 Jac.set(i, j, tempJ);
             }
@@ -308,7 +308,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         }
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
-                dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+              dij = i == j ? 1.0 : 0.0; // Kroneckers delta
                 tempJ = dij + system.getPhase(0).getComponents()[i].getdfugdx(j) * dyidlnk[j]
                         - system.getPhase(1).getComponents()[i].getdfugdx(j) * dxidlnk[j];
                 Jac.set(i, j, tempJ);

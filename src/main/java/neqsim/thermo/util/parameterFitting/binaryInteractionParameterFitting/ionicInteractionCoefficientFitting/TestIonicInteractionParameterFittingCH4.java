@@ -35,7 +35,7 @@ public class TestIonicInteractionParameterFittingCH4 {
 
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM Co2Ch4MDEA WHERE loading<1.9");// AND
+    ResultSet dataSet = database.getResultSet("SELECT * FROM Co2Ch4MDEA WHERE loading<1.9"); // AND
                                                                                             // temperature=313.15
                                                                                             // AND
                                                                                             // pressure<210
@@ -44,7 +44,7 @@ public class TestIonicInteractionParameterFittingCH4 {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND
     // Reference='Lemoine2000'
-    double guess[] = {-0.0001617266, 0.5 * 1e-3};// , -0.0932324951};//, 0.6465043774,};
+    double guess[] = {-0.0001617266, 0.5 * 1e-3}; // , -0.0932324951}; //, 0.6465043774,};
     // -0,0001550096 0,0007612383
 
     // double guess[] = {-0.0000309356,-0.1469925592,-0.0272808384};
@@ -95,7 +95,7 @@ public class TestIonicInteractionParameterFittingCH4 {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND
     // Reference='Lemoine2000'
-    dataSet = database.getResultSet("SELECT * FROM Co2Ch4MDEA WHERE loading<1.9");// AND
+    dataSet = database.getResultSet("SELECT * FROM Co2Ch4MDEA WHERE loading<1.9"); // AND
                                                                                   // temperature=313.15
                                                                                   // AND
                                                                                   // pressure<210

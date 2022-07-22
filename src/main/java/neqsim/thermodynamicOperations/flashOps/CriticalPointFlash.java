@@ -67,7 +67,7 @@ public class CriticalPointFlash extends Flash {
             double tempJ = 0;
             for (int i = 0; i < numberOfComponents; i++) {
                 for (int j = 0; j < numberOfComponents; j++) {
-                    dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+                  dij = i == j ? 1.0 : 0.0; // Kroneckers delta
 
                     tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase()
                             - 1.0 / system.getPhase(0).getNumberOfMolesInPhase()
@@ -98,7 +98,7 @@ public class CriticalPointFlash extends Flash {
         double tempJ = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
-                dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+              dij = i == j ? 1.0 : 0.0; // Kroneckers delta
 
                 tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase()
                         - 1.0 / system.getPhase(0).getNumberOfMolesInPhase()
@@ -186,7 +186,7 @@ public class CriticalPointFlash extends Flash {
             // int i = Mmatrix.eig().getNumberOfEigenvalues();
             SimpleMatrix eigenVector = Mmatrix.eig().getEigenVector(0);
             SimpleMatrix evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
-            detM = Mmatrix.determinant();// evalMatrix.get(0, 0);
+            detM = Mmatrix.determinant(); // evalMatrix.get(0, 0);
             int iter = 0;
             system.setTemperature(system.getTemperature() + dT);
 
@@ -200,7 +200,7 @@ public class CriticalPointFlash extends Flash {
                 i = Mmatrix.eig().getNumberOfEigenvalues();
                 eigenVector = Mmatrix.eig().getEigenVector(0);
                 evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
-                detM = Mmatrix.determinant();// evalMatrix.get(0, 0);
+                detM = Mmatrix.determinant(); // evalMatrix.get(0, 0);
                 ddetdT = (detM - olddetM) / dT;
                 // dTOld = dT;
                 dT = -detM / ddetdT;
@@ -211,7 +211,7 @@ public class CriticalPointFlash extends Flash {
                 system.setTemperature(oldTemp + dT);
                 logger.info("Temperature " + oldTemp + " dT " + dT + " evalMatrix "
                         + evalMatrix.get(0, 0));
-            } while (Math.abs(dT) > 1e-8 && iter < 112);// && (Math.abs(dT) < Math.abs(dTOld) ||
+              } while (Math.abs(dT) > 1e-8 && iter < 112); // && (Math.abs(dT) < Math.abs(dTOld) ||
                                                         // iter < 3));
 
             double dVc = Vc0 / 100.0;

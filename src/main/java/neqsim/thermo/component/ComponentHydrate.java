@@ -186,7 +186,7 @@ public class ComponentHydrate extends Component {
                             tempy += ((ComponentHydrate) phase.getComponent(j))
                                     .calcYKI(hydrateStructure, cavType, phase);
                             // System.out.println("tempny " +tempy);
-                            // System.out.println("temp ny " + this);//phase.getComponent(j));
+                            // System.out.println("temp ny " + this); //phase.getComponent(j));
                         }
                         val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
                     }

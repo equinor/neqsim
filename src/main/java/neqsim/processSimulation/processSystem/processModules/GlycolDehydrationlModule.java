@@ -290,7 +290,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
       numberOfMoles =
           tempStream.getThermoSystem().getPhase(0).getComponent("TEG").getNumberOfmoles();
       oldError = error;
-      error = (tempStream.getThermoSystem().getPhase(0).getComponent("water").getx() - y0);// /
+      error = (tempStream.getThermoSystem().getPhase(0).getComponent("water").getx() - y0); // /
                                                                                            // y0;
 
       double derrordn = (error - oldError) / (numberOfMoles - oldNumberOfMoles);
@@ -347,7 +347,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     double yN = gasStreamToAbsorber.getThermoSystem().getPhase(0).getComponent("water").getx();
 
     // Estimates K value
-    double K = calcKglycol();// gasStreamToAbsorber.getThermoSystem().getPhase(1).getComponent("water").getFugacityCoefficient()
+    double K = calcKglycol(); // gasStreamToAbsorber.getThermoSystem().getPhase(1).getComponent("water").getFugacityCoefficient()
                              // /
                              // gasStreamToAbsorber.getThermoSystem().getPhase(0).getComponent("water").getFugacityCoefficient();
     gasStreamFromAbsorber = gasStreamToAbsorber.clone();

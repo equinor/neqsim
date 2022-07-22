@@ -63,7 +63,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     dialogContentPane.setLayout(new BorderLayout());
 
     String[] names = {"Name", "Value", "Unit"};
-    String[][] table = new String[16][3];// createTable(getProcessEquipment().getName());
+    String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 
     table[1][0] = "Separator Inner Diameter";
     table[1][1] = Double.toString(getInnerDiameter());
@@ -140,7 +140,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     // maxDesignVolumeFlow = ((Compressor)
     // getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5;
 
-    double maxGasVelocity = 1;// Math.sqrt((liqDensity - gasDensity) / gasDensity);
+    double maxGasVelocity = 1; // Math.sqrt((liqDensity - gasDensity) / gasDensity);
     innerDiameter = Math.sqrt(4.0 * getMaxDesignVolumeFlow()
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
     tantanLength = innerDiameter * 5.0;
@@ -148,8 +148,9 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     // alternative design
     // double bubbleDiameter = 250.0e-6;
-    // double bubVelocity = 1;// 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity
-    double Ar = 1.0;// ((Separator) getProcessEquipment()).getThermoSystem().getPhase(1).getVolume()
+    // double bubVelocity = 1; // 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity
+    double Ar = 1.0; // ((Separator)
+                     // getProcessEquipment()).getThermoSystem().getPhase(1).getVolume()
                     // / 1e5 / bubVelocity;
     double Daim = Math.sqrt(Ar / 4.0);
     double Length2 = 4.0 * Daim;

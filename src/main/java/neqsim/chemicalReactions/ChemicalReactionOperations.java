@@ -377,7 +377,7 @@ public class ChemicalReactionOperations
       }
     }
     // System.out.println("change " + changeMoles);
-    system.initTotalNumberOfMoles(changeMoles);// x_solve.get(NELE,0)*n_t);
+    system.initTotalNumberOfMoles(changeMoles); // x_solve.get(NELE,0)*n_t);
     system.initBeta(); // this was added for mass trans calc
     system.init_x_y();
     system.init(1);

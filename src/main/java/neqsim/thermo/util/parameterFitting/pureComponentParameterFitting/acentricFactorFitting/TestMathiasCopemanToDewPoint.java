@@ -104,7 +104,7 @@ public class TestMathiasCopemanToDewPoint {
       }
     }
 
-    dataSet = database.getResultSet("SELECT * FROM dewPointDataSynthHCStatoil WHERE Pressure<80.0");// "0
+    dataSet = database.getResultSet("SELECT * FROM dewPointDataSynthHCStatoil WHERE Pressure<80.0"); // "0
                                                                                                     // AND
                                                                                                     // reference='Morch2004gas1'");
 

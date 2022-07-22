@@ -125,7 +125,7 @@ public class Viscosity extends
                         liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)
                                 * (1.0 / liquidPhase.getPhase().getTemperature()
                                         - 1.0 / liquidPhase.getPhase().getComponents()[i]
-                                                .getLiquidViscosityParameter(1)));// liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(2)*liquidPhase.getPhase().getTemperature()+liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)/liquidPhase.getPhase().getTemperature()+liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)*Math.pow(liquidPhase.getPhase().getTemperature(),2));
+                                .getLiquidViscosityParameter(1))); // liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(2)*liquidPhase.getPhase().getTemperature()+liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)/liquidPhase.getPhase().getTemperature()+liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)*Math.pow(liquidPhase.getPhase().getTemperature(),2));
             } else {
                 // System.out.println("no pure component viscosity model defined for component "
                 // + liquidPhase.getPhase().getComponents()[i].getComponentName());

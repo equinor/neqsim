@@ -40,7 +40,7 @@ public class TestIonicInteractionParameterFitting_CO2 {
         // double guess[] = {0.0004463876, -0.0001475081, 0.0021294606, 0.0002761438,
         // -0.0003450177}; //Detailed reactions, no data for 75 wt% MDEA or temp > 400K,
         // more iterations
-        double guess[] = {-0.0001660156, -0.0006035675, -0.0000068587, -0.0002164970};// ,0.0005};
+        double guess[] = {-0.0001660156, -0.0006035675, -0.0000068587, -0.0002164970}; // ,0.0005};
                                                                                       // //Detailed
                                                                                       // reactions,
                                                                                       // no data for

@@ -169,7 +169,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
             for (int i = 0; i < experimentalData[0].length; i++) {
                 CVDFunction function = new CVDFunction();
-                double[] guess = new double[] {234.0 / 1000.0};// getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus()/1000.0};
+                double[] guess = new double[] {234.0 / 1000.0}; // getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus()/1000.0};
                 function.setInitialGuess(guess);
 
                 SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();

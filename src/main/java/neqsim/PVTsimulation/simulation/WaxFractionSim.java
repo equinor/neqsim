@@ -68,7 +68,7 @@ public class WaxFractionSim extends BasePVTsimulation {
 
             for (int i = 0; i < experimentalData[0].length; i++) {
                 WaxFunction function = new WaxFunction();
-                double guess[] = new double[optimizer.getNumberOfTuningParameters()];// getThermoSystem().getWaxModel().getWaxParameters();
+                double guess[] = new double[optimizer.getNumberOfTuningParameters()]; // getThermoSystem().getWaxModel().getWaxParameters();
 
                 ArrayList<Double> guessArray = new ArrayList<Double>();
                 for (int p = 0; p < 3; p++) {

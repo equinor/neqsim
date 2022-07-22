@@ -32,7 +32,7 @@ public class BasePVTsimulation implements SimulationInterface {
      * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public BasePVTsimulation(SystemInterface tempSystem) {
-        thermoSystem = tempSystem;// tempSystem.clone();
+      thermoSystem = tempSystem; // tempSystem.clone();
         thermoOps = new ThermodynamicOperations(getThermoSystem());
         baseThermoSystem = thermoSystem.clone();
     }

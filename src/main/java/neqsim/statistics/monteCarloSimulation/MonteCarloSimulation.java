@@ -98,7 +98,7 @@ public class MonteCarloSimulation {
             }
         }
 
-        Matrix report = new Matrix(reportMatrix);// .print(10,2);
+        Matrix report = new Matrix(reportMatrix); // .print(10,2);
         report.print(10, 17);
     }
 }

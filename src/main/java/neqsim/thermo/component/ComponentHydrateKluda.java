@@ -112,7 +112,7 @@ public class ComponentHydrateKluda extends Component {
                         tempy += ((ComponentHydrateKluda) phase.getComponent(j))
                                 .calcYKI(hydrateStructure, cavType, phase);
                         logger.info("tempny " + tempy);
-                        // System.out.println("temp ny " + this);//phase.getComponent(j));
+                        // System.out.println("temp ny " + this); //phase.getComponent(j));
                     }
                     val += cavprwat[hydrateStructure][cavType] * Math.log(1.0 - tempy);
                 }
@@ -247,7 +247,7 @@ public class ComponentHydrateKluda extends Component {
      */
     public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         double cki = 4.0 * pi / (boltzmannConstant * phase.getTemperature())
-                * (potIntegral(0, stucture, cavityType, phase));// +0*potIntegral(1,stucture,
+            * (potIntegral(0, stucture, cavityType, phase)); // +0*potIntegral(1,stucture,
                                                                 // cavityType,phase)+0*potIntegral(2,stucture,
                                                                 // cavityType,phase));
         // System.out.println("cki " + cki);

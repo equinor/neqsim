@@ -266,7 +266,7 @@ public class graph2b extends javax.swing.JFrame {
      * Integer.valueOf(9), Integer.valueOf(9) }, { Integer.valueOf(3), Integer.valueOf(7),
      * Integer.valueOf(11), Integer.valueOf(10) } };
      */
-    return null;// new DefaultCategoryDataset(data);
+    return null; // new DefaultCategoryDataset(data);
   }
 
   private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_jButton1ActionPerformed

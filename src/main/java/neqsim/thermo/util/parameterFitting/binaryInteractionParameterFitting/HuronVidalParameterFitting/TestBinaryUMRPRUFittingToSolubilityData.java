@@ -37,7 +37,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
     ResultSet dataSet = database.getResultSet(
         "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-decane'");
 
-    double parameterGuess[] = {188.385052774267, -0.84022345};// , 2630.871733876947};
+    double parameterGuess[] = {188.385052774267, -0.84022345}; // , 2630.871733876947};
 
     try {
       int p = 0;

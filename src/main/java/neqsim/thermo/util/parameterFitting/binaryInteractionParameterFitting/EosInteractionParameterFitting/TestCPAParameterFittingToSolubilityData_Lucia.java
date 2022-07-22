@@ -36,7 +36,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
     ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM luciadata8 WHERE Component='methane' AND Temperature>410.15 AND Pressure<100000000 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure");// AND
+        "SELECT * FROM luciadata8 WHERE Component='methane' AND Temperature>410.15 AND Pressure<100000000 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure"); // AND
                                                                                                                                                                          // Reference='Houghton1957'
                                                                                                                                                                          // AND
                                                                                                                                                                          // Reference<>'Nighswander1989'
@@ -87,7 +87,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
         double sdev = val / 100.0;
         SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
         sample.setFunction(function);
-        sample.setThermodynamicSystem(testSystem);// 34.7
+        sample.setThermodynamicSystem(testSystem); // 34.7
         sample.setReference(Double.toString(testSystem.getTemperature()));
         // double parameterGuess[] = {0.05155112588}; //srk
         double parameterGuess[] = {0.0459393339}; // cpa-srk- metan 23.658199 abs dev bias
@@ -111,7 +111,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
 
     // dataSet = database.getResultSet( "SELECT * FROM LuciaData WHERE
     // Component='methane' AND ID<3000 AND Temperature<380 AND Pressure<100000000
-    // AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure");// AND
+    // AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure"); // AND
     // Reference='Houghton1957' AND Reference<>'Nighswander1989' AND
     // Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
     dataSet = database.getResultSet(

@@ -229,7 +229,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
      * @return a double
      */
     public double dFCPAdTdT() {
-        return dFCPAdTdT;// -1.0 / 2.0 * hcpatotdTdT;
+      return dFCPAdTdT; // -1.0 / 2.0 * hcpatotdTdT;
     }
 
     /**
@@ -718,7 +718,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
         // System.out.println("pressure " + Z*R*temperature/getMolarVolume());
         // if(iterations>=100) throw new util.exception.TooManyIterationsException();
         // System.out.println("error in volume " +
-        // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
+        // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV())); // + "
         // firstterm " + (R*temperature/molarVolume) + " second " +
         // R*temperature*dFdV());
         if (Double.isNaN(getMolarVolume())) {

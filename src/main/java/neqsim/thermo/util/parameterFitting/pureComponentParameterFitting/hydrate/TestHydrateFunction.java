@@ -36,7 +36,7 @@ public class TestHydrateFunction {
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
 
-    double[] guess = {155.8090060223, 3.1907109417, 0.4069986258};// methane fitted statoil
+    double[] guess = {155.8090060223, 3.1907109417, 0.4069986258}; // methane fitted statoil
                                                                   // sCPA-MC
     // double[] guess = { 176.4, 3.2641, 0.5651}; //ethane fitted statoil sCPA-MC
     // double[] guess = {126.5783867132, 3.1325067483, 0.3591889027}; // nitrogen
@@ -46,11 +46,11 @@ public class TestHydrateFunction {
     // double[] guess = { 225.1504438988, 3.0810162204, 0.8708186545}; // i-butane
     // fitted statoil sCPA-MC
 
-    // double[] guess = { 154.7937576383, 3.2008300801, 0.4526279094};//methane
+    // double[] guess = { 154.7937576383, 3.2008300801, 0.4526279094}; //methane
     // fitted sCPA
     // double[] guess = { 170.1623828321, 3.0372071690, 0.6846338805}; //CO2
-    // double[] guess = { 154.0936564578, 3.1720449934, 0.4436459226};//,
-    // -293247.7186651294};//methane fitted'
+    // double[] guess = { 154.0936564578, 3.1720449934, 0.4436459226}; //,
+    // -293247.7186651294}; //methane fitted'
     // double[] guess = {17.5988597357, -6056.9305919979};
 
     // ljeps, ljdiam,a

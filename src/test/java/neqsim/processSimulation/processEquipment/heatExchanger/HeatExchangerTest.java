@@ -41,7 +41,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest{
 
     HeatExchanger heatEx = new HeatExchanger("heatEx");
     heatEx.setFeedStream(0, stream_Hot);
-    heatEx.setFeedStream(1, stream_Cold);// resyc.getOutStream());
+    heatEx.setFeedStream(1, stream_Cold); // resyc.getOutStream());
 
     Separator sep = new Separator("sep", stream_Hot);
 

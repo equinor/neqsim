@@ -123,7 +123,8 @@ public class PhaseBWRSEos extends PhaseSrkEos {
      * @return a double
      */
     public double getGammadRho() {
-        return 0.0;// -2.0/Math.pow(((ComponentBWRS)componentArray[0]).getRhoc(),3.0);//-1.0/(rhoc*rhoc);
+      return 0.0; // -2.0/Math.pow(((ComponentBWRS)componentArray[0]).getRhoc(),3.0);
+                  // //-1.0/(rhoc*rhoc);
     }
 
     /**
@@ -461,7 +462,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         // init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
         // System.out.println("dFdT " + ((fold-fnew)/(2*dv)) + " super " +
         // (getFpoldT()+getFexpdT())*1e3+ " phasetype " +getPhaseTypeName());
-        return (getFpoldT() + getFexpdT()) * 1e3;// (fold-fnew)/(2*dv);
+        return (getFpoldT() + getFexpdT()) * 1e3; // (fold-fnew)/(2*dv);
 
         // // System.out.println("FT " + getFpoldT()*1e3+ " "+ getFexpdT()*1e3 + " super
         // " + super.dFdT() + " phasetype " +getPhaseTypeName());
@@ -546,7 +547,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         double Btemp = getB();
-        setMolarVolume(1.0 / BonV * Btemp);// numberOfMolesInPhase;
+        setMolarVolume(1.0 / BonV * Btemp); // numberOfMolesInPhase;
         int iterations = 0;
         int maxIterations = 10000;
         double guesPres = pressure;

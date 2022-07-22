@@ -127,7 +127,7 @@ public class multiThreadTest {
                 e.printStackTrace();
             }
         }
-        // } while (processThread1.isAlive());// && processThread2.isAlive());
+        // } while (processThread1.isAlive()); // && processThread2.isAlive());
 
         System.out.println("Time taken for simulation = " + (System.currentTimeMillis() - time));
 

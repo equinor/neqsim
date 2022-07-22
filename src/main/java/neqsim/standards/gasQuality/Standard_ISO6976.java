@@ -386,7 +386,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     nf.applyPattern("#.#####E0");
     String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
     // String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
-    table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
+    table[0][0] = ""; // getPhases()[0].getPhaseTypeName(); //"";
 
     for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {

@@ -55,7 +55,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   double lrOn = 1.0;
   double bornOn = 1.0;
   // double gammLRdV=0.0;
-  // PhaseInterface[] refPhase;// = new PhaseInterface[10];
+  // PhaseInterface[] refPhase; // = new PhaseInterface[10];
 
   /**
    * <p>
@@ -574,7 +574,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
     }
 
-    // if(phaseType==0) System.out.println("density " + getDensity());//"BonV: " +
+    // if(phaseType==0) System.out.println("density " + getDensity()); //"BonV: " +
     // BonV + " "+" itert: " + iterations +" " + " phase " + phaseType+ " " + h + "
     // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
     // + fVV());
@@ -687,7 +687,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     double Y = getSolventDiElectricConstant() - 1.0;
     double dXdf = getEpsIonicdVdV() * -3.0 / 2.0 / Math.pow(getEpsIonic() / 2.0 + 1.0, 2.0)
         + getEpsIonicdV() * getEpsIonicdV() * 3.0 / 2.0 / Math.pow(getEpsIonic() / 2.0 + 1.0, 3.0);
-    return Y * dXdf;// + Y*dXdf;
+    return Y * dXdf; // + Y*dXdf;
   }
 
   /** {@inheritDoc} */
@@ -797,7 +797,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFLRdV() {
-    return (FLRV() + dFdAlphaLR() * alphaLRdV) * 1e-5;// + FLRGammaLR()*gammLRdV +
+    return (FLRV() + dFdAlphaLR() * alphaLRdV) * 1e-5; // + FLRGammaLR()*gammLRdV +
                                                       // 0*FLRXLR()*XLRdGammaLR()*gammLRdV)*1e-5;
   }
 

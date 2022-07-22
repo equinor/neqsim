@@ -20,7 +20,7 @@ public class TestNeqsim {
      */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
-        SystemInterface testFluid = new SystemSrkEos(298.15, 10.0);// SystemSrkCPAstatoil(298.1,
+      SystemInterface testFluid = new SystemSrkEos(298.15, 10.0); // SystemSrkCPAstatoil(298.1,
                                                                    // 10.9); //298.15 K
 
         testFluid.addComponent("methane", 8.8316);
@@ -58,7 +58,7 @@ public class TestNeqsim {
         // for(int i=0;i<10;i++){
         Stream stream1 = new Stream("stream1", testFluid);
         Compressor compressor1 = new Compressor("compressor1", stream1);
-        compressor1.setOutletPressure(26.590909);// (20+5*i)
+        compressor1.setOutletPressure(26.590909); // (20+5*i)
         compressor1.setUsePolytropicCalc(true);
         compressor1.setPolytropicEfficiency(0.64951);
         Stream stream2 = new Stream("stream2", compressor1.getOutletStream());

@@ -47,7 +47,7 @@ public class SystemDuanSun extends SystemEos {
         phaseArray[0].setTemperature(T);
         phaseArray[0].setPressure(P);
         for (int i = 1; i < numberOfPhases; i++) {
-            phaseArray[i] = new PhaseDuanSun();// new PhaseGENRTLmodifiedWS();
+          phaseArray[i] = new PhaseDuanSun(); // new PhaseGENRTLmodifiedWS();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
         }
@@ -73,7 +73,7 @@ public class SystemDuanSun extends SystemEos {
         phaseArray[0].setTemperature(T);
         phaseArray[0].setPressure(P);
         for (int i = 1; i < numberOfPhases; i++) {
-            phaseArray[i] = new PhaseDuanSun();// new PhaseGENRTLmodifiedWS();
+          phaseArray[i] = new PhaseDuanSun(); // new PhaseGENRTLmodifiedWS();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
         }

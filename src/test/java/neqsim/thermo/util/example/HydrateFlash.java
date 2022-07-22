@@ -87,10 +87,10 @@ public class HydrateFlash {
             // testOps.TPflash();
             testOps.hydrateFormationTemperature();
             // testOps.calcTOLHydrateFormationTemperature();
-            // double[] temp = {288.15, 285.2, 283.5};//, 277.3};//, 285.15};//, 284.0};//,
-            // 283.5, 283.0};//, 280.15};// , 268.15, 288.0, 274.6, 274.2, 273.7,
-            // 273.15};//, 297.8, 297.5};
-            // double[] pres = {100.0, 100.0, 100.0, 100, 100, 100};//, 100, 100,
+            // double[] temp = {288.15, 285.2, 283.5}; //, 277.3}; //, 285.15}; //, 284.0}; //,
+            // 283.5, 283.0}; //, 280.15}; // , 268.15, 288.0, 274.6, 274.2, 273.7,
+            // 273.15}; //, 297.8, 297.5};
+            // double[] pres = {100.0, 100.0, 100.0, 100, 100, 100}; //, 100, 100,
             // 100,100,100};
             // testOps.calcImobilePhaseHydrateTemperature(temp, pres);
             // testOps.dewPointTemperatureFlash();

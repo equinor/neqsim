@@ -46,8 +46,8 @@ public class TPflashTest {
         // testSystem.addComponent("n-butane", 0.9);
         // testSystem.addComponent("i-pentane", 10.24);
         // testSystem.addComponent("water", 0.4);
-        testSystem.addComponent("MEG", 99.5);// , "kg/sec");
-        testSystem.addComponent("water", 0.5);// , "kg/sec");
+        testSystem.addComponent("MEG", 99.5); // , "kg/sec");
+        testSystem.addComponent("water", 0.5); // , "kg/sec");
         // testSystem.addTBPfraction("C7", 10.36, 110.0 / 1000.0, 0.82);
         // testSystem.addTBPfraction("C10", 5.31, 150.0 / 1000.0, 0.89);
         // testSystem.addComponent("water", 1.1);

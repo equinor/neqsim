@@ -45,7 +45,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     int totalNumberOfAccociationSites = 0;
     int[][][] selfAccociationScheme = null;
     int[][][][] crossAccociationScheme = null;
-    int[] activeAccosComp = null;// new int[100];
+    int[] activeAccosComp = null; // new int[100];
     private double[] lngi;
     int[] moleculeNumber = null, assSiteNumber = null;
     private double[][] gvector = null, delta = null, deltaNog = null, deltadT = null,
@@ -56,7 +56,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
             QMatksiksiksi = null, KlkVVVMatrix = null, KlkVVMatrix = null, udotTimesmiMatrix = null,
             ksiMatrix = null, KlkMatrix = null, hessianMatrix = null, hessianInvers = null,
             KlkVMatrix = null;
-    private DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null;// new
+    private DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null; // new
                                                                                    // DenseMatrix64F(getTotalNumberOfAccociationSites(),
                                                                                    // 1);
 
@@ -340,7 +340,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
                             if (moleculeNumber[j] == p) {
                                 t2 = 1.0 / mVector.get(j, 0);
                             }
-                            Klkni[p][i][j] = Klk * (t1 + t2 + lngi[p]);// ((ComponentSrkCPA)
+                            Klkni[p][i][j] = Klk * (t1 + t2 + lngi[p]); // ((ComponentSrkCPA)
                                                                        // getComponent(p)).calc_lngi(this));
                             Klkni[p][j][i] = Klkni[p][i][j];
                         }
@@ -360,15 +360,15 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         SimpleMatrix XVtranspose = XV.transpose();
 
         FCPA = mVector.transpose().mult(uMatrix.minus(ksiMatrix.elementMult(udotMatrix).scale(0.5)))
-                .get(0, 0);// QCPA.get(0,
-                           // 0);//*0.5;
+            .get(0, 0); // QCPA.get(0,
+                        // 0); //*0.5;
 
         dFCPAdV = ksiMatrixTranspose.mult(KlkVMatrixksi).get(0, 0) * (-0.5);
         SimpleMatrix KlkVVMatrixTImesKsi = KlkVVMatrix.mult(ksiMatrix);
         dFCPAdVdV = ksiMatrixTranspose.mult(KlkVVMatrixTImesKsi).scale(-0.5)
                 .minus(KlkVMatrixksi.transpose().mult(XV)).get(0, 0);
 
-        SimpleMatrix QVVV = ksiMatrixTranspose.mult(KlkVVVMatrix.mult(ksiMatrix));// .scale(-0.5);
+        SimpleMatrix QVVV = ksiMatrixTranspose.mult(KlkVVVMatrix.mult(ksiMatrix)); // .scale(-0.5);
         SimpleMatrix QVVksi = KlkVVMatrixTImesKsi.scale(-1.0);
         SimpleMatrix QksiVksi = KlkVMatrix.scale(-1.0);
 
@@ -391,7 +391,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         // KlkTMatrix = new SimpleMatrix(KlkdT);
         SimpleMatrix KlkTMatrixTImesKsi = KlkTMatrix.mult(ksiMatrix);
         // dQdT
-        SimpleMatrix tempMatrix2 = ksiMatrixTranspose.mult(KlkTMatrixTImesKsi);// .scale(-0.5);
+        SimpleMatrix tempMatrix2 = ksiMatrixTranspose.mult(KlkTMatrixTImesKsi); // .scale(-0.5);
         dFCPAdT = tempMatrix2.get(0, 0) * (-0.5);
 
         // SimpleMatrix KlkTVMatrix = new SimpleMatrix(KlkdTdV);
@@ -435,7 +435,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
             // 1).print(10, 10);
             // Matrix tempMatrix20 = miMatrix.getMatrix(assSites, assSites, 0,
             // totalNumberOfAccociationSites -
-            // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));//
+            // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));
+            // //
             // ksiMatrix.transpose().times(KlkTMatrix.times(ksiMatrix)).times(-0.5);
             // System.out.println("dQdn ");
             // tempMatrix20.print(10, 10);
@@ -452,7 +453,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
             // System.out.println("temp4 matrix");
             // tempMatrix4.print(10, 10);
             // Matrix tempMatrix5 = amatrix.minus(tempMatrix4);
-            SimpleMatrix tempMatrix6 = hessianInvers.mult(tempMatrix5);// .scale(-1.0);
+            SimpleMatrix tempMatrix6 = hessianInvers.mult(tempMatrix5); // .scale(-1.0);
             // System.out.println("dXdni");
             // tempMatrix4.print(10, 10);
             // tempMatrix5.print(10, 10);
@@ -619,7 +620,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
          * 0.0; for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) { double
          * xai = ((ComponentSrkCPA) componentArray[i]).getXsite()[j]; double xaidT =
          * ((ComponentSrkCPA) componentArray[i]).getXsitedT()[j]; tot += 1.0 / xai * xaidT - 0.5 *
-         * xaidT;// - 1.0 / 2.0 * xai + 1.0 / 2.0); } ans +=
+         * xaidT; // - 1.0 / 2.0 * xai + 1.0 / 2.0); } ans +=
          * componentArray[i].getNumberOfMolesInPhase() * tot; } System.out.println("dFCPAdT1  " +
          * ans + " dfcpa2 " +dFCPAdT); return ans;
          */
@@ -781,7 +782,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         // getMolarVolume());
         // if(iterations>=100) throw new util.exception.TooManyIterationsException();
         // System.out.println("error in volume " +
-        // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
+        // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV())); // + "
         // firstterm " + (R*temperature/molarVolume) + " second " +
         // R*temperature*dFdV());
         // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
@@ -1010,7 +1011,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
             CommonOps_DDRM.mult(hessianInvers.getDDRM(), corr3Matrix, corr4Matrix);
             // SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
             // corrMatrix =
-            // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));//.scale(-1.0);
+            // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));
+            // //.scale(-1.0);
             temp = 0;
             // System.out.println("print SimpleMatrix ...");
             // corrMatrix.print(10, 10);
@@ -1306,7 +1308,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         // getMolarVolume());
         // if(iterations>=100) throw new util.exception.TooManyIterationsException();
         // System.out.println("error in volume " +
-        // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
+        // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV())); // + "
         // firstterm " + (R*temperature/molarVolume) + " second " +
         // R*temperature*dFdV());
         // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh + " B
@@ -1782,7 +1784,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
             // 1).print(10, 10);
             // Matrix tempMatrix20 = miMatrix.getMatrix(assSites, assSites, 0,
             // totalNumberOfAccociationSites -
-            // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));//
+            // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));
+            // //
             // ksiMatrix.transpose().times(KlkTMatrix.times(ksiMatrix)).times(-0.5);
             // System.out.println("dQdn ");
             // tempMatrix20.print(10, 10);
@@ -1799,7 +1802,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
             // System.out.println("temp4 matrix");
             // tempMatrix4.print(10, 10);
             // Matrix tempMatrix5 = amatrix.minus(tempMatrix4);
-            SimpleMatrix tempMatrix6 = hessianInvers.mult(tempMatrix5);// .scale(-1.0);
+            SimpleMatrix tempMatrix6 = hessianInvers.mult(tempMatrix5); // .scale(-1.0);
             // System.out.println("dXdni");
             // tempMatrix4.print(10, 10);
             // tempMatrix5.print(10, 10);
@@ -1899,7 +1902,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
             CommonOps_DDRM.mult(hessianInvers.getDDRM(), corr3Matrix, corr4Matrix);
             // SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
             // corrMatrix =
-            // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));//.scale(-1.0);
+            // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));
+            // //.scale(-1.0);
             temp = 0;
             // System.out.println("print SimpleMatrix ...");
             // corrMatrix.print(10, 10);
@@ -2103,7 +2107,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         // getMolarVolume());
         // if(iterations>=100) throw new util.exception.TooManyIterationsException();
         // System.out.println("error in volume " +
-        // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
+        // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV())); // + "
         // firstterm " + (R*temperature/molarVolume) + " second " +
         // R*temperature*dFdV());
         // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh + " B

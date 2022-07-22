@@ -38,7 +38,7 @@ public class SystemKentEisenberg extends SystemEos {
         phaseArray[0].setTemperature(T);
         phaseArray[0].setPressure(P);
         for (int i = 1; i < numberOfPhases; i++) {
-            phaseArray[i] = new PhaseKentEisenberg();// new PhaseGENRTLmodifiedWS();
+          phaseArray[i] = new PhaseKentEisenberg(); // new PhaseGENRTLmodifiedWS();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
         }
@@ -64,7 +64,7 @@ public class SystemKentEisenberg extends SystemEos {
         phaseArray[0].setTemperature(T);
         phaseArray[0].setPressure(P);
         for (int i = 1; i < numberOfPhases; i++) {
-            phaseArray[i] = new PhaseKentEisenberg();// new PhaseGENRTLmodifiedWS();
+          phaseArray[i] = new PhaseKentEisenberg(); // new PhaseGENRTLmodifiedWS();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
         }
