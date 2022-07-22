@@ -31,11 +31,19 @@ import neqsim.util.util.DoubleCloneable;
 public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
 
-  protected double distanceToCenterOfNode = 0, lengthOfNode = 0, veticalPositionOfNode = 0;
-  protected double[] hydraulicDiameter, reynoldsNumber;
+  protected double distanceToCenterOfNode = 0;
+  protected double lengthOfNode = 0;
+  protected double veticalPositionOfNode = 0;
+  protected double[] hydraulicDiameter;
+  protected double[] reynoldsNumber;
   protected int[] flowDirection;
-  protected double[] interphaseContactLength, wallContactLength, phaseFraction;
-  public double[] molarFlowRate, massFlowRate, volumetricFlowRate;
+  protected double[] interphaseContactLength;
+  protected double[] wallContactLength;
+  protected double[] phaseFraction;
+  public double[] molarFlowRate;
+  public double[] massFlowRate;
+  public double[] volumetricFlowRate;
+
   protected ThermodynamicOperations operations;
   protected String flowNodeType = null;
   protected FluidBoundaryInterface fluidBoundary = null;
@@ -48,7 +56,10 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   public double[] velocity;
   public GeometryDefinitionInterface pipe;
   protected InterphaseTransportCoefficientInterface interphaseTransportCoefficient;
-  protected double[] wallFrictionFactor, interphaseFrictionFactor;
+  protected double[] wallFrictionFactor;
+
+  protected double[] interphaseFrictionFactor;
+
   protected Double[] specifiedFrictionFactor = null;
   protected ThermodynamicOperations phaseOps;
 
@@ -444,7 +455,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
 
   /** {@inheritDoc} */
   @Override
-  public void setFluxes(double dn[]) {}
+  public void setFluxes(double[] dn) {}
 
   /** {@inheritDoc} */
   @Override

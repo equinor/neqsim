@@ -36,7 +36,7 @@ public class TestSolidComplexFunction {
 
     ResultSet dataSet = database.getResultSet(
         "SELECT * FROM comlexsolidfreezingdata WHERE Component1='TEG' AND Component2='water'");
-    // double parameterGuess[] = {0.1640550024};//, 7578.080};//, 245.0};
+    // double parameterGuess[] = {0.1640550024}; //, 7578.080}; //, 245.0};
     double parameterGuess[] = {0.119803125, 4482.0};
 
     try {

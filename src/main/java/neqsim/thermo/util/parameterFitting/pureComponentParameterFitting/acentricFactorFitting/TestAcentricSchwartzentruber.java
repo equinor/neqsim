@@ -69,7 +69,7 @@ public class TestAcentricSchwartzentruber {
 
         double guess[] = {0.09245, 0.9784, 2.244};
         // double guess[] ={0.1208932305, 0.9580163852, 0.9875864928} ; //mercury PROII -
-        // double guess[] = {0.4563609446};//, -140.87783836,44.122}; // nitrogen
+        // double guess[] = {0.4563609446}; //, -140.87783836,44.122}; // nitrogen
         function.setInitialGuess(guess);
 
         // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(280, 0.101);

@@ -64,9 +64,11 @@ public class PSFlash extends QfuncFlash {
   /** {@inheritDoc} */
   @Override
   public double solveQ() {
-    double oldTemp = system.getTemperature(), nyTemp = system.getTemperature();
+    double oldTemp = system.getTemperature();
+    double nyTemp = system.getTemperature();
     int iterations = 1;
-    double error = 1.0, erorOld = 10.0e10;
+    double error = 1.0;
+    double erorOld = 10.0e10;
     double factor = 0.8;
 
     boolean correctFactor = true;
@@ -102,7 +104,7 @@ public class PSFlash extends QfuncFlash {
       tpFlash.run();
       system.init(2);
       erorOld = error;
-      error = Math.abs(calcdQdT());// Math.abs((nyTemp - oldTemp) / (nyTemp));
+      error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
       // if(error>erorOld) factor *= -1.0;
       // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
       // " error "+ error + " correction " + newCorr + " factor "+ factor);

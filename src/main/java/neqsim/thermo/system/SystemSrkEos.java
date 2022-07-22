@@ -18,7 +18,7 @@ public class SystemSrkEos extends SystemEos {
     public SystemSrkEos() {
         super();
         modelName = "SRK-EOS";
-        getCharacterization().setTBPModel("PedersenSRK");// (RiaziDaubert PedersenPR PedersenSRK
+        getCharacterization().setTBPModel("PedersenSRK"); // (RiaziDaubert PedersenPR PedersenSRK
         attractiveTermNumber = 0;
 
         for (int i = 0; i < numberOfPhases; i++) {

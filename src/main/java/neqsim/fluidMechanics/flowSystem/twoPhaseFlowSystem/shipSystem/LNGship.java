@@ -34,7 +34,7 @@ public class LNGship
   double initialNumberOffMoles;
   double molarBoilOffRate = 0.0;
   double dailyBoilOffVolume = 0.0;
-  private double endTime = 960;// 24.0 * 10;
+  private double endTime = 960; // 24.0 * 10;
   private Standard_ISO6976 standardISO6976 = null;
   StandardInterface standardDensity = null;
   double[] WI = null;
@@ -118,8 +118,8 @@ public class LNGship
       } else {
         thermoOperations.bubblePointTemperatureFlash();
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     getThermoSystem().init(0);
 
@@ -155,8 +155,8 @@ public class LNGship
       if (!isSetInitialTemperature()) {
         thermoOperations.bubblePointTemperatureFlash();
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     logger.info("temperature start " + getThermoSystem().getTemperature());
     // todo: getTimeSeries().init(this);
@@ -222,8 +222,8 @@ public class LNGship
           if (!(j == 0 && isSetInitialTemperature())) {
             thermoOperations.bubblePointTemperatureFlash();
           }
-        } catch (Exception e) {
-          e.printStackTrace();
+        } catch (Exception ex) {
+          logger.error(ex.getMessage());
         }
         double[] xgas = new double[getThermoSystem().getPhase(0).getNumberOfComponents()];
 
@@ -282,7 +282,7 @@ public class LNGship
 
         tankTemperature[j] = getThermoSystem().getTemperature();
         volume[j] = getThermoSystem().getNumberOfMoles()
-            * getThermoSystem().getPhase(1).getMolarMass() / density[j];// density[0];
+            * getThermoSystem().getPhase(1).getMolarMass() / density[j]; // density[0];
 
         this.standardISO6976.setReferenceType("mass");
         totalEnergy[j] =
@@ -305,8 +305,8 @@ public class LNGship
       double derrordn = (oldVolume - oldoldVolume) / (oldmolarBoilOffRate - oldoldmolarBoilOffRate);
       boilOffCorrection = (volume[numberOffTimeSteps - 1] - endVolume) / derrordn;
       if (iterations > 1) {
-        molarBoilOffRate += boilOffCorrection;// (volume[numberOffTimeSteps - 1] -
-                                              // endVolume) / derrordn;
+        molarBoilOffRate += boilOffCorrection; // (volume[numberOffTimeSteps - 1] -
+                                               // endVolume) / derrordn;
       } else {
         molarBoilOffRate = molarBoilOffRate * volume[numberOffTimeSteps - 1] / endVolume;
       }
@@ -317,8 +317,8 @@ public class LNGship
     try {
       thermoOperations.bubblePointTemperatureFlash();
       calcIdentifier = id;
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 
@@ -412,10 +412,10 @@ public class LNGship
      * testSystem.addComponent("nitrogen", 0.0136); testSystem.addComponent("methane", 0.9186);
      * testSystem.addComponent("ethane", 0.0526); testSystem.addComponent("propane", 0.0115);
      */
-    testSystem.addComponent("nitrogen", 0.691);// 0.93041);
-    testSystem.addComponent("methane", 91.93);// 92.637);
-    testSystem.addComponent("ethane", 5.651);// 4.876);
-    testSystem.addComponent("propane", 1.296);// 1.093);
+    testSystem.addComponent("nitrogen", 0.691); // 0.93041);
+    testSystem.addComponent("methane", 91.93); // 92.637);
+    testSystem.addComponent("ethane", 5.651); // 4.876);
+    testSystem.addComponent("propane", 1.296); // 1.093);
     testSystem.addComponent("i-butane", 0.122);
     testSystem.addComponent("n-butane", 0.289);
     testSystem.addComponent("i-pentane", 0.018);

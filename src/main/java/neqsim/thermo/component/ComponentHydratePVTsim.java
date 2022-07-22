@@ -73,7 +73,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                     database.getConnection().close();
                 } catch (Exception e) {
                     logger.error("error closing comp hydrate database....." + component_name);
-                    // e.printStackTrace();
+                    // logger.error(e.getMessage());
                 }
             }
         }

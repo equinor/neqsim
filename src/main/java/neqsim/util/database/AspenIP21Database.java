@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -17,6 +19,7 @@ import java.sql.Statement;
 public class AspenIP21Database
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(AspenIP21Database.class);
 
   protected Connection databaseConnection = null;
   private static String dataBaseType = "Karsto";
@@ -68,8 +71,8 @@ public class AspenIP21Database
         if (ctx != null) {
           ctx.close();
         }
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
     return null;

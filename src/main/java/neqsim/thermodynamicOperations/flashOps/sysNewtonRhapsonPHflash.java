@@ -155,7 +155,7 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     double tempJ = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-        dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+        dij = i == j ? 1.0 : 0.0; // Kroneckers delta
         tempJ = 1.0 / system.getBeta()
             * (dij / system.getPhases()[0].getComponents()[i].getx() - 1.0
                 + system.getPhases()[0].getComponents()[i].getdfugdx(j))
@@ -267,7 +267,7 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
       // u.equals(dx.timesEquals(1.0));
       fvec.print(10, 10);
       logger.info("iter: " + iter);
-    } while (fvec.norm2() > 1.e-10 && iter < 1000);// && Double.isNaN(dx.norm2()));
+    } while (fvec.norm2() > 1.e-10 && iter < 1000); // && Double.isNaN(dx.norm2()));
     logger.info("iter: " + iter);
     logger.info("temperature: " + system.getTemperature());
     logger.info("pressure: " + system.getPressure());

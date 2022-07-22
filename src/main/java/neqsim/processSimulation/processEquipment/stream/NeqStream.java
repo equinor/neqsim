@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -13,6 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class NeqStream extends Stream {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NeqStream.class);
 
   /**
    * <p>

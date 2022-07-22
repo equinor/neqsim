@@ -13,163 +13,165 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class BasePVTsimulation implements SimulationInterface {
-    private SystemInterface thermoSystem = null;
-    private SystemInterface baseThermoSystem = null;
-    public ThermodynamicOperations thermoOps = null;
-    private double pressure;
-    public double[] pressures = {381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3};
-    public double temperature = 289.0;
-    double[][] experimentalData = null;
-    double saturationVolume = 0, saturationPressure = 0, saturationTemperature;
-    double Zsaturation = 0;
-    public LevenbergMarquardt optimizer = new LevenbergMarquardt();
+  private SystemInterface thermoSystem = null;
+  private SystemInterface baseThermoSystem = null;
+  public ThermodynamicOperations thermoOps = null;
+  private double pressure;
+  public double[] pressures = {381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3};
+  public double temperature = 289.0;
+  double[][] experimentalData = null;
+  double saturationVolume = 0;
+  double saturationPressure = 0;
+  double saturationTemperature;
+  double Zsaturation = 0;
+  public LevenbergMarquardt optimizer = new LevenbergMarquardt();
 
-    /**
-     * <p>
-     * Constructor for BasePVTsimulation.
-     * </p>
-     *
-     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public BasePVTsimulation(SystemInterface tempSystem) {
-        thermoSystem = tempSystem;// tempSystem.clone();
-        thermoOps = new ThermodynamicOperations(getThermoSystem());
-        baseThermoSystem = thermoSystem.clone();
-    }
+  /**
+   * <p>
+   * Constructor for BasePVTsimulation.
+   * </p>
+   *
+   * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public BasePVTsimulation(SystemInterface tempSystem) {
+    thermoSystem = tempSystem; // tempSystem.clone();
+    thermoOps = new ThermodynamicOperations(getThermoSystem());
+    baseThermoSystem = thermoSystem.clone();
+  }
 
-    /**
-     * <p>
-     * Setter for the field <code>experimentalData</code>.
-     * </p>
-     *
-     * @param expData an array of {@link double} objects
-     */
-    public void setExperimentalData(double[][] expData) {
-        experimentalData = expData;
-    }
+  /**
+   * <p>
+   * Setter for the field <code>experimentalData</code>.
+   * </p>
+   *
+   * @param expData an array of {@link double} objects
+   */
+  public void setExperimentalData(double[][] expData) {
+    experimentalData = expData;
+  }
 
-    /**
-     * <p>
-     * Getter for the field <code>saturationPressure</code>.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getSaturationPressure() {
-        return saturationPressure;
-    }
+  /**
+   * <p>
+   * Getter for the field <code>saturationPressure</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getSaturationPressure() {
+    return saturationPressure;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public SystemInterface getThermoSystem() {
-        return thermoSystem;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public SystemInterface getThermoSystem() {
+    return thermoSystem;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void run() {
-        thermoOps = new ThermodynamicOperations(getThermoSystem());
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void run() {
+    thermoOps = new ThermodynamicOperations(getThermoSystem());
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public SystemInterface getBaseThermoSystem() {
-        return baseThermoSystem;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public SystemInterface getBaseThermoSystem() {
+    return baseThermoSystem;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setThermoSystem(SystemInterface thermoSystem) {
-        this.thermoSystem = thermoSystem;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setThermoSystem(SystemInterface thermoSystem) {
+    this.thermoSystem = thermoSystem;
+  }
 
-    /**
-     * <p>
-     * Getter for the field <code>pressure</code>.
-     * </p>
-     *
-     * @return the pressure
-     */
-    public double getPressure() {
-        return pressure;
-    }
+  /**
+   * <p>
+   * Getter for the field <code>pressure</code>.
+   * </p>
+   *
+   * @return the pressure
+   */
+  public double getPressure() {
+    return pressure;
+  }
 
-    /**
-     * <p>
-     * Setter for the field <code>pressure</code>.
-     * </p>
-     *
-     * @param pressure the pressure to set
-     */
-    public void setPressure(double pressure) {
-        this.pressure = pressure;
-    }
+  /**
+   * <p>
+   * Setter for the field <code>pressure</code>.
+   * </p>
+   *
+   * @param pressure the pressure to set
+   */
+  public void setPressure(double pressure) {
+    this.pressure = pressure;
+  }
 
-    /**
-     * <p>
-     * Getter for the field <code>temperature</code>.
-     * </p>
-     *
-     * @return the temperature
-     */
-    public double getTemperature() {
-        return temperature;
-    }
+  /**
+   * <p>
+   * Getter for the field <code>temperature</code>.
+   * </p>
+   *
+   * @return the temperature
+   */
+  public double getTemperature() {
+    return temperature;
+  }
 
-    /**
-     * <p>
-     * Setter for the field <code>temperature</code>.
-     * </p>
-     *
-     * @param temperature the temperature to set
-     */
-    public void setTemperature(double temperature) {
-        this.temperature = temperature;
-    }
+  /**
+   * <p>
+   * Setter for the field <code>temperature</code>.
+   * </p>
+   *
+   * @param temperature the temperature to set
+   */
+  public void setTemperature(double temperature) {
+    this.temperature = temperature;
+  }
 
-    /**
-     * <p>
-     * Getter for the field <code>pressures</code>.
-     * </p>
-     *
-     * @return the pressures
-     */
-    public double[] getPressures() {
-        return pressures;
-    }
+  /**
+   * <p>
+   * Getter for the field <code>pressures</code>.
+   * </p>
+   *
+   * @return the pressures
+   */
+  public double[] getPressures() {
+    return pressures;
+  }
 
-    /**
-     * <p>
-     * Setter for the field <code>pressures</code>.
-     * </p>
-     *
-     * @param pressures the pressures to set
-     */
-    public void setPressures(double[] pressures) {
-        this.pressures = pressures;
-    }
+  /**
+   * <p>
+   * Setter for the field <code>pressures</code>.
+   * </p>
+   *
+   * @param pressures the pressures to set
+   */
+  public void setPressures(double[] pressures) {
+    this.pressures = pressures;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public LevenbergMarquardt getOptimizer() {
-        return optimizer;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public LevenbergMarquardt getOptimizer() {
+    return optimizer;
+  }
 
-    /**
-     * <p>
-     * getZsaturation.
-     * </p>
-     *
-     * @return the Zsaturation
-     */
-    public double getZsaturation() {
-        return Zsaturation;
-    }
+  /**
+   * <p>
+   * getZsaturation.
+   * </p>
+   *
+   * @return the Zsaturation
+   */
+  public double getZsaturation() {
+    return Zsaturation;
+  }
 
-    /**
-     * @return the saturationTemperature
-     */
-    public double getSaturationTemperature() {
-        return saturationTemperature;
-    }
+  /**
+   * @return the saturationTemperature
+   */
+  public double getSaturationTemperature() {
+    return saturationTemperature;
+  }
 }

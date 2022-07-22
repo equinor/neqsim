@@ -1,6 +1,3 @@
-/**
- * 
- */
 package neqsim.thermodynamicOperations.flashOps;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

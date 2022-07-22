@@ -3,6 +3,7 @@
  *
  * Created on 1. november 2000, 19:00
  */
+
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.conductivity;
 
 import org.apache.logging.log4j.LogManager;
@@ -81,10 +82,10 @@ public class Conductivity extends
                  */
             }
             double wigthFraci = liquidPhase.getPhase().getWtFrac(i);
-            conductivity += wigthFraci * pureComponentConductivity[i];/// tempVar;
+            conductivity += wigthFraci * pureComponentConductivity[i]; /// tempVar;
             // conductivity = conductivity +
             // liquidPhase.getPhase().getComponents()[i].getx() *
-            // pureComponentConductivity[i];///tempVar;
+            // pureComponentConductivity[i]; ///tempVar;
         }
 
         return conductivity;

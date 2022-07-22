@@ -97,7 +97,9 @@ class CompressorTest  extends neqsim.NeqSimTest{
         // System.out.println("schultz compressor power " + compressor1.getPower() / 1e6
         // + " MW");
         assertEquals(compressor1.getPower() / 1e6, 4.668373797540108,0.01);
-//                "Test case for compressor Schultz method polytropic calculation should return approximate 4.67 MW");
+        // // "Test case for compressor Schultz method polytropic calculation should return
+        // approximate
+        // 4.67 MW");
     }
 
     /**

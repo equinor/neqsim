@@ -23,14 +23,23 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 public class MixerGasProcessingModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
 
-  StreamInterface feedStream, gasExitStream, oilExitStream, glycolFeedStream, glycolExitStream;
+  StreamInterface feedStream;
+  StreamInterface gasExitStream;
+  StreamInterface oilExitStream;
+  StreamInterface glycolFeedStream;
+  StreamInterface glycolExitStream;
+
   Separator glycolScrubber;
   Separator inletSeparator;
   double inletSepTemperature = 50.00; // bar'
-  double gasScrubberTemperature = 30.00, firstStageOutPressure = 110.0,
-      glycolScrubberTemperature = 20.0, secondStageOutPressure = 200.0; // bar
-  double glycolInjectionRate = 10.0, exportGasTemperature = 273.15 + 30.0,
-      liquidPumpPressure = 150.0; // m^3/hr
+  double gasScrubberTemperature = 30.00;
+  double firstStageOutPressure = 110.0;
+  double glycolScrubberTemperature = 20.0;
+  double secondStageOutPressure = 200.0;
+  double glycolInjectionRate = 10.0;
+  double exportGasTemperature = 273.15 + 30.0;
+  double liquidPumpPressure = 150.0;
+
   Compressor secondStageCompressor;
   Pump oilPump;
   Cooler secondStageAfterCooler;

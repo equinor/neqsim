@@ -35,7 +35,7 @@ public class TestInfluenceParamGTFunction {
 
         NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
-                "SELECT * FROM purecomponentsurfacetension2 WHERE ComponentName IN ('n-pentane','ethane','methane', 'propane','CO2', 'c-hexane','M-cy-C5', 'n-pentane','n-hexane', 'n-nonane','nC10')");// AND
+            "SELECT * FROM purecomponentsurfacetension2 WHERE ComponentName IN ('n-pentane','ethane','methane', 'propane','CO2', 'c-hexane','M-cy-C5', 'n-pentane','n-hexane', 'n-nonane','nC10')"); // AND
                                                                                                                                                                                                         // ComponentName<>'nC10'
                                                                                                                                                                                                         // AND
                                                                                                                                                                                                         // ComponentName<>'nC11'
@@ -52,7 +52,7 @@ public class TestInfluenceParamGTFunction {
                                      // param
 
         // double guess[] = {1.9286440937, -8.7271963910, 1.2495334818, -1.8975206092};
-        // double guess[] = {-5.2897559010400935E-17, 7.103588505598196E-17};//,
+        // double guess[] = {-5.2897559010400935E-17, 7.103588505598196E-17}; //,
         // 1.1161368619, 0.8363538313}; // PR param
 
         try {
@@ -101,7 +101,7 @@ public class TestInfluenceParamGTFunction {
 
         /*
          * dataSet = database.getResultSet("NeqSimDataBase",
-         * "SELECT * FROM BinaryComponentSurfaceTension WHERE Include=1");// AND
+         * "SELECT * FROM BinaryComponentSurfaceTension WHERE Include=1"); // AND
          * ComponentName<>'nC12' AND ComponentName<>'nC13'"); boolean includeBinaryData = false;
          * 
          * try { logger.error("adding...."); while (dataSet.next() && includeBinaryData) {

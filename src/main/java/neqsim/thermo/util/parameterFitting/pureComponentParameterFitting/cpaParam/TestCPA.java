@@ -64,7 +64,7 @@ public class TestCPA {
 
                 // double guess[] =
                 // {((ComponentSrk)testSystem.getPhase(0).getComponent(0)).geta(),((ComponentSrk)testSystem.getPhase(0).getComponent(0)).getb(),testSystem.getPhase(0).getComponent(0).getAcentricFactor(),0.04567};
-                double guess[] = {13.21, 39.123563589168, 1.1692, 0.0188, 14337.0};// ,
+                double guess[] = {13.21, 39.123563589168, 1.1692, 0.0188, 14337.0}; // ,
                                                                                    // 0.3255175584,
                                                                                    // 10725.7300849509};
                 // abs 3.2% 10,8185533003 33,0294376487 1,0676048144 0,0221795587
@@ -100,9 +100,9 @@ public class TestCPA {
                 SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
                 // double guess[] =
                 // {testSystem.getPhase(0).geta(),testSystem.getPhase(0).getb(),
-                // testSystem.getPhase(0).getComponent(0).getAcentricFactor()};// , 2260.69,
+                // testSystem.getPhase(0).getComponent(0).getAcentricFactor()}; // , 2260.69,
                 // 0.0229};
-                double guess[] = {13.21, 39.123563589168, 1.1692, 0.0188, 14337.0};// ,
+                double guess[] = {13.21, 39.123563589168, 1.1692, 0.0188, 14337.0}; // ,
                                                                                    // 0.4354649799,
                                                                                    // 0.3255175584,
                                                                                    // 10725.7300849509};

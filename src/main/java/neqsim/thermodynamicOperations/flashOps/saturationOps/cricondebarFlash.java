@@ -86,7 +86,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
           - system.getPhase(1).getComponent(i).getLogFugacityCoefficient());
       // sumX += XI[i];
     }
-    double tempSumXI = 1.0;// sumX;
+    double tempSumXI = 1.0; // sumX;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       system.getPhase(1).getComponent(i).setx(XI[i] / tempSumXI);
     }
@@ -241,7 +241,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
 
         logger.info("temp " + system.getTemperature() + "dewTemp " + dewTemp + " Q1 " + Q1
             + " pressure " + system.getPressure());
-      } while (Math.abs(Q1) > 1e-10 && iterations < 15);// maxNumberOfIterations);
+      } while (Math.abs(Q1) > 1e-10 && iterations < 15); // maxNumberOfIterations);
       logger.info("temp " + system.getTemperature() + " Q1 " + Q1);
       // if(ii<2) system.setTemperature(dewTemp-);
       logger.info("fvec " + fvec.norm2() + " pressure " + system.getPressure());
@@ -280,7 +280,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-        dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+        dij = i == j ? 1.0 : 0.0; // Kroneckers delta
         tempJ = -dij * 1.0 / system.getPhases()[1].getComponents()[i].getx()
             - system.getPhases()[1].getComponents()[i].getdfugdx(j);
         Jac.set(i, j, tempJ);
