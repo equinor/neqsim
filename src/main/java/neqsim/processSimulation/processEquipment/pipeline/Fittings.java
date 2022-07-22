@@ -85,13 +85,13 @@ public class Fittings implements Serializable {
                 System.out.printf("LtoD " + LtoD);
             } catch (Exception e) {
                 System.out.println("error in comp");
-                e.printStackTrace();
+                logger.error(e.getMessage());
             } finally {
                 try {
                     dataSet.close();
                 } catch (Exception e) {
                     System.out.println("error closing database.....");
-                    e.printStackTrace();
+                    logger.error(e.getMessage());
                 }
             }
         }

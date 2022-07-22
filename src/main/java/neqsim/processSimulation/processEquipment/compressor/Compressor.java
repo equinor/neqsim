@@ -155,7 +155,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     try {
       this.outStream = inletStream.clone();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
   }
 

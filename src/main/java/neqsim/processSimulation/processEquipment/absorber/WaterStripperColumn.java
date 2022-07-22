@@ -385,7 +385,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
       }
       setCalculationIdentifier(id);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
   }
 

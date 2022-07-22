@@ -90,7 +90,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         // mixedStream.getThermoSystem().init(3);
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
 
     numberOfInputStreams++;

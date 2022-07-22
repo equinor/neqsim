@@ -141,7 +141,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       thermoOps.hydrateFormationTemperature();
       return copySystem.getTemperature();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
     return 0.0;
   }
@@ -170,7 +170,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       }
       return copySystem.getTemperature();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
     return 0.0;
   }
@@ -333,14 +333,14 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       try {
         thermoOps.dewPointTemperatureFlash();
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
         thermoOps.TPflash();
       }
     } else if (getSpecification().equals("dewT")) {
       try {
         thermoOps.dewPointPressureFlash();
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
         thermoOps.TPflash();
       }
     } else if (getSpecification().equals("gas quality")) {
@@ -354,28 +354,28 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
             getGasQuality() * gasEnthalpy + (1.0 - getGasQuality()) * liquidEnthalpy;
         thermoOps.PHflash(enthalpySpec);
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
         thermoOps.TPflash();
       }
     } else if (getSpecification().equals("bubP")) {
       try {
         thermoOps.bubblePointTemperatureFlash();
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
         thermoOps.TPflash();
       }
     } else if (getSpecification().equals("bubT")) {
       try {
         thermoOps.bubblePointPressureFlash(false);
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
         thermoOps.TPflash();
       }
     } else if (getSpecification().equals("PH")) {
       try {
         thermoOps.PHflash(getThermoSystem().getEnthalpy(), 0);
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
         thermoOps.TPflash();
       }
     } else {

@@ -72,7 +72,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
         splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
   }
 

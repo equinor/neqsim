@@ -123,7 +123,7 @@ public class GasTurbine extends TwoPortEquipment {
     try {
       this.outStream = inletStream.clone();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
   }
 
