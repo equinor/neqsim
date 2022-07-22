@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -116,7 +117,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     // System.out.println("MoleFractionContollerUtil running..");
     thermoSystem = inStream.getThermoSystem().clone();
     if (thermoSystem.getPhase(0).hasComponent(compName)) {
@@ -132,6 +133,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
       thermoOps.TPflash();
     }
     outStream.setThermoSystem(thermoSystem);
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

@@ -19,7 +19,6 @@ import neqsim.thermo.phase.PhasePrEosvolcor;
  */
 public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
 
-
   public SystemUMRPRUMCEosNew() {
     super();
     modelName = "UMR-PRU-MC-EoS-New";

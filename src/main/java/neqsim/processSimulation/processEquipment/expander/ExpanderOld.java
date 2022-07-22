@@ -4,6 +4,7 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -56,7 +57,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
 
   /**
    * Constructor for ExpanderOld.
-   * 
+   *
    * @param name name of expander
    */
   public ExpanderOld(String name) {
@@ -68,7 +69,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
    * Constructor for ExpanderOld.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name name of expander
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
@@ -100,21 +101,20 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     System.out.println("expander running..");
     thermoSystem = inStream.getThermoSystem().clone();
     thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoSystem.init(3);
-    double hinn = thermoSystem.getEnthalpy();
     double entropy = thermoSystem.getEntropy();
-    thermoSystem.setPressure(pressure);
     System.out.println("entropy inn.." + entropy);
+    double hinn = thermoSystem.getEnthalpy();
+    thermoSystem.setPressure(pressure);
     thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
     outStream.setThermoSystem(thermoSystem);
+    setCalculationIdentifier(id);
   }
-
-
 
   /** {@inheritDoc} */
   @Override
@@ -129,7 +129,6 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
 
     thermoSystem.initPhysicalProperties();
     String[][] table = new String[20][5];
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";
@@ -206,6 +205,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
     }
 
+    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);

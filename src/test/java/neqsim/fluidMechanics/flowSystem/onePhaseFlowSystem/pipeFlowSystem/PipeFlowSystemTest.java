@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.thermo.system.SystemInterface;
 
-
 public class PipeFlowSystemTest extends neqsim.NeqSimTest {
   FlowSystemInterface pipe;
 

@@ -5,6 +5,7 @@
  */
 package neqsim.processSimulation.processEquipment.pipeline;
 
+import java.util.UUID;
 import neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhasePipeFlowSystem.TwoPhasePipeFlowSystem;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
@@ -72,9 +73,12 @@ public class TwoPhasePipeLine extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    super.run();
-    pipe.solveSteadyState(2);
+  public void run(UUID id) {
+    UUID oldid = getCalculationIdentifier();
+    super.run(id);
+    setCalculationIdentifier(oldid);
+    pipe.solveSteadyState(2, id);
+    setCalculationIdentifier(id);
     pipe.print();
   }
 }

@@ -1,5 +1,7 @@
 package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhasePipeFlowSystem;
 
+import java.util.UUID;
+
 /**
  * <p>
  * TwoPhasePipeFlowSystem class.
@@ -72,7 +74,7 @@ public class TwoPhasePipeFlowSystem
 
   /** {@inheritDoc} */
   @Override
-  public void solveSteadyState(int solverType) {
+  public void solveSteadyState(int type, UUID id) {
     double[] times = {0.0};
     display =
         new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.twoPhasePipeFlowVisualization.TwoPhasePipeFlowVisualization(
@@ -87,8 +89,9 @@ public class TwoPhasePipeFlowSystem
     flowSolver =
         new neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.TwoPhaseFixedStaggeredGridSolver(
             this, getSystemLength(), this.getTotalNumberOfNodes(), false);
-    flowSolver.setSolverType(solverType);
+    flowSolver.setSolverType(type);
     flowSolver.solveTDMA();
+    calcIdentifier = id;
 
     getTimeSeries().init(this);
     display.setNextData(this);
@@ -96,10 +99,11 @@ public class TwoPhasePipeFlowSystem
 
   /** {@inheritDoc} */
   @Override
-  public void solveTransient(int type) {
+  public void solveTransient(int type, UUID id) {
     // pipeSolver pipeSolve = new pipeSolver(this, getSystemLength(),
     // getTotalNumberOfNodes());
     // pipeSolve.solveTDMA();
+    calcIdentifier = id;
   }
 
   /**

@@ -3,8 +3,10 @@
  *
  * Created on 21. august 2001, 20:44
  */
+
 package neqsim.processSimulation.processEquipment.pipeline;
 
+import java.util.UUID;
 import neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
@@ -42,7 +44,7 @@ public class OnePhasePipeLine extends Pipeline {
 
   /**
    * Constructor for OnePhasePipeLine.
-   * 
+   *
    * @param name name of pipe
    */
   public OnePhasePipeLine(String name) {
@@ -51,7 +53,7 @@ public class OnePhasePipeLine extends Pipeline {
 
   /**
    * Constructor for OnePhasePipeLine.
-   * 
+   *
    * @param name name of pipe
    * @param inStream input stream
    */
@@ -69,16 +71,15 @@ public class OnePhasePipeLine extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    super.run();
-    pipe.solveSteadyState(10);
+  public void run(UUID id) {
+    UUID oldid = getCalculationIdentifier();
+    super.run(id);
+    setCalculationIdentifier(oldid);
+    pipe.solveSteadyState(10, id);
     // pipe.print();
     outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem());
-  }
 
-  /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {
-    super.runTransient(dt);
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
   }
 }

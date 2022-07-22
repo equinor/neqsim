@@ -72,7 +72,6 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
      */
     public void setCv(double Cv);
 
-
     /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem();

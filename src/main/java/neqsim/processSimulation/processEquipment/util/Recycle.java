@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -57,6 +58,17 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public SystemInterface getThermoSystem() {
     return mixedStream.getThermoSystem();
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>downstreamProperty</code>.
+   * </p>
+   *
+   * @param property a {@link java.util.ArrayList} object
+   */
+  public void setDownstreamProperty(ArrayList<String> property) {
+    this.downstreamProperty = property;
   }
 
   /**
@@ -226,7 +238,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     iterations++;
     /*
      * if(firstTime || iterations>maxIterations) { firstTime=false; return;
@@ -264,10 +276,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       setDownstreamProperties();
       testOps.TPflash();
     }
+    mixedStream.setCalculationIdentifier(id);
     setError(massBalanceCheck());
     System.out.println(name + " recycle error: " + getError());
     lastIterationStream = (Stream) mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
+    outletStream.setCalculationIdentifier(id);
     // System.out.println("flow rate new in recycle " +
     // outletStream.getFlowRate("kg/hr"));
 
@@ -279,6 +293,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
     // outStream.setThermoSystem(mixedStream.getThermoSystem());
+    setCalculationIdentifier(id);
   }
 
   /**
@@ -423,17 +438,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   public ArrayList<String> getDownstreamProperty() {
     return downstreamProperty;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>downstreamProperty</code>.
-   * </p>
-   *
-   * @param upstreamProperty a {@link java.util.ArrayList} object
-   */
-  public void setDownstreamProperty(ArrayList<String> upstreamProperty) {
-    this.downstreamProperty = upstreamProperty;
   }
 
   /**

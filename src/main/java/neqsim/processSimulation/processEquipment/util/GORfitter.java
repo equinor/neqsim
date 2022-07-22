@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
+import java.util.UUID;
 import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -126,7 +127,7 @@ public class GORfitter extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     SystemInterface tempFluid = inStream.getThermoSystem().clone();
     double flow = tempFluid.getFlowRate("kg/sec");
 
@@ -200,20 +201,19 @@ public class GORfitter extends TwoPortEquipment {
       e.printStackTrace();
     }
     outStream.setThermoSystem(tempFluid);
-    if(!tempFluid.hasPhaseType("gas")) {
+    if (!tempFluid.hasPhaseType("gas")) {
       GVF = 0.0;
-    }
-    else if(tempFluid.hasPhaseType("gas") && tempFluid.hasPhaseType("oil")) {
-    GVF = tempFluid.getPhase("gas").getCorrectedVolume()
-        / (tempFluid.getPhase("oil").getCorrectedVolume()
-            + tempFluid.getPhase("gas").getCorrectedVolume());
-    }
-    else {
+    } else if (tempFluid.hasPhaseType("gas") && tempFluid.hasPhaseType("oil")) {
+      GVF = tempFluid.getPhase("gas").getCorrectedVolume()
+          / (tempFluid.getPhase("oil").getCorrectedVolume()
+              + tempFluid.getPhase("gas").getCorrectedVolume());
+    } else {
       GVF = Double.NaN;
     }
-    return;
-  }
 
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
 
   /**
    * <p>

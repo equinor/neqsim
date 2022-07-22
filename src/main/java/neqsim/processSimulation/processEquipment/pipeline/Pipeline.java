@@ -6,6 +6,7 @@
 
 package neqsim.processSimulation.processEquipment.pipeline;
 
+import java.util.UUID;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
@@ -228,7 +229,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     system = inStream.getThermoSystem();
     GeometryDefinitionInterface[] pipeGemometry = new PipeData[numberOfLegs + 1];
     for (int i = 0; i < pipeDiameters.length; i++) {
@@ -248,12 +249,13 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
     pipe.setEquilibriumMassTransfer(equilibriumMassTransfer);
     pipe.setEquilibriumHeatTransfer(equilibriumHeatTransfer);
     pipe.init();
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {
-    pipe.solveTransient(2);
+  public void runTransient(double dt, UUID id) {
+    pipe.solveTransient(2, id);
   }
 
   /** {@inheritDoc} */
