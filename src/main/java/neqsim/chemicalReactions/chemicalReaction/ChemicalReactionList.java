@@ -52,7 +52,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     chemicalReactionList.clear();
     ArrayList<String> names = new ArrayList<String>();
     ArrayList<String> stocCoef = new ArrayList<String>();
-    double r = 0, refT = 0, actH;
+    double r = 0;
+    double refT = 0;
+    double actH;
     double[] K = new double[4];
     boolean useReaction = false;
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -336,9 +338,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   public double[] calcReferencePotentials() {
     Matrix reacMatr = new Matrix(reacGMatrix);
     Matrix Amatrix = reacMatr.copy().getMatrix(0, chemicalReactionList.size() - 1, 0,
-        chemicalReactionList.size() - 1);// new Matrix(reacGMatrix);
+        chemicalReactionList.size() - 1); // new Matrix(reacGMatrix);
     Matrix Bmatrix = reacMatr.copy().getMatrix(0, chemicalReactionList.size() - 1,
-        reacGMatrix[0].length - 1, reacGMatrix[0].length - 1);// new Matrix(reacGMatrix);
+        reacGMatrix[0].length - 1, reacGMatrix[0].length - 1); // new Matrix(reacGMatrix);
 
     if (Amatrix.rank() < chemicalReactionList.size()) {
       System.out.println("rank of A matrix too low !!" + Amatrix.rank());
