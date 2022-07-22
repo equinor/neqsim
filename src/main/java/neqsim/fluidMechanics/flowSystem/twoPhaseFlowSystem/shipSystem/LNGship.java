@@ -24,21 +24,43 @@ public class LNGship
   private static final long serialVersionUID = 1000;
 
   double[] temperature = null;
-  double dailyBoilOffRatio = 0.005, totalTankVolume = 140000;
+  double dailyBoilOffRatio = 0.005;
+  double totalTankVolume = 140000;
   private double liquidDensity = 0.7;
   int numberOffTimeSteps = 100;
   private double initialTemperature = 111.0;
   private boolean setInitialTemperature = false;
   private neqsim.thermo.system.SystemInterface thermoSystem = null;
   double initialNumberOffMoles;
-  double molarBoilOffRate = 0.0, dailyBoilOffVolume = 0.0;
+  double molarBoilOffRate = 0.0;
+  double dailyBoilOffVolume = 0.0;
   private double endTime = 960;// 24.0 * 10;
   private Standard_ISO6976 standardISO6976 = null;
   StandardInterface standardDensity = null;
-  double[] WI = null, density = null, volume = null, xmethane, xethane, xpropane, xiC4, xnC4, xiC5,
-      xnC5, xnC6, xnitrogen;
-  double[] ymethane, yethane, ypropane, yiC4, ynC4, yiC5, ynC5, ynC6, ynitrogen;
-  double[] GCV, GCVmass, totalEnergy;
+  double[] WI = null;
+  double[] density = null;
+  double[] volume = null;
+  double[] xmethane;
+  double[] xethane;
+  double[] xpropane;
+  double[] xiC4;
+  double[] xnC4;
+  double[] xiC5;
+  double[] xnC5;
+  double[] xnC6;
+  double[] xnitrogen;
+  double[] ymethane;
+  double[] yethane;
+  double[] ypropane;
+  double[] yiC4;
+  double[] ynC4;
+  double[] yiC5;
+  double[] ynC5;
+  double[] ynC6;
+  double[] ynitrogen;
+  double[] GCV;
+  double[] GCVmass;
+  double[] totalEnergy;
   double[] time;
   double[] tankTemperature = null;
   double timeStep = 0;
@@ -185,7 +207,6 @@ public class LNGship
     if (backCalculate) {
       molarBoilOffRate = -molarBoilOffRate;
     }
-    // double orginalMolarBoilOff = molarBoilOffRate;
     logger.info("end Volume " + endVolume);
     int iterations = 0;
     double boilOffCorrection = 0.0;
