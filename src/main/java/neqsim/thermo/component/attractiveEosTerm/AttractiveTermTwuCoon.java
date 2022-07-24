@@ -70,8 +70,8 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   }
 
   /**
-   * alphaCrit
-   * 
+   * alphaCrit.
+   *
    * @param temperature temperature in unit Kelvin
    * @return double
    */
@@ -83,8 +83,8 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   }
 
   /**
-   * diffalphaCritT
-   * 
+   * diffalphaCritT.
+   *
    * @param temperature temperature in unit Kelvin
    * @return double
    */
@@ -97,8 +97,8 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   }
 
   /**
-   * diffdiffalphaCritT
-   * 
+   * diffdiffalphaCritT.
+   *
    * @param temperature temperature in unit Kelvin
    * @return double
    */

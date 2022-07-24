@@ -179,8 +179,8 @@ public class VUflashQfunc extends Flash {
 
       testOps.VUflash(volume, energy);
       testSystem.display();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
   }
 }

@@ -215,7 +215,7 @@ public class SolidFlash12 extends TPflash {
 
       try {
         ans = dQdBM.solve(dQM.transpose());
-      } catch (Exception e) {
+      } catch (Exception ex) {
         // ans = dQdBM.solve(dQM.transpose());
       }
       dQM.print(10, 10);

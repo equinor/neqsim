@@ -184,7 +184,7 @@ public class TPmultiflashWAX extends TPflash {
       Matrix dQdBM = new Matrix(Qmatrix);
       try {
         ans = dQdBM.solve(dQM.transpose());
-      } catch (Exception e) {
+      } catch (Exception ex) {
       }
       betaMatrix.minusEquals(ans.times(iter / (iter + 2.0)));
       // ans.print(10,2);

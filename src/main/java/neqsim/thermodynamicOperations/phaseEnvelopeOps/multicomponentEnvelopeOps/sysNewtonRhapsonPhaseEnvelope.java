@@ -520,7 +520,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       xg = Xgij.getMatrix(j, j, 0, 3);
       try {
         xcoef = a.solve(xg.transpose());
-      } catch (Exception e) {
+      } catch (Exception ex) {
         xcoef = xcoefOld.copy();
       }
       u.set(j, 0, xcoef.get(0, 0)
@@ -556,14 +556,14 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         xg = Xgij.getMatrix(j, j, 0, 3);
         try {
           xcoef = a.solve(xg.transpose());
-        } catch (Exception e) {
+        } catch (Exception ex) {
           xcoef = xcoefOld.copy();
         }
         u.set(j, 0, xcoef.get(0, 0)
             + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
       }
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
 
     system.setTC(Math.exp(u.get(numberOfComponents, 0)));

@@ -126,8 +126,8 @@ public class TSFlash extends QfuncFlash {
       testSystem.setTemperature(293.15);
       testOps.TSflash(Sspec, "kJ/kgK");
       testSystem.display();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
   }
 }
