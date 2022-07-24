@@ -79,7 +79,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   String[][] classicOrWS;
 
   public double nEOSkij = 3.0;
-  /** Constant <code>calcEOSInteractionParameters=false</code> */
+  /** Constant <code>calcEOSInteractionParameters=false</code>. */
   public static boolean calcEOSInteractionParameters = false;
   private int bmixType = 0;
 
@@ -98,8 +98,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     EosMixingRules clonedSystem = null;
     try {
       clonedSystem = (EosMixingRules) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     // clonedSystem.intparam = (double[][]) intparam.clone();
@@ -397,8 +397,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       ClassicVdW clonedSystem = null;
       try {
         clonedSystem = (ClassicVdW) super.clone();
-      } catch (Exception e) {
-        logger.error("Cloning failed.", e);
+      } catch (Exception ex) {
+        logger.error("Cloning failed.", ex);
       }
 
       return clonedSystem;
@@ -572,8 +572,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       ClassicSRK clonedSystem = null;
       try {
         clonedSystem = (ClassicSRK) super.clone();
-      } catch (Exception e) {
-        logger.error("Cloning failed.", e);
+      } catch (Exception ex) {
+        logger.error("Cloning failed.", ex);
       }
 
       // clonedSystem.intparam = (double[][]) clonedSystem.intparam.clone();
@@ -685,8 +685,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       ClassicSRKT clonedSystem = null;
       try {
         clonedSystem = (ClassicSRKT) super.clone();
-      } catch (Exception e) {
-        logger.error("Cloning failed.", e);
+      } catch (Exception ex) {
+        logger.error("Cloning failed.", ex);
       }
 
       return clonedSystem;
@@ -990,8 +990,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       ClassicSRKT clonedSystem = null;
       try {
         clonedSystem = super.clone();
-      } catch (Exception e) {
-        logger.error("Cloning failed.", e);
+      } catch (Exception ex) {
+        logger.error("Cloning failed.", ex);
       }
 
       return clonedSystem;
@@ -2272,9 +2272,9 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
             NRTLDijT[tempk][templ] = Double.parseDouble(dataSet.getString("WSgijT"));
             NRTLDijT[templ][tempk] = Double.parseDouble(dataSet.getString("WSgjiT"));
-          } catch (Exception e) {
+          } catch (Exception ex) {
             // System.out.println("err in thermo mix.....");
-            // String err = e.toString();
+            // String err = ex.toString();
             // System.out.println(err);
             if (isCalcEOSInteractionParameters()) {
               intparam[k][l] = 1.0 - Math.pow((2.0
@@ -2429,8 +2429,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
               if (dataSet != null) {
                 dataSet.close();
               }
-            } catch (Exception e) {
-              logger.error("err closing dataSet IN MIX...", e);
+            } catch (Exception ex) {
+              logger.error("err closing dataSet IN MIX...", ex);
             }
           }
         }
@@ -2444,8 +2444,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       if (database.getConnection() != null) {
         database.getConnection().close();
       }
-    } catch (Exception e) {
-      logger.error("error closing database.....", e);
+    } catch (Exception ex) {
+      logger.error("error closing database.....", ex);
     }
 
     if (i == 2) {

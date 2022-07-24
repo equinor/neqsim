@@ -87,8 +87,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     PhaseElectrolyteCPA clonedPhase = null;
     try {
       clonedPhase = (PhaseElectrolyteCPA) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
     // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
@@ -722,8 +722,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       // SimpleMatrix hessianMatrix = new SimpleMatrix(hessian);
       try {
         hessianInvers = hessianMatrix.invert();
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
         return false;
       }
 
@@ -841,8 +841,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     double BonV = 1.0 - 1e-10;
     try {
       // molarVolume(pressure, temperature, A, B, phaseType);
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     double BonVold = BonV;
     double Btemp = 0;

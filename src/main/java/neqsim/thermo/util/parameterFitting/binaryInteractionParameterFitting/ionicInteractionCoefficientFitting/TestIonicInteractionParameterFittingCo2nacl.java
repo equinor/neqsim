@@ -78,8 +78,8 @@ public class TestIonicInteractionParameterFittingCo2nacl {
         sample.setThermodynamicSystem(testSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

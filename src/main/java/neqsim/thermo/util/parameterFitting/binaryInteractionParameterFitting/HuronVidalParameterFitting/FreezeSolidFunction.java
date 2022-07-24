@@ -12,24 +12,24 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class FreezeSolidFunction extends HuronVidalFunction {
-    static Logger logger = LogManager.getLogger(FreezeSolidFunction.class);
+  static Logger logger = LogManager.getLogger(FreezeSolidFunction.class);
 
-    /**
-     * <p>
-     * Constructor for FreezeSolidFunction.
-     * </p>
-     */
-    public FreezeSolidFunction() {}
+  /**
+   * <p>
+   * Constructor for FreezeSolidFunction.
+   * </p>
+   */
+  public FreezeSolidFunction() {}
 
-    /** {@inheritDoc} */
-    @Override
-    public double calcValue(double[] dependentValues) {
-        system.init(0);
-        try {
-            thermoOps.freezingPointTemperatureFlash();
-        } catch (Exception e) {
-            logger.error(e.toString());
-        }
-        return system.getTemperature();
+  /** {@inheritDoc} */
+  @Override
+  public double calcValue(double[] dependentValues) {
+    system.init(0);
+    try {
+      thermoOps.freezingPointTemperatureFlash();
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
+    return system.getTemperature();
+  }
 }

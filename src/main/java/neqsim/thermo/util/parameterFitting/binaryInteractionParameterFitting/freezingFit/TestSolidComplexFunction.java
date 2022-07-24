@@ -66,8 +66,8 @@ public class TestSolidComplexFunction {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

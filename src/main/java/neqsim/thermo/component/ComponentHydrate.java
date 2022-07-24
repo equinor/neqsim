@@ -87,7 +87,7 @@ public class ComponentHydrate extends Component {
           }
           dataSet.next();
           dataSet.getString("FORMULA");
-        } catch (Exception e) {
+        } catch (Exception ex) {
           dataSet.close();
           logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
           dataSet =
@@ -100,8 +100,8 @@ public class ComponentHydrate extends Component {
         sphericalCoreRadiusHydrate =
             Double.parseDouble(dataSet.getString("SphericalCoreRadiusHYDRATE"));
       }
-    } catch (Exception e) {
-      logger.error("error in comp", e);
+    } catch (Exception ex) {
+      logger.error("error in comp", ex);
     } finally {
       try {
         if (dataSet != null) {
@@ -113,8 +113,8 @@ public class ComponentHydrate extends Component {
         if (database.getConnection() != null) {
           database.getConnection().close();
         }
-      } catch (Exception e) {
-        logger.error("error closing database.....", e);
+      } catch (Exception ex) {
+        logger.error("error closing database.....", ex);
       }
     }
   }
@@ -664,8 +664,8 @@ public class ComponentHydrate extends Component {
       refPhase.setPressure(1.0);
       refPhase.addcomponent("water", 10.0, 10.0, 0);
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
-    } catch (Exception e) {
-      logger.error("error occured", e);
+    } catch (Exception ex) {
+      logger.error("error occured", ex);
     }
   }
   // public double dfugdt(PhaseInterface phase, int numberOfComps, double temp,

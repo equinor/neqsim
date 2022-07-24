@@ -106,8 +106,8 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     ComponentUMRCPA clonedComponent = null;
     try {
       clonedComponent = (ComponentUMRCPA) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     clonedComponent.xsite = xsite.clone();
