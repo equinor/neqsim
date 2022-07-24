@@ -132,8 +132,8 @@ public class HydrateFlash {
       // testOps.bubblePointPressureFlash(false);
       // testOps.hydrateFormationTemperature(1);
       // testOps.waterPrecipitationTemperature();
-    } catch (Exception e) {
-      logger.error(e.toString(), e);
+    } catch (Exception ex) {
+      logger.error(ex.toString(), ex);
     }
     testSystem.display();
     // System.out.println("temperature " + (testSystem.getTemperature() - 273.15));
@@ -168,7 +168,7 @@ public class HydrateFlash {
      * ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2); try {
      * testOps2.waterDewPointTemperatureFlash();
      *
-     * } catch (Exception e) { logger.error(e.getMessage()) } testSystem2.display();
+     * } catch (Exception ex) { logger.error(ex.getMessage()) } testSystem2.display();
      *
      */
   }

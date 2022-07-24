@@ -81,8 +81,8 @@ public class TestUMRPRU {
       // boolean isFinished = testOps.waitAndCheckForFinishedCalculation(10000);
 
       // testOps.displayResult();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
     // testSystem.saveObject(880);
     // testSystem.saveFluid(30, "Norne");
