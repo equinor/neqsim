@@ -158,8 +158,8 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
       thermoOps.calcPTphaseEnvelope();
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
   }
 
@@ -180,8 +180,8 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
         thermoOps.bubblePointPressureFlash(false);
         bubP[i] = thermoSystem.getPressure();
         bubPLOG[i] = bubP[i] * 1e5;
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
         bubP[i] = 0;
       }
     }
@@ -205,8 +205,8 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
         thermoOps.dewPointPressureFlashHC();
         dewP[i] = thermoSystem.getPressure();
         dewPLOG[i] = dewP[i] * 1e5;
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
         dewP[i] = 0;
       }
     }
@@ -228,8 +228,8 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
       try {
         thermoOps.bubblePointTemperatureFlash();
         bubT[i] = thermoSystem.getPressure();
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
         bubT[i] = 0.0;
       }
     }
@@ -313,13 +313,13 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
           acceptedFlash = true;
-        } catch (Exception e) {
+        } catch (Exception ex) {
           acceptedFlash = false;
           logger.info("fail temperature " + thermoSystem.getTemperature() + " fail pressure "
               + thermoSystem.getPressure());
 
           thermoSystem.display();
-          logger.error("error", e);
+          logger.error("error", ex);
         }
 
         /*

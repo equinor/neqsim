@@ -199,8 +199,8 @@ public class pTphaseEnvelope extends BaseOperation {
             system.setTemperature(temp);
             testOps.dewPointTemperatureFlash();
           }
-        } catch (Exception e) {
-          // e.toString();
+        } catch (Exception ex) {
+          // ex.toString();
         }
         double tempNy = system.getTemperature();
 
@@ -530,8 +530,8 @@ public class pTphaseEnvelope extends BaseOperation {
     ThermodynamicOperations opsHyd = new ThermodynamicOperations(system);
     try {
       opsHyd.hydrateEquilibriumLine(10.0, 300.0);
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
 
     // double[][] hydData = opsHyd.getData();
@@ -839,7 +839,7 @@ public class pTphaseEnvelope extends BaseOperation {
         }
         Tstartold = Tstart;
       }
-    } catch (Exception e) {
+    } catch (Exception ex) {
       Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
     }
     if (Double.isNaN(Tstart) || Double.isInfinite(Tstart)) {

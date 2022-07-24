@@ -16,35 +16,36 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @since 2.2.3
  */
 public class TPflashMethanolWaterPropane {
-    static Logger logger = LogManager.getLogger(TPflashMethanolWaterPropane.class);
+  static Logger logger = LogManager.getLogger(TPflashMethanolWaterPropane.class);
 
-    /**
-     * <p>main.</p>
-     *
-     * @param args an array of {@link java.lang.String} objects
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String args[]) {
+    SystemInterface testSystem = new SystemSrkCPA(300, 10.01325);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    /*
+     * testSystem.addComponent("methane", 150.0e-2); testSystem.addComponent("propane", 150.0e-3);
+     * testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water", 0.5);
+     * 
+     * testSystem.createDatabase(true); testSystem.setMixingRule(10);
+     * testSystem.setMultiPhaseCheck(true);
      */
-    public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkCPA(300, 10.01325);
-
-        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        /*
-         * testSystem.addComponent("methane", 150.0e-2); testSystem.addComponent("propane",
-         * 150.0e-3); testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water",
-         * 0.5);
-         * 
-         * testSystem.createDatabase(true); testSystem.setMixingRule(10);
-         * testSystem.setMultiPhaseCheck(true);
-         */
-        testSystem = testSystem.readObject(100);
-        testOps = new ThermodynamicOperations(testSystem);
-        testSystem.init(0);
-        try {
-            testOps.TPflash();
-            // testOps.bubblePointPressureFlash(false);
-            testSystem.display();
-        } catch (Exception e) {
-            logger.error(e.toString());
-        }
-        // testSystem.saveFluid(3019);
+    testSystem = testSystem.readObject(100);
+    testOps = new ThermodynamicOperations(testSystem);
+    testSystem.init(0);
+    try {
+      testOps.TPflash();
+      // testOps.bubblePointPressureFlash(false);
+      testSystem.display();
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
+    // testSystem.saveFluid(3019);
+  }
 }

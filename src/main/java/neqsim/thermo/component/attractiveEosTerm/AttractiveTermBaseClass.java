@@ -19,123 +19,123 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AttractiveTermBaseClass implements AttractiveTermInterface {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    private ComponentEosInterface component = null;
-    protected double m;
-    protected double parameters[] = new double[3];
-    protected double parametersSolid[] = new double[3];
+  private ComponentEosInterface component = null;
+  protected double m;
+  protected double parameters[] = new double[3];
+  protected double parametersSolid[] = new double[3];
 
-    static Logger logger = LogManager.getLogger(AttractiveTermBaseClass.class);
+  static Logger logger = LogManager.getLogger(AttractiveTermBaseClass.class);
 
-    /**
-     * <p>
-     * Constructor for AttractiveTermBaseClass.
-     * </p>
-     */
-    public AttractiveTermBaseClass() {}
+  /**
+   * <p>
+   * Constructor for AttractiveTermBaseClass.
+   * </p>
+   */
+  public AttractiveTermBaseClass() {}
 
-    /**
-     * <p>
-     * Constructor for AttractiveTermBaseClass.
-     * </p>
-     *
-     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-     */
-    public AttractiveTermBaseClass(ComponentEosInterface component) {
-        this.setComponent(component);
+  /**
+   * <p>
+   * Constructor for AttractiveTermBaseClass.
+   * </p>
+   *
+   * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+   */
+  public AttractiveTermBaseClass(ComponentEosInterface component) {
+    this.setComponent(component);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setm(double val) {
+    this.m = val;
+    logger.info("does not solve for accentric when new m is set... in AccentricBase class");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public AttractiveTermBaseClass clone() {
+    AttractiveTermBaseClass attractiveTerm = null;
+    try {
+      attractiveTerm = (AttractiveTermBaseClass) super.clone();
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setm(double val) {
-        this.m = val;
-        logger.info("does not solve for accentric when new m is set... in AccentricBase class");
-    }
+    // atSystem.out.println("m " + m);ractiveTerm.parameters = (double[])
+    // parameters.clone();
+    // System.arraycopy(parameters,0, attractiveTerm.parameters, 0,
+    // parameters.length);
+    return attractiveTerm;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public AttractiveTermBaseClass clone() {
-        AttractiveTermBaseClass attractiveTerm = null;
-        try {
-            attractiveTerm = (AttractiveTermBaseClass) super.clone();
-        } catch (Exception e) {
-            logger.error("Cloning failed.", e);
-        }
+  /** {@inheritDoc} */
+  @Override
+  public void init() {}
 
-        // atSystem.out.println("m " + m);ractiveTerm.parameters = (double[])
-        // parameters.clone();
-        // System.arraycopy(parameters,0, attractiveTerm.parameters, 0,
-        // parameters.length);
-        return attractiveTerm;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double diffdiffalphaT(double temperature) {
+    return 0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void init() {}
+  /** {@inheritDoc} */
+  @Override
+  public double diffdiffaT(double temperature) {
+    return 0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double diffdiffalphaT(double temperature) {
-        return 0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double aT(double temperature) {
+    return getComponent().geta();
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double diffdiffaT(double temperature) {
-        return 0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double alpha(double temperature) {
+    return 1.0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double aT(double temperature) {
-        return getComponent().geta();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double diffaT(double temperature) {
+    return 0.0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double alpha(double temperature) {
-        return 1.0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double diffalphaT(double temperature) {
+    return 0.0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double diffaT(double temperature) {
-        return 0.0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setParameters(int i, double val) {
+    parameters[i] = val;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double diffalphaT(double temperature) {
-        return 0.0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getParameters(int i) {
+    return parameters[i];
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setParameters(int i, double val) {
-        parameters[i] = val;
-    }
+  /**
+   * @return ComponentEosInterface
+   */
+  ComponentEosInterface getComponent() {
+    return component;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getParameters(int i) {
-        return parameters[i];
-    }
+  /**
+   * @param component input components
+   * 
+   * 
+   */
 
-    /**
-     * @return ComponentEosInterface
-     */
-    ComponentEosInterface getComponent() {
-        return component;
-    }
-
-    /**
-     * @param component input components
-     * 
-     * 
-     */
-
-    void setComponent(ComponentEosInterface component) {
-        this.component = component;
-    }
+  void setComponent(ComponentEosInterface component) {
+    this.component = component;
+  }
 }

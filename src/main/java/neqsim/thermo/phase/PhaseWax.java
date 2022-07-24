@@ -11,49 +11,48 @@ import neqsim.thermo.component.ComponentWax;
  * @version $Id: $Id
  */
 public class PhaseWax extends PhaseSolid {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for PhaseWax.
-     * </p>
-     */
-    public PhaseWax() {
-        super();
-        phaseTypeName = "wax";
+  /**
+   * <p>
+   * Constructor for PhaseWax.
+   * </p>
+   */
+  public PhaseWax() {
+    super();
+    phaseTypeName = "wax";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PhaseWax clone() {
+    PhaseWax clonedPhase = null;
+    try {
+      clonedPhase = (PhaseWax) super.clone();
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public PhaseWax clone() {
-        PhaseWax clonedPhase = null;
-        try {
-            clonedPhase = (PhaseWax) super.clone();
-        } catch (Exception e) {
-            logger.error("Cloning failed.", e);
-        }
+    return clonedPhase;
+  }
 
-        return clonedPhase;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+      double beta) {
+    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    phaseTypeName = "wax";
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) {
-        super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-        phaseTypeName = "wax";
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void addcomponent(String componentName, double molesInPhase, double moles,
-            int compNumber) {
-        super.addcomponent(molesInPhase);
-        componentArray[compNumber] =
-                new ComponentWax(componentName, moles, molesInPhase, compNumber);
-        // componentArray[compNumber] = new ComponentWaxWilson(componentName, moles,
-        // molesInPhase, compNumber);
-        //// componentArray[compNumber] = new ComponentWonWax(componentName, moles,
-        // molesInPhase, compNumber);
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void addcomponent(String componentName, double molesInPhase, double moles,
+      int compNumber) {
+    super.addcomponent(molesInPhase);
+    componentArray[compNumber] = new ComponentWax(componentName, moles, molesInPhase, compNumber);
+    // componentArray[compNumber] = new ComponentWaxWilson(componentName, moles,
+    // molesInPhase, compNumber);
+    //// componentArray[compNumber] = new ComponentWonWax(componentName, moles,
+    // molesInPhase, compNumber);
+  }
 }

@@ -160,8 +160,8 @@ public class TestFurstIonicParameterFunction {
         sample.setThermodynamicSystem(testSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.error("database error: ", e);
+    } catch (Exception ex) {
+      logger.error("database error: ", ex);
     }
 
     // double sample1[] = {0.1};

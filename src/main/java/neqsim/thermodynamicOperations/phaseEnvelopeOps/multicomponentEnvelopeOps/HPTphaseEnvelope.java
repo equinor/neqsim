@@ -95,7 +95,7 @@ public class HPTphaseEnvelope extends BaseOperation {
     /*
      * try { mainFrame.setVisible(false); visAd3DPlot plot = new visAd3DPlot("pressure[bar]",
      * "temperature[K]", "enthalpy[J/mol]"); plot.setXYvals(150, 160, 10, 10, 20, 10);
-     * plot.setZvals(points); plot.init(); } catch (Exception e) { logger.error("plotting failed");
+     * plot.setZvals(points); plot.init(); } catch (Exception ex) { logger.error("plotting failed");
      * }
      */
   }

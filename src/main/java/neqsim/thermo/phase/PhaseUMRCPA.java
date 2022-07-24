@@ -102,8 +102,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     PhaseUMRCPA clonedPhase = null;
     try {
       clonedPhase = (PhaseUMRCPA) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
     if (activeAccosComp != null) {
       clonedPhase.activeAccosComp = activeAccosComp.clone();
@@ -1026,8 +1026,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       // SimpleMatrix hessianMatrix = new SimpleMatrix(hessian);
       try {
         hessianInvers = hessianMatrix.invert();
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
         return false;
       }
       if (solvedX) {
@@ -1150,8 +1150,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     double BonV = 1.0 - 1e-10;
     try {
       // molarVolume(pressure, temperature, A, B, phaseType);
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     double BonVold = BonV;
     double Btemp = 0;
@@ -1921,8 +1921,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       // SimpleMatrix hessianMatrix = new SimpleMatrix(hessian);
       try {
         hessianInvers = hessianMatrix.invert();
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
         return false;
       }
 

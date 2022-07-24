@@ -45,8 +45,8 @@ public class TextFile implements java.io.Serializable {
   public void newFile(String name) {
     try (FileWriter out = new FileWriter(new File(name))) {
       out.write("");
-    } catch (Exception e) {
-      System.out.println(e.toString());
+    } catch (Exception ex) {
+      System.out.println(ex.toString());
     }
   }
 
@@ -100,8 +100,8 @@ public class TextFile implements java.io.Serializable {
         out.write("\n");
       }
       out.flush();
-    } catch (Exception e) {
-      System.err.println("error writing file: " + e.toString());
+    } catch (Exception ex) {
+      System.err.println("error writing file: " + ex.toString());
     }
     System.out.println("writing data to file: " + fileName + " ... ok");
   }

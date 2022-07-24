@@ -99,8 +99,8 @@ public class TestMathiasCopemanToDewPoint {
             sampleList.add(sample);
           }
         }
-      } catch (Exception e) {
-        logger.error("database error" + e);
+      } catch (Exception ex) {
+        logger.error("database error" + ex);
       }
     }
 
@@ -155,8 +155,8 @@ public class TestMathiasCopemanToDewPoint {
           sampleList.add(sample);
         }
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

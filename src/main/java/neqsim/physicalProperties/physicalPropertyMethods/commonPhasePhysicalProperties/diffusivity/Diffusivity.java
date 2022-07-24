@@ -54,8 +54,8 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
 
     try {
       properties = (Diffusivity) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return properties;

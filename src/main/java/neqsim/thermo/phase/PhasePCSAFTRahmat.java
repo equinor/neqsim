@@ -153,8 +153,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     PhasePCSAFTRahmat clonedPhase = null;
     try {
       clonedPhase = (PhasePCSAFTRahmat) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return clonedPhase;

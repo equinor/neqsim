@@ -14,65 +14,64 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMarquardtFunction {
-    static Logger logger =
-            LogManager.getLogger(IonicInteractionParameterFittingFunctionCo2nacl.class);
+  static Logger logger =
+      LogManager.getLogger(IonicInteractionParameterFittingFunctionCo2nacl.class);
 
-    /**
-     * <p>
-     * Constructor for IonicInteractionParameterFittingFunctionCo2nacl.
-     * </p>
-     */
-    public IonicInteractionParameterFittingFunctionCo2nacl() {}
+  /**
+   * <p>
+   * Constructor for IonicInteractionParameterFittingFunctionCo2nacl.
+   * </p>
+   */
+  public IonicInteractionParameterFittingFunctionCo2nacl() {}
 
-    /** {@inheritDoc} */
-    @Override
-    public double calcValue(double[] dependentValues) {
-        try {
-            thermoOps.TPflash();
-        } catch (Exception e) {
-            logger.error(e.toString());
-        }
-        return system.getPhase(1).getComponent(0).getx()
-                / (1.0 - system.getPhase(1).getComponent(2).getx()
-                        - system.getPhase(1).getComponent(3).getx());
+  /** {@inheritDoc} */
+  @Override
+  public double calcValue(double[] dependentValues) {
+    try {
+      thermoOps.TPflash();
+    } catch (Exception ex) {
+      logger.error(ex.toString());
+    }
+    return system.getPhase(1).getComponent(0).getx() / (1.0
+        - system.getPhase(1).getComponent(2).getx() - system.getPhase(1).getComponent(3).getx());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcTrueValue(double val) {
+    return val;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setFittingParams(int i, double value) {
+    params[i] = value;
+    int CO2Numb = 0, Naplusnumb = 0;
+    int j = 0;
+    do {
+      CO2Numb = j;
+      j++;
+    } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("CO2"));
+    j = 0;
+
+    do {
+      Naplusnumb = j;
+      j++;
+    } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
+        .equals(system.getPhases()[0].getComponents()[2].getComponentName()));
+
+    if (i == 0) {
+      ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0]).getElectrolyteMixingRule()
+          .setWijParameter(Naplusnumb, CO2Numb, value);
+      ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
+          .setWijParameter(Naplusnumb, CO2Numb, value);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public double calcTrueValue(double val) {
-        return val;
+    if (i == 1) {
+      ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0]).getElectrolyteMixingRule()
+          .setWijT1Parameter(Naplusnumb, CO2Numb, value);
+      ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
+          .setWijT1Parameter(Naplusnumb, CO2Numb, value);
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setFittingParams(int i, double value) {
-        params[i] = value;
-        int CO2Numb = 0, Naplusnumb = 0;
-        int j = 0;
-        do {
-            CO2Numb = j;
-            j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("CO2"));
-        j = 0;
-
-        do {
-            Naplusnumb = j;
-            j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
-                .equals(system.getPhases()[0].getComponents()[2].getComponentName()));
-
-        if (i == 0) {
-            ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0]).getElectrolyteMixingRule()
-                    .setWijParameter(Naplusnumb, CO2Numb, value);
-            ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
-                    .setWijParameter(Naplusnumb, CO2Numb, value);
-        }
-
-        if (i == 1) {
-            ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0]).getElectrolyteMixingRule()
-                    .setWijT1Parameter(Naplusnumb, CO2Numb, value);
-            ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
-                    .setWijT1Parameter(Naplusnumb, CO2Numb, value);
-        }
-    }
+  }
 }

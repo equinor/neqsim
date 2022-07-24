@@ -6,7 +6,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * This class defines a thermodynamic system using the Duan Sun method used for CO2
+ * This class defines a thermodynamic system using the Duan Sun method used for CO2.
  * 
  * @author Even Solbraa
  */
@@ -93,8 +93,8 @@ public class SystemDuanSun extends SystemEos {
     SystemDuanSun clonedSystem = null;
     try {
       clonedSystem = (SystemDuanSun) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return clonedSystem;
@@ -119,8 +119,8 @@ public class SystemDuanSun extends SystemEos {
     try {
       ThermodynamicOperations testOps = new ThermodynamicOperations(fluid1);
       testOps.TPflash();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
     fluid1.display();
   }

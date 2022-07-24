@@ -204,7 +204,7 @@ public class TPmultiflash extends TPflash {
       SimpleMatrix dQdBM = new SimpleMatrix(Qmatrix);
       try {
         ans = dQdBM.solve(dQM).transpose();
-      } catch (Exception e) {
+      } catch (Exception ex) {
       }
       betaMatrix = betaMatrix.minus(ans.scale(iter / (iter + 3.0)));
       removePhase = false;
@@ -365,8 +365,8 @@ public class TPmultiflash extends TPflash {
         if (clonedSystem.get(0).IsPhase(1)) {
           try {
             clonedSystem.get(0).getPhase(1).getComponents()[cc].setx(nomb);
-          } catch (Exception e) {
-            System.out.println(e.getMessage());
+          } catch (Exception ex) {
+            System.out.println(ex.getMessage());
           }
         }
       }
