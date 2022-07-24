@@ -110,7 +110,7 @@ public class TestIonicInteractionParameterFitting {
     // sampleList.add(sample);
     // }
     // }
-    // catch(Exception e){
+    // catch(Exception ex){
     // logger.error("database error" + ex);
     // }
 

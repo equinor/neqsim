@@ -102,8 +102,8 @@ public class TestBinaryHVParameterFitting_MDEA {
      * standardDeviation1);
      * 
      * sample.setFunction(function); sample.setReference(Double.toString(ID));
-     * sample.setThermodynamicSystem(testSystem); sampleList.add(sample); } } catch(Exception e){
-     * logger.info("database error" + e); }
+     * sample.setThermodynamicSystem(testSystem); sampleList.add(sample); } } catch(Exception ex){
+     * logger.info("database error" + ex); }
      */
 
     /*
@@ -133,7 +133,7 @@ public class TestBinaryHVParameterFitting_MDEA {
      * Hm/100.0; SampleValue sample = new SampleValue(Hm, stddev, sample1, standardDeviation1);
      * 
      * sample.setFunction(function); sample.setReference(Double.toString(ID));
-     * sample.setThermodynamicSystem(testSystem); sampleList.add(sample); } } catch(Exception e){
+     * sample.setThermodynamicSystem(testSystem); sampleList.add(sample); } } catch(Exception ex){
      * logger.info("database error" + ex); }
      */
 
