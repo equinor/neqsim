@@ -3,6 +3,7 @@
  *
  * Created on 18. august 2001, 12:45
  */
+
 package neqsim.thermo.component;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -139,7 +140,7 @@ public class ComponentWaxWilson extends ComponentSolid {
     public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {
         double param1 = 0.0; // ((ComponentWaxWilson)
                              // phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
-        double param2 = 0.0;// ((ComponentWaxWilson)
+        double param2 = 0.0; // ((ComponentWaxWilson)
                             // phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
         // this need to be corrected accordint to how to select energy of shortest
         // carbon molecule .....

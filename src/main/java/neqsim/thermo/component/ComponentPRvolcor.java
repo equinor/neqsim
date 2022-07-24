@@ -3,6 +3,7 @@
  *
  * Created on 8. april 2000, 23:14
  */
+
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
@@ -11,7 +12,7 @@ import neqsim.thermo.phase.PhasePrEosvolcor;
 /**
  *
  * @author Even Solbraa
- * @version
+ *
  */
 public class ComponentPRvolcor extends ComponentPR {
 
@@ -41,7 +42,6 @@ public class ComponentPRvolcor extends ComponentPR {
     return 0.;
   }
 
-
   public ComponentPRvolcor(String component_name, double moles, double molesInPhase,
       int compnumber) {
     super(component_name, moles, molesInPhase, compnumber);
@@ -56,7 +56,6 @@ public class ComponentPRvolcor extends ComponentPR {
     super.init(temp, pres, totMoles, beta, type);
     c = calcc();
   }
-
 
   /** {@inheritDoc} */
   // @Override
@@ -89,11 +88,9 @@ public class ComponentPRvolcor extends ComponentPR {
     }
   }
 
-
   public double getCi() {
     return Ci;
   }
-
 
   public double getCij(int j) {
     return Cij[j];
@@ -101,7 +98,6 @@ public class ComponentPRvolcor extends ComponentPR {
 
   // depending on the type of the volume translation (T-dependent or not) these sould be properly
   // modified
-
 
   // second derivative of C with regards to mole fraction and temperature
   public double getCiT() {
@@ -112,9 +108,7 @@ public class ComponentPRvolcor extends ComponentPR {
     return 0;
   }
 
-
-
-  /// ** {@inheritDoc} */ do I need this inheritDoc thing?
+  /** {@inheritDoc} */
   @Override
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
@@ -126,7 +120,6 @@ public class ComponentPRvolcor extends ComponentPR {
   double pressure) {
     return ((PhasePrEosvolcor) phase).FC();
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -173,7 +166,6 @@ public class ComponentPRvolcor extends ComponentPR {
         + phase.FD() * getAij(j);
   }
 
-
   /** {@inheritDoc} */
   @Override
   public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
@@ -182,10 +174,7 @@ public class ComponentPRvolcor extends ComponentPR {
     return phase.FnV() + phase.FBV() * getBi() + phase.FDV() * getAi() + loc_FCV * getCi();
   }
 
-
-
   // Remember this trick above that professor showed to you...you can call whichever new F
   // expression
   // you need by first specifying the type "PhasePrEosvolcor"
-
 }

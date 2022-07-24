@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -28,13 +29,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Mixer.class);
 
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   private int numberOfInputStreams = 0;
   protected StreamInterface mixedStream;
   private boolean isSetOutTemperature = false;
   private double outTemperature = Double.NaN;
-  static Logger logger = LogManager.getLogger(Mixer.class);
 
   /**
    * <p>
@@ -68,6 +69,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   public void replaceStream(int i, StreamInterface newStream) {
     streams.set(i, newStream);
   }
+  
+  /** {@inheritDoc} */
+  @Override
+  public void removeInputStream(int i) {
+    streams.remove(i);
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -82,8 +89,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         // mixedStream.getThermoSystem().init(0);
         // mixedStream.getThermoSystem().init(3);
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
 
     numberOfInputStreams++;
@@ -151,11 +158,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         }
       }
     }
-    if (hasAddedNewComponent)
+    if (hasAddedNewComponent) {
       mixedStream.getThermoSystem().setMixingRule(mixedStream.getThermoSystem().getMixingRule());
-    // mixedStream.getThermoSystem().init_x_y();
-    // mixedStream.getThermoSystem().initBeta();
-    // mixedStream.getThermoSystem().init(2);
+      // mixedStream.getThermoSystem().init_x_y();
+      // mixedStream.getThermoSystem().initBeta();
+      // mixedStream.getThermoSystem().init(2);
+    }
   }
 
   /**
@@ -202,7 +210,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
@@ -221,28 +229,31 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
       enthalpy = calcMixStreamEnthalpy();
       // System.out.println("temp guess " + guessTemperature());
-      if (!isSetOutTemperature) {
-        mixedStream.getThermoSystem().setTemperature(guessTemperature());
-      } else {
+      if (isSetOutTemperature) {
         mixedStream.setTemperature(outTemperature, "K");
+      } else {
+        mixedStream.getThermoSystem().setTemperature(guessTemperature());
       }
       // System.out.println("filan temp " + mixedStream.getTemperature());
     }
     if (isSetOutTemperature) {
-      if (!Double.isNaN(getOutTemperature()))
+      if (!Double.isNaN(getOutTemperature())) {
         mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+      }
       testOps.TPflash();
       mixedStream.getThermoSystem().init(2);
     } else {
       try {
         testOps.PHflash(enthalpy, 0);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-        if (!Double.isNaN(getOutTemperature()))
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
+        if (!Double.isNaN(getOutTemperature())) {
           mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+        }
         testOps.TPflash();
       }
     }
+    mixedStream.setCalculationIdentifier(id);
 
     // System.out.println("enthalpy: " +
     // mixedStream.getThermoSystem().getEnthalpy());
@@ -252,12 +263,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
     // outStream.setThermoSystem(mixedStream.getThermoSystem());
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
   @Override
   public void displayResult() {
-    SystemInterface thermoSystem = mixedStream.getThermoSystem();
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
@@ -266,9 +277,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new FlowLayout());
 
+    SystemInterface thermoSystem = mixedStream.getThermoSystem();
     thermoSystem.initPhysicalProperties();
     String[][] table = new String[50][5];
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";
@@ -347,6 +358,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
     }
 
+    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);
@@ -459,12 +471,15 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (!super.equals(obj))
+    }
+    if (!super.equals(obj)) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     Mixer other = (Mixer) obj;
     return isSetOutTemperature == other.isSetOutTemperature
         && Objects.equals(mixedStream, other.mixedStream)

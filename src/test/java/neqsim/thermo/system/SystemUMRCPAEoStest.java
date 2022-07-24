@@ -22,36 +22,34 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
   @BeforeAll
   public static void setUp() {
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
-    //testSystem = new neqsim.thermo.system.SystemSrkCPA(400.0, 500.0);
-    //testSystem = new neqsim.thermo.system.SystemSrkCPA(400.0, 500.0);
+    // testSystem = new neqsim.thermo.system.SystemSrkCPA(400.0, 500.0);
+    // testSystem = new neqsim.thermo.system.SystemSrkCPA(400.0, 500.0);
     testSystem = new neqsim.thermo.system.SystemUMRCPAEoS(800, 110);
     // testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 10.0);
-    //testSystem.addComponent("nitrogen", 1);
+    // testSystem.addComponent("nitrogen", 1);
     testSystem.addComponent("water", 1);
-    //testSystem.addComponent("CO2", 0.01);
-    //testSystem.addComponent("methane", 0.68);
-    //testSystem.addComponent("ethane", 0.1);
+    // testSystem.addComponent("CO2", 0.01);
+    // testSystem.addComponent("methane", 0.68);
+    // testSystem.addComponent("ethane", 0.1);
     // testSystem.addComponent("n-heptane", 0.2);
     // testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-    //testSystem.setMixingRule(1);
+    // testSystem.setMixingRule(1);
     testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     // testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testSystem.init(0);
     testOps.TPflash();
     testSystem.init(3);
-    //testSystem.initProperties();
+    // testSystem.initProperties();
     // testSystem.i
   }
-
-
 
   /**
    * <p>
    * testFugasities.
    * </p>
    */
-   //@Test
+  // @Test
   public void testFugasities() {
     testSystem.init(0);
     testSystem.init(1);
@@ -61,7 +59,6 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     double fucoef = testSystem.getComponent(0).getLogFugacityCoefficient();
 
     assertEquals(-0.002884922, fucoef, 1e-6);
-
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
@@ -82,14 +79,14 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     // testSystem = new neqsim.thermo.system.SystemPr(298.0, 10.0);
     // testSystem = new SystemSrkEos(298.0, 10.0);
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
-    //testSystem = new neqsim.thermo.system.SystemSrkCPA(400, 500);
+    // testSystem = new neqsim.thermo.system.SystemSrkCPA(400, 500);
     testSystem = new neqsim.thermo.system.SystemUMRCPAEoS(800, 110);
     testSystem.addComponent("water", 1);
     // testSystem.addComponent("CO2", 0.01);
-     //testSystem.addComponent("methane", 0.68);
-     //testSystem.addComponent("ethane", 0.1);
+    // testSystem.addComponent("methane", 0.68);
+    // testSystem.addComponent("ethane", 0.1);
     // testSystem.addComponent("n-heptane", 0.2);
-    //testSystem.setMixingRule(1);
+    // testSystem.setMixingRule(1);
     testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     // testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -101,15 +98,19 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     System.out.println("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
     System.out.println("fugacity of gas phase " + testSystem.getPhase(0).getFugacity(0));
     System.out.println("residual enthalpy of gas phase is " + testSystem.getPhase(0).getHresTP());
-    System.out.println("isochoric heat capacity of gas phase is " + testSystem.getPhase(0).getCv("J/mol"));
-    System.out.println("isobaric heat capacity of gas phase is " + testSystem.getPhase(0).getCp("J/mol"));
-    System.out.println("internal energy of gas phase is " + testSystem.getPhase(0).getInternalEnergy());
+    System.out.println(
+        "isochoric heat capacity of gas phase is " + testSystem.getPhase(0).getCv("J/mol"));
+    System.out
+        .println("isobaric heat capacity of gas phase is " + testSystem.getPhase(0).getCp("J/mol"));
+    System.out
+        .println("internal energy of gas phase is " + testSystem.getPhase(0).getInternalEnergy());
     System.out.println("molar volume liquid is " + testSystem.getPhase(1).getMolarVolume());
     System.out.println("fugacity of gas phase " + testSystem.getPhase(1).getFugacity(0));
     System.out.println("enthalpy of gas phase is " + testSystem.getPhase(1).getEnthalpy("J/mol"));
-    System.out.println("isochoric heat capacity of gas phase is " + testSystem.getPhase(1).getCv("J/mol"));
-     //ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-     //testOps.TPflash();
+    System.out.println(
+        "isochoric heat capacity of gas phase is " + testSystem.getPhase(1).getCv("J/mol"));
+    // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    // testOps.TPflash();
 
     // testSystem.initProperties();
     // assertEquals(0.9711401538454589, testSystem.getPhase(0).getZ(), 0.001);
@@ -161,8 +162,8 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to pressure")
   public void checkFugacityCoefficientsDP() {
-    //testSystem.init(0);
-    //testSystem.init(3);
+    // testSystem.init(0);
+    // testSystem.init(3);
     assertTrue(testModel.checkFugacityCoefficientsDP());
   }
 
@@ -172,7 +173,7 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
    * </p>
    */
 
-   @Test
+  @Test
   @DisplayName("test derivative of fugacity coefficients with respect to temperature")
   public void checkFugacityCoefficientsDT() {
     assertTrue(testModel.checkFugacityCoefficientsDT());
@@ -183,7 +184,7 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
    * checkFugacityCoefficientsDn.
    * </p>
    */
-   //@Test
+  // @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition")
   public void checkFugacityCoefficientsDn() {
     assertTrue(testModel.checkFugacityCoefficientsDn());
@@ -194,12 +195,11 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
    * checkFugacityCoefficientsDn2.
    * </p>
    */
-   //@Test
+  // @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition (2nd method)")
   public void checkFugacityCoefficientsDn2() {
     assertTrue(testModel.checkFugacityCoefficientsDn2());
   }
-
 
   /**
    * <p>
@@ -225,9 +225,9 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
       testOps.calcPTphaseEnvelope();
       System.out.println("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
           + testOps.get("cricondenbar")[1]);
-    } catch (Exception e) {
+    } catch (Exception ex) {
       assertTrue(false);
-      throw new Exception(e);
+      throw new Exception(ex);
     }
     assertEquals(testOps.get("cricondenbar")[1], 130.686140727503, 0.02);
   }

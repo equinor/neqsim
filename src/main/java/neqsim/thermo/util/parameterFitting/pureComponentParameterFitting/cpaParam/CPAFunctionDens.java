@@ -12,72 +12,72 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class CPAFunctionDens extends CPAFunction {
-    static Logger logger = LogManager.getLogger(CPAFunctionDens.class);
+  static Logger logger = LogManager.getLogger(CPAFunctionDens.class);
 
-    int phasetype = 1;
+  int phasetype = 1;
 
-    /**
-     * <p>
-     * Constructor for CPAFunctionDens.
-     * </p>
-     */
-    public CPAFunctionDens() {}
+  /**
+   * <p>
+   * Constructor for CPAFunctionDens.
+   * </p>
+   */
+  public CPAFunctionDens() {}
 
-    /**
-     * <p>
-     * Constructor for CPAFunctionDens.
-     * </p>
-     *
-     * @param phase a int
-     */
-    public CPAFunctionDens(int phase) {
-        phasetype = phase;
+  /**
+   * <p>
+   * Constructor for CPAFunctionDens.
+   * </p>
+   *
+   * @param phase a int
+   */
+  public CPAFunctionDens(int phase) {
+    phasetype = phase;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcTrueValue(double val) {
+    return val;
+  }
+
+  // public double calcValue(double[] dependentValues){
+  // system.setTemperature(dependentValues[0]);
+  // system.init(0);
+  // system.init(1);
+  // system.initPhysicalProperties();
+  // return system.getPhase(phasetype).getPhysicalProperties().getDensity();
+  // }
+  /**
+   * <p>
+   * calcValue2.
+   * </p>
+   *
+   * @param dependentValues an array of {@link double} objects
+   * @return a double
+   */
+  public double calcValue2(double[] dependentValues) {
+    system.setTemperature(dependentValues[0]);
+    system.setPressure(1.0); // system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
+    try {
+      thermoOps.bubblePointPressureFlash(false);
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
+    system.initPhysicalProperties();
+    // System.out.println("pres: " + system.getPressure());
+    return system.getPhase(phasetype).getPhysicalProperties().getDensity();
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double calcTrueValue(double val) {
-        return val;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double calcValue(double[] dependentValues) {
+    system.setTemperature(dependentValues[0]);
+    // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
 
-    // public double calcValue(double[] dependentValues){
-    // system.setTemperature(dependentValues[0]);
-    // system.init(0);
-    // system.init(1);
-    // system.initPhysicalProperties();
-    // return system.getPhase(phasetype).getPhysicalProperties().getDensity();
-    // }
-    /**
-     * <p>
-     * calcValue2.
-     * </p>
-     *
-     * @param dependentValues an array of {@link double} objects
-     * @return a double
-     */
-    public double calcValue2(double[] dependentValues) {
-        system.setTemperature(dependentValues[0]);
-        system.setPressure(1.0);// system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
-        try {
-            thermoOps.bubblePointPressureFlash(false);
-        } catch (Exception e) {
-            logger.error(e.toString());
-        }
-        system.initPhysicalProperties();
-        // System.out.println("pres: " + system.getPressure());
-        return system.getPhase(phasetype).getPhysicalProperties().getDensity();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public double calcValue(double[] dependentValues) {
-        system.setTemperature(dependentValues[0]);
-        // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
-
-        system.init(0);
-        system.init(1);
-        system.initPhysicalProperties();
-        // System.out.println("pres: " + system.getPressure());
-        return system.getPhase(phasetype).getPhysicalProperties().getDensity();
-    }
+    system.init(0);
+    system.init(1);
+    system.initPhysicalProperties();
+    // System.out.println("pres: " + system.getPressure());
+    return system.getPhase(phasetype).getPhysicalProperties().getDensity();
+  }
 }

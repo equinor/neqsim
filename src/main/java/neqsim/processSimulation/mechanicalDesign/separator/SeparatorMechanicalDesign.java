@@ -76,9 +76,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       volumeSafetyFactor =
           ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
               .getVolumetricDesignFactor();
-      retentionTime = 120.0;// ((SeparatorDesignStandard)
-                            // getDesignStandard().get("separator process
-                            // design")).getLiquidRetentionTime("API12J", this);
+      retentionTime = 120.0; // ((SeparatorDesignStandard)
+                             // getDesignStandard().get("separator process
+                             // design")).getLiquidRetentionTime("API12J", this);
     } else {
       System.out.println("no separator process design specified......");
       return;
@@ -93,7 +93,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     dialogContentPane.setLayout(new BorderLayout());
 
     String[] names = {"Name", "Value", "Unit"};
-    String[][] table = new String[16][3];// createTable(getProcessEquipment().getName());
+    String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 
     table[1][0] = "Separator Inner Diameter";
     table[1][1] = Double.toString(getInnerDiameter());
@@ -151,8 +151,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     separator.getThermoSystem().initPhysicalProperties();
     separator.setDesignLiquidLevelFraction(Fg);
 
-    double emptyVesselWeight = 0.0, internalsWeight = 0.0, externalNozzelsWeight = 0.0;
-    double pipingWeight = 0.0, structualWeight = 0.0, electricalWeight = 0.0;
+    double emptyVesselWeight = 0.0;
+    double internalsWeight = 0.0;
+    double externalNozzelsWeight = 0.0;
+    double pipingWeight = 0.0;
+    double structualWeight = 0.0;
+    double electricalWeight = 0.0;
     double totalSkidWeight = 0.0;
 
     // double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;

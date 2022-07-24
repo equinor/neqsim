@@ -3,6 +3,7 @@
  *
  * Created on 6. september 2002, 21:49
  */
+
 package neqsim.MathLib.nonLinearSolver;
 
 /**

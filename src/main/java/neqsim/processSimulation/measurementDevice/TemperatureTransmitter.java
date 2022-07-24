@@ -3,6 +3,7 @@
  *
  * Created on 6. juni 2006, 15:24
  */
+
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;

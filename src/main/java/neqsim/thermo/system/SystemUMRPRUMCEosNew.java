@@ -6,7 +6,8 @@
 
 package neqsim.thermo.system;
 /**
- *
+ * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
+ * 
  * @author Even Solbraa
  * @version
  */
@@ -17,7 +18,6 @@ import neqsim.thermo.phase.PhasePrEosvolcor;
  * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
  */
 public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
-
 
   public SystemUMRPRUMCEosNew() {
     super();

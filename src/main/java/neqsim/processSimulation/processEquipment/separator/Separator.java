@@ -3,10 +3,14 @@
  *
  * Created on 12. mars 2001, 19:48
  */
+
 package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -30,6 +34,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Separator.class);
 
   SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned,
       thermoSystem2;
@@ -72,7 +77,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /**
    * Constructor for Separator.
-   * 
+   *
    * @param name Name of separator
    */
   public Separator(String name) {
@@ -194,8 +199,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    inletStreamMixer.run();
+  public void run(UUID id) {
+    inletStreamMixer.run(id);
     thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
     thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
 
@@ -212,12 +217,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       liquidOutStream.setThermoSystem(thermoSystem2.getEmptySystemClone());
     }
     if (thermoSystem2.hasPhaseType("gas")) {
-      gasOutStream.run();
+      gasOutStream.run(id);
     } else {
       gasOutStream.getFluid().init(3);
     }
     if (thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil")) {
-      liquidOutStream.run();
+      liquidOutStream.run(id);
     } else {
       liquidOutStream.getFluid().init(3);
     }
@@ -259,10 +264,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           * getInternalDiameter() * getSeparatorLength();
       // System.out.println("moles out" +
       // liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     thermoSystem = thermoSystem2;
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
@@ -279,13 +285,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {
+  public void runTransient(double dt, UUID id) {
     if (getCalculateSteadyState()) {
-      run();
+      run(id);
+      increaseTime(dt);
       return;
     }
 
-    inletStreamMixer.run();
+    inletStreamMixer.run(id);
 
     // System.out.println("moles out" +
     // liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
@@ -325,6 +332,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         * getSeparatorLength();
     gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
         * getInternalDiameter() * getSeparatorLength();
+    setCalculationIdentifier(id);
   }
 
   /**
@@ -343,9 +351,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     gasOutStream.getThermoSystem().setPressure(pres);
     liquidOutStream.getThermoSystem().setPressure(pres);
 
-    inletStreamMixer.run();
-    gasOutStream.run();
-    liquidOutStream.run();
+    UUID id = UUID.randomUUID();
+
+    inletStreamMixer.run(id);
+    gasOutStream.run(id);
+    liquidOutStream.run(id);
   }
 
   /**
@@ -708,7 +718,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
       try {
         getLiquidOutStream().getThermoSystem().init(3);
-      } catch (Exception e) {
+      } catch (Exception ex) {
       }
     }
     if (thermoSystem.hasPhaseType("gas")) {
