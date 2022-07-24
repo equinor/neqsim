@@ -43,7 +43,7 @@ public class ActivityCalc {
 
     try {
       testOps.bubblePointPressureFlash(false);
-    } catch (Exception e) {
+    } catch (Exception ex) {
     }
 
     // testSystem.display();

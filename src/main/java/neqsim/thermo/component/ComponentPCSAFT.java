@@ -69,8 +69,8 @@ public class ComponentPCSAFT extends ComponentSrk {
     ComponentPCSAFT clonedComponent = null;
     try {
       clonedComponent = (ComponentPCSAFT) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return clonedComponent;

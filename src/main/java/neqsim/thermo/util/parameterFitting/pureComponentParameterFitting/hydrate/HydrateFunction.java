@@ -31,8 +31,8 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
     try {
       thermoOps.hydrateFormationTemperature(1);
       // System.out.println("temperature " + system.getTemperature());
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
     return system.getTemperature();
   }

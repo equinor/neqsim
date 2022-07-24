@@ -128,8 +128,8 @@ public class ChemicalReactionOperations
     ChemicalReactionOperations clonedSystem = null;
     try {
       clonedSystem = (ChemicalReactionOperations) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace(System.err);
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
     return clonedSystem;
   }
@@ -436,7 +436,7 @@ public class ChemicalReactionOperations
         // system.display();
         firsttime = false;
         return true;
-      } catch (Exception e) {
+      } catch (Exception ex) {
         System.out.println("error in chem eq");
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phase);
         return solver.solve();

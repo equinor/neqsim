@@ -154,7 +154,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
     } else {
       try {
         testOps.PHflash(enthalpy, 0);
-      } catch (Exception e) {
+      } catch (Exception ex) {
         if (!Double.isNaN(getOutTemperature())) {
           mixedStream.getThermoSystem().setTemperature(getOutTemperature());
         }

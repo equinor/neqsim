@@ -55,9 +55,9 @@ public class CompressorDesignStandard extends DesignStandard {
         if (dataSet != null) {
           dataSet.close();
         }
-      } catch (Exception e) {
+      } catch (Exception ex) {
         System.out.println("error closing database.....GasScrubberDesignStandard");
-        logger.error(e.getMessage());
+        logger.error(ex.getMessage());
       }
     }
   }

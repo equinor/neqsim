@@ -105,8 +105,8 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         error = -(wtp - wtfrac);
 
         logger.info("error " + error);
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
       }
     } while ((Math.abs(error) > 1e-5 && iter < 100) || iter < 3);
     // system.display();
@@ -151,8 +151,8 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
               + testSystem.getPhase(0).getComponent("water").getNumberOfmoles()
                   * testSystem.getPhase(0).getComponent("water").getMolarMass());
       logger.info("hydrate inhibitor concentration " + cons + " wt%");
-    } catch (Exception e) {
-      e.toString();
+    } catch (Exception ex) {
+      ex.toString();
     }
     testSystem.display();
   }

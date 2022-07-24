@@ -113,7 +113,7 @@ public class PipeFlowVisualization extends
      * neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass("title[1]", "title[2]");
      * ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot) .setLineXYVals(xPlace,
      * points[0]); ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setXYVals(xPlace,
-     * points[0]); } } catch (Exception e) { System.out.println(e.toString());
+     * points[0]); } } catch (Exception ex) { System.out.println(ex.toString());
      * System.out.println("plotting failed"); }
      */
   }
@@ -148,7 +148,7 @@ public class PipeFlowVisualization extends
      * neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass("title[1]", "title[2]");
      * ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot) .setLineXYVals(xPlace,
      * points[0]); ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setXYVals(xPlace,
-     * points[0]); } plot.init(); } catch (Exception e) { System.out.println(e.toString());
+     * points[0]); } plot.init(); } catch (Exception ex) { System.out.println(ex.toString());
      * System.out.println("plotting failed"); }
      */
   }

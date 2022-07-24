@@ -227,8 +227,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // try catch block added by Neeraj
     try {
       x_solve = A_solve.solve(b_solve);
-    } catch (Exception e) {
-      // logger.error(e.getMessage());
+    } catch (Exception ex) {
+      // logger.error(ex.getMessage());
       // System.out.println("\nError x " +
       // system.getPhase(phasenumb).getComponent(0).getx());
       // System.out.println("Error T " + system.getTemperature());

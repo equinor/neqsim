@@ -76,8 +76,8 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     AtractiveTermMatCopPRUMRNew atractiveTerm = null;
     try {
       atractiveTerm = (AtractiveTermMatCopPRUMRNew) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return atractiveTerm;

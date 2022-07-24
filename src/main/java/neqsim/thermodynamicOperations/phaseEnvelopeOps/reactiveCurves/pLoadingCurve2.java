@@ -116,8 +116,8 @@ public class pLoadingCurve2 extends BaseOperation {
       system.init_x_y();
       try {
         testOps.bubblePointPressureFlash(false);
-      } catch (Exception e) {
-        logger.info(e.toString());
+      } catch (Exception ex) {
+        logger.info(ex.toString());
       }
       logger.info("beta " + system.getBeta());
       points[0][i] = (inscr * (i - 1)) / molMDEA;

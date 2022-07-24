@@ -49,8 +49,8 @@ public class Viscosity extends
 
     try {
       properties = (Viscosity) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return properties;

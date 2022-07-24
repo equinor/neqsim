@@ -164,8 +164,8 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
       // dx.print(10,10);
       u.minusEquals(dx);
       return (dx.norm2() / u.norm2());
-    } catch (Exception e) {
-      throw e;
+    } catch (Exception ex) {
+      throw ex;
     }
   }
 }

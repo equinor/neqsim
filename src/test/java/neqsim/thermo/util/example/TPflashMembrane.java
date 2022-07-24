@@ -16,45 +16,45 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @since 2.2.3
  */
 public class TPflashMembrane {
-    static Logger logger = LogManager.getLogger(TPflashMembrane.class);
+  static Logger logger = LogManager.getLogger(TPflashMembrane.class);
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String args[]) {
-        // SystemInterface testSystem2 =
-        // util.serialization.SerializationManager.open("c:/test.fluid");
-        // testSystem2.display();
-        SystemInterface testSystem = new SystemSrkEos(298, 1.01325);
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String args[]) {
+    // SystemInterface testSystem2 =
+    // util.serialization.SerializationManager.open("c:/test.fluid");
+    // testSystem2.display();
+    SystemInterface testSystem = new SystemSrkEos(298, 1.01325);
 
-        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-        testSystem.addComponent("CO2", 10.0);
-        testSystem.addComponent("propane", 100.0, 0);
-        testSystem.addComponent("propane", 100.0, 1);
+    testSystem.addComponent("CO2", 10.0);
+    testSystem.addComponent("propane", 100.0, 0);
+    testSystem.addComponent("propane", 100.0, 1);
 
-        testSystem.createDatabase(true);
-        // 1- orginal no interaction 2- classic w interaction
-        // 3- Huron-Vidal 4- Wong-Sandler
-        testSystem.setMixingRule(2);
+    testSystem.createDatabase(true);
+    // 1- orginal no interaction 2- classic w interaction
+    // 3- Huron-Vidal 4- Wong-Sandler
+    testSystem.setMixingRule(2);
 
-        testSystem.init_x_y();
-        testSystem.getPhase(0).setPressure(30.0);
-        testSystem.getPhase(1).setPressure(2.0);
-        testSystem.setPhaseType("all", 1);
-        testSystem.allowPhaseShift(false);
+    testSystem.init_x_y();
+    testSystem.getPhase(0).setPressure(30.0);
+    testSystem.getPhase(1).setPressure(2.0);
+    testSystem.setPhaseType("all", 1);
+    testSystem.allowPhaseShift(false);
 
-        try {
-            String[] comps = {"CO2"};
-            testOps.dTPflash(comps);
-            // testOps.TPflash();
-            testSystem.display();
-        } catch (Exception e) {
-            logger.error(e.toString());
-        }
+    try {
+      String[] comps = {"CO2"};
+      testOps.dTPflash(comps);
+      // testOps.TPflash();
+      testSystem.display();
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
+  }
 }

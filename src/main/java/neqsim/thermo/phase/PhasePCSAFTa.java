@@ -50,8 +50,8 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     PhasePCSAFTa clonedPhase = null;
     try {
       clonedPhase = (PhasePCSAFTa) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
 

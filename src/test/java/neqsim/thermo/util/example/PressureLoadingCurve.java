@@ -44,8 +44,8 @@ public class PressureLoadingCurve {
 
     try {
       testOps.bubblePointPressureFlash(true);
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
     logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
     testSystem.display();

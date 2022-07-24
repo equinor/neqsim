@@ -399,18 +399,18 @@ public class ProcessSystem extends SimulationBaseClass {
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
             ((ProcessEquipmentInterface) unitOperations.get(i)).run();
-          } catch (Exception e) {
-            // String error = e.getMessage();
-            logger.error(e.getMessage());
+          } catch (Exception ex) {
+            // String error = ex.getMessage();
+            logger.error(ex.getMessage());
           }
         }
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
             && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
           try {
             ((ProcessEquipmentInterface) unitOperations.get(i)).run();
-          } catch (Exception e) {
-            // String error = e.getMessage();
-            logger.error(e.getMessage());
+          } catch (Exception ex) {
+            // String error = ex.getMessage();
+            logger.error(ex.getMessage());
           }
         }
       }
@@ -560,7 +560,7 @@ public class ProcessSystem extends SimulationBaseClass {
   public void displayResult() {
     try {
       thisThread.join();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("Thread did not finish");
     }
     for (int i = 0; i < unitOperations.size(); i++) {
@@ -583,7 +583,7 @@ public class ProcessSystem extends SimulationBaseClass {
   public void reportMeasuredValues() {
     try {
       thisThread.join();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("Thread did not finish");
     }
     for (int i = 0; i < measurementDevices.size(); i++) {
@@ -608,9 +608,9 @@ public class ProcessSystem extends SimulationBaseClass {
     try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filePath, false))) {
       out.writeObject(this);
       logger.info("process file saved to:  " + filePath);
-    } catch (Exception e) {
-      logger.error(e.toString());
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
+      logger.error(ex.getMessage());
     }
   }
 
@@ -627,9 +627,9 @@ public class ProcessSystem extends SimulationBaseClass {
         new ObjectInputStream(new FileInputStream(filePath))) {
       return (ProcessSystem) objectinputstream.readObject();
       // logger.info("process file open ok: " + filePath);
-    } catch (Exception e) {
-      // logger.error(e.toString());
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      // logger.error(ex.toString());
+      logger.error(ex.getMessage());
     }
     return null;
   }
