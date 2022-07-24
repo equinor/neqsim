@@ -13,7 +13,12 @@ import neqsim.thermo.component.ComponentEosInterface;
 public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   private static final long serialVersionUID = 1000;
 
-  private double a = -0.201158, b = 0.141599, c = 2.29528, d = -0.660145, e = 0.500315, f = 2.63165;
+  private double a = -0.201158;
+  private double b = 0.141599;
+  private double c = 2.29528;
+  private double d = -0.660145;
+  private double e = 0.500315;
+  private double f = 2.63165;
 
   /**
    * <p>
@@ -65,6 +70,8 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   }
 
   /**
+   * alphaCrit.
+   *
    * @param temperature temperature in unit Kelvin
    * @return double
    */
@@ -76,6 +83,8 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   }
 
   /**
+   * diffalphaCritT.
+   *
    * @param temperature temperature in unit Kelvin
    * @return double
    */
@@ -88,6 +97,8 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   }
 
   /**
+   * diffdiffalphaCritT.
+   *
    * @param temperature temperature in unit Kelvin
    * @return double
    */

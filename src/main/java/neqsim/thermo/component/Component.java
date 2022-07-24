@@ -453,7 +453,7 @@ abstract class Component implements ComponentInterface {
       }
       componentNumber = compnumber;
     } catch (Exception ex) {
-      logger.error("error in comp", e);
+      logger.error("error in comp", ex);
     } finally {
       try {
         if (dataSet != null) {

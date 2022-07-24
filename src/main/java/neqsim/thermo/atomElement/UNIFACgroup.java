@@ -104,9 +104,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       } catch (Exception ex2) {
         logger.error(ex2);
       }
-      String err = ex.toString();
-      logger.error(err);
-      // System.out.println(err);
+      logger.error(ex.toString());
     }
   }
 

@@ -63,14 +63,12 @@ public class Element implements ThermodynamicConstantsInterface {
       dataSet.close();
       database.getConnection().close();
     } catch (Exception ex) {
+      logger.error(ex.toString());
       try {
         database.getConnection().close();
       } catch (Exception ex2) {
         logger.error(ex2);
       }
-      String err = ex.toString();
-      logger.error(err);
-      // System.out.println(err);
     }
   }
 

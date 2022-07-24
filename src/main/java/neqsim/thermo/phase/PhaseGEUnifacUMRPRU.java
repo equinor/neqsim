@@ -246,8 +246,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        String err = ex.toString();
-        logger.error(err, ex);
+        logger.error(ex.toString(), ex);
       } finally {
         try {
           if (dataSet != null) {

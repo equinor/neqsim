@@ -2274,8 +2274,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
             NRTLDijT[templ][tempk] = Double.parseDouble(dataSet.getString("WSgjiT"));
           } catch (Exception ex) {
             // System.out.println("err in thermo mix.....");
-            // String err = ex.toString();
-            // System.out.println(err);
+            // System.out.println(ex.toString());
             if (isCalcEOSInteractionParameters()) {
               intparam[k][l] = 1.0 - Math.pow((2.0
                   * Math.sqrt(Math.pow(phase.getComponent(l).getCriticalVolume(), 1.0 / 3.0)

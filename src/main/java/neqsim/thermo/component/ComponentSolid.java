@@ -20,8 +20,11 @@ public class ComponentSolid extends ComponentSrk {
   private static final long serialVersionUID = 1000;
 
   double dpdt = 1.0;
-  double SolidFug = 0.0, PvapSolid = 0.0, PvapSoliddT = 0.0;
-  double solvol = 0.0, soldens = 0.0;
+  double SolidFug = 0.0;
+  double PvapSolid = 0.0;
+  double PvapSoliddT = 0.0;
+  double solvol = 0.0;
+  double soldens = 0.0;
   boolean CCequation = true;
   boolean AntoineSolidequation = true;
   PhaseInterface refPhase = null;
@@ -88,7 +91,8 @@ public class ComponentSolid extends ComponentSrk {
 
     // System.out.println("deltaCp Sol-liq " + deltaCpSL);
     // Calculates solid-liquid volume change
-    double liqMolVol = 0.0, solMolVol = 0.0;
+    double liqMolVol = 0.0;
+    double solMolVol = 0.0;
     double temp = getPureComponentLiquidDensity(getTriplePointTemperature());
     if (temp > 1e-20) {
       liqMolVol = 1.0 / temp * getMolarMass();
@@ -230,7 +234,7 @@ public class ComponentSolid extends ComponentSrk {
         try {
           refPhase.addcomponent(componentName, 10.0, 10.0, 0);
         } catch (Exception ex) {
-          logger.error("error occured in setSolidRefFluidPhase ", x);
+          logger.error("error occured in setSolidRefFluidPhase ", ex);
           refPhase.addcomponent("methane", 10.0, 10.0, 0);
           refPhase.getComponent("methane").setComponentName(componentName);
         }
