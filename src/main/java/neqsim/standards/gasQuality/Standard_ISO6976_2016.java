@@ -71,7 +71,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
                   + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
           dataSet.next();
           M[i] = Double.parseDouble(dataSet.getString("MolarMass"));
-        } catch (Exception e) {
+        } catch (Exception ex) {
           try {
             String compName = "inert";
             String compType = this.thermoSystem.getPhase(0).getComponent(i).getComponentType();
@@ -125,8 +125,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
       dataSet.close();
       database.getConnection().close();
-    } catch (Exception e) {
-      String err = e.toString();
+    } catch (Exception ex) {
+      String err = ex.toString();
       logger.error(err);
     }
   }
