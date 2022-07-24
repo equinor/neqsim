@@ -82,8 +82,8 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
         sampleList.add(sample);
         logger.info("liq points " + p);
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     dataSet = database.getResultSet(
@@ -120,8 +120,8 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
         sampleList.add(sample);
         logger.info("gas points " + p);
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

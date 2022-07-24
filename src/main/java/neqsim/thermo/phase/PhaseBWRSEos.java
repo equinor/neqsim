@@ -35,8 +35,8 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     PhaseBWRSEos clonedPhase = null;
     try {
       clonedPhase = (PhaseBWRSEos) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return clonedPhase;

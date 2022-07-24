@@ -61,8 +61,8 @@ public class ComponentPR extends ComponentEos {
     ComponentPR clonedComponent = null;
     try {
       clonedComponent = (ComponentPR) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return clonedComponent;

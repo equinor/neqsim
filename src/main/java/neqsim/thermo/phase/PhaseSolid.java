@@ -35,8 +35,8 @@ public abstract class PhaseSolid extends PhaseSrkEos {
     PhaseSolid clonedPhase = null;
     try {
       clonedPhase = (PhaseSolid) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
     return clonedPhase;
   }
@@ -81,7 +81,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   }
 
   /**
-   * method to get density of a phase note: at the moment return density of water (997 kg/m3)
+   * method to get density of a phase note: at the moment return density of water (997 kg/m3).
    *
    * @return density with unit kg/m3
    */
