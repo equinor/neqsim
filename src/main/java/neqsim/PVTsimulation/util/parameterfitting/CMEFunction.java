@@ -13,7 +13,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class CMEFunction extends LevenbergMarquardtFunction {
   double molarMass = 0.0;
-  double saturationVolume = 0, saturationPressure = 0;
+  double saturationVolume = 0;
+  double saturationPressure = 0;
   double Zsaturation = 0;
 
   /**

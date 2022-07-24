@@ -31,7 +31,7 @@ public class TestSaturationPresFunction {
       int i = 0;
       while (i < 1) {
         SaturationPressureFunction function = new SaturationPressureFunction();
-        double guess[] = {341.6 / 1000.0};
+        double[] guess = {341.6 / 1000.0};
         function.setInitialGuess(guess);
 
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 120, 100.0);
@@ -57,9 +57,9 @@ public class TestSaturationPresFunction {
         tempSystem.init(0);
         tempSystem.init(1);
 
-        double sample1[] = {273.15 + 100};
+        double[] sample1 = {273.15 + 100};
         double satPres = 400.0;
-        double standardDeviation1[] = {1.5};
+        double[] standardDeviation1 = {1.5};
         SampleValue sample = new SampleValue(satPres, satPres / 100.0, sample1, standardDeviation1);
         sample.setFunction(function);
         function.setInitialGuess(guess);

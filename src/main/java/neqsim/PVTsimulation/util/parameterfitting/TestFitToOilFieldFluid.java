@@ -31,8 +31,7 @@ public class TestFitToOilFieldFluid {
       int i = 0;
       while (i < 1) {
         i++;
-        FunctionJohanSverderup function = new FunctionJohanSverderup();
-        double guess[] = {17.90};
+
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 83.5, 50.0);
         tempSystem.addComponent("nitrogen", 0.586);
         tempSystem.addComponent("CO2", 0.087);
@@ -54,10 +53,12 @@ public class TestFitToOilFieldFluid {
         tempSystem.init(0);
         tempSystem.init(1);
 
-        double sample1[] = {273.15 + 100};
+        double[] sample1 = {273.15 + 100};
         double satPres = 75.0;
-        double standardDeviation1[] = {75.0 / 100.0};
+        double[] standardDeviation1 = {75.0 / 100.0};
         SampleValue sample = new SampleValue(satPres, satPres / 100.0, sample1, standardDeviation1);
+        FunctionJohanSverderup function = new FunctionJohanSverderup();
+        double[] guess = {17.90};
         sample.setFunction(function);
         function.setInitialGuess(guess);
         sample.setThermodynamicSystem(tempSystem);
