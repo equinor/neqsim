@@ -141,7 +141,7 @@ public class TwoPhasePipeFlowVisualization extends
     // }
     // plot.init();
     // }
-    // catch(Exception e){
+    // catch(Exception ex){
     // System.out.println(ex.toString());
     // System.out.println("plotting failed");
     // }

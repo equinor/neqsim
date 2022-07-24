@@ -216,7 +216,7 @@ public class FreezeOut extends constantDutyTemperatureFlash
                                 .toString(system.getPhases()[0].getComponents()[k].getz()));
                 pr_writer.flush();
             }
-        } catch (SecurityException e) {
+          } catch (SecurityException ex) {
             logger.error("writeFile: caught security exception");
         } catch (IOException ioe) {
             logger.error("writeFile: caught i/o exception");

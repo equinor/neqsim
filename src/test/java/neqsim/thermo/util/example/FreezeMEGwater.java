@@ -61,7 +61,7 @@ public class FreezeMEGwater {
     // try{
     // testOps.bubblePointPressureFlash(false);
     // }
-    // catch(Exception e){
+    // catch(Exception ex){
     // System.out.println("error");
     // }
     // testSystem.display();

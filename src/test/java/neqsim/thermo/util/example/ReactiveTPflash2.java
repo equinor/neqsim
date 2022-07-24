@@ -123,7 +123,7 @@ public class ReactiveTPflash2 {
     // ops.bubblePointPressureFlash(false);
     // // testSystem.display();
     // //ops.TPflash();
-    // } catch(Exception e){}
+    // } catch(Exception ex){}
 
     // System.out.println("loading " + (0.0005+0.05*i)+ " PCO2 " +
     // testSystem.getPhase(0).getComponent("CO2").getx()*testSystem.getPressure());

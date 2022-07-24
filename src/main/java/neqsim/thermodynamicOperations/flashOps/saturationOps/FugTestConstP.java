@@ -184,7 +184,7 @@ public class FugTestConstP extends constantDutyTemperatureFlash
 
         // logger.error("Successful attempt to write to " + myFile);
         // }
-        // catch (SecurityException e) {
+        // catch (SecurityException ex) {
         // logger.error("writeFile: caught security exception");
         // }
         // catch (IOException ioe) {

@@ -193,7 +193,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                         + "," + Niterations);
                 pr_writer.flush();
             }
-        } catch (SecurityException e) {
+          } catch (SecurityException ex) {
             logger.error("writeFile: caught security exception");
         } catch (IOException ioe) {
             logger.error("writeFile: caught i/o exception");

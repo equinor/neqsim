@@ -110,7 +110,7 @@ public class TestVHflash {
 // testOps.TPflash();
 // testSystem.display();
 // }
-// catch(Exception e){
+// catch(Exception ex){
 // logger.info(ex.toString());
 // }
 // }
