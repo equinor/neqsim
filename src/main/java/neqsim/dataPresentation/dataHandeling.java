@@ -133,8 +133,8 @@ public class dataHandeling {
           }
         }
       }
-    } catch (Exception e) {
-      String err = e.toString();
+    } catch (Exception ex) {
+      String err = ex.toString();
       System.out.println(err);
     }
   }

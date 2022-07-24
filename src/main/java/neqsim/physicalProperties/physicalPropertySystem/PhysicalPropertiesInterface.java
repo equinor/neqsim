@@ -17,283 +17,281 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public interface PhysicalPropertiesInterface extends Cloneable {
-    /**
-     * <p>
-     * getPureComponentViscosity.
-     * </p>
-     *
-     * @param i a int
-     * @return a double
-     */
-    public double getPureComponentViscosity(int i);
-    
-    /**
-     * <p>
-     * setDensityModel.
-     * </p>
-     *
-     * @param model a {@link java.lang.String} object
-     */
-    public void setDensityModel(String model);
-    
-    /**
-     * <p>
-     * setMixingRule.
-     * </p>
-     *
-     * @param mixingRule a
-     *        {@link neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface}
-     *        object
-     */
-    public void setMixingRule(
-            neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule);
+  /**
+   * <p>
+   * getPureComponentViscosity.
+   * </p>
+   *
+   * @param i a int
+   * @return a double
+   */
+  public double getPureComponentViscosity(int i);
 
-    /**
-     * <p>
-     * getMixingRule.
-     * </p>
-     *
-     * @return a {@link neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface}
-     *         object
-     */
-    public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule();
+  /**
+   * <p>
+   * setDensityModel.
+   * </p>
+   *
+   * @param model a {@link java.lang.String} object
+   */
+  public void setDensityModel(String model);
 
-    /**
-     * <p>
-     * getViscosity.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getViscosity();
+  /**
+   * <p>
+   * setMixingRule.
+   * </p>
+   *
+   * @param mixingRule a
+   *        {@link neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface} object
+   */
+  public void setMixingRule(
+      neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule);
 
-    /**
-     * <p>
-     * setMixingRuleNull.
-     * </p>
-     */
-    public void setMixingRuleNull();
+  /**
+   * <p>
+   * getMixingRule.
+   * </p>
+   *
+   * @return a {@link neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface}
+   *         object
+   */
+  public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule();
 
-    /**
-     * <p>
-     * getViscosityOfWaxyOil.
-     * </p>
-     *
-     * @param waxVolumeFraction a double
-     * @param shareRate a double
-     * @return a double
-     */
-    public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate);
+  /**
+   * <p>
+   * getViscosity.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getViscosity();
 
-    /**
-     * <p>
-     * getDiffusionCoefficient.
-     * </p>
-     *
-     * @param comp1 a {@link java.lang.String} object
-     * @param comp2 a {@link java.lang.String} object
-     * @return a double
-     */
-    public double getDiffusionCoefficient(String comp1, String comp2);
+  /**
+   * <p>
+   * setMixingRuleNull.
+   * </p>
+   */
+  public void setMixingRuleNull();
 
-    /**
-     * <p>
-     * getConductivity.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getConductivity();
+  /**
+   * <p>
+   * getViscosityOfWaxyOil.
+   * </p>
+   *
+   * @param waxVolumeFraction a double
+   * @param shareRate a double
+   * @return a double
+   */
+  public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate);
 
-    /**
-     * <p>
-     * getKinematicViscosity.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getKinematicViscosity();
+  /**
+   * <p>
+   * getDiffusionCoefficient.
+   * </p>
+   *
+   * @param comp1 a {@link java.lang.String} object
+   * @param comp2 a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getDiffusionCoefficient(String comp1, String comp2);
 
-    /**
-     * <p>
-     * getEffectiveDiffusionCoefficient.
-     * </p>
-     *
-     * @param compName a {@link java.lang.String} object
-     * @return a double
-     */
-    public double getEffectiveDiffusionCoefficient(String compName);
+  /**
+   * <p>
+   * getConductivity.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getConductivity();
 
-    /**
-     * <p>
-     * setViscosityModel.
-     * </p>
-     *
-     * @param model a {@link java.lang.String} object
-     */
-    public void setViscosityModel(String model);
+  /**
+   * <p>
+   * getKinematicViscosity.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getKinematicViscosity();
 
-    /**
-     * <p>
-     * setConductivityModel.
-     * </p>
-     *
-     * @param model a {@link java.lang.String} object
-     */
-    public void setConductivityModel(String model);
+  /**
+   * <p>
+   * getEffectiveDiffusionCoefficient.
+   * </p>
+   *
+   * @param compName a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getEffectiveDiffusionCoefficient(String compName);
 
-    /**
-     * <p>
-     * getDensity.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getDensity();
+  /**
+   * <p>
+   * setViscosityModel.
+   * </p>
+   *
+   * @param model a {@link java.lang.String} object
+   */
+  public void setViscosityModel(String model);
 
-    /**
-     * <p>
-     * getPhase.
-     * </p>
-     *
-     * @return a {@link neqsim.thermo.phase.PhaseInterface} object
-     */
-    public PhaseInterface getPhase();
+  /**
+   * <p>
+   * setConductivityModel.
+   * </p>
+   *
+   * @param model a {@link java.lang.String} object
+   */
+  public void setConductivityModel(String model);
 
-    /**
-     * <p>
-     * setPhase.
-     * </p>
-     *
-     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-     */
-    public void setPhase(PhaseInterface phase);
+  /**
+   * <p>
+   * getDensity.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getDensity();
 
-    /**
-     * <p>
-     * calcDensity.
-     * </p>
-     *
-     * @return a double
-     */
-    public double calcDensity();
+  /**
+   * <p>
+   * getPhase.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.phase.PhaseInterface} object
+   */
+  public PhaseInterface getPhase();
 
-    /**
-     * <p>
-     * getEffectiveSchmidtNumber.
-     * </p>
-     *
-     * @param i a int
-     * @return a double
-     */
-    public double getEffectiveSchmidtNumber(int i);
+  /**
+   * <p>
+   * setPhase.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   */
+  public void setPhase(PhaseInterface phase);
 
-    /**
-     * <p>
-     * getDiffusionCoefficient.
-     * </p>
-     *
-     * @param i a int
-     * @param j a int
-     * @return a double
-     */
-    public double getDiffusionCoefficient(int i, int j);
+  /**
+   * <p>
+   * calcDensity.
+   * </p>
+   *
+   * @return a double
+   */
+  public double calcDensity();
 
-    /**
-     * <p>
-     * getEffectiveDiffusionCoefficient.
-     * </p>
-     *
-     * @param i a int
-     * @return a double
-     */
-    public double getEffectiveDiffusionCoefficient(int i);
+  /**
+   * <p>
+   * getEffectiveSchmidtNumber.
+   * </p>
+   *
+   * @param i a int
+   * @return a double
+   */
+  public double getEffectiveSchmidtNumber(int i);
 
-    /**
-     * <p>
-     * calcEffectiveDiffusionCoefficients.
-     * </p>
-     */
-    public void calcEffectiveDiffusionCoefficients();
+  /**
+   * <p>
+   * getDiffusionCoefficient.
+   * </p>
+   *
+   * @param i a int
+   * @param j a int
+   * @return a double
+   */
+  public double getDiffusionCoefficient(int i, int j);
 
-    /**
-     * <p>
-     * getFickDiffusionCoefficient.
-     * </p>
-     *
-     * @param i a int
-     * @param j a int
-     * @return a double
-     */
-    public double getFickDiffusionCoefficient(int i, int j);
+  /**
+   * <p>
+   * getEffectiveDiffusionCoefficient.
+   * </p>
+   *
+   * @param i a int
+   * @return a double
+   */
+  public double getEffectiveDiffusionCoefficient(int i);
 
-    /**
-     * <p>
-     * Initialize / calculate all physical properties of object.
-     * </p>
-     *
-     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-     */
-    public void init(PhaseInterface phase);
+  /**
+   * <p>
+   * calcEffectiveDiffusionCoefficients.
+   * </p>
+   */
+  public void calcEffectiveDiffusionCoefficients();
 
-    /**
-     * <p>
-     * init.
-     * </p>
-     *
-     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-     * @param type a {@link java.lang.String} object
-     */
-    public void init(PhaseInterface phase, String type);
+  /**
+   * <p>
+   * getFickDiffusionCoefficient.
+   * </p>
+   *
+   * @param i a int
+   * @param j a int
+   * @return a double
+   */
+  public double getFickDiffusionCoefficient(int i, int j);
 
-    /**
-     * <p>
-     * clone.
-     * </p>
-     *
-     * @return a
-     *         {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
-     *         object
-     */
-    public PhysicalPropertiesInterface clone();
+  /**
+   * <p>
+   * Initialize / calculate all physical properties of object.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   */
+  public void init(PhaseInterface phase);
 
-    /**
-     * <p>
-     * setBinaryDiffusionCoefficientMethod.
-     * </p>
-     *
-     * @param i a int
-     */
-    public void setBinaryDiffusionCoefficientMethod(int i);
+  /**
+   * <p>
+   * init.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param type a {@link java.lang.String} object
+   */
+  public void init(PhaseInterface phase, String type);
 
-    /**
-     * <p>
-     * setMulticomponentDiffusionMethod.
-     * </p>
-     *
-     * @param i a int
-     */
-    public void setMulticomponentDiffusionMethod(int i);
+  /**
+   * <p>
+   * clone.
+   * </p>
+   *
+   * @return a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+   *         object
+   */
+  public PhysicalPropertiesInterface clone();
 
-    /**
-     * <p>
-     * getViscosityModel.
-     * </p>
-     *
-     * @return a
-     *         {@link neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface}
-     *         object
-     */
-    public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface getViscosityModel();
+  /**
+   * <p>
+   * setBinaryDiffusionCoefficientMethod.
+   * </p>
+   *
+   * @param i a int
+   */
+  public void setBinaryDiffusionCoefficientMethod(int i);
 
-    /**
-     * <p>
-     * getConductivityModel.
-     * </p>
-     *
-     * @return a
-     *         {@link neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface}
-     *         object
-     */
-    public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface getConductivityModel();
+  /**
+   * <p>
+   * setMulticomponentDiffusionMethod.
+   * </p>
+   *
+   * @param i a int
+   */
+  public void setMulticomponentDiffusionMethod(int i);
+
+  /**
+   * <p>
+   * getViscosityModel.
+   * </p>
+   *
+   * @return a
+   *         {@link neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface}
+   *         object
+   */
+  public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface getViscosityModel();
+
+  /**
+   * <p>
+   * getConductivityModel.
+   * </p>
+   *
+   * @return a
+   *         {@link neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface}
+   *         object
+   */
+  public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface getConductivityModel();
 }
