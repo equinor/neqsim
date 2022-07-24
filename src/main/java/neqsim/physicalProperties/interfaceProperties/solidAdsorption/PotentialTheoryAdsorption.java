@@ -167,7 +167,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
 
         logger.info("adsorption parameters read ok for "
             + system.getPhase(0).getComponent(comp).getComponentName() + " eps " + eps0[comp]);
-      } catch (Exception e) {
+      } catch (Exception ex) {
         logger.info("Component not found in adsorption DB "
             + system.getPhase(0).getComponent(comp).getComponentName() + " on solid "
             + solidMaterial);
@@ -175,14 +175,14 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         eps0[comp] = 7.2;
         beta[comp] = 2.0;
         z0[comp] = 3.2;
-        // logger.error(e.getMessage());
+        // logger.error(ex.getMessage());
       } finally {
         try {
           if (dataSet != null) {
             dataSet.close();
           }
-        } catch (Exception e) {
-          logger.error("error closing adsorption database.....", e);
+        } catch (Exception ex) {
+          logger.error("error closing adsorption database.....", ex);
         }
       }
     }

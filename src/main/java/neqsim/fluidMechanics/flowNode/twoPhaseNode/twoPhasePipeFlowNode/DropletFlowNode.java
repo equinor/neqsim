@@ -93,8 +93,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     DropletFlowNode clonedSystem = null;
     try {
       clonedSystem = (DropletFlowNode) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedSystem;

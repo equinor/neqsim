@@ -47,8 +47,8 @@ public class TPflash2 {
     try {
       testOps.TPflash();
       // testOps.waterDewPointTemperatureMultiphaseFlash();
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     // testSystem.init(0);
     // testSystem.init(1);

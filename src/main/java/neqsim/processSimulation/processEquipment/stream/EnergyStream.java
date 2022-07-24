@@ -24,8 +24,8 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
     EnergyStream clonedStream = null;
     try {
       clonedStream = (EnergyStream) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
     return clonedStream;
   }

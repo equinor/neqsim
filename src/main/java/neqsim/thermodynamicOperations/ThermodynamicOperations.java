@@ -244,7 +244,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Method to perform a PH flash calculation
+   * Method to perform a PH flash calculation.
    *
    * @param Hspec is the enthalpy in the specified unit
    * @param enthalpyUnit Supported units are J, J/mol, J/kg and kJ/kg
@@ -271,7 +271,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Method to perform a PH flash calculation
+   * Method to perform a PH flash calculation.
    *
    * @param Hspec is the enthalpy in unit Joule to be held constant
    */
@@ -280,7 +280,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Method to perform a PH flash calculation based on GERG2008 EoS
+   * Method to perform a PH flash calculation based on GERG2008 EoS.
    *
    * @param Hspec is the enthalpy in unit Joule to be held constant
    */
@@ -398,7 +398,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Method to perform a PS flash calculation for a specified entropy and pressure
+   * Method to perform a PS flash calculation for a specified entropy and pressure.
    *
    * @param Sspec is the entropy in the specified unit
    * @param unit Supported units are J/K, J/molK, J/kgK and kJ/kgK
@@ -436,7 +436,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Method to perform a TS flash calculation for a specified entropy and pressure
+   * Method to perform a TS flash calculation for a specified entropy and pressure.
    *
    * @param Sspec is the entropy in the specified unit
    * @param unit Supported units are J/K, J/molK, J/kgK and kJ/kgK
@@ -928,8 +928,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       getThermoOperationThread().join(maxTime);
       getThermoOperationThread().interrupt();
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     boolean didFinish = !getThermoOperationThread().isInterrupted();
     // getThermoOperationThread().stop();
@@ -944,8 +944,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void waitToFinishCalculation() {
     try {
       getThermoOperationThread().join();
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
   }
 
@@ -1007,7 +1007,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
        * opsTemp = new ThermodynamicOperations(systemTemp);
        * systemTemp.setTemperature(temperature[i]); systemTemp.setPressure(pressure[i]);
        * systemTemp.init(0); systemTemp.display(); try { opsTemp.hydrateFormationTemperature(); }
-       * catch (Exception e) { logger.error("error",e); } systemTemp.display(); hydTemps[i] =
+       * catch (Exception ex) { logger.error("error",e); } systemTemp.display(); hydTemps[i] =
        * systemTemp.getTemperature();
        *
        */
@@ -1025,8 +1025,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     systemTemp.setMixingRule(9);
     try {
       opsTemp.hydrateFormationTemperature();
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     systemTemp.display();
     return hydTemps;
@@ -1046,8 +1046,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     ThermodynamicOperations opsTemp = new ThermodynamicOperations(systemTemp);
     try {
       opsTemp.hydrateFormationTemperature();
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     systemTemp.display();
     system.setTemperature(systemTemp.getTemperature());
@@ -1749,16 +1749,16 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     double dT = 1.1;
     try {
       dewPointTemperatureFlash();
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     system.setTemperature(system.getTemperature() - dT);
     TPflash();
     double condensationRate = system.getPhase(1).getMass() / (system.getVolume() * 1.0e-5);
     try {
       dewPointTemperatureFlash();
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     return condensationRate / dT;
   }
@@ -1771,7 +1771,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void displayResult() {
     try {
       getThermoOperationThread().join();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       logger.error("Thread did not finish");
     }
     getOperation().displayResult();

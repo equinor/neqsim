@@ -38,8 +38,8 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
       thermoOps.bubblePointPressureFlash(false);
       // logger.info("pres " +
       // system.getPressure()*system.getPhases()[0].getComponent(0).getx());
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
     return system.getPressure() * system.getPhases()[0].getComponent(0).getx();
   }

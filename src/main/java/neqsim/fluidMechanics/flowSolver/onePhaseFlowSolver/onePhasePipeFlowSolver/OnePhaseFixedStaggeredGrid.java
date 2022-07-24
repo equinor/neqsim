@@ -78,8 +78,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     OnePhaseFixedStaggeredGrid clonedSystem = null;
     try {
       clonedSystem = (OnePhaseFixedStaggeredGrid) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedSystem;

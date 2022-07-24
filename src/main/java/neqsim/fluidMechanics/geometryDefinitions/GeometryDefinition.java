@@ -70,7 +70,6 @@ public abstract class GeometryDefinition
   private SurroundingEnvironment surroundingEnvironment = new SurroundingEnvironmentBaseClass();
 
   /**
-   * *
    * <p>
    * Constructor for GeometryDefinition.
    * </p>
@@ -110,8 +109,8 @@ public abstract class GeometryDefinition
     GeometryDefinitionInterface clonedGeometry = null;
     try {
       clonedGeometry = (GeometryDefinition) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedGeometry;

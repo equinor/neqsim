@@ -102,8 +102,8 @@ public class WaxFractionSim extends BasePVTsimulation {
         sample.setThermodynamicSystem(tempSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      System.out.println("database error" + e);
+    } catch (Exception ex) {
+      System.out.println("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

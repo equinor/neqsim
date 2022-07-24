@@ -24,13 +24,13 @@ public class SampleValue implements Cloneable {
   String reference = "unknown";
   String description = "unknown";
   /**
-   * Standard deviation of function value
+   * Standard deviation of function value.
    */
   double standardDeviation = 0.0001;
   public SystemInterface system;
   public ThermodynamicOperations thermoOps;
   /**
-   * Standard deviation of dependent variables
+   * Standard deviation of dependent variables.
    */
   double[] standardDeviations;
 
@@ -79,8 +79,8 @@ public class SampleValue implements Cloneable {
     SampleValue clonedValue = null;
     try {
       clonedValue = (SampleValue) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
     // this was modified 20.05.2002
     // clonedValue.system = system.clone();

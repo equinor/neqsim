@@ -138,8 +138,8 @@ public class PhaseEnvelope {
       // testOps.bubblePointTemperatureFlash();
       // JFreeChart jfreeObj = testOps.getJfreeChart();
       // BufferedImage buf = jfreeObj.createBufferedImage(640, 400, null);
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
 
     // testSystem.display();

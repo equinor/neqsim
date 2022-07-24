@@ -60,8 +60,8 @@ public class PipeData extends GeometryDefinition {
     PipeData clonedPipe = null;
     try {
       clonedPipe = (PipeData) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
     return clonedPipe;
   }

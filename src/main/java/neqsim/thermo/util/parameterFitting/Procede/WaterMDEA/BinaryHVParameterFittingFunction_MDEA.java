@@ -53,8 +53,8 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
     if (type == 0) {
       try {
         thermoOps.bubblePointPressureFlash(false);
-      } catch (Exception e) {
-        logger.error(e.toString());
+      } catch (Exception ex) {
+        logger.error(ex.toString());
       }
       return (system.getPressure()); // *system.getPhases()[0].getComponent(0).getx());
     }

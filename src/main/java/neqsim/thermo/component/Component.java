@@ -200,7 +200,7 @@ abstract class Component implements ComponentInterface {
       }
       index = 1000 + componentNumber;
       CASnumber = "00-00-0";
-    } catch (Exception e) {
+    } catch (Exception ex) {
       logger.error("error in inserting to database", e);
     } finally {
       try {
@@ -210,8 +210,8 @@ abstract class Component implements ComponentInterface {
         if (database.getConnection() != null) {
           database.getConnection().close();
         }
-      } catch (Exception e) {
-        logger.error("error closing database.....", e);
+      } catch (Exception ex) {
+        logger.error("error closing database.....", ex);
       }
     }
   }
@@ -239,7 +239,7 @@ abstract class Component implements ComponentInterface {
           dataSet.next();
           dataSet.getString("ID");
           // if(dataSet.isAfterLast()) dataSet.next();
-        } catch (Exception e) {
+        } catch (Exception ex) {
           try {
             dataSet.close();
             // logger.info("no parameters in tempcomp -- trying comp.. " +
@@ -452,7 +452,7 @@ abstract class Component implements ComponentInterface {
         // System.out.println(componentName + " pure component parameters: ok...");
       }
       componentNumber = compnumber;
-    } catch (Exception e) {
+    } catch (Exception ex) {
       logger.error("error in comp", e);
     } finally {
       try {
@@ -465,8 +465,8 @@ abstract class Component implements ComponentInterface {
         if (database.getConnection() != null) {
           database.getConnection().close();
         }
-      } catch (Exception e) {
-        logger.error("error closing database.....", e);
+      } catch (Exception ex) {
+        logger.error("error closing database.....", ex);
       }
     }
 
@@ -481,8 +481,8 @@ abstract class Component implements ComponentInterface {
     Component clonedComponent = null;
     try {
       clonedComponent = (Component) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return clonedComponent;

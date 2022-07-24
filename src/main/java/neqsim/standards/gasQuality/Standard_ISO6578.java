@@ -200,8 +200,8 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
       // thermoSystem.getTemperature();
       try {
         Vi[i] = function.value(thermoSystem.getTemperature());
-      } catch (Exception e) {
-        // logger.error(e.getMessage());
+      } catch (Exception ex) {
+        // logger.error(ex.getMessage());
         // System.out.println("volume "+
         // (thermoSystem.getPhase(0).getMolarVolume())/10e4);
         Vi[i] = thermoSystem.getPhase(1).getMolarVolume() / 100.0;
@@ -220,8 +220,8 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
           thermoSystem.getTemperature());
       KMcorrectionFactor2 = pcs2.value(thermoSystem.getPhase(0).getMolarMass() * 1000.0,
           thermoSystem.getTemperature());
-    } catch (Exception e) {
-      /// logger.error(e.getMessage());
+    } catch (Exception ex) {
+      /// logger.error(ex.getMessage());
       KMcorrectionFactor1 = 0.0;
       KMcorrectionFactor2 = 0.0;
     }

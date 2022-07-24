@@ -45,8 +45,8 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     TwoPhaseFlowNode clonedSystem = null;
     try {
       clonedSystem = (TwoPhaseFlowNode) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedSystem;

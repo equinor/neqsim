@@ -59,8 +59,8 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
       system.addComponent(name1, ksp / 100.0);
       system.addComponent(name2, ksp / 100.0);
       system.createDatabase(true);
-    } catch (Exception e) {
-      logger.error("failed " + e.toString());
+    } catch (Exception ex) {
+      logger.error("failed " + ex.toString());
     }
 
     system.init(0);

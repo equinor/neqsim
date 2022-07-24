@@ -159,9 +159,9 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
 
     try {
       clonedHandler = (PhysicalPropertyHandler) super.clone();
-    } catch (Exception e) {
-      // e.printStackTrace();
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      // ex.printStackTrace();
+      logger.error(ex.getMessage());
     }
     try {
       if (gasPhysicalProperties != null) {
@@ -179,8 +179,8 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
       if (mixingRule != null) {
         clonedHandler.mixingRule = mixingRule.clone();
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
     return clonedHandler;
   }

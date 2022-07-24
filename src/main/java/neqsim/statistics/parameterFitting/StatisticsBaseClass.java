@@ -69,8 +69,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     StatisticsBaseClass clonedClass = null;
     try {
       clonedClass = (StatisticsBaseClass) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     clonedClass.sampleSet = sampleSet.clone();
@@ -714,21 +714,21 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     calcAbsDev();
     try {
       // displayGraph();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(e.getMessage());
+      logger.error(ex.getMessage());
     }
     try {
       displayResult();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(e.getMessage());
+      logger.error(ex.getMessage());
     }
     try {
       displayValues();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(e.getMessage());
+      logger.error(ex.getMessage());
     }
   }
 
@@ -738,27 +738,27 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     calcAbsDev();
     try {
       // displayGraph();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(e.getMessage());
+      logger.error(ex.getMessage());
     }
     try {
       displayResult();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(e.getMessage());
+      logger.error(ex.getMessage());
     }
     try {
       displayValues();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(e.getMessage());
+      logger.error(ex.getMessage());
     }
     try {
       displayResultWithDeviation();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("could not calc deviation");
-      logger.error(e.getMessage());
+      logger.error(ex.getMessage());
     }
   }
 

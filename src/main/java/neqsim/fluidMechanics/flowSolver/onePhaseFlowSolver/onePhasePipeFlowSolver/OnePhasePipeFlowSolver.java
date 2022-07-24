@@ -76,8 +76,8 @@ public class OnePhasePipeFlowSolver
     OnePhasePipeFlowSolver clonedSystem = null;
     try {
       clonedSystem = (OnePhasePipeFlowSolver) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedSystem;

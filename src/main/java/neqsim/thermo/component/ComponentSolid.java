@@ -222,14 +222,15 @@ public class ComponentSolid extends ComponentSrk {
    */
   public void setSolidRefFluidPhase(PhaseInterface phase) {
     try {
-      if ((!isTBPfraction && !isPlusFraction) || neqsim.util.database.NeqSimDataBase.createTemporaryTables()) {
+      if ((!isTBPfraction && !isPlusFraction)
+          || neqsim.util.database.NeqSimDataBase.createTemporaryTables()) {
         refPhase = phase.getClass().getDeclaredConstructor().newInstance();
         refPhase.setTemperature(273.0);
         refPhase.setPressure(1.0);
         try {
-           refPhase.addcomponent(componentName, 10.0, 10.0, 0);
-        } catch (Exception e) {
-          logger.error("error occured in setSolidRefFluidPhase ", e);
+          refPhase.addcomponent(componentName, 10.0, 10.0, 0);
+        } catch (Exception ex) {
+          logger.error("error occured in setSolidRefFluidPhase ", x);
           refPhase.addcomponent("methane", 10.0, 10.0, 0);
           refPhase.getComponent("methane").setComponentName(componentName);
         }
@@ -237,8 +238,8 @@ public class ComponentSolid extends ComponentSrk {
             .setAttractiveTerm(phase.getComponent(componentName).getAttractiveTermNumber());
         refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
       }
-    } catch (Exception e) {
-      logger.error("error occured", e);
+    } catch (Exception ex) {
+      logger.error("error occured", ex);
     }
   }
 

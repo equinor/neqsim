@@ -50,8 +50,8 @@ public abstract class onePhaseFlowNode extends FlowNode {
     onePhaseFlowNode clonedSystem = null;
     try {
       clonedSystem = (onePhaseFlowNode) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedSystem;

@@ -55,8 +55,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     TwoPhaseFlowNode clonedSystem = null;
     try {
       clonedSystem = (TwoPhaseFlowNode) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     // clonedSystem.molarMassTransferFlux = (double[])

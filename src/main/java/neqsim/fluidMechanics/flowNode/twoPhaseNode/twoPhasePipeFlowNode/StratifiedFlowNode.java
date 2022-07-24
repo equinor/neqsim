@@ -72,8 +72,8 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
     StratifiedFlowNode clonedSystem = null;
     try {
       clonedSystem = (StratifiedFlowNode) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedSystem;
