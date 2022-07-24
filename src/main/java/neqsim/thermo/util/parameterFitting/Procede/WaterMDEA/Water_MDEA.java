@@ -76,8 +76,8 @@ public class Water_MDEA {
         try (PrintStream p =
             new PrintStream(new FileOutputStream("C:/java/NeqSimSource/water_MDEA.txt", true))) {
           p.println(ID + " " + pressure + " " + testSystem.getPressure());
-        } catch (FileNotFoundException e) {
-          logger.error("Could not find file", e);
+        } catch (FileNotFoundException ex) {
+          logger.error("Could not find file", ex);
         }
       }
     } catch (Exception ex) {
