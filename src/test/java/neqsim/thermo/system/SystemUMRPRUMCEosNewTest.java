@@ -22,10 +22,10 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   public static void setUp() {
     // testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
     testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
-     //testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 10.0);
+    // testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("nitrogen", 0.7);
-    //testSystem.addComponent("CO2", 0.01);
-    //testSystem.addComponent("methane", 0.68);
+    // testSystem.addComponent("CO2", 0.01);
+    // testSystem.addComponent("methane", 0.68);
     testSystem.addComponent("ethane", 0.3);
     // testSystem.addComponent("n-heptane", 0.2);
     // testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
@@ -36,8 +36,8 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.init(0);
-     testSystem.init(3);
-    //testSystem.initProperties();
+    testSystem.init(3);
+    // testSystem.initProperties();
     // testSystem.i
   }
 
@@ -79,10 +79,10 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298, 10);
     testSystem.addComponent("nitrogen", 0.7);
     // testSystem.addComponent("CO2", 0.01);
-     //testSystem.addComponent("methane", 0.68);
-     testSystem.addComponent("ethane", 0.3);
+    // testSystem.addComponent("methane", 0.68);
+    testSystem.addComponent("ethane", 0.3);
     // testSystem.addComponent("n-heptane", 0.2);
-    //testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+    // testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
     testSystem.setMixingRule(0);
     testSystem.init(0);
     // testSystem.init(1);
@@ -153,7 +153,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * </p>
    */
 
-   @Test
+  @Test
   @DisplayName("test derivative of fugacity coefficients with respect to temperature")
   public void checkFugacityCoefficientsDT() {
     assertTrue(testModel.checkFugacityCoefficientsDT());
@@ -164,7 +164,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * checkFugacityCoefficientsDn.
    * </p>
    */
-   @Test
+  @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition")
   public void checkFugacityCoefficientsDn() {
     assertTrue(testModel.checkFugacityCoefficientsDn());
@@ -175,7 +175,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * checkFugacityCoefficientsDn2.
    * </p>
    */
-   @Test
+  @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition (2nd method)")
   public void checkFugacityCoefficientsDn2() {
     assertTrue(testModel.checkFugacityCoefficientsDn2());
@@ -188,7 +188,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * 
    * @throws Exception
    */
-   @Test
+  @Test
   @DisplayName("calculate phase envelope using UMR")
   public void checkPhaseEnvelope() throws Exception {
     testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
@@ -205,9 +205,9 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
       testOps.calcPTphaseEnvelope();
       System.out.println("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
           + testOps.get("cricondenbar")[1]);
-    } catch (Exception e) {
+    } catch (Exception ex) {
       assertTrue(false);
-      throw new Exception(e);
+      throw new Exception(ex);
     }
     assertEquals(testOps.get("cricondenbar")[1], 130.686140727503, 0.02);
   }

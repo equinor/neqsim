@@ -104,8 +104,8 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     PhaseSrkCPAojAlgo clonedPhase = null;
     try {
       clonedPhase = (PhaseSrkCPAojAlgo) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
     // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
@@ -820,8 +820,8 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
       // PrimitiveMatrix hessianInvers2;
       try {
         // hessianInvers2 = input.invert();
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
         return false;
       }
 
@@ -942,8 +942,8 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     double BonV = 1.0 - 1e-10;
     try {
       // molarVolume(pressure, temperature, A, B, phaseType);
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     double BonVold = BonV;
     double Btemp = 0;

@@ -122,8 +122,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
     PhasePCSAFT clonedPhase = null;
     try {
       clonedPhase = (PhasePCSAFT) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return clonedPhase;

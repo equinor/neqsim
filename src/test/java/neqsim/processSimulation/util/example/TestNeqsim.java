@@ -138,7 +138,7 @@ public class TestNeqsim {
     // try{
     // flash.TPflash();
   }
-  // catch(Exception e){
+  // catch(Exception ex){
   /*
    * System.out.println( "P_out" ); for (int i=0;i<10;i++ ) { System.out.println(20 + 5*i);
    * 

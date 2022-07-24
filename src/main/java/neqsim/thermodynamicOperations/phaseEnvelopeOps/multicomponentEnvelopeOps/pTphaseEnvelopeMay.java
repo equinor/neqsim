@@ -166,8 +166,8 @@ public class pTphaseEnvelopeMay extends BaseOperation {
             system.setTemperature(temp);
             testOps.dewPointTemperatureFlash();
           }
-        } catch (Exception e) {
-          e.toString();
+        } catch (Exception ex) {
+          ex.toString();
         }
         double tempNy = system.getTemperature();
 
@@ -483,8 +483,8 @@ public class pTphaseEnvelopeMay extends BaseOperation {
     ThermodynamicOperations opsHyd = new ThermodynamicOperations(system);
     try {
       opsHyd.hydrateEquilibriumLine(10.0, 300.0);
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
 
     // double[][] hydData = opsHyd.getData();

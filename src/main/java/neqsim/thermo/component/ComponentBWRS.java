@@ -56,7 +56,7 @@ public class ComponentBWRS extends ComponentSrk {
             .getResultSet(("SELECT * FROM mbwr32param WHERE name='" + component_name + "'"));
         dataSet.next();
         dataSet.getClob("name");
-      } catch (Exception e) {
+      } catch (Exception ex) {
         dataSet.close();
         dataSet = database
             .getResultSet(("SELECT * FROM mbwr32param WHERE name='" + component_name + "'"));
@@ -72,11 +72,8 @@ public class ComponentBWRS extends ComponentSrk {
       // logger.info("gamma " + gammaBWRS);
       dataSet.close();
       database.getConnection().close();
-    }
-
-    catch (Exception e) {
-      String err = e.toString();
-      logger.error(err);
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
   }
 
@@ -102,8 +99,8 @@ public class ComponentBWRS extends ComponentSrk {
     ComponentBWRS clonedComponent = null;
     try {
       clonedComponent = (ComponentBWRS) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return clonedComponent;

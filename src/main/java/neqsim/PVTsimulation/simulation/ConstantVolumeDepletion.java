@@ -85,8 +85,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
-     * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
-     * logger.error(e.getMessage()); }
+     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) {
+     * logger.error(ex.getMessage()); }
      */
     saturationVolume = getThermoSystem().getVolume();
     saturationPressure = getThermoSystem().getPressure();
@@ -194,8 +194,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         sample.setThermodynamicSystem(tempSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      System.out.println("database error" + e);
+    } catch (Exception ex) {
+      System.out.println("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

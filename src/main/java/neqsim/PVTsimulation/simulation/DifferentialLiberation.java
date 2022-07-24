@@ -73,8 +73,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
-     * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
-     * logger.error(e.getMessage()); }
+     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) {
+     * logger.error(ex.getMessage()); }
      */
     saturationVolume = getThermoSystem().getVolume();
     saturationPressure = getThermoSystem().getPressure();

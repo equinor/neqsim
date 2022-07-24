@@ -333,8 +333,8 @@ abstract class Flash extends BaseOperation {
     if (system.getPhase(lowestGibbsEnergyPhase).getNumberOfComponents() > 1) {
       try {
         stabilityAnalysis();
-      } catch (Exception e) {
-        logger.error("error ", e);
+      } catch (Exception ex) {
+        logger.error("error ", ex);
       }
     }
     if (!(tm[0] < -1e-4) && !(tm[1] < -1e-4) || system.getPhase(0).getNumberOfComponents() == 1) {
@@ -356,8 +356,8 @@ abstract class Flash extends BaseOperation {
     } else {
       try {
         system.calcBeta();
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
       }
       system.calc_x_y();
       system.init(1);

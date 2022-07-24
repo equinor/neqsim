@@ -5,7 +5,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- * This class defines a thermodynamic system using the Kent Eisenberg model
+ * This class defines a thermodynamic system using the Kent Eisenberg model.
  * 
  * @author Even Solbraa
  */
@@ -84,8 +84,8 @@ public class SystemKentEisenberg extends SystemEos {
     SystemKentEisenberg clonedSystem = null;
     try {
       clonedSystem = (SystemKentEisenberg) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     // for(int i = 0; i < numberOfPhases; i++) {

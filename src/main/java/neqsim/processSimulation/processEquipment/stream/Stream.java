@@ -29,7 +29,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected SystemInterface thermoSystem;
 
   protected int streamNumber = 0;
-  /** Constant <code>numberOfStreams=0</code> */
+  /** Constant <code>numberOfStreams=0</code>. */
   protected static int numberOfStreams = 0;
   private double gasQuality = 0.5;
   protected StreamInterface stream = null;
@@ -182,8 +182,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     Stream clonedSystem = null;
     try {
       clonedSystem = (Stream) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace(System.err);
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
     if (stream != null) {
       clonedSystem.setStream((Stream) stream.clone());
@@ -505,7 +505,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
     try {
       ops.bubblePointPressureFlash(false);
-    } catch (Exception e) {
+    } catch (Exception ex) {
     }
     return localSyst.getPressure(unit);
   }

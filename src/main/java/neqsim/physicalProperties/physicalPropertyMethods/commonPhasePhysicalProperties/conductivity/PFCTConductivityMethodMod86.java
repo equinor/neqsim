@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class PFCTConductivityMethodMod86 extends Conductivity {
   private static final long serialVersionUID = 1000;
 
-  /** Constant <code>referenceSystem</code> */
+  /** Constant <code>referenceSystem</code>. */
   public static SystemInterface referenceSystem = new SystemSrkEos(273.0, 1.01325);
   double[] GVcoef = {-2.147621e5, 2.190461e5, -8.618097e4, 1.496099e4, -4.730660e2, -2.331178e2,
       3.778439e1, -2.320481, 5.311764e-2};
@@ -131,8 +131,8 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
     try {
       referenceSystem.init(1);
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0;
     double critMolDens = 10.1521197;

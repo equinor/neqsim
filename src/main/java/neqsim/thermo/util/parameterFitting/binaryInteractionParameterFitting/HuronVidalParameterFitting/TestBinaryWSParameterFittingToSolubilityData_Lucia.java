@@ -110,8 +110,8 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     dataSet = database.getResultSet(
@@ -193,8 +193,8 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -33,8 +33,8 @@ public class SerializationManager {
   public static void save(Object obj, String name) {
     try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name))) {
       out.writeObject(obj);
-    } catch (Exception e) {
-      System.out.println(e.toString());
+    } catch (Exception ex) {
+      System.out.println(ex.toString());
     }
   }
 
@@ -49,8 +49,8 @@ public class SerializationManager {
   public static Object open(String name) {
     try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(name))) {
       return in.readObject();
-    } catch (Exception e) {
-      System.out.println(e.toString());
+    } catch (Exception ex) {
+      System.out.println(ex.toString());
     }
     return null;
   }

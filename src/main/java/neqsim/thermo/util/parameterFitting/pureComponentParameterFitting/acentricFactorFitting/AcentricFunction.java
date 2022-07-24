@@ -13,36 +13,36 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class AcentricFunction extends LevenbergMarquardtFunction {
-    static Logger logger = LogManager.getLogger(AcentricFunction.class);
+  static Logger logger = LogManager.getLogger(AcentricFunction.class);
 
-    /**
-     * <p>
-     * Constructor for AcentricFunction.
-     * </p>
-     */
-    public AcentricFunction() {
-        params = new double[1];
-    }
+  /**
+   * <p>
+   * Constructor for AcentricFunction.
+   * </p>
+   */
+  public AcentricFunction() {
+    params = new double[1];
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double calcValue(double[] dependentValues) {
-        system.setTemperature(dependentValues[0]);
-        system.init(0);
-        system.init(1);
-        try {
-            thermoOps.bubblePointPressureFlash(false);
-        } catch (Exception e) {
-            logger.error(e.toString());
-        }
-        return Math.log(system.getPressure());
+  /** {@inheritDoc} */
+  @Override
+  public double calcValue(double[] dependentValues) {
+    system.setTemperature(dependentValues[0]);
+    system.init(0);
+    system.init(1);
+    try {
+      thermoOps.bubblePointPressureFlash(false);
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
+    return Math.log(system.getPressure());
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setFittingParams(int i, double value) {
-        params[i] = value;
-        system.getPhases()[0].getComponents()[i].setAcentricFactor(value);
-        system.getPhases()[1].getComponents()[i].setAcentricFactor(value);
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setFittingParams(int i, double value) {
+    params[i] = value;
+    system.getPhases()[0].getComponents()[i].setAcentricFactor(value);
+    system.getPhases()[1].getComponents()[i].setAcentricFactor(value);
+  }
 }

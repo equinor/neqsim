@@ -55,8 +55,8 @@ public class PhaseHydrate extends Phase {
     PhaseHydrate clonedPhase = null;
     try {
       clonedPhase = (PhaseHydrate) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return clonedPhase;

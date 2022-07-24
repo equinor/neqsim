@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * Test TVFlash
+ * Test TVFlash.
  */
 class TVFlashTest {
   static Logger logger = LogManager.getLogger(TVFlashTest.class);
@@ -60,9 +60,9 @@ class TVFlashTest {
       ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
       try {
         testOps.TVflash(total_rig_volume, "m3");
-      } catch (Exception e) {
+      } catch (Exception ex) {
         System.out.println("error iterations " + i);
-        logger.error(e.getMessage());
+        logger.error(ex.getMessage());
       }
     }
     assertEquals(235263.80103781424, testSystem.getEnthalpy(), 1e-2);
