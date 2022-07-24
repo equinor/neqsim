@@ -83,8 +83,8 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
             compNumber = i;
           }
         }
-      } catch (Exception e) {
-        e.toString();
+      } catch (Exception ex) {
+        ex.toString();
       }
     }
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
@@ -117,8 +117,8 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
             firstPlusFractionNumber = firstPlusNumber.intValue();
           }
         }
-      } catch (Exception e) {
-        e.toString();
+      } catch (Exception ex) {
+        ex.toString();
       }
     }
     logger.info("first plus fraction number " + firstPlusFractionNumber);
@@ -448,7 +448,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
       try {
         system.removeComponent(list.get(i));
         logger.info("removing " + list.get(i));
-      } catch (Exception e) {
+      } catch (Exception ex) {
         logger.error("not able to remove " + list.get(i));
         // return;
       }

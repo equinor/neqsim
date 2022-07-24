@@ -63,8 +63,8 @@ public class TestFitToAntoineVapPres {
         sample.setThermodynamicSystem(testSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.info("database error" + e);
+    } catch (Exception ex) {
+      logger.info("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -111,7 +111,7 @@ public class TestIonicInteractionParameterFitting {
     // }
     // }
     // catch(Exception e){
-    // logger.error("database error" + e);
+    // logger.error("database error" + ex);
     // }
 
     double guess[] = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
@@ -189,8 +189,8 @@ public class TestIonicInteractionParameterFitting {
         sample.setThermodynamicSystem(testSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     dataSet = database.getResultSet(
@@ -267,8 +267,8 @@ public class TestIonicInteractionParameterFitting {
         sample.setThermodynamicSystem(testSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

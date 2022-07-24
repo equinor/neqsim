@@ -84,7 +84,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
             .getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
         dataSet.next();
         dataSet.getClob("name");
-      } catch (Exception e) {
+      } catch (Exception ex) {
         dataSet.close();
         dataSet = database
             .getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
@@ -98,15 +98,13 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       groupName = dataSet.getString("Name");
       dataSet.close();
       database.getConnection().close();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       try {
         database.getConnection().close();
-      } catch (Exception ex) {
-        logger.error(ex);
+      } catch (Exception ex2) {
+        logger.error(ex2);
       }
-      String err = e.toString();
-      logger.error(err);
-      // System.out.println(err);
+      logger.error(ex.toString());
     }
   }
 

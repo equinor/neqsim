@@ -92,10 +92,9 @@ public class PhaseDesmukhMather extends PhaseGE {
             dataSet.close();
             // database.getConnection().close();
           }
-        } catch (Exception e) {
-          String err = e.toString();
+        } catch (Exception ex) {
           logger.info("comp names " + component_name);
-          logger.error(err);
+          logger.error(ex.toString());
         }
       }
     }

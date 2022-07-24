@@ -136,8 +136,8 @@ public class TestIonicInteractionParameterFitting_CO2 {
         sample.setThermodynamicSystem(testSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEA WHERE ID>230");
@@ -204,8 +204,8 @@ public class TestIonicInteractionParameterFitting_CO2 {
         sample.setThermodynamicSystem(testSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEAtest");
@@ -251,8 +251,8 @@ public class TestIonicInteractionParameterFitting_CO2 {
         sample.setThermodynamicSystem(testSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      logger.error("database error" + e);
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

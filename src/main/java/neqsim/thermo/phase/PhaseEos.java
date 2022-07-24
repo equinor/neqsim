@@ -40,8 +40,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     PhaseEos clonedPhase = null;
     try {
       clonedPhase = (PhaseEos) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     // clonedPhase.mixSelect = (EosMixingRules) mixSelect.clone();
@@ -108,9 +108,9 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
               getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase,
               phase);
         }
-      } catch (Exception e) {
+      } catch (Exception ex) {
         logger.error("Failed to solve for molarVolume within the iteration limit.");
-        throw new RuntimeException(e);
+        throw new RuntimeException(ex);
         // logger.error("too many iterations in volume calc!", e);
         // logger.info("moles " + numberOfMolesInPhase);
         // logger.info("molarVolume " + getMolarVolume());

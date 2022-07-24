@@ -77,8 +77,8 @@ abstract class Phase implements PhaseInterface {
 
     try {
       clonedPhase = (Phase) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     clonedPhase.componentArray = this.componentArray.clone();
@@ -124,7 +124,7 @@ abstract class Phase implements PhaseInterface {
         this.componentArray[i] = temp.get(i);
         this.getComponent(i).setComponentNumber(i);
       }
-    } catch (Exception e) {
+    } catch (Exception ex) {
       logger.error("not able to remove " + componentName);
     }
 
@@ -166,16 +166,16 @@ abstract class Phase implements PhaseInterface {
     if (numberOfMolesInPhase < 0.0 || getComponent(component).getNumberOfMolesInPhase() < 0.0) {
       String msg = "Negative number of moles in phase.";
       logger.error(msg);
-      neqsim.util.exception.InvalidInputException e =
+      neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", msg);
-      throw new RuntimeException(e);
+      throw new RuntimeException(ex);
     }
     if (getComponent(component).getNumberOfMolesInPhase() < 0.0) {
       String msg = "Negative number of moles of component " + component;
       logger.error(msg);
-      neqsim.util.exception.InvalidInputException e =
+      neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", msg);
-      throw new RuntimeException(e);
+      throw new RuntimeException(ex);
     }
   }
 
@@ -1216,8 +1216,8 @@ abstract class Phase implements PhaseInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       try {
         refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();
-      } catch (Exception e) {
-        logger.error("err " + e.toString());
+      } catch (Exception ex) {
+        logger.error("err " + ex.toString());
       }
       refPhase[i].setTemperature(temperature);
       refPhase[i].setPressure(pressure);
@@ -1744,10 +1744,10 @@ abstract class Phase implements PhaseInterface {
       }
       logger.error("could not find component " + name + ", returning null");
       throw new Exception("component not in fluid... " + name);
-    } catch (Exception e) {
-      logger.debug(e.getMessage());
+    } catch (Exception ex) {
+      logger.debug(ex.getMessage());
       logger.error("component not found... " + name);
-      logger.error("returning first component... " + componentArray[0].getName(), e);
+      logger.error("returning first component... " + componentArray[0].getName(), ex);
     }
     return null;
   }
