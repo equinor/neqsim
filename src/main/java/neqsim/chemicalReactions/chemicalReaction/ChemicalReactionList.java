@@ -124,8 +124,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
           // System.out.println("reaction added ok...");
         }
       } while (dataSet.next());
-    } catch (Exception e) {
-      System.out.println("could not add reacton: " + e.toString());
+    } catch (Exception ex) {
+      System.out.println("could not add reacton: " + ex.toString());
     } finally {
       try {
         dataSet.close();
@@ -135,7 +135,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     }
     try {
       database.getConnection().close();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("err closing database");
     }
   }

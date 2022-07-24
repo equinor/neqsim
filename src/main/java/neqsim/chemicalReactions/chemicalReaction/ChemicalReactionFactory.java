@@ -71,7 +71,7 @@ public class ChemicalReactionFactory {
     }
     try {
       database.getConnection().close();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("err closing database");
     }
     String[] nameArray = new String[names.size()];
