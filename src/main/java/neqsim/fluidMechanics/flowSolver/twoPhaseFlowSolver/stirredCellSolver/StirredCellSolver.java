@@ -85,8 +85,8 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
     TwoPhaseFixedStaggeredGridSolver clonedSystem = null;
     try {
       clonedSystem = (TwoPhaseFixedStaggeredGridSolver) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace(System.err);
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
     return clonedSystem;
   }
