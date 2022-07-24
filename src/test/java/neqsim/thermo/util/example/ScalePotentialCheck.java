@@ -79,8 +79,8 @@ public class ScalePotentialCheck {
       // testOps.addIonToScaleSaturation(1,"FeCO3","Fe++");
       // testOps.display();
       logger.info(testOps.getResultTable());
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     logger.info("pH " + testSystem.getPhase("aqueous").getpH());
     // testSystem.display();

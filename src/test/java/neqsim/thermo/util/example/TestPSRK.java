@@ -63,8 +63,8 @@ public class TestPSRK {
       testOps.dewPointPressureFlash(); // (false);
       // testOps.dewPointTemperatureFlash();
       // testOps.calcPTphaseEnvelope(0.0005, 0.0001); testOps.displayResult();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
     testSystem.display();
     logger.info(testSystem.getTemperature() - 273.15);

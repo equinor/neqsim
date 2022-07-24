@@ -85,8 +85,8 @@ public class TestCharacterizationCondensate {
       testOps.TPflash();
       // testOps.hydrateFormationTemperature();
       // testOps.dewPointTemperatureFlash();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
     testSystem.display();
 
@@ -97,8 +97,8 @@ public class TestCharacterizationCondensate {
       testOps.TPflash();
       // testOps.hydrateFormationTemperature();
       // testOps.dewPointTemperatureFlash();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
     testSystem.display();
     // System.out.println("number of lumped components " +
@@ -115,7 +115,7 @@ public class TestCharacterizationCondensate {
      * testSystem.setMolarCompositionOfPlusFluid(new double[]{0.02, 0.005, 0.4, 0.01, 0.01, 0.02,
      * 0.02, 0.01 ,0.01, 0.01, 0.01 ,0.01, 0.01, 0.2 }); try { testOps.TPflash(); //
      * testOps.hydrateFormationTemperature(); // testOps.dewPointTemperatureFlash(); } catch
-     * (Exception e) { logger.error(e.toString()); } testSystem.display();
+     * (Exception e) { logger.error(ex.toString()); } testSystem.display();
      */
   }
 }

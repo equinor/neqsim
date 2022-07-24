@@ -77,8 +77,8 @@ public class TestCharacterizationCondensate1 {
       testSystem.display();
       // testOps.hydrateFormationTemperature();
       // testOps.dewPointTemperatureFlash();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
     System.out.println("activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
     testSystem.display();
