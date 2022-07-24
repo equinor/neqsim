@@ -201,7 +201,7 @@ abstract class Component implements ComponentInterface {
       index = 1000 + componentNumber;
       CASnumber = "00-00-0";
     } catch (Exception ex) {
-      logger.error("error in inserting to database", e);
+      logger.error("error in inserting to database", ex);
     } finally {
       try {
         if (database.getStatement() != null) {
