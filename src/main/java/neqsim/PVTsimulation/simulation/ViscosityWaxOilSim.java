@@ -174,7 +174,7 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     sepSim.setShareRate(new double[] {0, 0, 0, 100, 100});
     sepSim.runCalc();
 
-    double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4}};
+    double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4},};
     sepSim.setExperimentalData(expData);
     sepSim.runTuning();
     // sepSim.runCalc();
