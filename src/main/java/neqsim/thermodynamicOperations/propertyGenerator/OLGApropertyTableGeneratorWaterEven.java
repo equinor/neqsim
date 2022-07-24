@@ -122,8 +122,8 @@ public class OLGApropertyTableGeneratorWaterEven
       thermoOps.calcPTphaseEnvelope();
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
   }
 
@@ -144,8 +144,8 @@ public class OLGApropertyTableGeneratorWaterEven
         // thermoOps.bubblePointPressureFlash(false);
         bubP[i] = thermoSystem.getPressure();
         bubPLOG[i] = bubP[i] * 1e5;
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
         bubP[i] = 0;
       }
     }
@@ -169,8 +169,8 @@ public class OLGApropertyTableGeneratorWaterEven
         // thermoOps.dewPointPressureFlashHC();
         dewP[i] = thermoSystem.getPressure();
         dewPLOG[i] = dewP[i] * 1e5;
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
         dewP[i] = 0;
       }
     }
@@ -192,8 +192,8 @@ public class OLGApropertyTableGeneratorWaterEven
       try {
         // thermoOps.bubblePointTemperatureFlash();
         bubT[i] = thermoSystem.getPressure();
-      } catch (Exception e) {
-        logger.error("error", e);
+      } catch (Exception ex) {
+        logger.error("error", ex);
         bubT[i] = 0.0;
       }
     }
@@ -277,13 +277,13 @@ public class OLGApropertyTableGeneratorWaterEven
           // }
           // thermoSystem.display();
           acceptedFlash = true;
-        } catch (Exception e) {
+        } catch (Exception ex) {
           acceptedFlash = false;
           logger.info("fail temperature " + thermoSystem.getTemperature() + " fail pressure "
               + thermoSystem.getPressure());
 
           thermoSystem.display();
-          logger.error("error", e);
+          logger.error("error", ex);
         }
 
         /*
@@ -417,7 +417,7 @@ public class OLGApropertyTableGeneratorWaterEven
          * 
          * for (int jj = 0; jj < 9; jj++) { Matrix xg = XMatrixgas.getMatrix(jj, jj, 0, 3);
          * 
-         * try { xcoef[jj] = aMatrix.solve(xg.transpose()); } catch (Exception e) {
+         * try { xcoef[jj] = aMatrix.solve(xg.transpose()); } catch (Exception ex) {
          * logger.error("error",e); } // logger.info("xcoef " + j); // xcoef.print(10, 10);
          * //logger.info("dss: " +ds * dxds.get(speceq, 0)); // specVal = xcoef.get(0, 0) + sny *
          * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))); //

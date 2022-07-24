@@ -145,8 +145,8 @@ public class pTphaseEnvelope1 extends BaseOperation {
           } else {
             testOps.dewPointTemperatureFlash();
           }
-        } catch (Exception e) {
-          e.toString();
+        } catch (Exception ex) {
+          ex.toString();
         }
         double tempNy = system.getTemperature();
 
@@ -315,8 +315,8 @@ public class pTphaseEnvelope1 extends BaseOperation {
        * file2.setOutputFileName(name2); file2.setXvalues(points2[0], "temp", "sec");
        * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); }
        */
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
   }
 

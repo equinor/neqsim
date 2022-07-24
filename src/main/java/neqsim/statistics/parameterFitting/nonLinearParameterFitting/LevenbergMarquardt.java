@@ -41,8 +41,8 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     LevenbergMarquardt clonedClass = null;
     try {
       clonedClass = (LevenbergMarquardt) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace(System.err);
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedClass;
@@ -98,7 +98,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
       calcAbsDev();
       try {
         Thread.sleep(50);
-      } catch (Exception e) {
+      } catch (Exception ex) {
       }
       System.out.println("Parameters:");
       newParameters.print(100, 100);

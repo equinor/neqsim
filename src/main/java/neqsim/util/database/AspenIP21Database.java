@@ -114,8 +114,8 @@ public class AspenIP21Database
     try {
       ResultSet result = getStatement().executeQuery(sqlString);
       return result;
-    } catch (Exception e) {
-      System.out.println("error in DB " + e.toString());
+    } catch (Exception ex) {
+      System.out.println("error in DB " + ex.toString());
       System.out.println("The database must be rgistered on the local DBMS to work.");
     }
     return null;
@@ -146,8 +146,8 @@ public class AspenIP21Database
         System.out.println("dataset " + dataSet.getString(4));
         System.out.println("dataset value " + dataSet.getDouble("..."));
       }
-    } catch (Exception e) {
-      System.out.println("failed " + e.toString());
+    } catch (Exception ex) {
+      System.out.println("failed " + ex.toString());
     }
 
     System.out.println("ok");
