@@ -718,7 +718,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
       try {
         getLiquidOutStream().getThermoSystem().init(3);
-      } catch (Exception e) {
+      } catch (Exception ex) {
       }
     }
     if (thermoSystem.hasPhaseType("gas")) {
