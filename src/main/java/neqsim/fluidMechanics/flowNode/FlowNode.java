@@ -228,7 +228,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     try {
       clonedSystem = (FlowNode) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
 
     clonedSystem.bulkSystem = bulkSystem.clone();

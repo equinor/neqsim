@@ -32,7 +32,7 @@ public abstract class BaseFunction implements FunctionInterface {
     try {
       clonedClass = (BaseFunction) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
     // if(system!=null) clonedClass.system = system.clone();
     clonedClass.params = params.clone();

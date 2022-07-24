@@ -84,7 +84,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     try {
       clonedSystem = (TwoPhaseFixedStaggeredGridSolver) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
     return clonedSystem;
   }

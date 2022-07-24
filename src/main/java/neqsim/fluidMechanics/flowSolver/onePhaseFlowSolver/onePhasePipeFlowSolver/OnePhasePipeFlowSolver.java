@@ -77,7 +77,7 @@ public class OnePhasePipeFlowSolver
     try {
       clonedSystem = (OnePhasePipeFlowSolver) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
 
     return clonedSystem;

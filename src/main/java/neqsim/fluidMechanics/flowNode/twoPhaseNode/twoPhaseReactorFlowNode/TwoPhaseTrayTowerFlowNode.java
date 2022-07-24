@@ -74,7 +74,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     try {
       clonedSystem = (TwoPhaseTrayTowerFlowNode) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
 
     return clonedSystem;

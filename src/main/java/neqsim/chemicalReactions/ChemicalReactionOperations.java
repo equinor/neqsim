@@ -129,7 +129,7 @@ public class ChemicalReactionOperations
     try {
       clonedSystem = (ChemicalReactionOperations) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
     return clonedSystem;
   }

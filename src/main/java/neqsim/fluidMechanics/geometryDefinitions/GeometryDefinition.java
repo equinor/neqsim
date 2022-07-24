@@ -111,7 +111,7 @@ public abstract class GeometryDefinition
     try {
       clonedGeometry = (GeometryDefinition) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
 
     return clonedGeometry;

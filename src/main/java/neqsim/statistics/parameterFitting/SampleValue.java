@@ -80,7 +80,7 @@ public class SampleValue implements Cloneable {
     try {
       clonedValue = (SampleValue) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
     // this was modified 20.05.2002
     // clonedValue.system = system.clone();

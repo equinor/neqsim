@@ -75,7 +75,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     try {
       clonedSystem = (StratifiedFlowNode) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
 
     return clonedSystem;

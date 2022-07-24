@@ -160,7 +160,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     try {
       clonedHandler = (PhysicalPropertyHandler) super.clone();
     } catch (Exception e) {
-      // e.printStackTrace(System.err);
+      // e.printStackTrace();
       logger.error(e.getMessage());
     }
     try {
@@ -180,7 +180,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         clonedHandler.mixingRule = mixingRule.clone();
       }
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
     return clonedHandler;
   }

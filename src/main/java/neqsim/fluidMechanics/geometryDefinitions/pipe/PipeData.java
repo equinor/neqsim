@@ -61,7 +61,7 @@ public class PipeData extends GeometryDefinition {
     try {
       clonedPipe = (PipeData) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
     return clonedPipe;
   }

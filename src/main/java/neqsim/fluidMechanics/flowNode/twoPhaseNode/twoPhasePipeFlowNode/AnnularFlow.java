@@ -79,7 +79,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     try {
       clonedSystem = (AnnularFlow) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
     return clonedSystem;
   }

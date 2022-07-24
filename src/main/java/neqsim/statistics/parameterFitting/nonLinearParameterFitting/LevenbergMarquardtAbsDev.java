@@ -31,7 +31,7 @@ public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
     try {
       clonedClass = (LevenbergMarquardtAbsDev) super.clone();
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
     }
 
     return clonedClass;
