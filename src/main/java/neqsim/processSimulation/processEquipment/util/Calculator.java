@@ -77,8 +77,8 @@ public class Calculator extends ProcessEquipmentBaseClass {
     try {
       ((Stream) outputVariable).setFlowRate(sum, "kg/hr");
       outputVariable.setCalculationIdentifier(id);
-    } catch (Exception e) {
-      logger.error("error", e.getMessage());
+    } catch (Exception ex) {
+      logger.error("error", ex.getMessage());
     }
     setCalculationIdentifier(id);
   }

@@ -264,8 +264,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       setDownstreamProperties();
       try {
         enthalpy = calcMixStreamEnthalpy();
-      } catch (Exception e) {
-        // String error = e.getMessage();
+      } catch (Exception ex) {
+        // String error = ex.getMessage();
         return;
       }
       // System.out.println("temp guess " + guessTemperature());

@@ -84,9 +84,9 @@ public class BaseContract implements ContractInterface {
             Double.parseDouble(dataSet.getString("ReferencePbar")), dataSet.getString("Comments"));
         System.out.println("specification added..." + numb);
       }
-    } catch (Exception e) {
+    } catch (Exception ex) {
       System.out.println("error in comp");
-      logger.error(e.getMessage());
+      logger.error(ex.getMessage());
     } finally {
       specificationsNumber = numb;
       try {
@@ -99,9 +99,9 @@ public class BaseContract implements ContractInterface {
         if (database.getConnection() != null) {
           database.getConnection().close();
         }
-      } catch (Exception e) {
+      } catch (Exception ex) {
         System.out.println("error closing database.....");
-        logger.error(e.getMessage());
+        logger.error(ex.getMessage());
       }
     }
   }

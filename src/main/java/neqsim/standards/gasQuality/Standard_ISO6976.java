@@ -115,7 +115,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
               + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
           dataSet.next();
           dataSet.getString("ID");
-        } catch (Exception e) {
+        } catch (Exception ex) {
           try {
             String compName = "inert";
             String compType = this.thermoSystem.getPhase(0).getComponent(i).getComponentType();
@@ -130,8 +130,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
                 ("SELECT * FROM iso6976constants WHERE ComponentName='" + compName + "'"));
             M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
             dataSet.next();
-          } catch (Exception ex) {
-            logger.error(ex.getMessage());
+          } catch (Exception ex2) {
+            logger.error(ex2.getMessage());
           }
           componentsNotDefinedByStandard
               .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
@@ -158,8 +158,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         Hinf25[i] = Double.parseDouble(dataSet.getString("Hinfmolar25"));
         Hinf60F[i] = Double.parseDouble(dataSet.getString("Hinfmolar60F"));
       }
-    } catch (Exception e) {
-      String err = e.toString();
+    } catch (Exception ex) {
+      String err = ex.toString();
       System.out.println(err);
     } finally {
       try {
