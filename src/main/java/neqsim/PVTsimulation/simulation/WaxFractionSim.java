@@ -22,7 +22,6 @@ public class WaxFractionSim extends BasePVTsimulation {
   double[] pressure = null;
   private double[] waxFraction = null;
   double[] Sm3gas;
-
   double[] m3oil;
 
   private double[] Bofactor;
@@ -70,8 +69,6 @@ public class WaxFractionSim extends BasePVTsimulation {
       System.out.println("adding....");
 
       for (int i = 0; i < experimentalData[0].length; i++) {
-        WaxFunction function = new WaxFunction();
-        double[] guess = new double[optimizer.getNumberOfTuningParameters()]; // getThermoSystem().getWaxModel().getWaxParameters();
 
         ArrayList<Double> guessArray = new ArrayList<Double>();
         for (int p = 0; p < 3; p++) {
@@ -80,11 +77,14 @@ public class WaxFractionSim extends BasePVTsimulation {
         guessArray.add(getThermoSystem().getWaxModel().getParameterWaxHeatOfFusion()[0]);
         guessArray.add(getThermoSystem().getWaxModel().getParameterWaxTriplePointTemperature()[0]);
 
+        // double[] guess = getThermoSystem().getWaxModel().getWaxParameters();
+        double[] guess = new double[optimizer.getNumberOfTuningParameters()];
         for (int o = 0; o < guess.length; o++) {
           guess[o] = guessArray.get(o);
         }
         // guess = guessArray.subList(0, optimizer.getNumberOfTuningParameters()-1);
 
+        WaxFunction function = new WaxFunction();
         function.setInitialGuess(guess);
 
         SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
@@ -102,8 +102,8 @@ public class WaxFractionSim extends BasePVTsimulation {
         sample.setThermodynamicSystem(tempSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      System.out.println("database error" + e);
+    } catch (Exception ex) {
+      System.out.println("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

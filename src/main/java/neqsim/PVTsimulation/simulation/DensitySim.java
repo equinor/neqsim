@@ -67,7 +67,7 @@ public class DensitySim extends BasePVTsimulation {
 
       for (int i = 0; i < experimentalData[0].length; i++) {
         ViscosityFunction function = new ViscosityFunction();
-        double guess[] = {1.0}; // getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
+        double[] guess = {1.0}; // getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
         function.setInitialGuess(guess);
 
         SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
@@ -76,17 +76,17 @@ public class DensitySim extends BasePVTsimulation {
         tempSystem.setPressure(pressure[i]);
         thermoOps.TPflash();
         // tempSystem.display();
-        double sample1[] = {temperature[i]};
+        double[] sample1 = {temperature[i]};
         double viscosity = experimentalData[0][i];
-        double standardDeviation1[] = {1.5};
+        double[] standardDeviation1 = {1.5};
         SampleValue sample =
             new SampleValue(viscosity, viscosity / 50.0, sample1, standardDeviation1);
         sample.setFunction(function);
         sample.setThermodynamicSystem(tempSystem);
         sampleList.add(sample);
       }
-    } catch (Exception e) {
-      System.out.println("database error" + e);
+    } catch (Exception ex) {
+      System.out.println("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);
