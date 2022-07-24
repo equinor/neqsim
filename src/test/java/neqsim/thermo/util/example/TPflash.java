@@ -59,7 +59,7 @@ public class TPflash {
 
     try {
       testOps.TPflash();
-    } catch (Exception e) {
+    } catch (Exception ex) {
     }
 
     // ObjectMapper om = new ObjectMapper(new YAMLFactory());

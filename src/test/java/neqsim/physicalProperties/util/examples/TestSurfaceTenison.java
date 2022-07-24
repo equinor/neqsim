@@ -81,8 +81,8 @@ public class TestSurfaceTenison {
       // testOps.dewPointMach("n-pentane", "dewPointTemperature",
       // testSystem.getTemperature());
       // testOps.dewPointTemperatureFlash();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
 
     // testSystem.getPhase(1).getComponent(1).getChemicalPotentialdNTV(0,

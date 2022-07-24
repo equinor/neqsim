@@ -111,8 +111,8 @@ public class TestUMRPRUMC {
       // testOps.calcPTphaseEnvelope(false);
 
       // testOps.displayResult();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
     // System.out.println("activity coefficient water " +
     // testSystem.getPhase(1).getActivityCoefficient(1));

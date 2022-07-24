@@ -40,8 +40,8 @@ public class TestGEHenry {
     try {
       testOps.TPflash();
       // testOps.bubblePointPressureFlash(false); //(false);
-    } catch (Exception e) {
-      logger.error(e.toString(), e);
+    } catch (Exception ex) {
+      logger.error(ex.toString(), ex);
     }
     testSystem.display();
   }

@@ -122,7 +122,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     Thread runThr = operations.runAsThread();
     try {
       runThr.join(100000);
-    } catch (Exception e) {
+    } catch (Exception ex) {
 
     }
     double wtpWaterRichTEG =

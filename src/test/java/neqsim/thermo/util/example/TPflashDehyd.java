@@ -79,7 +79,7 @@ public class TPflashDehyd {
      * // testSystem.init(1); // testSystem.init(2); // testSystem.init(3); //
      * System.out.println("heat cap " + (testSystem.getPhase(1).getCp())); //
      * testOps.calcPTphaseEnvelope(); testSystem.display(); // testSystem.getPhase(0).getCp(); }
-     * catch (Exception e) { System.out.println(e.toString()); }
+     * catch (Exception ex) { System.out.println(ex.toString()); }
      * 
      * /* System.out.println("gas density " + (testSystem.getPhase(0).getDensity()));
      * System.out.println("gas density " + (1.0 / (testSystem.getPhase(0).getDensity() /
@@ -131,7 +131,7 @@ public class TPflashDehyd {
      * testSystem.getInterphaseProperties().setInterfacialTensionModel(3); testOps = new
      * ThermodynamicOperations(testSystem); try { // testOps.freezingPointTemperatureFlash();
      * testOps.TPflash(); // testOps.calcPTphaseEnvelope(); // testOps.display(); //
-     * testSystem.display(); } catch (Exception e) { System.out.println(e.toString()); }
+     * testSystem.display(); } catch (Exception ex) { System.out.println(ex.toString()); }
      * 
      * /* double h1 = testSystem.getPhase(0).getEntropy(); System.out.println("H " +
      * testSystem.getPhase(0).getEntropy()); System.out.println("H dP " +

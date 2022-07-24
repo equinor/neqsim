@@ -55,8 +55,8 @@ public class CompGradientFlash {
       newSystem.display();
 
       // testSystem.display();
-    } catch (Exception e) {
-      logger.error(e.toString());
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
   }
 }
