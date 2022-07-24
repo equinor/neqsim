@@ -97,8 +97,8 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     StirredCellNode clonedSystem = null;
     try {
       clonedSystem = (StirredCellNode) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace(System.err);
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedSystem;

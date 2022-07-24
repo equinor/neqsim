@@ -92,8 +92,8 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     BubbleFlowNode clonedSystem = null;
     try {
       clonedSystem = (BubbleFlowNode) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace(System.err);
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedSystem;

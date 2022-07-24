@@ -124,8 +124,8 @@ public class ReactorData extends GeometryDefinition {
     ReactorData clonedPipe = null;
     try {
       clonedPipe = (ReactorData) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace(System.err);
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     return clonedPipe;

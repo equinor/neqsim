@@ -143,8 +143,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
 
     try {
       clonedSystem = (FluidBoundary) super.clone();
-    } catch (Exception e) {
-      e.printStackTrace(System.err);
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
 
     clonedSystem.interphaseSystem = interphaseSystem.clone();
