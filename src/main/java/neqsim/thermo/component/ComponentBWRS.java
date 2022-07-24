@@ -72,11 +72,8 @@ public class ComponentBWRS extends ComponentSrk {
       // logger.info("gamma " + gammaBWRS);
       dataSet.close();
       database.getConnection().close();
-    }
-
-    catch (Exception ex) {
-      String err = ex.toString();
-      logger.error(err);
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
   }
 

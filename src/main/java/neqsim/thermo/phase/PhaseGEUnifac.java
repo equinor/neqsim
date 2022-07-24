@@ -127,8 +127,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
           database.getConnection().close();
         } catch (Exception ex) {
           logger.error("error", ex);
-          String err = ex.toString();
-          logger.error(err);
+          logger.error(ex.toString());
         }
       }
     }

@@ -4255,8 +4255,7 @@ abstract class SystemThermo implements SystemInterface {
         }
       }
     } catch (Exception ex) {
-      String err = ex.toString();
-      logger.error(err);
+      logger.error(ex.toString());
     }
   }
 

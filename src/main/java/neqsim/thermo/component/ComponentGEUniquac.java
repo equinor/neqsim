@@ -68,8 +68,7 @@ public class ComponentGEUniquac extends ComponentGE {
       dataSet.close();
       database.getConnection().close();
     } catch (Exception ex) {
-      String err = ex.toString();
-      logger.error(err);
+      logger.error(ex.toString());
     }
   }
 
