@@ -1,29 +1,16 @@
 package neqsim.processSimulation.processSystem;
 
-import java.util.ArrayList;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.measurementDevice.HydrateEquilibriumTemperatureAnalyser;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
-import neqsim.processSimulation.processEquipment.filter.Filter;
-import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
-import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
-import neqsim.processSimulation.processEquipment.pump.Pump;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Calculator;
 import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.util.SetPoint;
-import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class GlycolRigTest extends neqsim.NeqSimTest {
   ProcessSystem p;
@@ -68,8 +55,9 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.setName("TEG regeneration column");
     column.addFeedStream(TEGtoRegenerator, 1);
     column.getReboiler().setOutTemperature(273.15 + 209.0);
-    column.getCondenser().setOutTemperature(273.15 + 94.0);
+    column.getCondenser().setOutTemperature(273.15 + 104.0);
     column.getReboiler().addStream(gasToReboiler);
+    //column.getTray(0).addStream(gasToReboiler);
     column.setTopPressure(0.1 + 1.01325);
     column.setBottomPressure(0.2 + 1.01325);
 
@@ -141,11 +129,11 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
 
     }
     double wtpWaterRichTEG =
-        TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("TEG") * 100.0;
+        TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
     double wtpWaterFromReboil =
-        column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG") * 100.0;
+        column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
     double wtpWaterFromStripper =
-        stripper.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG") * 100.0;
+        stripper.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
     System.out.println("wtpRichTEG " + wtpWaterRichTEG);
     System.out.println("wtpWaterFromReboil " + wtpWaterFromReboil);
     System.out.println("wtpWaterFromStripper " + wtpWaterFromStripper);
@@ -172,6 +160,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
         + column.getLiquidOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
     System.out.println("water gas from regenerator "
         + column.getGasOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
+        System.out.println("water from stripping gas "
+        +  gasToReboiler.getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
 
     double waterBalanceColumn =
         column.getLiquidOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr")
