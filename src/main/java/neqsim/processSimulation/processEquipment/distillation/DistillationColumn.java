@@ -423,68 +423,69 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
                             + " temperature " + trays.get(i).getGasOutStream().getTemperature("C"));
         }
 
-    double massError = 0.0;
-    for (int i = 0; i < numberOfTrays; i++) {
-      massError += Math.abs(massBalance[i]);
-    }
-    if (massError > 1e-6) {
-      return false;
-    } else {
-      return true;
-    }
-
-    /**
-     * <p>
-     * energyBalanceCheck.
-     * </p>
-     */
-    public void energyBalanceCheck() {
-        double[] energyInput = new double[numberOfTrays];
-        double[] energyOutput = new double[numberOfTrays];
-        double[] energyBalance = new double[numberOfTrays];
+        double massError = 0.0;
         for (int i = 0; i < numberOfTrays; i++) {
-            int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
-            for (int j = 0; j < numberOfInputStreams; j++) {
-                energyInput[i] += trays.get(i).getStream(j).getFluid().getEnthalpy();
-            }
-            energyOutput[i] += trays.get(i).getGasOutStream().getFluid().getEnthalpy();
-            energyOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
-            energyBalance[i] = energyInput[i] - energyOutput[i];
-            System.out.println("tray " + i + " number of input streams " + numberOfInputStreams
-                    + " energyinput " + energyInput[i] + " energyoutput " + energyOutput[i]
-                    + " energybalance " + energyBalance[i] + " gasout "
-                    + trays.get(i).getGasOutStream().getFlowRate("kg/hr") + " liquidout "
-                    + trays.get(i).getLiquidOutStream().getFlowRate("kg/hr") + " pressure "
-                    + trays.get(i).getGasOutStream().getPressure() + " temperature "
-                    + trays.get(i).getGasOutStream().getTemperature("C"));
+            massError += Math.abs(massBalance[i]);
         }
+        if (massError > 1e-6)
+            return false;
+        else
+            return true;
     }
+  }
 
   /**
    * <p>
-   * main.
+   * energyBalanceCheck.
    * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
    */
-  public static void main(String[] args) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 - 0.0), 15.000);
-    // testSystem.addComponent("methane", 10.00);
-    testSystem.addComponent("ethane", 10.0);
-    testSystem.addComponent("CO2", 10.0);
-    testSystem.addComponent("propane", 20.0);
-    // testSystem.addComponent("i-butane", 5.0);
-    // testSystem.addComponent("n-hexane", 15.0);
-    // testSystem.addComponent("n-heptane", 30.0);
-    // testSystem.addComponent("n-octane", 4.0);
-    // testSystem.addComponent("n-nonane", 3.0);
-    testSystem.createDatabase(true);
-    testSystem.setMixingRule(2);
-    ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
-    ops.TPflash();
-    testSystem.display();
-    Stream stream_1 = new Stream("Stream1", testSystem);
+  public void energyBalanceCheck() {
+    double[] energyInput = new double[numberOfTrays];
+    double[] energyOutput = new double[numberOfTrays];
+    double[] energyBalance = new double[numberOfTrays];
+    for (int i = 0; i < numberOfTrays; i++) {
+      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
+      for (int j = 0; j < numberOfInputStreams; j++) {
+        energyInput[i] += trays.get(i).getStream(j).getFluid().getEnthalpy();
+      }
+      energyOutput[i] += trays.get(i).getGasOutStream().getFluid().getEnthalpy();
+      energyOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
+      energyBalance[i] = energyInput[i] - energyOutput[i];
+      System.out.println(
+          "tray " + i + " number of input streams " + numberOfInputStreams + " energyinput "
+              + energyInput[i] + " energyoutput " + energyOutput[i] + " energybalance "
+              + energyBalance[i] + " gasout " + trays.get(i).getGasOutStream().getFlowRate("kg/hr")
+              + " liquidout " + trays.get(i).getLiquidOutStream().getFlowRate("kg/hr")
+              + " pressure " + trays.get(i).getGasOutStream().getPressure() + " temperature "
+              + trays.get(i).getGasOutStream().getTemperature("C"));
+    }
+  }
+
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    public static void main(String[] args) {
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 - 0.0), 15.000);
+        // testSystem.addComponent("methane", 10.00);
+        testSystem.addComponent("ethane", 10.0);
+        testSystem.addComponent("CO2", 10.0);
+        testSystem.addComponent("propane", 20.0);
+        // testSystem.addComponent("i-butane", 5.0);
+        // testSystem.addComponent("n-hexane", 15.0);
+        // testSystem.addComponent("n-heptane", 30.0);
+        // testSystem.addComponent("n-octane", 4.0);
+        // testSystem.addComponent("n-nonane", 3.0);
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(2);
+        ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+        ops.TPflash();
+        testSystem.display();
+        Stream stream_1 = new Stream("Stream1", testSystem);
 
     DistillationColumn column = new DistillationColumn(5, true, true);
     column.addFeedStream(stream_1, 3);
