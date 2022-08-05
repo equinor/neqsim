@@ -416,11 +416,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           + trays.get(i).getGasOutStream().getPressure() + " temperature "
           + trays.get(i).getGasOutStream().getTemperature("C"));
 
-      System.out.println("tray " + i + " number of input streams " + numberOfInputStreams
-          + " water in gasout "
-          + trays.get(i).getGasOutStream().getFluid().getPhase(0).getComponent("water")
-              .getNumberOfmoles()
-          + " water in liquidout "
+      System.out.println(
+          "tray " + i + " number of input streams " + numberOfInputStreams + " water in gasout "
+              + trays.get(i).getGasOutStream().getFluid().getPhase(0).getComponent("water")
+                  .getNumberOfmoles()
+              + " water in liquidout "
               + trays.get(i).getLiquidOutStream().getFluid().getPhase(0).getComponent("water")
                   .getNumberOfmoles()
               + " pressure " + trays.get(i).getGasOutStream().getPressure() + " temperature "
@@ -659,8 +659,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public int hashCode() {
     final int prime = 31;
     int result = super.hashCode();
-    result = prime * result + Objects.hash(bottomTrayPressure, condenserCoolingDuty,
-        condenserTemperature,
+    result = prime * result
+        + Objects.hash(bottomTrayPressure, condenserCoolingDuty, condenserTemperature,
             distoperations, doInitializion, feedStream, feedTrayNumber, gasOutStream, hasCondenser,
             hasReboiler, heater, internalDiameter, liquidOutStream, numberOfTrays,
             reboilerTemperature, separator2, stream_3, stream_3isset, topTrayPressure, trays);

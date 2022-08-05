@@ -54,8 +54,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.addFeedStream(TEGtoRegenerator, 1);
     column.getReboiler().setOutTemperature(273.15 + 209.0);
     column.getCondenser().setOutTemperature(273.15 + 104.0);
-    column.getReboiler().addStream(gasToReboiler);
-    //column.getTray(0).addStream(gasToReboiler);
+    // column.getReboiler().addStream(gasToReboiler);
+    column.getTray(1).addStream(gasToReboiler);
     column.setTopPressure(0.1 + 1.01325);
     column.setBottomPressure(0.2 + 1.01325);
 
@@ -158,8 +158,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
         + column.getLiquidOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
     System.out.println("water gas from regenerator "
         + column.getGasOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
-        System.out.println("water from stripping gas "
-        +  gasToReboiler.getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
+    System.out.println("water from stripping gas "
+        + gasToReboiler.getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
 
     double waterBalanceColumn =
         column.getLiquidOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr")
