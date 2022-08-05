@@ -53,8 +53,9 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.setName("TEG regeneration column");
     column.addFeedStream(TEGtoRegenerator, 1);
     column.getReboiler().setOutTemperature(273.15 + 209.0);
-    column.getCondenser().setOutTemperature(273.15 + 94.0);
+    column.getCondenser().setOutTemperature(273.15 + 104.0);
     column.getReboiler().addStream(gasToReboiler);
+    //column.getTray(0).addStream(gasToReboiler);
     column.setTopPressure(0.1 + 1.01325);
     column.setBottomPressure(0.2 + 1.01325);
 
@@ -126,11 +127,11 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
 
     }
     double wtpWaterRichTEG =
-        TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("TEG") * 100.0;
+        TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
     double wtpWaterFromReboil =
-        column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG") * 100.0;
+        column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
     double wtpWaterFromStripper =
-        stripper.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG") * 100.0;
+        stripper.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
     System.out.println("wtpRichTEG " + wtpWaterRichTEG);
     System.out.println("wtpWaterFromReboil " + wtpWaterFromReboil);
     System.out.println("wtpWaterFromStripper " + wtpWaterFromStripper);
