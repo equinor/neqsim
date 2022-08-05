@@ -106,37 +106,34 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     setDoInitializion(false);
     ((Runnable) trays.get(feedTrayNumber)).run();
 
-    if (getTray(feedTrayNumber).getStream(0).getFluid().getNumberOfPhases() == 1) {
-      for (int i = 0; i < numberOfTrays; i++) {
-        if (getTray(i).getNumberOfInputStreams() > 0 && i != feedTrayNumber) {
-          getTray(feedTrayNumber).addStream(trays.get(i).getStream(0));
-          getTray(feedTrayNumber).run();
-          getTray(feedTrayNumber)
-              .removeInputStream(getTray(feedTrayNumber).getNumberOfInputStreams() - 1);
-          if (getTray(feedTrayNumber).getThermoSystem().getNumberOfPhases() > 1) {
-            break;
-          }
-        } else if (i == feedTrayNumber && getTray(i).getNumberOfInputStreams() > 1) {
-          getTray(feedTrayNumber).addStream(trays.get(i).getStream(1));
-          ((Runnable) trays.get(feedTrayNumber)).run();
-          getTray(feedTrayNumber)
-              .removeInputStream(getTray(feedTrayNumber).getNumberOfInputStreams() - 1);
-          if (getTray(feedTrayNumber).getThermoSystem().getNumberOfPhases() > 1) {
-            break;
-          }
+        if (getTray(feedTrayNumber).getStream(0).getFluid().getNumberOfPhases() == 1) {
+            for (int i = 0; i < numberOfTrays; i++) {
+                if (getTray(i).getNumberOfInputStreams() > 0 && i != feedTrayNumber) {
+                    getTray(feedTrayNumber).addStream(trays.get(i).getStream(0));
+                    getTray(feedTrayNumber).run();
+                    getTray(feedTrayNumber).removeInputStream(getTray(feedTrayNumber).getNumberOfInputStreams()-1);  
+                    if (getTray(feedTrayNumber).getThermoSystem().getNumberOfPhases() > 1)
+                      break;
+                }
+                else if(i == feedTrayNumber && getTray(i).getNumberOfInputStreams() > 1) {
+                  getTray(feedTrayNumber).addStream(trays.get(i).getStream(1));
+                  ((Runnable) trays.get(feedTrayNumber)).run();
+                  getTray(feedTrayNumber).removeInputStream(getTray(feedTrayNumber).getNumberOfInputStreams()-1);
+                  if (getTray(feedTrayNumber).getThermoSystem().getNumberOfPhases() > 1)
+                    break;
+                }
+            }
         }
-      }
-    }
-    ((MixerInterface) trays.get(numberOfTrays - 1))
-        .addStream(trays.get(feedTrayNumber).getGasOutStream());
-    ((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem()
-        .setTotalNumberOfMoles(((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem()
-            .getTotalNumberOfMoles() * (1.0e-6));
-    ((MixerInterface) trays.get(0)).addStream(trays.get(feedTrayNumber).getLiquidOutStream());
-    int streamNumbReboil = (trays.get(0)).getNumberOfInputStreams() - 1;
-    ((Mixer) trays.get(0)).getStream(streamNumbReboil).getThermoSystem().setTotalNumberOfMoles(
-        ((Mixer) trays.get(0)).getStream(streamNumbReboil).getThermoSystem().getTotalNumberOfMoles()
-            * (1.0e-6));
+        ((MixerInterface) trays.get(numberOfTrays - 1))
+                .addStream(trays.get(feedTrayNumber).getGasOutStream());
+        ((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem()
+                .setTotalNumberOfMoles(((Mixer) trays.get(numberOfTrays - 1)).getStream(0)
+                        .getThermoSystem().getTotalNumberOfMoles() * (1.0e-6));
+        ((MixerInterface) trays.get(0)).addStream(trays.get(feedTrayNumber).getLiquidOutStream());
+        int streamNumbReboil = (trays.get(0)).getNumberOfInputStreams() - 1;
+        ((Mixer) trays.get(0)).getStream(streamNumbReboil).getThermoSystem()
+                .setTotalNumberOfMoles(((Mixer) trays.get(0)).getStream(streamNumbReboil)
+                        .getThermoSystem().getTotalNumberOfMoles() * (1.0e-6));
 
     // ((Runnable) trays.get(numberOfTrays - 1)).run();
     ((Runnable) trays.get(0)).run();
@@ -145,8 +142,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         ((MixerInterface) trays.get(numberOfTrays - 1)).getThermoSystem().getTemperature();
     reboilerTemperature = ((MixerInterface) trays.get(0)).getThermoSystem().getTemperature();
 
-    // double deltaTemp = (reboilerTemperature - condenserTemperature) / (numberOfTrays * 1.0);
-    double feedTrayTemperature = getTray(getFeedTrayNumber()).getThermoSystem().getTemperature();
+        // double deltaTemp = (reboilerTemperature - condenserTemperature) / (numberOfTrays * 1.0);
+        double feedTrayTemperature =
+                getTray(getFeedTrayNumber()).getThermoSystem().getTemperature();
 
     double deltaTempCondenser =
         (feedTrayTemperature - condenserTemperature) / (numberOfTrays * 1.0 - feedTrayNumber - 1);
