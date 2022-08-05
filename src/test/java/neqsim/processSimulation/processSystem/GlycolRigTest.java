@@ -143,7 +143,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     // stripper.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("water")*100.0
     // double wtWaterBufferTank =
     // liquidFromBufferTank.getFluid().getPhase("aqueous").getWtFrac("water")*100.0
-    //TEGtoRegenerator.displayResult();
+    // TEGtoRegenerator.displayResult();
     System.out.println("water to regenerator "
         + TEGtoRegenerator.getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
     System.out.println("TEG to regenerator "
@@ -157,6 +157,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
         + column.getLiquidOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
     System.out.println("water gas from regenerator "
         + column.getGasOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
+    System.out.println("water from stripping gas "
+        + gasToReboiler.getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
 
     double waterBalanceColumn =
         column.getLiquidOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr")
@@ -170,7 +172,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
 
     System.out.println("wt water from mixer "
         + TEGWaterMixer.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0);
-    //strippingGas.displayResult();
+    // strippingGas.displayResult();
     System.out.println("stripping gas rate " + strippingGas.getFlowRate("kg/hr"));
     Assertions.assertEquals(0.0, waterBalanceColumn, 1e-3);
   }
