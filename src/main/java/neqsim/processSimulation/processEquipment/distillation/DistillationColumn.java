@@ -43,36 +43,36 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   Separator separator2;
 
 
-    /**
-     * <p>
-     * Constructor for DistillationColumn.
-     * </p>
-     *
-     * @param numberOfTraysLocal a int
-     * @param hasReboiler a boolean
-     * @param hasCondenser a boolean
-     */
-    public DistillationColumn(int numberOfTraysLocal, boolean hasReboiler, boolean hasCondenser) {
-        super("DistillationColumn");
-        this.hasReboiler = hasReboiler;
-        this.hasCondenser = hasCondenser;
-        distoperations = new neqsim.processSimulation.processSystem.ProcessSystem();
-        this.numberOfTrays = numberOfTraysLocal;
-        if (hasReboiler) {
-            trays.add(new Reboiler("Reboiler"));
-            this.numberOfTrays++;
-        }
-        for (int i = 0; i < numberOfTraysLocal; i++) {
-            trays.add(new SimpleTray("SimpleTray" + i + 1));
-        }
-        if (hasCondenser) {
-            trays.add(new Condenser("Condenser"));
-            this.numberOfTrays++;
-        }
-        for (int i = 0; i < this.numberOfTrays; i++) {
-            distoperations.add(trays.get(i));
-        }
+  /**
+   * <p>
+   * Constructor for DistillationColumn.
+   * </p>
+   *
+   * @param numberOfTraysLocal a int
+   * @param hasReboiler a boolean
+   * @param hasCondenser a boolean
+   */
+  public DistillationColumn(int numberOfTraysLocal, boolean hasReboiler, boolean hasCondenser) {
+    super("DistillationColumn");
+    this.hasReboiler = hasReboiler;
+    this.hasCondenser = hasCondenser;
+    distoperations = new neqsim.processSimulation.processSystem.ProcessSystem();
+    this.numberOfTrays = numberOfTraysLocal;
+    if (hasReboiler) {
+      trays.add(new Reboiler("Reboiler"));
+      this.numberOfTrays++;
     }
+    for (int i = 0; i < numberOfTraysLocal; i++) {
+      trays.add(new SimpleTray("SimpleTray" + i + 1));
+    }
+    if (hasCondenser) {
+      trays.add(new Condenser("Condenser"));
+      this.numberOfTrays++;
+    }
+    for (int i = 0; i < this.numberOfTrays; i++) {
+      distoperations.add(trays.get(i));
+    }
+  }
 
   /**
    * <p>
@@ -94,17 +94,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     liquidOutStream.getThermoSystem().setTotalNumberOfMoles(moles / 2.0);
   }
 
-    /**
-     * <p>
-     * init.
-     * </p>
-     */
-    public void init() {
-        if (!isDoInitializion()) {
-            return;
-        }
-        setDoInitializion(false);
-        ((Runnable) trays.get(feedTrayNumber)).run();
+  /**
+   * <p>
+   * init.
+   * </p>
+   */
+  public void init() {
+    if (!isDoInitializion()) {
+      return;
+    }
+    setDoInitializion(false);
+    ((Runnable) trays.get(feedTrayNumber)).run();
 
     if (getTray(feedTrayNumber).getStream(0).getFluid().getNumberOfPhases() == 1) {
       for (int i = 0; i < numberOfTrays; i++) {
@@ -176,17 +176,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     trays.get(numberOfTrays - 1).init();
     ((Runnable) trays.get(numberOfTrays - 1)).run();
 
-        for (int i = numberOfTrays - 2; i >= 1; i--) {
-            ((MixerInterface) trays.get(i)).addStream(trays.get(i + 1).getLiquidOutStream());
-            trays.get(i).init();
-            ((Runnable) trays.get(i)).run();
-        }
-        int streamNumb = (trays.get(0)).getNumberOfInputStreams() - 1;
-        ((MixerInterface) trays.get(0)).replaceStream(streamNumb,
-                trays.get(1).getLiquidOutStream());
-        trays.get(0).init();
-        ((Runnable) trays.get(0)).run();
+    for (int i = numberOfTrays - 2; i >= 1; i--) {
+      ((MixerInterface) trays.get(i)).addStream(trays.get(i + 1).getLiquidOutStream());
+      trays.get(i).init();
+      ((Runnable) trays.get(i)).run();
     }
+    int streamNumb = (trays.get(0)).getNumberOfInputStreams() - 1;
+    ((MixerInterface) trays.get(0)).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
+    trays.get(0).init();
+    ((Runnable) trays.get(0)).run();
+  }
 
   /**
    * <p>
@@ -304,21 +303,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     getTray(feedTrayNumber).getStream(0).setThermoSystem(feedStream.getThermoSystem().clone());
 
-        if (numberOfTrays == 1) {
-            ((Runnable) trays.get(0)).run();
-            gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
-            liquidOutStream
-                    .setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-            return;
-        }
+    if (numberOfTrays == 1) {
+      ((Runnable) trays.get(0)).run();
+      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
+      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+      return;
+    }
 
-        if (isDoInitializion()) {
-            this.init();
-        }
-        double err = 1.0e10, errOld;
-        int iter = 0;
-        double[] oldtemps = new double[numberOfTrays];
-        ((Runnable) trays.get(feedTrayNumber)).run();
+    if (isDoInitializion()) {
+      this.init();
+    }
+    double err = 1.0e10;
+    double errOld;
+    int iter = 0;
+    double[] oldtemps = new double[numberOfTrays];
+    ((Runnable) trays.get(feedTrayNumber)).run();
 
     do {
       iter++;
@@ -367,12 +366,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // massBalanceCheck();
     } while (err > 1e-4 && err < errOld && iter < 10);// && !massBalanceCheck());
 
-        // massBalanceCheck();
-        gasOutStream.setThermoSystem(
-                trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
-        liquidOutStream
-                .setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-    }
+    // massBalanceCheck();
+    gasOutStream
+        .setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
+    liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -411,17 +409,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           + trays.get(i).getGasOutStream().getPressure() + " temperature "
           + trays.get(i).getGasOutStream().getTemperature("C"));
 
-            System.out
-                    .println("tray " + i + " number of input streams " + numberOfInputStreams
-                            + " water in gasout "
-                            + trays.get(i).getGasOutStream().getFluid().getPhase(0)
-                                    .getComponent("water").getNumberOfmoles()
-                            + " water in liquidout "
-                            + trays.get(i).getLiquidOutStream().getFluid().getPhase(0)
-                                    .getComponent("water").getNumberOfmoles()
-                            + " pressure " + trays.get(i).getGasOutStream().getPressure()
-                            + " temperature " + trays.get(i).getGasOutStream().getTemperature("C"));
-        }
+      System.out.println("tray " + i + " number of input streams " + numberOfInputStreams
+          + " water in gasout "
+          + trays.get(i).getGasOutStream().getFluid().getPhase(0).getComponent("water")
+              .getNumberOfmoles()
+          + " water in liquidout "
+              + trays.get(i).getLiquidOutStream().getFluid().getPhase(0).getComponent("water")
+                  .getNumberOfmoles()
+              + " pressure " + trays.get(i).getGasOutStream().getPressure() + " temperature "
+              + trays.get(i).getGasOutStream().getTemperature("C"));
+    }
 
     double massError = 0.0;
     for (int i = 0; i < numberOfTrays; i++) {
@@ -698,5 +695,4 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
             .doubleToLongBits(topTrayPressure) == Double.doubleToLongBits(other.topTrayPressure)
         && Objects.equals(trays, other.trays);
   }
-<<<<<<< HEAD
 }
