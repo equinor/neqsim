@@ -106,7 +106,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     setDoInitializion(false);
     ((Runnable) trays.get(feedTrayNumber)).run();
 
-    if (getTray(feedTrayNumber).getStream(0).getFluid().getNumberOfPhases() == 1) {
+    if (getTray(feedTrayNumber).getFluid().getNumberOfPhases() == 1) {
       for (int i = 0; i < numberOfTrays; i++) {
         if (getTray(i).getNumberOfInputStreams() > 0 && i != feedTrayNumber) {
           getTray(feedTrayNumber).addStream(trays.get(i).getStream(0));
@@ -327,31 +327,27 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
 
         for (int i = feedTrayNumber; i > 1; i--) {
-          ((Mixer) trays.get(i - 1)).replaceStream(1, trays.get(i).getLiquidOutStream());
+          int replaceStream1 = trays.get(i - 1).getNumberOfInputStreams() - 1;
+          ((Mixer) trays.get(i - 1)).replaceStream(replaceStream1,
+              trays.get(i).getLiquidOutStream());
           trays.get(i - 1).setPressure(bottomTrayPressure - (i - 1) * dp);
           ((SimpleTray) trays.get(i - 1)).run();
         }
-        int streamNumb = (trays.get(0)).getNumberOfInputStreams() - 1;
+        int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
         ((Mixer) trays.get(0)).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
         ((SimpleTray) trays.get(0)).run();
 
         for (int i = 1; i <= numberOfTrays - 1; i++) {
-          int replaceStream = 0;
-          if (i == feedTrayNumber) {
-            replaceStream = 1;
+          int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
+          if (i == (numberOfTrays - 1)) {
+            replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
           }
           ((Mixer) trays.get(i)).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
           ((SimpleTray) trays.get(i)).run();
         }
 
         for (int i = numberOfTrays - 2; i == feedTrayNumber; i--) {
-          int replaceStream = 1;
-          if (i == feedTrayNumber) {
-            replaceStream = 2;
-          }
-          if (i == feedTrayNumber && i == 0) {
-            replaceStream = 1;
-          }
+          int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
           ((Mixer) trays.get(i)).replaceStream(replaceStream,
               trays.get(i + 1).getLiquidOutStream());
           ((SimpleTray) trays.get(i)).run();
@@ -659,8 +655,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public int hashCode() {
     final int prime = 31;
     int result = super.hashCode();
-    result = prime * result + Objects.hash(bottomTrayPressure, condenserCoolingDuty,
-        condenserTemperature,
+    result = prime * result
+        + Objects.hash(bottomTrayPressure, condenserCoolingDuty, condenserTemperature,
             distoperations, doInitializion, feedStream, feedTrayNumber, gasOutStream, hasCondenser,
             hasReboiler, heater, internalDiameter, liquidOutStream, numberOfTrays,
             reboilerTemperature, separator2, stream_3, stream_3isset, topTrayPressure, trays);
