@@ -127,16 +127,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
       }
     }
+
+    if (getTray(feedTrayNumber).getFluid().getNumberOfPhases() == 1) {
+      getTray(feedTrayNumber).getThermoSystem().init(0);
+      getTray(feedTrayNumber).getThermoSystem().init(3);
+    }
+
     ((MixerInterface) trays.get(numberOfTrays - 1))
         .addStream(trays.get(feedTrayNumber).getGasOutStream());
     ((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem()
         .setTotalNumberOfMoles(((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem()
-            .getTotalNumberOfMoles() * (1.0e-6));
+            .getTotalNumberOfMoles() * (1.0));
     ((MixerInterface) trays.get(0)).addStream(trays.get(feedTrayNumber).getLiquidOutStream());
     int streamNumbReboil = (trays.get(0)).getNumberOfInputStreams() - 1;
     ((Mixer) trays.get(0)).getStream(streamNumbReboil).getThermoSystem().setTotalNumberOfMoles(
         ((Mixer) trays.get(0)).getStream(streamNumbReboil).getThermoSystem().getTotalNumberOfMoles()
-            * (1.0e-6));
+            * (1.0));
 
     // ((Runnable) trays.get(numberOfTrays - 1)).run();
     ((Runnable) trays.get(0)).run();

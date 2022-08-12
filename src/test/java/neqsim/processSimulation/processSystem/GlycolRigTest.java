@@ -54,8 +54,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.addFeedStream(TEGtoRegenerator, 1);
     column.getReboiler().setOutTemperature(273.15 + 209.0);
     column.getCondenser().setOutTemperature(273.15 + 104.0);
-    column.getReboiler().addStream(gasToReboiler);
-    // column.getTray(1).addStream(gasToReboiler); //this does not work at the moment
+    // column.getReboiler().addStream(gasToReboiler);
+    column.getTray(1).addStream(gasToReboiler); // this does not work at the moment
     column.setTopPressure(0.1 + 1.01325);
     column.setBottomPressure(0.2 + 1.01325);
 
@@ -176,5 +176,100 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     // strippingGas.displayResult();
     System.out.println("stripping gas rate " + strippingGas.getFlowRate("kg/hr"));
     Assertions.assertEquals(0.0, waterBalanceColumn, 1e-3);
+  }
+
+  @Test
+  public void runDistillationProcessTest() {
+    neqsim.thermo.system.SystemInterface feed =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 10.0, 2.01325);
+    feed.addComponent("methane", 0.1);
+    feed.addComponent("propane", 0.3);
+    feed.addComponent("n-hexane", 0.6);
+    feed.setMixingRule("classic");
+
+    Stream feedToRegenerator = new Stream("feed", feed);
+    feedToRegenerator.setName("feed to regenerator");
+    feedToRegenerator.setFlowRate(400.0, "kg/hr");
+    feedToRegenerator.setTemperature(20.0, "C");
+    feedToRegenerator.setPressure(2.01325, "barg");
+
+    DistillationColumn column = new DistillationColumn(1, true, true);
+    column.setName("distillation column");
+    column.addFeedStream(feedToRegenerator, 1);
+    column.getReboiler().setOutTemperature(273.15 + 70.0);
+    column.getCondenser().setOutTemperature(273.15 - 10.0);
+    column.setTopPressure(1.0 + 1.01325);
+    column.setBottomPressure(1.0 + 1.01325);
+
+    neqsim.processSimulation.processSystem.ProcessSystem operations =
+        new neqsim.processSimulation.processSystem.ProcessSystem();
+    operations.add(feedToRegenerator);
+    operations.add(column);
+
+    operations.run();
+
+    System.out.println("wt n-hexane from column "
+        + column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("n-hexane") * 100.0);
+
+    System.out.println("wt methane from column "
+        + column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("methane") * 100.0);
+
+    System.out.println("wt propane from column "
+        + column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("propane") * 100.0);
+
+
+    System.out.println("wt n-hexane from gas column "
+        + column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("n-hexane") * 100.0);
+
+    System.out.println("wt methane from gas column "
+        + column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("methane") * 100.0);
+
+    System.out.println("wt propane from gas column "
+        + column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("propane") * 100.0);
+
+  }
+
+  @Test
+  public void runDistillationProcessTest2() {
+    neqsim.thermo.system.SystemInterface feed =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 5.01325);
+    feed.addComponent("propane", 0.3);
+    feed.addComponent("n-hexane", 0.6);
+    feed.setMixingRule("classic");
+
+    Stream feedToRegenerator = new Stream("feed", feed);
+    feedToRegenerator.setName("feed to regenerator");
+    feedToRegenerator.setFlowRate(400.0, "kg/hr");
+    feedToRegenerator.setTemperature(40.0, "C");
+    feedToRegenerator.setPressure(5.0, "barg");
+
+    DistillationColumn column = new DistillationColumn(1, true, true);
+    column.setName("distillation column");
+    column.addFeedStream(feedToRegenerator, 1);
+    column.getReboiler().setOutTemperature(273.15 + 100.0);
+    column.getCondenser().setOutTemperature(273.15 + 50.0);
+    column.setTopPressure(1.0 + 5.01325);
+    column.setBottomPressure(1.0 + 5.01325);
+
+    neqsim.processSimulation.processSystem.ProcessSystem operations =
+        new neqsim.processSimulation.processSystem.ProcessSystem();
+    operations.add(feedToRegenerator);
+    operations.add(column);
+
+    operations.run();
+
+    System.out.println("wt n-hexane from column "
+        + column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("n-hexane") * 100.0);
+
+    System.out.println("wt propane from column "
+        + column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("propane") * 100.0);
+
+
+    System.out.println("wt n-hexane from gas column "
+        + column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("n-hexane") * 100.0);
+
+    System.out.println("wt propane from gas column "
+        + column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("propane") * 100.0);
+
   }
 }
