@@ -240,7 +240,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     Stream feedToRegenerator = new Stream("feed", feed);
     feedToRegenerator.setName("feed to regenerator");
     feedToRegenerator.setFlowRate(400.0, "kg/hr");
-    feedToRegenerator.setTemperature(40.0, "C");
+    feedToRegenerator.setTemperature(80.0, "C");
     feedToRegenerator.setPressure(5.0, "barg");
 
     DistillationColumn column = new DistillationColumn(1, true, true);
