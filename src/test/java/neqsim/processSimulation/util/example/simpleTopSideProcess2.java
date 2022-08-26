@@ -21,8 +21,9 @@ public class simpleTopSideProcess2 {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        neqsim.thermo.Fluid.setHasWater(true);
-        neqsim.thermo.system.SystemInterface fluid = neqsim.thermo.Fluid.create("gas condensate");
+        neqsim.thermo.Fluid fluidCreator = new neqsim.thermo.Fluid();
+        fluidCreator.setHasWater(true);
+        neqsim.thermo.system.SystemInterface fluid = fluidCreator.create("gas condensate");
         fluid.setTemperature(45.0, "C");
         fluid.setPressure(5.0, "bara");
         Stream stream_inlet = new Stream("Stream1", fluid);
