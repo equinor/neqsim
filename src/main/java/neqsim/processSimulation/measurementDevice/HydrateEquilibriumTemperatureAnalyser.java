@@ -17,10 +17,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(HydrateEquilibriumTemperatureAnalyser.class);
-
-  protected int streamNumber = 0;
-  /** Constant <code>numberOfStreams=0</code> */
-  protected static int numberOfStreams = 0;
   protected StreamInterface stream = null;
   private double referencePressure = 0;
 
@@ -40,8 +36,6 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
    */
   public HydrateEquilibriumTemperatureAnalyser(StreamInterface stream) {
     this.stream = stream;
-    numberOfStreams++;
-    streamNumber = numberOfStreams;
     unit = "K";
     setConditionAnalysisMaxDeviation(1.0);
   }
