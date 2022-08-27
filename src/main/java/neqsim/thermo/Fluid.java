@@ -13,13 +13,40 @@ import org.apache.logging.log4j.Logger;
  */
 public class Fluid {
   static Logger logger = LogManager.getLogger(Fluid.class);
-  static neqsim.thermo.system.SystemInterface fluid = null;
-  private static boolean hasWater = false;
-  private static boolean autoSelectModel = false;
-  private static String thermoModel = "srk";
-  private static String thermoMixingRule = "classic";
+  neqsim.thermo.system.SystemInterface fluid = null;
+  private boolean hasWater = false;
+  private boolean autoSelectModel = false;
+  private String thermoModel = "srk";
+  private String thermoMixingRule = "classic";
 
-  private static void setThermoModel() {
+  public Fluid() {
+  }
+
+  public Fluid(String[] componentNames) {
+    create2(componentNames);
+  }
+
+  /**
+   * @param componentNames
+   * @param flowrate
+   * @param unit
+   */
+  public Fluid(String[] componentNames, double[] flowrate, String unit) {
+    create2(componentNames, flowrate, unit);
+  }
+
+  public Fluid(String fluidType) {
+    create(fluidType);
+  }
+
+  public neqsim.thermo.system.SystemInterface getFluid() {
+    return fluid;
+  }
+
+  /**
+   * 
+   */
+  private void setThermoModel() {
     if (thermoModel.equals("srk")) {
       fluid = new neqsim.thermo.system.SystemSrkEos();
     } else if (thermoModel.equals("pr")) {
@@ -31,7 +58,7 @@ public class Fluid {
     }
   }
 
-  private static void setMixingRule() {
+  private void setMixingRule() {
     fluid.setMixingRule(getThermoMixingRule());
   }
 
@@ -43,7 +70,7 @@ public class Fluid {
    * @param componentNames an array of {@link java.lang.String} objects
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public static neqsim.thermo.system.SystemInterface create2(String[] componentNames) {
+  public neqsim.thermo.system.SystemInterface create2(String[] componentNames) {
     double[] comp = new double[componentNames.length];
     for (int i = 0; i < componentNames.length; i++) {
       comp[i] = 1.0;
@@ -61,12 +88,13 @@ public class Fluid {
    * @param unit a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public static neqsim.thermo.system.SystemInterface create2(String[] componentNames,
+  public neqsim.thermo.system.SystemInterface create2(String[] componentNames,
       double[] flowrate, String unit) {
     setThermoModel();
     createFluid(componentNames, flowrate, unit);
-    if (isHasWater() == true)
+    if (isHasWater() == true) {
       fluid.addComponent("water", 0.1);
+    }
     fluid.createDatabase(true);
     setMixingRule();
     if (isHasWater()) {
@@ -87,10 +115,10 @@ public class Fluid {
    * @param fluidType a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public static neqsim.thermo.system.SystemInterface create(String fluidType) {
+  public neqsim.thermo.system.SystemInterface create(String fluidType) {
     String[] compNames = null;
     double[] flowrate = null;
-    setThermoModel();
+    this.setThermoModel();
     if (fluidType.equals("water")) {
       compNames = new String[] {"water"};
       flowrate = new double[] {1.0};
@@ -189,8 +217,9 @@ public class Fluid {
       return null;
     }
 
-    if (isHasWater() == true)
+    if (isHasWater() == true) {
       fluid.addComponent("water", 0.1);
+    }
     fluid.createDatabase(true);
     setMixingRule();
     if (isHasWater()) {
@@ -213,7 +242,7 @@ public class Fluid {
    * @param molarMass an array of {@link double} objects
    * @param relativedensity an array of {@link double} objects
    */
-  public static void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
+  public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
       double[] relativedensity) {
     if (charNames.length != charFlowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
@@ -235,7 +264,7 @@ public class Fluid {
    * @param lastIsPlusFraction a boolean
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public static neqsim.thermo.system.SystemInterface addOilFractions(String[] charNames,
+  public neqsim.thermo.system.SystemInterface addOilFractions(String[] charNames,
       double[] charFlowrate, double[] molarMass, double[] relativedensity,
       boolean lastIsPlusFraction) {
     if (charNames.length != charFlowrate.length) {
@@ -273,7 +302,7 @@ public class Fluid {
    * @param unit a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public static neqsim.thermo.system.SystemInterface createFluid(String[] componentNames,
+  public neqsim.thermo.system.SystemInterface createFluid(String[] componentNames,
       double[] flowrate, String unit) {
     if (componentNames.length != flowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
@@ -293,7 +322,7 @@ public class Fluid {
    *
    * @param name a {@link java.lang.String} object
    */
-  public static void addComponment(String name) {
+  public void addComponment(String name) {
     fluid.addComponent(name, 1.0);
     fluid.createDatabase(true);
     fluid.setMixingRule(2);
@@ -311,16 +340,17 @@ public class Fluid {
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String[] args) {
-    neqsim.thermo.Fluid.setHasWater(true);
-    neqsim.thermo.system.SystemInterface fluid = neqsim.thermo.Fluid.create("petrol");
+    neqsim.thermo.Fluid fluidCreator = new neqsim.thermo.Fluid();
+
+    neqsim.thermo.system.SystemInterface fluid = fluidCreator.create("petrol");
     fluid.display();
 
-    neqsim.thermo.system.SystemInterface fluid2 = neqsim.thermo.Fluid.create("dry gas");
+    neqsim.thermo.system.SystemInterface fluid2 = fluidCreator.create("dry gas");
     fluid2.display();
     fluid2.getNumberOfComponents();
 
     neqsim.thermo.system.SystemInterface fluid3 =
-        neqsim.thermo.Fluid.create("black oil with water");
+    fluidCreator.create("black oil with water");
     fluid3.display();
     fluid3.getNumberOfComponents();
   }
@@ -332,7 +362,7 @@ public class Fluid {
    *
    * @return a boolean
    */
-  public static boolean isHasWater() {
+  public boolean isHasWater() {
     return hasWater;
   }
 
@@ -343,8 +373,8 @@ public class Fluid {
    *
    * @param hasWater a boolean
    */
-  public static void setHasWater(boolean hasWater) {
-    Fluid.hasWater = hasWater;
+  public void setHasWater(boolean hasWater) {
+    hasWater = hasWater;
   }
 
   /**
@@ -354,7 +384,7 @@ public class Fluid {
    *
    * @return a boolean
    */
-  public static boolean isAutoSelectModel() {
+  public boolean isAutoSelectModel() {
     return autoSelectModel;
   }
 
@@ -365,8 +395,8 @@ public class Fluid {
    *
    * @param autoSelectModel a boolean
    */
-  public static void setAutoSelectModel(boolean autoSelectModel) {
-    Fluid.autoSelectModel = autoSelectModel;
+  public void setAutoSelectModel(boolean autoSelectModel) {
+    autoSelectModel = autoSelectModel;
   }
 
   /**
@@ -376,7 +406,7 @@ public class Fluid {
    *
    * @return a {@link java.lang.String} object
    */
-  public static String getThermoModel() {
+  public String getThermoModel() {
     return thermoModel;
   }
 
@@ -387,8 +417,8 @@ public class Fluid {
    *
    * @param thermoModel a {@link java.lang.String} object
    */
-  public static void setThermoModel(String thermoModel) {
-    Fluid.thermoModel = thermoModel;
+  public void setThermoModel(String thermoModel) {
+    this.thermoModel = thermoModel;
   }
 
   /**
@@ -398,7 +428,7 @@ public class Fluid {
    *
    * @return a {@link java.lang.String} object
    */
-  public static String getThermoMixingRule() {
+  public String getThermoMixingRule() {
     return thermoMixingRule;
   }
 
@@ -409,7 +439,7 @@ public class Fluid {
    *
    * @param thermoMixingRule a {@link java.lang.String} object
    */
-  public static void setThermoMixingRule(String thermoMixingRule) {
-    Fluid.thermoMixingRule = thermoMixingRule;
+  public  void setThermoMixingRule(String thermoMixingRule) {
+    this.thermoMixingRule = thermoMixingRule;
   }
 }

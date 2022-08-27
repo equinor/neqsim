@@ -20,11 +20,11 @@ public class oxygenRemovalWater {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-        neqsim.thermo.Fluid.setHasWater(true);
-        neqsim.thermo.system.SystemInterface fluid1 =
-                neqsim.thermo.Fluid.create("air").autoSelectModel();
+        neqsim.thermo.Fluid fluidCreator = new neqsim.thermo.Fluid();
+        fluidCreator.setHasWater(true);
+        neqsim.thermo.system.SystemInterface fluid1 = fluidCreator.create("air").autoSelectModel();
         fluid1.setMultiPhaseCheck(true);
-        neqsim.thermo.system.SystemInterface fluid2 = neqsim.thermo.Fluid.create("water");
+        neqsim.thermo.system.SystemInterface fluid2 = fluidCreator.create("water");
         fluid1.setPressure(1.01325);
         fluid1.setTemperature(273.15 + 10);
         fluid1.setTotalFlowRate(1.0, "kg/hr");
