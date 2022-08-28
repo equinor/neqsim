@@ -40,11 +40,6 @@ public class Fluid {
       fluid = new neqsim.thermo.system.SystemSrkEos();
     }
   }
-
-  private void setMixingRule() {
-    fluid.setMixingRule(getThermoMixingRule());
-  }
-
   /**
    * <p>
    * create2.
@@ -79,7 +74,7 @@ public class Fluid {
       fluid.addComponent("water", 0.1);
     }
     fluid.createDatabase(true);
-    setMixingRule();
+    fluid.setMixingRule(fluid.getMixingRule());
     if (isHasWater()) {
       fluid.setMultiPhaseCheck(true);
     }
@@ -138,7 +133,7 @@ public class Fluid {
       double[] charFlowrate = new double[] {0.1, 0.08, 0.05, 0.01};
       double[] molarMass = new double[] {0.20, 0.3, 0.36, 0.4};
       double[] density = new double[] {700.0e-3, 810.0e-3, 880.0e-3, 920.0e-3};
-      addCharacterized(charNames, charFlowrate, molarMass, density);
+      getFluid().addCharacterized(charNames, charFlowrate, molarMass, density);
     } else if (fluidType.equals("petrol")) {
       compNames = new String[] {"n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane",
           "nC10", "nC11", "nC12"};
@@ -160,7 +155,7 @@ public class Fluid {
       double[] charFlowrate = new double[] {0.2, 0.1, 0.05, 0.01};
       double[] molarMass = new double[] {0.20, 0.3, 0.36, 0.4};
       double[] density = new double[] {700.0e-3, 810.0e-3, 880.0e-3, 920.0e-3};
-      addCharacterized(charNames, charFlowrate, molarMass, density);
+      getFluid().addCharacterized(charNames, charFlowrate, molarMass, density);
     } else if (fluidType.equals("black oil")) {
       compNames = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
           "n-butane", "i-pentane", "n-pentane", "n-hexane"};
@@ -170,7 +165,7 @@ public class Fluid {
       double[] charFlowrate = new double[] {0.2, 0.1, 0.1, 0.05, 0.01};
       double[] molarMass = new double[] {0.20, 0.25, 0.3, 0.36, 0.4};
       double[] density = new double[] {700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3};
-      addCharacterized(charNames, charFlowrate, molarMass, density);
+      getFluid().addCharacterized(charNames, charFlowrate, molarMass, density);
     } else if (fluidType.equals("black oil with water")) {
       compNames = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
           "n-butane", "i-pentane", "n-pentane", "n-hexane"};
@@ -180,7 +175,7 @@ public class Fluid {
       double[] charFlowrate = new double[] {0.2, 0.1, 0.1, 0.05, 0.01};
       double[] molarMass = new double[] {0.20, 0.25, 0.3, 0.36, 0.4};
       double[] density = new double[] {700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3};
-      addCharacterized(charNames, charFlowrate, molarMass, density);
+      getFluid().addCharacterized(charNames, charFlowrate, molarMass, density);
       setHasWater(true);
     } else if (fluidType.equals("heavy oil")) {
       compNames = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
@@ -191,7 +186,7 @@ public class Fluid {
       double[] charFlowrate = new double[] {0.2, 0.2, 0.2, 0.1, 0.1};
       double[] molarMass = new double[] {0.20, 0.25, 0.3, 0.36, 0.4};
       double[] density = new double[] {700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3};
-      addCharacterized(charNames, charFlowrate, molarMass, density);
+      getFluid().addCharacterized(charNames, charFlowrate, molarMass, density);
     } else if (neqsim.util.database.NeqSimDataBase.hasComponent(fluidType)) {
       compNames = new String[] {fluidType};
       flowrate = new double[] {1.0};
@@ -204,73 +199,13 @@ public class Fluid {
       fluid.addComponent("water", 0.1);
     }
     fluid.createDatabase(true);
-    setMixingRule();
+    fluid.setMixingRule(fluid.getMixingRule());
     if (isHasWater()) {
       fluid.setMultiPhaseCheck(true);
     }
     if (isAutoSelectModel()) {
       fluid = fluid.autoSelectModel();
     }
-    fluid.init(0);
-    return fluid;
-  }
-
-  /**
-   * <p>
-   * addCharacterized.
-   * </p>
-   *
-   * @param charNames an array of {@link java.lang.String} objects
-   * @param charFlowrate an array of {@link double} objects
-   * @param molarMass an array of {@link double} objects
-   * @param relativedensity an array of {@link double} objects
-   */
-  public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
-      double[] relativedensity) {
-    if (charNames.length != charFlowrate.length) {
-      logger.error("component names and mole fractions need to be same length...");
-    }
-    for (int i = 0; i < charNames.length; i++) {
-      fluid.addTBPfraction(charNames[i], charFlowrate[i], molarMass[i], relativedensity[i]);
-    }
-  }
-
-  /**
-   * <p>
-   * addOilFractions.
-   * </p>
-   *
-   * @param charNames an array of {@link java.lang.String} objects
-   * @param charFlowrate an array of {@link double} objects
-   * @param molarMass an array of {@link double} objects
-   * @param relativedensity an array of {@link double} objects
-   * @param lastIsPlusFraction a boolean
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  public neqsim.thermo.system.SystemInterface addOilFractions(String[] charNames,
-      double[] charFlowrate, double[] molarMass, double[] relativedensity,
-      boolean lastIsPlusFraction) {
-    if (charNames.length != charFlowrate.length) {
-      logger.error("component names and mole fractions need to be same length...");
-    }
-
-    for (int i = 0; i < charNames.length - 1; i++) {
-      fluid.addTBPfraction(charNames[i], charFlowrate[i], molarMass[i], relativedensity[i]);
-    }
-    int i = charNames.length - 1;
-    if (lastIsPlusFraction) {
-      fluid.addPlusFraction(charNames[i], charFlowrate[i], molarMass[i], relativedensity[i]);
-    } else {
-      fluid.addTBPfraction(charNames[i], charFlowrate[i], molarMass[i], relativedensity[i]);
-    }
-    fluid.createDatabase(true);
-    if (lastIsPlusFraction) {
-      fluid.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
-      fluid.getCharacterization().setLumpingModel("PVTlumpingModel");
-      fluid.getCharacterization().characterisePlusFraction();
-    }
-    setMixingRule();
-    fluid.setMultiPhaseCheck(true);
     fluid.init(0);
     return fluid;
   }
@@ -287,6 +222,7 @@ public class Fluid {
    */
   public neqsim.thermo.system.SystemInterface createFluid(String[] componentNames,
       double[] flowrate, String unit) {
+      setThermoModel();
     if (componentNames.length != flowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
     }
@@ -357,7 +293,7 @@ public class Fluid {
    * @param hasWater a boolean
    */
   public void setHasWater(boolean hasWater) {
-    hasWater = hasWater;
+    this.hasWater = hasWater;
   }
 
   /**
@@ -379,7 +315,7 @@ public class Fluid {
    * @param autoSelectModel a boolean
    */
   public void setAutoSelectModel(boolean autoSelectModel) {
-    autoSelectModel = autoSelectModel;
+    this.autoSelectModel = autoSelectModel;
   }
 
   /**

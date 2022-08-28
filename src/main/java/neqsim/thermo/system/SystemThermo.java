@@ -5143,4 +5143,62 @@ abstract class SystemThermo implements SystemInterface {
       init(0, i);
     }
   }
+
+   /**
+   * <p>
+   * addCharacterized.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   */
+  public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity) {
+    if (charNames.length != charFlowrate.length) {
+      logger.error("component names and mole fractions need to be same length...");
+    }
+    for (int i = 0; i < charNames.length; i++) {
+      addTBPfraction(charNames[i], charFlowrate[i], molarMass[i], relativedensity[i]);
+    }
+  }
+
+  /**
+   * <p>
+   * addOilFractions.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   * @param lastIsPlusFraction a boolean
+   */
+  public void addOilFractions(String[] charNames,
+      double[] charFlowrate, double[] molarMass, double[] relativedensity,
+      boolean lastIsPlusFraction) {
+    if (charNames.length != charFlowrate.length) {
+      logger.error("component names and mole fractions need to be same length...");
+    }
+
+    for (int i = 0; i < charNames.length - 1; i++) {
+      addTBPfraction(charNames[i], charFlowrate[i], molarMass[i], relativedensity[i]);
+    }
+    int i = charNames.length - 1;
+    if (lastIsPlusFraction) {
+      addPlusFraction(charNames[i], charFlowrate[i], molarMass[i], relativedensity[i]);
+    } else {
+      addTBPfraction(charNames[i], charFlowrate[i], molarMass[i], relativedensity[i]);
+    }
+    createDatabase(true);
+    if (lastIsPlusFraction) {
+      getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
+      getCharacterization().setLumpingModel("PVTlumpingModel");
+      getCharacterization().characterisePlusFraction();
+    }
+    setMixingRule(getMixingRule());
+    setMultiPhaseCheck(true);
+    init(0);
+  }
 }
