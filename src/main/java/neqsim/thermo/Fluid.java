@@ -40,6 +40,7 @@ public class Fluid {
       fluid = new neqsim.thermo.system.SystemSrkEos();
     }
   }
+
   /**
    * <p>
    * create2.
@@ -293,7 +294,9 @@ public class Fluid {
    * @param hasWater a boolean
    */
   public void setHasWater(boolean hasWater) {
+
     this.hasWater = hasWater;
+
   }
 
   /**
