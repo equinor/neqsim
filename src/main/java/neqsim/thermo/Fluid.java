@@ -22,23 +22,6 @@ public class Fluid {
   public Fluid() {
   }
 
-  public Fluid(String[] componentNames) {
-    create2(componentNames);
-  }
-
-  /**
-   * @param componentNames
-   * @param flowrate
-   * @param unit
-   */
-  public Fluid(String[] componentNames, double[] flowrate, String unit) {
-    create2(componentNames, flowrate, unit);
-  }
-
-  public Fluid(String fluidType) {
-    create(fluidType);
-  }
-
   public neqsim.thermo.system.SystemInterface getFluid() {
     return fluid;
   }
