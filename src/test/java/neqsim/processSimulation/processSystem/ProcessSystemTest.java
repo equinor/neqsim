@@ -565,7 +565,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 		feedGas.addComponent("water", 0.0);
 		feedGas.addComponent("TEG", 0);
     feedGas.setMixingRule(10);
-    feedGas.setMultiPhaseCheck(true);
+    feedGas.setMultiPhaseCheck(false);
     feedGas.init(0);
    
     Stream dryFeedGasSmøbukk = new Stream("dry feed gas Smøbukk", feedGas);
@@ -703,17 +703,20 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     double reboilerPressure = 1.4;
     double condenserPressure = 1.2;
+    double feedPressureGLycol = (reboilerPressure+condenserPressure)/2.0; //enters middle of column
+    double feedPressureStripGas = (reboilerPressure+condenserPressure)/2.0; //enters middle of column
 
     ThrottlingValve glycol_flash_valve2 = new ThrottlingValve("LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setName("Rich TEG LP flash valve");
-    glycol_flash_valve2.setOutletPressure(reboilerPressure);
+    glycol_flash_valve2.setOutletPressure(feedPressureGLycol);
 
     neqsim.thermo.system.SystemInterface stripGas = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
 
     Stream strippingGas = new Stream("stripGas", stripGas);
     strippingGas.setFlowRate(250.0*0.8, "kg/hr");
     strippingGas.setTemperature(180.0, "C");
-    strippingGas.setPressure(condenserPressure, "bara");
+    strippingGas.setPressure(feedPressureStripGas, "bara");
 
     Stream gasToReboiler = (Stream) strippingGas.clone();
     gasToReboiler.setName("gas to reboiler");
@@ -723,7 +726,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     column.addFeedStream(glycol_flash_valve2.getOutStream(), 1);
     column.getReboiler().setOutTemperature(273.15 + 202.0);
     column.getCondenser().setOutTemperature(273.15 + 89.0);
-    //column.getReboiler().addStream(gasToReboiler);
     column.getTray(1).addStream(gasToReboiler);
     column.setTopPressure(condenserPressure);
     column.setBottomPressure(reboilerPressure);
@@ -731,7 +733,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     Heater coolerRegenGas = new Heater(column.getGasOutStream());
     coolerRegenGas.setName("regen gas cooler");
-    coolerRegenGas.setOutTemperature(273.15 + 40.0);
+    coolerRegenGas.setOutTemperature(273.15 + 15.0);
 
     Separator sepregenGas = new Separator(coolerRegenGas.getOutStream());
     sepregenGas.setName("regen gas separator");
