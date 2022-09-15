@@ -120,6 +120,7 @@ public class StaticMixer extends Mixer {
     ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
     try {
       if (Double.isNaN(enthalpy)) {
+        logger.error("error in StaticMIxer calc enthalpy NaN");
         testOps.TPflash();
       }
       else {
