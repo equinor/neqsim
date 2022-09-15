@@ -670,9 +670,11 @@ abstract class SystemThermo implements SystemInterface {
       if (flowRate < 1e-100) {
         setEmptyFluid();
       } else if (totalNumberOfMolesLocal > 1e-100) {
-        addComponent(i,
-            SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
-                - getPhase(0).getComponent(i).getNumberOfmoles());
+        double change = SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
+            - getPhase(0).getComponent(i).getNumberOfmoles();
+        if (Math.abs(change) > 1e-12) {
+          addComponent(i, change);
+        }
       } else {
         addComponent(i, SIval);
       }

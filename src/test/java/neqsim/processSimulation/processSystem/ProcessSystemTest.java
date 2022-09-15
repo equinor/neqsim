@@ -696,7 +696,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleGasFromStripper.setOutletStream(gasToReboiler);
 
     neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGasTrainB.clone();
-    pureTEG.setMolarComposition(new double[] { 0.00000001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e-5, 1.0 });
+    pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
 
     Stream makeupTEG = new Stream("makeup TEG", pureTEG);
     makeupTEG.setFlowRate(1e-5, "kg/hr");
@@ -715,7 +715,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     makeupMixer.addStream(makeupTEG);
     
     heatEx.setFeedStream(1, makeupMixer.getOutletStream());
-
     heatEx2.setFeedStream(1, heatEx.getOutStream(1));
 
     
