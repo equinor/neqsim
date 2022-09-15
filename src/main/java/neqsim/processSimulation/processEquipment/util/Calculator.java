@@ -72,7 +72,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
       }
     }
 
-    // System.out.println("make up MEG " + sum);
+    System.out.println("make up TEG " + sum);
     outputVariable.getFluid().setTotalFlowRate(sum, "kg/hr");
     try {
       ((Stream) outputVariable).setFlowRate(sum, "kg/hr");

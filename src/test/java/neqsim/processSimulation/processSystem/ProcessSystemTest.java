@@ -679,7 +679,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     coolerRegenGas.setOutTemperature(273.15 + 18.8918);
 
     Separator sepregenGas = new Separator("regen gas separator",coolerRegenGas.getOutletStream());
-    sepregenGas.setName("regen gas separator");
 
     Stream gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
 
@@ -697,11 +696,11 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleGasFromStripper.setOutletStream(gasToReboiler);
 
     neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGasTrainB.clone();
-    pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+    pureTEG.setMolarComposition(new double[] { 0.00000001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e-5, 1.0 });
 
     Stream makeupTEG = new Stream("makeup TEG", pureTEG);
-    makeupTEG.setFlowRate(1e-6, "kg/hr");
-    makeupTEG.setTemperature(180.0, "C");
+    makeupTEG.setFlowRate(1e-5, "kg/hr");
+    makeupTEG.setTemperature(20.46, "C");
     makeupTEG.setPressure(1.2096, "bara");
 
     Calculator makeupCalculator = new Calculator("TEG makeup calculator");
@@ -713,7 +712,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     StaticMixer makeupMixer = new StaticMixer("makeup mixer");
     makeupMixer.addStream(stripper.getLiquidOutStream());
-    //makeupMixer.addStream(makeupTEG);
     
     heatEx.setFeedStream(1, makeupMixer.getOutletStream());
 
