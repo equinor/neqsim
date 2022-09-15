@@ -712,6 +712,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     StaticMixer makeupMixer = new StaticMixer("makeup mixer");
     makeupMixer.addStream(stripper.getLiquidOutStream());
+    makeupMixer.addStream(makeupTEG);
     
     heatEx.setFeedStream(1, makeupMixer.getOutletStream());
 
