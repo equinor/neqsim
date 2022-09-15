@@ -547,7 +547,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  public void runTEGProcessTest2(){
+  public void runTEGProcessTest3(){
     neqsim.thermo.system.SystemInterface feedGasTrainB = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
     10.00);
 		feedGasTrainB.addComponent("nitrogen", 0.00258);
