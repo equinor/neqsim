@@ -49,18 +49,20 @@ public class TestCharacterizationCondensate1 {
      * testSystem.addComponent("PC-C15-C16", 0.023); testSystem.addComponent("PC-C17-C18", 0.014);
      * testSystem.addComponent("PC-C19-C22", 0.015); testSystem.addComponent("PC-C23-C58", 0.01);
      */
-    testSystem.addPlusFraction("C7", 5, 100.0 / 1000.0, 0.72);
-    testSystem.addPlusFraction("C8", 50, 200.0 / 1000.0, 0.82);
-    testSystem.addPlusFraction("C8", 34, 200.0 / 1000.0, 0.82);
-    // testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
+    testSystem.addTBPfraction("C7", 5, 100.0 / 1000.0, 0.72);
+    testSystem.addPlusFraction("C8", 50, 230.0 / 1000.0, 0.84);
+    //testSystem.addPlusFraction("C8", 34, 200.0 / 1000.0, 0.82);
+    testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
     testSystem.getCharacterization().characterisePlusFraction();
     /*
      * testSystem.getInterphaseProperties().setInterfacialTensionModel(0);
      */
+    System.out.println("number of components " + testSystem.getNumberOfComponents());
     testSystem.useVolumeCorrection(true);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
     testSystem.setMultiPhaseCheck(true);
+    System.out.println("number of components " + testSystem.getNumberOfComponents());
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
     try {

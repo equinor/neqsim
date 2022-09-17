@@ -1106,6 +1106,5 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.add(resycleLeanTEG);
 
     operations.run();
-
   }
 }
