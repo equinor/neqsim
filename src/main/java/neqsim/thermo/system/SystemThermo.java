@@ -5168,18 +5168,19 @@ abstract class SystemThermo implements SystemInterface {
 
   /**
    * <p>
-   * addOilFractions.
+   * addCharacterized.
    * </p>
    *
    * @param charNames an array of {@link java.lang.String} objects
    * @param charFlowrate an array of {@link double} objects
    * @param molarMass an array of {@link double} objects
    * @param relativedensity an array of {@link double} objects
-   * @param lastIsPlusFraction a boolean
+   * @param lumpComponents True if component should be lumped 
+   * @param numberOfPseudoComponents number of pseudo components
    */
   public void addOilFractions(String[] charNames,
       double[] charFlowrate, double[] molarMass, double[] relativedensity,
-      boolean lastIsPlusFraction, boolean lumpComponents, int numberOfLumpedComponents) {
+      boolean lastIsPlusFraction, boolean lumpComponents, int numberOfPseudoComponents) {
     if (charNames.length != charFlowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
     }
@@ -5195,8 +5196,8 @@ abstract class SystemThermo implements SystemInterface {
     }
     createDatabase(true);
     if (lastIsPlusFraction) {
-      getCharacterization().getLumpingModel().setNumberOfPseudoComponents(numberOfLumpedComponents);
-      if(lumpComponents){
+      getCharacterization().getLumpingModel().setNumberOfPseudoComponents(numberOfPseudoComponents);
+      if (lumpComponents){
         getCharacterization().setLumpingModel("PVTlumpingModel");
       }
       else {

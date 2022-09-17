@@ -2494,11 +2494,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param molarMass an array of {@link double} objects
    * @param relativedensity an array of {@link double} objects
    * @param lumpComponents True if component should be lumped 
-   * @param numberOfLumpedComponents number of lumped components
+   * @param numberOfPseudoComponents number of pseudo components
    */
   public void addOilFractions(String[] charNames,
   double[] charFlowrate, double[] molarMass, double[] relativedensity,
-      boolean lastIsPlusFraction, boolean lumpComponents, int numberOfLumpedComponents);
+      boolean lastIsPlusFraction, boolean lumpComponents, int numberOfPseudoComponents);
   
      /**
    * <p>
