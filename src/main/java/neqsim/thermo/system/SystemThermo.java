@@ -5179,7 +5179,7 @@ abstract class SystemThermo implements SystemInterface {
    */
   public void addOilFractions(String[] charNames,
       double[] charFlowrate, double[] molarMass, double[] relativedensity,
-      boolean lastIsPlusFraction) {
+      boolean lastIsPlusFraction, boolean lumpComponents, int numberOfLumpedComponents) {
     if (charNames.length != charFlowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
     }
@@ -5195,12 +5195,34 @@ abstract class SystemThermo implements SystemInterface {
     }
     createDatabase(true);
     if (lastIsPlusFraction) {
-      getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
-      getCharacterization().setLumpingModel("PVTlumpingModel");
+      getCharacterization().getLumpingModel().setNumberOfPseudoComponents(numberOfLumpedComponents);
+      if(lumpComponents){
+        getCharacterization().setLumpingModel("PVTlumpingModel");
+      }
+      else {
+        getCharacterization().setLumpingModel("no lumping");
+      }
       getCharacterization().characterisePlusFraction();
     }
     setMixingRule(getMixingRule());
     setMultiPhaseCheck(true);
     init(0);
   }
+
+  /**
+   * <p>
+   * addOilFractions.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   * @param lastIsPlusFraction a boolean
+   */
+  public void addOilFractions(String[] charNames,
+      double[] charFlowrate, double[] molarMass, double[] relativedensity,
+      boolean lastIsPlusFraction) {
+    addOilFractions(charNames, charFlowrate, molarMass, relativedensity, lastIsPlusFraction, true, 12);
+      }
 }

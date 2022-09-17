@@ -70,6 +70,7 @@ public class TestCharacterizationCondensate {
     // testSystem.addPlusFraction("C11", 1.44, 231.0 / 1000, 0.87);
     testSystem.setHeavyTBPfractionAsPlusFraction();
     testSystem.getCharacterization().characterisePlusFraction();
+    System.out.println("number of components " + testSystem.getNumberOfComponents());
     // testSystem.setHydrateCheck(true);
     testSystem.createDatabase(true);
     logger.info("start benchmark TPflash......");
