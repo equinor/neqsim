@@ -1255,6 +1255,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.propertyProfile = propertyProfile;
   }
 
+  public double getCompressionRatio(){
+    return getOutletStream().getPressure("bara")/getInletStream().getPressure("bara");
+  }
+
   /**
    * {@inheritDoc}
    */

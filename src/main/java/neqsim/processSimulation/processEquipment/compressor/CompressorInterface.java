@@ -71,4 +71,10 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
      * @return a {@link neqsim.processSimulation.processEquipment.compressor.AntiSurge} object
      */
     public AntiSurge getAntiSurge();
+
+    
+    /**
+     * @return compression ratio as p_out/p_in
+     */
+    public double getCompressionRatio();
 }
