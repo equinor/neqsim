@@ -70,13 +70,12 @@ public class SystemProperties {
 
       if (fluid.hasPhaseType(phaseName[j])) {
         int phaseNumber = fluid.getPhaseNumberOfPhase(phaseName[j]);
+        PhaseInterface currPhase = fluid.getPhase(phaseNumber);
         names[++k] = currPhaseName + " Mole Percent";
         values[k] = fluid.getMoleFraction(phaseNumber) * 100;
         names[++k] = currPhaseName + " Weight Percent";
         values[k] = fluid.getWtFraction(phaseNumber) * 100;
         names[++k] = currPhaseName + " Molar Volume [m3/mol]";
-
-        PhaseInterface currPhase = fluid.getPhase(phaseNumber);
         values[k] = 1.0 / currPhase.getDensity("mol/m3");
         names[++k] = currPhaseName + " Volume Percent";
         values[k] = fluid.getCorrectedVolumeFraction(phaseNumber) * 100;
@@ -93,17 +92,17 @@ public class SystemProperties {
         names[++k] = currPhaseName + "Molecular Weight [g/mol]";
         values[k] = currPhase.getMolarMass() * 1000;
         names[++k] = currPhaseName + "Enthalpy [J/mol]";
-        values[k] = currPhase.getEnthalpy("J/mol");
-        // currPhase.getEnthalpy() / currPhase.getNumberOfMolesInPhase();
+        values[k] = currPhase.getEnthalpy("J/mol"); // currPhase.getEnthalpy() /
+                                                    // currPhase.getNumberOfMolesInPhase();
         names[++k] = currPhaseName + "Entropy [J/molK]";
-        values[k] = currPhase.getEntropy("J/molK");
-        // currPhase.getEntropy() / currPhase.getNumberOfMolesInPhase();
+        values[k] = currPhase.getEntropy("J/molK"); // currPhase.getEntropy() /
+                                                    // currPhase.getNumberOfMolesInPhase();
         names[++k] = currPhaseName + "Heat Capacity-Cp [J/molK]";
-        values[k] = currPhase.getCp("J/molK");
-        // currPhase.getCp() / currPhase.getNumberOfMolesInPhase();
+        values[k] = currPhase.getCp("J/molK"); // currPhase.getCp() /
+                                               // currPhase.getNumberOfMolesInPhase();
         names[++k] = currPhaseName + " Heat Capacity-Cv [J/molK]";
-        values[k] = currPhase.getCv("J/molK");
-        // currPhase.getCv() / currPhase.getNumberOfMolesInPhase();
+        values[k] = currPhase.getCv("J/molK"); // currPhase.getCv() /
+                                               // currPhase.getNumberOfMolesInPhase();
         names[++k] = currPhaseName + " Kappa (Cp/Cv)";
         values[k] = currPhase.getGamma(); // currPhase.getCp() / currPhase.getCv();
         names[++k] = currPhaseName + " JT Coefficient [K/Pa]";
@@ -181,8 +180,8 @@ public class SystemProperties {
   }
 
   /**
-   * Get property names and values as a map.
-   *
+   * Get property names and values as a map
+   * 
    * @return map of property name and values
    */
   public HashMap<String, Double> getProperties() {
@@ -194,8 +193,8 @@ public class SystemProperties {
   }
 
   /**
-   * Getter for property values.
-   *
+   * Getter for property values
+   * 
    * @return Systemproperty values
    */
   public Double[] getValues() {
@@ -203,8 +202,8 @@ public class SystemProperties {
   }
 
   /**
-   * Get names of properties.
-   *
+   * Get names of properties
+   * 
    * @return Array of names of properties
    */
   public static String[] getPropertyNames() {

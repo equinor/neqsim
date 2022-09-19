@@ -66,7 +66,8 @@ abstract class SystemThermo implements SystemInterface {
   protected double criticalPressure = 0;
   private double totalNumberOfMoles = 0;
   public String componentNameTag = "";
-  protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;
+  protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null; // new
+                                                                                       // WaxCharacterise(this);
   protected double[] beta = new double[6];
   protected int a;
 
@@ -854,7 +855,8 @@ abstract class SystemThermo implements SystemInterface {
       logger.error("error", ex);
     }
 
-    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density);
+    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density); // 0.2918-0.0928*
+                                                                                                   // acs)*8.314*TC/PC*10.0;
     addComponent(componentName, numberOfMoles, TC, PC, acs);
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
     // System.out.println("watson " + Kwatson);
@@ -4357,8 +4359,9 @@ abstract class SystemThermo implements SystemInterface {
       }
       logger.info("done ... set mixing rule ......");
       tempModel.autoSelectMixingRule();
-      if (model.equals("Electrolyte-ScRK-EOS")) {
-        // || model.equals("Electrolyte-CPA-EOS-statoil")) {
+      if (model.equals("Electrolyte-ScRK-EOS")) {// ||
+                                                 // model.equals("Electrolyte-CPA-EOS-statoil"))
+                                                 // {
         logger.info("chemical reaction init......");
         tempModel.setMultiPhaseCheck(false);
         tempModel.chemicalReactionInit();
