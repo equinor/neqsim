@@ -66,8 +66,7 @@ abstract class SystemThermo implements SystemInterface {
   protected double criticalPressure = 0;
   private double totalNumberOfMoles = 0;
   public String componentNameTag = "";
-  protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null; // new
-                                                                                       // WaxCharacterise(this);
+  protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;
   protected double[] beta = new double[6];
   protected int a;
 
@@ -670,8 +669,9 @@ abstract class SystemThermo implements SystemInterface {
       if (flowRate < 1e-100) {
         setEmptyFluid();
       } else if (totalNumberOfMolesLocal > 1e-100) {
-        double change = SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
-            - getPhase(0).getComponent(i).getNumberOfmoles();
+        double change =
+            SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
+                - getPhase(0).getComponent(i).getNumberOfmoles();
         if (Math.abs(change) > 1e-12) {
           addComponent(i, change);
         }
@@ -854,8 +854,7 @@ abstract class SystemThermo implements SystemInterface {
       logger.error("error", ex);
     }
 
-    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density); // 0.2918-0.0928*
-                                                                                                   // acs)*8.314*TC/PC*10.0;
+    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density);
     addComponent(componentName, numberOfMoles, TC, PC, acs);
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
     // System.out.println("watson " + Kwatson);
@@ -4358,9 +4357,8 @@ abstract class SystemThermo implements SystemInterface {
       }
       logger.info("done ... set mixing rule ......");
       tempModel.autoSelectMixingRule();
-      if (model.equals("Electrolyte-ScRK-EOS")) {// ||
-                                                 // model.equals("Electrolyte-CPA-EOS-statoil"))
-                                                 // {
+      if (model.equals("Electrolyte-ScRK-EOS")) {
+        // || model.equals("Electrolyte-CPA-EOS-statoil")) {
         logger.info("chemical reaction init......");
         tempModel.setMultiPhaseCheck(false);
         tempModel.chemicalReactionInit();
@@ -5146,7 +5144,7 @@ abstract class SystemThermo implements SystemInterface {
     }
   }
 
-   /**
+  /**
    * <p>
    * addCharacterized.
    * </p>
@@ -5175,12 +5173,12 @@ abstract class SystemThermo implements SystemInterface {
    * @param charFlowrate an array of {@link double} objects
    * @param molarMass an array of {@link double} objects
    * @param relativedensity an array of {@link double} objects
-   * @param lumpComponents True if component should be lumped 
+   * @param lumpComponents True if component should be lumped
    * @param numberOfPseudoComponents number of pseudo components
    */
-  public void addOilFractions(String[] charNames,
-      double[] charFlowrate, double[] molarMass, double[] relativedensity,
-      boolean lastIsPlusFraction, boolean lumpComponents, int numberOfPseudoComponents) {
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction, boolean lumpComponents,
+      int numberOfPseudoComponents) {
     if (charNames.length != charFlowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
     }
@@ -5197,10 +5195,9 @@ abstract class SystemThermo implements SystemInterface {
     createDatabase(true);
     if (lastIsPlusFraction) {
       getCharacterization().getLumpingModel().setNumberOfPseudoComponents(numberOfPseudoComponents);
-      if (lumpComponents){
+      if (lumpComponents) {
         getCharacterization().setLumpingModel("PVTlumpingModel");
-      }
-      else {
+      } else {
         getCharacterization().setLumpingModel("no lumping");
       }
       getCharacterization().characterisePlusFraction();
@@ -5221,9 +5218,9 @@ abstract class SystemThermo implements SystemInterface {
    * @param relativedensity an array of {@link double} objects
    * @param lastIsPlusFraction a boolean
    */
-  public void addOilFractions(String[] charNames,
-      double[] charFlowrate, double[] molarMass, double[] relativedensity,
-      boolean lastIsPlusFraction) {
-    addOilFractions(charNames, charFlowrate, molarMass, relativedensity, lastIsPlusFraction, true, 12);
-      }
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction) {
+    addOilFractions(charNames, charFlowrate, molarMass, relativedensity, lastIsPlusFraction, true,
+        12);
+  }
 }

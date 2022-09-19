@@ -525,13 +525,12 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
   /**
    * <p>
-   * Getter for the field <code>energyRefT</code>.
+   * Getter for the field <code>energyRefT</code>. // combustion conditions
    * </p>
    *
    * @return the energyRefT
    */
-  public // combustion conditions
-  double getEnergyRefT() {
+  public double getEnergyRefT() {
     return energyRefT;
   }
 
@@ -570,13 +569,12 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
   /**
    * <p>
-   * Getter for the field <code>volRefT</code>.
+   * Getter for the field <code>volRefT</code>. metering conditions
    * </p>
    *
    * @return the volRefT
    */
-  public // metering conditions
-  double getVolRefT() {
+  public double getVolRefT() {
     return volRefT;
   }
 
@@ -598,8 +596,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    *
    * @return the componentsNotDefinedByStandard
    */
-  public // metering conditions
-  ArrayList<String> getComponentsNotDefinedByStandard() {
+  public ArrayList<String> getComponentsNotDefinedByStandard() {
     return componentsNotDefinedByStandard;
   }
 

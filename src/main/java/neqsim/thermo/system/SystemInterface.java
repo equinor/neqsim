@@ -2470,7 +2470,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /** {@inheritDoc} */
   public void addToComponentNames(java.lang.String name);
 
-     /**
+  /**
    * <p>
    * addCharacterized.
    * </p>
@@ -2480,27 +2480,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param molarMass an array of {@link double} objects
    * @param relativedensity an array of {@link double} objects
    */
-  public void addOilFractions(String[] charNames,
-  double[] charFlowrate, double[] molarMass, double[] relativedensity,
-  boolean lastIsPlusFraction);
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction);
 
-    /**
-   * <p>
-   * addCharacterized.
-   * </p>
-   *
-   * @param charNames an array of {@link java.lang.String} objects
-   * @param charFlowrate an array of {@link double} objects
-   * @param molarMass an array of {@link double} objects
-   * @param relativedensity an array of {@link double} objects
-   * @param lumpComponents True if component should be lumped 
-   * @param numberOfPseudoComponents number of pseudo components
-   */
-  public void addOilFractions(String[] charNames,
-  double[] charFlowrate, double[] molarMass, double[] relativedensity,
-      boolean lastIsPlusFraction, boolean lumpComponents, int numberOfPseudoComponents);
-  
-     /**
+  /**
    * <p>
    * addCharacterized.
    * </p>
