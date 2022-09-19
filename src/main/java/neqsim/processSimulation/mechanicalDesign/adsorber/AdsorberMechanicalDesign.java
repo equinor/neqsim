@@ -75,7 +75,6 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
     double totalSkidWeight = 0.0;
 
     double moduleWidth = 0.0;
-
     double moduleHeight = 0.0;
     double moduleLength = 0.0;
     double materialsCost = 0.0;
