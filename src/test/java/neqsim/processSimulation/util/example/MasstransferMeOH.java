@@ -64,7 +64,7 @@ public class MasstransferMeOH {
                 mainMixer.getOutletStream(), "pipeline", "stratified");
         pipeline.setLength(123.01);
 
-        GasScrubber scrubber = new GasScrubber("gas scrub", pipeline.getOutStream());
+        GasScrubber scrubber = new GasScrubber("gas scrub", pipeline.getOutletStream());
 
         Stream gasFromScrubber = new Stream("gasFromScrubber", scrubber.getGasOutStream());
 

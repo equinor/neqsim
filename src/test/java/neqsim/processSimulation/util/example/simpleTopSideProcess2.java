@@ -45,7 +45,7 @@ public class simpleTopSideProcess2 {
 
         Recycle recyleOp = new Recycle("resyc");
         recyleOp.addStream(scrubber.getLiquidOutStream());
-        mixer_inlet.addStream(recyleOp.getOutStream());
+        mixer_inlet.addStream(recyleOp.getOutletStream());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();
