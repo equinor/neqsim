@@ -13,7 +13,9 @@ import neqsim.thermo.component.ComponentEosInterface;
 public class AttractiveTermTwuCoonParam extends AttractiveTermBaseClass {
   private static final long serialVersionUID = 1000;
 
-  private double a = 0.0, b = 0.0, c = 0.0;
+  private double a = 0.0;
+  private double b = 0.0;
+  private double c = 0.0;
 
   /**
    * <p>

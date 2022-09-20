@@ -54,8 +54,8 @@ public class TestBinaryCPAfitToActivityCoefficientDB implements Cloneable {
         testSystem.setMixingRule(10);
         testSystem.init(0);
 
-        double sample1[] = {x2, testSystem.getTemperature()};
-        double standardDeviation1[] = {x2 / 100.0};
+        double[] sample1 = {x2, testSystem.getTemperature()};
+        double[] standardDeviation1 = {x2 / 100.0};
         double val = Double.parseDouble(dataSet.getString("gamma2"));
         SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
         sample.setFunction(function);
@@ -64,7 +64,7 @@ public class TestBinaryCPAfitToActivityCoefficientDB implements Cloneable {
         // function.setDatabaseParameters();
         // double guess[] = {-1466.3924707953, 1197.4327552750, 5.9188456398,
         // -7.2410712156, 0.2127650110};
-        double guess[] = {-0.241488376, -0.344136439, 0.0004315217}; // ,0.02}; //,
+        double[] guess = {-0.241488376, -0.344136439, 0.0004315217}; // ,0.02}; //,
                                                                      // -55}; //,-30};
 
         function.setInitialGuess(guess);

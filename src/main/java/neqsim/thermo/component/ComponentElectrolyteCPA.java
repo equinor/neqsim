@@ -327,7 +327,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
       xi += (1.0 / xsite[i]) * xsitedV[i];
     }
 
-    double tot1 = 0.0, tot2 = 0.0;
+    double tot1 = 0.0;
+    double tot2 = 0.0;
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       tot2 = 0.0;
       for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) {
@@ -337,7 +338,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
       tot1 += 1.0 / 2.0 * tot2 * phase.getComponent(k).getNumberOfMolesInPhase();
     }
 
-    double tot3 = 0.0, tot4 = 0.0;
+    double tot3 = 0.0;
+    double tot4 = 0.0;
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       tot3 = 0.0;
       for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) {
@@ -368,7 +370,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
       xi += 1.0 / xsite[i] * xsitedT[i];
     }
 
-    double tot1 = 0.0, tot2 = 0.0;
+    double tot1 = 0.0;
+    double tot2 = 0.0;
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       tot2 = 0.0;
       for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) {
@@ -632,7 +635,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   /** {@inheritDoc} */
   @Override
   public double getSurfaceTenisionInfluenceParameter(double temperature) {
-    double AA = 0, BB = 0;
+    double AA = 0;
+    double BB = 0;
     if (componentName.equals("water")) {
       double TR = 1.0 - temperature / getTC();
       AA = -2.2367E-16;
@@ -643,8 +647,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
       double AAW2 = -1.3646E-16;
 
       return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AAW1 + AAW2 * TR + 0.5113e-16 * TR * TR);
-    } // old
-    else if (componentName.equals("water2")) { /// THis is the old method from
+    } else if (componentName.equals("water2")) { /// THis is the old method from
       double TR = 1.0 - temperature / getTC();
       AA = -2.2367E-16;
       BB = 2.83732E-16;

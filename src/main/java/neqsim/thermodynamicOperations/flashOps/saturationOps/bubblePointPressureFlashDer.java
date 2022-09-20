@@ -177,7 +177,7 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
           || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-6)
           && (iterations < maxNumberOfIterations)) || iterations < 5);
 
-      if (system.isChemicalSystem()) {// && (iterations%3)==0 && iterations<50){
+      if (system.isChemicalSystem()) { // && (iterations%3)==0 && iterations<50){
         // Should also change -- Neeraj
         chemSolved = system.getChemicalReactionOperations().solveChemEq(1, 0);
         system.setBeta(1, 1.0 - 1e-10);

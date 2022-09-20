@@ -307,14 +307,18 @@ abstract class Phase implements PhaseInterface {
     double[] comp = new double[getNumberOfComponents()];
 
     for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
-      if (unit.equals("molefraction"))
+      if (unit.equals("molefraction")) {
         comp[compNumb] = getComponent(compNumb).getx();
-      if (unit.equals("wtfraction"))
+      }
+      if (unit.equals("wtfraction")) {
         comp[compNumb] = getWtFrac(compNumb);
-      if (unit.equals("molespersec"))
+      }
+      if (unit.equals("molespersec")) {
         comp[compNumb] = getWtFrac(compNumb);
-      if (unit.equals("volumefraction"))
+      }
+      if (unit.equals("volumefraction")) {
         comp[compNumb] = getComponent(compNumb).getVoli() / getVolume();
+      }
     }
     return comp;
   }
@@ -476,25 +480,7 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getg() {
     return 1;
   }
 
@@ -541,6 +527,24 @@ abstract class Phase implements PhaseInterface {
   public double calcAij(int compNumb, int j, PhaseInterface phase, double temperature,
       double pressure, int numbcomp) {
     return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    return 1;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    return 1;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getg() {
+    return 1;
   }
 
   /** {@inheritDoc} */
@@ -953,6 +957,8 @@ abstract class Phase implements PhaseInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
         break;
+      default:
+        break;
     }
     return refCp * conversionFactor;
   }
@@ -980,6 +986,8 @@ abstract class Phase implements PhaseInterface {
         break;
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+        break;
+      default:
         break;
     }
     return refCv * conversionFactor;
@@ -1020,6 +1028,8 @@ abstract class Phase implements PhaseInterface {
         break;
       case "kJ/kg":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+        break;
+      default:
         break;
     }
     return refEnthalpy * conversionFactor;
@@ -1105,6 +1115,8 @@ abstract class Phase implements PhaseInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
         break;
+      default:
+        break;
     }
     return refEntropy * conversionFactor;
   }
@@ -1153,13 +1165,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  @Deprecated
-  public double getConductivity() {
-    return getPhysicalProperties().getConductivity();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getThermalConductivity(String unit) {
     double refConductivity = getThermalConductivity(); // conductivity in W/m*K
     double conversionFactor = 1.0;
@@ -1174,6 +1179,13 @@ abstract class Phase implements PhaseInterface {
         throw new RuntimeException();
     }
     return refConductivity * conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  @Deprecated
+  public double getConductivity() {
+    return getPhysicalProperties().getConductivity();
   }
 
   /** {@inheritDoc} */
@@ -1539,6 +1551,8 @@ abstract class Phase implements PhaseInterface {
         break;
       case "C/bar":
         conversionFactor = 1.0;
+        break;
+      default:
         break;
     }
     return JTcoef * conversionFactor;
@@ -1974,6 +1988,8 @@ abstract class Phase implements PhaseInterface {
         break;
       case "litre":
         conversionFactor = 1000.0;
+        break;
+      default:
         break;
     }
     return conversionFactor * getVolume() / 1.0e5;

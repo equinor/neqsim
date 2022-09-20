@@ -618,8 +618,20 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param i Phase number
    * @return True if phase exists, false if not.
+   * @deprecated use {@link #isPhase(int i)} instead
    */
-  public boolean IsPhase(int i);
+  @Deprecated
+  public default boolean IsPhase(int i) {
+    return isPhase(i);
+  }
+
+  /**
+   * Returns true if phase exists and is not null.
+   *
+   * @param i Phase number
+   * @return True if phase exists, false if not.
+   */
+  public boolean isPhase(int i);
 
   /**
    * Get phase number i from SystemInterface object.

@@ -101,8 +101,10 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
       double refWaterFugacityCoef = Math.log(refPhase.getComponent("water").fugcoef(refPhase));
 
-      double dhf = 6010.0, tmi = 273.15, dcp = 37.29;
+      double dhf = 6010.0;
 
+      double tmi = 273.15;
+      double dcp = 37.29;
       double LNFUG_ICEREF = refWaterFugacityCoef - (dhf / (R * tmi)) * (tmi / temp - 1.0)
           + (dcp / R) * ((tmi / temp) - 1.0 - Math.log(tmi / temp));
 
@@ -226,8 +228,9 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
    */
   public double calcDeltaChemPot(PhaseInterface phase, int numberOfComps, double temp, double pres,
       int hydrateStruct) {
-    double dGf = 0.0, dHf = 0.0;
+    double dGf = 0.0;
 
+    double dHf = 0.0;
     double Cp = 0;
 
     double deltaMolarVolume = 0.0;

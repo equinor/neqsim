@@ -252,7 +252,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * Calculates polytropic or isentropic efficiency
+   * Calculates polytropic or isentropic efficiency.
    *
    * @param outTemperature a double
    * @return a double
@@ -1230,7 +1230,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * Getter for property useGERG2008
+   * Getter for property useGERG2008.
    *
    * @return Value
    */
@@ -1239,7 +1239,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * Setter for property useGERG2008
+   * Setter for property useGERG2008.
    *
    * @param useGERG2008 Value to set
    */

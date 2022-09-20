@@ -51,8 +51,8 @@ public class TestCPAStatoil {
         // SystemInterface testSystem = new SystemSrkEos(280, 0.001);
         testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
         testSystem.createDatabase(true);
-        double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
-        double standardDeviation1[] = {0.1};
+        double[] sample1 = {Double.parseDouble(dataSet.getString("Temperature"))};
+        double[] standardDeviation1 = {0.1};
         double val = Double.parseDouble(dataSet.getString("VapourPressure"));
         testSystem.setPressure(val);
         double stddev = val / 10.0;
@@ -64,7 +64,7 @@ public class TestCPAStatoil {
 
         // double guess[] =
         // {((ComponentSrk)testSystem.getPhase(0).getComponent(0)).geta(),((ComponentSrk)testSystem.getPhase(0).getComponent(0)).getb(),testSystem.getPhase(0).getComponent(0).getAcentricFactor(),0.04567};
-        double guess[] = {0.7892765953, -1.0606510837, 2.2071936510}; // water CPA statoil
+        double[] guess = {0.7892765953, -1.0606510837, 2.2071936510}; // water CPA statoil
         // double guess[] ={0.8581331725*0, -1.0053180150*0, 1.2736063639*0}; //MEG CPA
         // statoil
         // double guess[] ={ 1.0008858863, 1.8649645470, -4.6720397496}; //TEG CPA

@@ -824,6 +824,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   }
 
   /**
+   * calcdFdNtemp.
+   *
    * @return double[]
    */
   double[] calcdFdNtemp() {

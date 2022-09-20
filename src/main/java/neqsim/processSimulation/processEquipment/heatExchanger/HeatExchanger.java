@@ -260,10 +260,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   public void run(UUID id) {
     if (getSpecification().equals("out stream")) {
       runSpecifiedStream(id);
-    }
-    // inStream[0].run(id);
-    // inStream[1].displayResult();
-    else if (firstTime) {
+    } else if (firstTime) {
       firstTime = false;
       SystemInterface systemOut0 = inStream[0].getThermoSystem().clone();
       outStream[0].setThermoSystem(systemOut0);

@@ -915,7 +915,7 @@ public class TPmultiflash extends TPflash {
     }
 
     int iterations = 0;
-    if (multiPhaseTest) {// && !system.isChemicalSystem()) {
+    if (multiPhaseTest) { // && !system.isChemicalSystem()) {
       double diff = 1.0e10;
 
       double oldDiff = 1.0e10;
