@@ -43,9 +43,9 @@ public interface TwoPortInterface {
 
     /**
      * Get outlet Stream of twoport.
-     * 
-     * @deprecated use {@link #getOutletStream()} instead
+     *
      * @return outlet Stream of TwoPortEquipment
+     * @deprecated use {@link #getOutletStream()} instead
      */
     @Deprecated
     default public StreamInterface getOutStream() {

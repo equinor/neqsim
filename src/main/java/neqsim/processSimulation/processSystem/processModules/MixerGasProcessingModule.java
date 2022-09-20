@@ -102,7 +102,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     double tolerance = 1e-2;
     HPliquidRecycle.setTolerance(tolerance);
     HPliquidRecycle.addStream(gasScrubber.getLiquidOutStream());
-    inletSeparator.addStream(HPliquidRecycle.getOutStream());
+    inletSeparator.addStream(HPliquidRecycle.getOutletStream());
 
     Compressor firstStageCompressor =
         new Compressor("1st stage compressor", gasScrubber.getGasOutStream());

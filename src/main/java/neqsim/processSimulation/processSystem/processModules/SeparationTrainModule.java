@@ -148,7 +148,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     double tolerance = 1e-10;
     HPliquidRecycle.setTolerance(tolerance);
     HPliquidRecycle.addStream(gasInletScrubber.getLiquidOutStream());
-    inletSeparator.addStream(HPliquidRecycle.getOutStream());
+    inletSeparator.addStream(HPliquidRecycle.getOutletStream());
 
     getOperations().add(inletSeparator);
     getOperations().add(liquidOutHeater);

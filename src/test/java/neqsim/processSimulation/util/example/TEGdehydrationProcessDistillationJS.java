@@ -245,12 +245,12 @@ public class TEGdehydrationProcessDistillationJS {
         heatEx2.setGuessOutTemperature(273.15 + 62.0);
         heatEx2.setUAvalue(UAvalueRichTEGHeatExchanger_1);
 
-        Separator flashSep = new Separator("degasing separator", heatEx2.getOutStream(0));
+        Separator flashSep = new Separator("degassing separator", heatEx2.getOutStream(0));
 
-        Stream flashGas = new Stream("gas from degasing separator", flashSep.getGasOutStream());
+        Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
         Stream flashLiquid =
-                new Stream("liquid from degasing separator", flashSep.getLiquidOutStream());
+            new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
 
         Filter fineFilter = new Filter("TEG fine filter", flashLiquid);
         fineFilter.setDeltaP(0.05, "bara");

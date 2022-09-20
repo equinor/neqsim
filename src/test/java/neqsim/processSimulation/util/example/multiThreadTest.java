@@ -101,7 +101,7 @@ public class multiThreadTest {
     Recycle resyc = new Recycle("resyc");
     resyc.addStream(separator3.getLiquidOutStream());
 
-    mixer2.addStream(resyc.getOutStream());
+    mixer2.addStream(resyc.getOutletStream());
 
     // mixer2.addStream(stream_222);
     neqsim.processSimulation.processSystem.ProcessSystem operations2 =
