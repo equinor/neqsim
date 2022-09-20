@@ -382,12 +382,12 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     heatEx2.setGuessOutTemperature(273.15 + 62.0);
     heatEx2.setUAvalue(200.0);
 
-    Separator flashSep = new Separator("degasing separator", heatEx2.getOutStream(0));
+    Separator flashSep = new Separator("degassing separator", heatEx2.getOutStream(0));
 
-    Stream flashGas = new Stream("gas from degasing separator", flashSep.getGasOutStream());
+    Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
     Stream flashLiquid =
-        new Stream("liquid from degasing separator", flashSep.getLiquidOutStream());
+        new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
 
     Filter fineFilter = new Filter("TEG fine filter", flashLiquid);
     fineFilter.setDeltaP(0.05, "bara");
@@ -637,13 +637,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     waterFeed.setTemperature(90, "C");
     waterFeed.setPressure(7.013, "bara");
 
-    Separator flashSep = new Separator("degasing separator", heatEx2.getOutStream(0));
+    Separator flashSep = new Separator("degassing separator", heatEx2.getOutStream(0));
     flashSep.setInternalDiameter(1.2);
 
-    Stream flashGas = new Stream("gas from degasing separator", flashSep.getGasOutStream());
+    Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
     Stream flashLiquid =
-        new Stream("liquid from degasing separator", flashSep.getLiquidOutStream());
+        new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
 
     Filter filter = new Filter("TEG fine filter", flashLiquid);
     filter.setDeltaP(0, "bara");
@@ -947,7 +947,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     }
     flashSep.setInternalDiameter(1.2);
 
-    Stream flashGas = new Stream("gas from degasing separator", flashSep.getGasOutStream());
+    Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
     Stream flashLiquid =
         new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());

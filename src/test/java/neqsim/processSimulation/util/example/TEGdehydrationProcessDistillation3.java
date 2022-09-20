@@ -96,12 +96,12 @@ public class TEGdehydrationProcessDistillation3 {
         richGLycolHeater.setOutTemperature(273.15 + 62.0);
 
         Separator flashSep =
-            new Separator("degasing separator", richGLycolHeater.getOutletStream());
+            new Separator("degassing separator", richGLycolHeater.getOutletStream());
 
-        Stream flashGas = new Stream("gas from degasing separator", flashSep.getGasOutStream());
+        Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
         Stream flashLiquid =
-                new Stream("liquid from degasing separator", flashSep.getLiquidOutStream());
+            new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
 
         Heater richGLycolHeater2 = new Heater("LP rich glycol heater", flashLiquid);
         richGLycolHeater2.setOutTemperature(273.15 + 139.0);
