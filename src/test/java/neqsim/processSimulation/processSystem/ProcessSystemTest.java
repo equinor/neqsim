@@ -24,6 +24,9 @@ import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
+/**
+ * Class for testing ProcessSystem class.
+ */
 public class ProcessSystemTest extends neqsim.NeqSimTest {
   ProcessSystem p;
   String _name = "TestProcess";
