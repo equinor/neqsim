@@ -670,8 +670,9 @@ abstract class SystemThermo implements SystemInterface {
       if (flowRate < 1e-100) {
         setEmptyFluid();
       } else if (totalNumberOfMolesLocal > 1e-100) {
-        double change = SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
-            - getPhase(0).getComponent(i).getNumberOfmoles();
+        double change =
+            SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
+                - getPhase(0).getComponent(i).getNumberOfmoles();
         if (Math.abs(change) > 1e-12) {
           addComponent(i, change);
         }
@@ -5146,7 +5147,7 @@ abstract class SystemThermo implements SystemInterface {
     }
   }
 
-   /**
+  /**
    * <p>
    * addCharacterized.
    * </p>
@@ -5175,12 +5176,12 @@ abstract class SystemThermo implements SystemInterface {
    * @param charFlowrate an array of {@link double} objects
    * @param molarMass an array of {@link double} objects
    * @param relativedensity an array of {@link double} objects
-   * @param lumpComponents True if component should be lumped 
+   * @param lumpComponents True if component should be lumped
    * @param numberOfPseudoComponents number of pseudo components
    */
-  public void addOilFractions(String[] charNames,
-      double[] charFlowrate, double[] molarMass, double[] relativedensity,
-      boolean lastIsPlusFraction, boolean lumpComponents, int numberOfPseudoComponents) {
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction, boolean lumpComponents,
+      int numberOfPseudoComponents) {
     if (charNames.length != charFlowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
     }
@@ -5197,10 +5198,9 @@ abstract class SystemThermo implements SystemInterface {
     createDatabase(true);
     if (lastIsPlusFraction) {
       getCharacterization().getLumpingModel().setNumberOfPseudoComponents(numberOfPseudoComponents);
-      if (lumpComponents){
+      if (lumpComponents) {
         getCharacterization().setLumpingModel("PVTlumpingModel");
-      }
-      else {
+      } else {
         getCharacterization().setLumpingModel("no lumping");
       }
       getCharacterization().characterisePlusFraction();
@@ -5221,9 +5221,9 @@ abstract class SystemThermo implements SystemInterface {
    * @param relativedensity an array of {@link double} objects
    * @param lastIsPlusFraction a boolean
    */
-  public void addOilFractions(String[] charNames,
-      double[] charFlowrate, double[] molarMass, double[] relativedensity,
-      boolean lastIsPlusFraction) {
-    addOilFractions(charNames, charFlowrate, molarMass, relativedensity, lastIsPlusFraction, true, 12);
-      }
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction) {
+    addOilFractions(charNames, charFlowrate, molarMass, relativedensity, lastIsPlusFraction, true,
+        12);
+  }
 }
