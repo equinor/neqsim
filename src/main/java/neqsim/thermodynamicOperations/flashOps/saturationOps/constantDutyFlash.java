@@ -18,13 +18,23 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
 
   SystemInterface system;
   protected boolean superCritical = false;
-  int i, j = 0, nummer = 0, iterations = 0, maxNumberOfIterations = 10000;
-  double gibbsEnergy = 0, gibbsEnergyOld = 0;
-  double Kold, deviation = 0, g0 = 0, g1 = 0;
-  double lnOldOldK[], lnK[];
-  double lnOldK[];
-  double oldDeltalnK[], deltalnK[];
-  double tm[] = {1, 1};
+  int i;
+  int j = 0;
+  int nummer = 0;
+  int iterations = 0;
+  int maxNumberOfIterations = 10000;
+  double gibbsEnergy = 0;
+  double gibbsEnergyOld = 0;
+  double Kold;
+  double deviation = 0;
+  double g0 = 0;
+  double g1 = 0;
+  double lnOldOldK[];
+  double lnK[];
+  double[] lnOldK;
+  double oldDeltalnK[];
+  double deltalnK[];
+  double[] tm = {1, 1};
   double beta = 1e-5;
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
@@ -65,8 +75,13 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
 
     // int iterations = 0, maxNumberOfIterations = 10000;
     // double yold = 0, ytotal = 1;
-    double deriv = 0, funk = 0, dkidt = 0, dyidt = 0, dxidt = 0, Told = 0;
+    double deriv = 0;
 
+    double funk = 0;
+    double dkidt = 0;
+    double dyidt = 0;
+    double dxidt = 0;
+    double Told = 0;
     do {
       // system.setBeta(beta+0.65);
       system.init(2);

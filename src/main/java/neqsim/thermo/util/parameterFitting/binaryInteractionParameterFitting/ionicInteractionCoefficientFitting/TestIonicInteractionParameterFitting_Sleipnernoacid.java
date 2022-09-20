@@ -48,7 +48,7 @@ public class TestIonicInteractionParameterFitting_Sleipnernoacid {
             new IonicInteractionParameterFittingFunction_Sleipnernoacid();
 
         // double guess[] = {1.046762e-4,0.231069e-4,1.09254e-4,-1.190554e-4};
-        double guess[] = {-2.2e-5};
+        double[] guess = {-2.2e-5};
         // double guess[] = {-2.181442e-4};
         // double guess[] = {1.04e-4,0.23e-4,1.0e-4,-1.1e-4};
         double ID = Double.parseDouble(dataSet.getString("ID"));
@@ -72,8 +72,8 @@ public class TestIonicInteractionParameterFitting_Sleipnernoacid {
         testSystem.setMixingRule(4);
         testSystem.init(0);
 
-        double sample1[] = {temperature, x1 / (x4 - x3)};
-        double standardDeviation1[] = {0.01};
+        double[] sample1 = {temperature, x1 / (x4 - x3)};
+        double[] standardDeviation1 = {0.01};
         double stddev = 0.01;
         SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
         function.setInitialGuess(guess);

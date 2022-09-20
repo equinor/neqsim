@@ -39,7 +39,8 @@ public class GTSurfaceTensionUtils {
       double[][] dmu_drho, double[] p) {
     double v = 1.0;
     double n;
-    int i, j;
+    int i;
+    int j;
     PhaseInterface phase;
 
     double[] nv = new double[ncomp];
