@@ -89,8 +89,8 @@ public class TPflash extends Flash {
     double oldBeta = system.getBeta();
     try {
       system.calcBeta();
-    } catch (Exception e) {
-      logger.error("error in beta calc" + e.toString());
+    } catch (Exception ex) {
+      logger.error("error in beta calc" + ex.toString());
       system.setBeta(oldBeta);
     }
     if (system.getBeta() > 1.0 - betaTolerance) {
@@ -128,12 +128,12 @@ public class TPflash extends Flash {
     double oldBeta = system.getBeta();
     try {
       system.calcBeta();
-    } catch (Exception e) {
+    } catch (Exception ex) {
       if (system.getBeta() > 1.0 - betaTolerance || system.getBeta() < betaTolerance) {
         system.setBeta(oldBeta);
       }
       logger.info("temperature " + system.getTemperature() + " pressure " + system.getPressure());
-      logger.error("error", e);
+      logger.error("error", ex);
     }
 
     system.calc_x_y();
@@ -166,6 +166,7 @@ public class TPflash extends Flash {
    * </p>
    */
   public void resetK() {
+
     for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       lnK[i] = lnOldK[i];
       system.getPhase(0).getComponents()[i].setK(Math.exp(lnK[i]));
@@ -175,8 +176,8 @@ public class TPflash extends Flash {
       system.calcBeta();
       system.calc_x_y();
       system.init(1);
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
   }
 
@@ -242,8 +243,8 @@ public class TPflash extends Flash {
     // Calculates phase fractions and initial composition based on Wilson K-factors
     try {
       system.calcBeta();
-    } catch (Exception e) {
-      logger.error("error", e);
+    } catch (Exception ex) {
+      logger.error("error", ex);
     }
     system.calc_x_y();
     system.init(1);
@@ -391,7 +392,7 @@ public class TPflash extends Flash {
           }
           try {
             deviation = secondOrderSolver.solve();
-          } catch (Exception e) {
+          } catch (Exception ex) {
             sucsSubs();
           }
         } else {
@@ -402,7 +403,7 @@ public class TPflash extends Flash {
         gibbsEnergy = system.getGibbsEnergy();
 
         if ((gibbsEnergy - gibbsEnergyOld) / Math.abs(gibbsEnergyOld) > 1e-3
-            && !system.isChemicalSystem()) {
+            && !system.isChemicalSystem() && timeFromLastGibbsFail > 0) {
           resetK();
           timeFromLastGibbsFail = 0;
           // logger.info("gibbs decrease " + (gibbsEnergy - gibbsEnergyOld) /

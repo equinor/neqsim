@@ -20,7 +20,6 @@ public class SystemThermoAddComponentTest extends neqsim.NeqSimTest{
          */
     }
 
-
     @Test
     void testAddComponent() {
         // Assure that System contains no components

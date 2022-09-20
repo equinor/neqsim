@@ -3,6 +3,7 @@
  *
  * Created on 1. november 2006, 21:48
  */
+
 package neqsim.processSimulation.processSystem;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
@@ -64,7 +65,6 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
      * @param preferedThermodynamicModel a {@link java.lang.String} object
      */
     public void setPreferedThermodynamicModel(String preferedThermodynamicModel);
-
 
     /**
      * <p>

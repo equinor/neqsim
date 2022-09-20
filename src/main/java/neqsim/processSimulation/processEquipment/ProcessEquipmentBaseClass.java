@@ -3,6 +3,7 @@
  *
  * Created on 6. juni 2006, 15:12
  */
+
 package neqsim.processSimulation.processEquipment;
 
 import java.util.Arrays;
@@ -60,7 +61,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /**
    * Create deep copy.
    * 
-   * @return
+   * @return a deep copy of the unit operation/process equipment
    */
   public ProcessEquipmentInterface copy() {
     byte[] bytes = SerializationUtils.serialize(this);
@@ -167,17 +168,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /**
    * <p>
-   * isSetEnergyStream.
-   * </p>
-   *
-   * @return a boolean
-   */
-  public boolean isSetEnergyStream() {
-    return isSetEnergyStream;
-  }
-
-  /**
-   * <p>
    * Setter for the field <code>energyStream</code>.
    * </p>
    *
@@ -185,6 +175,17 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    */
   public void setEnergyStream(boolean isSetEnergyStream) {
     this.isSetEnergyStream = isSetEnergyStream;
+  }
+
+  /**
+   * <p>
+   * isSetEnergyStream.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isSetEnergyStream() {
+    return isSetEnergyStream;
   }
 
   /** {@inheritDoc} */

@@ -3,6 +3,7 @@
  *
  * Created on 22. august 2001, 17:20
  */
+
 package neqsim.processSimulation.processEquipment.valve;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
@@ -71,7 +72,6 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
      * @param Cv a double
      */
     public void setCv(double Cv);
-
 
     /** {@inheritDoc} */
     @Override

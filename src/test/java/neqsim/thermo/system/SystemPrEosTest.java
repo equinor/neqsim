@@ -2,11 +2,9 @@ package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 class SystemPrEoSTest extends neqsim.NeqSimTest{
@@ -41,6 +39,7 @@ class SystemPrEoSTest extends neqsim.NeqSimTest{
     @Test
     @DisplayName("test a TPflash2")
     public void testTPflash2() {
+
         assertEquals(2, testSystem.getNumberOfPhases());
     }
 

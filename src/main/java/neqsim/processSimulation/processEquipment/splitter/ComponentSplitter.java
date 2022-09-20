@@ -1,5 +1,8 @@
 package neqsim.processSimulation.processEquipment.splitter;
 
+import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -16,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class ComponentSplitter extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentSplitter.class);
 
   SystemInterface thermoSystem;
   StreamInterface inletStream;
@@ -35,7 +39,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   /**
    * Constructor for Splitter.
    * 
-   * @param name
+   * @param name name of splitter
    */
   public ComponentSplitter(String name) {
     super(name);
@@ -49,7 +53,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
-   * @param i a int
+   *
    */
   public ComponentSplitter(String name, StreamInterface inletStream) {
     this(name);
@@ -67,8 +71,8 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
       for (int i = 0; i < splitStream.length; i++) {
         splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 
@@ -78,7 +82,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     for (int i = 0; i < 2; i++) {
       thermoSystem = inletStream.getThermoSystem().clone();
       thermoSystem.setEmptyFluid();
@@ -101,6 +105,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
           new ThermodynamicOperations(splitStream[i].getThermoSystem());
       thermoOps.TPflash();
     }
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

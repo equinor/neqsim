@@ -3,6 +3,7 @@
  *
  * Created on 17. januar 2001, 21:03
  */
+
 package neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver;
 
 /**
@@ -14,12 +15,12 @@ package neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver;
  * @version $Id: $Id
  */
 public abstract class OnePhaseFlowSolver extends neqsim.fluidMechanics.flowSolver.FlowSolver {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for OnePhaseFlowSolver.
-     * </p>
-     */
-    public OnePhaseFlowSolver() {}
+  /**
+   * <p>
+   * Constructor for OnePhaseFlowSolver.
+   * </p>
+   */
+  public OnePhaseFlowSolver() {}
 }

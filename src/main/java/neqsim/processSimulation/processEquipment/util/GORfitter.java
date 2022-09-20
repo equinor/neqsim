@@ -1,5 +1,8 @@
 package neqsim.processSimulation.processEquipment.util;
 
+import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -18,13 +21,17 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class GORfitter extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(GORfitter.class);
 
-  double pressure = 1.01325, temperature = 15.0;
+  double pressure = 1.01325;
+  double temperature = 15.0;
   private String referenceConditions = "standard"; // "actual";
   private boolean fitAsGVF = false;
 
-  private double GOR = 120.0, GVF;
-  String unitT = "C", unitP = "bara";
+  private double GOR = 120.0;
+  private double GVF;
+  String unitT = "C";
+  String unitP = "bara";
 
   @Deprecated
   public GORfitter() {
@@ -71,8 +78,8 @@ public class GORfitter extends TwoPortEquipment {
     this.inStream = inletStream;
     try {
       this.outStream = inletStream.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 
@@ -126,7 +133,7 @@ public class GORfitter extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     SystemInterface tempFluid = inStream.getThermoSystem().clone();
     double flow = tempFluid.getFlowRate("kg/sec");
 
@@ -145,8 +152,8 @@ public class GORfitter extends TwoPortEquipment {
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
       try {
         thermoOps.TPflash();
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
       outStream.setThermoSystem(tempFluid);
       return;
@@ -158,8 +165,8 @@ public class GORfitter extends TwoPortEquipment {
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
     try {
       thermoOps.TPflash();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     if (!tempFluid.hasPhaseType("gas") || !tempFluid.hasPhaseType("oil")) {
       outStream = inStream.clone();
@@ -196,16 +203,23 @@ public class GORfitter extends TwoPortEquipment {
     tempFluid.setTotalFlowRate(flow, "kg/sec");
     try {
       thermoOps.TPflash();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     outStream.setThermoSystem(tempFluid);
-    GVF = tempFluid.getPhase("gas").getCorrectedVolume()
-        / (tempFluid.getPhase("oil").getCorrectedVolume()
-            + tempFluid.getPhase("gas").getCorrectedVolume());
-    return;
-  }
+    if (!tempFluid.hasPhaseType("gas")) {
+      GVF = 0.0;
+    } else if (tempFluid.hasPhaseType("gas") && tempFluid.hasPhaseType("oil")) {
+      GVF = tempFluid.getPhase("gas").getCorrectedVolume()
+          / (tempFluid.getPhase("oil").getCorrectedVolume()
+              + tempFluid.getPhase("gas").getCorrectedVolume());
+    } else {
+      GVF = Double.NaN;
+    }
 
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
 
   /**
    * <p>

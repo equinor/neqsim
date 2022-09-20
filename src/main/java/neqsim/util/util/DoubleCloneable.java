@@ -3,6 +3,7 @@
  *
  * Created on 3. juni 2001, 20:19
  */
+
 package neqsim.util.util;
 
 /**
@@ -14,57 +15,57 @@ package neqsim.util.util;
  * @version $Id: $Id
  */
 public class DoubleCloneable implements Cloneable {
-    double doubleValue;
+  double doubleValue;
 
-    /**
-     * <p>
-     * Constructor for DoubleCloneable.
-     * </p>
-     */
-    public DoubleCloneable() {}
+  /**
+   * <p>
+   * Constructor for DoubleCloneable.
+   * </p>
+   */
+  public DoubleCloneable() {}
 
-    /**
-     * <p>
-     * Constructor for DoubleCloneable.
-     * </p>
-     *
-     * @param val a double
-     */
-    public DoubleCloneable(double val) {
-        this.doubleValue = val;
+  /**
+   * <p>
+   * Constructor for DoubleCloneable.
+   * </p>
+   *
+   * @param val a double
+   */
+  public DoubleCloneable(double val) {
+    this.doubleValue = val;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public DoubleCloneable clone() {
+    DoubleCloneable clonedSystem = null;
+    try {
+      clonedSystem = (DoubleCloneable) super.clone();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
+    return clonedSystem;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public DoubleCloneable clone() {
-        DoubleCloneable clonedSystem = null;
-        try {
-            clonedSystem = (DoubleCloneable) super.clone();
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
-        }
-        return clonedSystem;
-    }
+  /**
+   * <p>
+   * set.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void set(double val) {
+    doubleValue = val;
+  }
 
-    /**
-     * <p>
-     * set.
-     * </p>
-     *
-     * @param val a double
-     */
-    public void set(double val) {
-        doubleValue = val;
-    }
-
-    /**
-     * <p>
-     * doubleValue.
-     * </p>
-     *
-     * @return a double
-     */
-    public double doubleValue() {
-        return doubleValue;
-    }
+  /**
+   * <p>
+   * doubleValue.
+   * </p>
+   *
+   * @return a double
+   */
+  public double doubleValue() {
+    return doubleValue;
+  }
 }

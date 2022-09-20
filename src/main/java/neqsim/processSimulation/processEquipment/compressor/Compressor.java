@@ -5,6 +5,7 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.Objects;
+import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -37,13 +38,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public double inletEnthalpy = 0;
   public double pressure = 0.0;
   private int speed = 3000;
-  public double isentropicEfficiency = 1.0, polytropicEfficiency = 1.0;
+  public double isentropicEfficiency = 1.0;
+  public double polytropicEfficiency = 1.0;
   public boolean usePolytropicCalc = false;
   public boolean powerSet = false;
   private CompressorChartInterface compressorChart = new CompressorChart();
   private AntiSurge antiSurge = new AntiSurge();
   private double polytropicHead = 0;
-  private double polytropicFluidHead = 0, polytropicHeadMeter = 0.0;
+  private double polytropicFluidHead = 0;
+  private double polytropicHeadMeter = 0.0;
   private double polytropicExponent = 0;
   private int numberOfCompressorCalcSteps = 40;
   private boolean useRigorousPolytropicMethod = false;
@@ -89,7 +92,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   /**
    * Constructor for Compressor.
-   * 
+   *
    * @param name
    */
   public Compressor(String name) {
@@ -125,7 +128,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   public CompressorMechanicalDesign getMechanicalDesign() {
     return new CompressorMechanicalDesign(this);
   }
@@ -141,14 +146,16 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return (Compressor) super.copy();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
       this.outStream = inletStream.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 
@@ -163,7 +170,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setOutletPressure(double pressure) {
     this.pressure = pressure;
@@ -193,7 +202,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return pressure;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getEnergy() {
     return getTotalWork();
@@ -247,9 +258,12 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * @return a double
    */
   public double solveEfficiency(double outTemperature) {
-    double funk = 0.0, funkOld = 0.0;
+    double funk = 0.0;
+    double funkOld = 0.0;
     double newPoly;
-    double dfunkdPoly = 100.0, dPoly = 100.0, oldPoly = outTemperature;
+    double dfunkdPoly = 100.0;
+    double dPoly = 100.0;
+    double oldPoly = outTemperature;
     useOutTemperature = false;
     run();
     useOutTemperature = true;
@@ -308,8 +322,20 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     thermoSystem = inStream.getThermoSystem().clone();
+
+    if (Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) < 1e-6
+        && !compressorChart.isUseCompressorChart()) {
+      thermoSystem.initProperties();
+      outStream.setThermoSystem(getThermoSystem());
+      outStream.setCalculationIdentifier(id);
+      dH = 0.0;
+      polytropicFluidHead = 0.0;
+      polytropicHeadMeter = 0.0;
+      return;
+    }
+
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
     thermoOps = new ThermodynamicOperations(getThermoSystem());
     getThermoSystem().init(3);
@@ -389,7 +415,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         isentropicEfficiency = (enthalpyOutIsentropic - inletEnthalpy) / dH;
 
         // isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
-
         double k = Math.log(getOutletPressure() / presinn) / Math.log(densOutIsentropic / densInn);
         double term1 = Math.pow(getOutletPressure() / presinn, (n - 1.0) / n) - 1.0;
         double term2 = n / (n - 1.0) * (k - 1.0) / k;
@@ -410,7 +435,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           }
         }
         outStream.setThermoSystem(getThermoSystem());
-
+        outStream.setCalculationIdentifier(id);
+        setCalculationIdentifier(id);
         return;
       }
     }
@@ -630,10 +656,13 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
     thermoSystem.initProperties();
     outStream.setThermoSystem(getThermoSystem());
+    outStream.setCalculationIdentifier(id);
 
     polytropicFluidHead =
         getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
     polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
+
+    setCalculationIdentifier(id);
   }
 
   /**
@@ -699,7 +728,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     getCompressorChart().setHeadUnit("kJ/kg");
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void displayResult() {
     DecimalFormat nf = new DecimalFormat();
@@ -797,7 +828,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     dialog.setVisible(true);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String[][] getResultTable() {
     return thermoSystem.getResultTable();
@@ -820,17 +853,22 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
       double enth = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
       return (enth - inletEnthalpy) * multi;
-    } else
+    } else {
       return multi * (getThermoSystem().getEnthalpy() - inletEnthalpy);
+    }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getIsentropicEfficiency() {
     return isentropicEfficiency;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setIsentropicEfficiency(double isentropicEfficiency) {
     this.isentropicEfficiency = isentropicEfficiency;
@@ -858,19 +896,25 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.usePolytropicCalc = usePolytropicCalc;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getPolytropicEfficiency() {
     return polytropicEfficiency;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setPolytropicEfficiency(double polytropicEfficiency) {
     this.polytropicEfficiency = polytropicEfficiency;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public SystemInterface getThermoSystem() {
     return thermoSystem;
@@ -900,7 +944,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.compressorChart = compressorChart;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public AntiSurge getAntiSurge() {
     return antiSurge;
@@ -976,12 +1022,13 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * @return a double
    */
   public double getPolytropicHead(String unit) {
-    if (unit.equals("kJ/kg"))
+    if (unit.equals("kJ/kg")) {
       return polytropicFluidHead;
-    else if (unit.equals("meter"))
+    } else if (unit.equals("meter")) {
       return polytropicHeadMeter;
-    else
+    } else {
       return polytropicHead;
+    }
   }
 
   /**
@@ -1047,10 +1094,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * @return a double
    */
   public double getOutTemperature() {
-    if (useOutTemperature)
+    if (useOutTemperature) {
       return outTemperature;
-    else
+    } else {
       return getThermoSystem().getTemperature();
+    }
   }
 
   /**
@@ -1120,7 +1168,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.useRigorousPolytropicMethod = useRigorousPolytropicMethod;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setPressure(double pressure) {
     setOutletPressure(pressure);
@@ -1139,14 +1189,18 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     pressureUnit = unit;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getEntropyProduction(String unit) {
     return outStream.getThermoSystem().getEntropy(unit)
         - inStream.getThermoSystem().getEntropy(unit);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public double getExergyChange(String unit, double surroundingTemperature) {
     return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
@@ -1177,7 +1231,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   /**
    * Getter for property useGERG2008
-   * 
+   *
    * @return Value
    */
   public boolean isUseGERG2008() {
@@ -1186,7 +1240,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   /**
    * Setter for property useGERG2008
-   * 
+   *
    * @param useGERG2008 Value to set
    */
   public void setUseGERG2008(boolean useGERG2008) {
@@ -1201,7 +1255,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.propertyProfile = propertyProfile;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -1215,15 +1271,20 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return result;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (!super.equals(obj))
+    }
+    if (!super.equals(obj)) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     Compressor other = (Compressor) obj;
     return Objects.equals(antiSurge, other.antiSurge)
         && Objects.equals(compressorChart, other.compressorChart)

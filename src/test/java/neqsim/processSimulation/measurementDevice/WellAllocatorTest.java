@@ -45,9 +45,7 @@ class WellAllocatorTest extends neqsim.NeqSimTest {
     testFluid.setPressure(48.0, "bara");
     testFluid.setTotalFlowRate(2500.0, "kg/hr");
 
-
     SystemInterface testFluid2 = testFluid.clone();
-
 
     testFluid.setTemperature(24.0, "C");
     testFluid.setPressure(48.0, "bara");

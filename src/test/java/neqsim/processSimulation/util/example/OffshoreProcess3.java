@@ -50,7 +50,7 @@ public class OffshoreProcess3 {
         testSystem.setMixingRule(2);
         testSystem.setMultiPhaseCheck(true);
         neqsim.thermo.system.SystemInterface fluid3 =
-                neqsim.thermo.Fluid.create("black oil with water");
+                new neqsim.thermo.Fluid().create("black oil with water");
 
         Stream wellStream = new Stream("well stream", fluid3);
         // wellStream.setFluid(testSystem);

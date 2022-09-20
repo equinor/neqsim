@@ -20,6 +20,7 @@ public class NeqSimAGA8Detail {
   double[] normalizedGERGComposition = new double[21 + 1];
   double[] notNormalizedGERGComposition = new double[21 + 1];
   PhaseInterface phase = null;
+  DETAIL DETAIL = new DETAIL();
 
   /**
    * <p>
@@ -105,7 +106,7 @@ public class NeqSimAGA8Detail {
    */
   public double getMolarMass() {
     doubleW mm = new doubleW(0.0);
-    neqsim.thermo.util.GERG.DETAIL.MolarMassDetail(normalizedGERGComposition, mm);
+    DETAIL.MolarMassDetail(normalizedGERGComposition, mm);
     return mm.val / 1.0e3;
   }
 
@@ -121,8 +122,8 @@ public class NeqSimAGA8Detail {
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 100.0;
-    neqsim.thermo.util.GERG.DETAIL.DensityDetail(phase.getTemperature(), pressure,
-        normalizedGERGComposition, D, ierr, herr);
+    DETAIL.DensityDetail(phase.getTemperature(), pressure,
+    normalizedGERGComposition, D, ierr, herr);
     return D.val;
   }
 

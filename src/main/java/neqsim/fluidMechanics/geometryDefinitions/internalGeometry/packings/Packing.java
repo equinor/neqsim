@@ -3,6 +3,7 @@
  *
  * Created on 25. august 2001, 23:34
  */
+
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
 import neqsim.util.NamedBaseClass;
@@ -50,8 +51,8 @@ public class Packing extends NamedBaseClass implements PackingInterface {
       System.out.println("packing ok");
     }
 
-    catch (Exception e) {
-      String err = e.toString();
+    catch (Exception ex) {
+      String err = ex.toString();
       System.out.println(err);
     }
   }
@@ -79,8 +80,8 @@ public class Packing extends NamedBaseClass implements PackingInterface {
       System.out.println("packing ok");
     }
 
-    catch (Exception e) {
-      String err = e.toString();
+    catch (Exception ex) {
+      String err = ex.toString();
       System.out.println(err);
     }
   }

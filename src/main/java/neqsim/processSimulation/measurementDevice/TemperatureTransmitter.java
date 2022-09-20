@@ -3,6 +3,7 @@
  *
  * Created on 6. juni 2006, 15:24
  */
+
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -17,10 +18,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  */
 public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
     private static final long serialVersionUID = 1000;
-
-    protected int streamNumber = 0;
-    /** Constant <code>numberOfStreams=0</code> */
-    protected static int numberOfStreams = 0;
     protected StreamInterface stream = null;
 
     public TemperatureTransmitter() {
@@ -39,8 +36,6 @@ public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
     public TemperatureTransmitter(StreamInterface stream) {
         this();
         this.stream = stream;
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
     }
 
     /** {@inheritDoc} */

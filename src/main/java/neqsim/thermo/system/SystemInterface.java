@@ -27,6 +27,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
+   * saveFluid.
+   * </p>
+   *
+   * @param id a int
+   * @param text a {@link java.lang.String} object
+   */
+  public void saveFluid(int id, String text);
+
+  /**
+   * <p>
    * getComponentNameTag.
    * </p>
    *
@@ -101,7 +111,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     }
   }
 
-
   /**
    * Add named components to a System with a number of moles. If component already exists, the moles
    * will be added to the component.
@@ -128,6 +137,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
+   * <p>
+   * getKinematicViscosity.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getKinematicViscosity();
+
+  /**
    * method to return kinematic viscosity in a specified unit.
    *
    * @param unit Supported units are m2/sec
@@ -145,14 +163,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public int getNumberOfComponents();
 
   /**
-   * method to get molar mass of a fluid phase.
-   *
-   * @param unit Supported units are kg/mol, gr/mol
-   * @return molar mass in specified unit
-   */
-  public double getMolarMass(String unit);
-
-  /**
    * This method is used to set the total molar composition of a plus fluid. The total flow rate
    * will be kept constant. The input mole fractions will be normalized.
    *
@@ -160,16 +170,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *        fluid. THe last molfraction is the mole fraction of the plus component
    */
   public void setMolarCompositionPlus(double[] molefractions);
-
-  /**
-   * <p>
-   * saveFluid.
-   * </p>
-   *
-   * @param id a int
-   * @param text a {@link java.lang.String} object
-   */
-  public void saveFluid(int id, String text);
 
   /**
    * This method is used to set the total molar composition of a characterized fluid. The total flow
@@ -180,15 +180,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *        components.
    */
   public void setMolarCompositionOfPlusFluid(double[] molefractions);
-
-  /**
-   * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis
-   * average.
-   *
-   * @param unit Supported units are K/bar, C/bar
-   * @return Joule Thomson coefficient in specified unit
-   */
-  public double getJouleThomsonCoefficient(String unit);
 
   /**
    * method to return exergy in a specified unit.
@@ -214,6 +205,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return Joule Thomson coefficient in K/bar
    */
   public double getJouleThomsonCoefficient();
+
+  /**
+   * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis
+   * average.
+   *
+   * @param unit Supported units are K/bar, C/bar
+   * @return Joule Thomson coefficient in specified unit
+   */
+  public double getJouleThomsonCoefficient(String unit);
 
   /**
    * method to return mass of fluid.
@@ -259,6 +259,18 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void removePhaseKeepTotalComposition(int specPhase);
 
   /**
+   * Init physical properties for all phases and interfaces.
+   */
+  public void initPhysicalProperties();
+
+  /**
+   * Calculates physical properties of type propertyName.
+   *
+   * @param propertyName a {@link java.lang.String} object
+   */
+  public void initPhysicalProperties(String propertyName);
+
+  /**
    * Calculates thermodynamic and physical properties of a fluid using initThermoProperties() and
    * initPhysicalProperties().
    */
@@ -278,6 +290,25 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
+   * method to return interfacial tension between two phases.
+   *
+   * @param phase1 phase type of phase1 as string (valid phases are gas, oil, aqueous)
+   * @param phase2 phase type of phase2 as string (valid phases are gas, oil, aqueous)
+   * @return interfacial tension with unit N/m. If one or both phases does not exist - the method
+   *         will return NaN
+   */
+  public double getInterfacialTension(String phase1, String phase2);
+
+  /**
+   * method to return interfacial tension between two phases.
+   *
+   * @param phase1 phase number of phase1
+   * @param phase2 phase number of phase2
+   * @return interfacial tension with unit N/m
+   */
+  public double getInterfacialTension(int phase1, int phase2);
+
+  /**
    * <p>
    * getInterfacialTension.
    * </p>
@@ -288,13 +319,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a double
    */
   public double getInterfacialTension(int phase1, int phase2, String unit);
-
-  /**
-   * Calculates physical properties of type propertyName.
-   *
-   * @param propertyName a {@link java.lang.String} object
-   */
-  public void initPhysicalProperties(String propertyName);
 
   /**
    * method to return heat capacity ratio calculated as Cp/(Cp-R).
@@ -311,6 +335,13 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return kappa
    */
   public double getGamma();
+
+  /**
+   * method to return fluid volume.
+   *
+   * @return volume in unit m3*1e5
+   */
+  public double getVolume();
 
   /**
    * method to return fluid volume.
@@ -332,10 +363,36 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to set the pressure of a fluid (same pressure for all phases).
    *
+   * @param pres pressure in unit bara (absolute pressure in bar)
+   */
+  public void setPressure(double pres);
+
+  /**
+   * method to set the pressure of a fluid (same pressure for all phases).
+   *
    * @param newPressure in specified unit
    * @param unit unit can be bar, bara, barg or atm
    */
   public void setPressure(double newPressure, String unit);
+
+  /**
+   * <p>
+   * method to set the temperature of a fluid (same temperature for all phases).
+   * </p>
+   *
+   * @param temp a double
+   */
+  public void setTemperature(double temp);
+
+  /**
+   * <p>
+   * setTemperature.
+   * </p>
+   *
+   * @param newTemperature a double
+   * @param phaseNumber a int
+   */
+  public void setTemperature(double newTemperature, int phaseNumber);
 
   /**
    * method to set the temperature of a fluid (same temperature for all phases).
@@ -371,12 +428,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getHeatOfVaporization();
 
   /**
-   * method to return total enthalpy in a specified unit.
+   * method to return internal energy (U) in unit J.
    *
-   * @param unit Supported units are 'J', 'J/mol', 'J/kg' and 'kJ/kg'
-   * @return enthalpy in specified unit
+   * @return internal energy in unit Joule (J)
    */
-  public double getEnthalpy(String unit);
+  public double getInternalEnergy();
 
   /**
    * method to return internal energy (U) in a specified unit.
@@ -486,6 +542,36 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * phaseToSystem.
    * </p>
    *
+   * @param phaseNumber a int
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public SystemInterface phaseToSystem(int phaseNumber);
+
+  /**
+   * <p>
+   * phaseToSystem.
+   * </p>
+   *
+   * @param newPhase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public SystemInterface phaseToSystem(PhaseInterface newPhase);
+
+  /**
+   * <p>
+   * phaseToSystem.
+   * </p>
+   *
+   * @param phaseName a {@link java.lang.String} object
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public SystemInterface phaseToSystem(String phaseName);
+
+  /**
+   * <p>
+   * phaseToSystem.
+   * </p>
+   *
    * @param phaseNumber1 a int
    * @param phaseNumber2 a int
    * @return a {@link neqsim.thermo.system.SystemInterface} object
@@ -521,22 +607,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public neqsim.thermo.characterization.WaxCharacterise getWaxCharacterisation();
 
   /**
-   * <p>
-   * phaseToSystem.
-   * </p>
-   *
-   * @param phaseName a {@link java.lang.String} object
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  public SystemInterface phaseToSystem(String phaseName);
-
-  /**
    * method to get the total molar flow rate of individual components in a fluid.
    *
    * @return molar flow of individual components in unit mol/sec
    */
   public double[] getMolarRate();
-
 
   /**
    * Returns true if phase exists and is not null.
@@ -546,6 +621,13 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public boolean IsPhase(int i);
 
+  /**
+   * Get phase number i from SystemInterface object.
+   *
+   * @param i a int
+   * @return a {@link neqsim.thermo.phase.PhaseInterface} object
+   */
+  public PhaseInterface getPhase(int i);
 
   /**
    * <p>
@@ -719,15 +801,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return an array of {@link java.lang.String} objects
    */
   public String[] getCompIDs();
-
-  /**
-   * <p>
-   * isImplementedCompositionDeriativesofFugacity.
-   * </p>
-   *
-   * @param isImpl a boolean
-   */
-  public void isImplementedCompositionDeriativesofFugacity(boolean isImpl);
 
   /**
    * <p>
@@ -1076,6 +1149,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * getBeta.
    * </p>
    *
+   * @return a double
+   */
+  public double getBeta();
+
+  /**
+   * <p>
+   * getBeta.
+   * </p>
+   *
    * @param phase a int
    * @return a double
    */
@@ -1120,6 +1202,26 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMixingRule(String typename, String GEmodel);
 
   /**
+   * method to set mixing rule used for the fluid.
+   *
+   * @param type The type of mixing rule to be used for the fluid. 1 - classic mixing rule with all
+   *        kij set to zero 2 -classic mixing rule with kij from NeqSim database 3- classic mixing
+   *        rule with temperature dependent kij 4- Huron Vidal mixing rule with parameters from
+   *        NeqSim database 7 -classic mixing rule with kij of CPA from NeqSim Database 9
+   *        -classicmixing rule with temperature dependent kij of CPA from NeqSim database
+   *        10-classic mixing rule with temperature and composition dependent kij of CPA from NeqSim
+   *        database
+   */
+  public void setMixingRule(int type);
+
+  /**
+   * method to set the mixing rule for the fluid.
+   *
+   * @param typename a {@link java.lang.String} object
+   */
+  public void setMixingRule(String typename);
+
+  /**
    * <p>
    * normalizeBeta.
    * </p>
@@ -1150,6 +1252,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * checkStability.
    * </p>
    *
+   * @return a boolean
+   */
+  public boolean checkStability();
+
+  /**
+   * <p>
+   * checkStability.
+   * </p>
+   *
    * @param val a boolean
    */
   public void checkStability(boolean val);
@@ -1162,15 +1273,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a boolean
    */
   public boolean hasPlusFraction();
-
-  /**
-   * <p>
-   * checkStability.
-   * </p>
-   *
-   * @return a boolean
-   */
-  public boolean checkStability();
 
   /**
    * <p>
@@ -1232,13 +1334,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param volcor a boolean
    */
   public void useVolumeCorrection(boolean volcor);
-
-  /**
-   * method to set the mixing rule for the fluid.
-   *
-   * @param typename a {@link java.lang.String} object
-   */
-  public void setMixingRule(String typename);
 
   /**
    * <p>
@@ -1329,6 +1424,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
+   * setSolidPhaseCheck.
+   * </p>
+   *
+   * @param solidComponent a {@link java.lang.String} object
+   */
+  public void setSolidPhaseCheck(String solidComponent);
+
+  /**
+   * <p>
    * doSolidPhaseCheck.
    * </p>
    *
@@ -1387,7 +1491,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public void init(int number, int phase);
 
-
   /**
    * Calculates thermodynamic properties of a fluid using the init(2) method.
    */
@@ -1409,6 +1512,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
+   * display.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
+  public void display(String name);
+
+  /**
+   * <p>
    * addFluid.
    * </p>
    *
@@ -1416,15 +1528,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return SystemInterface
    */
   public SystemInterface addFluid(SystemInterface addSystem);
-
-  /**
-   * <p>
-   * display.
-   * </p>
-   *
-   * @param name a {@link java.lang.String} object
-   */
-  public void display(String name);
 
   /**
    * <p>
@@ -1502,28 +1605,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void calc_x_y();
 
   /**
-   * Get phase number i from SystemInterface object.
-   *
-   * @param i a int
-   * @return a {@link neqsim.thermo.phase.PhaseInterface} object
-   */
-  public PhaseInterface getPhase(int i);
-
-  /**
    * <p>
    * reset_x_y.
    * </p>
    */
   public void reset_x_y();
-
-  /**
-   * <p>
-   * isChemicalSystem.
-   * </p>
-   *
-   * @param temp a boolean
-   */
-  public void isChemicalSystem(boolean temp);
 
   /**
    * Add phase to SystemInterface object.
@@ -1544,6 +1630,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * setBeta.
    * </p>
    *
+   * @param b a double
+   */
+  public void setBeta(double b);
+
+  /**
+   * <p>
+   * setBeta.
+   * </p>
+   *
    * @param phase a int
    * @param b a double
    */
@@ -1558,42 +1653,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public void removePhase(int specPhase);
 
-  /**
-   * <p>
-   * phaseToSystem.
-   * </p>
-   *
-   * @param newPhase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  public SystemInterface phaseToSystem(PhaseInterface newPhase);
-
-  /**
-   * <p>
-   * method to set the temperature of a fluid (same temperature for all phases).
-   * </p>
-   *
-   * @param temp a double
-   */
-  public void setTemperature(double temp);
-
-  /**
-   * <p>
-   * setTemperature.
-   * </p>
-   *
-   * @param newTemperature a double
-   * @param phaseNumber a int
-   */
-  public void setTemperature(double newTemperature, int phaseNumber);
   // public void setPressure(double newPressure, int phaseNumber);
-
-  /**
-   * method to set the pressure of a fluid (same pressure for all phases).
-   *
-   * @param pres pressure in unit bara (absolute pressure in bar)
-   */
-  public void setPressure(double pres);
 
   /**
    * method to return pressure.
@@ -1601,6 +1661,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return pressure in unit bara
    */
   public double getPressure();
+
+  /**
+   * <p>
+   * method to return pressure of phase.
+   * </p>
+   *
+   * @param phaseNumber a int
+   * @return a double
+   */
+  public double getPressure(int phaseNumber);
 
   /**
    * method to return pressure in a specified unit.
@@ -1633,16 +1703,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void clearAll();
 
   /**
-   * <p>
-   * method to return pressure of phase.
-   * </p>
-   *
-   * @param phaseNumber a int
-   * @return a double
-   */
-  public double getPressure(int phaseNumber);
-
-  /**
    * method to get density of a fluid note: without Peneloux volume correction.
    *
    * @return density with unit kg/m3
@@ -1656,13 +1716,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return density in specified unit
    */
   public double getDensity(String unit);
-
-  /**
-   * method to return fluid volume.
-   *
-   * @return volume in unit m3*1e5
-   */
-  public double getVolume();
 
   /**
    * <p>
@@ -1683,6 +1736,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public boolean isChemicalSystem();
 
   /**
+   * <p>
+   * isChemicalSystem.
+   * </p>
+   *
+   * @param temp a boolean
+   */
+  public void isChemicalSystem(boolean temp);
+
+  /**
    * method to return molar volume of the fluid note: without Peneloux volume correction.
    *
    * @return molar volume volume in unit m3/mol*1e5
@@ -1697,11 +1759,27 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMolarMass();
 
   /**
+   * method to get molar mass of a fluid phase.
+   *
+   * @param unit Supported units are kg/mol, gr/mol
+   * @return molar mass in specified unit
+   */
+  public double getMolarMass(String unit);
+
+  /**
    * method to get the total enthalpy of a fluid.
    *
    * @return molar mass in unit J (Joule)
    */
   public double getEnthalpy();
+
+  /**
+   * method to return total enthalpy in a specified unit.
+   *
+   * @param unit Supported units are 'J', 'J/mol', 'J/kg' and 'kJ/kg'
+   * @return enthalpy in specified unit
+   */
+  public double getEnthalpy(String unit);
 
   /**
    * <p>
@@ -1778,33 +1856,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getBeta.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getBeta();
-
-  /**
-   * <p>
    * chemicalReactionInit.
    * </p>
    */
   public void chemicalReactionInit();
 
-  /**
-   * Init physical properties for all phases and interfaces.
-   */
-  public void initPhysicalProperties();
-
-  /**
-   * <p>
-   * setBeta.
-   * </p>
-   *
-   * @param b a double
-   */
-  public void setBeta(double b);
   // public double getdfugdt(int i, int j);
 
   /**
@@ -1816,6 +1872,24 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param newPhaseType a int
    */
   public void setPhaseType(int phaseToChange, int newPhaseType);
+
+  /**
+   * <p>
+   * setPhaseType.
+   * </p>
+   *
+   * @param phases a {@link java.lang.String} object
+   * @param newPhaseType a int
+   */
+  public void setPhaseType(String phases, int newPhaseType);
+
+  /**
+   * method to set the phase type of a given phase.
+   *
+   * @param phaseToChange the phase number of the phase to set phase type
+   * @param phaseTypeName the phase type name (valid names are gas or liquid)
+   */
+  public void setPhaseType(int phaseToChange, String phaseTypeName);
 
   /**
    * <p>
@@ -1890,13 +1964,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getGibbsEnergy();
 
   /**
-   * method to return internal energy (U) in unit J.
-   *
-   * @return internal energy in unit Joule (J)
-   */
-  public double getInternalEnergy();
-
-  /**
    * <p>
    * getHelmholtzEnergy.
    * </p>
@@ -1942,19 +2009,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
   public SystemInterface clone();
-
-  /**
-   * method to set mixing rule used for the fluid.
-   *
-   * @param type The type of mixing rule to be used for the fluid. 1 - classic mixing rule with all
-   *        kij set to zero 2 -classic mixing rule with kij from NeqSim database 3- classic mixing
-   *        rule with temperature dependent kij 4- Huron Vidal mixing rule with parameters from
-   *        NeqSim database 7 -classic mixing rule with kij of CPA from NeqSim Database 9
-   *        -classicmixing rule with temperature dependent kij of CPA from NeqSim database
-   *        10-classic mixing rule with temperature and composition dependent kij of CPA from NeqSim
-   *        database
-   */
-  public void setMixingRule(int type);
 
   /**
    * <p>
@@ -2003,6 +2057,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return kappa
    */
+
   public double getKappa();
 
   /**
@@ -2091,34 +2146,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getThermalConductivity(String unit);
 
   /**
-   * method to return interfacial tension between two phases.
-   *
-   * @param phase1 phase type of phase1 as string (valid phases are gas, oil, aqueous)
-   * @param phase2 phase type of phase2 as string (valid phases are gas, oil, aqueous)
-   * @return interfacial tension with unit N/m. If one or both phases does not exist - the method
-   *         will return NaN
-   */
-  public double getInterfacialTension(String phase1, String phase2);
-
-  /**
-   * method to return interfacial tension between two phases.
-   *
-   * @param phase1 phase number of phase1
-   * @param phase2 phase number of phase2
-   * @return interfacial tension with unit N/m
-   */
-  public double getInterfacialTension(int phase1, int phase2);
-
-  /**
-   * <p>
-   * getKinematicViscosity.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getKinematicViscosity();
-
-  /**
    * <p>
    * initRefPhases.
    * </p>
@@ -2142,15 +2169,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param fluidName a {@link java.lang.String} object
    */
   public void setFluidName(java.lang.String fluidName);
-
-  /**
-   * <p>
-   * setSolidPhaseCheck.
-   * </p>
-   *
-   * @param solidComponent a {@link java.lang.String} object
-   */
-  public void setSolidPhaseCheck(String solidComponent);
 
   /**
    * <p>
@@ -2178,25 +2196,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return phase: fraction in specified unit
    */
   public double getPhaseFraction(String phaseTypeName, String unit);
-
-  /**
-   * <p>
-   * setPhaseType.
-   * </p>
-   *
-   * @param phases a {@link java.lang.String} object
-   * @param newPhaseType a int
-   */
-  public void setPhaseType(String phases, int newPhaseType);
-
-  /**
-   * method to set the phase type of a given phase.
-   *
-   * @param phaseToChange the phase number of the phase to set phase type
-   * @param phaseTypeName the phase type name (valid names are gas or liquid)
-   */
-  public void setPhaseType(int phaseToChange, String phaseTypeName);
-
 
   /**
    * <p>
@@ -2265,22 +2264,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    */
   public void saveToDataBase();
-
-  /**
-   * <p>
-   * generatePDF.
-   * </p>
-   */
-  public neqsim.dataPresentation.iTextPDF.PdfCreator generatePDF();
-
-  /**
-   * <p>
-   * displayPDF.
-   * </p>
-   */
-  public default void displayPDF() {
-    generatePDF().openPDF();
-  }
 
   /**
    * <p>
@@ -2354,16 +2337,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param totalNumberOfMoles a double
    */
   public void setTotalNumberOfMoles(double totalNumberOfMoles);
-
-  /**
-   * <p>
-   * phaseToSystem.
-   * </p>
-   *
-   * @param phaseNumber a int
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  public SystemInterface phaseToSystem(int phaseNumber);
 
   /**
    * <p>
@@ -2453,6 +2426,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
+   * isImplementedCompositionDeriativesofFugacity.
+   * </p>
+   *
+   * @param isImpl a boolean
+   */
+  public void isImplementedCompositionDeriativesofFugacity(boolean isImpl);
+
+  /**
+   * <p>
    * setImplementedCompositionDeriativesofFugacity.
    * </p>
    *
@@ -2487,4 +2469,46 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /** {@inheritDoc} */
   public void addToComponentNames(java.lang.String name);
+
+  /**
+   * <p>
+   * addCharacterized.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   */
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction);
+
+  /**
+   * <p>
+   * addCharacterized.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   * @param lumpComponents True if component should be lumped
+   * @param numberOfPseudoComponents number of pseudo components
+   */
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction, boolean lumpComponents,
+      int numberOfPseudoComponents);
+
+  /**
+   * <p>
+   * addCharacterized.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   */
+  public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity);
 }

@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.filter;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -38,7 +39,7 @@ public class Filter extends TwoPortEquipment {
    * Constructor for Filter.
    * </p>
    *
-   * @param name
+   * @param name name of filter
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
@@ -48,7 +49,7 @@ public class Filter extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     SystemInterface system = inStream.getThermoSystem().clone();
     if (Math.abs(getDeltaP()) > 1e-10) {
       system.setPressure(inStream.getPressure() - getDeltaP());
@@ -58,6 +59,7 @@ public class Filter extends TwoPortEquipment {
     system.initProperties();
     outStream.setThermoSystem(system);
     Cv = Math.sqrt(deltaP) / inStream.getFlowRate("kg/hr");
+    setCalculationIdentifier(id);
   }
 
   /**
