@@ -10,6 +10,6 @@
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
     "java.checkstyle.version": "10.3",
-    "java.checkstyle.configuration": "https://raw.githubusercontent.com/checkstyle/checkstyle/master/src/main/resources/google_checks.xml",
+    "java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
     "java.debug.settings.hotCodeReplace": "never"
 }

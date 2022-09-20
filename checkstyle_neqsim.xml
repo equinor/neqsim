@@ -23,9 +23,14 @@
   <!-- See https://checkstyle.org/config_filefilters.html -->
   <module name="BeforeExecutionExclusionFileFilter">
     <property name="fileNamePattern" value="module\-info\.java$" />
-    <!-- <property name="fileNamePattern" value=".*Test\.java$" /> -->
-    <property name="fileNamePattern" value=".*[\\/]src[\\/]util[\\/]\.java$" />
   </module>
+  <module name="BeforeExecutionExclusionFileFilter">
+    <property name="fileNamePattern" value="[\\/]util[\\/]" />
+  </module>
+  <module name="BeforeExecutionExclusionFileFilter">
+    <property name="fileNamePattern" value=".*Test\.java$" />
+  </module>
+
   <!-- https://checkstyle.org/config_filters.html#SuppressionFilter -->
   <module name="SuppressionFilter">
     <property name="file" value="${org.checkstyle.google.suppressionfilter.config}" default="checkstyle-suppressions.xml" />
