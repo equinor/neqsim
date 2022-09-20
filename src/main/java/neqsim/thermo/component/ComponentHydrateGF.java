@@ -168,8 +168,10 @@ public class ComponentHydrateGF extends ComponentHydrate {
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, 0, 1.0);
       double refWaterFugacityCoef = Math.log(refPhase.getComponent("water").fugcoef(refPhase));
 
-      double dhf = 6010.0, tmi = 273.15, dcp = 37.29;
+      double dhf = 6010.0;
 
+      double tmi = 273.15;
+      double dcp = 37.29;
       double LNFUG_ICEREF = refWaterFugacityCoef - (dhf / (R * tmi)) * (tmi / temp - 1.0)
           + (dcp / R) * ((tmi / temp) - 1.0 - Math.log(tmi / temp));
       double VM = 0.0;

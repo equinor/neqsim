@@ -151,9 +151,11 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public void calclnGammak(int k, PhaseInterface phase) {
-    double sum1Comp = 0.0, sum1Mix = 0.0;
-    double sum3Comp = 0.0, sum3Mix = 0.0;
+    double sum1Comp = 0.0;
+    double sum1Mix = 0.0;
+    double sum3Comp = 0.0;
 
+    double sum3Mix = 0.0;
     for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
       sum1Comp += getUnifacGroup(i).getQComp()
           * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase)
@@ -161,7 +163,8 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
       sum1Mix += getUnifacGroup(i).getQMix()
           * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase)
               .getAij(getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
-      double sum2Comp = 0.0, sum2Mix = 0.0;
+      double sum2Comp = 0.0;
+      double sum2Mix = 0.0;
       for (int j = 0; j < getNumberOfUNIFACgroups(); j++) {
         sum2Comp += getUnifacGroup(j).getQComp()
             * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase)
@@ -189,13 +192,17 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, int phasetype) {
-    double lngammaCombinational = 0.0, lngammaResidual = 0.0;
+    double lngammaCombinational = 0.0;
+    double lngammaResidual = 0.0;
     dlngammadn = new double[numberOfComponents];
     dlngammadt = 0.0;
     ComponentGEUnifac[] compArray = (ComponentGEUnifac[]) phase.getcomponentArray();
-    double temp1 = 0, temp2 = 0, suml = 0.0;
-    double V = 0.0, F = 0.0;
+    double temp1 = 0;
+    double temp2 = 0;
+    double suml = 0.0;
+    double V = 0.0;
 
+    double F = 0.0;
     for (int j = 0; j < numberOfComponents; j++) {
       temp1 += compArray[j].getx() * compArray[j].getR();
       temp2 += (compArray[j].getQ() * compArray[j].getx());

@@ -84,7 +84,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
   /**
    * Constructor for HeatExchanger.
-   * 
+   *
    * @param name name of heat exchanger
    */
   public HeatExchanger(String name) {
@@ -93,7 +93,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
   /**
    * Constructor for HeatExchanger.
-   * 
+   *
    * @param name name of heat exchanger
    * @param inStream1 input stream
    */
@@ -107,7 +107,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
   /**
    * Constructor for HeatExchanger.
-   * 
+   *
    * @param name name of heat exchanger
    * @param inStream1 input stream 1
    * @param inStream2 input stream 2
@@ -260,10 +260,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   public void run(UUID id) {
     if (getSpecification().equals("out stream")) {
       runSpecifiedStream(id);
-    }
-    // inStream[0].run(id);
-    // inStream[1].displayResult();
-    else if (firstTime) {
+    } else if (firstTime) {
       firstTime = false;
       SystemInterface systemOut0 = inStream[0].getThermoSystem().clone();
       outStream[0].setThermoSystem(systemOut0);

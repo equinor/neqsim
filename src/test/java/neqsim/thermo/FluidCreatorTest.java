@@ -3,6 +3,9 @@ package neqsim.thermo;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * Class for testing FluidCreator.
+ */
 public class FluidCreatorTest {
   @Test
   void testCreate() {

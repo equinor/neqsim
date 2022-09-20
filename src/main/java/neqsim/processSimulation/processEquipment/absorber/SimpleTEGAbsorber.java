@@ -592,7 +592,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * <p>
    * Setter for the field <code>waterInDryGas</code>.
    * </p>
-   * 
+   *
    * @param waterInDryGasInput water in dry gas
    */
   public void setWaterInDryGas(double waterInDryGasInput) {

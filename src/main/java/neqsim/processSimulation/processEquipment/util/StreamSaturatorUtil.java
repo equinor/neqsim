@@ -73,12 +73,12 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoOps.saturateWithWater();
 
-    if(thermoSystem.getPhase(0).hasComponent("water") && approachToSaturation<1.0){
-      try{
-      thermoSystem.addComponent("water", -thermoSystem.getComponent("water").getNumberOfmoles()*(1.0-approachToSaturation));
-      thermoOps.TPflash();
-      }
-      catch(Exception e){
+    if (thermoSystem.getPhase(0).hasComponent("water") && approachToSaturation < 1.0) {
+      try {
+        thermoSystem.addComponent("water",
+            -thermoSystem.getComponent("water").getNumberOfmoles() * (1.0 - approachToSaturation));
+        thermoOps.TPflash();
+      } catch (Exception e) {
         e.printStackTrace();
       }
     }
@@ -114,8 +114,8 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     this.multiPhase = multiPhase;
   }
 
-  
-  public void setApprachToSaturation(double approachToSaturation){
+
+  public void setApprachToSaturation(double approachToSaturation) {
     this.approachToSaturation = approachToSaturation;
   }
 }

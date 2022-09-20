@@ -6,7 +6,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  * This class defines a thermodynamic system using the PR Gassem equation of state.
- * 
+ *
  * @author Even Solbraa
  */
 public class SystemPrGassemEos extends SystemPrEos {

@@ -132,19 +132,18 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getVolumeCorrectionT_CPA();
 
   /**
-   * method to return flow rate of a component
+   * method to return flow rate of a component.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, m3/sec, m3/min,
-   *                 m3/hr, mole/sec, mole/min, mole/hr
+   * @param flowunit Supported units are kg/sec, kg/min, m3/sec, m3/min, m3/hr, mole/sec, mole/min,
+   *        mole/hr
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
 
   /**
-   * method to return total flow rate of a component
+   * method to return total flow rate of a component.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, mole/sec, mole/min,
-   *                 mole/hr
+   * @param flowunit Supported units are kg/sec, kg/min, mole/sec, mole/min, mole/hr
    * @return flow rate in specified unit
    */
   public double getTotalFlowRate(String flowunit);
@@ -715,14 +714,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * Initialize component
+   * Initialize component.
    * </p>
    *
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @param totalNumberOfMoles a double
-   * @param beta               a double
-   * @param type               a int
+   * @param beta a double
+   * @param type a int
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
       int type);

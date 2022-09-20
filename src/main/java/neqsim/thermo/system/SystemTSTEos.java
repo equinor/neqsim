@@ -6,7 +6,7 @@ import neqsim.thermo.phase.PhaseTSTEos;
 
 /**
  * This class defines a thermodynamic system using the TST equation of state.
- * 
+ *
  * @author Even Solbraa
  */
 public class SystemTSTEos extends SystemEos {

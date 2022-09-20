@@ -6,7 +6,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  * This class defines a thermodynamic system using the Desmukh Mather thermodynamic model.
- * 
+ *
  * @author Even Solbraa
  */
 public class SystemDesmukhMather extends SystemEos {

@@ -21,7 +21,11 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Splitter.class);
 
-  SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
+  SystemInterface thermoSystem;
+  SystemInterface gasSystem;
+  SystemInterface waterSystem;
+  SystemInterface liquidSystem;
+  SystemInterface thermoSystemCloned;
   StreamInterface inletStream;
   StreamInterface[] splitStream;
   protected int splitNumber = 1;
@@ -52,7 +56,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /**
    * Constructor for Splitter.
-   * 
+   *
    * @param name name of splitter
    */
   public Splitter(String name) {
@@ -61,7 +65,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /**
    * Constructor for Splitter.
-   * 
+   *
    * @param name name of splitter
    * @param inStream input stream
    */

@@ -6,7 +6,7 @@ import neqsim.thermo.phase.PhaseSrkCPAs;
 
 /**
  * This class defines a thermodynamic system using the CPA-EOS of Equinor equation of state.
- * 
+ *
  * @author Even Solbraa
  */
 public class SystemSrkCPAstatoil extends SystemSrkCPAs {

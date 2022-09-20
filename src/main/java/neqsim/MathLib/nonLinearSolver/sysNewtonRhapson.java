@@ -240,9 +240,7 @@ public class sysNewtonRhapson implements java.io.Serializable {
       if (iter > 6) {
         ds *= 0.5;
         System.out.println("ds > 6");
-      }
-
-      else {
+      } else {
         if (iter < 3) {
           ds *= 1.5;
         }
@@ -363,9 +361,7 @@ public class sysNewtonRhapson implements java.io.Serializable {
       system.setPhaseType(0, 1);
       system.setPhaseType(1, 0);
       return;
-    }
-
-    else if ((xlnkmax < avscp && testcrit != 1) && (np != ic03p && !etterCP)) {
+    } else if ((xlnkmax < avscp && testcrit != 1) && (np != ic03p && !etterCP)) {
       // System.out.println("hei fra her");
       testcrit = 1;
       xg = Xgij.getMatrix(numb, numb, 0, 3);

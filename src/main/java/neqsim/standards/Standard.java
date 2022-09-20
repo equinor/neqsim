@@ -39,7 +39,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
 
   /**
    * Constructor for Standard.
-   * 
+   *
    * @param name name of standard
    * @param description description
    */
@@ -50,7 +50,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
 
   /**
    * Constructor for Standard.
-   * 
+   *
    * @param name name of standard
    * @param thermoSyst input fluid
    * @param description description of standard

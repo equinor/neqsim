@@ -76,12 +76,24 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
   static Logger logger = LogManager.getLogger(Standard_ISO6976.class);
 
+  /**
+   * Constructor for Standard_ISO6976.
+   *
+   * @param thermoSystem
+   */
   public Standard_ISO6976(SystemInterface thermoSystem) {
     this("Standard_ISO6976",
         "Calculation of calorific values, density, relative density and Wobbe index from composition",
         thermoSystem);
   }
 
+  /**
+   * Constructor for Standard_ISO6976.
+   *
+   * @param name Name of standard
+   * @param description Description of standard
+   * @param thermoSystem
+   */
   public Standard_ISO6976(String name, String description, SystemInterface thermoSystem) {
     super(name, description, thermoSystem);
     M = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
