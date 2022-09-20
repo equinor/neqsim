@@ -20,11 +20,49 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004;
 public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   private static final long serialVersionUID = 1000;
 
-  double Wi = 0, WiT = 0.0, epsi = 0, epsiV = 0, epsIonici = 0, epsIoniciV = 0, dEpsdNi = 0,
-      ionicCoVolume = 0, solventdiElectricdn = 0.0, solventdiElectricdndT = 0, diElectricdn = 0,
-      diElectricdndV = 0, diElectricdndT = 0, bornterm = 0, alphai = 0.0, alphaiT = 0.0,
-      alphaiV = 0.0, XLRi = 0.0, XBorni = 0.0;
-  double sr2On = 1.0, lrOn = 1.0, bornOn = 1.0;
+  double Wi = 0;
+
+  double WiT = 0.0;
+
+  double epsi = 0;
+
+  double epsiV = 0;
+
+  double epsIonici = 0;
+
+  double epsIoniciV = 0;
+
+  double dEpsdNi = 0;
+
+  double ionicCoVolume = 0;
+
+  double solventdiElectricdn = 0.0;
+
+  double solventdiElectricdndT = 0;
+
+  double diElectricdn = 0;
+
+  double diElectricdndV = 0;
+
+  double diElectricdndT = 0;
+
+  double bornterm = 0;
+
+  double alphai = 0.0;
+
+  double alphaiT = 0.0;
+
+  double alphaiV = 0.0;
+
+  double XLRi = 0.0;
+
+  double XBorni = 0.0;
+
+  double sr2On = 1.0;
+
+  double lrOn = 1.0;
+
+  double bornOn = 1.0;
 
   /**
    * <p>
@@ -208,7 +246,10 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   @Override
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    double Fsup = 0, FSR2 = 0, FLR = 0, FBorn = 0;
+    double Fsup = 0;
+    double FSR2 = 0;
+    double FLR = 0;
+    double FBorn = 0;
     Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
     FSR2 = dFSR2dN(phase, numberOfComponents, temperature, pressure);
     FLR = dFLRdN(phase, numberOfComponents, temperature, pressure);

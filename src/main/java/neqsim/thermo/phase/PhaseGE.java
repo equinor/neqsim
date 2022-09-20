@@ -65,7 +65,8 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
     this.getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, type);
 
-    double sumHydrocarbons = 0.0, sumAqueous = 0.0;
+    double sumHydrocarbons = 0.0;
+    double sumAqueous = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()
           || getComponent(i).isIsTBPfraction()) {
@@ -91,7 +92,8 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
       getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, phase);
     }
 
-    double sumHydrocarbons = 0.0, sumAqueous = 0.0;
+    double sumHydrocarbons = 0.0;
+    double sumAqueous = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()
           || getComponent(i).isIsTBPfraction()) {

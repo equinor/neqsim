@@ -25,7 +25,12 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 public class SeparationTrainModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
 
-  protected StreamInterface feedStream = null, gasExitStream = null, oilExitStream = null;
+  protected StreamInterface feedStream = null;
+
+  protected StreamInterface gasExitStream = null;
+
+  protected StreamInterface oilExitStream = null;
+
   // ThreePhaseSeparator thirdStageSeparator = null;
   Separator gasInletScrubber = null;
   Cooler oilCooler;

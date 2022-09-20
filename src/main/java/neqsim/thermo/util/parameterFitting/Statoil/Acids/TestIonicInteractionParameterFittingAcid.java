@@ -38,9 +38,15 @@ public class TestIonicInteractionParameterFittingAcid {
     NeqSimDataBase database = new NeqSimDataBase();
     ResultSet dataSet = database.getResultSet("SELECT * FROM Sleipner");
     int error = 1;
-    double ID, x1, x2, x3, x4, temperature, pressure;
+    double ID;
 
-    double guess[] = {0.0000708122};
+    double x1;
+    double x2;
+    double x3;
+    double x4;
+    double temperature;
+    double pressure;
+    double[] guess = {0.0000708122};
 
     try {
       int i = 0;
@@ -69,8 +75,8 @@ public class TestIonicInteractionParameterFittingAcid {
         testSystem.setMixingRule(4);
         testSystem.init(0);
 
-        double sample1[] = {x1 / x4};
-        double standardDeviation1[] = {0.01};
+        double[] sample1 = {x1 / x4};
+        double[] standardDeviation1 = {0.01};
 
         if (ID == 162) {
           error = 5;

@@ -36,12 +36,37 @@ public class CO2_MDEA_speciation {
    */
   @SuppressWarnings("unused")
   public static void main(String[] args) {
-    int i = 0, j, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0, MDEAHpNumb = 0,
-        CO3Numb = 0, OHNumb = 0;
-    double nCO2, nMDEA, nHCO3, nCO3, nMDEAp, nOH;
-    double aCO2, aMDEA, aHCO3, awater, aMDEAp, aOH, aCO3;
-    double x1, x2, x3, total, n1, n2, n3, mass;
+    int i = 0;
+    int j;
+    int CO2Numb = 0;
+    int WaterNumb = 0;
+    int MDEANumb = 0;
+    int HCO3Numb = 0;
+    int MDEAHpNumb = 0;
+    int CO3Numb = 0;
+    int OHNumb = 0;
+    double nCO2;
+    double nMDEA;
+    double nHCO3;
+    double nCO3;
+    double nMDEAp;
+    double nOH;
+    double aCO2;
+    double aMDEA;
+    double aHCO3;
+    double awater;
+    double aMDEAp;
+    double aOH;
+    double aCO3;
+    double x1;
 
+    double x2;
+    double x3;
+    double total;
+    double n1;
+    double n2;
+    double n3;
+    double mass;
     double MDEAwt = 42.313781;
     double loading = 0.43194;
     double temperature = 273.16 + 65;
