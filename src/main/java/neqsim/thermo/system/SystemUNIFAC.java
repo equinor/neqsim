@@ -7,7 +7,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 /**
  * This class defines a thermodynamic system using the Unifac for liquids with SRK equation of state
  * for gas.
- * 
+ *
  * @author Even Solbraa
  */
 public class SystemUNIFAC extends SystemEos {

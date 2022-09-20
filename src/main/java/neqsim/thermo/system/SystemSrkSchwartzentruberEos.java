@@ -2,7 +2,7 @@ package neqsim.thermo.system;
 
 /**
  * This class defines a thermodynamic system using the SRK Schwartzentruber equation of state.
- * 
+ *
  * @author Even Solbraa
  */
 public class SystemSrkSchwartzentruberEos extends SystemSrkEos {

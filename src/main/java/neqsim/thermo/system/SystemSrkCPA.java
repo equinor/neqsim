@@ -6,7 +6,7 @@ import neqsim.thermo.phase.PhaseSrkCPA;
 
 /**
  * This class defines a thermodynamic system using the CPA EoS equation of state.
- * 
+ *
  * @author Even Solbraa
  */
 

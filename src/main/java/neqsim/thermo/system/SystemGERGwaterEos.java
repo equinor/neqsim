@@ -6,7 +6,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  * This class defines a thermodynamic system using the GERG water equation of state.
- * 
+ *
  * @author Even Solbraa
  */
 public class SystemGERGwaterEos extends SystemPrEos {

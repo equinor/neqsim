@@ -44,7 +44,7 @@ public class ChemicalReaction extends NamedBaseClass
    * <p>
    * Constructor for ChemicalReaction.
    * </p>
-   * 
+   *
    * @deprecated use
    *             {@link #ChemicalReaction(String, String[], double[], double[], double, double, double)}
    *             instead

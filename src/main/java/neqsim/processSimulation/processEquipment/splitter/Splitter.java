@@ -56,7 +56,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /**
    * Constructor for Splitter.
-   * 
+   *
    * @param name name of splitter
    */
   public Splitter(String name) {
@@ -65,7 +65,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /**
    * Constructor for Splitter.
-   * 
+   *
    * @param name name of splitter
    * @param inStream input stream
    */

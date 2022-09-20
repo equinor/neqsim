@@ -84,7 +84,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
   /**
    * Constructor for HeatExchanger.
-   * 
+   *
    * @param name name of heat exchanger
    */
   public HeatExchanger(String name) {
@@ -93,7 +93,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
   /**
    * Constructor for HeatExchanger.
-   * 
+   *
    * @param name name of heat exchanger
    * @param inStream1 input stream
    */
@@ -107,7 +107,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
   /**
    * Constructor for HeatExchanger.
-   * 
+   *
    * @param name name of heat exchanger
    * @param inStream1 input stream 1
    * @param inStream2 input stream 2

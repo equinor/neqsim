@@ -6,7 +6,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  * This class defines a thermodynamic system using the SRK equation of state.
- * 
+ *
  * @author Even Solbraa
  */
 public class SystemSrkEos extends SystemEos {
