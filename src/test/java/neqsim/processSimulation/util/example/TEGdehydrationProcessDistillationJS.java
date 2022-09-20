@@ -28,127 +28,127 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  */
 public class TEGdehydrationProcessDistillationJS {
   /**
-   * The flow rate of gas from the scrubber controlling the dew point (MSm3/hr)
+   * The flow rate of gas from the scrubber controlling the dew point (MSm3/hr).
    */
   public double feedGasFlowRate = 5.0;
 
   /**
-   * The temperature of the gas from the scrubber controlling the dew point (Celisuis)
+   * The temperature of the gas from the scrubber controlling the dew point (Celsuis).
    */
   public double feedGasTemperature = 30.4;
 
   /**
-   * The pressure of the gas from the scrubber controlling the dew point (bara)
+   * The pressure of the gas from the scrubber controlling the dew point (bara).
    */
   public double feedGasPressure = 52.21;
 
   /**
-   * The temperature of the gas entering the TEG absorption column (Celisuis)
+   * The temperature of the gas entering the TEG absorption column (Celsius).
    */
   public double absorberFeedGasTemperature = 35.0;
 
   /**
-   * The pressure of the gas entering the TEG absorption column (bara)
+   * The pressure of the gas entering the TEG absorption column (bara).
    */
   public double absorberFeedGasPressure = 52.21;
 
   /**
-   * The flow rate of lean TEG entering the absorption column (kg/hr)
+   * The flow rate of lean TEG entering the absorption column (kg/hr).
    */
   public double leanTEGFlowRate = 6862.5;
 
   /**
-   * The temperature of the lean TEG entering the absorption column (Celcius)
+   * The temperature of the lean TEG entering the absorption column (Celsius).
    */
   public double leanTEGTemperature = 43.0;
 
   /**
-   * The pressure in the flash drum (bara)
+   * The pressure in the flash drum (bara).
    */
   public double flashDrumPressure = 5.5;
 
   /**
-   * Number of equilibrium stages in TEG absorpber
+   * Number of equilibrium stages in TEG absorber.
    */
   public int numberOfEquilibriumStagesTEGabsorber = 5;
 
   /**
-   * Stage efficiency in TEG absorpber
+   * Stage efficiency in TEG absorber.
    */
   public double stageEfficiencyStripper = 0.5;
 
   /**
-   * Number of equilibrium stages in TEG absorpber
+   * Number of equilibrium stages in TEG absorber.
    */
   public int numberOfEquilibriumStagesStripper = 4;
 
   /**
-   * Stage efficiency in TEG absorpber
+   * Stage efficiency in TEG absorber.
    */
   public double stageEfficiencyTEGabsorber = 0.55;
 
   /**
-   * UA value of rich TEG heat exchanger 1
+   * UA value of rich TEG heat exchanger 1.
    */
   public double UAvalueRichTEGHeatExchanger_1 = 220.0;
 
   /**
-   * UA value of rich TEG heat exchanger 2
+   * UA value of rich TEG heat exchanger 2.
    */
   public double UAvalueRichTEGHeatExchanger_2 = 600.0;
 
   /**
-   * Pressure in reboiler (bara)
+   * Pressure in reboiler (bara).
    */
   public double reboilerPressure = 1.2;
 
   /**
-   * Temperature in condenser(Celcius)
+   * Temperature in condenser (Celsius).
    */
   public double condenserTemperature = 100.0;
 
   /**
-   * Pressure in condenser (bara)
+   * Pressure in condenser (bara).
    */
   public double condenserPressure = 1.0;
 
   /**
-   * Temperature in reboiler (Celcius)
+   * Temperature in reboiler (Celsius).
    */
   public double reboilerTemperature = 205.0;
 
   /**
-   * Stripping gas flow rate (Sm3/hr)
+   * Stripping gas flow rate (Sm3/hr).
    */
   public double strippingGasRate = 55.0;
 
   /**
-   * Stripping gas feed temperature (Celcius)
+   * Stripping gas feed temperature (Celsius).
    */
   public double strippingGasFeedTemperature = 80.0;
 
   /**
-   * TEG buffer tank temperature (Celcius)
+   * TEG buffer tank temperature (Celsius).
    */
   public double bufferTankTemperatureTEG = 185.0;
 
   /**
-   * temperature of after regeneration gas cooler (Celcius)
+   * temperature of after regeneration gas cooler (Celsius).
    */
   public double regenerationGasCoolerTemperature = 35.0;
 
   /**
-   * isentropic efficiency of hot lean TEG pump (0.0-1.0)
+   * isentropic efficiency of hot lean TEG pump (0.0-1.0).
    */
   public double hotTEGpumpIsentropicEfficiency = 0.75;
 
   /**
-   * pressure after hot lean TEG pump (bara)
+   * pressure after hot lean TEG pump (bara).
    */
   public double hotTEGpumpPressure = 5.0;
 
   /**
-   * isentropic efficiency of cold lean TEG pump (0.0-1.0)
+   * isentropic efficiency of cold lean TEG pump (0.0-1.0).
    */
   public double coldTEGpumpIsentropicEfficiency = 0.75;
 

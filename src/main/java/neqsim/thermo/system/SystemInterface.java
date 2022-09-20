@@ -398,7 +398,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to set the temperature of a fluid (same temperature for all phases).
    *
    * @param newTemperature in specified unit
-   * @param unit unit can be C or K (Celcius of Kelvin)
+   * @param unit unit can be C or K (Celsius or Kelvin)
    */
   public void setTemperature(double newTemperature, String unit);
 

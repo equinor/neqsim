@@ -12,6 +12,9 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 
+/**
+ * Test class for GlycolRig.
+ */
 public class GlycolRigTest extends neqsim.NeqSimTest {
   ProcessSystem p;
   String _name = "TestProcess";

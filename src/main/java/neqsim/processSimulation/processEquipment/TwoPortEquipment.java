@@ -2,14 +2,17 @@ package neqsim.processSimulation.processEquipment;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
+/**
+ * Abstract class defining ProcessEquipment with one inlet and one outlet.
+ */
 public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
     implements TwoPortInterface {
   protected StreamInterface inStream;
   protected StreamInterface outStream;
 
   /**
-   * Constructor for TwoPortEquipment
-   * 
+   * Constructor for TwoPortEquipment.
+   *
    * @param name Name of TwoPortEquipment
    */
   public TwoPortEquipment(String name) {
@@ -17,8 +20,8 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Constructor for TwoPortEquipment
-   * 
+   * Constructor for TwoPortEquipment.
+   *
    * @param name Name of TwoPortEquipment
    * @param stream Stream to set as inlet Stream. A clone of stream is set as outlet stream.
    */
