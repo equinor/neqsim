@@ -1786,7 +1786,7 @@ abstract class SystemThermo implements SystemInterface {
           }
         }
       }
-    } else if (type == 2) {// calculate T and P derivatives
+    } else if (type == 2) { // calculate T and P derivatives
       for (int i = 0; i < numberOfPhases; i++) {
         if (IsPhase(i)) {
           getPhase(i).init(getTotalNumberOfMoles(), numberOfComponents, 2, phaseType[phaseIndex[i]],
@@ -1803,7 +1803,7 @@ abstract class SystemThermo implements SystemInterface {
           }
         }
       }
-    } else if (type == 3) {// calculate all derivatives
+    } else if (type == 3) { // calculate all derivatives
       for (int i = 0; i < numberOfPhases; i++) {
         if (IsPhase(i)) {
           getPhase(i).init(getTotalNumberOfMoles(), numberOfComponents, 3, phaseType[phaseIndex[i]],
@@ -4359,9 +4359,8 @@ abstract class SystemThermo implements SystemInterface {
       }
       logger.info("done ... set mixing rule ......");
       tempModel.autoSelectMixingRule();
-      if (model.equals("Electrolyte-ScRK-EOS")) {// ||
-                                                 // model.equals("Electrolyte-CPA-EOS-statoil"))
-                                                 // {
+      if (model.equals("Electrolyte-ScRK-EOS")) { // ||
+                                                  // model.equals("Electrolyte-CPA-EOS-statoil"
         logger.info("chemical reaction init......");
         tempModel.setMultiPhaseCheck(false);
         tempModel.chemicalReactionInit();

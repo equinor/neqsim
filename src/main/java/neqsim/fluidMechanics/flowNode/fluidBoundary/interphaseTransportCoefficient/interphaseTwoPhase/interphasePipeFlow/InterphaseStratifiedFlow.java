@@ -52,9 +52,9 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
     if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phase)
           * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
-    }
-    // if turbulent - use chilton colburn analogy
-    else {
+    } else {
+      // if turbulent - use chilton colburn analogy
+
       double temp = node.getBulkSystem().getPhases()[phase].getCp()
           / node.getBulkSystem().getPhases()[phase].getMolarMass()
           / node.getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()
@@ -73,9 +73,8 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
     if (Math.abs(node.getReynoldsNumber()) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phase)
           * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
-    }
-    // if turbulent - use chilton colburn analogy
-    else {
+    } else {
+      // if turbulent - use chilton colburn analogy
       double temp = node.getBulkSystem().getPhases()[phase].getCp()
           / node.getBulkSystem().getPhases()[phase].getMolarMass()
           / node.getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()

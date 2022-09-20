@@ -69,37 +69,32 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     recycleGasFromStripper.addStream(stripper.getGasOutStream());
     recycleGasFromStripper.setOutletStream(gasToReboiler);
 
-    Heater coolerPipe = new Heater(column.getGasOutStream());
-    coolerPipe.setName("heat loss cooling");
+    Heater coolerPipe = new Heater("heat loss cooling", column.getGasOutStream());
     coolerPipe.setOutTemperature(273.15 + 81.0);
 
-    Heater coolerRegenGas = new Heater(coolerPipe.getOutStream());
-    coolerRegenGas.setName("regen gas cooler");
+    Heater coolerRegenGas = new Heater("regen gas cooler", coolerPipe.getOutletStream());
     coolerRegenGas.setOutTemperature(273.15 + 25.0);
 
-    Separator sepregenGas = new Separator(coolerRegenGas.getOutStream());
-    sepregenGas.setName("regen gas separator");
+    Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
-    Compressor blower = new Compressor(sepregenGas.getGasOutStream());
+    Compressor blower = new Compressor("blower", sepregenGas.getGasOutStream());
     blower.setOutletPressure(0.2, "barg");
 
-    Heater gasHeater = new Heater(blower.getOutStream());
+    Heater gasHeater = new Heater("heater", blower.getOutletStream());
     gasHeater.setOutTemperature(273.15 + 53.0);
 
     Recycle recycleGasfEED = new Recycle("FEED gas recirc");
-    recycleGasfEED.addStream(gasHeater.getOutStream());
+    recycleGasfEED.addStream(gasHeater.getOutletStream());
     recycleGasfEED.setOutletStream(strippingGas);
     recycleGasfEED.setPriority(200);
 
-    Heater coolerStripper = new Heater(stripper.getSolventOutStream());
-    coolerStripper.setName("TEG cooler");
+    Heater coolerStripper = new Heater("TEG cooler", stripper.getSolventOutStream());
     coolerStripper.setOutTemperature(273.15 + 98.0);
 
-    Stream liquidToTreatment = new Stream(sepregenGas.getLiquidOutStream());
-    liquidToTreatment.setName("water to treatment");
+    Stream liquidToTreatment = new Stream("water to treatment", sepregenGas.getLiquidOutStream());
 
     Mixer TEGWaterMixer = new Mixer("TEG water mixer");
-    TEGWaterMixer.addStream(coolerStripper.getOutStream());
+    TEGWaterMixer.addStream(coolerStripper.getOutletStream());
     TEGWaterMixer.addStream(liquidToTreatment);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =

@@ -185,8 +185,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to return exergy in a specified unit.
    *
    * @param temperatureOfSurroundings in Kelvin
-   * @return exergy in specified unit
    * @param exergyUnit a {@link java.lang.String} object
+   * @return exergy in specified unit
    */
   public double getExergy(double temperatureOfSurroundings, String exergyUnit);
 

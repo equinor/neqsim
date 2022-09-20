@@ -19,7 +19,7 @@ public class StreamSaturatorUtilTest {
     testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("water", 1.0);
-    
+
     Stream inletStream = new Stream("inletStream", testSystem);
     inletStream.setName("inlet stream");
     inletStream.setPressure(pressure_inlet, "bara");
@@ -32,7 +32,8 @@ public class StreamSaturatorUtilTest {
     processOps.add(streamSaturator);
     processOps.run();
 
-    assertEquals(0.0012319218375683974, streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx());
+    assertEquals(0.0012319218375683974,
+        streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx());
 
   }
 
@@ -41,7 +42,7 @@ public class StreamSaturatorUtilTest {
     testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("water", 1.0);
-    
+
     Stream inletStream = new Stream("inletStream", testSystem);
     inletStream.setName("inlet stream");
     inletStream.setPressure(pressure_inlet, "bara");
@@ -55,7 +56,8 @@ public class StreamSaturatorUtilTest {
     processOps.add(streamSaturator);
     processOps.run();
 
-    assertEquals(0.0012319218375683974*0.93, streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx(), 1e-3);
-
+    assertEquals(0.0012319218375683974 * 0.93,
+        streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx(),
+        1e-3);
   }
 }
