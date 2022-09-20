@@ -825,24 +825,24 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     feedGas.setMultiPhaseCheck(false);
     feedGas.init(0);
 
-    Stream dryFeedGasSmøbukk = new Stream("dry feed gas Smøbukk", feedGas);
-    dryFeedGasSmøbukk.setFlowRate(10.0, "MSm3/day");
-    dryFeedGasSmøbukk.setTemperature(25.0, "C");
-    dryFeedGasSmøbukk.setPressure(40.0, "bara");
+    Stream dryFeedGasSmorbukk = new Stream("dry feed gas Smorbukk", feedGas);
+    dryFeedGasSmorbukk.setFlowRate(10.0, "MSm3/day");
+    dryFeedGasSmorbukk.setTemperature(25.0, "C");
+    dryFeedGasSmorbukk.setPressure(40.0, "bara");
 
-    StreamSaturatorUtil saturatedFeedGasSmøbukk =
-        new StreamSaturatorUtil("water saturator Smøbukk", dryFeedGasSmøbukk);
+    StreamSaturatorUtil saturatedFeedGasSmorbukk =
+        new StreamSaturatorUtil("water saturator Smorbukk", dryFeedGasSmorbukk);
 
-    Stream waterSaturatedFeedGasSmøbukk =
-        new Stream("water saturated feed gas Smøbukk", saturatedFeedGasSmøbukk.getOutletStream());
+    Stream waterSaturatedFeedGasSmorbukk =
+        new Stream("water saturated feed gas Smorbukk", saturatedFeedGasSmorbukk.getOutletStream());
 
-    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserSmøbukk =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser Smøbukk",
-            waterSaturatedFeedGasSmøbukk);
+    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserSmorbukk =
+        new HydrateEquilibriumTemperatureAnalyser(waterSaturatedFeedGasSmorbukk);
+    hydrateTAnalyserSmorbukk.setName("hydrate temperature analyser Smorbukk");
 
-    Splitter SmøbukkSplit = new Splitter("SmøRbukk Splitter", waterSaturatedFeedGasSmøbukk);
-    double[] splitSmøbukk = {1.0 - 1e-10, 1e-10};
-    SmøbukkSplit.setSplitFactors(splitSmøbukk);
+    Splitter SmorbukkSplit = new Splitter("Smorbukk Splitter", waterSaturatedFeedGasSmorbukk);
+    double[] splitSmorbukk = {1.0 - 1e-10, 1e-10};
+    SmorbukkSplit.setSplitFactors(splitSmorbukk);
 
 
     Stream dryFeedGasMidgard = new Stream("dry feed gas Midgard201", feedGas.clone());
@@ -857,8 +857,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
         new Stream("water saturated feed gas Midgard", saturatedFeedGasMidgard.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserMidgard =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser Midgard",
+        new HydrateEquilibriumTemperatureAnalyser(
             waterSaturatedFeedGasMidgard);
+    hydrateTAnalyserMidgard.setName("hydrate temperature analyser Midgard");
 
 
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
@@ -867,7 +868,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
 
     StaticMixer TrainB = new StaticMixer("mixer TrainB");
-    TrainB.addStream(SmøbukkSplit.getSplitStream(1));
+    TrainB.addStream(SmorbukkSplit.getSplitStream(1));
     TrainB.addStream(MidgardSplit.getSplitStream(1));
 
 
@@ -1060,11 +1061,11 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
-    operations.add(dryFeedGasSmøbukk);
-    operations.add(saturatedFeedGasSmøbukk);
-    operations.add(waterSaturatedFeedGasSmøbukk);
-    operations.add(hydrateTAnalyserSmøbukk);
-    operations.add(SmøbukkSplit);
+    operations.add(dryFeedGasSmorbukk);
+    operations.add(saturatedFeedGasSmorbukk);
+    operations.add(waterSaturatedFeedGasSmorbukk);
+    operations.add(hydrateTAnalyserSmorbukk);
+    operations.add(SmorbukkSplit);
 
     operations.add(dryFeedGasMidgard);
     operations.add(saturatedFeedGasMidgard);
