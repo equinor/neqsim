@@ -53,7 +53,11 @@ public class PHsolidFlash extends Flash {
     // logger.info("enthalpy: " + system.getEnthalpy());
     double err = 0;
     int iter = 0;
-    double f_func = 0.0, f_func_old = 0.0, df_func_dt = 0, t_old = 0, t_oldold = 0.0;
+    double f_func = 0.0;
+    double f_func_old = 0.0;
+    double df_func_dt = 0;
+    double t_old = 0;
+    double t_oldold = 0.0;
     // ThermodynamicOperations ops = new ThermodynamicOperations(system);
     tpFlash.run();
     double dt = 10;
