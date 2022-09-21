@@ -45,7 +45,7 @@
 
   <module name="LineLength">
     <property name="fileExtensions" value="java" />
-    <property name="max" value="100" />
+    <property name="max" value="120" />
     <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://" />
   </module>
 
@@ -176,14 +176,14 @@
                     ANNOTATION_DEF, RECORD_DEF" />
       <message key="name.invalidPattern" value="Type name ''{0}'' must match pattern ''{1}''." />
     </module>
-    <module name="MemberName">
+    <!--<module name="MemberName">
       <property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9]*$" />
       <message key="name.invalidPattern" value="Member name ''{0}'' must match pattern ''{1}''." />
     </module>
     <module name="ParameterName">
       <property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$" />
       <message key="name.invalidPattern" value="Parameter name ''{0}'' must match pattern ''{1}''." />
-    </module>
+    </module>    -->
     <module name="LambdaParameterName">
       <property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$" />
       <message key="name.invalidPattern" value="Lambda parameter name ''{0}'' must match pattern ''{1}''." />
@@ -192,10 +192,10 @@
       <property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$" />
       <message key="name.invalidPattern" value="Catch parameter name ''{0}'' must match pattern ''{1}''." />
     </module>
-    <module name="LocalVariableName">
+    <!--<module name="LocalVariableName">
       <property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$" />
       <message key="name.invalidPattern" value="Local variable name ''{0}'' must match pattern ''{1}''." />
-    </module>
+    </module>-->
     <module name="PatternVariableName">
       <property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$" />
       <message key="name.invalidPattern" value="Pattern variable name ''{0}'' must match pattern ''{1}''." />
@@ -248,6 +248,7 @@
     <module name="CustomImportOrder">
       <property name="sortImportsInGroupAlphabetically" value="true" />
       <property name="separateLineBetweenGroups" value="true" />
+      <property name="specialImportsRegExp" value="neqsim*"/>
       <property name="customImportOrderRules" value="STATIC###THIRD_PARTY_PACKAGE" />
       <property name="tokens" value="IMPORT, STATIC_IMPORT, PACKAGE_DEF" />
     </module>
