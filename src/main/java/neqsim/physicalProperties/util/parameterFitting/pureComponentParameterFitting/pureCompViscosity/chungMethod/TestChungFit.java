@@ -35,10 +35,10 @@ public class TestChungFit {
 
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM purecomponentviscosity"); // WHERE
-                                                                                       // ComponentName='MDEA*'");
 
-    try {
+    try (ResultSet dataSet = database.getResultSet("SELECT * FROM purecomponentviscosity") // WHERE
+                                                                                           // ComponentName='MDEA*'");
+    ) {
       while (dataSet.next()) {
         ChungFunction function = new ChungFunction();
         double guess[] = {0.3211};

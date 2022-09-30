@@ -327,9 +327,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   public static void main(String[] args) {
     NeqSimDataBase database = new NeqSimDataBase();
 
-    ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'");
-
-    try {
+    try (ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
       dataSet.next();
       logger.info("dataset " + dataSet.getString("molarmass"));
     } catch (Exception ex) {
@@ -347,9 +345,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    */
   public static String[] getComponentNames() {
     NeqSimDataBase database = new NeqSimDataBase();
-    try {
+    try (ResultSet dataSet = database.getResultSet("SELECT name FROM comp ORDER BY ID")) {
       List<String> names = new ArrayList<>();
-      ResultSet dataSet = database.getResultSet("SELECT name FROM comp ORDER BY ID");
       while (dataSet.next()) {
         names.add(dataSet.getString("name"));
       }

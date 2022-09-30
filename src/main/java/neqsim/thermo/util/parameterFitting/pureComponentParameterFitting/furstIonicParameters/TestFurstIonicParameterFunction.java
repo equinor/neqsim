@@ -46,12 +46,11 @@ public class TestFurstIonicParameterFunction {
         {0.0000000752, 0.0000037242, 0.0000250998, 0.0000198635, -0.0000000311, -0.0000006630};
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
     // Description IN ('NaCl')"); //,'LiCl','Sr2Br','Sr2I')");
-    ResultSet dataSet = database
-        .getResultSet("SELECT * FROM ionicData WHERE ion1<>'H3Oplus2' ORDER BY ion1,ion2,x2");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
     // ion1='Na+' AND ion2='Cl-'");
     int numb = 0;
-    try {
+    try (ResultSet dataSet = database
+        .getResultSet("SELECT * FROM ionicData WHERE ion1<>'H3Oplus2' ORDER BY ion1,ion2,x2")) {
       logger.info("adding....");
       while (dataSet.next() && numb < 22265) {
         numb++;
