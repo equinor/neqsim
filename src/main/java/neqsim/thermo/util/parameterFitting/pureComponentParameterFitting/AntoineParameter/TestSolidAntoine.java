@@ -39,10 +39,9 @@ public class TestSolidAntoine {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY
     // FreezingTemperature");
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY FreezingTemperature");
     int i = 0;
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY FreezingTemperature")) {
       while (dataSet.next() && i < 4) {
         i++;
         AntoineSolidFunction function = new AntoineSolidFunction();

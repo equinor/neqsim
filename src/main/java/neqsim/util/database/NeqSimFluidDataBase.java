@@ -148,9 +148,8 @@ public class NeqSimFluidDataBase
    */
   public static void main(String[] args) {
     NeqSimFluidDataBase database = new NeqSimFluidDataBase();
-    ResultSet dataSet =
-        database.getResultSet("FluidDatabase", "SELECT * FROM comp where name='water'");
-    try {
+    try (ResultSet dataSet =
+        database.getResultSet("FluidDatabase", "SELECT * FROM comp where name='water'")) {
       dataSet.next();
       System.out.println("dataset " + dataSet.getString("molarmass"));
     } catch (Exception ex) {

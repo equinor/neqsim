@@ -34,10 +34,9 @@ public class TestBinaryCPAfitToActivityCoefficientDB implements Cloneable {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM activitycoefficienttable WHERE ((Component1='TEG' AND Component2='water') OR (Component1='water' AND Component2='TEG')) AND ReferenceID<>'shell data'");
 
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM activitycoefficienttable WHERE ((Component1='TEG' AND Component2='water') OR (Component1='water' AND Component2='TEG')) AND ReferenceID<>'shell data'")) {
       while (dataSet.next()) {
         BinaryCPAparameterFitToActivityCoefficientFunction function =
             new BinaryCPAparameterFitToActivityCoefficientFunction();
