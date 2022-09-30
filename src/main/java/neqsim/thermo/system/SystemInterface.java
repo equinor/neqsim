@@ -2491,6 +2491,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param charFlowrate an array of {@link double} objects
    * @param molarMass an array of {@link double} objects
    * @param relativedensity an array of {@link double} objects
+   * @param lastIsPlusFraction True if last fraction is a Plus fraction
    */
   public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
       double[] relativedensity, boolean lastIsPlusFraction);
@@ -2504,6 +2505,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param charFlowrate an array of {@link double} objects
    * @param molarMass an array of {@link double} objects
    * @param relativedensity an array of {@link double} objects
+   * @param lastIsPlusFraction True if last fraction is a Plus fraction
    * @param lumpComponents True if component should be lumped
    * @param numberOfPseudoComponents number of pseudo components
    */
