@@ -1504,7 +1504,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getChemicalPotentialdV(PhaseInterface phase);
 
   /**
-   * Calculates the pure comopnent heat of vaporization in J/mol.
+   * Calculates the pure component heat of vaporization in J/mol.
    *
    * @param temperature a double
    * @return a double
