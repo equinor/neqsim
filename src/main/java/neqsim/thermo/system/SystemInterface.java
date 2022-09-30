@@ -1279,7 +1279,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * hasPlusFraction.
+   * Getter for property hasPlusFraction.
    * </p>
    *
    * @return a boolean
