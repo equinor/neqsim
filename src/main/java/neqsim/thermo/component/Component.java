@@ -6,6 +6,8 @@
 
 package neqsim.thermo.component;
 
+import java.sql.Connection;
+import java.sql.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -459,11 +461,14 @@ abstract class Component implements ComponentInterface {
         if (dataSet != null) {
           dataSet.close();
         }
-        if (database.getStatement() != null) {
-          database.getStatement().close();
+
+        Statement s = database.getStatement();
+        if (s != null) {
+          s.close();
         }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
+        Connection c = database.getConnection();
+        if (c != null) {
+          c.close();
         }
       } catch (Exception ex) {
         logger.error("error closing database.....", ex);
@@ -908,11 +913,7 @@ abstract class Component implements ComponentInterface {
     // Math.pow(1.0 - temperature / liquidDensityCoefs[2], liquidDensityCoefs[3]));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure comonent heat of vaporization in J/mol
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPureComponentHeatOfVaporization(double temperature) {
     return 1.0e-3 * heatOfVaporizationCoefs[0]
@@ -994,8 +995,7 @@ abstract class Component implements ComponentInterface {
   @Override
   public double fugcoef(PhaseInterface phase) {
     fugacityCoefficient = 1.0; // this.fugcoef(phase, phase.getNumberOfComponents(),
-                               // phase.getTemperature(),
-                               // phase.getPressure());
+                               // phase.getTemperature(), phase.getPressure());
     logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }

@@ -35,10 +35,9 @@ public class TestDiffusivity {
 
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM binaryliquiddiffusioncoefficientdata WHERE ComponentSolute='CO2' AND ComponentSolvent='water'");
 
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM binaryliquiddiffusioncoefficientdata WHERE ComponentSolute='CO2' AND ComponentSolvent='water'")) {
       logger.info("adding....");
       while (dataSet.next()) {
         DiffusivityFunction function = new DiffusivityFunction();
