@@ -426,6 +426,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * </p>
    *
    * @param dt a double
+   * @param id UUID of run
    */
   public void runController(double dt, UUID id) {
     if (hasController) {

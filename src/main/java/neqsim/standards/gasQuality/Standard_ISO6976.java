@@ -79,7 +79,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   /**
    * Constructor for Standard_ISO6976.
    *
-   * @param thermoSystem
+   * @param thermoSystem SystemInterface to base object on
    */
   public Standard_ISO6976(SystemInterface thermoSystem) {
     this("Standard_ISO6976",
@@ -92,7 +92,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    *
    * @param name Name of standard
    * @param description Description of standard
-   * @param thermoSystem
+   * @param thermoSystem SystemInterface to base object on
    */
   public Standard_ISO6976(String name, String description, SystemInterface thermoSystem) {
     super(name, description, thermoSystem);
