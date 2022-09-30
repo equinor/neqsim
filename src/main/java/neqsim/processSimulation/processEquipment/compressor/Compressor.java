@@ -93,7 +93,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   /**
    * Constructor for Compressor.
    *
-   * @param name
+   * @param name Name of compressor
    */
   public Compressor(String name) {
     super(name);
@@ -118,7 +118,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Constructor for Compressor.
    * </p>
    *
-   * @param name
+   * @param name Name of compressor
    * @param interpolateMapLookup a boolean
    */
   public Compressor(String name, boolean interpolateMapLookup) {

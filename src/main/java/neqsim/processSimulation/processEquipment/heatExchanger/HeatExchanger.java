@@ -223,6 +223,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
    * <p>
    * runSpecifiedStream.
    * </p>
+   *
+   * @param id UUID of run
    */
   public void runSpecifiedStream(UUID id) {
     int nonOutStreamSpecifiedStreamNumber = 0;
