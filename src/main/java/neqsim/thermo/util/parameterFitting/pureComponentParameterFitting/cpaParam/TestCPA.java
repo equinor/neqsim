@@ -80,10 +80,8 @@ public class TestCPA {
       logger.error("database error" + ex);
     }
 
-    dataSet =
-        database.getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA'");
-
-    try {
+    try (ResultSet dataSet =
+        database.getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA'")) {
       while (dataSet.next()) {
         CPAFunctionDens function = new CPAFunctionDens();
         SystemInterface testSystem = new SystemSrkCPAs(280, 0.001);

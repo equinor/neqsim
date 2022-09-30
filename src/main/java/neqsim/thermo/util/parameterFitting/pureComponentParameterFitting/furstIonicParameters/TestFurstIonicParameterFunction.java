@@ -89,13 +89,17 @@ public class TestFurstIonicParameterFunction {
         sample.setDescription(dataSet.getString("Description"));
         sampleList.add(sample);
       }
+    } catch (Exception ex) {
+      logger.error("database error: ", ex);
+    }
 
+    try (ResultSet dataSet =
+        database.getResultSet("SELECT * FROM ionicData WHERE ion1='Na+' AND ion2='Cl-'")) {
       // dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
       // ion1<>'H3Oplus2' AND IonicActivity>=0.01");
       // dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
       // Description
       // IN ('NaCl','LiCl','Sr2Br','Sr2I') AND IonicActivity>=0.01");
-      dataSet = database.getResultSet("SELECT * FROM ionicData WHERE ion1='Na+' AND ion2='Cl-'");
       logger.info("setting new for activity");
       while (!dataSet.next()) {
         FurstIonicParameterFunction_Activity function = new FurstIonicParameterFunction_Activity();
@@ -128,8 +132,12 @@ public class TestFurstIonicParameterFunction {
         sample.setDescription(dataSet.getString("Description"));
         sampleList.add(sample);
       }
+    } catch (Exception ex) {
+      logger.error("database error: ", ex);
+    }
 
-      dataSet = database.getResultSet("SELECT * FROM saltdens WHERE ion1='Na+' AND ion2='Cl-'");
+    try (ResultSet dataSet =
+        database.getResultSet("SELECT * FROM saltdens WHERE ion1='Na+' AND ion2='Cl-'")) {
       logger.info("fitting to ionic density");
       while (!dataSet.next()) {
         FurstIonicParameterFunction_Density function = new FurstIonicParameterFunction_Density();

@@ -141,9 +141,6 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
     } catch (Exception ex) {
       logger.error("database error" + ex);
     }
-
-    dataSet = database.getResultSet(
-        "SELECT * FROM LuciaData8 WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure"); // AND
                                                                                                                                                             // Reference='Houghton1957'
                                                                                                                                                             // AND
                                                                                                                                                             // Reference<>'Nighswander1989'
@@ -167,7 +164,8 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
     // testSystem.addComponent(dataSet.getString("ComponentSolute"), 1.0);
     // testSystem.addComponent(dataSet.getString("ComponentSolvent"), 1.0);
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM LuciaData8 WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure")) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 150) {
