@@ -31,10 +31,9 @@ public class TestMassTransfer {
 
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM purecomponentvapourpressures WHERE ComponentName='water' AND VapourPressure<100");
 
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM purecomponentvapourpressures WHERE ComponentName='water' AND VapourPressure<100")) {
       System.out.println("adding....");
       while (dataSet.next()) {
         MassTransferFunction function = new MassTransferFunction();

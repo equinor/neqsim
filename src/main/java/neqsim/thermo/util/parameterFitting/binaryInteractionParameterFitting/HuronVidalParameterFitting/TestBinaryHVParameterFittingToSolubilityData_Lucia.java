@@ -36,17 +36,6 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
 
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature<520 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure"); // AND
-                                                                                                                                                  // Reference='Houghton1957'
-                                                                                                                                                  // AND
-                                                                                                                                                  // Reference<>'Nighswander1989'
-                                                                                                                                                  // AND
-                                                                                                                                                  // Temperature>278.15
-                                                                                                                                                  // AND
-                                                                                                                                                  // Temperature<383.15
-                                                                                                                                                  // AND
-                                                                                                                                                  // Pressure<60.01325");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
     // Component='CO2' AND Temperature>250 AND Temperature<420 AND
     // Pressure<700000000 AND L2 IS NOT NULL AND L2>0.000000001 ORDER BY
@@ -67,7 +56,18 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
     // Component='H2S' AND Temperature>250 AND Temperature<420 AND Pressure<10000000
     // AND L2<>NULL AND L2>0.000000001 ORDER BY Temperature,Pressure");
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature<520 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure") // AND
+                                                                                                                                                 // Reference='Houghton1957'
+                                                                                                                                                 // AND
+                                                                                                                                                 // Reference<>'Nighswander1989'
+                                                                                                                                                 // AND
+                                                                                                                                                 // Temperature>278.15
+                                                                                                                                                 // AND
+                                                                                                                                                 // Temperature<383.15
+                                                                                                                                                 // AND
+                                                                                                                                                 // Pressure<60.01325");
+    ) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 150) {
@@ -141,9 +141,6 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
     } catch (Exception ex) {
       logger.error("database error" + ex);
     }
-
-    dataSet = database.getResultSet(
-        "SELECT * FROM LuciaData8 WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure"); // AND
                                                                                                                                                             // Reference='Houghton1957'
                                                                                                                                                             // AND
                                                                                                                                                             // Reference<>'Nighswander1989'
@@ -167,7 +164,8 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
     // testSystem.addComponent(dataSet.getString("ComponentSolute"), 1.0);
     // testSystem.addComponent(dataSet.getString("ComponentSolvent"), 1.0);
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM LuciaData8 WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure")) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 150) {
