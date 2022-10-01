@@ -6,6 +6,7 @@
 
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
+import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -22,6 +23,33 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class pTphaseEnvelopeHCwater extends pTphaseEnvelope {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(pTphaseEnvelopeHCwater.class);
+  ThermodynamicOperations ops = null;
+
+  class PhaseEnevelopePoint {
+
+    double temperature;
+    double pressure;
+    String dewPointType;
+
+    public PhaseEnevelopePoint(SystemInterface fluid) {
+      this.temperature = fluid.getTemperature();
+      this.pressure = fluid.getPressure();
+
+      if (fluid.getNumberOfPhases() > 1 && fluid.getPhase(1).getPhaseTypeName().equals("aqueous")
+          && fluid.getPhase(0).getPhaseTypeName().equals("gas")) {
+        this.dewPointType = "2 phase gas-aqueous dew point";
+      } else if (fluid.getNumberOfPhases() > 1
+          && fluid.getPhase(1).getPhaseTypeName().equals("aqueous")
+          && fluid.getPhase(0).getPhaseTypeName().equals("oil")) {
+        this.dewPointType = "2 phase oil-aqueous dew point";
+      } else if (fluid.getNumberOfPhases() > 1 && fluid.getPhase(1).getPhaseTypeName().equals("oil")
+          && fluid.getPhase(0).getPhaseTypeName().equals("gas")) {
+        this.dewPointType = "2 phase gas-oil dew point";
+      }
+    }
+  }
+
+  ArrayList<PhaseEnevelopePoint> data = new ArrayList<PhaseEnevelopePoint>();
 
   /**
    * <p>
@@ -43,8 +71,8 @@ public class pTphaseEnvelopeHCwater extends pTphaseEnvelope {
    * @param lowPres a double
    * @param bubfirst a boolean
    */
-  public pTphaseEnvelopeHCwater(SystemInterface system, String name, double phaseFraction, double lowPres,
-      boolean bubfirst) {
+  public pTphaseEnvelopeHCwater(SystemInterface system, String name, double phaseFraction,
+      double lowPres, boolean bubfirst) {
     super(system, name, phaseFraction, lowPres, bubfirst);
   }
 
@@ -70,30 +98,54 @@ public class pTphaseEnvelopeHCwater extends pTphaseEnvelope {
      */
 
 
-    // Step 1Tracing the dewline segments that separate the single-phase region from the
+    // Step 1.
+    // Tracing the dewline segments that separate the single-phase region from the
     // two-phase region (Lines I and II in Fig. 1).
     //
-    // setting pressure to 1.0 atm
-    system.setPressure(50.0, "atm");
-    // set temperature to 0C
     system.setTemperature(0.0, "C");
-    // initializing fluid and calculaton K-values accirding to Wilson
+    system.setPressure(lowPres, "atm");
+    // initializing fluid and calculaton K-values according to Wilson
     system.init(0);
+
     // Create a thermodynamic operation object for the fluid
-    ThermodynamicOperations ops = new ThermodynamicOperations(system);
-    // Calculate the dew point temprature of the fluid
+    ops = new ThermodynamicOperations(system);
+
+    // Initialize with threee steps along dew point line
+    startTraceDewPointLine();
+
+    double dewPointPressure = system.getPressure("bara");
+    // at the moment we use the HC phase envelope method in the super class
+    // super.run();
+  }
+
+  private void startTraceDewPointLine() {
+    for (int i = 0; i < 3; i++) {
+      // setting pressure to 1.0 atm
+      system.setPressure(lowPres + 1.0 * i, "atm");
+      // Calculate the dew point temprature of the fluid
+      try {
+        ops.dewPointTemperatureFlash(false);
+      } catch (Exception e) {
+        logger.error(e.toString());
+      }
+      if (checkForThreePhases()) {
+        break;
+      }
+      data.add(new PhaseEnevelopePoint(system));
+    }
+  }
+
+  private boolean checkForThreePhases() {
     try {
-      ops.dewPointTemperatureFlash(false);
+      ops.TPflash();
     } catch (Exception e) {
       logger.error(e.toString());
     }
-    double dewPointTemperature = system.getTemperature("C");
-    String dewPhaseType = system.getPhase(1).getPhaseTypeName();
-    double dewPointPressure = system.getPressure("bara");
-
-
-    //at the moment we use the HC phase envelope method in the super class
-    // super.run();
+    if (system.getNumberOfPhases() > 2) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
 }

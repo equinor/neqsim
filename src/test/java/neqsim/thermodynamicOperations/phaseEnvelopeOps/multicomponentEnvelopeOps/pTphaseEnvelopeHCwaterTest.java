@@ -32,6 +32,7 @@ public class pTphaseEnvelopeHCwaterTest {
     thermoSystem.addComponent("n-hexane", 0.01);
     thermoSystem.addComponent("water", 500e-4);
     thermoSystem.setMixingRule("classic");
+    thermoSystem.setMultiPhaseCheck(true);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
     testOps.calcPTphaseEnvelopeHCwater();
@@ -57,6 +58,7 @@ public class pTphaseEnvelopeHCwaterTest {
 
     thermoSystem.addComponent("water", 8.0);
     thermoSystem.setMixingRule(10);
+    thermoSystem.setMultiPhaseCheck(true);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
     testOps.calcPTphaseEnvelopeHCwater();
