@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -132,13 +133,10 @@ class TPFlashTest {
     testSystem5.setMultiPhaseCheck(true);
     testSystem5.setPressure(300.0, "bara");
     testSystem5.setTemperature(343.15, "K");
-
     testOps = new ThermodynamicOperations(testSystem5);
     testOps.TPflash();
     testSystem5.initProperties();
-    double beta = testSystem5.getBeta();
-    int numberOfPhases = testSystem5.getNumberOfPhases();
-    PhaseInterface[] phaseTypes = testSystem5.getPhases();
-    assertEquals(6.272876522701802E-7, beta, 1e-5);
+    assertEquals(0.27697023509412244, testSystem5.getBeta(), 1e-6);
+    assertEquals(3, testSystem5.getNumberOfPhases());
   }
 }
