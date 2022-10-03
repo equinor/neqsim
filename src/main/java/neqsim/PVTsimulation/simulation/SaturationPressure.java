@@ -100,7 +100,7 @@ public class SaturationPressure extends BasePVTsimulation {
         tempSystem.addPlusFraction("C11", 4.58, 256.2 / 1000.0, 0.8398);
         tempSystem.getCharacterization().characterisePlusFraction();
         tempSystem.createDatabase(true);
-        tempSystem.setMixingRule(9);// "HV", "UNIFAC_UMRPRU");
+        tempSystem.setMixingRule(9); // "HV", "UNIFAC_UMRPRU");
         tempSystem.init(0);
         tempSystem.init(1);
         //tempSystem.saveFluid(928);

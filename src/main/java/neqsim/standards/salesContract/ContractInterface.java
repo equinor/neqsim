@@ -3,6 +3,7 @@
  *
  * Created on 15. juni 2004, 21:43
  */
+
 package neqsim.standards.salesContract;
 
 /**

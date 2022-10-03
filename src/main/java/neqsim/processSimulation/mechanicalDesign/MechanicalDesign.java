@@ -424,7 +424,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * @return a double
    */
   public double getOuterDiameter() {
-    return 1.0;// processEquipment.getInternalDiameter();
+    return 1.0; // processEquipment.getInternalDiameter();
   }
 
   /**
@@ -1024,7 +1024,7 @@ public class MechanicalDesign implements java.io.Serializable {
     dialogContentPane.setLayout(new BorderLayout());
 
     String[] names = {"", "Volume", "Weight"};
-    String[][] table = new String[3][3];// createTable(getProcessEquipment().getName());
+    String[][] table = new String[3][3]; // createTable(getProcessEquipment().getName());
     table[1][0] = getProcessEquipment().getName();
     table[1][1] = Double.toString(getWeightTotal());
     table[1][2] = Double.toString(getVolumeTotal());

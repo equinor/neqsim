@@ -53,7 +53,7 @@ public class OsmoticCoefficient {
         // try{
         // // testOps.TPflash();
         // // testOps.calcSaltSaturation("NaCl");
-        // } catch(Exception e){
+        // } catch(Exception ex){
         // }
         testSystem.display();
 

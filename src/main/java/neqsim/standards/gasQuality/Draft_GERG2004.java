@@ -2,6 +2,8 @@ package neqsim.standards.gasQuality;
 
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -16,6 +18,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Draft_GERG2004 extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
+  static Logger logger = LogManager.getLogger(Draft_GERG2004.class);
+
   double specPressure = 70.0;
   double initTemperature = 273.15;
 
@@ -54,8 +58,8 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
     try {
       this.thermoOps.TPflash();
       thermoSystem.display();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 
@@ -109,7 +113,7 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
     nf.applyPattern("#.#####E0");
     String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
     // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
-    table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
+    table[0][0] = ""; // getPhases()[0].getPhaseTypeName(); //"";
 
     for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {

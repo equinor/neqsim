@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.separator;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -155,8 +156,8 @@ public class ThreePhaseSeparator extends Separator {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    inletStreamMixer.run();
+  public void run(UUID id) {
+    inletStreamMixer.run(id);
     thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
     thermoSystem.setMultiPhaseCheck(true);
@@ -182,32 +183,31 @@ public class ThreePhaseSeparator extends Separator {
     // //gasOutStream.setThermoSystem(gasSystem);
     if (thermoSystem.hasPhaseType("gas")) {
       gasOutStream.setThermoSystemFromPhase(thermoSystem, "gas");
-      gasOutStream.run();
+      gasOutStream.run(id);
     } else {
       gasOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }
-    // //gasOutStream.run();
 
     //// liquidSystem = thermoSystem.phaseToSystem(1);
     //// liquidOutStream.setThermoSystem(liquidSystem);
     if (thermoSystem.hasPhaseType("oil")) {
       // thermoSystem.display();
       liquidOutStream.setThermoSystemFromPhase(thermoSystem, "oil");
-      liquidOutStream.run();
+      liquidOutStream.run(id);
       // thermoSystem.display();
     } else {
       liquidOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }
-    // //liquidOutStream.run();
 
     //// waterSystem = thermoSystem.phaseToSystem(2);
     //// waterOutStream.setThermoSystem(waterSystem);
     if (thermoSystem.hasPhaseType("aqueous")) {
       waterOutStream.setThermoSystemFromPhase(thermoSystem, "aqueous");
-      waterOutStream.run();
+      waterOutStream.run(id);
     } else {
       waterOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

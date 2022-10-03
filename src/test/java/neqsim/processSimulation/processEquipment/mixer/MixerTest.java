@@ -1,6 +1,3 @@
-/**
- * 
- */
 package neqsim.processSimulation.processEquipment.mixer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +15,7 @@ class MixerTest {
   static neqsim.thermo.system.SystemInterface waterSystem;
   static Stream gasStream;
   static Stream waterStream;
+
   /**
    * @throws java.lang.Exception
    */
@@ -31,9 +29,9 @@ class MixerTest {
     testSystem.addTBPfraction("C10", 0.01, 0.366, 0.94);
     testSystem.setMixingRule(2);
     testSystem.setMultiPhaseCheck(true);
-    
+
     waterSystem = testSystem.clone();
-    waterSystem.setMolarComposition(new double[]{1.0, 0.0, 0.0,0.0, 0.0});
+    waterSystem.setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0, 0.0});
 
     gasStream = new Stream("turbine stream", testSystem);
     gasStream.setFlowRate(1.0, "MSm3/day");

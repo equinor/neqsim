@@ -100,7 +100,7 @@ public class AbsorberMechanicalDesign extends MechanicalDesign {
 
     double gasDensity = ((Separator) getProcessEquipment()).getGasOutStream().getThermoSystem()
         .getPhase(0).getPhysicalProperties().getDensity();
-    double liqDensity = 1000.0;// ((SimpleTEGAbsorber)
+    double liqDensity = 1000.0; // ((SimpleTEGAbsorber)
                                // getProcessEquipment()).getLiquidOutStream().getThermoSystem().getPhase(1).getPhysicalProperties().getDensity();
 
     // maxDesignVolumeFlow = volumeSafetyFactor * ((Separator)

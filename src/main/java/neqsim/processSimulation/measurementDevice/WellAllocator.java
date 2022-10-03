@@ -9,6 +9,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 public class WellAllocator extends MeasurementDeviceBaseClass {
 
+  private static final long serialVersionUID = 1L;
   protected StreamInterface wellStream = null;
   protected StreamInterface exportGasStream = null;
   protected StreamInterface exportOilStream = null;
@@ -16,7 +17,6 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
   public WellAllocator() {
     name = "Well Allocator";
   }
-
 
   public WellAllocator(StreamInterface stream) {
     name = "Well Allocator";
@@ -27,7 +27,6 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
     this(stream);
     name = streamname;
   }
-
 
   public void setExportGasStream(StreamInterface stream) {
     this.exportGasStream = stream;

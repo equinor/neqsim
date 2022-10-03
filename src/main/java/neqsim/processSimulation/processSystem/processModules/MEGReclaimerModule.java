@@ -1,5 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
+import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.pump.Pump;
@@ -19,10 +22,12 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  */
 public class MEGReclaimerModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(MEGReclaimerModule.class);
 
-  protected StreamInterface streamToReclaimer = null, streamToWaterRemoval = null,
-      streamFromBoosterCompressor = null, streamWithWaste = null;
-
+  protected StreamInterface streamToReclaimer = null;
+  protected StreamInterface streamToWaterRemoval = null;
+  protected StreamInterface streamFromBoosterCompressor = null;
+  protected StreamInterface streamWithWaste = null;
   ThrottlingValve inletValve = null;
   Mixer inletMixer = null;
   protected Separator flashSeparator = null;
@@ -71,8 +76,8 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
       this.streamWithWaste = (Stream) this.streamToReclaimer.clone();
       this.streamWithWaste.setName("Reclaimer Waste Stream");
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 
@@ -117,18 +122,19 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     if (!isInitializedModule) {
       initializeModule();
     }
     for (int i = 0; i < 2; i++) {
-      getOperations().run();
+      getOperations().run(id);
       flashSeparator.displayResult();
-      System.out.println("flow to vacum separator "
+      System.out.println("flow to vacuum separator "
           + inletMixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles());
     }
 
     streamToWaterRemoval = flashSeparator.getGasOutStream();
+    setCalculationIdentifier(id);
   }
 
   /**

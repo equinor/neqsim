@@ -76,8 +76,8 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     AtractiveTermMatCopPRUMRNew atractiveTerm = null;
     try {
       atractiveTerm = (AtractiveTermMatCopPRUMRNew) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return atractiveTerm;
@@ -163,7 +163,6 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
                 + 5 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / TcT
                 + 5.0 / 4.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / Tc2Trpower32);
   }
-
 
   @Override
   public double diffaT(double temperature) {

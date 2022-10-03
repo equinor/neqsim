@@ -3,6 +3,7 @@
  *
  * Created on 21. august 2001, 22:28
  */
+
 package neqsim.processSimulation.processEquipment.mixer;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
@@ -64,4 +65,6 @@ public interface MixerInterface extends ProcessEquipmentInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface getThermoSystem();
+  
+  public void removeInputStream(int i);
 }

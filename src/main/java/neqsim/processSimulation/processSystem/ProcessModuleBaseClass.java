@@ -3,8 +3,10 @@
  *
  * Created on 1. november 2006, 22:07
  */
+
 package neqsim.processSimulation.processSystem;
 
+import java.util.UUID;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
@@ -24,7 +26,9 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   private static final long serialVersionUID = 1000;
 
   protected String preferedThermodynamicModel = "";
-  protected boolean isInitializedModule = false, isInitializedStreams = false;
+  protected boolean isInitializedModule = false;
+  protected boolean isInitializedStreams = false;
+
   private boolean isCalcDesign = false;
   private neqsim.processSimulation.processSystem.ProcessSystem operations =
       new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -111,8 +115,8 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {
-    getOperations().runTransient(dt);
+  public void runTransient(double dt, UUID id) {
+    getOperations().runTransient(dt, id);
   }
 
   // TODO: Check if all the equipment is solved correctly
@@ -128,6 +132,12 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return null;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public String getSpecification() {
+    return null;
+  }
+
   /**
    * <p>
    * setSpecification.
@@ -137,12 +147,6 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    * @param value a double
    */
   public void setSpecification(String specificationName, double value) {}
-
-  /** {@inheritDoc} */
-  @Override
-  public String getSpecification() {
-    return null;
-  }
 
   /** {@inheritDoc} */
   @Override

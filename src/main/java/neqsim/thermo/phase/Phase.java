@@ -3,6 +3,7 @@
  *
  * Created on 8. april 2000, 23:38
  */
+
 package neqsim.thermo.phase;
 
 import java.util.ArrayList;
@@ -15,7 +16,6 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * @author Even Solbraa
  */
-
 abstract class Phase implements PhaseInterface {
   private static final long serialVersionUID = 1000;
 
@@ -77,8 +77,8 @@ abstract class Phase implements PhaseInterface {
 
     try {
       clonedPhase = (Phase) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     clonedPhase.componentArray = this.componentArray.clone();
@@ -109,7 +109,7 @@ abstract class Phase implements PhaseInterface {
   @Override
   public void removeComponent(String componentName, double moles, double molesInPhase,
       int compNumber) {
-    componentName = ComponentInterface.getComponentName(componentName);
+    componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
     ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();
 
@@ -124,7 +124,7 @@ abstract class Phase implements PhaseInterface {
         this.componentArray[i] = temp.get(i);
         this.getComponent(i).setComponentNumber(i);
       }
-    } catch (Exception e) {
+    } catch (Exception ex) {
       logger.error("not able to remove " + componentName);
     }
 
@@ -166,16 +166,16 @@ abstract class Phase implements PhaseInterface {
     if (numberOfMolesInPhase < 0.0 || getComponent(component).getNumberOfMolesInPhase() < 0.0) {
       String msg = "Negative number of moles in phase.";
       logger.error(msg);
-      neqsim.util.exception.InvalidInputException e =
+      neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", msg);
-      throw new RuntimeException(e);
+      throw new RuntimeException(ex);
     }
     if (getComponent(component).getNumberOfMolesInPhase() < 0.0) {
       String msg = "Negative number of moles of component " + component;
       logger.error(msg);
-      neqsim.util.exception.InvalidInputException e =
+      neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", msg);
-      throw new RuntimeException(e);
+      throw new RuntimeException(ex);
     }
   }
 
@@ -307,14 +307,18 @@ abstract class Phase implements PhaseInterface {
     double[] comp = new double[getNumberOfComponents()];
 
     for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
-      if (unit.equals("molefraction"))
+      if (unit.equals("molefraction")) {
         comp[compNumb] = getComponent(compNumb).getx();
-      if (unit.equals("wtfraction"))
+      }
+      if (unit.equals("wtfraction")) {
         comp[compNumb] = getWtFrac(compNumb);
-      if (unit.equals("molespersec"))
+      }
+      if (unit.equals("molespersec")) {
         comp[compNumb] = getWtFrac(compNumb);
-      if (unit.equals("volumefraction"))
+      }
+      if (unit.equals("volumefraction")) {
         comp[compNumb] = getComponent(compNumb).getVoli() / getVolume();
+      }
     }
     return comp;
   }
@@ -476,25 +480,7 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getg() {
     return 1;
   }
 
@@ -541,6 +527,24 @@ abstract class Phase implements PhaseInterface {
   public double calcAij(int compNumb, int j, PhaseInterface phase, double temperature,
       double pressure, int numbcomp) {
     return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    return 1;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    return 1;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getg() {
+    return 1;
   }
 
   /** {@inheritDoc} */
@@ -953,6 +957,8 @@ abstract class Phase implements PhaseInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
         break;
+      default:
+        break;
     }
     return refCp * conversionFactor;
   }
@@ -980,6 +986,8 @@ abstract class Phase implements PhaseInterface {
         break;
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+        break;
+      default:
         break;
     }
     return refCv * conversionFactor;
@@ -1020,6 +1028,8 @@ abstract class Phase implements PhaseInterface {
         break;
       case "kJ/kg":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+        break;
+      default:
         break;
     }
     return refEnthalpy * conversionFactor;
@@ -1105,6 +1115,8 @@ abstract class Phase implements PhaseInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
         break;
+      default:
+        break;
     }
     return refEntropy * conversionFactor;
   }
@@ -1153,13 +1165,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  @Deprecated
-  public double getConductivity() {
-    return getPhysicalProperties().getConductivity();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getThermalConductivity(String unit) {
     double refConductivity = getThermalConductivity(); // conductivity in W/m*K
     double conversionFactor = 1.0;
@@ -1174,6 +1179,13 @@ abstract class Phase implements PhaseInterface {
         throw new RuntimeException();
     }
     return refConductivity * conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  @Deprecated
+  public double getConductivity() {
+    return getPhysicalProperties().getConductivity();
   }
 
   /** {@inheritDoc} */
@@ -1216,8 +1228,8 @@ abstract class Phase implements PhaseInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       try {
         refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();
-      } catch (Exception e) {
-        logger.error("err " + e.toString());
+      } catch (Exception ex) {
+        logger.error("err " + ex.toString());
       }
       refPhase[i].setTemperature(temperature);
       refPhase[i].setPressure(pressure);
@@ -1451,8 +1463,8 @@ abstract class Phase implements PhaseInterface {
         ions += getComponent(j).getx();
       }
     }
-    return -Math.log(oldFug * getComponent(watNumb).getx() / pureFug)
-        * getComponent(watNumb).getx() / ions;
+    return -Math.log(oldFug * getComponent(watNumb).getx() / pureFug) * getComponent(watNumb).getx()
+        / ions;
   }
 
   // public double getOsmoticCoefficient(int watNumb, String refState){
@@ -1462,7 +1474,8 @@ abstract class Phase implements PhaseInterface {
   // double ions=0.0;
   // for(int j=0;j<this.numberOfComponents;j++){
   // if(getComponent(j).getIonicCharge()!=0) ions +=
-  // getComponent(j).getNumberOfMolesInPhase()/getComponent(watNumb).getNumberOfMolesInPhase()/getComponent(watNumb).getMolarMass();//*Math.abs(getComponent(j).getIonicCharge());
+  // getComponent(j).getNumberOfMolesInPhase()/getComponent(watNumb).getNumberOfMolesInPhase()/getComponent(watNumb).getMolarMass();
+  // //*Math.abs(getComponent(j).getIonicCharge());
   // }
   // double val = - Math.log(oldFug*getComponent(watNumb).getx()/pureFug) *
   // 1.0/ions/getComponent(watNumb).getMolarMass();
@@ -1538,6 +1551,8 @@ abstract class Phase implements PhaseInterface {
         break;
       case "C/bar":
         conversionFactor = 1.0;
+        break;
+      default:
         break;
     }
     return JTcoef * conversionFactor;
@@ -1741,12 +1756,14 @@ abstract class Phase implements PhaseInterface {
           return componentArray[i];
         }
       }
-      logger.error("could not find component... " + name + " ..returning null");
-    } catch (Exception e) {
-      logger.error("component not found.... " + name);
-      logger.error("returning first component..." + componentArray[0].getName(), e);
+      logger.error("could not find component " + name + ", returning null");
+      throw new Exception("component not in fluid... " + name);
+    } catch (Exception ex) {
+      logger.debug(ex.getMessage());
+      logger.error("component not found... " + name);
+      logger.error("returning first component... " + componentArray[0].getName(), ex);
     }
-    return componentArray[0];
+    return null;
   }
 
   /** {@inheritDoc} */
@@ -1971,6 +1988,8 @@ abstract class Phase implements PhaseInterface {
         break;
       case "litre":
         conversionFactor = 1000.0;
+        break;
+      default:
         break;
     }
     return conversionFactor * getVolume() / 1.0e5;

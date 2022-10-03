@@ -40,8 +40,6 @@ class SystemPrEoSTest extends neqsim.NeqSimTest{
     @DisplayName("test a TPflash2")
     public void testTPflash2() {
 
-
-
         assertEquals(2, testSystem.getNumberOfPhases());
     }
 

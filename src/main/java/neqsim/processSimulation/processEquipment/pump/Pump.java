@@ -4,6 +4,7 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -65,7 +66,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
   /**
    * Constructor for Pump.
-   * 
+   *
    * @param name name of pump
    */
   public Pump(String name) {
@@ -153,7 +154,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     // System.out.println("pump running..");
     inStream.getThermoSystem().init(3);
     double hinn = inStream.getThermoSystem().getEnthalpy();
@@ -217,8 +218,10 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     // thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
     outStream.setThermoSystem(thermoSystem);
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
 
-    // outStream.run();
+    // outStream.run(id);
   }
 
   /** {@inheritDoc} */
@@ -376,10 +379,11 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * @return a double
    */
   public double getOutTemperature() {
-    if (useOutTemperature)
+    if (useOutTemperature) {
       return outTemperature;
-    else
+    } else {
       return getThermoSystem().getTemperature();
+    }
   }
 
   /**

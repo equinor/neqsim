@@ -20,80 +20,78 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class TestCPAParameterFittingToDewPointData {
-    static Logger logger = LogManager.getLogger(TestCPAParameterFittingToDewPointData.class);
+  static Logger logger = LogManager.getLogger(TestCPAParameterFittingToDewPointData.class);
 
-    /**
-     * <p>
-     * Constructor for TestCPAParameterFittingToDewPointData.
-     * </p>
-     */
-    public TestCPAParameterFittingToDewPointData() {}
+  /**
+   * <p>
+   * Constructor for TestCPAParameterFittingToDewPointData.
+   * </p>
+   */
+  public TestCPAParameterFittingToDewPointData() {}
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String[] args) {
+    LevenbergMarquardt optim = new LevenbergMarquardt();
+    ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-        // inserting samples from database
-        NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet(
-                "SELECT * FROM waterdewpointpaper WHERE gascomponent='nitrogen' AND reference='Gil'");
+    // inserting samples from database
+    NeqSimDataBase database = new NeqSimDataBase();
 
-        try {
-            int p = 0;
-            logger.info("adding....");
-            while (dataSet.next() && p < 500) {
-                p++;
-                CPAParameterFittingToDewPointData function =
-                        new CPAParameterFittingToDewPointData();
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM waterdewpointpaper WHERE gascomponent='nitrogen' AND reference='Gil'")) {
+      int p = 0;
+      logger.info("adding....");
+      while (dataSet.next() && p < 500) {
+        p++;
+        CPAParameterFittingToDewPointData function = new CPAParameterFittingToDewPointData();
 
-                // SystemInterface testSystem = new
-                // SystemSrkCPAstatoil(Double.parseDouble(dataSet.getString("temperature")),
-                // Double.parseDouble(dataSet.getString("Pressure"))*10.0);
-                SystemInterface testSystem =
-                        new SystemGERGwaterEos(Double.parseDouble(dataSet.getString("temperature")),
-                                Double.parseDouble(dataSet.getString("Pressure")) * 10.0);
-                // SystemInterface testSystem = new SystemSrkEos(290, 1.0);
-                double valueppm = Double.parseDouble(dataSet.getString("ywater")) * 1.0e3;
-                testSystem.addComponent(dataSet.getString("gascomponent"), 1.0 - valueppm / 1.0e6);
-                testSystem.addComponent("water", valueppm / 1.0e6);
+        // SystemInterface testSystem = new
+        // SystemSrkCPAstatoil(Double.parseDouble(dataSet.getString("temperature")),
+        // Double.parseDouble(dataSet.getString("Pressure"))*10.0);
+        SystemInterface testSystem =
+            new SystemGERGwaterEos(Double.parseDouble(dataSet.getString("temperature")),
+                Double.parseDouble(dataSet.getString("Pressure")) * 10.0);
+        // SystemInterface testSystem = new SystemSrkEos(290, 1.0);
+        double valueppm = Double.parseDouble(dataSet.getString("ywater")) * 1.0e3;
+        testSystem.addComponent(dataSet.getString("gascomponent"), 1.0 - valueppm / 1.0e6);
+        testSystem.addComponent("water", valueppm / 1.0e6);
 
-                // testSystem.setSolidPhaseCheck(true);
-                // testSystem.setHydrateCheck(true);
-                testSystem.createDatabase(true);
-                testSystem.setMixingRule(8);
+        // testSystem.setSolidPhaseCheck(true);
+        // testSystem.setHydrateCheck(true);
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(8);
 
-                testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
+        testSystem.init(0);
+        double[] sample1 = {testSystem.getPressure(), testSystem.getTemperature()};
 
-                double standardDeviation1[] = {0.13};
-                SampleValue sample = new SampleValue(testSystem.getTemperature(), 1.0, sample1,
-                        standardDeviation1);
-                sample.setFunction(function);
-                sample.setThermodynamicSystem(testSystem);
-                sample.setDescription(Double.toString(valueppm));
-                sample.setReference(dataSet.getString("reference"));
+        double[] standardDeviation1 = {0.13};
+        SampleValue sample =
+            new SampleValue(testSystem.getTemperature(), 1.0, sample1, standardDeviation1);
+        sample.setFunction(function);
+        sample.setThermodynamicSystem(testSystem);
+        sample.setDescription(Double.toString(valueppm));
+        sample.setReference(dataSet.getString("reference"));
 
-                double parameterGuess[] = {0.001}; // cpa
-                function.setInitialGuess(parameterGuess);
-                sampleList.add(sample);
-            }
-        } catch (Exception e) {
-            logger.error("database error" + e);
-        }
-
-        SampleSet sampleSet = new SampleSet(sampleList);
-        optim.setSampleSet(sampleSet);
-
-        // do simulations
-        // optim.solve();
-        // optim.runMonteCarloSimulation();
-        optim.displayCurveFit();
+        double[] parameterGuess = {0.001}; // cpa
+        function.setInitialGuess(parameterGuess);
+        sampleList.add(sample);
+      }
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
+
+    SampleSet sampleSet = new SampleSet(sampleList);
+    optim.setSampleSet(sampleSet);
+
+    // do simulations
+    // optim.solve();
+    // optim.runMonteCarloSimulation();
+    optim.displayCurveFit();
+  }
 }

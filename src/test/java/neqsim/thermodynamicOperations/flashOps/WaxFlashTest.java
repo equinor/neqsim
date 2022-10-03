@@ -1,14 +1,10 @@
-/**
- * 
- */
 package neqsim.thermodynamicOperations.flashOps;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
@@ -18,6 +14,7 @@ import neqsim.util.database.NeqSimDataBase;
  *
  */
 class WaxFlashTest {
+  static Logger logger = LogManager.getLogger(WaxFlashTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
@@ -27,7 +24,8 @@ class WaxFlashTest {
    */
   @BeforeEach
   void setUp() throws Exception {
-    NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/programming/neqsim/src/main/resources/data/neqsimtestdatabase");
+    NeqSimDataBase.setConnectionString(
+        "jdbc:derby:C:/Users/esol/OneDrive - Equinor/programming/neqsim/src/main/resources/data/neqsimtestdatabase");
     NeqSimDataBase.setCreateTemporaryTables(true);
 
     testSystem = new SystemSrkEos(273.0 + 30, 50.0);
@@ -51,7 +49,7 @@ class WaxFlashTest {
     testSystem.setMultiphaseWaxCheck(true);
     NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimthermodatabase");
     NeqSimDataBase.setCreateTemporaryTables(false);
-    //testSystem.display();
+    // testSystem.display();
   }
 
   /**
@@ -62,10 +60,10 @@ class WaxFlashTest {
   void testRun() {
     testOps = new ThermodynamicOperations(testSystem);
     try {
-        testOps.calcWAT();
-        testOps.TPflash();
-    } catch (Exception e) {
-        e.printStackTrace();
+      testOps.calcWAT();
+      testOps.TPflash();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     double waxVolumeFrac = 0;
     if (testSystem.hasPhaseType("wax")) {

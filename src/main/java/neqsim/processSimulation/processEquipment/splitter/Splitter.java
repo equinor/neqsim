@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.splitter;
 
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
@@ -19,7 +20,12 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Splitter extends ProcessEquipmentBaseClass implements SplitterInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Splitter.class);
-  SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
+
+  SystemInterface thermoSystem;
+  SystemInterface gasSystem;
+  SystemInterface waterSystem;
+  SystemInterface liquidSystem;
+  SystemInterface thermoSystemCloned;
   StreamInterface inletStream;
   StreamInterface[] splitStream;
   protected int splitNumber = 1;
@@ -50,7 +56,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /**
    * Constructor for Splitter.
-   * 
+   *
    * @param name name of splitter
    */
   public Splitter(String name) {
@@ -59,7 +65,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /**
    * Constructor for Splitter.
-   * 
+   *
    * @param name name of splitter
    * @param inStream input stream
    */
@@ -125,8 +131,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         // System.out.println("splitting...." + i);
         splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 
@@ -138,21 +144,21 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     double totSplit = 0.0;
     for (int i = 0; i < splitNumber; i++) {
-      if(splitFactor[i]<0) {
+      if (splitFactor[i] < 0) {
         logger.debug("split factor negative = " + splitFactor[i]);
         splitFactor[i] = 0.0;
       }
       totSplit += splitFactor[i];
     }
-    if(Math.abs(totSplit-1.0)>1e-10) {
+    if (Math.abs(totSplit - 1.0) > 1e-10) {
       logger.debug("total split factor different from 0 in splitter - totsplit = " + totSplit);
       logger.debug("setting first split to = " + (1.0 - totSplit));
       splitFactor[0] = 1.0 - totSplit;
     }
-    
+
     for (int i = 0; i < splitNumber; i++) {
       thermoSystem = inletStream.getThermoSystem().clone();
       thermoSystem.init(0);
@@ -166,6 +172,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
           new ThermodynamicOperations(splitStream[i].getThermoSystem());
       thermoOps.TPflash();
     }
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
