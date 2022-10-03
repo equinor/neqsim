@@ -11,5 +11,8 @@
     "editor.detectIndentation": false,
     "java.checkstyle.version": "10.3",
     "java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
-    "java.debug.settings.hotCodeReplace": "never"
+    "java.debug.settings.hotCodeReplace": "never",
+    "githubPullRequests.ignoredPullRequestBranches": [
+      "master"
+    ]
 }
