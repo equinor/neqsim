@@ -119,6 +119,20 @@ public class pTphaseEnvelopeHCwater extends pTphaseEnvelope {
   }
 
   private void startTraceDewPointLine() {
+    double highDewPointTemperature = 0.0;
+    system.setPressure(lowPres);
+
+    try {
+      ops.dewPointTemperatureFlash(false);
+    } catch (Exception e) {
+      logger.error(e.toString());
+    }
+
+    
+
+
+
+
     for (int i = 0; i < 3; i++) {
       // setting pressure to 1.0 atm
       system.setPressure(lowPres + 1.0 * i, "atm");
