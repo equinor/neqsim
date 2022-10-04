@@ -15,7 +15,9 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
 
   double[][] hydratePoints = null;
-  double minPressure = 1.0, maxPressure = 200.0;
+  double minPressure = 1.0;
+  double maxPressure = 200.0;
+
   int numberOfPoints = 10;
 
   /**
