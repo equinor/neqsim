@@ -77,16 +77,18 @@ public class PHflashGERG2008 extends Flash {
    * @return a double
    */
   public double solveQ() {
-    double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
+    double oldTemp = 1.0 / system.getTemperature();
+    double nyTemp = 1.0 / system.getTemperature();
     double iterations = 1;
-    double error = 1.0, erorOld = 1.0e10;
+    double error = 1.0;
+    double erorOld = 1.0e10;
     double factor = 0.8;
     double newCorr = 1.0;
     system.init(2);
     boolean correctFactor = true;
 
-    double maxTemperature = 1e10, minTemperature = 0.0;
-
+    double maxTemperature = 1e10;
+    double minTemperature = 0.0;
     do {
       if (Math.abs(error) > Math.abs(erorOld) && factor > 0.1 && correctFactor) {
         factor *= 0.5;
@@ -97,8 +99,7 @@ public class PHflashGERG2008 extends Flash {
       oldTemp = nyTemp;
       double[] gergProps = system.getPhase(0).getProperties_GERG2008();
       cP_GERG2008 = gergProps[10] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
-      enthalpy_GERG2008 = gergProps[7] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol
-                                                                                       // K
+      enthalpy_GERG2008 = gergProps[7] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
@@ -152,9 +153,11 @@ public class PHflashGERG2008 extends Flash {
    * @return a double
    */
   public double solveQ2() {
-    double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
+    double oldTemp = 1.0 / system.getTemperature();
+    double nyTemp = 1.0 / system.getTemperature();
     double iterations = 1;
-    double error = 1.0, erorOld = 1.0e10;
+    double error = 1.0;
+    double erorOld = 1.0e10;
     double factor = 0.8;
     double newCorr = 1.0;
     system.init(2);
