@@ -33,7 +33,8 @@ public class StreamSaturatorUtilTest {
     processOps.run();
 
     assertEquals(0.0012319218375683974,
-        streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx());
+        streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx(),
+        1e-16);
 
   }
 
