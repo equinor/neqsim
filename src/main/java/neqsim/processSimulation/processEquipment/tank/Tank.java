@@ -19,7 +19,11 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Tank extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
 
-  SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
+  SystemInterface thermoSystem;
+  SystemInterface gasSystem;
+  SystemInterface waterSystem;
+  SystemInterface liquidSystem;
+  SystemInterface thermoSystemCloned;
   Stream gasOutStream;
   Stream liquidOutStream;
   private int numberOfInputStreams = 0;
@@ -28,10 +32,17 @@ public class Tank extends ProcessEquipmentBaseClass {
   private double liquidCarryoverFraction = 0.0;
   private double gasCarryunderFraction = 0.0;
   private double volume = 136000.0;
-  double steelWallTemperature = 298.15, steelWallMass = 1840.0 * 1000.0, steelWallArea = 15613.0,
-      heatTransferNumber = 5.0, steelCp = 450.0;
-  double separatorLength = 40.0, separatorDiameter = 60.0;
-  double liquidVolume = 235.0, gasVolume = 15.0;
+  double steelWallTemperature = 298.15;
+  double steelWallMass = 1840.0 * 1000.0;
+  double steelWallArea = 15613.0;
+  double heatTransferNumber = 5.0;
+  double steelCp = 450.0;
+
+  double separatorLength = 40.0;
+  double separatorDiameter = 60.0;
+  double liquidVolume = 235.0;
+  double gasVolume = 15.0;
+
   private double liquidLevel = liquidVolume / (liquidVolume + gasVolume);
 
   /**
@@ -60,7 +71,7 @@ public class Tank extends ProcessEquipmentBaseClass {
 
   /**
    * Constructor for Tank.
-   * 
+   *
    * @param name name of tank
    */
   public Tank(String name) {
