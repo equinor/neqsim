@@ -78,16 +78,18 @@ public class PHflash extends Flash {
    * @return a double
    */
   public double solveQ() {
-    double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
+    double oldTemp = 1.0 / system.getTemperature();
+    double nyTemp = 1.0 / system.getTemperature();
     double iterations = 1;
-    double error = 1.0, erorOld = 1.0e10;
+    double error = 1.0;
+    double erorOld = 1.0e10;
     double factor = 0.8;
     double newCorr = 1.0;
     system.init(2);
     boolean correctFactor = true;
-
-    double maxTemperature = 1e10, minTemperature = 0.0;
-
+    double maxTemperature = 1e10;
+    double minTemperature = 0.0;
+    
     do {
       if (Math.abs(error) > Math.abs(erorOld) && factor > 0.1 && correctFactor) {
         factor *= 0.5;
@@ -144,9 +146,11 @@ public class PHflash extends Flash {
    * @return a double
    */
   public double solveQ2() {
-    double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
+    double oldTemp = 1.0 / system.getTemperature();
+    double nyTemp = 1.0 / system.getTemperature();
     double iterations = 1;
-    double error = 1.0, erorOld = 1.0e10;
+    double error = 1.0;
+    double erorOld = 1.0e10;
     double factor = 0.8;
     double newCorr = 1.0;
     system.init(2);
