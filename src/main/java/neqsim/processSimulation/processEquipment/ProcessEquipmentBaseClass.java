@@ -191,12 +191,20 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public double getPressure() {
-    return 1.0;
+    return getFluid().getPressure();
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setPressure(double pressure) {}
+   public double getPressure(String unit) {
+     return getFluid().getPressure(unit);
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public void setPressure(double pressure) {
+     getFluid().setPressure(pressure);
+   }
 
   /** {@inheritDoc} */
   @Override
@@ -253,12 +261,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
     return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
         && Objects.equals(controller, other.controller)
