@@ -1,12 +1,13 @@
 package neqsim.processSimulation;
 
+import java.io.Serializable;
 import java.util.UUID;
 import neqsim.util.NamedInterface;
 
 /**
  * Interface for simulation objects.
  */
-public interface SimulationInterface extends NamedInterface, Runnable {
+public interface SimulationInterface extends NamedInterface, Runnable, Serializable {
   /**
    * Getter for property calcIdentifier.
    *
