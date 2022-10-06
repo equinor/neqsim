@@ -223,4 +223,16 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   public String[][] getResultTable() {
     return null;
   }
+
+  /**
+   * <p>
+   * getPressure.
+   * </p>
+   * 
+   * @param unit a {@link java.lang.String} object
+   * 
+   **/
+  public double getPressure(String unit) {
+    return 1.0;
+  }
 }
