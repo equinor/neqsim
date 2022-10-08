@@ -53,6 +53,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private boolean useGERG2008 = false;
   private String pressureUnit = "bara";
   private String polytropicMethod = "detailed";
+  private int inletStreamNumberOfPhases;
 
   /**
    * <p>
@@ -345,7 +346,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     double densInn = getThermoSystem().getDensity();
     double entropy = getThermoSystem().getEntropy();
 
-    if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+    if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
       double[] gergProps;
       gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
       hinn = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
@@ -371,13 +372,13 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         double MW = thermoSystem.getMolarMass();
         thermoSystem.setPressure(getOutletPressure(), pressureUnit);
         thermoOps.PSflash(entropy);
-        if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+        if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           thermoOps.PSflashGERG2008(entropy);
         }
         thermoSystem.initPhysicalProperties("density");
         double densOutIsentropic = thermoSystem.getDensity("kg/m3");
         double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
-        if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+        if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           double[] gergProps;
           gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
           densOutIsentropic = getThermoSystem().getPhase(0).getDensity_GERG2008();
@@ -390,7 +391,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         thermoSystem.initPhysicalProperties("density");
         double outEnthalpy = thermoSystem.getEnthalpy();
         double densOut = thermoSystem.getDensity("kg/m3");
-        if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+        if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           double[] gergProps;
           gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
           outEnthalpy = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
@@ -451,7 +452,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         } else {
           kappa = thermoSystem.getGamma2();
         }
-        if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+        if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           double[] gergProps;
           gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
           actualFlowRate *= gergProps[1] / z_inlet;
@@ -508,7 +509,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         thermoSystem.setPressure(pressure, pressureUnit);
         thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps.PHflash(hout, 0);
-        if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+        if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           thermoOps.PHflashGERG2008(hout);
         }
       } else {
@@ -519,7 +520,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           for (int i = 0; i < numbersteps; i++) {
             entropy = getThermoSystem().getEntropy();
             hinn = getThermoSystem().getEnthalpy();
-            if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+            if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
               double[] gergProps;
               gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
               hinn = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
@@ -527,7 +528,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
             }
             getThermoSystem().setPressure(getThermoSystem().getPressure() + dp, pressureUnit);
             thermoOps = new ThermodynamicOperations(getThermoSystem());
-            if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+            if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
               thermoOps.PSflashGERG2008(entropy);
             } else {
               double oleTemp = getThermoSystem().getTemperature();
@@ -540,14 +541,14 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
               }
             }
             double newEnt = getThermoSystem().getEnthalpy();
-            if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+            if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
               double[] gergProps;
               gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
               newEnt = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
             }
             double hout = hinn + (newEnt - hinn) / polytropicEfficiency;
             thermoOps.PHflash(hout, 0);
-            if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+            if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
               thermoOps.PHflashGERG2008(hout);
             }
             if (propertyProfile.isActive()) {
@@ -565,7 +566,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           thermoSystem.initProperties();
           double densOutIsentropic = thermoSystem.getDensity("kg/m3");
           double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
-          if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+          if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PSflashGERG2008(entropy);
             double[] gergProps;
             gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
@@ -587,7 +588,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           double hout = hinn + dH;
           thermoOps = new ThermodynamicOperations(getThermoSystem());
           thermoOps.PHflash(hout, 0);
-          if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+          if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PHflashGERG2008(hout);
           }
         } else {
@@ -596,7 +597,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           thermoSystem.initProperties();
           double densOutIsentropic = thermoSystem.getDensity("kg/m3");
           double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
-          if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+          if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PSflashGERG2008(entropy);
             double[] gergProps;
             gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
@@ -615,7 +616,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           double hout = hinn + dH;
           thermoOps = new ThermodynamicOperations(getThermoSystem());
           thermoOps.PHflash(hout, 0);
-          if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+          if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PHflashGERG2008(hout);
           }
         }
@@ -625,14 +626,14 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       // System.out.println("entropy inn.." + entropy);
       thermoOps = new ThermodynamicOperations(getThermoSystem());
       thermoOps.PSflash(entropy);
-      if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+      if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
         thermoOps.PSflashGERG2008(entropy);
       }
       // double densOutIdeal = getThermoSystem().getDensity();
       double newEnt = getThermoSystem().getEnthalpy();
       if (!powerSet) {
         dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
-        if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+        if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           double[] gergProps;
           gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
           newEnt = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
@@ -644,7 +645,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       dH = hout - hinn;
       thermoOps = new ThermodynamicOperations(getThermoSystem());
       thermoOps.PHflash(hout, 0);
-      if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+      if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
         thermoOps.PHflashGERG2008(hout);
       }
     }
@@ -848,7 +849,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     if (getAntiSurge().isActive()) {
       multi = 1.0 + getAntiSurge().getCurrentSurgeFraction();
     }
-    if (useGERG2008 && thermoSystem.getNumberOfPhases() == 1) {
+    if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
       double[] gergProps;
       gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
       double enth = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
