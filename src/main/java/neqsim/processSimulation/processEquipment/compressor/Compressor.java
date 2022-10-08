@@ -53,7 +53,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private boolean useGERG2008 = false;
   private String pressureUnit = "bara";
   private String polytropicMethod = "detailed";
-  private int inletStreamNumberOfPhases;
 
   /**
    * <p>
