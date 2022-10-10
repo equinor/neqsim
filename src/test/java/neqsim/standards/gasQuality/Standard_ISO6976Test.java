@@ -60,7 +60,7 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
     standard.setReferenceType("volume");
     standard.calculate();
     double GCV = standard.getValue("GCV");
-    double WI = standard.getValue("WI");
+    standard.getValue("WI");
     assertEquals(39614.56783352743, GCV, 0.01);
     energyReferenceState = 15.15; // example of wrong reference condition
     volumeReferenceState = 1.15; // example of wrong volume reference condition
@@ -90,7 +90,7 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
     standard.setReferenceType("volume");
     standard.calculate();
     double GCV = standard.getValue("GCV");
-    double WI = standard.getValue("WI");
+    standard.getValue("WI");
     assertEquals(42377.76099372482, GCV, 0.01);
   }
 

@@ -45,6 +45,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
           dataSet.getString("ID");
         } catch (Exception ex) {
           logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
+          dataSet.close();
           dataSet =
               database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
           dataSet.next();
