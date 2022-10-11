@@ -42,10 +42,6 @@
 			<id>central</id>
 			<url>https://repo1.maven.org/maven2/</url>
 		</repository>
-		<repository>
-			<id>github</id>
-			<url>https://maven.pkg.github.com/Equinor/</url>
-		</repository>
 	</repositories>
 	<dependencies>
 		<dependency>
@@ -63,11 +59,6 @@
 			<artifactId>junit-jupiter</artifactId>
 			<version>5.8.2</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.equinor</groupId>
-			<artifactId>neqsim</artifactId>
-			<version>2.4.0</version>
 		</dependency>
 		<dependency>
 			<groupId>colt</groupId>
