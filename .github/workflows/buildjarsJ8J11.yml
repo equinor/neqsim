@@ -12,9 +12,8 @@ jobs:
           java-version: 11
       - name: Build with Maven
         run: mvn -B package --file pom.xml
-      - name: savelibJ11
-        run: mkdir staging && cp target/*.jar staging
-        uses: actions/upload-artifact@v2
+      - run: mkdir staging && cp target/*.jar staging
+      - uses: actions/upload-artifact@v2
         with:
           name: jarfiles
           path: staging
