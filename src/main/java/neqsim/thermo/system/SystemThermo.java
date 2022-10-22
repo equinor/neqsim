@@ -661,7 +661,11 @@ abstract class SystemThermo implements SystemInterface {
     if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("Am3/sec")) {
       initPhysicalProperties("density");
     }
+
     density = getPhase(0).getDensity("kg/m3");
+    if (flowunit.equals("idSm3/hr")) {
+      density = getIdealLiquidDensity("kg/m3");
+    }
     neqsim.util.unit.Unit unit =
         new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), density, 0);
     double SIval = unit.getSIvalue();

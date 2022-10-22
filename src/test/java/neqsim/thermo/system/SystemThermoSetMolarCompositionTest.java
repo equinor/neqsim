@@ -94,5 +94,11 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest{
       assertEquals(0.8762236458342041, liqDensity, 1e-3);
       liqDensity = sys.getIdealLiquidDensity("kg/m3");
       assertEquals(876.2236458342041, liqDensity, 1e-3);
+
+      sys.setTotalFlowRate(1000.0, "idSm3/hr");
+
+      double flowRate = sys.getFlowRate("kg/hr");
+
+      assertEquals(876223.6458342039, flowRate, 1e-3);
     }
 }
