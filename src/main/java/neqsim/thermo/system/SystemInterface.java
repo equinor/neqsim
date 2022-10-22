@@ -667,7 +667,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param flowRate a double
-   * @param flowunit a {@link java.lang.String} object
+   * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr
+   *        m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr, Sm3/hr, Sm3/day, idSm3/hr, idSm3/day
+   * 
+   * 
    */
   public void setTotalFlowRate(double flowRate, String flowunit);
 
@@ -2525,4 +2528,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
       double[] relativedensity);
+
+  /**
+   * <p>
+   * getIdealLiquidDensity.
+   * </p>
+   * 
+   * @param {@link java.lang.String} object Supported units are kg/m3 and gr/cm3
+   * 
+   *        Return normal liquid density of fluid
+   * 
+   */
+  public double getIdealLiquidDensity(String unit);
 }
