@@ -2525,4 +2525,13 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
       double[] relativedensity);
+
+  /**
+   * <p>
+   * getIdealLiquidDensity.
+   * </p>
+   * Return normal liquid density of fluid 
+   * 
+   */
+  public double getIdealLiquidDensity(String unit);
 }

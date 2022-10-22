@@ -5223,4 +5223,25 @@ abstract class SystemThermo implements SystemInterface {
     addOilFractions(charNames, charFlowrate, molarMass, relativedensity, lastIsPlusFraction, true,
         12);
   }
+
+  /*
+   * <p> getIdealLiquidDensity. </p> Return normal liquid density of fluid in given unit
+   * 
+   */
+  public double getIdealLiquidDensity(String unit) {
+    double normalLiquidDensity = 0.0;
+    double molarMass = getMolarMass();
+    for (int i = 0; i < getNumberOfComponents(); i++) {
+      normalLiquidDensity += getComponent(i).getNormalLiquidDensity() * getComponent(i).getz()
+          * getComponent(i).getMolarMass() / molarMass;
+    }
+    if (unit.equals("gr/cm3"))
+      return normalLiquidDensity;
+    else if (unit.equals("kg/m3"))
+      return normalLiquidDensity * 1000.0;
+    else {
+      logger.error("unit not supported: " + unit);
+      return normalLiquidDensity;
+    }
+  }
 }
