@@ -7,6 +7,25 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/*
+ * https://www.ihsenergy.ca/support/documentation_ca/Piper/2018_1/Content/HTML_Files/Reference%20materials/Pressure_loss_correlations/c-te-pressure.htm
+ *
+ */
+
+/*
+ * For multiphase flow, many of the published correlations are applicable for "vertical flow" only, while others apply for "horizontal flow" only. Few correlations apply to 
+ * the whole spectrum of flow situations that may be encountered in oil and gas operations, namely uphill, downhill, horizontal, inclined and vertical flow. The Beggs and Brill (1973) 
+ * correlation, is one of the few published correlations capable of handling all these flow directions. It was developed using 1" and 1-1/2" sections of pipe that could be inclined at
+ *  any angle from the horizontal.
+
+The Beggs and Brill multiphase correlation deals with both the friction pressure loss and the hydrostatic pressure difference. 
+First the appropriate flow regime for the particular combination of gas and liquid rates (Segregated, Intermittent or Distributed) is determined. 
+The liquid holdup, and hence, the in-situ density of the gas-liquid mixture is then calculated according to the appropriate flow regime, to obtain the hydrostatic pressure difference. 
+A two-phase friction factor is calculated based on the "input" gas-liquid ratio and the Fanning friction factor. From this the friction pressure loss is calculated using 
+"input" gas-liquid mixture properties. A more detailed discussion of each step is given in the following documentation.
+
+If only a single-phase fluid is flowing, the Beggs and Brill multiphase correlation devolves to the Fanning Gas or Fanning Liquid correlation.
+ */
 /**
  * <p>
  * AdiabaticTwoPhasePipe class.
@@ -16,9 +35,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class PipeBeggsAndBrills extends Pipeline {
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
 
   double inletPressure = 0;
+
   boolean setTemperature = false;
 
   boolean setPressureOut = false;
@@ -39,8 +59,23 @@ public class PipeBeggsAndBrills extends Pipeline {
   private double inletElevation = 0;
   private double outletElevation = 0;
   double dH = 0.0;
-  String flowPattern = "unknown";
+  private String flowPattern = "unknown";
+  double inputVolumeFractionLiquid;
+  double  mixtureFroudeNumber;
   String pipeSpecification = "AP02";
+  double A;
+  double area;
+  double supGasVel;
+  double supLiquidVel;
+  double elevation = 0;
+  double angle;
+  boolean setPipeElevation;
+  double mixtureDensity;
+  double hydrostaticPressureDrop;
+  double El = 0;
+  double supMixVel;
+  double frictionPressureLoss;
+  double pressureDrop;
 
   /**
    * <p>
@@ -113,6 +148,15 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.temperatureOut = temperature;
   }
 
+  public void setElevation(double elevation) {
+    setPipeElevation = true;
+    this.elevation = elevation;
+  }
+
+  public void setAngle(double angle) {
+    this.angle = angle;
+  }
+
   /**
    * <p>
    * setOutPressure.
@@ -125,106 +169,186 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.pressureOut = pressure;
   }
 
-  /**
-   * <p>
-   * calcWallFrictionFactor.
-   * </p>
-   *
-   * @param reynoldsNumber a double
-   * @return a double
-   */
-  public double calcWallFrictionFactor(double reynoldsNumber) {
-    double relativeRoughnes = getPipeWallRoughness() / insideDiameter;
-    if (Math.abs(reynoldsNumber) < 2000) {
-      flowPattern = "laminar";
-      return 64.0 / reynoldsNumber;
-    } else {
-      flowPattern = "turbulent";
-      return Math.pow((1.0
-          / (-1.8 * Math.log10(6.9 / reynoldsNumber + Math.pow(relativeRoughnes / 3.7, 1.11)))),
-          2.0);
+  public String calcFlowRegime(){
+
+    //Calc input volume fraction 
+    area = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
+    supLiquidVel = system.getPhase(1).getFlowRate("m3/sec")/area;
+    supGasVel = system.getPhase(0).getFlowRate("m3/sec") / area;
+    supMixVel = supLiquidVel + supGasVel;
+    mixtureFroudeNumber = Math.pow(supMixVel*3.2808399,2)/(32.174*insideDiameter*3.2808399);
+
+    /* Unlike the Gray or the Hagedorn and Brown correlations,
+     the Beggs and Brill correlation requires that a flow pattern be determined.
+      Since the original flow pattern map was created, it has been modified. 
+      We have used this modified flow pattern map for our calculations. 
+      The transition lines for the modified correlation are defined as follows
+    */
+
+    if (system.getNumberOfPhases() == 1){
+      System.out.println("Only one phase in the pipe");
     }
+    inputVolumeFractionLiquid = supLiquidVel / supMixVel;
+    
+
+    double L1 = 316*Math.pow(inputVolumeFractionLiquid,0.302);
+    double L2 = 0.0009252*Math.pow(inputVolumeFractionLiquid,-2.4684);
+    double L3 = 0.1*Math.pow(inputVolumeFractionLiquid,-1.4516);
+    double L4 = 0.5*Math.pow(inputVolumeFractionLiquid,-6.738);
+
+
+    //The flow type can then be readily determined either from a representative flow pattern map or according to the following conditions
+    if ((inputVolumeFractionLiquid < 0.01 && mixtureFroudeNumber < L1) || (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber < L2)){
+      flowPattern = "SEGREGATED";
+    }
+    else if((inputVolumeFractionLiquid < 0.4 && inputVolumeFractionLiquid >= 0.01  
+    && mixtureFroudeNumber <= L1 && mixtureFroudeNumber > L3) || 
+    (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber <= L4 && mixtureFroudeNumber>L3)){
+      flowPattern = "INTERMITTENT";
+    }
+    else if((inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber>=L4) || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber>L4)){
+      flowPattern = "DISTRIBUTED";
+    }
+    else if(mixtureFroudeNumber> L2 && mixtureFroudeNumber<L3){
+      flowPattern = "TRANSITION";
+    }
+    else{
+      logger.debug("The flow pattern is not found");
+    }
+
+    A = (L3-mixtureFroudeNumber)/(L3-L2);
+
+    return flowPattern;
   }
 
-  /**
-   * <p>
-   * calcPressureOut.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calcPressureOut() {
-    double area = Math.PI / 4.0 * Math.pow(insideDiameter, 2.0);
-    velocity = system.getFlowRate("m3/sec") / area;
-    double supGasVel = system.getPhase(0).getFlowRate("m3/sec") / area;
-    double supoilVel = system.getPhase(0).getFlowRate("m3/sec") / area;
 
-    double reynoldsNumber = velocity * insideDiameter / system.getKinematicViscosity("m2/sec");
-    double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
-    // double dp = 2.0 * frictionFactor * length * Math.pow(system.getFlowRate("kg/sec"), 2.0)
-    // / insideDiameter / system.getDensity("kg/m3"); // * () *
-    // neqsim.thermo.ThermodynamicConstantsInterface.R
-    double dp = 6253000 * Math.pow(system.getFlowRate("kg/hr"), 2.0) * frictionFactor
-        / Math.pow(insideDiameter * 1000, 5.0) / system.getDensity("kg/m3") / 100.0 * 1000.0
-        * length;
-    double dp_gravity =
-        system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
-            * (inletElevation - outletElevation);
-    return (inletPressure * 1e5 - dp) / 1.0e5 + dp_gravity / 1.0e5;
+  public double calcHydrostaticPressureDifference(){
+
+    /*
+     * Once the flow type has been determined then the liquid holdup can be calculated. 
+     * Beggs and Brill divided the liquid holdup calculation into two parts.
+     *  First the liquid holdup for horizontal flow, EL(0), is determined, and then this holdup is modified for inclined flow.
+     *  EL(0) must be ≥ CL and therefore when EL(0) is smaller than CL, EL(0) is assigned a value of CL. 
+     * There is a separate calculation of liquid holdup (EL(0)) for each flow type
+     */
+
+    double B = 1 - A;
+
+    double BThetta;
+
+      if (flowPattern == "SEGREGATED"){
+        El = 0.98*Math.pow(inputVolumeFractionLiquid,0.4846)/Math.pow(mixtureFroudeNumber,0.0868);
+      }
+      else if(flowPattern == "INTERMITTENT"){
+        El = 0.845*Math.pow(inputVolumeFractionLiquid,0.5351)/(Math.pow(mixtureFroudeNumber,0.0173));
+      }
+      else if(flowPattern == "DISTRIBUTED"){
+        El = 1.065*Math.pow(inputVolumeFractionLiquid,0.5824)/(Math.pow(mixtureFroudeNumber,0.0609));
+      }
+      else if(flowPattern == "TRANSITION"){
+        El = A*0.98*Math.pow(inputVolumeFractionLiquid,0.4846)/Math.pow(mixtureFroudeNumber,0.0868) + B*0.845*Math.pow(inputVolumeFractionLiquid,0.5351)/(Math.pow(mixtureFroudeNumber,0.0173));
+      }
+      
+      // Oil surface tension
+      double SG = system.getPhase(1).getDensity()/1000.0;
+
+      double APIgrav = (141.5/(SG)) - 131.0;
+      double sigma68 = 39.0 - 0.2571*APIgrav;
+      double sigma100 = 37.5 - 0.2571*APIgrav;
+      double sigma;
+
+      if (system.getTemperature("C")*(9.0/5.0) + 32.0 > 100.0){
+        sigma = sigma100;
+      }
+      else if(system.getTemperature("C")*(9.0/5.0) + 32.0 < 68.0){
+        sigma = sigma68;
+      }
+      else{
+        sigma = sigma68 + (system.getTemperature("C")*(9.0/5.0) + 32.0-68.0)*(sigma100 - sigma68)/(100.0-68.0);
+      }
+      double pressureCorrection = 1.0 - 0.024*Math.pow((system.getPressure("bar")*(1.0/0.0689475728)),0.45);
+      sigma = sigma * pressureCorrection;
+      double Nvl = 1.938*supLiquidVel*3.2808399*Math.pow(system.getPhase(1).getDensity()/(16.01846337396*32.2*sigma),0.25);
+      double betta = 0;
+
+      if (elevation > 0){
+        if (flowPattern == "SEGREGATED"){
+          betta = (1 - inputVolumeFractionLiquid) * Math.log(0.011*Math.pow(Nvl,3.539)/(Math.pow(inputVolumeFractionLiquid,3.768)*Math.pow(mixtureFroudeNumber,1.614)));
+        }
+        else if(flowPattern == "INTERMITTENT"){
+          betta = (1 - inputVolumeFractionLiquid) * Math.log(2.96*Math.pow(inputVolumeFractionLiquid,0.305)*Math.pow(mixtureFroudeNumber,0.0978)/(Math.pow(Nvl,0.4473)));
+        }
+        else if(flowPattern == "DISTRIBUTED"){
+          betta = 0;
+        }
+      }
+      else{
+        betta = (1 - inputVolumeFractionLiquid) * Math.log(4.70*Math.pow(Nvl,0.1244)/(Math.pow(inputVolumeFractionLiquid,0.3692)*Math.pow(mixtureFroudeNumber,0.5056)));
+      }
+      betta = (betta > 0) ? betta : 0;
+      BThetta = 1 + betta * (Math.sin(1.8*angle*0.01745329) - (1.0/3.0)*Math.pow(Math.sin(1.8*angle*0.01745329),3.0));
+      El = BThetta * El;
+      mixtureDensity = (1.0/16.01846337396)*system.getPhase(1).getDensity()*El + (1.0/16.01846337396)*system.getPhase(0).getDensity()*(1-El);
+      hydrostaticPressureDrop = mixtureDensity*32.2*elevation*3.2808399/(144*32.2);
+          
+    return hydrostaticPressureDrop;
   }
 
+  public double calcFrictionPressureLoss(){
+    double y =  Math.log(inputVolumeFractionLiquid/(Math.pow(El,2)));
+    double S = y/(-0.0523 + 3.18*y - 0.872*Math.pow(y,2.0) + 0.01853*Math.pow(y,4));
+    double rhoNoSlip = (system.getPhase(1).getDensity()/16.01846337396)*inputVolumeFractionLiquid + (system.getPhase(1).getDensity()/16.01846337396)*(1-inputVolumeFractionLiquid);
+    double muNoSlip = system.getPhase(1).getViscosity("cP")*inputVolumeFractionLiquid + (system.getPhase(0).getViscosity("cP"))*(1-inputVolumeFractionLiquid);
+
+    double ReNoSlip = rhoNoSlip*supMixVel*3.2808399*insideDiameter*3.2808399/(muNoSlip);
+    double E = pipeWallRoughness/insideDiameter;
+
+    double frictionFactor1 = 0.5;
+    double frictionFactor2 = 0.1;
+    double frictionFactor = -1.0;
+    double function2;
+    double function1;
+    double iter = 0;
+    //Newton Method Chen Equation
+    while (Math.abs((frictionFactor2 -frictionFactor1)) > 1e-5 && iter < 200){
+      function1 = (1/Math.pow(frictionFactor1,0.5)) + 2*Math.log10((E/3.7065) - (5.042/ReNoSlip)*Math.log10(Math.pow(E,1.1098))/2.8257 + 5.8506/Math.pow(ReNoSlip,0.8981));
+      function2 = (1/Math.pow(frictionFactor2,0.5)) + 2*Math.log10((E/3.7065) - (5.042/ReNoSlip)*Math.log10(Math.pow(E,1.1098))/2.8257 + 5.8506/Math.pow(ReNoSlip,0.8981));
+      frictionFactor = frictionFactor2 - function2*(frictionFactor2-frictionFactor1)/(function2-function1);
+      frictionFactor = (frictionFactor > 0) ? frictionFactor : 0.00001;
+      frictionFactor1 = frictionFactor2;
+      frictionFactor2 = frictionFactor;
+      iter = iter + 1;
+    }
+    if (iter == 200){
+      logger.debug("The friction factor is not found");
+    }
+    
+    double frictionTwoPhase = frictionFactor*Math.exp(S);
+    frictionPressureLoss = 2*frictionTwoPhase*Math.pow(supMixVel*3.2808399,2)*rhoNoSlip*(length*3.2808399)/(144*32.2*insideDiameter*3.2808399);
+
+
+    return frictionPressureLoss;
+    
+  }
+
+  public double calcPressureDrop(){
+    calcFlowRegime();
+    
+    hydrostaticPressureDrop = calcHydrostaticPressureDifference();
+    frictionPressureLoss = calcFrictionPressureLoss();
+    pressureDrop = (hydrostaticPressureDrop + frictionPressureLoss)*0.06894757; // bar
+    return pressureDrop;
+  }
 
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     system = inStream.getThermoSystem().clone();
     inletPressure = system.getPressure();
-    // system.setMultiPhaseCheck(true);
-    if (setTemperature) {
-      system.setTemperature(this.temperatureOut);
-    }
-
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     testOps.TPflash();
-
-    double oldPressure = 0.0;
-    int iter = 0;
-
     system.initProperties();
-    double outP = calcPressureOut();
-    if (outP < 1e-10 || Double.isNaN(outP)) {
-      system.setPressure(0.001);
-      logger.debug("pressure too low in pipe....");
-    }
-    system.setPressure(outP);
-    testOps = new ThermodynamicOperations(system);
-    testOps.TPflash();
-
-    if (system.getPressure() < pressureOutLimit) {
-      iter = 0;
-      outP = system.getPressure();
-      oldPressure = system.getNumberOfMoles();
-      system.setTotalNumberOfMoles(system.getNumberOfMoles() * outP / pressureOutLimit);
-
-      // System.out.println("new moles " +
-      // system.getNumberOfMoles() + " outP "+ outP);
-      // outP = calcPressureOut();
-      // System.out.println("out P " + outP + " oldP " + oldPressure);
-      testOps = new ThermodynamicOperations(system);
-      testOps.TPflash();
-      system.initProperties();
-
-      outP = calcPressureOut();
-      system.setPressure(outP);
-    }
-
-    inStream.getThermoSystem().setTotalFlowRate(system.getFlowRate(maxflowunit), maxflowunit);
-    inStream.run(id);
-
-    testOps = new ThermodynamicOperations(system);
-    testOps.TPflash();
-    System.out.println("flow rate " + system.getFlowRate(maxflowunit));
-    // system.setMultiPhaseCheck(false);
+    pressureDrop = calcPressureDrop();
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
@@ -285,6 +409,10 @@ public class PipeBeggsAndBrills extends Pipeline {
     return insideDiameter;
   }
 
+  public String getFlowRegime() {
+    return flowPattern;
+  }
+
   /**
    * <p>
    * setDiameter.
@@ -296,16 +424,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     insideDiameter = diameter;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>pipeWallRoughness</code>.
-   * </p>
-   *
-   * @return the pipeWallRoughness
-   */
-  public double getPipeWallRoughness() {
-    return pipeWallRoughness;
-  }
+
 
   /**
    * <p>
@@ -327,6 +446,10 @@ public class PipeBeggsAndBrills extends Pipeline {
    */
   public double getInletElevation() {
     return inletElevation;
+  }
+
+  public double getPressureDrop() {
+    return pressureDrop;
   }
 
   /**
@@ -371,38 +494,33 @@ public class PipeBeggsAndBrills extends Pipeline {
    */
   public static void main(String[] name) {
     neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 200.00);
-    testSystem.addComponent("methane", 75, "MSm^3/day");
-    testSystem.addComponent("n-heptane", 0.0000001, "MSm^3/day");
-    testSystem.createDatabase(true);
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 4.0), 100.00);
+    testSystem.addComponent("methane", 35, "MSm^3/day");
+    testSystem.addComponent("n-heptane", 10, "MSm^3/day");
     testSystem.setMixingRule(2);
     testSystem.init(0);
 
     Stream stream_1 = new Stream("Stream1", testSystem);
 
     PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(stream_1);
-    pipe.setLength(400.0 * 1e3);
     pipe.setDiameter(1.017112);
     pipe.setPipeWallRoughness(5e-6);
+    pipe.setLength(400.0 * 1e3);
+    pipe.setElevation(0.0);
+    pipe.setAngle(5);
 
-    PipeBeggsAndBrills pipe2 = new PipeBeggsAndBrills(pipe.getOutletStream());
-    pipe2.setLength(100.0);
-    pipe2.setDiameter(0.3017112);
-    pipe2.setPipeWallRoughness(5e-6);
-    // pipe.setOutPressure(112.0);
+
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
-    operations.add(pipe2);
     operations.run();
-    // pipe.displayResult();
-    System.out.println("flow " + pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"));
-    System.out.println("out pressure " + pipe.getOutletStream().getPressure("bara"));
-    System.out.println("velocity " + pipe.getSuperficialVelocity());
-    System.out.println("out pressure " + pipe2.getOutletStream().getPressure("bara"));
-    System.out.println("velocity " + pipe2.getSuperficialVelocity());
+
+    System.out.println("Flow Regime " + pipe.getFlowRegime());
+    System.out.println(pipe.getPressureDrop());
+
+    
   }
 
   /**
