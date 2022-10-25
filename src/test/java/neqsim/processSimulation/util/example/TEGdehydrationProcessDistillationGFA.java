@@ -62,7 +62,7 @@ public class TEGdehydrationProcessDistillationGFA {
   public double leanTEGFlowRate = 6786.0;
 
   /**
-   * The temperature of the lean TEG entering the absorption column (Celcius).
+   * The temperature of the lean TEG entering the absorption column (Celsius).
    */
   public double leanTEGTemperature = 43.6;
 
@@ -72,22 +72,22 @@ public class TEGdehydrationProcessDistillationGFA {
   public double flashDrumPressure = 4.9;
 
   /**
-   * Number of equilibrium stages in TEG absorpber.
+   * Number of equilibrium stages in TEG absorber.
    */
   public int numberOfEquilibriumStagesTEGabsorber = 5;
 
   /**
-   * Stage efficiency in TEG absorpber.
+   * Stage efficiency in TEG absorber.
    */
   public double stageEfficiencyStripper = 0.5;
 
   /**
-   * Number of equilibrium stages in TEG absorpber.
+   * Number of equilibrium stages in TEG absorber.
    */
   public int numberOfEquilibriumStagesStripper = 4;
 
   /**
-   * Stage efficiency in TEG absorpber.
+   * Stage efficiency in TEG absorber.
    */
   public double stageEfficiencyTEGabsorber = 0.55;
 
@@ -107,7 +107,7 @@ public class TEGdehydrationProcessDistillationGFA {
   public double reboilerPressure = 1.23;
 
   /**
-   * Temperature in condenser(Celcius).
+   * Temperature in condenser(Celsius).
    */
   public double condenserTemperature = 93.6;
 
@@ -117,7 +117,7 @@ public class TEGdehydrationProcessDistillationGFA {
   public double condenserPressure = 1.2;
 
   /**
-   * Temperature in reboiler (Celcius).
+   * Temperature in reboiler (Celsius).
    */
   public double reboilerTemperature = 206.6;
 
@@ -127,17 +127,17 @@ public class TEGdehydrationProcessDistillationGFA {
   public double strippingGasRate = 91.2;
 
   /**
-   * Stripping gas feed temperature (Celcius).
+   * Stripping gas feed temperature (Celsius).
    */
   public double strippingGasFeedTemperature = 80.0;
 
   /**
-   * TEG buffer tank temperature (Celcius).
+   * TEG buffer tank temperature (Celsius).
    */
   public double bufferTankTemperatureTEG = 190.4;
 
   /**
-   * temperature of after regeneration gas cooler (Celcius).
+   * temperature of after regeneration gas cooler (Celsius).
    */
   public double regenerationGasCoolerTemperature = 35.0;
 
@@ -243,12 +243,12 @@ public class TEGdehydrationProcessDistillationGFA {
     heatEx2.setGuessOutTemperature(273.15 + 62.0);
     heatEx2.setUAvalue(UAvalueRichTEGHeatExchanger_1);
 
-    Separator flashSep = new Separator("degasing separator", heatEx2.getOutStream(0));
+    Separator flashSep = new Separator("degassing separator", heatEx2.getOutStream(0));
 
-    Stream flashGas = new Stream("gas from degasing separator", flashSep.getGasOutStream());
+    Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
     Stream flashLiquid =
-        new Stream("liquid from degasing separator", flashSep.getLiquidOutStream());
+        new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
 
     Filter filter = new Filter("filters", flashLiquid);
 

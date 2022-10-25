@@ -76,12 +76,24 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
   static Logger logger = LogManager.getLogger(Standard_ISO6976.class);
 
+  /**
+   * Constructor for Standard_ISO6976.
+   *
+   * @param thermoSystem SystemInterface to base object on
+   */
   public Standard_ISO6976(SystemInterface thermoSystem) {
     this("Standard_ISO6976",
         "Calculation of calorific values, density, relative density and Wobbe index from composition",
         thermoSystem);
   }
 
+  /**
+   * Constructor for Standard_ISO6976.
+   *
+   * @param name Name of standard
+   * @param description Description of standard
+   * @param thermoSystem SystemInterface to base object on
+   */
   public Standard_ISO6976(String name, String description, SystemInterface thermoSystem) {
     super(name, description, thermoSystem);
     M = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -525,13 +537,12 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
   /**
    * <p>
-   * Getter for the field <code>energyRefT</code>.
+   * Getter for the field <code>energyRefT</code>. // combustion conditions
    * </p>
    *
    * @return the energyRefT
    */
-  public // combustion conditions
-  double getEnergyRefT() {
+  public double getEnergyRefT() {
     return energyRefT;
   }
 
@@ -570,13 +581,12 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
   /**
    * <p>
-   * Getter for the field <code>volRefT</code>.
+   * Getter for the field <code>volRefT</code>. metering conditions
    * </p>
    *
    * @return the volRefT
    */
-  public // metering conditions
-  double getVolRefT() {
+  public double getVolRefT() {
     return volRefT;
   }
 
@@ -598,8 +608,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    *
    * @return the componentsNotDefinedByStandard
    */
-  public // metering conditions
-  ArrayList<String> getComponentsNotDefinedByStandard() {
+  public ArrayList<String> getComponentsNotDefinedByStandard() {
     return componentsNotDefinedByStandard;
   }
 

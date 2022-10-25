@@ -362,7 +362,7 @@ public class TPmultiflash extends TPflash {
           nomb = 0.0;
         }
 
-        if (clonedSystem.get(0).IsPhase(1)) {
+        if (clonedSystem.get(0).isPhase(1)) {
           try {
             clonedSystem.get(0).getPhase(1).getComponents()[cc].setx(nomb);
           } catch (Exception ex) {
@@ -915,7 +915,7 @@ public class TPmultiflash extends TPflash {
     }
 
     int iterations = 0;
-    if (multiPhaseTest) {// && !system.isChemicalSystem()) {
+    if (multiPhaseTest) { // && !system.isChemicalSystem()) {
       double diff = 1.0e10;
 
       double oldDiff = 1.0e10;

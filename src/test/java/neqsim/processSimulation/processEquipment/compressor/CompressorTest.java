@@ -198,6 +198,37 @@ class CompressorTest extends neqsim.NeqSimTest {
 
   /**
    * <p>
+   * testCompressorWithGERG2008-2.
+   * </p>
+   */
+  @Test
+  public void testCompressorWithGERG2008_2() {
+    Stream inletStream = new Stream("inletStream", testSystem);
+    inletStream.setPressure(pressure_inlet, "bara");
+    inletStream.setTemperature(temperature_inlet, "C");
+    inletStream.setFlowRate(gasFlowRate, "MSm3/day");
+    inletStream.run();
+    neqsim.processSimulation.processEquipment.compressor.Compressor compressor1 =
+        new neqsim.processSimulation.processEquipment.compressor.Compressor("Compressor1",
+            inletStream);
+    compressor1.setOutletPressure(pressure_Out);
+    compressor1.setPolytropicEfficiency(0.56);
+    compressor1.setUsePolytropicCalc(true);
+    compressor1.setUseGERG2008(true);
+    compressor1.run();
+    double head = compressor1.getPolytropicHead("kJ/kg");
+    System.out.println("gerg power " + compressor1.getPower() + " W");
+    // assertEquals(compressor1.getPolytropicHead("kJ/kg"), 89.464626, 0.01);
+    compressor1.setUseGERG2008(false);
+    compressor1.run();
+    double head2 = compressor1.getPolytropicHead("kJ/kg");
+    System.out.println("gerg power " + compressor1.getPower() + " W");
+    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 94.32923841459161, 0.01);
+
+  }
+
+  /**
+   * <p>
    * test Multi Phase Compression.
    * </p>
    */

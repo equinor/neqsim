@@ -81,3 +81,7 @@ test_*.ser
 
 #Intellij IDEA
 .idea
+
+# doxygen results
+html/
+latex/

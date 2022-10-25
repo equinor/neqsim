@@ -114,7 +114,7 @@ public class TestIonicInteractionParameterFitting {
     // logger.error("database error" + ex);
     // }
 
-    double guess[] = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
+    double[] guess = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
     ResultSet dataSet = database.getResultSet(
         "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND PressureCO2<'20' AND Reference<>'GPA'");
 
@@ -177,9 +177,9 @@ public class TestIonicInteractionParameterFitting {
         // testSystem.createDatabase(true);
         testSystem.setMixingRule(4);
         testSystem.init(0);
-        double sample1[] = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
+        double[] sample1 = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
             / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()};
-        double standardDeviation1[] = {0.01};
+        double[] standardDeviation1 = {0.01};
         double stddev = pressure; // Double.parseDouble(dataSet.getString("StandardDeviation"))
         SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
         function.setInitialGuess(guess);
@@ -255,9 +255,9 @@ public class TestIonicInteractionParameterFitting {
         // testSystem.createDatabase(true);
         testSystem.setMixingRule(4);
         testSystem.init(0);
-        double sample1[] = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
+        double[] sample1 = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
             / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()};
-        double standardDeviation1[] = {0.01};
+        double[] standardDeviation1 = {0.01};
         double stddev = pressure; // Double.parseDouble(dataSet.getString("StandardDeviation"))
         SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
         function.setInitialGuess(guess);

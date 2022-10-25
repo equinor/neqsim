@@ -26,7 +26,9 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   private static final long serialVersionUID = 1000;
 
   protected String preferedThermodynamicModel = "";
-  protected boolean isInitializedModule = false, isInitializedStreams = false;
+  protected boolean isInitializedModule = false;
+  protected boolean isInitializedStreams = false;
+
   private boolean isCalcDesign = false;
   private neqsim.processSimulation.processSystem.ProcessSystem operations =
       new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -220,5 +222,17 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    */
   public String[][] getResultTable() {
     return null;
+  }
+
+  /**
+   * <p>
+   * getPressure.
+   * </p>
+   * 
+   * @param unit a {@link java.lang.String} object
+   * 
+   **/
+  public double getPressure(String unit) {
+    return 1.0;
   }
 }

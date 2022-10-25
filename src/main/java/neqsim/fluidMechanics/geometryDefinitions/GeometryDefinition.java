@@ -61,10 +61,14 @@ public abstract class GeometryDefinition
   private double innerWallTemperature = 276.5;
   protected PackingInterface packing = null;
 
-  public double diameter = 0, radius = 0, innerSurfaceRoughness = 0.000005, nodeLength = 0,
-      area = 0, relativeRoughnes = 0;
-  public double[] layerConductivity, layerThickness;
-
+  public double diameter = 0;
+  public double radius = 0;
+  public double innerSurfaceRoughness = 0.000005;
+  public double nodeLength = 0;
+  public double area = 0;
+  public double relativeRoughnes = 0;
+  public double[] layerConductivity;
+  public double[] layerThickness;
   public Wall wall = new Wall();
 
   private SurroundingEnvironment surroundingEnvironment = new SurroundingEnvironmentBaseClass();

@@ -46,12 +46,11 @@ public class TestFurstIonicParameterFunction {
         {0.0000000752, 0.0000037242, 0.0000250998, 0.0000198635, -0.0000000311, -0.0000006630};
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
     // Description IN ('NaCl')"); //,'LiCl','Sr2Br','Sr2I')");
-    ResultSet dataSet = database
-        .getResultSet("SELECT * FROM ionicData WHERE ion1<>'H3Oplus2' ORDER BY ion1,ion2,x2");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
     // ion1='Na+' AND ion2='Cl-'");
     int numb = 0;
-    try {
+    try (ResultSet dataSet = database
+        .getResultSet("SELECT * FROM ionicData WHERE ion1<>'H3Oplus2' ORDER BY ion1,ion2,x2")) {
       logger.info("adding....");
       while (dataSet.next() && numb < 22265) {
         numb++;
@@ -73,8 +72,8 @@ public class TestFurstIonicParameterFunction {
         testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
         testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
         testSystem.init(0);
-        double sample1[] = {x2 / 0.01802};
-        double standardDeviation1[] = {0.01};
+        double[] sample1 = {x2 / 0.01802};
+        double[] standardDeviation1 = {0.01};
         double osmcoef = Double.parseDouble(dataSet.getString("OsmoticCoefficient"));
 
         testSystem.init(1);
@@ -90,13 +89,17 @@ public class TestFurstIonicParameterFunction {
         sample.setDescription(dataSet.getString("Description"));
         sampleList.add(sample);
       }
+    } catch (Exception ex) {
+      logger.error("database error: ", ex);
+    }
 
+    try (ResultSet dataSet =
+        database.getResultSet("SELECT * FROM ionicData WHERE ion1='Na+' AND ion2='Cl-'")) {
       // dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
       // ion1<>'H3Oplus2' AND IonicActivity>=0.01");
       // dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
       // Description
       // IN ('NaCl','LiCl','Sr2Br','Sr2I') AND IonicActivity>=0.01");
-      dataSet = database.getResultSet("SELECT * FROM ionicData WHERE ion1='Na+' AND ion2='Cl-'");
       logger.info("setting new for activity");
       while (!dataSet.next()) {
         FurstIonicParameterFunction_Activity function = new FurstIonicParameterFunction_Activity();
@@ -115,8 +118,8 @@ public class TestFurstIonicParameterFunction {
         testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
         testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
         testSystem.init(0);
-        double sample1[] = {x2 / 0.01802};
-        double standardDeviation1[] = {0.01};
+        double[] sample1 = {x2 / 0.01802};
+        double[] standardDeviation1 = {0.01};
         // SampleValue sample = new
         // SampleValue(Double.parseDouble(dataSet.getString("OsmoticCoefficient")),
         // Double.parseDouble(dataSet.getString("stddev1")), sample1,
@@ -129,8 +132,12 @@ public class TestFurstIonicParameterFunction {
         sample.setDescription(dataSet.getString("Description"));
         sampleList.add(sample);
       }
+    } catch (Exception ex) {
+      logger.error("database error: ", ex);
+    }
 
-      dataSet = database.getResultSet("SELECT * FROM saltdens WHERE ion1='Na+' AND ion2='Cl-'");
+    try (ResultSet dataSet =
+        database.getResultSet("SELECT * FROM saltdens WHERE ion1='Na+' AND ion2='Cl-'")) {
       logger.info("fitting to ionic density");
       while (!dataSet.next()) {
         FurstIonicParameterFunction_Density function = new FurstIonicParameterFunction_Density();
@@ -148,8 +155,8 @@ public class TestFurstIonicParameterFunction {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(7);
         testSystem.init(0);
-        double sample1[] = {x2 / 0.01802};
-        double standardDeviation1[] = {0.01};
+        double[] sample1 = {x2 / 0.01802};
+        double[] standardDeviation1 = {0.01};
         // SampleValue sample = new
         // SampleValue(Double.parseDouble(dataSet.getString("OsmoticCoefficient")),
         // Double.parseDouble(dataSet.getString("stddev1")), sample1,

@@ -325,8 +325,8 @@ public class ComponentBWRS extends ComponentSrk {
   /**
    * Getter for property BP.
    *
-   * @return Value of property BP. public double[] getBPdT() { return this.BPdT; }
    * @param i a int
+   * @return Value of property BP. public double[] getBPdT() { return this.BPdT; }
    */
   public double getBP(int i) {
     return this.BP[i];

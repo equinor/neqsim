@@ -17,11 +17,21 @@ public class PhaseGERG2004Eos extends PhaseEos {
   private GERG2004EOS gergEOS = new GERG2004EOS();
   double[] xFracGERG = new double[18];
 
-  ;
   int IPHASE = 0;
   boolean okVolume = true;
-  double enthalpy = 0.0, entropy = 0.0, gibbsEnergy = 0.0, CpGERG = 0.0, CvGERG = 0.0,
-      internalEnery = 0.0, JTcoef = 0.0;
+  double enthalpy = 0.0;
+
+  double entropy = 0.0;
+
+  double gibbsEnergy = 0.0;
+
+  double CpGERG = 0.0;
+
+  double CvGERG = 0.0;
+
+  double internalEnery = 0.0;
+
+  double JTcoef = 0.0;
 
   /**
    * <p>

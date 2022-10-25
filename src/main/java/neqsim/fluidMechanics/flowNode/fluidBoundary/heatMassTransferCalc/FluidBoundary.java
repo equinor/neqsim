@@ -291,11 +291,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
         nonIdealCorrections[phase].set(i, j,
             temp + bulkSystem.getPhases()[phase].getComponents()[i].getx()
                 * bulkSystem.getPhases()[phase].getComponents()[i].getdfugdn(j)
-                * bulkSystem.getPhases()[phase].getNumberOfMolesInPhase()); // her
-                                                                            // maa
-                                                                            // det
-                                                                            // fylles
-                                                                            // inn
+                * bulkSystem.getPhases()[phase].getNumberOfMolesInPhase());
+        // her må det fylles inn
       }
     }
     // System.out.println("non-id");

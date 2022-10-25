@@ -185,8 +185,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to return exergy in a specified unit.
    *
    * @param temperatureOfSurroundings in Kelvin
-   * @return exergy in specified unit
    * @param exergyUnit a {@link java.lang.String} object
+   * @return exergy in specified unit
    */
   public double getExergy(double temperatureOfSurroundings, String exergyUnit);
 
@@ -398,7 +398,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to set the temperature of a fluid (same temperature for all phases).
    *
    * @param newTemperature in specified unit
-   * @param unit unit can be C or K (Celcius of Kelvin)
+   * @param unit unit can be C or K (Celsius or Kelvin)
    */
   public void setTemperature(double newTemperature, String unit);
 
@@ -618,8 +618,20 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param i Phase number
    * @return True if phase exists, false if not.
+   * @deprecated use {@link #isPhase(int i)} instead
    */
-  public boolean IsPhase(int i);
+  @Deprecated
+  public default boolean IsPhase(int i) {
+    return isPhase(i);
+  }
+
+  /**
+   * Returns true if phase exists and is not null.
+   *
+   * @param i Phase number
+   * @return True if phase exists, false if not.
+   */
+  public boolean isPhase(int i);
 
   /**
    * Get phase number i from SystemInterface object.
@@ -655,7 +667,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param flowRate a double
-   * @param flowunit a {@link java.lang.String} object
+   * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr
+   *        m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr, Sm3/hr, Sm3/day, idSm3/hr, idSm3/day
+   * 
+   * 
    */
   public void setTotalFlowRate(double flowRate, String flowunit);
 
@@ -1267,7 +1282,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * hasPlusFraction.
+   * Getter for property hasPlusFraction.
    * </p>
    *
    * @return a boolean
@@ -2469,4 +2484,60 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /** {@inheritDoc} */
   public void addToComponentNames(java.lang.String name);
+
+  /**
+   * <p>
+   * addCharacterized.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   * @param lastIsPlusFraction True if last fraction is a Plus fraction
+   */
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction);
+
+  /**
+   * <p>
+   * addCharacterized.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   * @param lastIsPlusFraction True if last fraction is a Plus fraction
+   * @param lumpComponents True if component should be lumped
+   * @param numberOfPseudoComponents number of pseudo components
+   */
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction, boolean lumpComponents,
+      int numberOfPseudoComponents);
+
+  /**
+   * <p>
+   * addCharacterized.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   */
+  public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity);
+
+  /**
+   * <p>
+   * getIdealLiquidDensity.
+   * </p>
+   * 
+   * @param {@link java.lang.String} object Supported units are kg/m3 and gr/cm3
+   * 
+   *        Return normal liquid density of fluid
+   * 
+   */
+  public double getIdealLiquidDensity(String unit);
 }

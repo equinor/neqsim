@@ -40,8 +40,8 @@ public class Water_MDEA {
   public static void main(String[] args) {
     double pressure = 1;
     double temperature = 25 + 273.16;
-    double x1, x2;
-
+    double x1;
+    double x2;
     NeqSimDataBase database = new NeqSimDataBase();
     ResultSet dataSet = database.getResultSet("SELECT * FROM WaterMDEA");
 

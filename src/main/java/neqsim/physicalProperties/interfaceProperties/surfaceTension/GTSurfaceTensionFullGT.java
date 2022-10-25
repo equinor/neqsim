@@ -90,7 +90,7 @@ public class GTSurfaceTensionFullGT {
     this.sys.getPhase(0).setTotalVolume(1.0);
     this.sys.useVolumeCorrection(false);
     this.sys.setEmptyFluid();
-    double nv[] = new double[this.ncomp];
+    double[] nv = new double[this.ncomp];
     for (i = 0; i < ncomp; i++) {
       nv[i] = this.rho_ph1[i] * Pa;
     }
@@ -104,12 +104,14 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * Calculation of the interfacial tension
+   * Calculation of the interfacial tension.
    *
    * @return Interfacial tension in N/m.
    */
   public double runcase() {
-    int i, j, k;
+    int i;
+    int j;
+    int k;
     double cij[][] = new double[ncomp][ncomp];
     double[] delta_mu = new double[this.ncomp];
     double[][] dmu_drho = new double[this.ncomp][this.ncomp];
@@ -118,11 +120,12 @@ public class GTSurfaceTensionFullGT {
 
     int Nlevel = 3; // Hard coded
     // int NN;
-    int N1, N2;
+    int N1;
+    int N2;
     int Ngrid = (1 << Nlevel) + 1; // 2^(Nlevel) + 1
     double rhomat[][] = new double[Ngrid][this.ncomp];
     double rhotmp[][];
-    double xgrid[];
+    double[] xgrid;
 
     int Nrefinements = 7;
     double StopTolerance = 0.01; // Stop if rel change smaller than this
@@ -141,7 +144,7 @@ public class GTSurfaceTensionFullGT {
     // For grid remeshing:
     double H; // Mesh spacing
     double Lnew; // Half-width of domain
-    double xgridNew[]; // Grid
+    double[] xgridNew; // Grid
     double alpha; // Interpolation weight
     double drhodz[][]; // Density gradient
     int Nhalf; // Half the number of intervals
@@ -263,7 +266,6 @@ public class GTSurfaceTensionFullGT {
    * large 4. Iterate until convergence or max #iterations (N_Newton)
    * </p>
    *
-   * @return sigma The surface tension [N/m]
    * @param cij an array of {@link double} objects
    * @param L a double
    * @param N_Newton a int
@@ -275,15 +277,18 @@ public class GTSurfaceTensionFullGT {
    * @param ncomp a int
    * @param t a double
    * @param mueq an array of {@link double} objects
+   * @return sigma The surface tension [N/m]
    */
   public static double Newton(double[][] cij, double L, int N_Newton, double allowedRelChange,
       boolean highOrder, boolean directMethod, double[][] rhomat, SystemInterface sys, int ncomp,
       double t, double[] mueq) {
-    int i, j, k;
+    int i;
+    int j;
+    int k;
     int NewtonStep;
     int Ngrid = rhomat.length;
     double H = 2.0 * L / (Ngrid - 1); // Grid spacing
-    double Jac[][][] = new double[Ngrid][ncomp][ncomp];
+    double[][][] Jac = new double[Ngrid][ncomp][ncomp];
     double dmu[][] = new double[Ngrid][ncomp];
     double rres[][] = new double[Ngrid][ncomp];
     double rrho_prev[][] = new double[Ngrid][ncomp];
@@ -292,8 +297,11 @@ public class GTSurfaceTensionFullGT {
     double urel_Newton;
     double sigma = 0.0;
 
-    double xgrid[] = linspace(-L, L, Ngrid);
-    double tmp, sum_ztmp, sum_tmp, cg;
+    double[] xgrid = linspace(-L, L, Ngrid);
+    double tmp;
+    double sum_ztmp;
+    double sum_tmp;
+    double cg;
     int icorr;
 
     // Process initial array
@@ -332,7 +340,7 @@ public class GTSurfaceTensionFullGT {
       // %Limit the Newton step by max relative change in solution
       maxrelchange = 0.0;
       for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
-        for (j = 0; j < ncomp; j++) {// Each specie
+        for (j = 0; j < ncomp; j++) { // Each specie
           if (Math.abs(rhomat[i][j] - rrho_prev[i][j]) > maxrelchange * Math.abs(rrho_prev[i][j])) {
             maxrelchange = Math.abs(rhomat[i][j] - rrho_prev[i][j]) / Math.abs(rrho_prev[i][j]);
           }
@@ -342,14 +350,14 @@ public class GTSurfaceTensionFullGT {
 
       // Update solution
       for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
-        for (j = 0; j < ncomp; j++) {// Each specie
+        for (j = 0; j < ncomp; j++) { // Each specie
           rhomat[i][j] = urel_Newton * rhomat[i][j] + (1.0 - urel_Newton) * rrho_prev[i][j];
         }
       }
 
-      if (urel_Newton * maxrelchange < 0.00001) {// %Convergence test FIXME: Hardcoded
-                                                 // tolerance
-        break; // %Converged
+      if (urel_Newton * maxrelchange < 0.00001) { // Convergence test
+        // FIXME: Hardcoded tolerance
+        break;
       }
 
       sigma = sigmaCalc(H, rhomat, cij, false, drhodz, ncomp);
@@ -429,13 +437,16 @@ public class GTSurfaceTensionFullGT {
    * @param rhomat an array of {@link double} objects
    * @param ncomp a int
    */
-  public static void directsolve(double rres[][], double JJ[][][], double C[][], double H,
+  public static void directsolve(double rres[][], double[][][] JJ, double C[][], double H,
       int Ngrid, double rhomat[][], int ncomp) {
-    int i, j, k;
+    int i;
+    int j;
+    int k;
     double H2 = H * H;
     double bbtmp;
     int Neq = (Ngrid - 2) * ncomp;
-    int iglob, skip;
+    int iglob;
+    int skip;
     int kl = 2 * ncomp + 1;
     int ku = 2 * ncomp + 1;
 
@@ -446,9 +457,9 @@ public class GTSurfaceTensionFullGT {
     // Construct right hand side
     iglob = 0; // Global index
     for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
-      for (j = 0; j < ncomp; j++) {// Each specie
+      for (j = 0; j < ncomp; j++) { // Each specie
         bbtmp = rres[i][j];
-        for (k = 0; k < ncomp; k++) {// Each specie
+        for (k = 0; k < ncomp; k++) { // Each specie
           // bb[i][j] = rhomat[i][j] + JJ[i][j][k]*rhomat[i][k] -
           // C[j][k]*(rhomat[i][k-1]-2*rhomat[i][k]+rhomat[i][k+1])/(H*H) //Loop k
           bbtmp += JJ[i][j][k] * rhomat[i][k]
@@ -460,8 +471,8 @@ public class GTSurfaceTensionFullGT {
 
     // Add block by block to the jacobian
     i = 1; // Grid point 2 is the first unknown
-    for (j = 0; j < ncomp; j++) {// Each specie
-      for (k = 0; k < ncomp; k++) {// Each specie
+    for (j = 0; j < ncomp; j++) { // Each specie
+      for (k = 0; k < ncomp; k++) { // Each specie
         // Jac[j][k]=JJ[i][j][k]+2.0/H2*C[j][k];
         // Jac[j][k+ncomp] = -1.0/H2*C[j][k];
         Jac.set(j, k, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
@@ -471,8 +482,8 @@ public class GTSurfaceTensionFullGT {
 
     for (i = 2; i < Ngrid - 2; i++) { // Inner grid points
       skip = ncomp * (i - 1);
-      for (j = 0; j < ncomp; j++) {// Each specie
-        for (k = 0; k < ncomp; k++) {// Each specie
+      for (j = 0; j < ncomp; j++) { // Each specie
+        for (k = 0; k < ncomp; k++) { // Each specie
           // Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
           // Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
           // Jac[j+skip][k+skip+ncomp] = -1.0/H2*C[j][k];
@@ -485,8 +496,8 @@ public class GTSurfaceTensionFullGT {
 
     i = Ngrid - 2; // Last unknown grid point
     skip = ncomp * (i - 1);
-    for (j = 0; j < ncomp; j++) {// Each specie
-      for (k = 0; k < ncomp; k++) {// Each specie
+    for (j = 0; j < ncomp; j++) { // Each specie
+      for (k = 0; k < ncomp; k++) { // Each specie
         // Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
         // Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
         Jac.set(j + skip, k + skip - ncomp, -1.0 / H2 * C[j][k]);
@@ -498,7 +509,7 @@ public class GTSurfaceTensionFullGT {
 
     iglob = 0;
     for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
-      for (j = 0; j < ncomp; j++) {// Each specie
+      for (j = 0; j < ncomp; j++) { // Each specie
         bbtmp = drho.get(iglob++, 0); // FIXME: Only debugging
         rhomat[i][j] += bbtmp; // drho.get(iglob++);
       }
@@ -513,17 +524,19 @@ public class GTSurfaceTensionFullGT {
    * \int_{-\infty}^{\infty} \boldsymbol{n_z}^T \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
    * </p>
    *
-   * @return sigma The surface tension [N/m]
    * @param h a double
    * @param rrho an array of {@link double} objects
    * @param C an array of {@link double} objects
    * @param highOrder a boolean
    * @param drhodz an array of {@link double} objects
    * @param ncomp a int
+   * @return sigma The surface tension [N/m]
    */
   public static double sigmaCalc(double h, double rrho[][], double C[][], boolean highOrder,
       double drhodz[][], int ncomp) {
-    int i, j, k;
+    int i;
+    int j;
+    int k;
     double drho2; // For each pair of species j,k, drho2=sum_i{drhodz[i][j]*drhodz[i][k]}
     double sigma;
 
@@ -558,19 +571,24 @@ public class GTSurfaceTensionFullGT {
    * integrand. Used to adjust the domain size
    * </p>
    *
-   * @return Interface width (length scale) [nm]
    * @param z an array of {@link double} objects
    * @param C an array of {@link double} objects
    * @param drhodz an array of {@link double} objects
+   * @return Interface width (length scale) [nm]
    */
-  public double calc_std_integral(double z[], double C[][], double drhodz[][]) {
+  public double calc_std_integral(double[] z, double C[][], double drhodz[][]) {
     double h1 = z[1] - z[0];
     double mean;
     int Ngrid = drhodz.length + 1;
-    int j, m, n;
+    int j;
 
-    double zdum = 0.0, z2dum = 0.0, sumdum = 0.0, dum;
+    int m;
+    int n;
+    double zdum = 0.0;
 
+    double z2dum = 0.0;
+    double sumdum = 0.0;
+    double dum;
     for (j = 0; j < Ngrid - 1; j++) {
       dum = 0.0;
       for (m = 0; m < ncomp; m++) {
@@ -600,7 +618,7 @@ public class GTSurfaceTensionFullGT {
    * @param delta_mu an array of {@link double} objects
    * @param dmu_drho an array of {@link double} objects
    */
-  public static void delta_mu(SystemInterface sys, int ncomp, double t, double mueq[], double[] rho,
+  public static void delta_mu(SystemInterface sys, int ncomp, double t, double[] mueq, double[] rho,
       double[] delta_mu, double[][] dmu_drho) {
     int i;
     double[] pdummy = new double[ncomp];
@@ -624,7 +642,7 @@ public class GTSurfaceTensionFullGT {
    * @return an array of {@link double} objects
    */
   public static double[] linspace(double a, double b, int N) {
-    double x[] = new double[N];
+    double[] x = new double[N];
     double dx = (b - a) / (N - 1);
     int i;
 
@@ -645,8 +663,9 @@ public class GTSurfaceTensionFullGT {
   public static void debugPlot(double[] x, double[][] y) {
     int N = y.length;
     int M = y[0].length;
-    int i, j;
-    double yy[] = new double[N];
+    int i;
+    int j;
+    double[] yy = new double[N];
 
     for (j = 0; j < M; j++) {
       for (i = 0; i < N; i++) {
@@ -675,8 +694,8 @@ public class GTSurfaceTensionFullGT {
    * @param p0 an array of {@link double} objects
    * @param reltol a double
    */
-  public static void initmu(SystemInterface sys, int ncomp, double t, double rho_ph1[],
-      double rho_ph2[], double mueq[], double p0[], double reltol) {
+  public static void initmu(SystemInterface sys, int ncomp, double t, double[] rho_ph1,
+      double[] rho_ph2, double[] mueq, double[] p0, double reltol) {
     int i;
     double maxerr = 0.;
     double[][] dmu_drho1 = new double[ncomp][ncomp];

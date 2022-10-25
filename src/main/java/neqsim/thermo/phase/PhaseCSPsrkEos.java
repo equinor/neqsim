@@ -225,8 +225,15 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
       BonV = 1.0;
     }
     double BonVold = BonV;
-    double Btemp = 0, Dtemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
-    double d1 = 0, d2 = 0;
+    double Btemp = 0;
+    double Dtemp = 0;
+    double h = 0;
+    double dh = 0;
+    double gvvv = 0;
+    double fvvv = 0;
+    double dhh = 0;
+    double d1 = 0;
+    double d2 = 0;
     Btemp = getB();
     Dtemp = getA();
 

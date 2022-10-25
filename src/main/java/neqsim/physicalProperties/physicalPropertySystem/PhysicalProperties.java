@@ -40,7 +40,10 @@ public abstract class PhysicalProperties
   public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface viscosityCalc;
   public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface diffusivityCalc;
   public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface densityCalc;
-  public double kinematicViscosity = 0, density = 0, viscosity = 0, conductivity = 0;
+  public double kinematicViscosity = 0;
+  public double density = 0;
+  public double viscosity = 0;
+  public double conductivity = 0;
   private double[] waxViscosityParameter = {37.82, 83.96, 8.559e6};
 
   /**
@@ -91,8 +94,9 @@ public abstract class PhysicalProperties
     properties.diffusivityCalc = diffusivityCalc.clone();
     properties.viscosityCalc = viscosityCalc.clone();
     properties.conductivityCalc = conductivityCalc.clone();
-    if (mixingRule != null)
+    if (mixingRule != null) {
       properties.mixingRule = mixingRule.clone();
+    }
     return properties;
   }
 

@@ -6,7 +6,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  * This class defines a thermodynamic system using the Wilson GE model.
- * 
+ *
  * @author Even Solbraa
  */
 public class SystemGEWilson extends SystemEos {

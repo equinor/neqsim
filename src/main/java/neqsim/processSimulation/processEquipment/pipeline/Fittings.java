@@ -60,6 +60,9 @@ public class Fittings implements Serializable {
     return fittingList;
   }
 
+  /**
+   * Constructor for Fitting.
+   */
   public class Fitting implements Serializable {
     private static final long serialVersionUID = 1000;
 
@@ -71,6 +74,11 @@ public class Fittings implements Serializable {
       LtoD = LdivD;
     }
 
+    /**
+     * Constructor for Fitting.
+     *
+     * @param name Name of fitting
+     */
     public Fitting(String name) {
       this.fittingName = name;
 

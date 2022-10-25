@@ -31,21 +31,20 @@ public class TestMassTransfer {
 
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM purecomponentvapourpressures WHERE ComponentName='water' AND VapourPressure<100");
 
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM purecomponentvapourpressures WHERE ComponentName='water' AND VapourPressure<100")) {
       System.out.println("adding....");
       while (dataSet.next()) {
         MassTransferFunction function = new MassTransferFunction();
-        double guess[] = {0.3311};
+        double[] guess = {0.3311};
         double bound[][] = {{0, 1.0},};
         function.setInitialGuess(guess);
         SystemInterface testSystem = new SystemSrkEos(280, 0.001);
         testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
-        double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
+        double[] sample1 = {Double.parseDouble(dataSet.getString("Temperature"))};
         double vappres = Double.parseDouble(dataSet.getString("VapourPressure"));
-        double standardDeviation1[] = {0.15};
+        double[] standardDeviation1 = {0.15};
         SampleValue sample = new SampleValue(Math.log(vappres),
             Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
             standardDeviation1);
