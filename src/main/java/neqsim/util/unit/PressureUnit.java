@@ -54,6 +54,9 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
             case "bara":
                 conversionFactor = 1.0;
                 break;
+            case "psi":
+                conversionFactor = 0.06894757;
+                break;
             case "Pa":
                 conversionFactor = 1.0e-5;
                 break;
