@@ -399,8 +399,8 @@ public class PipeBeggsAndBrills extends Pipeline {
 
     else{
       if (system.hasPhaseType("gas")){
-        rhoNoSlip = (system.getPhase(0).getDensity("lb/ft3")) ;
-        muNoSlip = (system.getPhase(0).getViscosity("cP")) ;
+        rhoNoSlip = (system.getPhase(0).getDensity("lb/ft3"));
+        muNoSlip = (system.getPhase(0).getViscosity("cP"));
       }
       else{
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3"));
@@ -413,11 +413,11 @@ public class PipeBeggsAndBrills extends Pipeline {
     double E = pipeWallRoughness / insideDiameter;
 
     // Haaland equation
-    double frictionFactor = Math.pow(1 / (-1.8 * Math.log10((E / 3.7) + (6.9 / ReNoSlip))), 2);
+    double frictionFactor = Math.pow(1 / (-1.8 * Math.log10((E / 3.7) + (6.9 / ReNoSlip))), 2); 
     double frictionTwoPhase = frictionFactor * Math.exp(S);
 
-    frictionPressureLoss = 2*frictionTwoPhase * Math.pow(supMixVel, 2) * rhoNoSlip * (length)
-        / (insideDiameter);
+    frictionPressureLoss = frictionTwoPhase * Math.pow(supMixVel, 2) * rhoNoSlip * (length)
+        / (2*insideDiameter);
     return frictionPressureLoss;
   }
 
@@ -603,9 +603,9 @@ public class PipeBeggsAndBrills extends Pipeline {
    */
   public static void main(String[] name) {
     neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 55.0), 10);
-    testSystem.addComponent("methane", 25, "MSm^3/day");
-    testSystem.addComponent("n-heptane", 25, "MSm^3/day");
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 10);
+    testSystem.addComponent("methane", 5, "MSm^3/day");
+    testSystem.addComponent("n-heptane", 5, "MSm^3/day");
     testSystem.setMixingRule(2);
     testSystem.init(0);
 
@@ -614,10 +614,10 @@ public class PipeBeggsAndBrills extends Pipeline {
     PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(stream_1);
     pipe.setDiameter(1.017112);
     pipe.setPipeWallRoughness(5e-6);
-    pipe.setLength(100);
+    pipe.setLength(10000);
     pipe.setElevation(0.0);
     pipe.setAngle(0);
-    pipe.setNumberOfIncrements(10);
+    pipe.setNumberOfIncrements(2);
 
 
 
