@@ -1,9 +1,17 @@
 package neqsim.processSimulation.measurementDevice.simpleFlowRegime;
 import java.util.Arrays;
 import java.util.Collections;
+import neqsim.processSimulation.measurementDevice.MeasurementDeviceBaseClass;
+import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class SevereSlug {
+public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
+    FluidSevereSlug fluidSevereS;
+    Pipe pipe;
+    SevereSlugAnalyser severeSlug;
+    Stream streamS;
+
 
     final double gravAcc = 9.81;
     
@@ -14,6 +22,10 @@ public class SevereSlug {
     private double outletPressure = 100000.0;
     private double temperature = 20.0;
     private int numberOfTimeSteps = 20000;
+    private double internalDiameter = 0.0;
+    private double leftLength = 0.0;
+    private double rightLength = 0.0;
+    private double angle = 0.0;
     
     // These variables should not be changed by the user I guess. 
     // But this can be done if the user has advanced knowledge about the problem. 
@@ -77,10 +89,10 @@ public class SevereSlug {
     
     double iter;
 
-    public String flowPattern;
+    String flowPattern;
 
     // This constructor is used for the "default" values
-    SevereSlug(){
+    SevereSlugAnalyser(){
       this.setSuperficialGasVelocity(usl);
       this.setSuperficialGasVelocity(usg);
       this.setOutletPressure(outletPressure);
@@ -92,7 +104,7 @@ public class SevereSlug {
     
     // This constructor is used for the user input of superficial liquid and gas velocities,
     // and the rest will be the default values
-    SevereSlug(double usl, double usg){
+    SevereSlugAnalyser(double usl, double usg){
       this.setSuperficialLiquidVelocity(usl);
       this.setSuperficialGasVelocity(usg);
       this.setOutletPressure(outletPressure);
@@ -104,7 +116,7 @@ public class SevereSlug {
     // This constructor is used for the user input of superficial liquid and gas velocities, outletPressure,
     // temperature, simulationTime, numberOfTimeSteps
     // and the rest will be the default values
-    SevereSlug(double usl, double usg, double outletPressure, double temperature, double simulationTime, int numberOfTimeSteps){
+    SevereSlugAnalyser(double usl, double usg, double outletPressure, double temperature, double simulationTime, int numberOfTimeSteps){
       this.setSuperficialLiquidVelocity(usl);
       this.setSuperficialGasVelocity(usg);
       this.setOutletPressure(outletPressure);
@@ -113,7 +125,10 @@ public class SevereSlug {
       this.setNumberOfTimeSteps(numberOfTimeSteps);      
     }
 
-    SevereSlug(SystemInterface fluid, Pipe pipe, double outletPressure, double temperature, double simulationTime, int numberOfTimeSteps){
+    SevereSlugAnalyser(SystemInterface fluid, Pipe pipe, double outletPressure, double temperature, double simulationTime, int numberOfTimeSteps){
+      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+      ops.TPflash();
+      fluid.initProperties();
       if (fluid.getNumberOfPhases() == 2){
         usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
       }
@@ -129,7 +144,25 @@ public class SevereSlug {
       this.setNumberOfTimeSteps(numberOfTimeSteps);      
     }
 
-    SevereSlug(double outletPressure, double temperature, double simulationTime, int numberOfTimeSteps){
+    SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength, double rightLength,  double angle, double outletPressure, double temperature, double simulationTime, int numberOfTimeSteps){
+      pipe = new Pipe(internalDiameter, leftLength, rightLength, angle);
+      streamS = stream;
+      SystemInterface fluid = stream.getThermoSystem();
+      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+      ops.TPflash();
+      fluid.initProperties();
+      if (fluid.getNumberOfPhases() == 2){
+        usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
+      }
+      else{
+        usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea() + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
+      }
+      fluidSevereS = new FluidSevereSlug(fluid);
+      usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
+      severeSlug = new SevereSlugAnalyser(usl, usg,outletPressure, temperature, simulationTime, numberOfTimeSteps);
+    }
+
+    SevereSlugAnalyser(double outletPressure, double temperature, double simulationTime, int numberOfTimeSteps){
       this.setSuperficialLiquidVelocity(usl);
       this.setSuperficialGasVelocity(usg);
       this.setOutletPressure(outletPressure);
@@ -158,6 +191,14 @@ public class SevereSlug {
       return usg;
     }
     
+    public String getFlowPattern() {
+      return flowPattern;
+    }
+
+    public double getSlugValue() {
+      return slugValue;
+    }
+
     // 3. Pipe Outlet Pressure Encapsulation
     public void setOutletPressure(double outletPressure) {
       this.outletPressure = outletPressure;
@@ -201,7 +242,7 @@ public class SevereSlug {
     
     //Declare the variables for resuts after creating an object Severe slug with required number of steps.
     
-    public double slugHoldUp (Pipe pipe, SevereSlug severeSlug){
+    public double slugHoldUp (Pipe pipe, SevereSlugAnalyser severeSlug){
       double Udrift;
       double C0 = 1.2;
       double Umix;
@@ -212,7 +253,7 @@ public class SevereSlug {
       return holdUp;
   }  
 
-  public double stratifiedHoldUp (FluidSevereSlug fluid, Pipe pipe, SevereSlug severeSlug){
+  public double stratifiedHoldUp (FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug){
     Re = fluid.getLiqDensity()*severeSlug.getSuperficialLiquidVelocity()*pipe.getInternalDiameter()/(fluid.getliqVisc());
     lambda = Math.max(0.34 * Math.pow(Re, -0.25), 64 / Re);
     if (0.34 * Math.pow(Re, -0.25) > 64 / Re){
@@ -270,7 +311,7 @@ public class SevereSlug {
 }
     
     // Passing 3 objects as input parameters (fluid, pipe, severeSlug)
-    public void runSevereSlug(FluidSevereSlug fluid, Pipe pipe, SevereSlug severeSlug){
+    public void runSevereSlug(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug){
 
       resPres = new double[severeSlug.getNumberOfTimeSteps()]; 
       resTime = new double[severeSlug.getNumberOfTimeSteps()];
@@ -358,7 +399,7 @@ public class SevereSlug {
         }
     }
 
-    public String checkFlowRegime(FluidSevereSlug fluid, Pipe pipe, SevereSlug severeSlug){
+    public String checkFlowRegime(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug){
       Double[] halfRes =new Double[severeSlug.getNumberOfTimeSteps()/2];
       severeSlug.runSevereSlug(fluid, pipe, severeSlug);
       double sum = 0;
@@ -403,7 +444,70 @@ public class SevereSlug {
       return flowPattern;
     }
 
-    
+    public double getMeasuredValue() {
+      SystemInterface fluid = streamS.getThermoSystem();
+      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+      ops.TPflash();
+      fluid.initProperties();
+      if (fluid.getNumberOfPhases() == 2){
+        usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
+      }
+      else{
+        usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea() + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
+      }
+      fluidSevereS = new FluidSevereSlug(fluid);
+      usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
+      severeSlug = new SevereSlugAnalyser(usl, usg,outletPressure, temperature, simulationTime, numberOfTimeSteps);
+      checkFlowRegime(fluidSevereS, pipe, severeSlug);
+      return slugValue;
+    }
+
+    public String getPredictedFlowRegime() {
+      SystemInterface fluid = streamS.getThermoSystem();
+      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+      ops.TPflash();
+      fluid.initProperties();
+      if (fluid.getNumberOfPhases() == 2){
+        usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
+      }
+      else{
+        usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea() + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
+      }
+      fluidSevereS = new FluidSevereSlug(fluid);
+      usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
+      severeSlug = new SevereSlugAnalyser(usl, usg,outletPressure, temperature, simulationTime, numberOfTimeSteps);
+      checkFlowRegime(fluidSevereS, pipe, severeSlug);
+      return flowPattern;
+    }
+
+    public double getMeasuredValue(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
+      checkFlowRegime(fluid, pipe, severeSlug);
+      return slugValue;
+    }
+
+    public String getPredictedFlowRegime(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
+      checkFlowRegime(fluid, pipe, severeSlug);
+      return flowPattern;
+    }
+
+    public static void main(String args[]){
+      neqsim.thermo.system.SystemInterface testSystem =
+      new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 10);
+      testSystem.addComponent("methane", 0.015, "MSm^3/day");
+      testSystem.addComponent("n-heptane", 0.0055, "MSm^3/day");
+      testSystem.setMixingRule(2);
+      testSystem.init(0);
+      Stream inputStream = new Stream(testSystem);
+      SevereSlugAnalyser mySevereSlug4= new SevereSlugAnalyser (inputStream, 0.05, 167, 7.7, 2,100000.0,20.0, 200.0,20000);
+      System.out.println(inputStream.getFlowRate("kg/sec"));
+      mySevereSlug4.getPredictedFlowRegime();
+      // inputStream.setFlowRate(0.00001, "MSm^3/day");
+      // System.out.println(inputStream.getFlowRate("kg/sec"));
+      // mySevereSlug4.getPredictedFlowRegime();
+      
+    }
+
+
 // To be implemented
     // public void buildFlowMap(double ugmax, double ulmax, int numberOfStepsMap, FluidSevereSlug fluid, Pipe pipe, SevereSlug severeSlug){
     //   String stability1;
@@ -414,6 +518,7 @@ public class SevereSlug {
     //     double usg2 = ugmax;
     //     double usg_sol;
     //     iter = 0;
+
 
     //     while(Math.abs(usg1 - usg2) > 1e-5 && iter < 200){
 

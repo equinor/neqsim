@@ -2,7 +2,6 @@ package neqsim.processSimulation.measurementDevice.simpleFlowRegime;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-
 public class FluidSevereSlug {
 
     private double liqDensity = 1000.0;
@@ -41,8 +40,8 @@ public class FluidSevereSlug {
             waterWtFraction = fluid.getWtFraction(phaseNumber) * 100;
         }
         
-        this.liqDensity = waterWtFraction*waterDensity + oilWtFraction*oilDensity;
-        this.liqVisc = waterWtFraction*waterViscosity + oilWtFraction*oilViscosity;
+        this.liqDensity = (waterWtFraction/100)*waterDensity + (oilWtFraction/100)*oilDensity;
+        this.liqVisc = (waterWtFraction/100)*waterViscosity + (oilWtFraction/100)*oilViscosity;
         this.molecularWeight = fluid.getPhase("gas").getMolarMass();
     }
 
