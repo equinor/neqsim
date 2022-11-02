@@ -496,9 +496,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
 
-  /**
-   * @return boolean
-   */
+  /** {@inheritDoc} */
   @Override
   public boolean solved() {
     return true;
