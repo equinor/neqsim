@@ -60,10 +60,18 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
     this.setInletStream(inletStream);
   }
 
+
+  /**
+   * @param factors
+   */
   public void setSplitFactors(double[] factors) {
     splitFactor = factors;
   }
 
+
+  /**
+   * @param inletStream
+   */
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;
     splitStream = new Stream[2];
@@ -76,6 +84,11 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
     }
   }
 
+
+  /**
+   * @param i
+   * @return StreamInterface
+   */
   public StreamInterface getSplitStream(int i) {
     return splitStream[i];
   }
@@ -110,6 +123,5 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-  }
+  public void displayResult() {}
 }

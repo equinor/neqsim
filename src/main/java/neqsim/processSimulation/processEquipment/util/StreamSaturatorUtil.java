@@ -115,6 +115,10 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
 
+
+  /**
+   * @param approachToSaturation
+   */
   public void setApprachToSaturation(double approachToSaturation) {
     this.approachToSaturation = approachToSaturation;
   }

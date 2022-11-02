@@ -495,6 +495,10 @@ public class ProcessSystem extends SimulationBaseClass {
     setCalculationIdentifier(id);
   }
 
+
+  /**
+   * @return boolean
+   */
   @Override
   public boolean solved() {
     return true;

@@ -62,6 +62,10 @@ public class GORfitter extends TwoPortEquipment {
     super(name, stream);
   }
 
+
+  /**
+   * @return double
+   */
   public double getGFV() {
     return GVF;
   }
@@ -304,6 +308,10 @@ public class GORfitter extends TwoPortEquipment {
     this.GOR = gOR;
   }
 
+
+  /**
+   * @param gvf
+   */
   public void setGVF(double gvf) {
     fitAsGVF = true;
     this.GOR = gvf;

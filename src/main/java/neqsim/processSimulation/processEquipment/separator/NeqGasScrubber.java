@@ -77,6 +77,10 @@ public class NeqGasScrubber extends Separator {
     this.setOrientation("vertical");
   }
 
+
+  /**
+   * @return GasScrubberMechanicalDesign
+   */
   public GasScrubberMechanicalDesign getMechanicalDesign() {
     return new GasScrubberMechanicalDesign(this);
   }

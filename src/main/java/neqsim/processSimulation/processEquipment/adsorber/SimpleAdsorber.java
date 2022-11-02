@@ -114,6 +114,10 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     outStream[1].run();
   }
 
+
+  /**
+   * @return AdsorberMechanicalDesign
+   */
   public AdsorberMechanicalDesign getMechanicalDesign() {
     return new AdsorberMechanicalDesign(this);
   }

@@ -1247,10 +1247,18 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.useGERG2008 = useGERG2008;
   }
 
+
+  /**
+   * @return CompressorPropertyProfile
+   */
   public CompressorPropertyProfile getPropertyProfile() {
     return propertyProfile;
   }
 
+
+  /**
+   * @param propertyProfile
+   */
   public void setPropertyProfile(CompressorPropertyProfile propertyProfile) {
     this.propertyProfile = propertyProfile;
   }

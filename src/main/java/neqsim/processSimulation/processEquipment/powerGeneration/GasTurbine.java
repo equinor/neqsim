@@ -84,6 +84,10 @@ public class GasTurbine extends TwoPortEquipment {
     super(name, inletStream);
   }
 
+
+  /**
+   * @return CompressorMechanicalDesign
+   */
   public CompressorMechanicalDesign getMechanicalDesign() {
     return new CompressorMechanicalDesign(this);
   }

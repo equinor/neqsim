@@ -92,6 +92,10 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
     super(name, inStream);
   }
 
+
+  /**
+   * @return PipelineMechanicalDesign
+   */
   public PipelineMechanicalDesign getMechanicalDesign() {
     return new PipelineMechanicalDesign(this);
   }

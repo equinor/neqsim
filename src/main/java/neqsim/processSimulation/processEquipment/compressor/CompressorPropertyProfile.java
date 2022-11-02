@@ -16,24 +16,44 @@ public class CompressorPropertyProfile implements Serializable {
 
   public CompressorPropertyProfile() {}
 
+
+  /**
+   * @param inputFLuid
+   */
   public void addFluid(SystemInterface inputFLuid) {
     inputFLuid.initPhysicalProperties();
     fluid.add(inputFLuid);
   }
 
+
+  /**
+   * @return boolean
+   */
   public boolean isActive() {
     return isActive;
   }
 
+
+  /**
+   * @param isActive
+   */
   public void setActive(boolean isActive) {
     this.isActive = isActive;
     fluid.clear();
   }
 
+
+  /**
+   * @return ArrayList<SystemInterface>
+   */
   public ArrayList<SystemInterface> getFluid() {
     return fluid;
   }
 
+
+  /**
+   * @param fluid
+   */
   public void setFluid(ArrayList<SystemInterface> fluid) {
     this.fluid = fluid;
   }
