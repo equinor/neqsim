@@ -13,7 +13,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     Stream streamS;
 
 
-    final double gravAcc = 9.81;
+    final double gravAcc = neqsim.thermo.ThermodynamicConstantsInterface.gravity;
     
     //Severe slug problem
     private double simulationTime = 200;
@@ -35,7 +35,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     double uLevel = 0.0;// some initial value to start the calculation
     double valveConstant = 0.0;
     double normalPressure = 100000.0;
-    final double pi = 3.1415926; 
+    final double pi = neqsim.thermo.ThermodynamicConstantsInterface.pi;
 
     double[] resPres;
     double[] resTime;
@@ -159,7 +159,15 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       }
       fluidSevereS = new FluidSevereSlug(fluid);
       usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
-      severeSlug = new SevereSlugAnalyser(usl, usg,outletPressure, temperature, simulationTime, numberOfTimeSteps);
+
+      severeSlug = new SevereSlugAnalyser(usl, usg, outletPressure, temperature, simulationTime,
+          numberOfTimeSteps);
+    }
+
+    SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength,
+        double rightLength, double angle, double simulationTime, int numberOfTimeSteps) {
+      this(stream, internalDiameter, leftLength, rightLength, angle, stream.getPressure("Pa"),
+          stream.getTemperature("C"), simulationTime, numberOfTimeSteps);
     }
 
     SevereSlugAnalyser(double outletPressure, double temperature, double simulationTime, int numberOfTimeSteps){
