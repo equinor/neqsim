@@ -75,10 +75,6 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return null;
   }
 
-
-  /**
-   * @param reportResults(
-   */
   /**
    * <p>
    * calcDesign.
@@ -86,10 +82,6 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    */
   public abstract void calcDesign();
 
-
-  /**
-   * @param reportResults(
-   */
   /**
    * <p>
    * setDesign.
