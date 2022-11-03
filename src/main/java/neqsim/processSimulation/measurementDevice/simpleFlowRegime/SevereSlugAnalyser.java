@@ -170,6 +170,12 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
           stream.getTemperature("C"), simulationTime, numberOfTimeSteps);
     }
 
+    SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength,
+    double rightLength, double angle) {
+    this(stream, internalDiameter, leftLength, rightLength, angle, stream.getPressure("Pa"),
+      stream.getTemperature("C"), 500.0, 50000);
+}
+
     SevereSlugAnalyser(double outletPressure, double temperature, double simulationTime, int numberOfTimeSteps){
       this.setSuperficialLiquidVelocity(usl);
       this.setSuperficialGasVelocity(usg);
@@ -471,10 +477,18 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     }
 
     public String getPredictedFlowRegime() {
+      System.out.println(angle);
       SystemInterface fluid = streamS.getThermoSystem();
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
       ops.TPflash();
       fluid.initProperties();
+      if (fluid.getNumberOfPhases() == 1){
+        flowPattern = "Sinfle Phase";
+      }
+      else if(pipe.getAngle("Radian") <= 0.0){
+        flowPattern = "Regime cannot be detected (angle < or = 0.0). Severe slug is not possible";
+      }
+      else{
       if (fluid.getNumberOfPhases() == 2){
         usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
       }
@@ -485,6 +499,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
       severeSlug = new SevereSlugAnalyser(usl, usg,outletPressure, temperature, simulationTime, numberOfTimeSteps);
       checkFlowRegime(fluidSevereS, pipe, severeSlug);
+    }
       return flowPattern;
     }
 
