@@ -17,6 +17,7 @@ public class CalculationResult {
     this.calculationError = calculationError;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -26,14 +27,18 @@ public class CalculationResult {
     return result;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     CalculationResult other = (CalculationResult) obj;
     return Arrays.equals(calculationError, other.calculationError)
         && Arrays.deepEquals(fluidProperties, other.fluidProperties);
