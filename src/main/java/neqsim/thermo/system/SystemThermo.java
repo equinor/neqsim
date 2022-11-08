@@ -3923,6 +3923,7 @@ abstract class SystemThermo implements SystemInterface {
     this.fluidName = fluidName;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addToComponentNames(java.lang.String name) {
     for (int j = 0; j < componentNames.size(); j++) {
@@ -5086,11 +5087,18 @@ abstract class SystemThermo implements SystemInterface {
     this.forcePhaseTypes = forcePhaseTypes;
   }
 
+
+  /** {@inheritDoc} */
   @Override
   public SystemProperties getProperties() {
     return new SystemProperties(this);
   }
 
+
+  /**
+   * @param molefractions
+   * @param type
+   */
   private void setMolarFractions(double[] molefractions, String type) {
     double totalFlow = getTotalNumberOfMoles();
     if (totalFlow < 1e-100) {
@@ -5231,9 +5239,12 @@ abstract class SystemThermo implements SystemInterface {
         12);
   }
 
-  /*
-   * <p> getIdealLiquidDensity. </p> Return normal liquid density of fluid in given unit
-   * 
+
+  /**
+   * Return normal liquid density of fluid in given unit.
+   *
+   * @param unit Supported units are gr/cm3 and kg/m3. Defaults to gr/cm3.
+   * @return double Density of fluid.
    */
   public double getIdealLiquidDensity(String unit) {
     double normalLiquidDensity = 0.0;
@@ -5242,11 +5253,11 @@ abstract class SystemThermo implements SystemInterface {
       normalLiquidDensity += getComponent(i).getNormalLiquidDensity() * getComponent(i).getz()
           * getComponent(i).getMolarMass() / molarMass;
     }
-    if (unit.equals("gr/cm3"))
+    if (unit.equals("gr/cm3")) {
       return normalLiquidDensity;
-    else if (unit.equals("kg/m3"))
+    } else if (unit.equals("kg/m3")) {
       return normalLiquidDensity * 1000.0;
-    else {
+    } else {
       logger.error("unit not supported: " + unit);
       return normalLiquidDensity;
     }

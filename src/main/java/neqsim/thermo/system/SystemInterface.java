@@ -2530,14 +2530,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       double[] relativedensity);
 
   /**
-   * <p>
-   * getIdealLiquidDensity.
-   * </p>
-   * 
-   * @param {@link java.lang.String} object Supported units are kg/m3 and gr/cm3
-   * 
-   *        Return normal liquid density of fluid
-   * 
+   * Get normal liquid density of fluid.
+   *
+   * @param unit {@link java.lang.String} Supported units are kg/m3 and gr/cm3
    */
   public double getIdealLiquidDensity(String unit);
 }
