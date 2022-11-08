@@ -137,6 +137,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void createComponent(String component_name, double moles, double molesInPhase,
       int compnumber) {
