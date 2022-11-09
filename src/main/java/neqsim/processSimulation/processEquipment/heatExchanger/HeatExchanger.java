@@ -551,14 +551,14 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   /**
    * @return String
    */
-  String getFlowArrangement() {
+  public String getFlowArrangement() {
     return flowArrangement;
   }
 
   /**
    * @param flowArrangement name of flow arrangement
    */
-  void setFlowArrangement(String flowArrangement) {
+  public void setFlowArrangement(String flowArrangement) {
     this.flowArrangement = flowArrangement;
   }
 
