@@ -100,6 +100,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     splitNumber = i;
     splitFactor = new double[splitNumber];
     splitFactor[0] = 1.0;
+    setInletStream(inletStream);
   }
 
   /**
@@ -133,19 +134,29 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * @param setFlowRates an array of {@link double} objects
    */
   public void setFlowRates(double[] flowRates, String flowUnit) {
+    if (flowRates.length != splitNumber) {
+      setInletStream(inletStream);
+    }
     this.flowRates = flowRates;
-    splitNumber = flowRates.length;
-    splitFactor = new double[flowRates.length];
     this.flowUnit = flowUnit;
     double sum = 0.0;
     for (int i = 0; i < flowRates.length; i++) {
-      sum += flowRates[i];
+      if (flowRates[i] > -0.1) {
+        sum += flowRates[i];
+      }
     }
 
     for (int i = 0; i < flowRates.length; i++) {
+      if (flowRates[i] < -0.1) {
+        flowRates[i] = inletStream.getFlowRate(flowUnit) - sum;
+      }
+    }
+    splitFactor = new double[flowRates.length];
+    for (int i = 0; i < flowRates.length; i++) {
       splitFactor[i] = flowRates[i] / sum;
     }
-    setSplitFactors(splitFactor);
+    splitNumber = splitFactor.length;
+    setInletStream(inletStream);
   }
 
   public void calcSplitFactors() {
@@ -170,14 +181,16 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;
-    splitStream = new Stream[splitNumber];
-    try {
-      for (int i = 0; i < splitNumber; i++) {
-        // System.out.println("splitting...." + i);
-        splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
+    if (splitStream == null || splitStream.length != splitNumber) {
+      splitStream = new Stream[splitNumber];
+      try {
+        for (int i = 0; i < splitNumber; i++) {
+          // System.out.println("splitting...." + i);
+          splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
+        }
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
     }
   }
 
