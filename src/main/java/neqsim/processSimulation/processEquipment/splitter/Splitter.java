@@ -30,6 +30,10 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   StreamInterface[] splitStream;
   protected int splitNumber = 1;
   double[] splitFactor = new double[1];
+  double[] flowRates;
+  String flowUnit = "mole/sec";
+
+
 
   /**
    * <p>
@@ -121,6 +125,47 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     setInletStream(inletStream);
   }
 
+  /**
+   * <p>
+   * setFlowRates.
+   * </p>
+   *
+   * @param setFlowRates an array of {@link double} objects
+   */
+  public void setFlowRates(double[] flowRates, String flowUnit) {
+    this.flowRates = flowRates;
+    splitNumber = flowRates.length;
+    splitFactor = new double[flowRates.length];
+    this.flowUnit = flowUnit;
+    double sum = 0.0;
+    for (int i = 0; i < flowRates.length; i++) {
+      sum += flowRates[i];
+    }
+
+    for (int i = 0; i < flowRates.length; i++) {
+      splitFactor[i] = flowRates[i] / sum;
+    }
+    setSplitFactors(splitFactor);
+  }
+
+  public void calcSplitFactors() {
+    double sum = 0.0;
+    for (int i = 0; i < splitNumber; i++) {
+      if (flowRates[i] > -0.1) {
+        splitFactor[i] = flowRates[i] / inletStream.getFlowRate(flowUnit);
+        sum += splitFactor[i];
+      }
+    }
+
+    for (int i = 0; i < splitNumber; i++) {
+      if (flowRates[i] < -0.1) {
+        splitFactor[i] = 1 - 0 - sum;
+      }
+    }
+
+
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setInletStream(StreamInterface inletStream) {
@@ -146,6 +191,11 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   @Override
   public void run(UUID id) {
     double totSplit = 0.0;
+
+    if (flowRates != null) {
+      calcSplitFactors();
+    }
+
     for (int i = 0; i < splitNumber; i++) {
       if (splitFactor[i] < 0) {
         logger.debug("split factor negative = " + splitFactor[i]);
