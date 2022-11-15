@@ -3,8 +3,11 @@ package neqsim.processSimulation.processEquipment.splitter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.processSimulation.processEquipment.compressor.Compressor;
+import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
@@ -95,6 +98,71 @@ class ComponentSplitterTest {
     System.out.println("valve opening " + valve1.getPercentValveOpening());
     assertEquals(0.1, splitter.getSplitStream(0).getFlowRate("MSm3/day"), 1e-6);
     assertEquals(4.9, splitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-6);
+  }
+
+  @Test
+  public void testRunSplitter2() {
+    testSystem = new SystemSrkEos(298.0, 55.0);
+    testSystem.addComponent("methane", 100.0);
+
+    processOps = new ProcessSystem();
+
+    Stream inletStream = new Stream("inletStream", testSystem);
+    inletStream.setName("inlet stream");
+    inletStream.setPressure(55.0, "bara");
+    inletStream.setTemperature(25.0, "C");
+    inletStream.setFlowRate(5.0, "MSm3/day");
+
+    Stream streamresycl = inletStream.clone();
+
+    Mixer mixer1 = new Mixer("mixer 1");
+    mixer1.addStream(inletStream);
+    mixer1.addStream(streamresycl);
+
+    Compressor compressor1 = new Compressor("compressor 1", mixer1.getOutletStream());
+    compressor1.setOutletPressure(100.0);
+
+    Stream compressedStream = (Stream) compressor1.getOutletStream();
+
+    Splitter splitter = new Splitter("splitter 1", compressedStream);
+    splitter.setFlowRates(new double[] {5.0, 1.0}, "MSm3/day");
+
+    StreamInterface resycStream1 = splitter.getSplitStream(1);
+
+    ThrottlingValve valve1 = new ThrottlingValve("valve 1", resycStream1);
+    valve1.setOutletPressure(55.0);
+    valve1.setCv(500.0);
+
+    Recycle recycle1 = new Recycle("recycle 1");
+    recycle1.addStream(valve1.getOutletStream());
+    recycle1.setOutletStream(streamresycl);
+
+    StreamInterface exportStream = splitter.getSplitStream(0);
+
+    processOps.add(inletStream);
+    processOps.add(streamresycl);
+    processOps.add(mixer1);
+    processOps.add(compressor1);
+    processOps.add(compressedStream);
+    processOps.add(splitter);
+    processOps.add(resycStream1);
+    processOps.add(valve1);
+    processOps.add(recycle1);
+    processOps.add(exportStream);
+
+    processOps.run();
+
+    assertEquals(5.0, exportStream.getFlowRate("MSm3/day"), 1e-6);
+    assertEquals(1.0, resycStream1.getFlowRate("MSm3/day"), 1e-6);
+    assertEquals(83.41653486772951, valve1.getPercentValveOpening(), 1e-2);
+
+
+    splitter.setFlowRates(new double[] {5.0, 0.1}, "MSm3/day");
+    processOps.run();
+    assertEquals(5.00000000, exportStream.getFlowRate("MSm3/day"), 1e-6);
+    assertEquals(0.1, resycStream1.getFlowRate("MSm3/day"), 1e-6);
+    assertEquals(8.4328749964588, valve1.getPercentValveOpening(), 1e-2);
+
   }
 
 }

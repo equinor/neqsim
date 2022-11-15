@@ -2,6 +2,8 @@ package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -19,7 +21,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface {
   private static final long serialVersionUID = 1000;
-
+  static Logger logger = LogManager.getLogger(Recycle.class);
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   private ArrayList<String> downstreamProperty = new ArrayList<String>(0);
   protected int numberOfInputStreams = 0;
@@ -278,7 +280,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
     mixedStream.setCalculationIdentifier(id);
     setError(massBalanceCheck());
-    System.out.println(name + " recycle error: " + getError());
+    logger.debug(name + " recycle error: " + getError());
     lastIterationStream = (Stream) mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
     outletStream.setCalculationIdentifier(id);
