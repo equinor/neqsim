@@ -151,12 +151,10 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         flowRates[i] = inletStream.getFlowRate(flowUnit) - sum;
       }
     }
-
     splitFactor = new double[flowRates.length];
     for (int i = 0; i < flowRates.length; i++) {
       splitFactor[i] = flowRates[i] / sum;
     }
-
     splitNumber = splitFactor.length;
     setInletStream(inletStream);
   }
