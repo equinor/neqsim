@@ -24,7 +24,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   SystemInterface thermoSystem;
   double pressure = 0.0;
-  private double Cv = 1.0;
+  private double Cv;
   private double maxMolarFlow = 1000.0;
   private double minMolarFlow = 0.0;
   private double percentValveOpening = 100.0;
@@ -194,7 +194,15 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
           * Math.sqrt(
               (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
                   / thermoSystem.getDensity()));
+      valveCvSet = true;
     }
+
+    percentValveOpening = inStream.getThermoSystem().getTotalNumberOfMoles() / (getCv()) * 100.0
+        / Math.sqrt(
+            (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
+                / thermoSystem.getDensity());
+
+
     molarFlow = getCv() * getPercentValveOpening() / 100.0
         * Math.sqrt(
             (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
