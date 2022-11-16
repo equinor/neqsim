@@ -30,10 +30,10 @@ jobs:
         uses: actions/create-release@v1
         id: create_release
         with:
-          draft: false
+          draft: true
           prerelease: false
-          release_name: ${{ steps.version.outputs.version }}
-          tag_name: v${{ steps.version.outputs.version }}
+          release_name: ${{ steps.version.outputs.id }}
+          tag_name: v${{ steps.version.outputs.id }}a
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Upload java8 jar artifact
