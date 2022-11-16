@@ -61,7 +61,7 @@ class TVFlashTest {
       try {
         testOps.TVflash(total_rig_volume, "m3");
       } catch (Exception ex) {
-        System.out.println("error iterations " + i);
+        logger.info("error iterations " + i);
         logger.error(ex.getMessage());
       }
     }
