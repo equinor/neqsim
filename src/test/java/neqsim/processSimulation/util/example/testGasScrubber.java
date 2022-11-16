@@ -1,5 +1,7 @@
 package neqsim.processSimulation.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
 import neqsim.processSimulation.processEquipment.separator.GasScrubberSimple;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -13,6 +15,8 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @since 2.2.3
  */
 public class testGasScrubber {
+  static Logger logger = LogManager.getLogger(testGasScrubber.class);
+
     /**
      * <p>main.</p>
      *
@@ -91,18 +95,19 @@ public class testGasScrubber {
         // scrubber.getMechanicalDesign().setDesignStandard("BS 5500 - Pressure
         // Vessel");
 
-        System.out.println("vane top veight " + scrubber.getSeparatorSection("inlet vane")
+        logger.info("vane top veight "
+            + scrubber.getSeparatorSection("inlet vane")
                 .getMechanicalDesign().getTotalWeight());
 
-        System.out.println("curryover " + scrubber.calcLiquidCarryoverFraction());
-        System.out.println("gas vel " + scrubber.getGasSuperficialVelocity());
-        System.out.println("gas load factor oil " + scrubber.getGasLoadFactor());
-        // System.out.println("gas load factor water " + scrubber.getGasLoadFactor(2));
-        System.out.println("derated gas load factor oil " + scrubber.getDeRatedGasLoadFactor());
-        // System.out.println("derated gas load factor water " +
+        logger.info("curryover " + scrubber.calcLiquidCarryoverFraction());
+        logger.info("gas vel " + scrubber.getGasSuperficialVelocity());
+        logger.info("gas load factor oil " + scrubber.getGasLoadFactor());
+        // logger.info("gas load factor water " + scrubber.getGasLoadFactor(2));
+        logger.info("derated gas load factor oil " + scrubber.getDeRatedGasLoadFactor());
+        // logger.info("derated gas load factor water " +
         // scrubber.getDeRatedGasLoadFactor(2));
 
-        System.out.println("minimum liquid seal height "
+        logger.info("minimum liquid seal height "
                 + scrubber.getSeparatorSection(0).getMinimumLiquidSealHeight());
         scrubber.getMechanicalDesign().displayResults();
     }
