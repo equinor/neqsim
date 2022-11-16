@@ -48,4 +48,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ steps.filepath.outputs.id }}
           asset_name: ${{ steps.filename.outputs.id }}
-          asset_content_type:application/java-archive
+          asset_content_type: application/java-archive
