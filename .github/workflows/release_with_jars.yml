@@ -21,13 +21,13 @@ jobs:
         run: mvn -B package --file pomJava8.xml
       - name: Get file path of jar
         id: filepath
-        run: echo "value=$(ls ./target/neqsim*-Java8.jar)"
+        run: echo "value=$(ls ./target/neqsim*-Java8.jar)" >> $GITHUB_OUTPUT
       - name: Get file name of jar
         id: filename
-        run: echo "value=$(ls ./target/neqsim*-Java8.jar | cut -f 3 -d "/")"
+        run: echo "value=$(ls ./target/neqsim*-Java8.jar | cut -f 3 -d "/")" >> $GITHUB_OUTPUT
       - name: Get version number from jar file name
         id: version
-        run: echo "value=$(ls ./target/neqsim*-Java8.jar | cut -f 2 -d "-")"
+        run: echo "value=$(ls ./target/neqsim*-Java8.jar | cut -f 2 -d "-")" >> $GITHUB_OUTPUT
       - name: release
         uses: actions/create-release@v1
         id: create_release
