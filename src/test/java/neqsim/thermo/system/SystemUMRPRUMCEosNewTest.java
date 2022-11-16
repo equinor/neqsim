@@ -2,6 +2,8 @@ package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -9,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
+  static Logger logger = LogManager.getLogger(SystemUMRPRUMCEosNewTest.class);
+
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
   neqsim.thermo.ThermodynamicModelTest fugTest;
@@ -87,9 +91,9 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.init(0);
     // testSystem.init(1);
     testSystem.init(3);
-    System.out.println("molar volume gas+oil is " + testSystem.getMolarVolume());
-    System.out.println("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
-    System.out.println("molar volume liquid is " + testSystem.getPhase(1).getMolarVolume());
+    logger.info("molar volume gas+oil is " + testSystem.getMolarVolume());
+    logger.info("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
+    logger.info("molar volume liquid is " + testSystem.getPhase(1).getMolarVolume());
     // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     // testOps.TPflash();
 
@@ -131,7 +135,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   public void testFugacityCoefficients() {
     assertTrue(testModel.checkFugacityCoefficients());
 
-    // System.out.println("molar volume liquid is " + testSystem.((PhasePrEosvolcor)
+    // logger.info("molar volume liquid is " + testSystem.((PhasePrEosvolcor)
     // phase).getFC());
   }
 
@@ -203,7 +207,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.calcPTphaseEnvelope();
-      System.out.println("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
+      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
           + testOps.get("cricondenbar")[1]);
     } catch (Exception ex) {
       assertTrue(false);

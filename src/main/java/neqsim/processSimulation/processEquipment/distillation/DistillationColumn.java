@@ -3,6 +3,8 @@ package neqsim.processSimulation.processEquipment.distillation;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -22,6 +24,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class DistillationColumn extends ProcessEquipmentBaseClass implements DistillationInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(DistillationColumn.class);
+
   private boolean doInitializion = true;
   boolean hasReboiler = false;
   boolean hasCondenser = false;
@@ -362,7 +366,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           err += Math.abs(
               oldtemps[i] - ((MixerInterface) trays.get(i)).getThermoSystem().getTemperature());
         }
-        System.out.println("error iter " + err + " iteration " + iter);
+        logger.info("error iter " + err + " iteration " + iter);
         // massBalanceCheck();
       } while (err > 1e-4 && err < errOld && iter < 10); // && !massBalanceCheck());
 

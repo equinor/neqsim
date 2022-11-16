@@ -97,7 +97,7 @@ public class SwellingTest extends BasePVTsimulation {
     }
 
     for (int i = 0; i < getPressures().length; i++) {
-      System.out.println(
+      logger.info(
           "pressure " + getPressures()[i] + " relativeOil volume " + getRelativeOilVolume()[i]);
     }
   }

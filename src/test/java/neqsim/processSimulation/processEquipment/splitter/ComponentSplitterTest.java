@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processEquipment.splitter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -13,6 +15,8 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 class ComponentSplitterTest {
+  static Logger logger = LogManager.getLogger(ComponentSplitterTest.class);
+
   static neqsim.thermo.system.SystemInterface testSystem = null;
   double pressure_inlet = 85.0;
   double temperature_inlet = 35.0;
@@ -68,7 +72,7 @@ class ComponentSplitterTest {
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
 
-    Splitter splitter = new Splitter(inletStream);
+    Splitter splitter = new Splitter("splitter", inletStream);
     splitter.setSplitNumber(2);
     splitter.setFlowRates(new double[] {4.0, 1.0}, "MSm3/day");
     // splitter.setFlowRates(new double[] {-1.0, 1.0}, "MSm3/day");
@@ -76,7 +80,7 @@ class ComponentSplitterTest {
     StreamInterface stream1 = splitter.getSplitStream(0);
     StreamInterface stream2 = splitter.getSplitStream(1);
 
-    ThrottlingValve valve1 = new ThrottlingValve(stream1);
+    ThrottlingValve valve1 = new ThrottlingValve("valve", stream1);
     valve1.setCv(500.0);
     valve1.setOutletPressure(5.0);
 
@@ -90,12 +94,12 @@ class ComponentSplitterTest {
 
     assertEquals(stream1.getFlowRate("MSm3/day"), 4.0, 1e-6);
     assertEquals(stream2.getFlowRate("MSm3/day"), 1.0, 1e-6);
-    System.out.println("valve opening " + valve1.getPercentValveOpening());
+    logger.info("valve opening " + valve1.getPercentValveOpening());
 
     splitter.setFlowRates(new double[] {-1, 4.9}, "MSm3/day");
     processOps.run();
 
-    System.out.println("valve opening " + valve1.getPercentValveOpening());
+    logger.info("valve opening " + valve1.getPercentValveOpening());
     assertEquals(0.1, splitter.getSplitStream(0).getFlowRate("MSm3/day"), 1e-6);
     assertEquals(4.9, splitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-6);
   }

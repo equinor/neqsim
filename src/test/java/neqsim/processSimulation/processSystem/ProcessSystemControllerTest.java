@@ -1,5 +1,7 @@
 package neqsim.processSimulation.processSystem;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,8 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
 public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
+  static Logger logger = LogManager.getLogger(ProcessSystemControllerTest.class);
+
   ProcessSystem p;
 
   @BeforeEach
@@ -93,7 +97,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
     for (int i = 0; i < 55; i++) {
       flowController.setControllerSetPoint(65.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
-      System.out.println(
+      logger.info(
           "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
               + " controller response " + flowController.getResponse() + " valve opening "
               + valve_1.getPercentValveOpening() + " pressure "
@@ -104,7 +108,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
       flowController.setControllerSetPoint(55.0 + getRandomDistrurbanceFlowRate());
       // stream_1.runTransient(1.0);
       p.runTransient();
-      System.out.println(
+      logger.info(
           "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
               + " controller response " + flowController.getResponse() + " valve opening "
               + valve_1.getPercentValveOpening() + " pressure "
@@ -116,7 +120,7 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
     for (int i = 0; i < 55; i++) {
       flowController.setControllerSetPoint(75.0 + getRandomDistrurbanceFlowRate());
       p.runTransient();
-      System.out.println(
+      logger.info(
           "flow rate " + valve_1.getOutletStream().getFluid().getPhase("gas").getFlowRate("kg/hr")
               + " controller response " + flowController.getResponse() + " valve opening "
               + valve_1.getPercentValveOpening() + " pressure "

@@ -523,7 +523,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       testSystem.addComponent("n-heptane", 0.0055, "MSm^3/day");
       testSystem.setMixingRule(2);
       testSystem.init(0);
-      Stream inputStream = new Stream(testSystem);
+      Stream inputStream = new Stream("inputStream", testSystem);
       SevereSlugAnalyser mySevereSlug4= new SevereSlugAnalyser (inputStream, 0.05, 167, 7.7, 2,100000.0,20.0, 200.0,20000);
       logger.debug(inputStream.getFlowRate("kg/sec"));
       mySevereSlug4.getPredictedFlowRegime();
