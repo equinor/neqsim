@@ -1,9 +1,8 @@
-name: Release to Github Packages
+name: Build maven java 8
 
 on:
   push:
-    tags:
-      - v*
+    branches: [ master ]
 
 jobs:
   build:
@@ -16,5 +15,10 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 8
-        run:
-          mvn --settings settingsJava8.xml -Drevision=${{ steps.get_version.outputs.VERSION }} deploy
+      - name: Build with Maven
+        run: mvn -B package --file pomJava8.xml
+      - run: mkdir staging && cp target/*.jar staging
+      - uses: actions/upload-artifact@v2
+        with:
+         name: jarfiles
+         path: staging
