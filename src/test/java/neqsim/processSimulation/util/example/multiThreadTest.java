@@ -135,7 +135,7 @@ public class multiThreadTest {
     }
     // } while (processThread1.isAlive()); // && processThread2.isAlive());
 
-    System.out.println("Time taken for simulation = " + (System.currentTimeMillis() - time));
+    logger.info("Time taken for simulation = " + (System.currentTimeMillis() - time));
 
     ((Compressor) operations.getUnit("comp1")).displayResult();
     ((Compressor) operations2.getUnit("comp22")).displayResult();

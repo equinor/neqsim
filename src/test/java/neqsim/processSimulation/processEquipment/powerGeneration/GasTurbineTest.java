@@ -1,5 +1,7 @@
 package neqsim.processSimulation.processEquipment.powerGeneration;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -8,6 +10,8 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class GasTurbineTest extends neqsim.NeqSimTest{
+  static Logger logger = LogManager.getLogger(GasTurbineTest.class);
+
     static neqsim.thermo.system.SystemInterface testSystem;
     static Stream gasStream;
 
@@ -45,7 +49,7 @@ public class GasTurbineTest extends neqsim.NeqSimTest{
         // gasStream.run();
         gasturb.run();
 
-        System.out.println("power generated " + gasturb.getPower() / 1.0e6);
-        System.out.println("heat generated " + gasturb.getHeat() / 1.0e6);
+        logger.info("power generated " + gasturb.getPower() / 1.0e6);
+        logger.info("heat generated " + gasturb.getHeat() / 1.0e6);
     }
 }

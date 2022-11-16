@@ -1,5 +1,7 @@
 package neqsim.PVTsimulation.simulation;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -18,6 +20,8 @@ public class SeparatorTest extends BasePVTsimulation {
   private double[] Bofactor;
   private double[] GOR = null;
   double oilVolumeStdCond = 0;
+
+  static Logger logger = LogManager.getLogger(SeparatorTest.class);
 
   /**
    * <p>
@@ -82,7 +86,7 @@ public class SeparatorTest extends BasePVTsimulation {
         GOR[i] = Sm3gas[i] / oilVolumeStdCond;
         Bofactor[i] = m3oil[i] / oilVolumeStdCond;
       }
-      System.out.println("GOR " + getGOR()[i] + " Bo " + Bofactor[i]);
+      logger.info("GOR " + getGOR()[i] + " Bo " + Bofactor[i]);
     }
   }
 
