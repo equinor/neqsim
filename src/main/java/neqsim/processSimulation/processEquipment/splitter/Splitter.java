@@ -170,7 +170,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
     for (int i = 0; i < splitNumber; i++) {
       if (flowRates[i] < -0.1) {
-        splitFactor[i] = 1 - 0 - sum;
+        splitFactor[i] = 1 - sum;
       }
     }
 
