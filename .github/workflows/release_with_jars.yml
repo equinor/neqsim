@@ -26,24 +26,24 @@ jobs:
         run: ls ./target/neqsim*-Java8.jar | cut -f 3 -d "/"
         id: filename
       - name: Get version number from file name
-        run: ls ./target/neqsim*.Java8jar | cut -f 2 -d "-"
-        id: version        
-      # - name: release
-      #   uses: actions/create-release@v1
-      #   id: create_release
-      #   with:
-      #     draft: false
-      #     prerelease: false
-      #     release_name: ${{ steps.version.outputs.version }}
-      #     tag_name: join(["v", ${{ steps.version.outputs.version }}],"")
-      #   env:
-      #     GITHUB_TOKEN: ${{ github.token }}
-      # - name: Upload java8 jar artifact
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #    GITHUB_TOKEN: ${{ github.token }}
-      #  with:
-      #    upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #    asset_path: ${{ steps.filepath.outputs.id }}
-      #    asset_name: ${{ steps.filename.outputs.id }}
-      #    asset_content_type: application/java-archive
+        run: ls ./target/neqsim*-Java8.jar | cut -f 2 -d "-"
+        id: version
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.version.outputs.version }}
+          tag_name: join(["v", ${{ steps.version.outputs.version }}],"")
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Upload java8 jar artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.filepath.outputs.id }}
+          asset_name: ${{ steps.filename.outputs.id }}
+          asset_content_type: application/java-archive
