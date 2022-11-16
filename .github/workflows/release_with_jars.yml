@@ -34,8 +34,8 @@ jobs:
         with:
           draft: true
           prerelease: false
-          release_name: Release of version ${{ steps.version.outputs.id }}
-          tag_name: v${{ steps.version.outputs.id }}a
+          release_name: Release of version ${{ steps.version.outputs }}
+          tag_name: v${{ steps.version.outputs }}a
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Upload java8 jar artifact
@@ -44,6 +44,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.filepath.outputs.id }}
-          asset_name: ${{ steps.filename.outputs.id }}
+          asset_path: ${{ steps.filepath.outputs }}
+          asset_name: ${{ steps.filename.outputs }}
           asset_content_type: application/java-archive
