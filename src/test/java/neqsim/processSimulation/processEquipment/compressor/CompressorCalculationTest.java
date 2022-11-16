@@ -102,31 +102,30 @@ public class CompressorCalculationTest extends neqsim.NeqSimTest {
     operations.add(comp1);
     operations.run();
 
-    // System.out.println("power " + comp1.getPower());
+    // logger.info("power " + comp1.getPower());
     Assertions.assertEquals(1163805.2992826412, comp1.getPower(), 0.01);
     Assertions.assertFalse(comp1.getAntiSurge().isSurge());
     Assertions.assertEquals(0.0, comp1.getAntiSurge().getCurrentSurgeFraction());
 
-    // System.out.println("Polytropic head from curve:" + comp1.getPolytropicHead());
+    // logger.info("Polytropic head from curve:" + comp1.getPolytropicHead());
 
     Assertions.assertEquals(55.40415411694987, comp1.getPolytropicHead(), 0.01);
-    // System.out.println("Polytropic eff from curve:" + comp1.getPolytropicEfficiency() * 100.0);
+    // logger.info("Polytropic eff from curve:" + comp1.getPolytropicEfficiency() * 100.0);
     Assertions.assertEquals(0.43175024049749283, comp1.getPolytropicEfficiency(), 0.01);
 
-    // System.out.println("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
-    // System.out.println("speed " + comp1.getCompressorChart().getSpeed(
+    // logger.info("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
+    // logger.info("speed " + comp1.getCompressorChart().getSpeed(
     // stream_1.getThermoSystem().getFlowRate("m3/hr") + 10.0, comp1.getPolytropicHead()));
-    // System.out.println("pressure out " + comp1.getOutletPressure());
-    // System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
+    // logger.info("pressure out " + comp1.getOutletPressure());
+    // logger.info("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
     /*
      * double temperatureOut = 273.15 + 84; comp1.setOutletPressure(96.0);
      * comp1.setOutTemperature(temperatureOut); operations.run(); double polytropicHead =
      * comp1.getPolytropicHead(); double flowRate = stream_1.getThermoSystem().getFlowRate("m3/hr");
      * double calcSpeed = comp1.getCompressorChart().getSpeed(flowRate, polytropicHead);
-     * System.out.println("polytopic head " + polytropicHead);
-     * System.out.println("polytopic efficiency " + comp1.getPolytropicEfficiency());
-     * System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
-     * System.out.println("calculated speed " + calcSpeed);
+     * logger.info("polytopic head " + polytropicHead); logger.info("polytopic efficiency " +
+     * comp1.getPolytropicEfficiency()); logger.info("temperature out " + (comp1.getOutTemperature()
+     * - 273.15) + " C"); logger.info("calculated speed " + calcSpeed);
      */
   }
 }
