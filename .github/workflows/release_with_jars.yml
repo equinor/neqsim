@@ -108,7 +108,7 @@ jobs:
       - name: Create release v${{ needs.get_versions.outputs.version_8 }}
         uses: ncipollo/release-action@v1.11.2
         with:
-          name: Neqsim ${{ needs.get_versions.outputs.version_8 }}
+          name: NeqSim ${{ needs.get_versions.outputs.version_8 }}
           tag: v${{ needs.get_versions.outputs.version_8 }} 
           draft: true
           generateReleaseNotes: true
