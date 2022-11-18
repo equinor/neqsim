@@ -13,7 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
-      - name: Setup Java JDK
         uses: actions/setup-java@v3.6.0
         with:
           java-version: 11
