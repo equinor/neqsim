@@ -141,6 +141,7 @@ class ComponentSplitterTest {
     Recycle recycle1 = new Recycle("recycle 1");
     recycle1.addStream(valve1.getOutletStream());
     recycle1.setOutletStream(streamresycl);
+    recycle1.setFlowAccuracy(1e-6);
 
     StreamInterface exportStream = splitter.getSplitStream(0);
 
