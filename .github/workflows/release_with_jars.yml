@@ -22,12 +22,12 @@ jobs:
     steps:
     - name: Get version number for pomJava8.xml
       id: java-8
-      uses: jactions/maven-version@v1
+      uses: JActions/maven-version@v1.2.0
       with: 
         pom: ./pomJava8.xml
     - name: Get version number for pom.xml
       id: java
-      uses: jactions/maven-version@v1
+      uses: JActions/maven-version@v1.2.0
       with: 
         pom: ./pom.xml
 
