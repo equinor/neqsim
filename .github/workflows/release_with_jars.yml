@@ -34,7 +34,7 @@ jobs:
         pom: ./pom.xml
     - name: Fix java 8 version number
       id: java-8-fix
-      run: echo "version=$(${{ steps.java-8.outputs.version }} | cut -f 1 -d "-")"
+      run: echo "version=$('${{ steps.java-8.outputs.version }}' | cut -f 1 -d "-")"
         
     - run: echo "Java 8 pom file version number ${{ steps.java-8.outputs.version }}"
     - run: echo "Java 8 pom file version number trimmed ${{ steps.java-8-fix.outputs.version }}"
