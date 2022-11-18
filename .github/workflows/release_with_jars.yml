@@ -32,8 +32,8 @@ jobs:
       uses: JActions/maven-version@v1.2.0
       with: 
         pom: ./pom.xml
-    - run: Java 8 pom file version number ${{ steps.java-8.outputs.version }}
-    - run: Java pom file version number ${{ steps.java.outputs.version }}
+    - run: echo "Java 8 pom file version number ${{ steps.java-8.outputs.version }}"
+    - run: echo "Java pom file version number ${{ steps.java.outputs.version }}"
 
   compile_java_8:
     name: Build Neqsim ${{ needs.get_versions.outputs.version_8 }} with java 8
