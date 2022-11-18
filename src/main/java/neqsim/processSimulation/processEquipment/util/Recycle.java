@@ -28,12 +28,17 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   protected StreamInterface mixedStream;
   StreamInterface lastIterationStream = null;
   private StreamInterface outletStream = null;
-  private double tolerance = 1e-4;
+  private double tolerance = 1e-6;
   private double error = 1e6;
   private int priority = 100;
   boolean firstTime = true;
   int iterations = 0;
   int maxIterations = 10;
+
+  double compositionAccuracy = 5.0;
+  double temperatureAccuracy = 5.0;
+  double flowAccuracy = 5.0;
+
 
   /**
    * <p>
@@ -45,6 +50,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     this("Recycle");
   }
 
+  public void resetIterations() {
+    iterations = 0;
+  }
   /**
    * <p>
    * Constructor for Recycle.
@@ -248,12 +256,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
      * }
      */
     double enthalpy = 0.0;
-    // logger.info("flow rate old in recycle " +
-    // outletStream.getFlowRate("kg/hr"));
+     logger.info("flow rate old in recycle " +
+     outletStream.getFlowRate("kg/hr"));
     // ((Stream) streams.get(0)).getThermoSystem().display();
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-    // logger.info("total number of moles " +
-    // thermoSystem2.getTotalNumberOfMoles());
+     logger.info("total number of moles " +
+     thermoSystem2.getTotalNumberOfMoles());
     mixedStream.setThermoSystem(thermoSystem2);
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() > 1) {
@@ -284,8 +292,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     lastIterationStream = (Stream) mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
     outletStream.setCalculationIdentifier(id);
-    // logger.info("flow rate new in recycle " +
-    // outletStream.getFlowRate("kg/hr"));
+    logger.info(
+        "flow rate new in recycle " + outletStream.getFlowRate("kg/hr") + " iter " + iterations);
 
     // logger.info("enthalpy: " +
     // mixedStream.getThermoSystem().getEnthalpy());
@@ -325,8 +333,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       error += Math
           .abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx()
               - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx())
-          + Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec")
-              + Math.abs(mixedStream.getTemperature() - lastIterationStream.getTemperature()));
+          + Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"));
 
     }
     return Math.abs(error);
@@ -428,7 +435,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    if (error < tolerance) {
+    if (error < tolerance && iterations > 1) {
       return true;
     } else {
       return false;
