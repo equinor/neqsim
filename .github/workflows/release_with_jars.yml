@@ -60,7 +60,7 @@ jobs:
     name: Build for java 11
     needs: get_versions
 
-    if: ${{ get_versions.version_8 }} == ${{ get_versions.version }}
+    if: ${{ get_versions.outputs.version_8 }} == ${{ get_versions.outputs.version }}
     runs-on: ubuntu-latest
     
     steps:
