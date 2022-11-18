@@ -1,4 +1,8 @@
-name: Create release, package project and upload jar files to release, when pom-files are updated
+name: Create draft release with jar artifacts
+# Workflow is triggered when pom-files are updated in master-branch.
+# Packages jar-files in java 8 and java 11 environments if both pom-files have the same version number.
+# If both versions are packaged correctly a draft release is made and the jar-files are added as artifacts.
+
 
 on:
   workflow_dispatch:  
