@@ -88,6 +88,9 @@ jobs:
     needs: [compile_java_8, compile_java_11]
     
     steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v3.0.1
+          
       - name: Create Release
         uses: ncipollo/release-action@v1.11.2
         with:
@@ -99,5 +102,5 @@ jobs:
           skipIfReleaseExists: true
           artifactErrorsFailBuild: true
           
-          artifacts: "staging/*.jar"
+          artifacts: "*.jar"
           artifactContentType: application/java-archive
