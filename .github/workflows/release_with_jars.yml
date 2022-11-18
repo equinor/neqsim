@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     
     outputs:
-      version_8: ${{ steps.java-8.outputs.version }}
+      version_8: ${{ steps.java-8-fix.outputs.version }}
       version: ${{ steps.java.outputs.version }}
     
     steps:
@@ -26,20 +26,25 @@ jobs:
       id: java-8
       uses: JActions/maven-version@v1.2.0
       with: 
-        pom: ./pomJava8.xml
+        pom: ./pomJava8.xml 
     - name: Get version number for pom.xml
       id: java
       uses: JActions/maven-version@v1.2.0
       with: 
         pom: ./pom.xml
+    - name: Fix java 8 version number
+      id: java-8-fix
+      run: echo "version=$(${{ steps.java-8.outputs.version }} | cut -f 1 -d "-")"
+        
     - run: echo "Java 8 pom file version number ${{ steps.java-8.outputs.version }}"
+    - run: echo "Java 8 pom file version number trimmed ${{ steps.java-8-fix.outputs.version }}"
     - run: echo "Java pom file version number ${{ steps.java.outputs.version }}"
 
   compile_java_8:
     name: Build Neqsim ${{ needs.get_versions.outputs.version_8 }} with java 8
     needs: get_versions
     
-    if: ${{ needs.get_versions.outputs.version_8 }} == ${{ needs.get_versions.outputs.version }}
+    if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
     runs-on: ubuntu-latest
        
     steps:
@@ -64,7 +69,7 @@ jobs:
     name: Build for java 11
     needs: get_versions
 
-    if: ${{ needs.get_versions.outputs.version_8 }} == ${{ needs.get_versions.outputs.version }}
+    if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
     runs-on: ubuntu-latest
     
     steps:
