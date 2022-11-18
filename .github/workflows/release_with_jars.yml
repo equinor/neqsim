@@ -20,6 +20,8 @@ jobs:
       version: ${{ steps.java.outputs.version }}
     
     steps:
+    - name: Check out neqsim java project
+      uses: actions/checkout@v3
     - name: Get version number for pomJava8.xml
       id: java-8
       uses: JActions/maven-version@v1.2.0
