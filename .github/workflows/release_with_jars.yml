@@ -32,9 +32,11 @@ jobs:
       uses: JActions/maven-version@v1.2.0
       with: 
         pom: ./pom.xml
+    - run: Java 8 pom file version number ${{ steps.java-8.outputs.version }}
+    - run: Java pom file version number ${{ steps.java.outputs.version }}
 
   compile_java_8:
-    name: Build with java 8
+    name: Build Neqsim ${{ needs.get_versions.outputs.version_8 }} with java 8
     needs: get_versions
     
     if: ${{ needs.get_versions.outputs.version_8 }} == ${{ needs.get_versions.outputs.version }}
@@ -49,9 +51,9 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
           cache: 'maven'
-      - name: Build java 8 version with Maven
+      - name: Build java 8 version of Neqsim ${{ needs.get_versions.outputs.version_8 }} with Maven
         run: mvn -B package --file pomJava8.xml
-      - name: Copy build files to staging
+      - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java8.jar staging
       - uses: actions/upload-artifact@v2
         with:
@@ -76,7 +78,7 @@ jobs:
           cache: 'maven'
       - name: Build java 11 version with Maven
         run: mvn -B package --file pom.xml
-      - name: Copy build files to staging
+      - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*.jar staging
       - uses: actions/upload-artifact@v2
         with:
@@ -88,14 +90,12 @@ jobs:
     needs: [compile_java_8, compile_java_11]
     
     steps:
-      - name: Download a Build Artifact
+      - name: Download jar files from artifacts
         uses: actions/download-artifact@v3.0.1
         with:
           name: jarfiles
-      - name: Display structure of downloaded files
-        run: ls -R
-          
-      - name: Create Release
+        
+      - name: Create release v${{ needs.get_versions.outputs.version_8 }}
         uses: ncipollo/release-action@v1.11.2
         with:
           name: Neqsim ${{ needs.get_versions.outputs.version_8 }}
