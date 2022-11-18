@@ -35,13 +35,9 @@ jobs:
     name: Build with java 8
     needs: get_versions
     
-    if: ${{ get_versions.version_8 }} == ${{ get_versions.version }}
+    if: ${{ get_versions.outputs.version_8 }} == ${{ get_versions.outputs.version }}
     runs-on: ubuntu-latest
-    
-    outputs:
-      version_8: ${{ steps.java-8.outputs.version }}
-      version: ${{ steps.java.outputs.version }}
-    
+       
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v3
@@ -65,12 +61,7 @@ jobs:
     needs: get_versions
 
     if: ${{ get_versions.version_8 }} == ${{ get_versions.version }}
-
     runs-on: ubuntu-latest
-    
-    outputs:
-      version_8: ${{ steps.java-8.outputs.version }}
-      version: ${{ steps.java.outputs.version }}
     
     steps:
       - name: Check out neqsim java project
@@ -98,8 +89,8 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1.11.2
         with:
-          name: Neqsim ${{ get_versions.version_8 }}
-          tag: v${{ get_versions.version_8 }} 
+          name: Neqsim ${{ get_versions.outputs.version_8 }}
+          tag: v${{ get_versions.outputs.version_8 }} 
           draft: true
           generateReleaseNotes: true
           
