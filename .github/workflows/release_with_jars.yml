@@ -1,4 +1,8 @@
-name: Create release, package project and upload jar files to release, when pom-files are updated
+name: Create draft release with jar artifacts
+# Workflow is triggered when pom-files are updated in master-branch.
+# Packages jar-files in java 8 and java 11 environments if both pom-files have the same version number.
+# If both versions are packaged correctly a draft release is made and the jar-files are added as artifacts.
+
 
 on:
   workflow_dispatch:  
@@ -16,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     
     outputs:
-      version_8: ${{ steps.java-8.outputs.version }}
+      version_8: ${{ steps.java-8-fix.outputs.version }}
       version: ${{ steps.java.outputs.version }}
     
     steps:
@@ -26,18 +30,25 @@ jobs:
       id: java-8
       uses: JActions/maven-version@v1.2.0
       with: 
-        pom: ./pomJava8.xml
+        pom: ./pomJava8.xml 
     - name: Get version number for pom.xml
       id: java
       uses: JActions/maven-version@v1.2.0
       with: 
         pom: ./pom.xml
+    - name: Fix java 8 version number
+      id: java-8-fix
+      run: echo "version=$(echo ${{ steps.java-8.outputs.version }} | cut -f 1 -d "-")" >> $GITHUB_OUTPUT
+        
+    - run: echo "Java 8 pom file version number ${{ steps.java-8.outputs.version }}"
+    - run: echo "Java 8 pom file version number trimmed ${{ steps.java-8-fix.outputs.version }}"
+    - run: echo "Java pom file version number ${{ steps.java.outputs.version }}"
 
   compile_java_8:
-    name: Build with java 8
+    name: Build Neqsim ${{ needs.get_versions.outputs.version_8 }} with java 8
     needs: get_versions
     
-    if: ${{ needs.get_versions.outputs.version_8 }} == ${{ needs.get_versions.outputs.version }}
+    if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
     runs-on: ubuntu-latest
        
     steps:
@@ -49,9 +60,9 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
           cache: 'maven'
-      - name: Build java 8 version with Maven
+      - name: Build java 8 version of Neqsim ${{ needs.get_versions.outputs.version_8 }} with Maven
         run: mvn -B package --file pomJava8.xml
-      - name: Copy build files to staging
+      - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java8.jar staging
       - uses: actions/upload-artifact@v2
         with:
@@ -59,10 +70,10 @@ jobs:
           path: staging
         
   compile_java_11:
-    name: Build for java 11
+    name: Build Neqsim ${{ needs.get_versions.outputs.version }} with java 11
     needs: get_versions
 
-    if: ${{ needs.get_versions.outputs.version_8 }} == ${{ needs.get_versions.outputs.version }}
+    if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
     runs-on: ubuntu-latest
     
     steps:
@@ -76,7 +87,7 @@ jobs:
           cache: 'maven'
       - name: Build java 11 version with Maven
         run: mvn -B package --file pom.xml
-      - name: Copy build files to staging
+      - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*.jar staging
       - uses: actions/upload-artifact@v2
         with:
@@ -88,14 +99,12 @@ jobs:
     needs: [compile_java_8, compile_java_11]
     
     steps:
-      - name: Download a Build Artifact
+      - name: Download jar files from artifacts
         uses: actions/download-artifact@v3.0.1
         with:
           name: jarfiles
-      - name: Display structure of downloaded files
-        run: ls -R
-          
-      - name: Create Release
+        
+      - name: Create release v${{ needs.get_versions.outputs.version_8 }}
         uses: ncipollo/release-action@v1.11.2
         with:
           name: Neqsim ${{ needs.get_versions.outputs.version_8 }}
