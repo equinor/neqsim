@@ -322,8 +322,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       // lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
       // logger.info("x new " +
       // mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx());
-      error += Math.abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx()
-          - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
+      error += Math
+          .abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx()
+              - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx())
+          + Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec")
+              + Math.abs(mixedStream.getTemperature() - lastIterationStream.getTemperature()));
+
     }
     return Math.abs(error);
   }
