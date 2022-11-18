@@ -178,7 +178,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     // System.out.println("enthalpy inn.." + enthalpy);
     // thermoOps.PHflash(enthalpy, 0);
-    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6) {
+    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
+        || thermoSystem.getNumberOfMoles() < 1e-12) {
       thermoOps.TPflash();
     } else {
       thermoOps.PHflash(enthalpy, 0);
@@ -210,7 +211,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     if (Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6) {
       molarFlow = inStream.getThermoSystem().getTotalNumberOfMoles();
     }
-    // System.out.println("molar flow " + molarFlow);
 
     inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
     inStream.getThermoSystem().init(3);
