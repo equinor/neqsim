@@ -123,6 +123,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       splitFactor[i] = splitFact[i] / sum;
     }
     splitNumber = splitFact.length;
+    flowRates = null;
     setInletStream(inletStream);
   }
 
@@ -159,7 +160,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       if (flowRates[i] < -0.1) {
         missingFlowRate = inletStream.getFlowRate(flowUnit) - sum;
         sum += missingFlowRate;
-
       }
     }
 
