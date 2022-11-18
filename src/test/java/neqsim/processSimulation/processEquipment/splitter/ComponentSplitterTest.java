@@ -141,6 +141,7 @@ class ComponentSplitterTest {
     Recycle recycle1 = new Recycle("recycle 1");
     recycle1.addStream(valve1.getOutletStream());
     recycle1.setOutletStream(streamresycl);
+    recycle1.setFlowAccuracy(1e-6);
 
     StreamInterface exportStream = splitter.getSplitStream(0);
 
@@ -161,11 +162,9 @@ class ComponentSplitterTest {
     assertEquals(0.1, resycStream1.getFlowRate("MSm3/day"), 1e-6);
     // assertEquals(8.43553108874272, valve1.getPercentValveOpening(), 1e-2);
 
-
-
     splitter.setFlowRates(new double[] {5.0, 0.5}, "MSm3/day");
     processOps.run();
-    
+
     assertEquals(5.00000000, exportStream.getFlowRate("MSm3/day"), 1e-4);
     assertEquals(0.5, resycStream1.getFlowRate("MSm3/day"), 1e-4);
     // assertEquals(41.9139926125338, valve1.getPercentValveOpening(), 1e-2);
