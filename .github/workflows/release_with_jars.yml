@@ -90,6 +90,10 @@ jobs:
     steps:
       - name: Download a Build Artifact
         uses: actions/download-artifact@v3.0.1
+        with:
+          name: jarfiles
+      - name: Display structure of downloaded files
+        run: ls -R
           
       - name: Create Release
         uses: ncipollo/release-action@v1.11.2
