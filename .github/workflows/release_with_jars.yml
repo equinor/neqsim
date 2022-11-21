@@ -134,6 +134,8 @@ jobs:
           destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }} # optional
           # A custom message for the commmit
           commit_message:  'chore: updated java8-jar'
+          user_email: 'asmf@equinor.com'
+          user_name: 'asmfstatoil'
           
       - name: Push files to another repository
         uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
@@ -145,3 +147,5 @@ jobs:
           destination_folder: './neqsim/lib'
           destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }} # optional
           commit_message:  'chore: updated java-jar'
+          user_email: 'asmf@equinor.com'
+          user_name: 'asmfstatoil'
