@@ -116,7 +116,19 @@ jobs:
           artifactErrorsFailBuild: true          
           artifacts: "*.jar"
           artifactContentType: application/java-archive
-      - name: Copy Java 8 jar to new branch in neqsimpython
+          
+      - name: Create new branch in neqsimpython
+        # You may pin to the exact commit or the version.
+        # uses: GuillaumeFalourd/create-other-repo-branch-action@4aaae2f389943fd2448c07844a865be73d907a3f
+        uses: GuillaumeFalourd/create-other-repo-branch-action@v1.5
+        with:
+          repository_owner: 'asmfstatoil'
+          repository_name:  'actions-testing'
+          new_branch_name: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
+          access_token: ${{ secrets.API_TOKEN_GITHUB }}
+          ignore_branch_exists: true
+    
+      - name: Copy Java 8 jar to new branch
         uses: nkoppel/push-files-to-another-repository@v1.1.1
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
@@ -127,7 +139,8 @@ jobs:
           destination-branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
           destination-directory: './neqsim/lib/libj8'
           commit-message: 'chore: updated java8-jar'
-      - name: Copy Java jar to new branch in neqsimpython
+
+      - name: Copy Java jar to new branch
         uses: nkoppel/push-files-to-another-repository@v1.1.1
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
