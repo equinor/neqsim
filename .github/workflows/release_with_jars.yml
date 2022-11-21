@@ -111,10 +111,30 @@ jobs:
           name: NeqSim ${{ needs.get_versions.outputs.version_8 }}
           tag: v${{ needs.get_versions.outputs.version_8 }} 
           draft: true
-          generateReleaseNotes: true
-          
+          generateReleaseNotes: true          
           skipIfReleaseExists: true
-          artifactErrorsFailBuild: true
-          
+          artifactErrorsFailBuild: true          
           artifacts: "*.jar"
           artifactContentType: application/java-archive
+      - name: Copy Java 8 jar to new branch in neqsimpython
+        uses: nkoppel/push-files-to-another-repository@v1.1.1
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source-files: 'neqsim*Java8.jar'
+          destination-username: 'asmfstatoil'
+          destination-repository: 'actions-testing'
+          destination-branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
+          destination-directory: './neqsim/lib/libj8'
+          commit-message: 'chore: updated java8-jar'
+      - name: Copy Java jar to new branch in neqsimpython
+        uses: nkoppel/push-files-to-another-repository@v1.1.1
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source-files:  'neqsim*[0-9]*.[0-9]*.jar'
+          destination-username: 'asmfstatoil'
+          destination-repository: 'actions-testing'
+          destination-branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
+          destination-directory: './neqsim/lib'
+          commit-message: 'chore: updated java-jar'
