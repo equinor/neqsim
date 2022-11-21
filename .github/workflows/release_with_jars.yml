@@ -117,37 +117,30 @@ jobs:
           artifacts: "*.jar"
           artifactContentType: application/java-archive
           
-      - name: Create new branch in neqsimpython
-        # You may pin to the exact commit or the version.
-        # uses: GuillaumeFalourd/create-other-repo-branch-action@4aaae2f389943fd2448c07844a865be73d907a3f
-        uses: GuillaumeFalourd/create-other-repo-branch-action@v1.5
-        with:
-          repository_owner: 'asmfstatoil'
-          repository_name:  'actions-testing'
-          new_branch_name: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
-          access_token: ${{ secrets.API_TOKEN_GITHUB }}
-          ignore_branch_exists: true
-    
-      - name: Copy Java 8 jar to new branch
-        uses: nkoppel/push-files-to-another-repository@v1.1.1
+      - name: Push files to another repository
+        uses: timthedev07/copy_file_to_another_repo_action@v1.33.0
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source-files: 'neqsim*Java8.jar'
-          destination-username: 'asmfstatoil'
-          destination-repository: 'actions-testing'
-          destination-branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
-          destination-directory: './neqsim/lib/libj8'
-          commit-message: 'chore: updated java8-jar'
-
-      - name: Copy Java jar to new branch
-        uses: nkoppel/push-files-to-another-repository@v1.1.1
+          # Source file from the origin directory
+          source_file: 'neqsim*Java8.jar'
+          # Destination repository
+          destination_repo: 'asmfstatoil/actions-testing'
+          # Directory to push the file to
+          destination_folder: './neqsim/lib/libj8'
+          # branch to push file to, defaults to master
+          destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }} # optional
+          # A custom message for the commmit
+          commit_message:  'chore: updated java8-jar'
+          
+      - run: rm neqsim*Java8.jar          
+      - name: Push files to another repository
+        uses: timthedev07/copy_file_to_another_repo_action@v1.33.0
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source-files:  'neqsim*[0-9]*.[0-9]*.jar'
-          destination-username: 'asmfstatoil'
-          destination-repository: 'actions-testing'
-          destination-branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
-          destination-directory: './neqsim/lib'
-          commit-message: 'chore: updated java-jar'
+          source_file: 'neqsim*.jar'
+          destination_repo: 'asmfstatoil/actions-testing'
+          destination_folder: './neqsim/lib'
+          destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }} # optional
+          commit_message:  'chore: updated java-jar'
