@@ -125,7 +125,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           # Source file from the origin directory
-          source_file: neqsim*Java8.jar
+          source_file: neqsim$-{{ needs.get_versions.outputs.version }}-Java8.jar
           # Destination repository
           destination_repo: 'asmfstatoil/actions-testing'
           # Directory to push the file to
@@ -135,13 +135,12 @@ jobs:
           # A custom message for the commmit
           commit_message:  'chore: updated java8-jar'
           
-      - run: rm neqsim*Java8.jar          
       - name: Push files to another repository
         uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source_file: neqsim*.jar
+          source_file: neqsim$-{{ needs.get_versions.outputs.version }}.jar
           destination_repo: 'asmfstatoil/actions-testing'
           destination_folder: './neqsim/lib'
           destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }} # optional
