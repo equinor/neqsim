@@ -118,7 +118,7 @@ jobs:
           artifactContentType: application/java-archive
           
       - name: Push files to another repository
-        uses: timthedev07/copy_file_to_another_repo_action@v1.33.0
+        uses: dmnemec/copy_file_to_another_repo_action@v1.33.0
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
@@ -135,7 +135,7 @@ jobs:
           
       - run: rm neqsim*Java8.jar          
       - name: Push files to another repository
-        uses: timthedev07/copy_file_to_another_repo_action@v1.33.0
+        uses: dmnemec/copy_file_to_another_repo_action@v1.33.0
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
