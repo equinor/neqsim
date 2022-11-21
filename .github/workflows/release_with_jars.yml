@@ -117,6 +117,8 @@ jobs:
           artifacts: "*.jar"
           artifactContentType: application/java-archive
           
+      - run: ls
+          
       - name: Push files to another repository
         uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
         env:
