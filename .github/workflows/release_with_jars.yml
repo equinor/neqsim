@@ -1,8 +1,9 @@
 name: Create draft release with jar artifacts
-# Workflow is triggered when pom-files are updated in master-branch.
-# Packages jar-files in java 8 and java 11 environments if both pom-files have the same version number.
-# If both versions are packaged correctly a draft release is made and the jar-files are added as artifacts.
-
+# Workflow is triggered when any pom-file is updated in master-branch
+# If both pom-files have the same version number it 
+# - builds NeqSim-jars both in Java 8 and Java 11
+# - creates a new release and uploads the jars as artifacts
+# - makes a new branch in neqsimpython and updates the jar-files used there.
 
 on:
   workflow_dispatch:  
@@ -39,11 +40,7 @@ jobs:
     - name: Fix java 8 version number
       id: java-8-fix
       run: echo "version=$(echo ${{ steps.java-8.outputs.version }} | cut -f 1 -d "-")" >> $GITHUB_OUTPUT
-        
-    - run: echo "Java 8 pom file version number ${{ steps.java-8.outputs.version }}"
-    - run: echo "Java 8 pom file version number trimmed ${{ steps.java-8-fix.outputs.version }}"
-    - run: echo "Java pom file version number ${{ steps.java.outputs.version }}"
-
+  
   compile_java_8:
     name: Build Neqsim ${{ needs.get_versions.outputs.version_8 }} with java 8
     needs: get_versions
@@ -111,10 +108,28 @@ jobs:
           name: NeqSim ${{ needs.get_versions.outputs.version_8 }}
           tag: v${{ needs.get_versions.outputs.version_8 }} 
           draft: true
-          generateReleaseNotes: true
-          
+          generateReleaseNotes: true          
           skipIfReleaseExists: true
-          artifactErrorsFailBuild: true
-          
+          artifactErrorsFailBuild: true          
           artifacts: "*.jar"
           artifactContentType: application/java-archive
+          
+      # Needs to delete the old jars manually
+      
+      - run: mkdir lib && cp *.jar lib/ 
+      - run: cd lib && mkdir libj8 && mv *Java8.jar libj8/ && cd ..
+      
+      # Will fail if branch NeqSim-jars-updated-N.N.N already exists
+      - name: Push files to neqsimpython repo
+        uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: lib
+          destination_repo: 'equinor/neqsimpython'
+          destination_folder: neqsim/
+          destination_branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
+          commit_message:  'chore: updated jar-files'
+          user_email: 'asmf@equinor.com'
+          user_name: 'asmfstatoil'
+        
