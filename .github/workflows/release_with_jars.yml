@@ -117,7 +117,7 @@ jobs:
       - name: Remove a path from another repository
         uses: kafkasl/delete_from_another_repo@0.0.1
         with:
-          path: lib
+          path: 'neqsim/lib'
           destination_repo: 'asmfstatoil/neqsimpython'
           user_email: 'asmf@equinor.com'
           user_name: 'asmfstatoil'
