@@ -1,8 +1,9 @@
 name: Create draft release with jar artifacts
-# Workflow is triggered when pom-files are updated in master-branch and both have the same version number.
-# Packages jar-files in java 8 and java 11 environments if both pom-files have the same version number.
-# If both versions are packaged correctly a draft release is made and the jar-files are added as artifacts.
-
+# Workflow is triggered when any pom-file is updated in master-branch
+# If both pom-files have the same version number it 
+# - builds NeqSim-jars both in Java 8 and Java 11
+# - creates a new release and uploads the jars as artifacts
+# - makes a new branch in neqsimpython and updates the jar-files used there.
 
 on:
   workflow_dispatch:  
@@ -112,6 +113,16 @@ jobs:
           artifactErrorsFailBuild: true          
           artifacts: "*.jar"
           artifactContentType: application/java-archive
+          
+      - name: Remove a path from another repository
+        uses: kafkasl/delete_from_another_repo@0.0.1
+        with:
+          path: lib
+          destination_repo: 'asmfstatoil/neqsimpython'
+          user_email: 'asmf@equinor.com'
+          user_name: 'asmfstatoil'
+          destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }} # optional
+          commit_message: "chore: delete old jar-files"
       
       - run: mkdir lib && cp *.jar lib/ 
       - run: cd lib && mkdir libj8 && mv *Java8.jar libj8/ && cd ..
@@ -123,9 +134,10 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           source_file: lib
-          destination_repo: 'equinor/neqsimpython'
+          destination_repo: 'asmfstatoil/neqsimpython'
           destination_folder: neqsim/
-          destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
+          destination_branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
           commit_message:  'chore: updated jar-files'
           user_email: 'asmf@equinor.com'
           user_name: 'asmfstatoil'
+        
