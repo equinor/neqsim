@@ -118,22 +118,17 @@ jobs:
           artifactContentType: application/java-archive
       
       - run: mkdir lib && cp *.jar lib/ 
-      - run: cd lib && mkdir libj8 && mv *.jar libj8/ && cd ..
+      - run: cd lib && mkdir libj8 && mv *Java8.jar libj8/ && cd ..
       
       - name: Push files to another repository
         uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          # Source file from the origin directory
           source_file: lib
-          # Destination repository
           destination_repo: 'asmfstatoil/actions-testing'
-          # Directory to push the file to
           destination_folder: neqsim/
-          # branch to push file to, defaults to master
           destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }} # optional
-          # A custom message for the commmit
           commit_message:  'chore: updated jar-files'
           user_email: 'asmf@equinor.com'
           user_name: 'asmfstatoil'
