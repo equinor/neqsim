@@ -1,5 +1,5 @@
 name: Create draft release with jar artifacts
-# Workflow is triggered when pom-files are updated in master-branch.
+# Workflow is triggered when pom-files are updated in master-branch and both have the same version number.
 # Packages jar-files in java 8 and java 11 environments if both pom-files have the same version number.
 # If both versions are packaged correctly a draft release is made and the jar-files are added as artifacts.
 
@@ -39,11 +39,7 @@ jobs:
     - name: Fix java 8 version number
       id: java-8-fix
       run: echo "version=$(echo ${{ steps.java-8.outputs.version }} | cut -f 1 -d "-")" >> $GITHUB_OUTPUT
-        
-    - run: echo "Java 8 pom file version number ${{ steps.java-8.outputs.version }}"
-    - run: echo "Java 8 pom file version number trimmed ${{ steps.java-8-fix.outputs.version }}"
-    - run: echo "Java pom file version number ${{ steps.java.outputs.version }}"
-
+  
   compile_java_8:
     name: Build Neqsim ${{ needs.get_versions.outputs.version_8 }} with java 8
     needs: get_versions
@@ -120,7 +116,8 @@ jobs:
       - run: mkdir lib && cp *.jar lib/ 
       - run: cd lib && mkdir libj8 && mv *Java8.jar libj8/ && cd ..
       
-      - name: Push files to another repository
+      # Will fail if branch NeqSim-jars-updated-N.N.N already exists
+      - name: Push files to neqsimpython repo
         uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
@@ -128,7 +125,7 @@ jobs:
           source_file: lib
           destination_repo: 'asmfstatoil/actions-testing'
           destination_folder: neqsim/
-          destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }} # optional
+          destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
           commit_message:  'chore: updated jar-files'
           user_email: 'asmf@equinor.com'
           user_name: 'asmfstatoil'
