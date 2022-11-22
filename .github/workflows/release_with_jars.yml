@@ -123,7 +123,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           source_file: lib
-          destination_repo: 'asmfstatoil/actions-testing'
+          destination_repo: 'equinor/neqsimpython'
           destination_folder: neqsim/
           destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
           commit_message:  'chore: updated jar-files'
