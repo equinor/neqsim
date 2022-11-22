@@ -114,15 +114,7 @@ jobs:
           artifacts: "*.jar"
           artifactContentType: application/java-archive
           
-      - name: Remove a path from another repository
-        uses: kafkasl/delete_from_another_repo@0.0.1
-        with:
-          path: 'neqsim/lib'
-          destination_repo: 'asmfstatoil/neqsimpython'
-          user_email: 'asmf@equinor.com'
-          user_name: 'asmfstatoil'
-          destination_branch_create: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }} # optional
-          commit_message: "chore: delete old jar-files"
+      # Needs to delete the old jars manually
       
       - run: mkdir lib && cp *.jar lib/ 
       - run: cd lib && mkdir libj8 && mv *Java8.jar libj8/ && cd ..
