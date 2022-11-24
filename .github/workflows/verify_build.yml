@@ -1,4 +1,4 @@
-name: Verify builds
+name: Assert package builds, tests run and javadoc builds
 
 on:
   push:
