@@ -1931,7 +1931,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
   /**
    * Perform flashes and return System properties per set of Spec1 and Spec2.
-   * 
+   *
    * Possible to specify fractions for each value of Spec1.
    *
    * @param Spec1 Flash pressure in bar absolute.

@@ -10,6 +10,9 @@ package neqsim.thermo.system;
 public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for SystemSrkTwuCoonStatoilEos.</p>
+   */
   public SystemSrkTwuCoonStatoilEos() {
     super();
     modelName = "TwuCoonStatoil-EOS";

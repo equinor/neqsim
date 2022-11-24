@@ -27,6 +27,11 @@ public class ManwaySection extends SeparatorSection {
         super(name, type, sep);
     }
 
+    /**
+     * <p>getMechanicalDesign.</p>
+     *
+     * @return a {@link neqsim.processSimulation.mechanicalDesign.separator.sectionType.MechManwaySection} object
+     */
     public MechManwaySection getMechanicalDesign() {
         return new MechManwaySection(this);
     }

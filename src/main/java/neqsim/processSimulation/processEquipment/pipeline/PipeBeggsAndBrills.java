@@ -110,7 +110,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   /**
    * Constructor for AdiabaticTwoPhasePipe.
-   * 
+   *
    * @param name name of pipe
    */
   public PipeBeggsAndBrills(String name) {
@@ -119,7 +119,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   /**
    * Constructor for AdiabaticTwoPhasePipe.
-   * 
+   *
    * @param name name of pipe
    * @param inStream input stream
    */
@@ -158,15 +158,30 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.temperatureOut = temperature;
   }
 
+  /**
+   * <p>Setter for the field <code>elevation</code>.</p>
+   *
+   * @param elevation a double
+   */
   public void setElevation(double elevation) {
     setPipeElevation = true;
     this.elevation = elevation;
   }
 
+  /**
+   * <p>Setter for the field <code>angle</code>.</p>
+   *
+   * @param angle a double
+   */
   public void setAngle(double angle) {
     this.angle = angle;
   }
 
+  /**
+   * <p>Setter for the field <code>numberOfIncrements</code>.</p>
+   *
+   * @param numberOfIncrements a int
+   */
   public void setNumberOfIncrements(int numberOfIncrements) {
     this.numberOfIncrements = numberOfIncrements;
   }
@@ -183,6 +198,9 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.pressureOut = pressure;
   }
 
+  /**
+   * <p>convertSystemUnitToImperial.</p>
+   */
   public void convertSystemUnitToImperial() {
     insideDiameter = insideDiameter * 3.2808399;
     angle = 0.01745329 * angle;
@@ -191,6 +209,9 @@ public class PipeBeggsAndBrills extends Pipeline {
     pipeWallRoughness = pipeWallRoughness * 3.2808399;
   }
 
+  /**
+   * <p>convertSystemUnitToMetric.</p>
+   */
   public void convertSystemUnitToMetric() {
     insideDiameter = insideDiameter / 3.2808399;
     angle = angle / 0.01745329;
@@ -201,6 +222,11 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   }
 
+  /**
+   * <p>calcFlowRegime.</p>
+   *
+   * @return a {@link java.lang.String} object
+   */
   public String calcFlowRegime() {
 
     // Calc input volume fraction
@@ -272,13 +298,18 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
 
+  /**
+   * <p>calcHydrostaticPressureDifference.</p>
+   *
+   * @return a double
+   */
   public double calcHydrostaticPressureDifference() {
 
     /*
      * Once the flow type has been determined then the liquid holdup can be calculated. Beggs and
      * Brill divided the liquid holdup calculation into two parts. First the liquid holdup for
      * horizontal flow, EL(0), is determined, and then this holdup is modified for inclined flow.
-     * EL(0) must be ≥ CL and therefore when EL(0) is smaller than CL, EL(0) is assigned a value of
+     * EL(0) must be >= CL and therefore when EL(0) is smaller than CL, EL(0) is assigned a value of
      * CL. There is a separate calculation of liquid holdup (EL(0)) for each flow type
      */
     double B = 1 - A;
@@ -373,6 +404,11 @@ public class PipeBeggsAndBrills extends Pipeline {
     return hydrostaticPressureDrop;
   }
 
+  /**
+   * <p>calcFrictionPressureLoss.</p>
+   *
+   * @return a double
+   */
   public double calcFrictionPressureLoss() {
     double S = 0;
 
@@ -421,6 +457,11 @@ public class PipeBeggsAndBrills extends Pipeline {
     return frictionPressureLoss;
   }
 
+  /**
+   * <p>calcPressureDrop.</p>
+   *
+   * @return a double
+   */
   public double calcPressureDrop() {
     convertSystemUnitToImperial();
     calcFlowRegime();
@@ -469,6 +510,11 @@ public class PipeBeggsAndBrills extends Pipeline {
     system.display();
   }
 
+  /**
+   * <p>getSuperficialVelocity.</p>
+   *
+   * @return a double
+   */
   public double getSuperficialVelocity() {
     return getInletStream().getThermoSystem().getFlowRate("kg/sec")
         / getInletStream().getThermoSystem().getDensity("kg/m3")
@@ -518,6 +564,11 @@ public class PipeBeggsAndBrills extends Pipeline {
     return insideDiameter;
   }
 
+  /**
+   * <p>getFlowRegime.</p>
+   *
+   * @return a {@link java.lang.String} object
+   */
   public String getFlowRegime() {
     return flowPattern;
   }
@@ -557,6 +608,11 @@ public class PipeBeggsAndBrills extends Pipeline {
     return inletElevation;
   }
 
+  /**
+   * <p>Getter for the field <code>pressureDrop</code>.</p>
+   *
+   * @return a double
+   */
   public double getPressureDrop() {
     return pressureDrop;
   }

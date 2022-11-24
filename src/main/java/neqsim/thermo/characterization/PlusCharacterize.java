@@ -35,6 +35,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   double[] plusCoefs = {0.0007774204804, -0.02390179};
   SystemInterface system = null;
 
+  /**
+   * <p>Constructor for PlusCharacterize.</p>
+   */
   public PlusCharacterize() {}
 
   /**
@@ -336,7 +339,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
    *
    * @param startPlus New value of property firstPlusFractionNumber.
    * @deprecated use {@link #setFirstPlusFractionNumber(int firstPlusFractionNumber)} instead.
-   * 
    */
   @Deprecated
   public void setStartPlus(int startPlus) {

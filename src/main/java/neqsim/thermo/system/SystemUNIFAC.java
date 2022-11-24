@@ -9,10 +9,14 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * for gas.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemUNIFAC extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for SystemUNIFAC.</p>
+   */
   public SystemUNIFAC() {
     super();
     modelName = "UNIFAC-GE-model";

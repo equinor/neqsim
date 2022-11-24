@@ -20,6 +20,9 @@ public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
     private static final long serialVersionUID = 1000;
     protected StreamInterface stream = null;
 
+    /**
+     * <p>Constructor for TemperatureTransmitter.</p>
+     */
     public TemperatureTransmitter() {
         name = "Temperature Transmitter";
         unit = "K";

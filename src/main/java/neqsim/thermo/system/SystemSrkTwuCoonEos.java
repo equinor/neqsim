@@ -4,10 +4,14 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the SRK Two Coon equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemSrkTwuCoonEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for SystemSrkTwuCoonEos.</p>
+   */
   public SystemSrkTwuCoonEos() {
     super();
     modelName = "TwuCoonRK-EOS";

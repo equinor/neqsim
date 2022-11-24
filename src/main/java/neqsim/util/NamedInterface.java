@@ -1,5 +1,11 @@
 package neqsim.util;
 
+/**
+ * <p>NamedInterface interface.</p>
+ *
+ * @author ASMF
+ * @version $Id: $Id
+ */
 public interface NamedInterface {
     /**
      * <p>

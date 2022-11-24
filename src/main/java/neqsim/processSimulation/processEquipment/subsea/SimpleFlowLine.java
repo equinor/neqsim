@@ -38,7 +38,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
 
   /**
    * Constructor for SimpleFlowLine.
-   * 
+   *
    * @param name Name of SimpleFlowLine object
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
