@@ -1,4 +1,4 @@
-name: Create draft release with jar artifacts
+name: Create release (draft)
 # Workflow is triggered when any pom-file is updated in master-branch
 # If both pom-files have the same version number it 
 # - builds NeqSim-jars both in Java 8 and Java 11
@@ -9,9 +9,9 @@ on:
   workflow_dispatch:  
   push:
     branches:
-    - master
-    - main
-    - release/*
+      - master
+      - main
+      - release/*
     paths:
       - 'pom*.xml'
 
