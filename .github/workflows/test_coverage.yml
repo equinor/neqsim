@@ -1,9 +1,9 @@
 name: Test coverage report
 on:
   workflow_dispatch:  
-  push:
-    tags:
-      - v*
+  # push:
+  #   tags:
+  #     - v*
 
 jobs:
   unit-tests:
