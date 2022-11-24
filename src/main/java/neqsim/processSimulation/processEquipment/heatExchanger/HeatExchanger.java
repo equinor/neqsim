@@ -549,6 +549,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   }
 
   /**
+   * <p>Getter for the field <code>flowArrangement</code>.</p>
+   *
    * @return String
    */
   public String getFlowArrangement() {
@@ -556,6 +558,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   }
 
   /**
+   * <p>Setter for the field <code>flowArrangement</code>.</p>
+   *
    * @param flowArrangement name of flow arrangement
    */
   public void setFlowArrangement(String flowArrangement) {

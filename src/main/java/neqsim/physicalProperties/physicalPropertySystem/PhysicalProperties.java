@@ -350,13 +350,11 @@ public abstract class PhysicalProperties
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * getDiffusionCoefficient.
    * </p>
-   *
-   * @param i a int
-   * @param j a int
-   * @return a double
    */
   public double getDiffusionCoefficient(int i, int j) {
     return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(i, j);

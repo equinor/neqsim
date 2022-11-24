@@ -987,11 +987,9 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * method to return conductivity in a specified unit.
-   * 
    *
    * @param unit Supported units are W/mK, W/cmK
    * @return conductivity in specified unit
-   *
    * @deprecated use {@link #getThermalConductivity(String unit)} instead.
    */
   @Deprecated

@@ -38,7 +38,7 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
 
     /**
      * Constructs an <code>NotInitializedException</code> with the specified detail message.
-     * 
+     *
      * @param obj Object exception is raised from
      * @param methodName Method exception is raised from
      * @param msg Detailed error message
@@ -49,7 +49,7 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
 
     /**
      * Constructs an <code>NotInitializedException</code> with default detail message.
-     * 
+     *
      * @param obj Object exception is raised from
      * @param methodName Method exception is raised from
      * @param parameter Parameter not initialized

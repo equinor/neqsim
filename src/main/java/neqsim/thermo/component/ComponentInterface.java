@@ -2179,6 +2179,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    */
   public void setCpE(double CpE);
 
+  /**
+   * <p>getComponentNameFromAlias.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @return a {@link java.lang.String} object
+   */
   static public String getComponentNameFromAlias(String name) {
     LinkedHashMap<String, String> c = getComponentMap();
     if (c.containsKey(name)) {
@@ -2188,6 +2194,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     }
   }
 
+  /**
+   * <p>getComponentMap.</p>
+   *
+   * @return a {@link java.util.LinkedHashMap} object
+   */
   static public LinkedHashMap<String, String> getComponentMap() {
     LinkedHashMap<String, String> c = new LinkedHashMap<>();
     c.put("H2O", "water");

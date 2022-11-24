@@ -4,6 +4,7 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the PR Mathias Copeman equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemPrMathiasCopeman extends SystemPrEos {
   private static final long serialVersionUID = 1000;

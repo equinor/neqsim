@@ -49,7 +49,7 @@ public class Hydrocyclone extends Separator {
 
   /**
    * Constructor for Hydrocyclone.
-   * 
+   *
    * @param name name of hydrosycolen
    */
   public Hydrocyclone(String name) {

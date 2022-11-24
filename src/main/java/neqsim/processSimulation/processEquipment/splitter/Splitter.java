@@ -132,7 +132,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * setFlowRates.
    * </p>
    *
-   * @param setFlowRates an array of {@link double} objects
+   * @param flowRates an array of {@link double} objects
+   * @param flowUnit a {@link java.lang.String} object
    */
   public void setFlowRates(double[] flowRates, String flowUnit) {
     if (flowRates.length != splitNumber) {
@@ -147,6 +148,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     setInletStream(inletStream);
   }
 
+  /**
+   * <p>calcSplitFactors.</p>
+   */
   public void calcSplitFactors() {
     double sum = 0.0;
     for (int i = 0; i < flowRates.length; i++) {

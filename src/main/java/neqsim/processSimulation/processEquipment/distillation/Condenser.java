@@ -19,7 +19,11 @@ public class Condenser extends SimpleTray {
   boolean refluxIsSet = false;
   double duty = 0.0;
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public Condenser(String name) {
     super(name);
   }

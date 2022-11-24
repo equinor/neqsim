@@ -3103,7 +3103,11 @@ abstract class SystemThermo implements SystemInterface {
     return volume;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return a double
+   */
   public double getdPdVtn() {
     double dPdV = 0.0;
     for (int i = 0; i < numberOfPhases; i++) {
@@ -3206,13 +3210,7 @@ abstract class SystemThermo implements SystemInterface {
     return refCv * conversionFactor;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return kappa real gas kappa
-   *
-   *         method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
-   */
+  /** {@inheritDoc} */
   @Override
   public double getKappa() {
     return -getCp() / getCv() * getVolume() / getPressure() * getdPdVtn();
@@ -5157,14 +5155,11 @@ abstract class SystemThermo implements SystemInterface {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * addCharacterized.
    * </p>
-   *
-   * @param charNames an array of {@link java.lang.String} objects
-   * @param charFlowrate an array of {@link double} objects
-   * @param molarMass an array of {@link double} objects
-   * @param relativedensity an array of {@link double} objects
    */
   @Override
   public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
@@ -5178,16 +5173,11 @@ abstract class SystemThermo implements SystemInterface {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * addCharacterized.
    * </p>
-   *
-   * @param charNames an array of {@link java.lang.String} objects
-   * @param charFlowrate an array of {@link double} objects
-   * @param molarMass an array of {@link double} objects
-   * @param relativedensity an array of {@link double} objects
-   * @param lumpComponents True if component should be lumped
-   * @param numberOfPseudoComponents number of pseudo components
    */
   @Override
   public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
@@ -5222,15 +5212,11 @@ abstract class SystemThermo implements SystemInterface {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * addOilFractions.
    * </p>
-   *
-   * @param charNames an array of {@link java.lang.String} objects
-   * @param charFlowrate an array of {@link double} objects
-   * @param molarMass an array of {@link double} objects
-   * @param relativedensity an array of {@link double} objects
-   * @param lastIsPlusFraction a boolean
    */
   @Override
   public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
@@ -5241,10 +5227,9 @@ abstract class SystemThermo implements SystemInterface {
 
 
   /**
-   * Return normal liquid density of fluid in given unit.
+   * {@inheritDoc}
    *
-   * @param unit Supported units are gr/cm3 and kg/m3. Defaults to gr/cm3.
-   * @return double Density of fluid.
+   * Return normal liquid density of fluid in given unit.
    */
   public double getIdealLiquidDensity(String unit) {
     double normalLiquidDensity = 0.0;

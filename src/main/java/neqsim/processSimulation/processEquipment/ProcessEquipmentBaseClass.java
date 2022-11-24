@@ -60,7 +60,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /**
    * Create deep copy.
-   * 
+   *
    * @return a deep copy of the unit operation/process equipment
    */
   public ProcessEquipmentInterface copy() {

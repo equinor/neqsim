@@ -65,7 +65,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
   /**
    * Constructor for AdiabaticTwoPhasePipe.
-   * 
+   *
    * @param name name of pipe
    */
   public AdiabaticTwoPhasePipe(String name) {
@@ -74,7 +74,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
   /**
    * Constructor for AdiabaticTwoPhasePipe.
-   * 
+   *
    * @param name name of pipe
    * @param inStream input stream
    */
@@ -320,6 +320,11 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     system.display();
   }
 
+  /**
+   * <p>getSuperficialVelocity.</p>
+   *
+   * @return a double
+   */
   public double getSuperficialVelocity() {
     return getInletStream().getThermoSystem().getFlowRate("kg/sec")
         / getInletStream().getThermoSystem().getDensity("kg/m3")

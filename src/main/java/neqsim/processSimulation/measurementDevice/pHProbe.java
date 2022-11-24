@@ -105,6 +105,8 @@ public class pHProbe extends MeasurementDeviceBaseClass {
   }
 
   /**
+   * <p>Getter for the field <code>alkanility</code>.</p>
+   *
    * @return the alkanility
    */
   public double getAlkanility() {
@@ -112,6 +114,8 @@ public class pHProbe extends MeasurementDeviceBaseClass {
   }
 
   /**
+   * <p>Setter for the field <code>alkanility</code>.</p>
+   *
    * @param alkanility the alkanility to set
    */
   public void setAlkanility(double alkanility) {

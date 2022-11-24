@@ -5,6 +5,9 @@ import neqsim.util.NamedInterface;
 
 /**
  * Interface for simulation objects.
+ *
+ * @author ASMF
+ * @version $Id: $Id
  */
 public interface SimulationInterface extends NamedInterface, Runnable {
   /**
@@ -57,6 +60,8 @@ public interface SimulationInterface extends NamedInterface, Runnable {
   public void increaseTime(double dt);
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * run
    * </p>

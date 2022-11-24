@@ -2,6 +2,12 @@ package neqsim.processSimulation.measurementDevice.simpleFlowRegime;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+/**
+ * <p>FluidSevereSlug class.</p>
+ *
+ * @author ASMF
+ * @version $Id: $Id
+ */
 public class FluidSevereSlug {
 
     private double liqDensity = 1000.0;
@@ -52,30 +58,65 @@ public class FluidSevereSlug {
         this.gasConstant = 8314/(molecularWeight*1000);
     }
 
+    /**
+     * <p>Setter for the field <code>liqDensity</code>.</p>
+     *
+     * @param liqDensity a double
+     */
     public void setLiqDensity(double liqDensity) {
 		this.liqDensity = liqDensity;
 	}
 	
+	/**
+	 * <p>Getter for the field <code>liqDensity</code>.</p>
+	 *
+	 * @return a double
+	 */
 	public double getLiqDensity() {
 		return liqDensity;
 	}
 
+    /**
+     * <p>Setter for the field <code>liqVisc</code>.</p>
+     *
+     * @param liqVisc a double
+     */
     public void setLiqVisc(double liqVisc) {
 		this.liqVisc = liqVisc;
 	}
 	
+	/**
+	 * <p>Getter for the field <code>liqVisc</code>.</p>
+	 *
+	 * @return a double
+	 */
 	public double getliqVisc() {
 		return liqVisc;
 	}
 
+    /**
+     * <p>Setter for the field <code>molecularWeight</code>.</p>
+     *
+     * @param molecularWeight a double
+     */
     public void setMolecularWeight(double molecularWeight) {
 		this.molecularWeight = molecularWeight;
 	}
 	
+	/**
+	 * <p>Getter for the field <code>molecularWeight</code>.</p>
+	 *
+	 * @return a double
+	 */
 	public double getMolecularWeight() {
 		return molecularWeight;
 	}
 
+    /**
+     * <p>Getter for the field <code>gasConstant</code>.</p>
+     *
+     * @return a double
+     */
     public double getGasConstant() {
 		return gasConstant;
 	}

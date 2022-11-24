@@ -27,6 +27,11 @@ public class VaneSection extends SeparatorSection {
         super(name, type, sep);
     }
 
+    /**
+     * <p>getMechanicalDesign.</p>
+     *
+     * @return a {@link neqsim.processSimulation.mechanicalDesign.separator.sectionType.MechVaneSection} object
+     */
     public MechVaneSection getMechanicalDesign() {
         return new MechVaneSection(this);
     }
