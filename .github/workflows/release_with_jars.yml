@@ -9,9 +9,9 @@ on:
   workflow_dispatch:  
   push:
     branches:
-    - master
-    - main
-    - release/*
+      - master
+      - main
+      - release/*
     paths:
       - 'pom*.xml'
 

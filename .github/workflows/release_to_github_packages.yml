@@ -1,4 +1,4 @@
-name: Release to Github Packages using maven deploy
+name: Release to Github Packages 
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -18,7 +17,7 @@ jobs:
           java-version: 11
           distribution: 'temurin'
           cache: 'maven'
-      - name: Get the version from tag
+      - name: Get the version number from the pushed tag
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\/v/}
       - name: Deploy to Github Package Registry
