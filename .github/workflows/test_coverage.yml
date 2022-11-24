@@ -1,6 +1,6 @@
-name: Jacoco Distributed Exec and Aggregation2
-
+name: Test coverage report
 on:
+  workflow_dispatch:  
   push:
     tags:
       - v*

@@ -1,11 +1,12 @@
 name: Assert package builds, tests run and javadoc builds
 
 on:
+  workflow_dispatch:  
   push:
     branches: # Only run for changes in master branch and any releases branch
       - master
       - 'releases/**'
-    paths: # Only run if java-file is updated
+    paths: # Only run if some java-file is updated
       - '*.java' 
   pull_request:
     branches: 
