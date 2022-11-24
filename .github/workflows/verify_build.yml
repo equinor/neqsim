@@ -7,9 +7,9 @@ on:
       - 'releases/**'
     paths: # Only run if java-file is updated
       - '*.java' 
-    pull_request:
-      branches: 
-        - master
+  pull_request:
+    branches: 
+      - master
 
 jobs:
   test_java_8:
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Set up JDK 8
         uses: actions/setup-java@v3
-      with:
+        with:
           distribution: 'temurin'
           java-version: '8'
           cache: 'maven'
