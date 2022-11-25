@@ -45,8 +45,9 @@ public class NeqSimTechnicalDesignDatabase
   public static String dataBasePath = "";
 
   /** Constant <code>username=""</code> */
+  public static String username = "";
   /** Constant <code>password=""</code> */
-  public static String username = "", password = "";
+  public static String password = "";
   static Logger logger = LogManager.getLogger(NeqSimTechnicalDesignDatabase.class);
   private static boolean createTemporaryTables = false;
 
