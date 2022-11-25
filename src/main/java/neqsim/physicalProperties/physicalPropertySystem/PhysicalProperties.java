@@ -349,13 +349,7 @@ public abstract class PhysicalProperties
     return kinematicViscosity;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @param i a int
-   * @param j a int
-   * @return a double
-   */
+  /** {@inheritDoc} */
   public double getDiffusionCoefficient(int i, int j) {
     return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(i, j);
   }
