@@ -25,6 +25,11 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
 
   protected Separator inletSeparator = null;
 
+  /**
+   * <p>Constructor for CO2RemovalModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public CO2RemovalModule(String name) {
     super(name);
   }

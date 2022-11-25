@@ -28,7 +28,7 @@ public class ThermoException extends java.lang.Exception {
 
   /**
    * Constructs an <code>ThermoException</code> with the specified detail message.
-   * 
+   *
    * @param className Class that exception is raised from
    * @param methodName Method that exception is raised from
    * @param msg specific error message

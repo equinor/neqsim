@@ -14,6 +14,9 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for InterphaseStratifiedFlow.</p>
+   */
   public InterphaseStratifiedFlow() {}
 
   /**

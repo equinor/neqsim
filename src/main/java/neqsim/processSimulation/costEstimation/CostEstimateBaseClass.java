@@ -34,7 +34,8 @@ public class CostEstimateBaseClass implements java.io.Serializable {
   }
 
   /**
-   * 
+   * <p>Constructor for CostEstimateBaseClass.</p>
+   *
    * @param process input process
    * @param costFactor cost factor
    */

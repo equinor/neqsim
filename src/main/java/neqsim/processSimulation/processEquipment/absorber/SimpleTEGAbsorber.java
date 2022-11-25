@@ -600,6 +600,11 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     isSetWaterInDryGas = true;
   }
 
+  /**
+   * <p>isSetWaterInDryGas.</p>
+   *
+   * @param isSetwaterInDryGas a boolean
+   */
   public void isSetWaterInDryGas(boolean isSetwaterInDryGas) {
     this.isSetWaterInDryGas = isSetwaterInDryGas;
   }

@@ -7,6 +7,7 @@ import neqsim.thermo.util.constants.FurstElectrolyteConstants;
  * This class defines a thermodynamic system using the electrolyte CPA EoS Statoil model.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
   private static final long serialVersionUID = 1000;

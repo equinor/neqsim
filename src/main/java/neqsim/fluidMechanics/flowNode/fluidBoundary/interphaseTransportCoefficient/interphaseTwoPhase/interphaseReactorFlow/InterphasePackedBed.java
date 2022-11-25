@@ -14,6 +14,9 @@ public class InterphasePackedBed extends InterphaseReactorFlow
         implements neqsim.thermo.ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for InterphasePackedBed.</p>
+     */
     public InterphasePackedBed() {}
 
     /**

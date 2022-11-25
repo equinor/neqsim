@@ -32,6 +32,11 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
       HinfIdeal60F = 0.0;
   static Logger logger = LogManager.getLogger(Standard_ISO6976_2016.class);
 
+  /**
+   * <p>Constructor for Standard_ISO6976_2016.</p>
+   *
+   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public Standard_ISO6976_2016(SystemInterface thermoSystem) {
     super("Standard_ISO6976_2016",
         "Calculation of calorific values, density, relative density and Wobbe index from composition based on ISO6976 version 2016",

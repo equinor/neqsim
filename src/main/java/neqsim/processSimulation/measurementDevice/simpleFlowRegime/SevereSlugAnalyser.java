@@ -8,6 +8,12 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>SevereSlugAnalyser class.</p>
+ *
+ * @author ASMF
+ * @version $Id: $Id
+ */
 public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   static Logger logger = LogManager.getLogger(SevereSlugAnalyser.class);
     FluidSevereSlug fluidSevereS;
@@ -191,74 +197,157 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
     // Encapsulation
     // 1. Superficial Liquid Velocity Encapsulation
+    /**
+     * <p>setSuperficialLiquidVelocity.</p>
+     *
+     * @param usl a double
+     */
     public void setSuperficialLiquidVelocity(double usl) {
       this.usl = usl;
     }
     
+    /**
+     * <p>getSuperficialLiquidVelocity.</p>
+     *
+     * @return a double
+     */
     public double getSuperficialLiquidVelocity() {
       return usl;
     }
     
     // 2. Superficial Gas Velocity Encapsulation
+    /**
+     * <p>setSuperficialGasVelocity.</p>
+     *
+     * @param usg a double
+     */
     public void setSuperficialGasVelocity(double usg) {
       this.usg = usg;
     }
     
+    /**
+     * <p>getSuperficialGasVelocity.</p>
+     *
+     * @return a double
+     */
     public double getSuperficialGasVelocity() {
       return usg;
     }
     
+    /**
+     * <p>Getter for the field <code>flowPattern</code>.</p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String getFlowPattern() {
       return flowPattern;
     }
 
+    /**
+     * <p>Getter for the field <code>slugValue</code>.</p>
+     *
+     * @return a double
+     */
     public double getSlugValue() {
       return slugValue;
     }
 
     // 3. Pipe Outlet Pressure Encapsulation
+    /**
+     * <p>Setter for the field <code>outletPressure</code>.</p>
+     *
+     * @param outletPressure a double
+     */
     public void setOutletPressure(double outletPressure) {
       this.outletPressure = outletPressure;
     }
     
+    /**
+     * <p>Getter for the field <code>outletPressure</code>.</p>
+     *
+     * @return a double
+     */
     public double getOutletPressure() {
       return outletPressure;
     }
     
     // 4. Temperature Encapsulation
+    /**
+     * <p>Setter for the field <code>temperature</code>.</p>
+     *
+     * @param temperature a double
+     */
     public void setTemperature(double temperature) {
       this.temperature = temperature;
     }
     
+    /**
+     * <p>Getter for the field <code>temperature</code>.</p>
+     *
+     * @return a double
+     */
     public double getTemperature() {
       return temperature;
     }
     
     // 5. Number of Time Steps Encapsulation
+    /**
+     * <p>Setter for the field <code>numberOfTimeSteps</code>.</p>
+     *
+     * @param numberOfTimeSteps a int
+     */
     public void setNumberOfTimeSteps(int numberOfTimeSteps) {
       this.numberOfTimeSteps = numberOfTimeSteps;
     }
     
+    /**
+     * <p>Getter for the field <code>numberOfTimeSteps</code>.</p>
+     *
+     * @return a int
+     */
     public int getNumberOfTimeSteps() {
       return numberOfTimeSteps;
     }
     
     // 6. Simulation Time Encapsulation
+    /**
+     * <p>Setter for the field <code>simulationTime</code>.</p>
+     *
+     * @param simulationTime a double
+     */
     public void setSimulationTime(double simulationTime) {
       this.simulationTime = simulationTime;
     }
     
+    /**
+     * <p>Getter for the field <code>simulationTime</code>.</p>
+     *
+     * @return a double
+     */
     public double getSimulationTime() {
       return simulationTime;
     }
     
     // Method 1: Calculating the universal gas constant
+     /**
+      * <p>gasConst.</p>
+      *
+      * @param fluid a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.FluidSevereSlug} object
+      * @return a double
+      */
      public double gasConst(FluidSevereSlug fluid) {    
         return 8.314 / fluid.getMolecularWeight() * (273.15 + temperature);    
       }
     
     //Declare the variables for resuts after creating an object Severe slug with required number of steps.
     
+    /**
+     * <p>slugHoldUp.</p>
+     *
+     * @param pipe a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.Pipe} object
+     * @param severeSlug a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.SevereSlugAnalyser} object
+     * @return a double
+     */
     public double slugHoldUp (Pipe pipe, SevereSlugAnalyser severeSlug){
       double Udrift;
       double C0 = 1.2;
@@ -270,6 +359,14 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       return holdUp;
   }  
 
+  /**
+   * <p>stratifiedHoldUp.</p>
+   *
+   * @param fluid a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.FluidSevereSlug} object
+   * @param pipe a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.Pipe} object
+   * @param severeSlug a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.SevereSlugAnalyser} object
+   * @return a double
+   */
   public double stratifiedHoldUp (FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug){
     Re = fluid.getLiqDensity()*severeSlug.getSuperficialLiquidVelocity()*pipe.getInternalDiameter()/(fluid.getliqVisc());
     lambda = Math.max(0.34 * Math.pow(Re, -0.25), 64 / Re);
@@ -328,6 +425,13 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 }
     
     // Passing 3 objects as input parameters (fluid, pipe, severeSlug)
+    /**
+     * <p>runSevereSlug.</p>
+     *
+     * @param fluid a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.FluidSevereSlug} object
+     * @param pipe a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.Pipe} object
+     * @param severeSlug a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.SevereSlugAnalyser} object
+     */
     public void runSevereSlug(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug){
 
       resPres = new double[severeSlug.getNumberOfTimeSteps()]; 
@@ -416,6 +520,14 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
         }
     }
 
+    /**
+     * <p>checkFlowRegime.</p>
+     *
+     * @param fluid a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.FluidSevereSlug} object
+     * @param pipe a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.Pipe} object
+     * @param severeSlug a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.SevereSlugAnalyser} object
+     * @return a {@link java.lang.String} object
+     */
     public String checkFlowRegime(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug){
       Double[] halfRes =new Double[severeSlug.getNumberOfTimeSteps()/2];
       severeSlug.runSevereSlug(fluid, pipe, severeSlug);
@@ -461,6 +573,11 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       return flowPattern;
     }
 
+    /**
+     * <p>getMeasuredValue.</p>
+     *
+     * @return a double
+     */
     public double getMeasuredValue() {
       SystemInterface fluid = streamS.getThermoSystem();
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
@@ -479,6 +596,11 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       return slugValue;
     }
 
+    /**
+     * <p>getPredictedFlowRegime.</p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String getPredictedFlowRegime() {
       logger.debug(angle);
       SystemInterface fluid = streamS.getThermoSystem();
@@ -506,16 +628,37 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       return flowPattern;
     }
 
+    /**
+     * <p>getMeasuredValue.</p>
+     *
+     * @param fluid a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.FluidSevereSlug} object
+     * @param pipe a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.Pipe} object
+     * @param severeSlug a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.SevereSlugAnalyser} object
+     * @return a double
+     */
     public double getMeasuredValue(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
       checkFlowRegime(fluid, pipe, severeSlug);
       return slugValue;
     }
 
+    /**
+     * <p>getPredictedFlowRegime.</p>
+     *
+     * @param fluid a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.FluidSevereSlug} object
+     * @param pipe a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.Pipe} object
+     * @param severeSlug a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.SevereSlugAnalyser} object
+     * @return a {@link java.lang.String} object
+     */
     public String getPredictedFlowRegime(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
       checkFlowRegime(fluid, pipe, severeSlug);
       return flowPattern;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]){
       neqsim.thermo.system.SystemInterface testSystem =
       new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 10);
