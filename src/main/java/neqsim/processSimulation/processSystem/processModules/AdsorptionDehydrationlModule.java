@@ -35,6 +35,11 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   double adsorberInternalDiameter = 1.0;
   double adsorbentFillingHeight = 3.0;
 
+  /**
+   * <p>Constructor for AdsorptionDehydrationlModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public AdsorptionDehydrationlModule(String name) {
     super(name);
   }

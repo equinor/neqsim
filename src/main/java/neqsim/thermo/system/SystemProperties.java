@@ -6,10 +6,14 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * Class to get physical properties of system and its phases.
+ *
+ * @author ASMF
+ * @version $Id: $Id
  */
 public class SystemProperties {
   private Double[] values;
   private String[] names;
+  /** Constant <code>nCols=(16 * 4) + 6</code> */
   public static final int nCols = (16 * 4) + 6;
 
   /**
@@ -181,7 +185,7 @@ public class SystemProperties {
 
   /**
    * Get property names and values as a map
-   * 
+   *
    * @return map of property name and values
    */
   public HashMap<String, Double> getProperties() {
@@ -194,7 +198,7 @@ public class SystemProperties {
 
   /**
    * Getter for property values
-   * 
+   *
    * @return Systemproperty values
    */
   public Double[] getValues() {
@@ -203,7 +207,7 @@ public class SystemProperties {
 
   /**
    * Get names of properties
-   * 
+   *
    * @return Array of names of properties
    */
   public static String[] getPropertyNames() {

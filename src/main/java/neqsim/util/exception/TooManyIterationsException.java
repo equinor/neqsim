@@ -13,7 +13,7 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
 
     /**
      * Constructs a <code>TooManyIterationsException</code> with a standard error message.
-     * 
+     *
      * @param className Class that exception is raised from
      * @param methodName Method that exception is raised from
      * @param maxIterations the maximum number of iterations
@@ -24,7 +24,7 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
 
     /**
      * Constructs a <code>TooManyIterationsException</code> with a standard error message.
-     * 
+     *
      * @param obj object that exception is raised from
      * @param methodName method that exception is raised from
      * @param maxIterations the maximum number of iterations

@@ -8,6 +8,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the CSP SRK equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemCSPsrkEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;

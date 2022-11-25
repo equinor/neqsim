@@ -669,8 +669,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param flowRate a double
    * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr
    *        m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr, Sm3/hr, Sm3/day, idSm3/hr, idSm3/day
-   * 
-   * 
    */
   public void setTotalFlowRate(double flowRate, String flowunit);
 
@@ -1485,7 +1483,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to calculate thermodynamic properties of the fluid. The temperature, pressure, number of
    * phases and composition of the phases will be used as basis for calculation.
-   * 
    *
    * @param number - The number can be 0, 1, 2 or 3. 0: Set feed composition for all phases. 1:
    *        Calculation of density, fugacities and Z-factor 2: 1 + calculation of enthalpy, entropy,
@@ -2072,7 +2069,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return kappa
    */
-
   public double getKappa();
 
   /**
@@ -2482,7 +2478,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   @Override
   public int hashCode();
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public void addToComponentNames(java.lang.String name);
 
   /**
@@ -2533,6 +2533,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Get normal liquid density of fluid.
    *
    * @param unit {@link java.lang.String} Supported units are kg/m3 and gr/cm3
+   * @return a double
    */
   public double getIdealLiquidDensity(String unit);
 }

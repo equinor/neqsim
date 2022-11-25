@@ -41,7 +41,7 @@ public class Expander extends Compressor implements ExpanderInterface {
 
   /**
    * Constructor for Expander.
-   * 
+   *
    * @param name name of unit operation
    */
   public Expander(String name) {

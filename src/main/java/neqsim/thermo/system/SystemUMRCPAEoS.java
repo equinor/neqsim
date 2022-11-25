@@ -21,6 +21,9 @@ public class SystemUMRCPAEoS extends SystemPrEos {
 
   private static final long serialVersionUID = 1L;
 
+  /**
+   * <p>Constructor for SystemUMRCPAEoS.</p>
+   */
   public SystemUMRCPAEoS() {
     super();
     modelName = "UMR-CPA";
@@ -34,6 +37,12 @@ public class SystemUMRCPAEoS extends SystemPrEos {
     }
   }
 
+  /**
+   * <p>Constructor for SystemUMRCPAEoS.</p>
+   *
+   * @param T a double
+   * @param P a double
+   */
   public SystemUMRCPAEoS(double T, double P) {
     super(T, P);
     modelName = "UMR-CPA";

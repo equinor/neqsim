@@ -40,6 +40,9 @@ public class BaseContract implements ContractInterface {
   ContractSpecification[] spesifications = new ContractSpecification[50];
   private int specificationsNumber = 0;
 
+  /**
+   * <p>Constructor for BaseContract.</p>
+   */
   public BaseContract() {}
 
   /**

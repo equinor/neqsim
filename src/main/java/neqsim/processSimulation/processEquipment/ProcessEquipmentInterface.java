@@ -138,10 +138,10 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
    * <p>
    * getPressure.
    * </p>
-   * 
+   *
    * @param unit a {@link java.lang.String} object
-   * 
-   **/
+   * @return a double
+   */
   public double getPressure(String unit);
 
   /**

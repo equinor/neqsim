@@ -114,7 +114,6 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
    * @return a boolean
    */
   // public boolean checkFugacityCoefficientsDn() {
-
   public boolean checkFugacityCoefficientsDn() {
     double temp1 = 0;
     double sum = 0;

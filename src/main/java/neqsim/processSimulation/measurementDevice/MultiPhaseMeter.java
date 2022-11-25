@@ -23,6 +23,9 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
   double pressure = 10.0, temperature = 298.15;
   String unitT, unitP;
 
+  /**
+   * <p>Constructor for MultiPhaseMeter.</p>
+   */
   public MultiPhaseMeter() {
     name = "Multi Phase Meter";
   }

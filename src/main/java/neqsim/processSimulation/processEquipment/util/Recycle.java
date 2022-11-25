@@ -40,14 +40,29 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   double flowAccuracy = 1.0;
 
 
+  /**
+   * <p>Setter for the field <code>compositionAccuracy</code>.</p>
+   *
+   * @param compositionAccuracy a double
+   */
   public void setCompositionAccuracy(double compositionAccuracy) {
     this.compositionAccuracy = compositionAccuracy;
   }
 
+  /**
+   * <p>Setter for the field <code>temperatureAccuracy</code>.</p>
+   *
+   * @param temperatureAccuracy a double
+   */
   public void setTemperatureAccuracy(double temperatureAccuracy) {
     this.temperatureAccuracy = temperatureAccuracy;
   }
 
+  /**
+   * <p>Setter for the field <code>flowAccuracy</code>.</p>
+   *
+   * @param flowAccuracy a double
+   */
   public void setFlowAccuracy(double flowAccuracy) {
     this.flowAccuracy = flowAccuracy;
   }
@@ -62,6 +77,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     this("Recycle");
   }
 
+  /**
+   * <p>resetIterations.</p>
+   */
   public void resetIterations() {
     iterations = 0;
   }
@@ -226,7 +244,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     return enthalpy;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
   @Deprecated
   public StreamInterface getOutStream() {
     return mixedStream;
@@ -455,6 +477,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     this.errorFlow = error;
   }
 
+  /**
+   * <p>Getter for the field <code>errorFlow</code>.</p>
+   *
+   * @return a double
+   */
   public double getErrorFlow() {
     return errorFlow;
   }

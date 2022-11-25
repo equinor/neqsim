@@ -21,6 +21,9 @@ import org.apache.logging.log4j.Logger;
 public class ChemicalReactionFactory {
   static Logger logger = LogManager.getLogger(ChemicalReactionFactory.class);
 
+  /**
+   * <p>Constructor for ChemicalReactionFactory.</p>
+   */
   public ChemicalReactionFactory() {}
 
   /**

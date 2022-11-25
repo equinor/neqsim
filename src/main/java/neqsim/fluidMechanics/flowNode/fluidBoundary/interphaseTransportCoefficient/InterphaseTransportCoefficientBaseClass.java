@@ -12,6 +12,9 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
  */
 public class InterphaseTransportCoefficientBaseClass
     implements InterphaseTransportCoefficientInterface {
+  /**
+   * <p>Constructor for InterphaseTransportCoefficientBaseClass.</p>
+   */
   public InterphaseTransportCoefficientBaseClass() {}
 
   /**

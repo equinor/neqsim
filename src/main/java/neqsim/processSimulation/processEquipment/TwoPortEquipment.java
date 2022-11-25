@@ -4,6 +4,9 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  * Abstract class defining ProcessEquipment with one inlet and one outlet.
+ *
+ * @author ASMF
+ * @version $Id: $Id
  */
 public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
     implements TwoPortInterface {
