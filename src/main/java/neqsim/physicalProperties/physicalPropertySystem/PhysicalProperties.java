@@ -257,6 +257,13 @@ public abstract class PhysicalProperties
 
   /** {@inheritDoc} */
   @Override
+  public void setPhase(PhaseInterface phase) {
+    this.phase = phase;
+    this.setPhases();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void init(PhaseInterface phase) {
     this.phase = phase;
     this.setPhases();
@@ -273,13 +280,6 @@ public abstract class PhysicalProperties
       phase.resetPhysicalProperties();
       phase.initPhysicalProperties();
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setPhase(PhaseInterface phase) {
-    this.phase = phase;
-    this.setPhases();
   }
 
   /** {@inheritDoc} */
@@ -349,13 +349,7 @@ public abstract class PhysicalProperties
     return kinematicViscosity;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * getDiffusionCoefficient.
-   * </p>
-   */
+  /** {@inheritDoc} */
   public double getDiffusionCoefficient(int i, int j) {
     return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(i, j);
   }

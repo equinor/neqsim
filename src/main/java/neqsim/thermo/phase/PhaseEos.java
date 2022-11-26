@@ -510,17 +510,17 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         / numberOfMolesInPhase;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return calcB(phase, temperature, pressure, numbcomp) / numberOfMolesInPhase;
-  }
-
   /**
    * @return double
    */
   double geta() {
     return loc_A / numberOfMolesInPhase / numberOfMolesInPhase;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getA() {
+    return loc_A;
   }
 
   /**
@@ -532,8 +532,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getA() {
-    return loc_A;
+  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    return calcB(phase, temperature, pressure, numbcomp) / numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
