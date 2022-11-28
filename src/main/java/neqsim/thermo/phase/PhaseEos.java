@@ -1282,4 +1282,29 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(),
         temperature, pressure);
   }
+
+   /** {@inheritDoc} */
+  @Override
+  public double getCompressibilityX(){
+    return getTemperature()/getTotalVolume()*getdPdTVn()/getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+    public double getCompressibilityY(){
+    return getPressure()/getTotalVolume()*1.0/getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+    public double getIsothermalCompressibility(){
+    return -1.0/getTotalVolume()*1.0/getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+    public double getIsothermalExpansivity(){
+    return 1.0/getTotalVolume()*getdPdTVn()/getdPdVTn();
+  }
+  
 }
