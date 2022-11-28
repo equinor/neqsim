@@ -155,6 +155,45 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public double getWtFractionOfWaxFormingComponents();
 
+ /**
+   * <p>
+   * getCompressibilityX.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getCompressibilityX();
+
+  /**
+   * <p>
+   * getCompressibilityY.
+   * </p>
+   *
+   * @return a double
+   */
+    public double getCompressibilityY();
+
+  /** 
+  
+ /**
+   * <p>
+   * getIsothermalCompressibility.
+   * </p>
+   *
+   * @return a double
+   */
+    public double getIsothermalCompressibility();
+
+/**
+   * <p>
+   * getIsobaricThermalExpansivity.
+   * </p>
+   *
+   * @return a double
+   */
+    public double getIsobaricThermalExpansivity();
+  
+
   /**
    * <p>
    * getdrhodN.

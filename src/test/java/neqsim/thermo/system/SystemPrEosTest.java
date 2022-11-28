@@ -157,4 +157,37 @@ class SystemPrEoSTest extends neqsim.NeqSimTest{
       testSystem.getPhase("gas").getKappa();
       assertEquals(testSystem.getKappa(), testSystem.getPhase("gas").getKappa(), 1e-5);
     }
+
+    /**
+     * <p>
+     * checCompressibilityFunctions.
+     * </p>
+     */
+    @Test
+    @DisplayName("check compressibility functions")
+    public void checkCompressibilityFunctions() {
+      neqsim.thermo.system.SystemPrEos testSystem =
+          new neqsim.thermo.system.SystemPrEos(298.0, 75.0);
+      testSystem.addComponent("nitrogen", 0.01);
+      testSystem.addComponent("CO2", 0.01);
+      testSystem.addComponent("methane", 0.68);
+      testSystem.addComponent("ethane", 0.1);
+      testSystem.setMixingRule("classic");
+      ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+      testOps.TPflash();
+      testSystem.initProperties();
+
+      double isoThermComp = testSystem.getPhase("gas").getIsothermalCompressibility();
+      // assertEquals(1.0, isoThermComp, 1e-5);
+
+      double isobaricThermalExpansivity = testSystem.getPhase("gas").getIsobaricThermalExpansivity();
+      // assertEquals(1.0, isobaricThermalExpansivity, 1e-5);
+
+      double compressibilityX = testSystem.getPhase("gas").getCompressibilityX();
+      // assertEquals(1.0, compressibilityX, 1e-5);
+
+      double compressibilityY = testSystem.getPhase("gas").getCompressibilityY();
+      // assertEquals(1.0, compressibilityY, 1e-5);
+    }
+    
 }
