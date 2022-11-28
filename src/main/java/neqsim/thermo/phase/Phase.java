@@ -2152,4 +2152,29 @@ abstract class Phase implements PhaseInterface {
   public String getThermoPropertyModelName() {
     return thermoPropertyModelName;
   }
+
+    /** {@inheritDoc} */
+  @Override
+  public double getCompressibilityX(){
+    return getTemperature()/getTotalVolume()*getdPdTVn()/getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+    public double getCompressibilityY(){
+    return getPressure()/getTotalVolume()*1.0/getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+    public double getIsothermalCompressibility(){
+    return -1.0/getTotalVolume()*1.0/getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+    public double getIsobaricThermalExpansivity(){
+    return 1.0/getTotalVolume()*getdPdTVn()/getdPdVTn();
+  }
+  
 }
