@@ -6,8 +6,8 @@ on:
     branches: # Only run for changes in master branch and any releases branch
       - master
       - 'releases/**'
-    paths: # Only run if some java-file is updated
-      - '*.java' 
+    # paths: # Only run if some java-file is updated
+    #  - '*.java' 
   pull_request:
     branches: 
       - master
