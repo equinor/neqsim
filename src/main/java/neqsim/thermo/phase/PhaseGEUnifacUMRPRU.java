@@ -19,6 +19,9 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   double[] Qmix = null;
   double[][] QmixdN = null;
   String[] gropuNames = null;
+  double VCommontemp = 0.0;
+  double FCommontemp = 0.0;
+
   static Logger logger = LogManager.getLogger(PhaseGEUnifacUMRPRU.class);
 
   /**
@@ -56,6 +59,29 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     this.setMixingRule(2);
   }
 
+
+  public double getFCommontemp(PhaseInterface phase, int numberOfComponents, double temperature,
+  double pressure, int phasetype) {
+  FCommontemp = 0;
+  ComponentGEUnifac[] compArray = (ComponentGEUnifac[]) phase.getcomponentArray();
+
+  for (int j = 0; j < numberOfComponents; j++) {
+    FCommontemp += (compArray[j].getQ() * compArray[j].getx());
+  }
+  return FCommontemp;
+  }
+
+  public double getVCommontemp(PhaseInterface phase, int numberOfComponents, double temperature,
+  double pressure, int phasetype) {
+  VCommontemp = 0;
+  ComponentGEUnifac[] compArray = (ComponentGEUnifac[]) phase.getcomponentArray();
+
+  for (int j = 0; j < numberOfComponents; j++) {
+    VCommontemp += compArray[j].getx() * compArray[j].getR();
+  }
+  return VCommontemp;
+  }
+  
   /** {@inheritDoc} */
   @Override
   public void addcomponent(String componentName, double moles, double molesInPhase,
@@ -88,8 +114,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     double GE = 0.0;
-    ((ComponentGEUnifacUMRPRU) phase.getComponents()[0]).commonInit(phase, numberOfComponents,
-        temperature, pressure, phasetype);
+    //((ComponentGEUnifacUMRPRU) phase.getComponents()[0]).commonInit(phase, numberOfComponents,
+        //temperature, pressure, phasetype);
 
     initQmix();
     if (getInitType() > 2)
