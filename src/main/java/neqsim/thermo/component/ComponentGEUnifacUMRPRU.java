@@ -374,8 +374,8 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
       return gamma;
     }
 
-    double V = this.getx() * this.getR() / ((PhaseGEUnifacUMRPRU) phase).getVCommontemp(phase, numberOfComponents, temperature, pressure, phasetype);
-    double F = this.getx() * this.getQ() / ((PhaseGEUnifacUMRPRU) phase).getFCommontemp(phase, numberOfComponents, temperature, pressure, phasetype);
+    double V = this.getx() * this.getR() / ((PhaseGEUnifacUMRPRU) phase).getVCommontemp();
+    double F = this.getx() * this.getQ() / ((PhaseGEUnifacUMRPRU) phase).getFCommontemp();
 
     lngammaCombinational = -10.0 / 2.0 * getQ() * (Math.log(V / F) + 1.0 - V / F);
 
