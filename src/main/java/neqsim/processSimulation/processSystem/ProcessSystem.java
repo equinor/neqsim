@@ -18,6 +18,7 @@ import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.RecycleController;
 import neqsim.thermo.system.SystemInterface;
@@ -375,6 +376,10 @@ public class ProcessSystem extends SimulationBaseClass {
   @Override
   public void run(UUID id) {
     boolean hasResycle = false;
+    StreamInterface outRecStream;
+    String outRecStreamName;
+    int outStreamRecInt = 0;
+    int RecycleNumber = 0;
     // boolean hasAdjuster = false;
 
     // Initializing recycle controller
@@ -392,28 +397,43 @@ public class ProcessSystem extends SimulationBaseClass {
 
     boolean isConverged = true;
     int iter = 0;
-    do {
+    for (int i = 0; i < unitOperations.size(); i++) {
+      if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")){
+        ((ProcessEquipmentInterface) unitOperations.get(i)).run();
+      }
+    }
+
+    if (hasResycle){
+      do {
       iter++;
+      System.out.println("ITERATION " + iter);
       isConverged = true;
       for (int i = 0; i < unitOperations.size(); i++) {
-        if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
-          try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
-          } catch (Exception ex) {
-            // String error = ex.getMessage();
-            logger.error(ex.getMessage());
-          }
+        if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")){
+          ((ProcessEquipmentInterface) unitOperations.get(i)).run();
         }
+      }
+
+      for (int i = 0; i < unitOperations.size(); i++) {
+        //((ProcessEquipmentInterface) unitOperations.get(i)).run();
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
-            && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
-          try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
-          } catch (Exception ex) {
-            // String error = ex.getMessage();
-            logger.error(ex.getMessage());
+        && !((Recycle) unitOperations.get(i)).solved()) {
+          RecycleNumber = i;
+          outRecStream = ((Recycle) unitOperations.get(i)).getOutStream();
+          outRecStreamName = outRecStream.getName();
+          for (int k = 0; k < unitOperations.size(); k++) {
+            if (unitOperations.get(k).getName().equals(outRecStreamName)) {
+              outStreamRecInt = k;
+              System.out.println("outStreamRecInt " + outStreamRecInt);
+              for (int procIter = outStreamRecInt; procIter <  RecycleNumber; procIter++) {
+                System.out.println("RUNNING " + unitOperations.get(procIter).getName());
+                ((ProcessEquipmentInterface) unitOperations.get(procIter)).run();
+              }
+            }
           }
         }
       }
+
       if (!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
         isConverged = false;
       }
@@ -422,8 +442,9 @@ public class ProcessSystem extends SimulationBaseClass {
         recycleController.nextPriorityLevel();
       } else if (recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
         recycleController.resetPriorityLevel();
-        // isConverged=true;
+
       }
+
 
       for (int i = 0; i < unitOperations.size(); i++) {
         if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
@@ -448,7 +469,15 @@ public class ProcessSystem extends SimulationBaseClass {
        * 
        * }
        */
-    } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
+    } while ((!isConverged) && iter < 100);
+  }
+
+  if (hasResycle){
+    for (int procIter = RecycleNumber + 1; procIter < unitOperations.size(); procIter++) {
+        System.out.println("RUNNING " + unitOperations.get(procIter).getName());
+        ((ProcessEquipmentInterface) unitOperations.get(procIter)).run();
+      }
+  }
 
     for (int i = 0; i < unitOperations.size(); i++) {
       ((ProcessEquipmentInterface) unitOperations.get(i)).setCalculationIdentifier(id);

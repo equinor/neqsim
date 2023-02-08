@@ -249,9 +249,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  @Deprecated
+
   public StreamInterface getOutStream() {
-    return mixedStream;
+    return this.outletStream;
   }
 
   /**
