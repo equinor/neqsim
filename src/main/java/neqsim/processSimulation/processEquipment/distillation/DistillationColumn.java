@@ -33,6 +33,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
+  private double errorTolerance = 1e-4;
   double topTrayPressure = -1.0;
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
@@ -295,6 +296,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     bottomTrayPressure = bottomPressure;
   }
 
+  public void setErrorTolerance(double errorTolerance){
+    this.errorTolerance = errorTolerance;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -368,7 +373,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
         logger.info("error iter " + err + " iteration " + iter);
         // massBalanceCheck();
-      } while (err > 1e-4 && err < errOld && iter < 10); // && !massBalanceCheck());
+      } while (err > errorTolerance && err < errOld && iter < 10); // && !massBalanceCheck());
 
       // massBalanceCheck();
       gasOutStream.setThermoSystem(

@@ -18,6 +18,11 @@ import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.RecycleController;
 import neqsim.thermo.system.SystemInterface;
@@ -39,6 +44,13 @@ public class ProcessSystem extends SimulationBaseClass {
   private int timeStepNumber = 0;
   private ArrayList<ProcessEquipmentInterface> unitOperations =
       new ArrayList<ProcessEquipmentInterface>(0);
+
+  private ArrayList<Integer> modules =
+      new ArrayList<Integer>(0);
+
+  private ArrayList<Integer> sequence =
+      new ArrayList<Integer>(0);
+
   ArrayList<MeasurementDeviceInterface> measurementDevices =
       new ArrayList<MeasurementDeviceInterface>(0);
   RecycleController recycleController = new RecycleController();
@@ -92,6 +104,35 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     getUnitOperations().add(operation);
+    if (operation instanceof ModuleInterface) {
+      ((ModuleInterface) operation).initializeModule();
+    }
+  }
+
+  public void add(ProcessEquipmentInterface operation, Integer module, Integer sequence ) {
+    ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
+
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit == operation) {
+        return;
+      }
+    }
+
+    if (getAllUnitNames().contains(operation.getName())) {
+      String currClass = operation.getClass().getSimpleName();
+      int num = 1;
+      for (ProcessEquipmentInterface unit : units) {
+        if (unit.getClass().getSimpleName().equals(currClass)) {
+          num++;
+        }
+      }
+      operation.setName(currClass + Integer.toString(num));
+    }
+
+    getUnitOperations().add(operation);
+    getModules().add(module);
+    getSequence().add(sequence);
+
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
     }
@@ -251,6 +292,30 @@ public class ProcessSystem extends SimulationBaseClass {
     return unitOperations;
   }
 
+    /**
+   * <p>
+   * Getter for the field <code>modules</code>.
+   * </p>
+   *
+   * @return the modules
+   */
+  public ArrayList<Integer> getModules() {
+    return modules;
+  }
+
+
+  /**
+   * <p>
+   * Getter for the field <code>modules</code>.
+   * </p>
+   *
+   * @return the modules
+   */
+  public ArrayList<Integer> getSequence() {
+    return sequence;
+  }
+
+
   /**
    * <p>
    * removeUnit.
@@ -371,10 +436,16 @@ public class ProcessSystem extends SimulationBaseClass {
     return processThread;
   }
 
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    //runFirstModule()
     boolean hasResycle = false;
+    StreamInterface outRecStream;
+    String outRecStreamName;
+    int outStreamRecInt = 0;
+    int RecycleNumber = 0;
     // boolean hasAdjuster = false;
 
     // Initializing recycle controller
@@ -392,67 +463,140 @@ public class ProcessSystem extends SimulationBaseClass {
 
     boolean isConverged = true;
     int iter = 0;
-    do {
-      iter++;
-      isConverged = true;
-      for (int i = 0; i < unitOperations.size(); i++) {
-        if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
-          try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
-          } catch (Exception ex) {
-            // String error = ex.getMessage();
-            logger.error(ex.getMessage());
-          }
-        }
-        if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
-            && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
-          try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
-          } catch (Exception ex) {
-            // String error = ex.getMessage();
-            logger.error(ex.getMessage());
-          }
-        }
-      }
-      if (!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
-        isConverged = false;
-      }
-
-      if (recycleController.solvedCurrentPriorityLevel()) {
-        recycleController.nextPriorityLevel();
-      } else if (recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
-        recycleController.resetPriorityLevel();
-        // isConverged=true;
-      }
-
-      for (int i = 0; i < unitOperations.size(); i++) {
-        if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
-          if (!((neqsim.processSimulation.processEquipment.util.Adjuster) unitOperations.get(i))
-              .solved()) {
-            isConverged = false;
-            break;
-          }
-        }
-      }
-
-      /*
-       * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
-       * 
-       * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i
-       * < measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
-       * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface)
-       * measurementDevices.get(i)) .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
-       * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
-       * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
-       * measurementDevices.get(i)) .getUnit();
-       * 
-       * }
-       */
-    } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
-
     for (int i = 0; i < unitOperations.size(); i++) {
-      ((ProcessEquipmentInterface) unitOperations.get(i)).setCalculationIdentifier(id);
+      if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")){
+
+        ((ProcessEquipmentInterface) unitOperations.get(i)).run();
+      }
     }
+
+    boolean modules_rec_solved = false;
+    if (hasResycle){
+      do {
+      iter++;
+      
+      boolean module1_rec_solved = false;
+      boolean module2_rec_solved = false;
+      String componentName;
+      double delta; 
+      double total_flow_rate_delta; 
+
+
+
+
+      if (iter == 1){
+        /// initial guess of composition stripping gas 
+      int numberOfComponentsStrippingGas;
+      double molCalcStripGas;
+      numberOfComponentsStrippingGas = ((Stream) unitOperations.get(23)).getFluid().getNumberOfComponents();
+
+      total_flow_rate_delta = (((Stream) ((ThrottlingValve) unitOperations.get(25)).getOutStream()).getFlowRate("mole/hr") - 
+      ((Stream) ((WaterStripperColumn) unitOperations.get(27)).getLiquidOutStream()).getFlowRate("mole/hr"));
+
+      double[] componentsListStrippingGas = new double[numberOfComponentsStrippingGas];
+
+      for (int i = 0; i < numberOfComponentsStrippingGas; i++){
+
+        componentName = ((Stream) unitOperations.get(23)).getFluid().getComponent(i).getComponentName();
+
+        if (componentName != "water" && componentName != "TEG"){
+        delta = ((((Stream) ((ThrottlingValve) unitOperations.get(25)).getOutStream()).getFlowRate("mole/hr")* 
+        ((Stream) ((ThrottlingValve) unitOperations.get(25)).getOutStream()).getFluid().getComponent(componentName).getx()  - 
+        (((Stream) ((WaterStripperColumn) unitOperations.get(27)).getLiquidOutStream()).getFlowRate("mole/hr"))*
+        ((Stream) ((WaterStripperColumn) unitOperations.get(27)).getLiquidOutStream()).getFluid().getComponent(componentName).getx()));
+
+        molCalcStripGas = delta / total_flow_rate_delta;
+        }
+        else if (componentName == "water"){
+          molCalcStripGas = 0.1;
+        }
+        else{
+          molCalcStripGas = 0.0;
+        }
+        componentsListStrippingGas[i] = molCalcStripGas;
+
+      }
+     ((Stream) unitOperations.get(23)).getFluid().setMolarComposition(componentsListStrippingGas);
+
+        do{ 
+          ((ProcessEquipmentInterface) unitOperations.get(23)).run(); //Stripp gas
+          ((ProcessEquipmentInterface) unitOperations.get(27)).run(); //Stripper
+          ((ProcessEquipmentInterface) unitOperations.get(28)).run(); //Rec From Stripp
+          ((ProcessEquipmentInterface) unitOperations.get(24)).run(); // Gas to Reboiler
+          ((ProcessEquipmentInterface) unitOperations.get(25)).run(); //Glycol Flash valve
+          if (((Recycle) unitOperations.get(34)).getError() > 1e-3){
+            ((DistillationColumn) unitOperations.get(26)).setErrorTolerance(0.01);
+          }else{
+            ((DistillationColumn) unitOperations.get(26)).setErrorTolerance(1e-4);
+          };
+          ((ProcessEquipmentInterface) unitOperations.get(26)).run(); // Column
+          ((ProcessEquipmentInterface) unitOperations.get(29)).run();
+          ((ProcessEquipmentInterface) unitOperations.get(30)).run();
+          ((ProcessEquipmentInterface) unitOperations.get(31)).run();
+          ((ProcessEquipmentInterface) unitOperations.get(32)).run();
+          ((ProcessEquipmentInterface) unitOperations.get(33)).run(); // SFGTP setter
+          ((ProcessEquipmentInterface) unitOperations.get(34)).run(); //Rec Flare gas
+          module1_rec_solved = (((Recycle) unitOperations.get(34)).solved() && ((Recycle) unitOperations.get(28)).solved());
+        }while(!module1_rec_solved);
+      }
+
+      // module 2
+      System.out.println("MODULE 2");
+      do{
+        module1_rec_solved = false;
+        ((ProcessEquipmentInterface) unitOperations.get(42)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(10)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(11)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(12)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(13)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(14)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(15)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(16)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(17)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(18)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(19)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(20)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(21)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(22)).run();
+        do{ 
+          ((ProcessEquipmentInterface) unitOperations.get(23)).run(); //Stripp gas
+          ((ProcessEquipmentInterface) unitOperations.get(27)).run(); //Stripper
+          ((ProcessEquipmentInterface) unitOperations.get(28)).run(); //Rec From Stripp
+          ((ProcessEquipmentInterface) unitOperations.get(24)).run(); // Gas to Reboiler
+          ((ProcessEquipmentInterface) unitOperations.get(25)).run(); //Glycol Flash valve
+          if (((Recycle) unitOperations.get(34)).getError() > 1e-3){
+            ((DistillationColumn) unitOperations.get(26)).setErrorTolerance(0.01);
+          }else{
+            ((DistillationColumn) unitOperations.get(26)).setErrorTolerance(1e-4);
+          };
+          ((ProcessEquipmentInterface) unitOperations.get(26)).run(); // Column
+          ((ProcessEquipmentInterface) unitOperations.get(29)).run();
+          ((ProcessEquipmentInterface) unitOperations.get(30)).run();
+          ((ProcessEquipmentInterface) unitOperations.get(31)).run();
+          ((ProcessEquipmentInterface) unitOperations.get(32)).run();
+          ((ProcessEquipmentInterface) unitOperations.get(33)).run(); // SFGTP setter
+          ((ProcessEquipmentInterface) unitOperations.get(34)).run(); //Rec Flare gas
+          module1_rec_solved = (((Recycle) unitOperations.get(34)).solved() && ((Recycle) unitOperations.get(28)).solved());
+        }while(!module1_rec_solved);
+        ((ProcessEquipmentInterface) unitOperations.get(35)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(36)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(37)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(38)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(39)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(40)).run();
+        ((ProcessEquipmentInterface) unitOperations.get(41)).run();
+        module2_rec_solved = (((Recycle) unitOperations.get(42)).solved());
+      }while(!module2_rec_solved);
+      modules_rec_solved = module2_rec_solved;
+
+    } while ((!modules_rec_solved) && iter < 100);
+  }
+
+  if (hasResycle){
+    for (int procIter = 0; procIter < unitOperations.size(); procIter++) {
+        ((ProcessEquipmentInterface) unitOperations.get(procIter)).run();
+      }
+  }
 
     setCalculationIdentifier(id);
   }
