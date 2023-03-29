@@ -409,8 +409,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   public static void initDatabaseFromCSVfiles() {
     String dbcreate = null;
     try {
+      // create = IOUtils.toString(this.getClass().getResourceAsStream("foo.xml"), "UTF-8");
       dbcreate =
-          Files.readString(Paths.get(NeqSimDataBase.class.getResource("neqsimdb.sql").toURI()),
+          Files.readString(
+              Paths.get(NeqSimDataBase.class.getResource("/data/neqsimdb.sql").toURI()),
               Charset.forName("utf-8"));
     } catch (Exception e) {
       e.printStackTrace();
@@ -431,7 +433,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       e.printStackTrace();
     }
     try {
-      database.execute(createTableComp);
+      // database.execute(createTableComp);
     } catch (Exception e) {
       e.printStackTrace();
     }
