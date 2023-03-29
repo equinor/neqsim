@@ -325,10 +325,12 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String[] args) {
+    NeqSimDataBase.initDatabaseFromCSVfiles();
     NeqSimDataBase database = new NeqSimDataBase();
 
     try (ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
       dataSet.next();
+      System.out.println("dataset " + dataSet.getString("molarmass"));
       logger.info("dataset " + dataSet.getString("molarmass"));
     } catch (Exception ex) {
       logger.error("failed " + ex.toString());
@@ -392,6 +394,33 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       } catch (Exception ex) {
         logger.error("error closing database.....", ex);
       }
+    }
+  }
+
+  /**
+   * <p>
+   * initializes a datbase from files COMP and INTER.
+   * </p>
+   *
+   */
+  public static void initDatabaseFromCSVfiles() {
+    connectionString = "jdbc:derby:memory:neqsimthermodatabase;create=true";
+    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+
+    String createTableComp =
+        "CREATE TABLE COMP (ID double NOT NULL, NAME varchar(50) DEFAULT NULL, MOLARMASS double DEFAULT NULL)";
+
+
+    java.sql.ResultSet dataSet = null;
+    try {
+      database.execute("CREATE SCHEMA REMOTE");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    try {
+      database.execute(createTableComp);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 }
