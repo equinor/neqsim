@@ -119,7 +119,14 @@ jobs:
       - run: mkdir lib && cp *.jar lib/ 
       - run: cd lib && mkdir libj8 && mv *Java8.jar libj8/ && cd ..
       
-      # Will fail if branch NeqSim-jars-updated-N.N.N already exists
+      - name: Create release branch in neqsimpython repo
+        uses: GuillaumeFalourd/create-other-repo-branch-action@v1.5
+        with:
+          repository_owner: Equinor
+          repository_name: neqsimpython
+          new_branch_name: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
+          ssh_deploy_key: ${{ secrets.SSH_DEPLOY_KEY }}
+      
       - name: Push directory to another repository
         uses: cpina/github-action-push-to-another-repository@v1.5.1
         env:
