@@ -129,8 +129,7 @@ jobs:
           destination-github-username: 'equinor'
           destination-repository-name: 'neqsimpython'
           user-email: asmf@equinor.com
-          target-branch: main
+          target-branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
           target-directory: neqsim/lib
-          destination_branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
           commit_message:  'chore: updated jar-files'
         
