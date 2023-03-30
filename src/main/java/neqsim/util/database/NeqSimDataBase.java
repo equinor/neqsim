@@ -1,8 +1,5 @@
 package neqsim.util.database;
 
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -430,53 +427,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       } catch (Exception ex) {
         logger.error("error closing database.....", ex);
       }
-    }
-  }
-
-  /**
-   * <p>
-   * initializes a datbase from files COMP and INTER.
-   * </p>
-   *
-   */
-  public static void initDatabaseFromCSVfiles() {
-    dataBaseType = "H2";
-    connectionString = "jdbc:derby:memory:neqsimthermodatabase;create=true";
-    createTemporaryTables = true;
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-
-    String compcreate = null;
-    String intercreate = null;
-    try {
-      compcreate =
-          Files.readString(
-              Paths.get(NeqSimDataBase.class.getResource("/data/comptable.sql").toURI()),
-              Charset.forName("utf-8"));
-      intercreate = Files.readString(
-          Paths.get(NeqSimDataBase.class.getResource("/data/intertable.sql").toURI()),
-              Charset.forName("utf-8"));
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    try {
-      database.execute("CREATE SCHEMA REMOTE");
-      database.execute(compcreate);
-      database.execute(intercreate);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    try {
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    String createInput = "INSERT INTO COMP VALUES (1,'methane', 16.01)";
-
-    try {
-      database.execute(createInput);
-    } catch (Exception e) {
-      e.printStackTrace();
     }
   }
 

@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class compressorTest12 {
+public class compressorTest12 extends neqsim.NeqSimTest {
     public static SystemInterface getSystem() {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos(265, 49.6);
