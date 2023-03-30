@@ -52,11 +52,14 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   static Logger logger = LogManager.getLogger(NeqSimDataBase.class);
   private static boolean createTemporaryTables = false;
 
-  private static String dataBaseType = "Derby";
-  private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
+  // private static String dataBaseType = "Derby";
+  // private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
   private static String username = "remote";
   private static String password = "remote";
 
+  private static String dataBaseType = "H2fromCSV";
+  private static String connectionString = "jdbc:h2:mem:neqsimthermodatabase";
+  private static boolean h2IsInit = false;
   // static String dataBaseType = "MSAccessUCanAccess";
   // public static String connectionString =
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
@@ -71,6 +74,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * </p>
    */
   public NeqSimDataBase() {
+    if (dataBaseType == "H2fromCSV" && !h2IsInit) {
+      h2IsInit = true;
+      initH2DatabaseFromCSVfiles();
+    }
     setDataBaseType(dataBaseType);
 
     try {
@@ -111,7 +118,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
         return DriverManager.getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ="
             + dir + "\\data\\NeqSimDatabase");
-      } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
+      } else if (dataBaseType.equals("H2fromCSV") || dataBaseType.equals("H2")
+          || dataBaseType.equals("H2RT")) {
         return DriverManager.getConnection(connectionString, "sa", "");
       } else if (dataBaseType.equals("MSAccessUCanAccess")) {
         return DriverManager.getConnection(getConnectionString());
@@ -250,9 +258,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     try {
       if (dataBaseType.equals("MSAccess")) {
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
-      } else if (dataBaseType.equals("H2")) {
-        Class.forName("org.h2.Driver");
-      } else if (dataBaseType.equals("H2RT")) {
+      } else if (dataBaseType.equals("H2fromCSV") || dataBaseType.equals("H2")
+          || dataBaseType.equals("H2RT")) {
         Class.forName("org.h2.Driver");
       } else if (dataBaseType.equals("MSAccessUCanAccess")) {
         Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
@@ -350,7 +357,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String[] args) {
-    NeqSimDataBase.initH2DatabaseFromCSVfiles();
+    // NeqSimDataBase.initH2DatabaseFromCSVfiles();
     // NeqSimDataBase.initDatabaseFromCSVfiles();
     NeqSimDataBase database = new NeqSimDataBase();
 
@@ -474,8 +481,9 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   public static void initH2DatabaseFromCSVfiles() {
-    neqsim.util.database.NeqSimDataBase.connectionString = "jdbc:h2:mem:neqsimthermodatabase";
-    neqsim.util.database.NeqSimDataBase.createTemporaryTables = true;
+    neqsim.util.database.NeqSimDataBase.connectionString =
+        "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
+    neqsim.util.database.NeqSimDataBase.createTemporaryTables = false;
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
@@ -486,6 +494,18 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       database.execute(createINTER);
     } catch (Exception e) {
       e.printStackTrace();
+    }
+    finally {
+      try {
+        if (database.getStatement() != null) {
+          database.getStatement().close();
+        }
+        if (database.getConnection() != null) {
+          database.getConnection().close();
+        }
+      } catch (Exception ex) {
+        logger.error("error closing database.....", ex);
+      }
     }
   }
 }
