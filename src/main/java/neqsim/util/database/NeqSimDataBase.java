@@ -190,6 +190,27 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
 
   /**
    * <p>
+   * execute.
+   * </p>
+   *
+   * @param sqlString a {@link java.lang.String} object
+   */
+  public void executeQuery(String sqlString) {
+    try {
+      if (databaseConnection == null) {
+        databaseConnection = this.openConnection();
+        setStatement(databaseConnection.createStatement());
+      }
+      getStatement().executeQuery(sqlString);
+    } catch (Exception ex) {
+      logger.error("error in NeqSimDataBase " + ex.toString(), ex);
+      logger.error("The database must be rgistered on the local DBMS to work.");
+      throw new RuntimeException(ex);
+    }
+  }
+
+  /**
+   * <p>
    * Getter for the field <code>dataBaseType</code>.
    * </p>
    *
@@ -407,33 +428,33 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    *
    */
   public static void initDatabaseFromCSVfiles() {
-    String dbcreate = null;
-    try {
-      // create = IOUtils.toString(this.getClass().getResourceAsStream("foo.xml"), "UTF-8");
-      dbcreate =
-          Files.readString(
-              Paths.get(NeqSimDataBase.class.getResource("/data/neqsimdb.sql").toURI()),
-              Charset.forName("utf-8"));
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+
     connectionString = "jdbc:derby:memory:neqsimthermodatabase;create=true";
     createTemporaryTables = true;
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
-    String createTableComp =
-        "CREATE TABLE COMP (ID double NOT NULL, NAME varchar(50) DEFAULT NULL, MOLARMASS double DEFAULT NULL)";
-
-
-    java.sql.ResultSet dataSet = null;
+    String compcreate = null;
+    String intercreate = null;
     try {
-      // database.execute("CREATE SCHEMA REMOTE");
-      database.execute(dbcreate);
+      compcreate =
+          Files.readString(
+              Paths.get(NeqSimDataBase.class.getResource("/data/comptable.sql").toURI()),
+              Charset.forName("utf-8"));
+      intercreate = Files.readString(
+          Paths.get(NeqSimDataBase.class.getResource("/data/intertable.sql").toURI()),
+              Charset.forName("utf-8"));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    try {
+      database.execute("CREATE SCHEMA REMOTE");
+      database.execute(compcreate);
+      database.execute(intercreate);
     } catch (Exception e) {
       e.printStackTrace();
     }
     try {
-      // database.execute(createTableComp);
     } catch (Exception e) {
       e.printStackTrace();
     }
