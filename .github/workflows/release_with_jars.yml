@@ -120,16 +120,17 @@ jobs:
       - run: cd lib && mkdir libj8 && mv *Java8.jar libj8/ && cd ..
       
       # Will fail if branch NeqSim-jars-updated-N.N.N already exists
-      - name: Push files to neqsimpython repo
-        uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
+      - name: Push directory to another repository
+        uses: cpina/github-action-push-to-another-repository@v1.5.1
         env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
         with:
-          source_file: lib
-          destination_repo: 'equinor/neqsimpython'
-          destination_folder: neqsim/
+          source-directory: 'lib'
+          destination-github-username: 'equinor'
+          destination-repository-name: 'neqsimpython'
+          user-email: asmf@equinor.com
+          target-branch: main
+          target-directory: neqsim/lib
           destination_branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
           commit_message:  'chore: updated jar-files'
-          user_email: 'asmf@equinor.com'
-          user_name: 'asmfstatoil'
         
