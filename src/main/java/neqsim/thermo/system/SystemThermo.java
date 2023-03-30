@@ -66,8 +66,7 @@ abstract class SystemThermo implements SystemInterface {
   protected double criticalPressure = 0;
   private double totalNumberOfMoles = 0;
   public String componentNameTag = "";
-  protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null; // new
-                                                                                       // WaxCharacterise(this);
+  protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;
   protected double[] beta = new double[6];
   protected int a;
 
@@ -3091,7 +3090,9 @@ abstract class SystemThermo implements SystemInterface {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * need to call initPhysicalProperties() before this method is called
+   * </p>
    */
   @Override
   public double getCorrectedVolume() {
@@ -5094,8 +5095,10 @@ abstract class SystemThermo implements SystemInterface {
 
 
   /**
-   * @param molefractions
-   * @param type
+   * Wrapper function for addComponent to set fluid type and specify mole fractions.
+   *
+   * @param molefractions Component mole fraction of each component.
+   * @param type Type of fluid. Supports "PlusFluid", "Plus" and default.
    */
   private void setMolarFractions(double[] molefractions, String type) {
     double totalFlow = getTotalNumberOfMoles();
@@ -5226,11 +5229,7 @@ abstract class SystemThermo implements SystemInterface {
   }
 
 
-  /**
-   * {@inheritDoc}
-   *
-   * Return normal liquid density of fluid in given unit.
-   */
+  /** {@inheritDoc} */
   public double getIdealLiquidDensity(String unit) {
     double normalLiquidDensity = 0.0;
     double molarMass = getMolarMass();
