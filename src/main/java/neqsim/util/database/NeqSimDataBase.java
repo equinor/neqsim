@@ -14,6 +14,7 @@ import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+
 /**
  * <p>
  * NeqSimDataBase class.
@@ -349,17 +350,21 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String[] args) {
-    NeqSimDataBase.initDatabaseFromCSVfiles();
+    NeqSimDataBase.initH2DatabaseFromCSVfiles();
+    // NeqSimDataBase.initDatabaseFromCSVfiles();
     NeqSimDataBase database = new NeqSimDataBase();
 
     try (ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
       dataSet.next();
       System.out.println("dataset " + dataSet.getString("molarmass"));
       logger.info("dataset " + dataSet.getString("molarmass"));
+      dataSet.close();
+      database.getConnection().close();
     } catch (Exception ex) {
       logger.error("failed " + ex.toString());
       throw new RuntimeException(ex);
     }
+
   }
 
   /**
@@ -428,7 +433,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    *
    */
   public static void initDatabaseFromCSVfiles() {
-
+    dataBaseType = "H2";
     connectionString = "jdbc:derby:memory:neqsimthermodatabase;create=true";
     createTemporaryTables = true;
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -463,6 +468,22 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
 
     try {
       database.execute(createInput);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public static void initH2DatabaseFromCSVfiles() {
+    neqsim.util.database.NeqSimDataBase.connectionString = "jdbc:h2:mem:neqsimthermodatabase";
+    neqsim.util.database.NeqSimDataBase.createTemporaryTables = true;
+    neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
+    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+
+    String createCOMP = "CREATE TABLE COMP AS SELECT * FROM CSVREAD('classpath:/data/COMP.csv')";
+    String createINTER = "CREATE TABLE INTER AS SELECT * FROM CSVREAD('classpath:/data/INTER.csv')";
+    try {
+      database.execute(createCOMP);
+      database.execute(createINTER);
     } catch (Exception e) {
       e.printStackTrace();
     }

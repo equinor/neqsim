@@ -6,8 +6,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.database.NeqSimDataBase;
 
-class SystemPrEoSTest extends neqsim.NeqSimTest{
+class SystemPrEoSTest extends neqsim.NeqSimTest {
     static neqsim.thermo.system.SystemInterface testSystem = null;
     static neqsim.thermo.ThermodynamicModelTest testModel = null;
 
@@ -18,6 +19,7 @@ class SystemPrEoSTest extends neqsim.NeqSimTest{
      */
     @BeforeAll
     public static void setUp() {
+      NeqSimDataBase.initH2DatabaseFromCSVfiles();
         testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
         testSystem.addComponent("nitrogen", 0.01);
         testSystem.addComponent("CO2", 0.01);
