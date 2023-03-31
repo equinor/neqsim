@@ -433,7 +433,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   public static void initH2DatabaseFromCSVfiles() {
     neqsim.util.database.NeqSimDataBase.connectionString =
         "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
-    neqsim.util.database.NeqSimDataBase.createTemporaryTables = true;
+    neqsim.util.database.NeqSimDataBase.createTemporaryTables = false;
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
