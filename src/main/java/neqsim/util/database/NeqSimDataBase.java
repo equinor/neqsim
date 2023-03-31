@@ -463,7 +463,18 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         "CREATE TABLE UNIFACInterParamA_UMR AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamA_UMR.csv')";
     String UNIFACInterParamA_UMRMC =
         "CREATE TABLE UNIFACInterParamA_UMRMC AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamA_UMRMC.csv')";
-
+    String UNIFACInterParamB =
+        "CREATE TABLE UNIFACInterParamB AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamB.csv')";
+    String UNIFACInterParamB_UMR =
+        "CREATE TABLE UNIFACInterParamB_UMR AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamB_UMR.csv')";
+    String UNIFACInterParamB_UMRMC =
+        "CREATE TABLE UNIFACInterParamB_UMRMC AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamB_UMRMC.csv')";
+    String UNIFACInterParamC =
+        "CREATE TABLE UNIFACInterParamC AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamC.csv')";
+    String UNIFACInterParamC_UMR =
+        "CREATE TABLE UNIFACInterParamC_UMR AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamC_UMR.csv')";
+    String UNIFACInterParamC_UMRMC =
+        "CREATE TABLE UNIFACInterParamC_UMRMC AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamC_UMRMC.csv')";
 
     try {
       database.execute(createCOMP);
@@ -480,12 +491,17 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       database.execute(UNIFACInterParam);
       database.execute(UNIFACInterParamA_UMR);
       database.execute(UNIFACInterParamA_UMRMC);
+      database.execute(UNIFACInterParamB);
+      database.execute(UNIFACInterParamB_UMR);
+      database.execute(UNIFACInterParamB_UMRMC);
+      database.execute(UNIFACInterParamC);
+      database.execute(UNIFACInterParamC_UMR);
+      database.execute(UNIFACInterParamC_UMRMC);
       database.execute("CREATE TABLE comptemp AS SELECT * FROM comp");
       database.execute("CREATE TABLE intertemp AS SELECT * FROM inter");
     } catch (Exception e) {
       e.printStackTrace();
-    }
-    finally {
+    } finally {
       try {
         if (database.getStatement() != null) {
           database.getStatement().close();
