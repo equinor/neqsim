@@ -58,11 +58,11 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest{
 
     /**
      * <p>
-     * initPhysicalProperties.
+     * testinitPhysicalProperties.
      * </p>
      */
     @Test
-    public void initPhysicalProperties() {
+    public void testinitPhysicalProperties() {
         thermoSystem.initPhysicalProperties();
         assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(),
                 thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
