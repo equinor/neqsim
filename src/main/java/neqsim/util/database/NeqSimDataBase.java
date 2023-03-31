@@ -433,12 +433,12 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   public static void initH2DatabaseFromCSVfiles() {
     neqsim.util.database.NeqSimDataBase.connectionString =
         "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
-    neqsim.util.database.NeqSimDataBase.createTemporaryTables = true;
+    neqsim.util.database.NeqSimDataBase.createTemporaryTables = false;
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
-    String createCOMP = "CREATE TABLE comp AS SELECT * FROM CSVREAD('classpath:/data/comp.csv')";
-    String createINTER = "CREATE TABLE inter AS SELECT * FROM CSVREAD('classpath:/data/inter.csv')";
+    String createCOMP = "CREATE TABLE comp AS SELECT * FROM CSVREAD('classpath:/data/COMP.csv')";
+    String createINTER = "CREATE TABLE inter AS SELECT * FROM CSVREAD('classpath:/data/INTER.csv')";
     String createElement =
         "CREATE TABLE element AS SELECT * FROM CSVREAD('classpath:/data/element.csv')";
     String create_iso6976 =

@@ -9,8 +9,8 @@ public abstract class NeqSimTest {
    */
   public NeqSimTest() {
     // Setting NeqSim to use test parameter database
-    neqsim.util.database.NeqSimDataBase
-        .setConnectionString("jdbc:derby:classpath:data/neqsimtestdatabase");
-    neqsim.util.database.NeqSimDataBase.setDataBaseType("Derby");
+    // neqsim.util.database.NeqSimDataBase
+    // .setConnectionString("jdbc:derby:classpath:data/neqsimtestdatabase");
+    // neqsim.util.database.NeqSimDataBase.setDataBaseType("Derby");
   }
 }
