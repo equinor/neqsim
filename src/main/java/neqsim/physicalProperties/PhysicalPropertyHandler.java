@@ -22,14 +22,10 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable {
-  private PhysicalPropertiesInterface gasPhysicalProperties =
-      null;
-  private PhysicalPropertiesInterface oilPhysicalProperties =
-      null;
-  private PhysicalPropertiesInterface aqueousPhysicalProperties =
-      null;
-  private PhysicalPropertiesInterface solidPhysicalProperties =
-      null;
+  private PhysicalPropertiesInterface gasPhysicalProperties = null;
+  private PhysicalPropertiesInterface oilPhysicalProperties = null;
+  private PhysicalPropertiesInterface aqueousPhysicalProperties = null;
+  private PhysicalPropertiesInterface solidPhysicalProperties = null;
   private neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule mixingRule = null;
   static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
   private static final long serialVersionUID = 1000;
@@ -52,29 +48,19 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
   public void setPhysicalProperties(PhaseInterface phase, int type) {
     switch (type) {
       case 0:
-        gasPhysicalProperties =
-            new GasPhysicalProperties(phase, 0, 0);
-        oilPhysicalProperties =
-            new LiquidPhysicalProperties(phase, 0, 0);
-        aqueousPhysicalProperties =
-            new WaterPhysicalProperties(
-                phase, 0, 0);
+        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+        aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
         break;
       case 1:
-        gasPhysicalProperties =
-            new GasPhysicalProperties(phase, 0, 0);
-        oilPhysicalProperties =
-            new LiquidPhysicalProperties(phase, 0, 0);
-        aqueousPhysicalProperties =
-            new WaterPhysicalProperties(phase, 0, 0);
+        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+        aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
         break;
       case 2:
-        gasPhysicalProperties =
-            new GasPhysicalProperties(phase, 0, 0);
-        oilPhysicalProperties =
-            new LiquidPhysicalProperties(phase, 0, 0);
-        aqueousPhysicalProperties =
-            new GlycolPhysicalProperties(phase, 0, 0);
+        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+        aqueousPhysicalProperties = new GlycolPhysicalProperties(phase, 0, 0);
         break;
       case 3:
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
