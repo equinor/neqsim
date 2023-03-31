@@ -437,6 +437,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
+    // Connection con = database.getConnection();
+    // Statement stmn = con.createStatement();
+    // stmn.execute(defaultDatabaseRootRoot)
+
     String createCOMP = "CREATE TABLE comp AS SELECT * FROM CSVREAD('classpath:/data/COMP.csv')";
     String createINTER = "CREATE TABLE inter AS SELECT * FROM CSVREAD('classpath:/data/INTER.csv')";
     String createElement =
@@ -449,6 +453,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         "CREATE TABLE STOCCOEFDATA AS SELECT * FROM CSVREAD('classpath:/data/STOCCOEFDATA.csv')";
     String create_REACTIONDATA =
         "CREATE TABLE REACTIONDATA AS SELECT * FROM CSVREAD('classpath:/data/REACTIONDATA.csv')";
+    String ReactionKSPdata =
+        "CREATE TABLE ReactionKSPdata AS SELECT * FROM CSVREAD('classpath:/data/ReactionKSPdata.csv')";
     String create_AdsorptionParameters =
         "CREATE TABLE AdsorptionParameters AS SELECT * FROM CSVREAD('classpath:/data/AdsorptionParameters.csv')";
     String create_UNIFACcomp =
@@ -484,6 +490,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       database.execute(create_iso6976_2016);
       database.execute(create_STOCCOEFDATA);
       database.execute(create_REACTIONDATA);
+      database.execute(ReactionKSPdata);
       database.execute(create_AdsorptionParameters);
       database.execute(create_UNIFACcomp);
       database.execute(create_UNIFACcompUMRPRU);

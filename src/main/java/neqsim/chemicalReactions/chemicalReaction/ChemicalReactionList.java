@@ -89,10 +89,10 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
           r = Double.parseDouble(dataSet.getString("r"));
           actH = Double.parseDouble(dataSet.getString("ACTENERGY"));
 
+          neqsim.util.database.NeqSimDataBase database2 = null;
           java.sql.ResultSet dataSet2 = null;
           try {
-            neqsim.util.database.NeqSimDataBase database2 =
-                new neqsim.util.database.NeqSimDataBase();
+            database2 = new neqsim.util.database.NeqSimDataBase();
             dataSet2 = database2
                 .getResultSet("SELECT * FROM stoccoefdata where REACNAME='" + reacname + "'");
             dataSet2.next();
@@ -107,6 +107,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
           } finally {
             try {
               dataSet2.close();
+              database2.getConnection().close();
             } catch (Exception ex) {
               logger.error(ex.getMessage());
             }

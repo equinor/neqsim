@@ -53,7 +53,7 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    assertEquals(-359394.2117634512, testSystem.getEnthalpy(), 1e-2);
+    assertEquals(-359377.53319574066, testSystem.getEnthalpy(), 1e-2);
   }
 
   @Test
@@ -64,7 +64,7 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    assertEquals(-552568.2810227782, testSystem.getEnthalpy(), 1e-2);
+    assertEquals(-552558.80195817, testSystem.getEnthalpy(), 1e-2);
   }
 
   // @Test
