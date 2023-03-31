@@ -1,0 +1,9 @@
+"ID","Name","Solid","eps","z0","beta"
+1,"methane","AC Calgon F400",7.45,0.29,2.00
+2,"CO2","AC Calgon F400",7.76,0.29,2.00
+3,"nitrogen","AC Calgon F400",6.01,0.29,2.00
+4,"methane","AC Norit R1",8.06,0.36,2.00
+6,"argon","AC Norit R1",5.80,0.36,2.00
+7,"methane","AC",7.18,0.36,2.00
+8,"CO2","AC",7.51,0.36,2.00
+9,"nitrogen","AC Norit R1",0.05,0.36,2.00

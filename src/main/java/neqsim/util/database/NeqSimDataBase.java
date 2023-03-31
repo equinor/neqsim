@@ -433,15 +433,55 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   public static void initH2DatabaseFromCSVfiles() {
     neqsim.util.database.NeqSimDataBase.connectionString =
         "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
-    neqsim.util.database.NeqSimDataBase.createTemporaryTables = false;
+    neqsim.util.database.NeqSimDataBase.createTemporaryTables = true;
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
-    String createCOMP = "CREATE TABLE COMP AS SELECT * FROM CSVREAD('classpath:/data/COMP.csv')";
-    String createINTER = "CREATE TABLE INTER AS SELECT * FROM CSVREAD('classpath:/data/INTER.csv')";
+    String createCOMP = "CREATE TABLE comp AS SELECT * FROM CSVREAD('classpath:/data/comp.csv')";
+    String createINTER = "CREATE TABLE inter AS SELECT * FROM CSVREAD('classpath:/data/inter.csv')";
+    String createElement =
+        "CREATE TABLE element AS SELECT * FROM CSVREAD('classpath:/data/element.csv')";
+    String create_iso6976 =
+        "CREATE TABLE iso6976constants AS SELECT * FROM CSVREAD('classpath:/data/iso6976constants.csv')";
+    String create_iso6976_2016 =
+        "CREATE TABLE iso6976constants2016 AS SELECT * FROM CSVREAD('classpath:/data/iso6976constants2016.csv')";
+    String create_STOCCOEFDATA =
+        "CREATE TABLE STOCCOEFDATA AS SELECT * FROM CSVREAD('classpath:/data/STOCCOEFDATA.csv')";
+    String create_REACTIONDATA =
+        "CREATE TABLE REACTIONDATA AS SELECT * FROM CSVREAD('classpath:/data/REACTIONDATA.csv')";
+    String create_AdsorptionParameters =
+        "CREATE TABLE AdsorptionParameters AS SELECT * FROM CSVREAD('classpath:/data/AdsorptionParameters.csv')";
+    String create_UNIFACcomp =
+        "CREATE TABLE UNIFACcomp AS SELECT * FROM CSVREAD('classpath:/data/UNIFACcomp.csv')";
+    String create_UNIFACcompUMRPRU =
+        "CREATE TABLE UNIFACcompUMRPRU AS SELECT * FROM CSVREAD('classpath:/data/UNIFACcompUMRPRU.csv')";
+    String UNIFACGroupParam =
+        "CREATE TABLE UNIFACGroupParam AS SELECT * FROM CSVREAD('classpath:/data/UNIFACGroupParam.csv')";
+    String UNIFACInterParam =
+        "CREATE TABLE UNIFACInterParam AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParam.csv')";
+    String UNIFACInterParamA_UMR =
+        "CREATE TABLE UNIFACInterParamA_UMR AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamA_UMR.csv')";
+    String UNIFACInterParamA_UMRMC =
+        "CREATE TABLE UNIFACInterParamA_UMRMC AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamA_UMRMC.csv')";
+
+
     try {
       database.execute(createCOMP);
       database.execute(createINTER);
+      database.execute(createElement);
+      database.execute(create_iso6976);
+      database.execute(create_iso6976_2016);
+      database.execute(create_STOCCOEFDATA);
+      database.execute(create_REACTIONDATA);
+      database.execute(create_AdsorptionParameters);
+      database.execute(create_UNIFACcomp);
+      database.execute(create_UNIFACcompUMRPRU);
+      database.execute(UNIFACGroupParam);
+      database.execute(UNIFACInterParam);
+      database.execute(UNIFACInterParamA_UMR);
+      database.execute(UNIFACInterParamA_UMRMC);
+      database.execute("CREATE TABLE comptemp AS SELECT * FROM comp");
+      database.execute("CREATE TABLE intertemp AS SELECT * FROM inter");
     } catch (Exception e) {
       e.printStackTrace();
     }
