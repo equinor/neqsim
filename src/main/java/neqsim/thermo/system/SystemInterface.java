@@ -1700,7 +1700,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void reInitPhaseType();
 
   /**
-   * specify the type for the physical properties you want to use.
+   * Set the physical property model type for each phase of the System.
    *
    * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
    */

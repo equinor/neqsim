@@ -43,7 +43,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param type Type: 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
+   * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
    */
   public void setPhysicalProperties(PhaseInterface phase, int type) {
     switch (type) {
