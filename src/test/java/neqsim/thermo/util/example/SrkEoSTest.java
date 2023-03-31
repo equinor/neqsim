@@ -2,11 +2,9 @@ package neqsim.thermo.util.example;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -67,11 +65,11 @@ public class SrkEoSTest {
 
     /**
      * <p>
-     * initPhysicalProperties.
+     * testinitPhysicalProperties.
      * </p>
      */
     @Test
-    public void initPhysicalProperties() {
+    public void testinitPhysicalProperties() {
         thermoSystem.initPhysicalProperties();
         assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(),
                 thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
