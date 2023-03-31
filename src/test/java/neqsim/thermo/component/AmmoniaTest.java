@@ -18,6 +18,7 @@ public class AmmoniaTest extends neqsim.NeqSimTest {
   static void setUpBeforeClass() throws Exception {
     thermoSystem = new SystemSrkEos(298.0, 1.01325);
     thermoSystem.addComponent("ammonia", 1.0);
+    thermoSystem.init(0);
   }
 
   @Test
@@ -29,5 +30,10 @@ public class AmmoniaTest extends neqsim.NeqSimTest {
       e.printStackTrace();
     }
     assertEquals(-33.03983, thermoSystem.getTemperature("C"), 0.01);
+  }
+
+  @Test
+  public void molarMassTest() {
+    assertEquals(0.017, thermoSystem.getMolarMass("kg/mol"), 0.01);
   }
 }
