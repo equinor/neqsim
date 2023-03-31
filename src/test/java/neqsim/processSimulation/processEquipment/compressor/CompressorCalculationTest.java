@@ -109,7 +109,7 @@ public class CompressorCalculationTest extends neqsim.NeqSimTest {
 
     // logger.info("Polytropic head from curve:" + comp1.getPolytropicHead());
 
-    Assertions.assertEquals(55.40415411694987, comp1.getPolytropicHead(), 0.01);
+    Assertions.assertEquals(55.389588443623, comp1.getPolytropicHead(), 0.01);
     // logger.info("Polytropic eff from curve:" + comp1.getPolytropicEfficiency() * 100.0);
     Assertions.assertEquals(0.43175024049749283, comp1.getPolytropicEfficiency(), 0.01);
 

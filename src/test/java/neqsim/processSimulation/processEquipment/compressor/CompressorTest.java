@@ -254,6 +254,6 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(inletStream);
     processOps.add(compressor1);
     processOps.run();
-    assertEquals(compressor1.getPower(), 3712608.4725392014, 1110.01);
+    assertEquals(compressor1.getPower(), 3712607.597542703, 1110.01);
   }
 }

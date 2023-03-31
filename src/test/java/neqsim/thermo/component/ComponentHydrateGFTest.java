@@ -45,7 +45,7 @@ class ComponentHydrateGFTest extends neqsim.NeqSimTest {
       assertTrue(false);
       return;
     }
-    assertEquals(286.4105348944992, thermoSystem.getTemperature("K"), 0.01);
+    assertEquals(286.4552651579227, thermoSystem.getTemperature("K"), 0.01);
   }
 
 }

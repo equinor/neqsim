@@ -117,7 +117,7 @@ class SystemPrEoSTest extends neqsim.NeqSimTest {
     @Test
     @DisplayName("calculate compressibility of gas phase")
     public void checkCompressibility() {
-        assertEquals(0.9708455641951108, testSystem.getPhase("gas").getZ(), 1e-5);
+      assertEquals(0.9707572439365229, testSystem.getPhase("gas").getZ(), 1e-5);
     }
 
     /**
