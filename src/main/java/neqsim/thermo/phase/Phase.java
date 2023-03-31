@@ -2130,7 +2130,7 @@ abstract class Phase implements PhaseInterface {
     } else if (flowunit.equals("m3/sec")) {
       return getVolume() / 1.0e5;
     } else if (flowunit.equals("ft3/sec")) {
-      return getVolume()*Math.pow(3.2808399,3)  / 1.0e5;
+      return getVolume() * Math.pow(3.2808399, 3) / 1.0e5;
     } else if (flowunit.equals("mole/sec")) {
       return numberOfMolesInPhase;
     } else if (flowunit.equals("mole/min")) {
@@ -2153,28 +2153,27 @@ abstract class Phase implements PhaseInterface {
     return thermoPropertyModelName;
   }
 
-    /** {@inheritDoc} */
+  /** {@inheritDoc} */
   @Override
-  public double getCompressibilityX(){
-    return getTemperature()/getTotalVolume()*getdPdTVn()/getdPdVTn();
+  public double getCompressibilityX() {
+    return getTemperature() / getTotalVolume() * getdPdTVn() / getdPdVTn();
   }
 
   /** {@inheritDoc} */
   @Override
-    public double getCompressibilityY(){
-    return getPressure()/getTotalVolume()*1.0/getdPdVTn();
+  public double getCompressibilityY() {
+    return getPressure() / getTotalVolume() * 1.0 / getdPdVTn();
   }
 
   /** {@inheritDoc} */
   @Override
-    public double getIsothermalCompressibility(){
-    return -1.0/getTotalVolume()*1.0/getdPdVTn();
+  public double getIsothermalCompressibility() {
+    return -1.0 / getTotalVolume() * 1.0 / getdPdVTn();
   }
 
   /** {@inheritDoc} */
   @Override
-    public double getIsobaricThermalExpansivity(){
-    return 1.0/getTotalVolume()*getdPdTVn()/getdPdVTn();
+  public double getIsobaricThermalExpansivity() {
+    return 1.0 / getTotalVolume() * getdPdTVn() / getdPdVTn();
   }
-  
 }

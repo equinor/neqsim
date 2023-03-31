@@ -147,11 +147,11 @@ abstract class Component implements ComponentInterface {
    * </p>
    *
    * @param number a int
-   * @param TC a double
-   * @param PC a double
-   * @param M a double
-   * @param a a double
-   * @param moles a double
+   * @param TC Critical temperature
+   * @param PC Critical pressure
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Number of moles
    */
   public Component(int number, double TC, double PC, double M, double a, double moles) {
     criticalPressure = PC;

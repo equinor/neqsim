@@ -21,12 +21,6 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public abstract class PhysicalProperties
     implements PhysicalPropertiesInterface, ThermodynamicConstantsInterface {
-  /** {@inheritDoc} */
-  @Override
-  public void setMixingRule(
-      neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule) {
-    this.mixingRule = mixingRule;
-  }
 
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhysicalProperties.class);
@@ -110,6 +104,13 @@ public abstract class PhysicalProperties
   @Override
   public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule() {
     return mixingRule;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMixingRule(
+      neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule) {
+    this.mixingRule = mixingRule;
   }
 
   /** {@inheritDoc} */
