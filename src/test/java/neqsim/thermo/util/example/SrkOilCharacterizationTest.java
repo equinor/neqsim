@@ -1,10 +1,8 @@
 package neqsim.thermo.util.example;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
 import neqsim.thermo.system.SystemInterface;
 // import junit.framework.TestCase;
 import neqsim.thermo.system.SystemSrkEos;
@@ -52,10 +50,12 @@ public class SrkOilCharacterizationTest {
     }
 
     /**
-     * <p>initPhysicalProperties.</p>
+     * <p>
+     * testinitPhysicalProperties.
+     * </p>
      */
     @Test
-    public void initPhysicalProperties() {
+    public void testinitPhysicalProperties() {
         thermoSystem.initPhysicalProperties();
         assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(),
                 thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
