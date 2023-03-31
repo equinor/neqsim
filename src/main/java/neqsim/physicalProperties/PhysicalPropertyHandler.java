@@ -43,36 +43,36 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param type a int
+   * @param type Type: 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
    */
   public void setPhysicalProperties(PhaseInterface phase, int type) {
     switch (type) {
-      case 0:
+      case 0: // Default
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
         break;
-      case 1:
+      case 1: // Water
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
         break;
-      case 2:
+      case 2: // Glycol
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new GlycolPhysicalProperties(phase, 0, 0);
         break;
-      case 3:
+      case 3: // Amine
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new AminePhysicalProperties(phase, 0, 0);
         break;
-      case 4:
+      case 4: // CO2water
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new CO2waterPhysicalProperties(phase, 0, 0);
         break;
-      case 6:
+      case 6: // Basic?
         gasPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
