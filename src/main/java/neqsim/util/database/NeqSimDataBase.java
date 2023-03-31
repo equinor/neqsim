@@ -257,7 +257,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("H2fromCSV") || dataBaseType.equals("H2")
           || dataBaseType.equals("H2RT")) {
-        Class.forName("org.h2.Driver");
+        // Class.forName("org.h2.Driver");
       } else if (dataBaseType.equals("MSAccessUCanAccess")) {
         Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
       } else if (dataBaseType.equals("mySQL")) {

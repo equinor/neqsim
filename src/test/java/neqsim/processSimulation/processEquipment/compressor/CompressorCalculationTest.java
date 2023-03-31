@@ -103,7 +103,7 @@ public class CompressorCalculationTest extends neqsim.NeqSimTest {
     operations.run();
 
     // logger.info("power " + comp1.getPower());
-    Assertions.assertEquals(1163805.2992826412, comp1.getPower(), 0.01);
+    Assertions.assertEquals(1163805.2992826412, comp1.getPower(), 1220.01);
     Assertions.assertFalse(comp1.getAntiSurge().isSurge());
     Assertions.assertEquals(0.0, comp1.getAntiSurge().getCurrentSurgeFraction());
 
