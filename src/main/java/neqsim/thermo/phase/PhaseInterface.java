@@ -715,11 +715,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * specify the type model for the physical properties you want to use. Type: 0 Orginal/default 1
-   * Water 2 Glycol 3 Amine
+   * specify the type model for the physical properties you want to use.
    * </p>
    *
-   * @param type a int
+   * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
    */
   public void setPhysicalProperties(int type);
 
