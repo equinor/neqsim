@@ -6,7 +6,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class StreamSaturatorUtilTest {
+public class StreamSaturatorUtilTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
   double pressure_inlet = 85.0;
   double temperature_inlet = 35.0;
