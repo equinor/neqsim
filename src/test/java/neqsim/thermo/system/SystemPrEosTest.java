@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-class SystemPrEoSTest extends neqsim.NeqSimTest{
+class SystemPrEoSTest extends neqsim.NeqSimTest {
     static neqsim.thermo.system.SystemInterface testSystem = null;
     static neqsim.thermo.ThermodynamicModelTest testModel = null;
 
@@ -117,7 +117,7 @@ class SystemPrEoSTest extends neqsim.NeqSimTest{
     @Test
     @DisplayName("calculate compressibility of gas phase")
     public void checkCompressibility() {
-        assertEquals(0.9708455641951108, testSystem.getPhase("gas").getZ(), 1e-5);
+      assertEquals(0.9708455641951108, testSystem.getPhase("gas").getZ(), 1e-5);
     }
 
     /**

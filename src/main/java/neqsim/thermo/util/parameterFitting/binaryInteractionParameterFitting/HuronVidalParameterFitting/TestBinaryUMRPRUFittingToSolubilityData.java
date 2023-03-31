@@ -35,7 +35,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
 
     NeqSimDataBase database = new NeqSimDataBase();
     ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-decane'");
+        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='nC10'");
 
     double parameterGuess[] = {188.385052774267, -0.84022345}; // , 2630.871733876947};
 
