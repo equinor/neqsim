@@ -433,7 +433,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   public static void initH2DatabaseFromCSVfiles() {
     neqsim.util.database.NeqSimDataBase.connectionString =
         "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
-    neqsim.util.database.NeqSimDataBase.createTemporaryTables = false;
+    neqsim.util.database.NeqSimDataBase.createTemporaryTables = true;
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
@@ -442,9 +442,9 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     String createElement =
         "CREATE TABLE element AS SELECT * FROM CSVREAD('classpath:/data/element.csv')";
     String create_iso6976 =
-        "CREATE TABLE iso6976constants AS SELECT * FROM CSVREAD('classpath:/data/iso6976constants.csv')";
+        "CREATE TABLE iso6976constants AS SELECT * FROM CSVREAD('classpath:/data/ISO6976constants.csv')";
     String create_iso6976_2016 =
-        "CREATE TABLE iso6976constants2016 AS SELECT * FROM CSVREAD('classpath:/data/iso6976constants2016.csv')";
+        "CREATE TABLE iso6976constants2016 AS SELECT * FROM CSVREAD('classpath:/data/ISO6976constants2016.csv')";
     String create_STOCCOEFDATA =
         "CREATE TABLE STOCCOEFDATA AS SELECT * FROM CSVREAD('classpath:/data/STOCCOEFDATA.csv')";
     String create_REACTIONDATA =
