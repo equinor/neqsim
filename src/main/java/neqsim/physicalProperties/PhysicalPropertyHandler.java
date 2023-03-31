@@ -2,6 +2,14 @@ package neqsim.physicalProperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface;
+import neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties;
+import neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties;
+import neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.AminePhysicalProperties;
+import neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.CO2waterPhysicalProperties;
+import neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.GlycolPhysicalProperties;
+import neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties;
+import neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.WaterPhysicalProperties;
 import neqsim.physicalProperties.physicalPropertySystem.solidPhysicalProperties.SolidPhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -14,13 +22,13 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable {
-  private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhysicalProperties =
+  private PhysicalPropertiesInterface gasPhysicalProperties =
       null;
-  private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface oilPhysicalProperties =
+  private PhysicalPropertiesInterface oilPhysicalProperties =
       null;
-  private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface aqueousPhysicalProperties =
+  private PhysicalPropertiesInterface aqueousPhysicalProperties =
       null;
-  private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhysicalProperties =
+  private PhysicalPropertiesInterface solidPhysicalProperties =
       null;
   private neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule mixingRule = null;
   static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
@@ -45,69 +53,43 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     switch (type) {
       case 0:
         gasPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
-                phase, 0, 0);
+            new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
-                phase, 0, 0);
+            new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.WaterPhysicalProperties(
+            new WaterPhysicalProperties(
                 phase, 0, 0);
         break;
       case 1:
         gasPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
-                phase, 0, 0);
+            new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
-                phase, 0, 0);
+            new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.WaterPhysicalProperties(
-                phase, 0, 0);
+            new WaterPhysicalProperties(phase, 0, 0);
         break;
       case 2:
         gasPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
-                phase, 0, 0);
+            new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
-                phase, 0, 0);
+            new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.GlycolPhysicalProperties(
-                phase, 0, 0);
+            new GlycolPhysicalProperties(phase, 0, 0);
         break;
       case 3:
-        gasPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
-                phase, 0, 0);
-        oilPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
-                phase, 0, 0);
-        aqueousPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.AminePhysicalProperties(
-                phase, 0, 0);
+        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+        aqueousPhysicalProperties = new AminePhysicalProperties(phase, 0, 0);
         break;
       case 4:
-        gasPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(
-                phase, 0, 0);
-        oilPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(
-                phase, 0, 0);
-        aqueousPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.CO2waterPhysicalProperties(
-                phase, 0, 0);
+        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+        aqueousPhysicalProperties = new CO2waterPhysicalProperties(phase, 0, 0);
         break;
       case 6:
-        gasPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(
-                phase, 0, 0);
-        oilPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(
-                phase, 0, 0);
-        aqueousPhysicalProperties =
-            new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(
-                phase, 0, 0);
+        gasPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
+        oilPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
+        aqueousPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
         break;
       default:
         logger

@@ -950,11 +950,13 @@ abstract class SystemThermo implements SystemInterface {
       refSystem.setNumberOfPhases(1);
       refSystem.setPhaseType(0, "liquid");
       molarMass = 1000 * molarMass;
-      TC = criticalTemperature; // characterization.getTBPModel().calcTC(molarMass, density);
-      PC = criticalPressure; // characterization.getTBPModel().calcPC(molarMass, density);
+      // characterization.getTBPModel().calcTC(molarMass, density);
+      TC = criticalTemperature;
+      // characterization.getTBPModel().calcPC(molarMass, density);
+      PC = criticalPressure;
       m = characterization.getTBPModel().calcm(molarMass, density);
-      acs = acentricFactor; // acentracentrcharacterization.getTBPModel().calcAcentricFactor(molarMass,
-                            // density);
+      // acentracentrcharacterization.getTBPModel().calcAcentricFactor(molarMass, density);
+      acs = acentricFactor;
       TB = characterization.getTBPModel().calcTB(molarMass, density);
       molarMass /= 1000.0;
 
@@ -1006,8 +1008,8 @@ abstract class SystemThermo implements SystemInterface {
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
     // System.out.println("watson " + Kwatson);
     double CF = Math.pow((12.8 - Kwatson) * (10.0 - Kwatson) / (10.0 * acs), 2.0);
-    double acsKeslerLee = acs; // characterization.getTBPModel().calcAcentricFactorKeslerLee(molarMass*1000.0,
-                               // density);
+    // characterization.getTBPModel().calcAcentricFactorKeslerLee(molarMass*1000.0, density);
+    double acsKeslerLee = acs;
     double cpa = (-0.33886 + 0.02827 * Kwatson - 0.26105 * CF + 0.59332 * acsKeslerLee * CF)
         * 4.18682 * molarMass * 1e3;
     double cpb = (-(0.9291 - 1.1543 * Kwatson + 0.0368 * Kwatson * Kwatson) * 1e-4
