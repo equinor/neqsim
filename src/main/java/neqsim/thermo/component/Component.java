@@ -1203,7 +1203,19 @@ abstract class Component implements ComponentInterface {
                                                                                  // gases
                                                                                  // (poling
                                                                                  // 5th ed)
-    } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
+    } else if (antoineLiqVapPresType.equals("pow10KPa")) {
+      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC)))/1.0e5; // equation
+                                                                                 // and
+                                                                                 // parameter
+                                                                                 // from
+                                                                                 // properties
+                                                                                 // o liquids
+                                                                                 // and
+                                                                                 // gases
+                                                                                 // (poling
+                                                                                 // 5th ed)
+    }
+    else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
       return Math.exp(AntoineA - (AntoineB / (temp + AntoineC))); // equation and parameter
                                                                   // from properties o
                                                                   // liquids and gases (poling
