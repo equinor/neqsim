@@ -13,7 +13,7 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 
 A class representing a process module class that can contain unit operations and other modules.
 Module will be runnning until all recycles in this module are solved.
-If no recycle in the module -> run only once. 
+If no recycle in the module then run only once. 
 
 @author [seros]
 
