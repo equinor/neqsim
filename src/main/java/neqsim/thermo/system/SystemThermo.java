@@ -14,6 +14,8 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -730,6 +732,28 @@ abstract class SystemThermo implements SystemInterface {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
   }
+
+ /**
+ * Calculates the mass flow rate of non-methane volatile organic compounds (nmVOCs)
+ * 
+ * @param flowunit the flow unit to use for the mass flow rate calculation (e.g. "kg/hr", "tonnes/year")
+ * @return the flow rate of nmVOCs in the given flow unit 
+ */
+  public double getnmVOCFlowRate(String flowunit) {
+    // Define list of components to include in mass flow calculation
+    List<String> nmVOCcomponents = Arrays.asList("ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
+        "n-hexane", "n-heptane", "benzene", "nC8", "nC9", "nC10", "nC11");
+  
+    double flow = 0.0;
+    for (int i = 0; i < getNumberOfComponents(); i++) {
+        String name = getComponent(i).getName();
+        if (nmVOCcomponents.contains(name)) {
+            flow += getComponent(i).getFlowRate(flowunit);
+        }
+    }
+  
+    return flow;
+}
 
   /** {@inheritDoc} */
   @Override
@@ -4447,6 +4471,8 @@ abstract class SystemThermo implements SystemInterface {
   public ComponentInterface getComponent(int number) {
     return getPhase(0).getComponent(number);
   }
+
+  
 
   /** {@inheritDoc} */
   @Override

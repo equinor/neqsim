@@ -24,12 +24,12 @@ public class ComponentTest  extends neqsim.NeqSimTest{
                 60 * thermoSystem.getComponent("water").getFlowRate("kg/sec"));
         Assertions.assertEquals(thermoSystem.getComponent("water").getFlowRate("kg/hr"),
                 60 * thermoSystem.getComponent("water").getFlowRate("kg/min"));
-
+        Assertions.assertEquals(thermoSystem.getComponent("water").getFlowRate("tonnes/year"),
+                thermoSystem.getComponent("water").getFlowRate("kg/hr")*24*365/1000);
         Assertions.assertEquals(thermoSystem.getComponent("water").getFlowRate("m3/min"),
                 60 * thermoSystem.getComponent("water").getFlowRate("m3/sec"));
         Assertions.assertEquals(thermoSystem.getComponent("water").getFlowRate("m3/hr"),
                 60 * thermoSystem.getComponent("water").getFlowRate("m3/min"));
-
         Assertions.assertEquals(thermoSystem.getComponent("water").getFlowRate("mole/min"),
                 60 * thermoSystem.getComponent("water").getFlowRate("mole/sec"));
         Assertions.assertEquals(thermoSystem.getComponent("water").getFlowRate("mole/hr"),
@@ -54,5 +54,19 @@ public class ComponentTest  extends neqsim.NeqSimTest{
         Assertions.assertEquals(thermoSystem.getComponent("water").getTotalFlowRate("mole/hr"),
                 60 * thermoSystem.getComponent("water").getTotalFlowRate("mole/min"));
         // throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+    }
+
+    @Test
+    public void nmVOCFlowRateTest() {
+      thermoSystem = new SystemSrkEos(298.0, 100.0);
+      thermoSystem.addComponent("methane", 1.0);
+      thermoSystem.addComponent("ethane", 1.0);
+      thermoSystem.addComponent("propane", 1.0);
+      thermoSystem.addComponent("i-butane", 1.0);
+      thermoSystem.addComponent("n-butane", 1.0);
+      thermoSystem.addComponent("i-pentane", 1.0);
+      thermoSystem.addComponent("n-pentane", 1.0);
+      Assertions.assertEquals(thermoSystem.getnmVOCFlowRate("tonnes/year"),
+      10555.540704);
     }
 }
