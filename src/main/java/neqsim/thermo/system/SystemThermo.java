@@ -1137,8 +1137,7 @@ abstract class SystemThermo implements SystemInterface {
 
     if (addForFirstTime) {
       if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-        logger.error("No component with name: " + componentName + " in database");
-        return;
+        throw new RuntimeException("No component with name: " + componentName + " in database");
       }
       if (moles < 0.0) {
         String msg = "Negative input number of moles of component: " + componentName;
@@ -1179,8 +1178,7 @@ abstract class SystemThermo implements SystemInterface {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-      logger.error("No component with name: " + componentName + " in database");
-      return;
+      throw new RuntimeException("No component with name: " + componentName + " in database");
     }
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet =
@@ -1240,8 +1238,7 @@ abstract class SystemThermo implements SystemInterface {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-      logger.error("No component with name: " + componentName + " in database");
-      return;
+      throw new RuntimeException("No component with name: " + componentName + " in database");
     }
 
     for (int p = 0; p < componentNames.size(); p++) {
@@ -1282,8 +1279,7 @@ abstract class SystemThermo implements SystemInterface {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-      logger.error("No component with name: " + componentName + " in database");
-      return;
+      throw new RuntimeException("No component with name: " + componentName + " in database");
     }
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet =
