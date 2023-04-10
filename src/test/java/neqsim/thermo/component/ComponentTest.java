@@ -16,6 +16,13 @@ public class ComponentTest  extends neqsim.NeqSimTest{
     static void setUpBeforeClass() throws Exception {
         thermoSystem = new SystemSrkEos(298.0, 100.0);
         thermoSystem.addComponent("water", 1.0);
+        thermoSystem.addComponent("methane", 1.0);
+        thermoSystem.addComponent("ethane", 1.0);
+        thermoSystem.addComponent("propane", 1.0);
+        thermoSystem.addComponent("i-butane", 1.0);
+        thermoSystem.addComponent("n-butane", 1.0);
+        thermoSystem.addComponent("i-pentane", 1.0);
+        thermoSystem.addComponent("n-pentane", 1.0);
     }
 
     @Test
@@ -58,14 +65,6 @@ public class ComponentTest  extends neqsim.NeqSimTest{
 
     @Test
     public void nmVOCFlowRateTest() {
-      thermoSystem = new SystemSrkEos(298.0, 100.0);
-      thermoSystem.addComponent("methane", 1.0);
-      thermoSystem.addComponent("ethane", 1.0);
-      thermoSystem.addComponent("propane", 1.0);
-      thermoSystem.addComponent("i-butane", 1.0);
-      thermoSystem.addComponent("n-butane", 1.0);
-      thermoSystem.addComponent("i-pentane", 1.0);
-      thermoSystem.addComponent("n-pentane", 1.0);
       Assertions.assertEquals(thermoSystem.getnmVOCFlowRate("tonnes/year"),
       10555.540704);
     }
