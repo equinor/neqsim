@@ -2926,17 +2926,12 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final void setPressure(double newPressure, String unit) {
+    neqsim.util.unit.PressureUnit presConversion =
+        new neqsim.util.unit.PressureUnit(newPressure, unit);
+    double pressureWithUnit = presConversion.getValue("bara");
+
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      if (unit.equals("bar") || unit.equals("bara")) {
-        phaseArray[i].setPressure(newPressure);
-      } else if (unit.equals("atm")) {
-        phaseArray[i].setPressure(newPressure + 0.01325);
-      } else if (unit.equals("barg")) {
-        phaseArray[i].setPressure(newPressure + 1.01325);
-      } else {
-        throw new RuntimeException(
-            "setting new pressure could not be done. Specified unit might not be supported");
-      }
+      phaseArray[i].setPressure(pressureWithUnit);
     }
   }
 
