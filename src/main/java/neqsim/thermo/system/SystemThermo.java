@@ -2928,11 +2928,7 @@ abstract class SystemThermo implements SystemInterface {
   public final void setPressure(double newPressure, String unit) {
     neqsim.util.unit.PressureUnit presConversion =
         new neqsim.util.unit.PressureUnit(newPressure, unit);
-    double pressureWithUnit = presConversion.getValue("bara");
-
-    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      phaseArray[i].setPressure(pressureWithUnit);
-    }
+    setPressure(presConversion.getValue("bara"));
   }
 
   /** {@inheritDoc} */
