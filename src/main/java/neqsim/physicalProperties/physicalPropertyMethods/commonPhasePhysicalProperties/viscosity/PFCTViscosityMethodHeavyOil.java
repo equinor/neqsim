@@ -215,6 +215,9 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
     visRefE = (HTAN + 1.0) / 2.0;
 
     double viscRef2 = visRefE * Math.exp(viscRefJ[0] + viscRefJ[3] / temp) * (temp3 - 1.0);
+    if (Double.isNaN(viscRef2)) {
+      viscRef2 = 0.0;
+    }
 
     double temp4 = Math.pow(molDens, 0.1) * (viscRefK[1] + viscRefK[2] / Math.pow(temp, 3.0 / 2.0));
     double temp5 = redMolDens * Math.pow(molDens, 0.5)
@@ -222,11 +225,10 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
     double temp6 = Math.exp(temp4 + temp5);
     visRefG = (1.0 - HTAN) / 2.0;
     double viscRef3 = visRefG * Math.exp(viscRefK[0] + viscRefK[3] / temp) * (temp6 - 1.0);
-
-    // System.out.println("ref visc2 " + viscRef2);
-    // System.out.println("ref visc3 " + viscRef3);
+    if (Double.isNaN(viscRef3)) {
+      viscRef3 = 0.0;
+    }
     double refVisc = (viscRefO + viscRef1 + viscRef2 + viscRef3) / 1.0e7;
-    // System.out.println("ref visc " + refVisc);
     return refVisc;
   }
 }
