@@ -357,6 +357,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     // NeqSimDataBase.initH2DatabaseFromCSVfiles();
     // NeqSimDataBase.initDatabaseFromCSVfiles();
     NeqSimDataBase database = new NeqSimDataBase();
+    NeqSimDataBase.updateTable("COMP", "/workspaces/neqsim/src/main/resources/data/COMP.csv");
+
 
     try (ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
       dataSet.next();
@@ -430,6 +432,25 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
   }
 
+  public static void updateTable(String tableName, String path) {
+    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + path + "')";
+    try {
+      database.execute("DROP TABLE " + tableName);
+      database.execute(sqlString);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      try {
+        if (database.getStatement() != null) {
+          database.getStatement().close();
+        }
+      } catch (Exception ex) {
+        logger.error("error closing database.....", ex);
+      }
+    }
+  }
+
   public static void initH2DatabaseFromCSVfiles() {
     neqsim.util.database.NeqSimDataBase.connectionString =
         "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
@@ -441,8 +462,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     // Statement stmn = con.createStatement();
     // stmn.execute(defaultDatabaseRootRoot)
 
-    String createCOMP = "CREATE TABLE comp AS SELECT * FROM CSVREAD('classpath:/data/COMP.csv')";
-    String createINTER = "CREATE TABLE inter AS SELECT * FROM CSVREAD('classpath:/data/INTER.csv')";
+    String createCOMP = "CREATE TABLE COMP AS SELECT * FROM CSVREAD('classpath:/data/COMP.csv')";
+    String createINTER = "CREATE TABLE INTER AS SELECT * FROM CSVREAD('classpath:/data/INTER.csv')";
     String createElement =
         "CREATE TABLE element AS SELECT * FROM CSVREAD('classpath:/data/element.csv')";
     String create_iso6976 =
