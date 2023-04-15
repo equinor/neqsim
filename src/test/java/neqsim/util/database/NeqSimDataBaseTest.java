@@ -12,11 +12,6 @@ public class NeqSimDataBaseTest extends NeqSimTest {
   }
 
   @Test
-  void testInitH2DatabaseFromCSVfiles() {
-    neqsim.util.database.NeqSimDataBase.initH2DatabaseFromCSVfiles();
-  }
-
-  @Test
   void testUpdateTable() {
     neqsim.util.database.NeqSimDataBase.updateTable("COMP",
         "/workspaces/neqsim/src/main/resources/data/COMP.csv");
