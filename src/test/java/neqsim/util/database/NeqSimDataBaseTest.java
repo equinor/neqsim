@@ -14,6 +14,6 @@ public class NeqSimDataBaseTest extends NeqSimTest {
   @Test
   void testUpdateTable() {
     neqsim.util.database.NeqSimDataBase.updateTable("COMP",
-        "/workspaces/neqsim/src/main/resources/data/COMP.csv");
+        "classpath:/data/COMP.csv");
   }
 }
