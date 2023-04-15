@@ -457,7 +457,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     neqsim.util.database.NeqSimDataBase.createTemporaryTables = false;
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-
     // Connection con = database.getConnection();
     // Statement stmn = con.createStatement();
     // stmn.execute(defaultDatabaseRootRoot)
