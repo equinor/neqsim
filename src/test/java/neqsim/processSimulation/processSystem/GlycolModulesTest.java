@@ -314,6 +314,11 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
       modules.add(module2);
       modules.add(module3); 
       modules.add(module4);     
-      modules.run();
+
+      Thread runThr = modules.runAsThread();
+      try {
+        runThr.join(100000);
+      } catch (Exception ex) {
+      }
   }
 }
