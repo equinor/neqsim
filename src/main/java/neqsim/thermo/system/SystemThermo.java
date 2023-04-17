@@ -14,6 +14,8 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -1137,8 +1139,7 @@ abstract class SystemThermo implements SystemInterface {
 
     if (addForFirstTime) {
       if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-        logger.error("No component with name: " + componentName + " in database");
-        return;
+        throw new RuntimeException("No component with name: " + componentName + " in database");
       }
       if (moles < 0.0) {
         String msg = "Negative input number of moles of component: " + componentName;
@@ -1179,8 +1180,7 @@ abstract class SystemThermo implements SystemInterface {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-      logger.error("No component with name: " + componentName + " in database");
-      return;
+      throw new RuntimeException("No component with name: " + componentName + " in database");
     }
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet =
@@ -1240,8 +1240,7 @@ abstract class SystemThermo implements SystemInterface {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-      logger.error("No component with name: " + componentName + " in database");
-      return;
+      throw new RuntimeException("No component with name: " + componentName + " in database");
     }
 
     for (int p = 0; p < componentNames.size(); p++) {
@@ -1282,8 +1281,7 @@ abstract class SystemThermo implements SystemInterface {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-      logger.error("No component with name: " + componentName + " in database");
-      return;
+      throw new RuntimeException("No component with name: " + componentName + " in database");
     }
     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet =
@@ -2930,18 +2928,9 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final void setPressure(double newPressure, String unit) {
-    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      if (unit.equals("bar") || unit.equals("bara")) {
-        phaseArray[i].setPressure(newPressure);
-      } else if (unit.equals("atm")) {
-        phaseArray[i].setPressure(newPressure + 0.01325);
-      } else if (unit.equals("barg")) {
-        phaseArray[i].setPressure(newPressure + 1.01325);
-      } else {
-        throw new RuntimeException(
-            "setting new pressure could not be done. Specified unit might not be supported");
-      }
-    }
+    neqsim.util.unit.PressureUnit presConversion =
+        new neqsim.util.unit.PressureUnit(newPressure, unit);
+    setPressure(presConversion.getValue("bara"));
   }
 
   /** {@inheritDoc} */
@@ -4451,6 +4440,8 @@ abstract class SystemThermo implements SystemInterface {
   public ComponentInterface getComponent(int number) {
     return getPhase(0).getComponent(number);
   }
+
+  
 
   /** {@inheritDoc} */
   @Override
