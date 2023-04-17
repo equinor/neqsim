@@ -1,7 +1,6 @@
 package neqsim.thermo.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
@@ -29,7 +28,7 @@ public class AmmoniaTest extends neqsim.NeqSimTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    assertEquals(-33.03983, thermoSystem.getTemperature("C"), 0.01);
+    assertEquals(-33.039831, thermoSystem.getTemperature("C"), 0.01);
   }
 
   @Test

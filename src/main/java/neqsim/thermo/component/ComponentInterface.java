@@ -763,7 +763,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getx.
+   * The mole fraction of a component in the actual phase
    * </p>
    *
    * @return a double
@@ -772,7 +772,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getz.
+   * The mole fraction of a component in the total fluid
    * </p>
    *
    * @return a double
@@ -781,7 +781,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getK.
+   * The distribution coefficient y/x between gas and lidquid for a component
    * </p>
    *
    * @return a double
@@ -790,7 +790,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getTC.
+   * Returns the critical temperature of the component
    * </p>
    *
    * @return a double
@@ -1075,7 +1075,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getCp0.
+   * Return the ideal-gas molar heat capacity of a chemical using polynomial regressed coefficients
+   * as described by Poling, Bruce E. The Properties of Gases and Liquids. 5th edition. New York:
+   * McGraw-Hill Professional, 2000.
    * </p>
    *
    * @param temperature a double
@@ -1300,7 +1302,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getDebyeDipoleMoment.
+   * This function handles the retrieval of a chemical’s dipole moment. Dipole moment, [debye] as a
+   * double
    * </p>
    *
    * @return a double
