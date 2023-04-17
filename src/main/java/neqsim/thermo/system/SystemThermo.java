@@ -14,6 +14,8 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -4438,6 +4440,8 @@ abstract class SystemThermo implements SystemInterface {
   public ComponentInterface getComponent(int number) {
     return getPhase(0).getComponent(number);
   }
+
+  
 
   /** {@inheritDoc} */
   @Override
