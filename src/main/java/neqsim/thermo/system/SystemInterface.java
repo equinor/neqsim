@@ -361,14 +361,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getFlowRate(String flowunit);
 
   /**
-   * Calculates the mass flow rate of non-methane volatile organic compounds (nmVOCs)
-   * 
-   * @param flowunit the flow unit to use for the mass flow rate calculation (e.g. "kg/hr", "tonnes/year")
-   * @return the flow rate of nmVOCs in the given flow unit 
-   */
-  public double getnmVOCFlowRate(String flowunit);
-
-  /**
    * method to set the pressure of a fluid (same pressure for all phases).
    *
    * @param pres pressure in unit bara (absolute pressure in bar)
