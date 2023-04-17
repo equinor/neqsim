@@ -28,7 +28,7 @@ public class AmmoniaTest extends neqsim.NeqSimTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    assertEquals(24.850000, thermoSystem.getTemperature("C"), 0.01);
+    assertEquals(-33.039831, thermoSystem.getTemperature("C"), 0.01);
   }
 
   @Test
