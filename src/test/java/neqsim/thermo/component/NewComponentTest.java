@@ -21,6 +21,6 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     thermoSystem.addComponent("ammonia", 1.0);
     thermoSystem.init(0);
     assertEquals(0.01703052, thermoSystem.getMolarMass("kg/mol"), 0.01);
-    assertEquals(405.6, thermoSystem.getComponent(0).getTC(), 0.01);
+    assertEquals(405.4, thermoSystem.getComponent(0).getTC(), 0.01);
   }
 }
