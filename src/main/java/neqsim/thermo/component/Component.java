@@ -2298,7 +2298,11 @@ abstract class Component implements ComponentInterface {
       return numberOfMolesInPhase * getMolarMass() * 60.0;
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMolesInPhase * getMolarMass() * 3600.0;
-    } else if (flowunit.equals("m3/hr")) {
+    }
+      else if (flowunit.equals("tonnes/year")){
+      return numberOfMolesInPhase * getMolarMass()*3600.0*24.0*365.0/1000.0;
+    }
+      else if (flowunit.equals("m3/hr")) {
       return getVoli() / 1.0e5 * 3600.0;
     } else if (flowunit.equals("m3/min")) {
       return getVoli() / 1.0e5 * 60.0;
@@ -2314,6 +2318,8 @@ abstract class Component implements ComponentInterface {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
   }
+
+
 
   /** {@inheritDoc} */
   @Override
@@ -2334,6 +2340,7 @@ abstract class Component implements ComponentInterface {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
   }
+  
 
   /**
    * Indexed getter for property matiascopemanParamsUMRPRU.
