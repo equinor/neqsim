@@ -1,5 +1,5 @@
 package neqsim.processSimulation.processSystem;
-
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +21,7 @@ If no recycle in the module then run only once.
 
 */
 
-public class ProcessModule extends SimulationBaseClass {
+public class ProcessModule extends SimulationBaseClass implements Serializable{
 
     private static final long serialVersionUID = 1000;
     private static final Logger logger = LogManager.getLogger(ProcessModule.class);
@@ -206,6 +206,19 @@ public class ProcessModule extends SimulationBaseClass {
     @Override
     public boolean solved() {
         return solved;
+    }
+
+    /**
+     * <p>
+     * runAsThread.
+     * </p>
+     *
+     * @return a {@link java.lang.Thread} object
+     */
+    public Thread runAsThread() {
+      Thread processThread = new Thread(this);
+      processThread.start();
+      return processThread;
     }
 
 }
