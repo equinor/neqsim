@@ -20,6 +20,11 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  */
 public class PropaneCoolingModule extends ProcessModuleBaseClass {
 
+  /**
+   * <p>Constructor for PropaneCoolingModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public PropaneCoolingModule(String name) {
     super(name);
   }

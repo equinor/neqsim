@@ -100,6 +100,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     setInletStream(inletStream);
   }
 
+  /**
+   * <p>gMechanicalDesign.</p>
+   *
+   * @return a {@link neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign} object
+   */
   public SeparatorMechanicalDesign gMechanicalDesign() {
     return new SeparatorMechanicalDesign(this);
   }

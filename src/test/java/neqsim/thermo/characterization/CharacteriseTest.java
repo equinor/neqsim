@@ -21,7 +21,7 @@ public class CharacteriseTest  extends neqsim.NeqSimTest{
     thermoSystem.addPlusFraction("C10", 11.0, 290.0/1000.0, 0.82);
     thermoSystem.getCharacterization().setLumpingModel("no lumping");
     thermoSystem.getCharacterization().characterisePlusFraction();
-    //System.out.println("number of components " + thermoSystem.getNumberOfComponents());
+    // logger.info("number of components " + thermoSystem.getNumberOfComponents());
     assertEquals(77, thermoSystem.getNumberOfComponents());
 
     thermoSystem = new SystemSrkEos(298.0, 10.0);

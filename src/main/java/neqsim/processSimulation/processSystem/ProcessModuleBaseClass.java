@@ -33,6 +33,11 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   private neqsim.processSimulation.processSystem.ProcessSystem operations =
       new neqsim.processSimulation.processSystem.ProcessSystem();
 
+  /**
+   * <p>Constructor for ProcessModuleBaseClass.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public ProcessModuleBaseClass(String name) {
     super(name);
   }
@@ -225,13 +230,12 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * getPressure.
    * </p>
-   * 
-   * @param unit a {@link java.lang.String} object
-   * 
-   **/
+   */
   public double getPressure(String unit) {
     return 1.0;
   }

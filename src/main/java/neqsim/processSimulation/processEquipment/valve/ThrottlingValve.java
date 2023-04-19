@@ -24,7 +24,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   SystemInterface thermoSystem;
   double pressure = 0.0;
-  private double Cv = 1.0;
+  private double Cv;
   private double maxMolarFlow = 1000.0;
   private double minMolarFlow = 0.0;
   private double percentValveOpening = 100.0;
@@ -178,7 +178,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     // System.out.println("enthalpy inn.." + enthalpy);
     // thermoOps.PHflash(enthalpy, 0);
-    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6) {
+    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
+        || thermoSystem.getNumberOfMoles() < 1e-12) {
       thermoOps.TPflash();
     } else {
       thermoOps.PHflash(enthalpy, 0);
@@ -194,7 +195,15 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
           * Math.sqrt(
               (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
                   / thermoSystem.getDensity()));
+      valveCvSet = true;
     }
+
+    percentValveOpening = inStream.getThermoSystem().getTotalNumberOfMoles() / (getCv()) * 100.0
+        / Math.sqrt(
+            (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
+                / thermoSystem.getDensity());
+
+
     molarFlow = getCv() * getPercentValveOpening() / 100.0
         * Math.sqrt(
             (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
@@ -202,7 +211,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     if (Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6) {
       molarFlow = inStream.getThermoSystem().getTotalNumberOfMoles();
     }
-    // System.out.println("molar flow " + molarFlow);
 
     inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
     inStream.getThermoSystem().init(3);

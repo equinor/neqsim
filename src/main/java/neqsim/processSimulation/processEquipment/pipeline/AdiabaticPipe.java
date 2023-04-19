@@ -61,7 +61,7 @@ public class AdiabaticPipe extends Pipeline {
 
   /**
    * Constructor for AdiabaticPipe.
-   * 
+   *
    * @param name name of pipe
    */
   public AdiabaticPipe(String name) {
@@ -70,7 +70,7 @@ public class AdiabaticPipe extends Pipeline {
 
   /**
    * Constructor for AdiabaticPipe.
-   * 
+   *
    * @param name name of pipe
    * @param inStream input stream
    */

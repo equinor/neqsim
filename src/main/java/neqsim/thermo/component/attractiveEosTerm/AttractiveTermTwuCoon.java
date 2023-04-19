@@ -39,6 +39,7 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   // // d = 1-1.0/d;
   // }
 
+  /** {@inheritDoc} */
   @Override
   public AttractiveTermTwuCoon clone() {
     AttractiveTermTwuCoon attractiveTerm = null;

@@ -34,6 +34,7 @@ public class RecycleController implements java.io.Serializable {
    */
   public void init() {
     for (Recycle recyc : recycleArray) {
+      recyc.resetIterations();
       if (recyc.getPriority() < minimumPriorityLevel) {
         minimumPriorityLevel = recyc.getPriority();
       }

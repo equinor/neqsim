@@ -2,7 +2,9 @@ package neqsim.util;
 
 /**
  * Abstract class for named objects.
- * 
+ *
+ * @author ASMF
+ * @version $Id: $Id
  */
 public abstract class NamedBaseClass implements NamedInterface, java.io.Serializable {
   private static final long serialVersionUID = 1L;
@@ -10,7 +12,7 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
 
   /**
    * Constructor for NamedBaseClass
-   * 
+   *
    * @param name the name of the class
    */
   public NamedBaseClass(String name) {
@@ -18,9 +20,9 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Getter for property name
-   * 
-   * @return Name property
    */
   @Override
   public String getName() {
@@ -28,9 +30,9 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Setter for property name
-   * 
-   * @param name Name to set.
    */
   @Override
   public void setName(String name) {

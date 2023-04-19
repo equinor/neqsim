@@ -157,6 +157,43 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
+   * getCompressibilityX.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getCompressibilityX();
+
+  /**
+   * <p>
+   * getCompressibilityY.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getCompressibilityY();
+
+  /**
+   * <p>
+   * getIsothermalCompressibility.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getIsothermalCompressibility();
+
+  /**
+   * <p>
+   * getIsobaricThermalExpansivity.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getIsobaricThermalExpansivity();
+
+
+  /**
+   * <p>
    * getdrhodN.
    * </p>
    *
@@ -678,11 +715,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * specify the type model for the physical properties you want to use. Type: 0 Orginal/default 1
-   * Water 2 Glycol 3 Amine
+   * specify the type model for the physical properties you want to use.
    * </p>
    *
-   * @param type a int
+   * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
    */
   public void setPhysicalProperties(int type);
 
@@ -987,11 +1023,9 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * method to return conductivity in a specified unit.
-   * 
    *
    * @param unit Supported units are W/mK, W/cmK
    * @return conductivity in specified unit
-   *
    * @deprecated use {@link #getThermalConductivity(String unit)} instead.
    */
   @Deprecated

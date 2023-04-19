@@ -4,16 +4,19 @@
 ![Build maven](https://github.com/equinor/neqsim/workflows/Build%20maven/badge.svg?branch=master)
 [![Known Vulnerabilities](https://snyk.io/test/github/equinor/neqsim/badge.svg)](https://snyk.io/test/github/equinor/neqsim)
 
-NeqSim is the main part of the [NeqSim project](https://equinor.github.io/neqsimhome/). NeqSim (Non-Equilibrium Simulator) is a Java library for estimation of fluid behavior and process design for oil and gas production.
+NeqSim is the main part of the [NeqSim project](https://equinor.github.io/neqsimhome/). NeqSim (Non-Equilibrium Simulator) is a Java library for estimating fluid behavior and process design for oil and gas production.
 The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of oil and gas.  NeqSim is easilly extended with new models. NeqSim development was initiated at the [Norwegian University of Science and Technology (NTNU)](https://www.ntnu.edu/employees/even.solbraa).
 
 ## Releases
 
-[NeqSim releases](https://github.com/equinor/neqsim/releases) are available as java packages (jar files) and as source code. NeqSim can be used in a third party application by adding NeqSim.jar to the classpath.
+[NeqSim releases](https://github.com/equinor/neqsim/releases) are available as a packaged jar file and as source code. NeqSim can be used in a third party application by adding NeqSim jar to the classpath.
 
 ## Getting started as a NeqSim Java user
 
-NeqSim can be used in a Java application by adding the neqsim-x.x.x.jar found in [NeqSim releases](https://github.com/equinor/neqsim/releases) to the classpath. A demonstration of dowloading the library and running a TPflash  bencmark is illustrated in this [NeqSim Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL). Learn and ask questions in [Discussions for use and development of NeqSim](https://github.com/equinor/neqsim/discussions). Also see the [NeqSim JavaDoc](https://htmlpreview.github.io/?https://github.com/equinor/neqsimhome/blob/master/javadoc/site/apidocs/index.html).
+NeqSim can be used in a Java application by adding the neqsim-x.x.x.jar found in [NeqSim releases](https://github.com/equinor/neqsim/releases) to the classpath. A demonstration of downloading the library and running a TPflash  benchmark is illustrated in this [NeqSim Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL). Learn and ask questions in [Discussions for use and development of NeqSim](https://github.com/equinor/neqsim/discussions). Also see the [NeqSim JavaDoc](https://htmlpreview.github.io/?https://github.com/equinor/neqsimhome/blob/master/javadoc/site/apidocs/index.html).
+
+## Use of the NeqSim package
+NeqSim can be set up as a dependency in a Java project via the [NeqSim GitHub package distribution](https://github.com/equinor/neqsim/packages/42822).
 
 ## Getting Started as a NeqSim Java developer
 
@@ -38,7 +41,7 @@ An interactive demonstration of how to get started as a NeqSim developer is pres
 
 ## Running the tests
 
-The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsim/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project.  
+The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsim/tree/master/src/test). Test code shuld be written for all new code added to the project, and all tests have to pass before merging into the master branch.  
 
 Test coverage can be examined using [jacoco](https://www.eclemma.org/jacoco/) from maven.  
 Generate a coverage report using `./mvnw jacoco:prepare-agent test install jacoco:report` and see results in target/site/jacoco/index.html.

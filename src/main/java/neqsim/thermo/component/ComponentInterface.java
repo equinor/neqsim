@@ -349,6 +349,25 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
+   * getChemicalPotential.
+   * </p>
+   *
+   * @param temperature a double
+   * @param pressure a double
+   * @return a double
+   */
+  public double getChemicalPotential(double temperature, double pressure);
+  // public double fugcoef(PhaseInterface phase, int numberOfComponents, double
+  // temperature, double pressure);
+  // public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents,
+  // double temperature, double pressure);
+  // public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents,
+  // double temperature, double pressure);
+  // public double[] fugcoefDiffN(PhaseInterface phase, int numberOfComponents,
+  // double temperature, double pressure);
+
+  /**
+   * <p>
    * getChemicalPotentialdT.
    * </p>
    *
@@ -744,7 +763,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getx.
+   * The mole fraction of a component in the actual phase
    * </p>
    *
    * @return a double
@@ -753,7 +772,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getz.
+   * The mole fraction of a component in the total fluid
    * </p>
    *
    * @return a double
@@ -762,7 +781,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getK.
+   * The distribution coefficient y/x between gas and lidquid for a component
    * </p>
    *
    * @return a double
@@ -771,7 +790,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getTC.
+   * Returns the critical temperature of the component
    * </p>
    *
    * @return a double
@@ -1056,7 +1075,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getCp0.
+   * Return the ideal-gas molar heat capacity of a chemical using polynomial regressed coefficients
+   * as described by Poling, Bruce E. The Properties of Gases and Liquids. 5th edition. New York:
+   * McGraw-Hill Professional, 2000.
    * </p>
    *
    * @param temperature a double
@@ -1261,25 +1282,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getChemicalPotential.
-   * </p>
-   *
-   * @param temperature a double
-   * @param pressure    a double
-   * @return a double
-   */
-  public double getChemicalPotential(double temperature, double pressure);
-  // public double fugcoef(PhaseInterface phase, int numberOfComponents, double
-  // temperature, double pressure);
-  // public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents,
-  // double temperature, double pressure);
-  // public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents,
-  // double temperature, double pressure);
-  // public double[] fugcoefDiffN(PhaseInterface phase, int numberOfComponents,
-  // double temperature, double pressure);
-
-  /**
-   * <p>
    * getGibbsEnergy.
    * </p>
    *
@@ -1300,7 +1302,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getDebyeDipoleMoment.
+   * This function handles the retrieval of a chemical’s dipole moment. Dipole moment, [debye] as a
+   * double
    * </p>
    *
    * @return a double
@@ -2179,8 +2182,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    */
   public void setCpE(double CpE);
 
-  static public String getComponentNameFromAlias(String name) {
-    LinkedHashMap<String, String> c = getComponentMap();
+  /**
+   * getComponentNameFromAlias.
+   *
+   * @param name a {@link java.lang.String} Component name or alias of component name.
+   * @return a {@link java.lang.String} Component name
+   */
+  public static String getComponentNameFromAlias(String name) {
+    LinkedHashMap<String, String> c = getComponentNameMap();
     if (c.containsKey(name)) {
       return c.get(name);
     } else {
@@ -2188,7 +2197,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     }
   }
 
-  static public LinkedHashMap<String, String> getComponentMap() {
+  /**
+   * Get lookup map for component name alias.
+   *
+   * @return a {@link java.util.LinkedHashMap} Map with component alias name as key and component
+   *         name as value.
+   */
+  public static LinkedHashMap<String, String> getComponentNameMap() {
     LinkedHashMap<String, String> c = new LinkedHashMap<>();
     c.put("H2O", "water");
     c.put("N2", "nitrogen");

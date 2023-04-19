@@ -27,6 +27,11 @@ public class MeshSection extends SeparatorSection {
         super(name, type, sep);
     }
 
+    /**
+     * <p>getMechanicalDesign.</p>
+     *
+     * @return a {@link neqsim.processSimulation.mechanicalDesign.separator.sectionType.MecMeshSection} object
+     */
     public MecMeshSection getMechanicalDesign() {
         return new MecMeshSection(this);
     }

@@ -375,6 +375,9 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
   }
 
+  /**
+   * <p>checkReferenceCondition.</p>
+   */
   public void checkReferenceCondition() {
 
     Double[] validvalues = {0.0, 15.0, 15.55, 20.0};

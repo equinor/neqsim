@@ -727,7 +727,7 @@ public interface FlowNodeInterface extends Cloneable {
 
   /**
    * Specify wall friction factor for phase 0. Set to null to reset.
-   * 
+   *
    * @param frictionFactor Friction factor to use for phase 0 or null to reset.
    */
   default public void setWallFrictionFactor(double frictionFactor) {
@@ -736,7 +736,7 @@ public interface FlowNodeInterface extends Cloneable {
 
   /**
    * Specify wall friction factor for a given phase. Set to null to reset.
-   * 
+   *
    * @param phase Index to phase to set wall friction factor for.
    * @param frictionFactor Friction factor to use for a given phase or null to reset.
    */

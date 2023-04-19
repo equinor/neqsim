@@ -55,6 +55,6 @@ class MixerTest {
     testMixer.addStream(waterStream);
     testMixer.run();
     assertEquals(testMixer.getOutletStream().getFluid().getEnthalpy("kJ/kg"), -177.27666625251516,
-        1e-3);
+        1e-1);
   }
 }

@@ -13,9 +13,13 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class FluidCreator {
 
+  /** Constant <code>hasWater=false</code> */
   public static boolean hasWater = false;
+  /** Constant <code>autoSelectModel=false</code> */
   public static boolean autoSelectModel = false;
+  /** Constant <code>thermoModel="srk"</code> */
   public static String thermoModel = "srk";
+  /** Constant <code>thermoMixingRule="classic"</code> */
   public static String thermoMixingRule = "classic";
   
   /**

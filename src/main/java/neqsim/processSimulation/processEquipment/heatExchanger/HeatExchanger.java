@@ -270,10 +270,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
       outStream[0].run(id);
       run(id);
     } else {
-      double cP0 = inStream[0].getThermoSystem().getCp();
-      double cP1 = inStream[1].getThermoSystem().getCp();
       int streamToCalculate = 0;
 
+      // double cP0 = inStream[0].getThermoSystem().getCp();
+      // double cP1 = inStream[1].getThermoSystem().getCp();
       // if (cP0 < cP1) {
       // streamToCalculate = 1;
       // streamToSet = 0;
@@ -549,16 +549,20 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   }
 
   /**
+   * <p>Getter for the field <code>flowArrangement</code>.</p>
+   *
    * @return String
    */
-  String getFlowArrangement() {
+  public String getFlowArrangement() {
     return flowArrangement;
   }
 
   /**
+   * <p>Setter for the field <code>flowArrangement</code>.</p>
+   *
    * @param flowArrangement name of flow arrangement
    */
-  void setFlowArrangement(String flowArrangement) {
+  public void setFlowArrangement(String flowArrangement) {
     this.flowArrangement = flowArrangement;
   }
 
