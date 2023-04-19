@@ -64,7 +64,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.42</version>
+			<version>0.43</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -89,7 +89,7 @@
 		<dependency>
 			<groupId>org.ojalgo</groupId>
 			<artifactId>ojalgo</artifactId>
-			<version>48.4.2</version>
+			<version>53.0.0</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
