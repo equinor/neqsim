@@ -34,15 +34,15 @@
 			<version>2.19.0</version>
 		</dependency>
 		<dependency>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+			<version>1.4.20</version>
+		</dependency>
+		<dependency>
 		    <groupId>org.junit.jupiter</groupId>
 		    <artifactId>junit-jupiter</artifactId>
 		    <version>5.9.1</version>
 		    <scope>test</scope>
-		</dependency>
-				<dependency>
-			<groupId>com.thoughtworks.xstream</groupId>
-			<artifactId>xstream</artifactId>
-			<version>1.4.19</version>
 		</dependency>
 		<dependency>
 			<groupId>colt</groupId>
