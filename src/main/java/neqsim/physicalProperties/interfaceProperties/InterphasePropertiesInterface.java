@@ -41,15 +41,12 @@ public interface InterphasePropertiesInterface extends Cloneable {
    */
   public void initAdsorption();
 
-
   /**
    * <p>
    * calcAdsorption.
    * </p>
    */
   public void calcAdsorption();
-
-
 
   /**
    * <p>
@@ -93,7 +90,6 @@ public interface InterphasePropertiesInterface extends Cloneable {
    */
   public double getSurfaceTension(int numb1, int numb2, String unit);
 
-
   /**
    * <p>
    * getInterfacialTensionModel.
@@ -134,7 +130,6 @@ public interface InterphasePropertiesInterface extends Cloneable {
    * @param interfacialTensionModel a int
    */
   public void setInterfacialTensionModel(int interfacialTensionModel);
-
 
   /**
    * <p>

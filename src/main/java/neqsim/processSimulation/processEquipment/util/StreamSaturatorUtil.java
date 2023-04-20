@@ -113,7 +113,6 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     this.multiPhase = multiPhase;
   }
 
-
   /**
    * <p>setApprachToSaturation.</p>
    *

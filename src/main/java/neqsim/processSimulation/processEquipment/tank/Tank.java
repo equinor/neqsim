@@ -296,7 +296,6 @@ public class Tank extends ProcessEquipmentBaseClass {
     gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
         * separatorLength;
 
-
     System.out.println("total moles " + thermoSystem.getTotalNumberOfMoles());
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);

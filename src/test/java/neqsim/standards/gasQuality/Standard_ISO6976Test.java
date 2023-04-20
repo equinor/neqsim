@@ -166,5 +166,4 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
      * 150.0));
      */
   }
-
 }

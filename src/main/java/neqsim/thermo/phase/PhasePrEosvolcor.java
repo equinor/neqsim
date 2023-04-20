@@ -581,5 +581,4 @@ public class PhasePrEosvolcor extends PhasePrEos {
     componentArray[compNumber] =
         new ComponentPRvolcor(componentName, moles, molesInPhase, compNumber);
   }
-
 }

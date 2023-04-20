@@ -352,7 +352,6 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     unifacGroupsLocal[k].setLnGammaMixdTdT(tempGammaMixdT);
   }
 
-
   // TODO impement dlngammadn
 
   /** {@inheritDoc} */

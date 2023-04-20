@@ -126,7 +126,6 @@ class TPFlashTest {
     testSystem5.addTBPfraction("C29", 1.61579358577728, 367.554992675781 / 1000, 0.889698147773743);
     testSystem5.addTBPfraction("C30", 3.24028706550598, 594.625 / 1000, 0.935410261154175);
 
-
     testSystem5.setMixingRule(10);
     testSystem5.setMultiPhaseCheck(true);
     testSystem5.setPressure(300.0, "bara");
