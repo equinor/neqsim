@@ -23,12 +23,17 @@
 	</repositories>
 
 	<dependencies>
-        <!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
-      <dependency>
-          <groupId>com.h2database</groupId>
-          <artifactId>h2</artifactId>
-          <version>2.1.214</version>
-    </dependency>
+		<!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>2.1.214</version>
+		</dependency>
+		<dependency>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+			<version>1.4.20</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
@@ -40,10 +45,10 @@
 			<version>2.20.0</version>
 		</dependency>
 		<dependency>
-		    <groupId>org.junit.jupiter</groupId>
-		    <artifactId>junit-jupiter</artifactId>
-		    <version>5.9.1</version>
-		    <scope>test</scope>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.9.1</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>colt</groupId>
@@ -120,11 +125,11 @@
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>3.3.0</version>
 				<configuration>
-	  				<archive>
+					<archive>
 						<manifest>
 							<mainClass>neqsim.thermo.util.benchmark.TPflash_benchmark</mainClass>
 						</manifest>
-	  				</archive>
+					</archive>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -169,7 +174,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.10.1</version>
 				<configuration>
-          <release>11</release> <!-- Upgrade jdk version to 11 if you are having issues compiling -->
+					<release>11</release> <!-- Upgrade jdk version to 11 if you are having issues compiling -->
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<!-- Uncomment below to get compiler warnings 
 					<compilerArgs>

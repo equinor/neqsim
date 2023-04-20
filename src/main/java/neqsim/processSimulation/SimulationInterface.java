@@ -1,5 +1,6 @@
 package neqsim.processSimulation;
 
+import java.io.Serializable;
 import java.util.UUID;
 import neqsim.util.NamedInterface;
 
@@ -9,7 +10,7 @@ import neqsim.util.NamedInterface;
  * @author ASMF
  * @version $Id: $Id
  */
-public interface SimulationInterface extends NamedInterface, Runnable {
+public interface SimulationInterface extends NamedInterface, Runnable, Serializable {
   /**
    * Getter for property calcIdentifier.
    *
