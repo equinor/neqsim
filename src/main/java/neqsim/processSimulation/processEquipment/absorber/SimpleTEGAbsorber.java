@@ -601,7 +601,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * <p>isSetWaterInDryGas.</p>
+   * <p>
+   * isSetWaterInDryGas.
+   * </p>
    *
    * @param isSetwaterInDryGas a boolean
    */

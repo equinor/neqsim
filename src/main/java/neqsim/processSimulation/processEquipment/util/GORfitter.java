@@ -312,7 +312,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>setGVF.</p>
+   * <p>
+   * setGVF.
+   * </p>
    *
    * @param gvf a double
    */

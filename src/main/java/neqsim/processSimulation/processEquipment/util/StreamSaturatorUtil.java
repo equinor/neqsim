@@ -114,7 +114,9 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>setApprachToSaturation.</p>
+   * <p>
+   * setApprachToSaturation.
+   * </p>
    *
    * @param approachToSaturation a double
    */

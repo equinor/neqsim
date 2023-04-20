@@ -46,7 +46,9 @@ public class GasTurbine extends TwoPortEquipment {
   }
 
   /**
-   * <p>Constructor for GasTurbine.</p>
+   * <p>
+   * Constructor for GasTurbine.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -90,10 +92,13 @@ public class GasTurbine extends TwoPortEquipment {
   }
 
   /**
-   * <p>getMechanicalDesign.</p>
+   * {@inheritDoc}
    *
-   * @return a {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign} object
+   * @return a
+   *         {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
+   *         object
    */
+  @Override
   public CompressorMechanicalDesign getMechanicalDesign() {
     return new CompressorMechanicalDesign(this);
   }

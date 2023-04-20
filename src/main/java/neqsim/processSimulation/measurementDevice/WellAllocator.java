@@ -8,7 +8,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>WellAllocator class.</p>
+ * <p>
+ * WellAllocator class.
+ * </p>
  *
  * @author ASMF
  * @version $Id: $Id
@@ -21,14 +23,18 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
   protected StreamInterface exportOilStream = null;
 
   /**
-   * <p>Constructor for WellAllocator.</p>
+   * <p>
+   * Constructor for WellAllocator.
+   * </p>
    */
   public WellAllocator() {
     name = "Well Allocator";
   }
 
   /**
-   * <p>Constructor for WellAllocator.</p>
+   * <p>
+   * Constructor for WellAllocator.
+   * </p>
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
@@ -38,7 +44,9 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>Constructor for WellAllocator.</p>
+   * <p>
+   * Constructor for WellAllocator.
+   * </p>
    *
    * @param streamname a {@link java.lang.String} object
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
@@ -49,7 +57,9 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>Setter for the field <code>exportGasStream</code>.</p>
+   * <p>
+   * Setter for the field <code>exportGasStream</code>.
+   * </p>
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
@@ -58,7 +68,9 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>Setter for the field <code>exportOilStream</code>.</p>
+   * <p>
+   * Setter for the field <code>exportOilStream</code>.
+   * </p>
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
@@ -83,7 +95,8 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
       splitFactors[i] = exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
           / (exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
               + exportOilStream.getFluid().getComponent(i).getFlowRate("kg/hr"));
-      gasExportFlow += wellStream.getFluid().getComponent(i).getTotalFlowRate("kg/hr") * splitFactors[i];
+      gasExportFlow +=
+          wellStream.getFluid().getComponent(i).getTotalFlowRate("kg/hr") * splitFactors[i];
       oilExportFlow +=
           wellStream.getFluid().getComponent(i).getTotalFlowRate("kg/hr") * (1.0 - splitFactors[i]);
     }
@@ -101,7 +114,9 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>main.</p>
+   * <p>
+   * main.
+   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -124,9 +139,10 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
     testFluid.setTotalFlowRate(2500.0, "kg/hr");
 
     Stream stream_1 = new Stream("Stream1", testFluid);
-    
+
     SystemInterface testFluid2 = testFluid.clone();
-   // testFluid2.setMolarComposition(new double[] {0.1, 0.1, 0.9, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0});
+    // testFluid2.setMolarComposition(new double[] {0.1, 0.1, 0.9, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0,
+    // 0.0});
     Stream stream_2 = new Stream("Stream2", testFluid2);
 
     Separator sep1 = new Separator("sep1", stream_1);
@@ -149,9 +165,9 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
     operations.add(stream_oilExp);
     operations.add(wellAlloc);
     operations.run();
-   
+
     WellAllocatorResponse responsAl = new WellAllocatorResponse(wellAlloc);
-    
+
     System.out.println("name " + responsAl.name);
     System.out.println("gas flow " + responsAl.gasExportRate);
     System.out.println("oil flow " + responsAl.oilExportRate);
