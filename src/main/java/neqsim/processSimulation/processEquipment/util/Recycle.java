@@ -519,7 +519,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    if (Math.abs(error) < tolerance && errorFlow < flowAccuracy && iterations > 1) {
+    if (error < tolerance && errorFlow < flowAccuracy && iterations > 1) {
       return true;
     } else {
       return false;
