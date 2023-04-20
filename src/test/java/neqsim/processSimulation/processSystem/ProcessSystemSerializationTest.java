@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processSystem;
 
+import org.junit.jupiter.api.Test;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.security.AnyTypePermission;
-import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.measurementDevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.processSimulation.measurementDevice.WaterDewPointAnalyser;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
@@ -22,7 +22,6 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
-
   @Test
   public void runTEGProcessTest2() {
     neqsim.thermo.system.SystemInterface feedGas =
@@ -63,7 +62,6 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     double[] splitSmorbukk = {1.0 - 1e-10, 1e-10};
     SmorbukkSplit.setSplitFactors(splitSmorbukk);
 
-
     Stream dryFeedGasMidgard = new Stream("dry feed gas Midgard201", feedGas.clone());
     dryFeedGasMidgard.setFlowRate(10, "MSm3/day");
     dryFeedGasMidgard.setTemperature(5, "C");
@@ -79,16 +77,13 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
         new HydrateEquilibriumTemperatureAnalyser(waterSaturatedFeedGasMidgard);
     hydrateTAnalyserMidgard.setName("hydrate temperature analyser Midgard");
 
-
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
     double[] splitMidgard = {1e-10, 1 - 1e-10};
     MidgardSplit.setSplitFactors(splitMidgard);
 
-
     StaticMixer TrainB = new StaticMixer("mixer TrainB");
     TrainB.addStream(SmorbukkSplit.getSplitStream(1));
     TrainB.addStream(MidgardSplit.getSplitStream(1));
-
 
     Heater feedTPsetterToAbsorber = new Heater("TP of gas to absorber", TrainB.getOutletStream());
     feedTPsetterToAbsorber.setOutPressure(40.0, "bara");
@@ -217,11 +212,8 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     coolerRegenGas.setOutTemperature(273.15 + 15.0);
 
     Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
-
     Stream gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
-
     Stream liquidToTrreatment = new Stream("water to treatment", sepregenGas.getLiquidOutStream());
-
 
     WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
     stripper.addSolventInStream(column.getLiquidOutStream());
@@ -239,9 +231,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
         new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
     heatEx.setFeedStream(1, stripper.getLiquidOutStream());
-
     heatEx2.setFeedStream(1, heatEx.getOutStream(1));
-
 
     Pump hotLeanTEGPump = new Pump("lean TEG LP pump", heatEx2.getOutStream(1));
     hotLeanTEGPump.setOutletPressure(40.0);
@@ -276,7 +266,6 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     resycleLeanTEG.setPriority(200);
     resycleLeanTEG.setDownstreamProperty("flow rate");
 
-
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(dryFeedGasSmorbukk);
@@ -293,8 +282,6 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     operations.add(MidgardSplit);
 
     operations.add(TrainB);
-
-
 
     operations.add(feedTPsetterToAbsorber);
     operations.add(feedToAbsorber);
@@ -332,8 +319,6 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     operations.add(stripper);
     operations.add(recycleGasFromStripper);
 
-
-
     operations.add(hotLeanTEGPump);
     operations.add(makeupTEG);
     operations.add(makeupCalculator);
@@ -342,31 +327,18 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     operations.add(leanTEGtoabs);
     operations.add(resycleLeanTEG);
 
+    // Check that process can run
     operations.run();
-    System.out.println("start serialization.....");
+
+    // Serialize to xml using XStream
     XStream xstream = new XStream();
-    String xml = null;
-    try {
-      xml = xstream.toXML(operations);
-      // File fileLocation = new File("test.xml");
-      // FileOutputStream fos = new FileOutputStream(fileLocation);
-      // xstream.toXML(operations, fos);
+    String xml = xstream.toXML(operations);
 
-    } catch (Exception e) {
-      System.err.println("Error in XML Write: " + e.getMessage());
-    }
-    System.out.println("start deserialization.....");
-    neqsim.processSimulation.processSystem.ProcessSystem operationsCopy = null;
-    try {
-      xstream.addPermission(AnyTypePermission.ANY);
-      operationsCopy = (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xml);
-      // operationsCopy.run();
+    xstream.addPermission(AnyTypePermission.ANY);
 
-    } catch (Exception e) {
-      e.printStackTrace();
-      System.err.println("Error in XML Write: " + e.getMessage());
-    }
-    System.out.println("re-run process....");
+    // Deserialize from xml
+    neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
+        (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xml);
     operationsCopy.run();
   }
 }
