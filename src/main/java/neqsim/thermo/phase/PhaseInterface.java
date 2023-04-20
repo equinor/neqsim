@@ -76,14 +76,14 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getDensity_AGA8();
 
   /**
-   * method to get the Joule Thomson Coefficient of a phase note.
+   * method to get the Joule Thomson Coefficient of a phase.
    *
    * @return Joule Thomson coefficient in K/bar
    */
   public double getJouleThomsonCoefficient();
 
   /**
-   * method to get the Joule Thomson Coefficient of a phase note.
+   * method to get the Joule Thomson Coefficient of a phase.
    *
    * @param unit Supported units are K/bar, C/bar
    * @return Joule Thomson coefficient in specified unit
