@@ -832,9 +832,7 @@ abstract class Component implements ComponentInterface {
     return liquidConductivityParameter[i];
   }
 
-  /**
-   * {@inheritDoc} Units in m*e10
-   */
+  /** {@inheritDoc} */
   @Override
   public double getLennardJonesMolecularDiameter() {
     return lennardJonesMolecularDiameter;
@@ -852,32 +850,21 @@ abstract class Component implements ComponentInterface {
     return Hsub;
   }
 
-  /**
-   * {@inheritDoc} Calculates the pure comonent solid vapor pressure (bar) with the C-C equation,
-   * based on Hsub Should only be used in the valid temperature range below the triple point
-   * (specified in component database).
-   */
+  /** {@inheritDoc} */
   @Override
   public double getCCsolidVaporPressure(double temperature) {
     return triplePointPressure
         * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
   }
 
-  /**
-   * {@inheritDoc} Calculates the DT of pure comonent solid vapor pressure (bar) with the C-C
-   * equation, based on Hsub Should only be used in the valid temperature range below the triple
-   * point (specified in component database).
-   */
+  /** {@inheritDoc} */
   @Override
   public double getCCsolidVaporPressuredT(double temperature) {
     return triplePointPressure * Hsub / R * (1.0 / (temperature * temperature))
         * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
   }
 
-  /**
-   * {@inheritDoc} Calculates the pure component solid density in kg/liter Should only be used in
-   * the valid temperature range (specified in component database).
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPureComponentSolidDensity(double temperature) {
     return molarMass * 1000.0
@@ -887,11 +874,7 @@ abstract class Component implements ComponentInterface {
             + solidDensityCoefs[4] * Math.pow(temperature, 4.0));
   }
 
-  /**
-   * {@inheritDoc} Calculates the pure component liquid density in kg/liter Should only be used in
-   * the valid temperature range (specified in component database). This method seems to give bad
-   * results at the moment
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPureComponentLiquidDensity(double temperature) {
     return molarMass * 1000.0
@@ -1850,8 +1833,7 @@ abstract class Component implements ComponentInterface {
   }
 
   /**
-   * {@inheritDoc} Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT +
-   * C4*T
+   * {@inheritDoc}
    */
   @Override
   public double getHenryCoef(double temperature) {

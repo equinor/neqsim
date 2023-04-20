@@ -1129,7 +1129,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getLennardJonesMolecularDiameter.
    * </p>
    *
-   * @return a double
+   * @return Units in m*e10
    */
   public double getLennardJonesMolecularDiameter();
 
@@ -1478,21 +1478,24 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getPureComponentSolidDensity.
+   * getPureComponentSolidDensity. Calculates the pure component solid density in kg/liter Should
+   * only be used in the valid temperature range (specified in component database).
    * </p>
    *
    * @param temperature a double
-   * @return a double
+   * @return pure component solid density in kg/liter
    */
   public double getPureComponentSolidDensity(double temperature);
 
   /**
    * <p>
-   * getPureComponentLiquidDensity.
+   * getPureComponentLiquidDensity. Calculates the pure component liquid density in kg/liter Should
+   * only be used in the valid temperature range (specified in component database). This method
+   * seems to give bad results at the moment
    * </p>
    *
    * @param temperature a double
-   * @return a double
+   * @return pure component liquid density in kg/liter
    */
   public double getPureComponentLiquidDensity(double temperature);
 
@@ -1863,21 +1866,25 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getCCsolidVaporPressure.
+   * getCCsolidVaporPressure. Calculates the pure comonent solid vapor pressure (bar) with the C-C
+   * equation, based on Hsub Should only be used in the valid temperature range below the triple
+   * point (specified in component database).
    * </p>
    *
    * @param temperature a double
-   * @return a double
+   * @return Calculated solid vapor pressure in bar.
    */
   public double getCCsolidVaporPressure(double temperature);
 
   /**
    * <p>
-   * getCCsolidVaporPressuredT.
+   * getCCsolidVaporPressuredT. Calculates the DT of pure comonent solid vapor pressure (bar) with
+   * the C-C equation, based on Hsub Should only be used in the valid temperature range below the
+   * triple point (specified in component database).
    * </p>
    *
    * @param temperature a double
-   * @return a double
+   * @return Calculated solid vapor pressure in bar.
    */
   public double getCCsolidVaporPressuredT(double temperature);
 
@@ -1910,11 +1917,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getHenryCoef.
+   * getHenryCoef. Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT +
+   * C4*T
    * </p>
    *
    * @param temperature a double
-   * @return a double
+   * @return Henrys Coefficient in bar
    */
   public double getHenryCoef(double temperature);
 

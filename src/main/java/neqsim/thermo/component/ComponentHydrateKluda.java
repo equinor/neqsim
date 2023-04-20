@@ -22,8 +22,8 @@ public class ComponentHydrateKluda extends Component {
   int hydrateStructure = 0;
   double[][][] coordNumb = new double[3][2][2]; // [structure][cavitytype]
   double[][][] cavRadius = new double[3][2][2]; // [structure][cavitytype]
-  double cavNumb[][] = new double[2][2]; // [structure][cavitytype]
-  double cavprwat[][] = new double[2][2]; // [structure][cavitytype]
+  double[][] cavNumb = new double[2][2]; // [structure][cavitytype]
+  double[][] cavprwat = new double[2][2]; // [structure][cavitytype]
   double[] reffug = new double[20];
   static Logger logger = LogManager.getLogger(ComponentHydrateKluda.class);
 
