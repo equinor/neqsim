@@ -2478,9 +2478,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public int hashCode();
 
   /**
-   * {@inheritDoc}
+   * Add to component names.
    *
-   * @param name a {@link java.lang.String} object
+   * @param name Component name to add
    */
   public void addToComponentNames(java.lang.String name);
 

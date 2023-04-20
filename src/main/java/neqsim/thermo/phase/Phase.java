@@ -14,6 +14,8 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * Phase class.
+ *
  * @author Even Solbraa
  */
 abstract class Phase implements PhaseInterface {

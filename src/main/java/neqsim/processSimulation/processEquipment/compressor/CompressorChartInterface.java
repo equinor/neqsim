@@ -35,8 +35,8 @@ public interface CompressorChartInterface extends Cloneable {
    * Get method for polytropic head from reference curves.
    *
    * @param flow [m3/h], speed in [rpm].
-   * @return polytropic head in unit [getHeadUnit]
    * @param speed a double
+   * @return polytropic head in unit [getHeadUnit]
    */
   public double getPolytropicHead(double flow, double speed);
 

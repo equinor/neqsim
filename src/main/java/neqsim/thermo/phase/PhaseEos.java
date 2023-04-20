@@ -511,6 +511,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
+   * Get a.
+   *
    * @return double
    */
   double geta() {
@@ -609,18 +611,16 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
+   * </p>
    */
   @Override
   public double getKappa() {
     return -getCp() / getCv() * getVolume() / pressure * getdPdVTn();
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * method to get the Joule Thomson Coefficient of a phase
-   */
+  /** {@inheritDoc} */
   @Override
   public double getJouleThomsonCoefficient() {
     return -1.0 / getCp()
@@ -991,11 +991,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         - getNumberOfMolesInPhase() * R * temperature / Math.pow(getTotalVolume(), 2.0);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * method to get the speed of sound of a phase
-   */
+  /** {@inheritDoc} */
   @Override
   public double getSoundSpeed() {
     double bs = -1.0 / getVolume() * getCv() / getCp() / getdPdVTn();
