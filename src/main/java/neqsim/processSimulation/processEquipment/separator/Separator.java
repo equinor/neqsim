@@ -101,11 +101,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
-   * <p>gMechanicalDesign.</p>
+   * {@inheritDoc}
    *
-   * @return a {@link neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign} object
+   * @return a {@link neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign}
+   *         object
    */
-  public SeparatorMechanicalDesign gMechanicalDesign() {
+  @Override
+  public SeparatorMechanicalDesign getMechanicalDesign() {
     return new SeparatorMechanicalDesign(this);
   }
 
@@ -812,8 +814,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /*
-   * private class SeparatorReport extends Object{ public Double gasLoadFactor;
-   * SeparatorReport(){
+   * private class SeparatorReport extends Object{ public Double gasLoadFactor; SeparatorReport(){
    * gasLoadFactor = getGasLoadFactor(); } }
    * 
    * public SeparatorReport getReport(){ return this.new SeparatorReport(); }

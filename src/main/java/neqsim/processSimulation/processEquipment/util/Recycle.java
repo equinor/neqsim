@@ -34,13 +34,15 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   boolean firstTime = true;
   int iterations = 0;
   int maxIterations = 10;
-  
+
   double compositionAccuracy = 1.0;
   double temperatureAccuracy = 1.0;
   double flowAccuracy = 1.0;
 
   /**
-   * <p>Setter for the field <code>compositionAccuracy</code>.</p>
+   * <p>
+   * Setter for the field <code>compositionAccuracy</code>.
+   * </p>
    *
    * @param compositionAccuracy a double
    */
@@ -49,7 +51,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>Setter for the field <code>temperatureAccuracy</code>.</p>
+   * <p>
+   * Setter for the field <code>temperatureAccuracy</code>.
+   * </p>
    *
    * @param temperatureAccuracy a double
    */
@@ -58,7 +62,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>Setter for the field <code>flowAccuracy</code>.</p>
+   * <p>
+   * Setter for the field <code>flowAccuracy</code>.
+   * </p>
    *
    * @param flowAccuracy a double
    */
@@ -77,7 +83,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>resetIterations.</p>
+   * <p>
+   * resetIterations.
+   * </p>
    */
   public void resetIterations() {
     iterations = 0;
@@ -476,7 +484,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * <p>Getter for the field <code>errorFlow</code>.</p>
+   * <p>
+   * Getter for the field <code>errorFlow</code>.
+   * </p>
    *
    * @return a double
    */
@@ -509,9 +519,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-  
     if (error < tolerance && errorFlow < flowAccuracy && iterations > 1) {
-
       return true;
     } else {
       return false;

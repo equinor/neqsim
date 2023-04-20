@@ -60,7 +60,9 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>setSplitFactors.</p>
+   * <p>
+   * setSplitFactors.
+   * </p>
    *
    * @param factors an array of {@link double} objects
    */
@@ -69,9 +71,12 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Setter for the field <code>inletStream</code>.</p>
+   * <p>
+   * Setter for the field <code>inletStream</code>.
+   * </p>
    *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
    */
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;
@@ -86,7 +91,9 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Getter for the field <code>splitStream</code>.</p>
+   * <p>
+   * Getter for the field <code>splitStream</code>.
+   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
@@ -125,6 +132,5 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-  }
+  public void displayResult() {}
 }

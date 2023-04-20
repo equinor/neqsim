@@ -78,10 +78,13 @@ public class NeqGasScrubber extends Separator {
   }
 
   /**
-   * <p>getMechanicalDesign.</p>
+   * {@inheritDoc}
    *
-   * @return a {@link neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign} object
+   * @return a
+   *         {@link neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign}
+   *         object
    */
+  @Override
   public GasScrubberMechanicalDesign getMechanicalDesign() {
     return new GasScrubberMechanicalDesign(this);
   }

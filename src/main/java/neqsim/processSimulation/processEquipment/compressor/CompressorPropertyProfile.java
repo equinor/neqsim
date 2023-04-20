@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>CompressorPropertyProfile class.</p>
+ * <p>
+ * CompressorPropertyProfile class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -17,12 +19,16 @@ public class CompressorPropertyProfile implements Serializable {
   private boolean isActive = false;
 
   /**
-   * <p>Constructor for CompressorPropertyProfile.</p>
+   * <p>
+   * Constructor for CompressorPropertyProfile.
+   * </p>
    */
   public CompressorPropertyProfile() {}
 
   /**
-   * <p>addFluid.</p>
+   * <p>
+   * addFluid.
+   * </p>
    *
    * @param inputFLuid a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -32,7 +38,9 @@ public class CompressorPropertyProfile implements Serializable {
   }
 
   /**
-   * <p>isActive.</p>
+   * <p>
+   * isActive.
+   * </p>
    *
    * @return a boolean
    */
@@ -41,7 +49,9 @@ public class CompressorPropertyProfile implements Serializable {
   }
 
   /**
-   * <p>setActive.</p>
+   * <p>
+   * setActive.
+   * </p>
    *
    * @param isActive a boolean
    */
@@ -51,7 +61,9 @@ public class CompressorPropertyProfile implements Serializable {
   }
 
   /**
-   * <p>Getter for the field <code>fluid</code>.</p>
+   * <p>
+   * Getter for the field <code>fluid</code>.
+   * </p>
    *
    * @return a {@link java.util.ArrayList} object
    */
@@ -60,7 +72,9 @@ public class CompressorPropertyProfile implements Serializable {
   }
 
   /**
-   * <p>Setter for the field <code>fluid</code>.</p>
+   * <p>
+   * Setter for the field <code>fluid</code>.
+   * </p>
    *
    * @param fluid a {@link java.util.ArrayList} object
    */

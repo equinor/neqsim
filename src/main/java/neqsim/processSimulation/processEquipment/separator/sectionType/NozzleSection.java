@@ -12,33 +12,36 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
  * @version $Id: $Id
  */
 public class NozzleSection extends SeparatorSection {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for NozzleSection.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     * @param type a {@link java.lang.String} object
-     * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
-     */
-    public NozzleSection(String name, String type, Separator sep) {
-        super(name, type, sep);
-    }
+  /**
+   * <p>
+   * Constructor for NozzleSection.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param type a {@link java.lang.String} object
+   * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
+   */
+  public NozzleSection(String name, String type, Separator sep) {
+    super(name, type, sep);
+  }
 
-    /**
-     * <p>getMechanicalDesign.</p>
-     *
-     * @return a {@link neqsim.processSimulation.mechanicalDesign.separator.sectionType.MechNozzleSection} object
-     */
-    public MechNozzleSection getMechanicalDesign() {
-        return new MechNozzleSection(this);
-    }
+  /**
+   * {@inheritDoc}
+   *
+   * @return a
+   *         {@link neqsim.processSimulation.mechanicalDesign.separator.sectionType.MechNozzleSection}
+   *         object
+   */
+  @Override
+  public MechNozzleSection getMechanicalDesign() {
+    return new MechNozzleSection(this);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double calcEfficiency() {
-        return 1.0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double calcEfficiency() {
+    return 1.0;
+  }
 }
