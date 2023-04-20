@@ -47,12 +47,11 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
     dryFeedGas.setTemperature(32.48975904520211, "C");
     dryFeedGas.setPressure(40.1205259689988, "bara");
 
-    StreamSaturatorUtil saturatedFeedGas =
-        new StreamSaturatorUtil("water saturator Smøbukk", dryFeedGas);
+    StreamSaturatorUtil saturatedFeedGas = new StreamSaturatorUtil(dryFeedGas);
+    saturatedFeedGas.setName("water saturator Smøbukk");
     saturatedFeedGas.setApprachToSaturation(0.93);
 
-    Heater feedTPsetterToAbsorber =
-        new Heater("TP of gas to absorber", saturatedFeedGas.getOutletStream());
+    Heater feedTPsetterToAbsorber = new Heater("TP of gas to absorber", saturatedFeedGas.getOutStream());
     feedTPsetterToAbsorber.setOutPressure(39.67967207899729, "bara");
     feedTPsetterToAbsorber.setOutTemperature(31.40346842493481, "C");
 
@@ -81,9 +80,12 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
     absorber.setStageEfficiency(1);
     absorber.setInternalDiameter(3.65);
 
-    Stream dehydratedGas = new Stream("dry gas from absorber", absorber.getGasOutStream());
+    Stream dehydratedGas = new Stream(absorber.getGasOutStream());
+    dehydratedGas.setName("dry gas from absorber");
 
-    Stream richTEG = new Stream("rich TEG from absorber", absorber.getLiquidOutStream());
+    Stream richTEG = new Stream(absorber.getLiquidOutStream());
+    richTEG.setName("rich TEG from absorber");
+
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
         dehydratedGas);
     waterDewPointAnalyser.setReferencePressure(70.0);
@@ -93,14 +95,15 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
     waterDewPointAnalyser2.setReferencePressure(70.0);
     waterDewPointAnalyser2.setName("water dew point analyser");
     
-    Heater condHeat = new Heater("Condenser heat exchanger", richTEG);
+    Heater condHeat = new Heater(richTEG);
+    condHeat.setName("Condenser heat exchanger");
 
-    ThrottlingValve glycol_flash_valve =
-        new ThrottlingValve("Flash valve", condHeat.getOutletStream());
+    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Flash valve", condHeat.getOutStream());
     glycol_flash_valve.setName("Rich TEG HP flash valve");
     glycol_flash_valve.setOutletPressure(7.513533287063168);
     
-    Heater heatEx2 = new Heater("rich TEG heat exchanger 1", glycol_flash_valve.getOutletStream());
+    Heater heatEx2 = new Heater(glycol_flash_valve.getOutStream());
+    heatEx2.setName("rich TEG heat exchanger 1");
     heatEx2.setOutTemperature(273.15 + 90);
 
     neqsim.thermo.system.SystemInterface feedWater = (neqsim.thermo.system.SystemInterface) feedGas.clone();
@@ -111,22 +114,25 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
     waterFeed.setTemperature(90, "C");
     waterFeed.setPressure(7.513533287063168, "bara");
 
-    Separator flashSep = new Separator("degasing separator", heatEx2.getOutletStream());
+    Separator flashSep = new Separator(heatEx2.getOutStream());
+    flashSep.setName("degasing separator");
     flashSep.setInternalDiameter(1.2);
 
-    Stream flashGas = new Stream("gas from degasing separator", flashSep.getGasOutStream());
+    Stream flashGas = new Stream(flashSep.getGasOutStream());
+    flashGas.setName("gas from degasing separator");
 
-    Stream flashLiquid =
-        new Stream("liquid from degasing separator", flashSep.getLiquidOutStream());
+    Stream flashLiquid = new Stream(flashSep.getLiquidOutStream());
+    flashLiquid.setName("liquid from degasing separator");
 
-    Filter filter = new Filter("TEG fine filter", flashLiquid);
+    Filter filter = new Filter(flashLiquid);
+    filter.setName("TEG fine filter");
     filter.setDeltaP(0.0, "bara");
 
-    Heater heatEx = new Heater("lean/rich TEG heat-exchanger", filter.getOutletStream());
+    Heater heatEx = new Heater(filter.getOutStream());
+    heatEx.setName("lean/rich TEG heat-exchanger");
     heatEx.setOutTemperature(273.15 + 105.0);
 
-    ThrottlingValve glycol_flash_valve2 =
-        new ThrottlingValve("LP flash valve", heatEx.getOutletStream());
+    ThrottlingValve glycol_flash_valve2 = new ThrottlingValve("LP flash valve", heatEx.getOutStream());
     glycol_flash_valve2.setName("Rich TEG LP flash valve");
     glycol_flash_valve2.setOutletPressure(1.1714901511485545);
 
@@ -137,12 +143,13 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
     strippingGas.setTemperature(185.4402968739743, "C");
     strippingGas.setPressure(1.1714901511485545, "bara");
 
+
     Stream gasToReboiler = (Stream) (strippingGas).clone();
     gasToReboiler.setName("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn(1, true, true);
     column.setName("TEG regeneration column");
-    column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
+    column.addFeedStream(glycol_flash_valve2.getOutStream(), 1);
     column.getReboiler().setOutTemperature(273.15 + 201.86991706268591);
     column.getCondenser().setOutTemperature(273.15 + 102.80145109927442);
     column.getTray(1).addStream(gasToReboiler);
@@ -150,12 +157,15 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
     column.setBottomPressure(1.1714901511485545);
     column.setInternalDiameter(0.56);
 
-    Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
+    Heater coolerRegenGas = new Heater(column.getGasOutStream());
+    coolerRegenGas.setName("regen gas cooler");
     coolerRegenGas.setOutTemperature(273.15 + 17.685590621935702);
 
-    Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
+    Separator sepregenGas = new Separator(coolerRegenGas.getOutStream());
+    sepregenGas.setName("regen gas separator");
 
-    Stream gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
+    Stream gasToFlare = new Stream(sepregenGas.getGasOutStream());
+    gasToFlare.setName("gas to flare");
 
     Splitter splitterGasToFlare = new Splitter("splitter GasToFlare", gasToFlare);
     splitterGasToFlare.setSplitNumber(2);
@@ -165,7 +175,10 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
     strippingFlareGasTPsetter.setOutPressure(1.1714901511485545, "bara");
     strippingFlareGasTPsetter.setOutTemperature(185.4402968739743, "C");
 
-    Stream liquidToTrreatment = new Stream("water to treatment", sepregenGas.getLiquidOutStream());
+
+    Stream liquidToTrreatment = new Stream(sepregenGas.getLiquidOutStream());
+    liquidToTrreatment.setName("water to treatment");
+
 
     WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
     stripper.addSolventInStream(column.getLiquidOutStream());
@@ -181,6 +194,7 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
     recycleFlareGas.addStream(strippingFlareGasTPsetter.getOutletStream());
     recycleFlareGas.setOutletStream(strippingGas);
     recycleFlareGas.setPriority(1000);
+
 
     neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
     pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0,0.0,0.0, 1.0 });
@@ -202,16 +216,19 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
     makeupMixer.addStream(makeupTEG);
 
     
-    Pump hotLeanTEGPump = new Pump("lean TEG LP pump", makeupMixer.getOutletStream());
+    Pump hotLeanTEGPump = new Pump(makeupMixer.getOutStream());
+    hotLeanTEGPump.setName("lean TEG LP pump");
     hotLeanTEGPump.setOutletPressure(39.67967207899729);
     hotLeanTEGPump.setIsentropicEfficiency(0.9);
 
-    Heater coolerhOTteg3 = new Heater("lean TEG cooler", hotLeanTEGPump.getOutletStream());
+    Heater coolerhOTteg3 = new Heater(hotLeanTEGPump.getOutStream());
+    coolerhOTteg3.setName("lean TEG cooler");
     coolerhOTteg3.setOutTemperature(273.15 + 35.009563114341454);
 
     condHeat.setEnergyStream(column.getCondenser().getEnergyStream());
 
-    Stream leanTEGtoabs = new Stream("lean TEG to absorber", coolerhOTteg3.getOutletStream());
+    Stream leanTEGtoabs = new Stream(coolerhOTteg3.getOutStream());
+    leanTEGtoabs.setName("lean TEG to absorber");
 
     Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
     resycleLeanTEG.addStream(leanTEGtoabs);
@@ -275,6 +292,8 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
       operations5.add(waterDewPointAnalyser);
       operations5.add(waterDewPointAnalyser2);
 
+
+    
       neqsim.processSimulation.processSystem.ProcessModule module1 = new neqsim.processSimulation.processSystem.ProcessModule("Start process");
       module1.add(operations1);
       module1.add(operations2);
