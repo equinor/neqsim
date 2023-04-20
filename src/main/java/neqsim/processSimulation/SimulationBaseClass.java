@@ -28,11 +28,7 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
     super(name);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a {@link java.util.UUID} object
-   */
+  /** {@inheritDoc} */
   public UUID getCalculationIdentifier() {
     return calcIdentifier;
   }
@@ -58,11 +54,7 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
     this.calculateSteadyState = steady;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   public double getTime() {
     return this.time;
   }

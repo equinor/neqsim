@@ -64,10 +64,9 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
    * {@inheritDoc}
    *
    * <p>
-   * run
-   * </p>
    * In this method all thermodynamic and unit operations will be calculated in a steady state
    * calculation. Sets calc identifier UUID.
+   * </p>
    */
   @Override
   public default void run() {

@@ -43,7 +43,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   double alfaRiser = 0.0; // gas fraction in the riser
   double z = 0.0001; // some initial value to start the calculation
   double lambdaStagnant = 0.0;
-  double uLevel = 0.0;// some initial value to start the calculation
+  double uLevel = 0.0; // some initial value to start the calculation
   double valveConstant = 0.0;
   double normalPressure = 100000.0;
   final double pi = neqsim.thermo.ThermodynamicConstantsInterface.pi;
@@ -663,6 +663,25 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
   /**
    * <p>
+   * getMeasuredValue.
+   * </p>
+   *
+   * @param fluid a
+   *        {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.FluidSevereSlug}
+   *        object
+   * @param pipe a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.Pipe} object
+   * @param severeSlug a
+   *        {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.SevereSlugAnalyser}
+   *        object
+   * @return a double
+   */
+  public double getMeasuredValue(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
+    checkFlowRegime(fluid, pipe, severeSlug);
+    return slugValue;
+  }
+
+  /**
+   * <p>
    * getPredictedFlowRegime.
    * </p>
    *
@@ -696,25 +715,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
   /**
    * <p>
-   * getMeasuredValue.
-   * </p>
-   *
-   * @param fluid a
-   *        {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.FluidSevereSlug}
-   *        object
-   * @param pipe a {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.Pipe} object
-   * @param severeSlug a
-   *        {@link neqsim.processSimulation.measurementDevice.simpleFlowRegime.SevereSlugAnalyser}
-   *        object
-   * @return a double
-   */
-  public double getMeasuredValue(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
-    checkFlowRegime(fluid, pipe, severeSlug);
-    return slugValue;
-  }
-
-  /**
-   * <p>
    * getPredictedFlowRegime.
    * </p>
    *
@@ -740,7 +740,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    *
    * @param args an array of {@link java.lang.String} objects
    */
-  public static void main(String args[]) {
+  public static void main(String[] args) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 10);
     testSystem.addComponent("methane", 0.015, "MSm^3/day");
