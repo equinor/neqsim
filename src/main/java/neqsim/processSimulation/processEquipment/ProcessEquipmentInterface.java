@@ -26,7 +26,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
-   * getMechanicalDesign.
+   * Getter for the field <code>mechanicalDesign</code>.
    * </p>
    *
    * @return a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object

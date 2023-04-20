@@ -30,7 +30,7 @@ public class MeshSection extends SeparatorSection {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @return MecMeshSection
    */
   @Override

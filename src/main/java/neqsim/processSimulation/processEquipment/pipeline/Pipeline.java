@@ -93,13 +93,12 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   }
 
   /**
-   * <p>
-   * getMechanicalDesign.
-   * </p>
+   * {@inheritDoc}
    *
    * @return a {@link neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDesign}
    *         object
    */
+  @Override
   public PipelineMechanicalDesign getMechanicalDesign() {
     return new PipelineMechanicalDesign(this);
   }

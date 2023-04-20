@@ -92,14 +92,13 @@ public class GasTurbine extends TwoPortEquipment {
   }
 
   /**
-   * <p>
-   * getMechanicalDesign.
-   * </p>
+   * {@inheritDoc}
    *
    * @return a
    *         {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
    *         object
    */
+  @Override
   public CompressorMechanicalDesign getMechanicalDesign() {
     return new CompressorMechanicalDesign(this);
   }

@@ -135,6 +135,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    *         {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
    *         object
    */
+  @Override
   public CompressorMechanicalDesign getMechanicalDesign() {
     return new CompressorMechanicalDesign(this);
   }

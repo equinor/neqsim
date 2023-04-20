@@ -311,16 +311,12 @@ public class GORfitter extends TwoPortEquipment {
     this.GOR = gOR;
   }
 
-<<<<<<< HEAD
-
   /**
-   * @param gvf
-=======
-  /**
-   * <p>setGVF.</p>
+   * <p>
+   * setGVF.
+   * </p>
    *
    * @param gvf a double
->>>>>>> master
    */
   public void setGVF(double gvf) {
     fitAsGVF = true;
