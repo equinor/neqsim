@@ -30,7 +30,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   private StreamInterface outletStream = null;
   private double tolerance = 1e-4;
   private int priority = 100;
-  private double error = 1e10, errorFlow = 1e10;
+  private double error = 1e10;
+  private double errorFlow = 1e10;
   boolean firstTime = true;
   int iterations = 0;
   int maxIterations = 10;
@@ -358,16 +359,18 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * @return a double
    */
   public double massBalanceCheck2() {
-    double errorFlow = 0.0;
+    double sum_errorFlow = 0.0;
     if (mixedStream.getFlowRate("kg/sec") < 1.0) {
-      errorFlow +=
+      sum_errorFlow +=
           Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"));
     } else {
-      errorFlow +=
+      sum_errorFlow +=
           Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"))
               / mixedStream.getFlowRate("kg/sec") * 100.0;
     }
-    return Math.abs(errorFlow);
+
+    // TODO: Why abs of sum of abs
+    return Math.abs(sum_errorFlow);
   }
 
   /**
@@ -378,7 +381,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * @return a double
    */
   public double massBalanceCheck() {
-    double error = 0.0;
     // logger.info("flow rate new " +
     // mixedStream.getThermoSystem().getFlowRate("kg/hr"));
     // logger.info("temperature " +
@@ -389,16 +391,21 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         .getNumberOfComponents()) {
       return 10.0;
     }
+
+    double sum_error = 0.0;
     for (int i = 0; i < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
       // logger.info("x last " +
       // lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
       // logger.info("x new " +
       // mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx());
-      error += Math.abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx()
+
+      // TODO: A bit weird to sum the absolute errors?
+      sum_error += Math.abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx()
           - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
 
     }
-    return Math.abs(error);
+    // TODO: why abs of a sum of abs?
+    return Math.abs(sum_error);
   }
 
   /** {@inheritDoc} */
@@ -477,10 +484,10 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * Setter for the field <code>errorFlow</code>.
    * </p>
    *
-   * @param error the error to set
+   * @param errorFlow the error to set
    */
-  public void setErrorFlow(double error) {
-    this.errorFlow = error;
+  public void setErrorFlow(double errorFlow) {
+    this.errorFlow = errorFlow;
   }
 
   /**
@@ -519,7 +526,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    if (error < tolerance && errorFlow < flowAccuracy && iterations > 1) {
+    if (Math.abs(this.error) < tolerance && Math.abs(this.errorFlow) < flowAccuracy
+        && iterations > 1) {
       return true;
     } else {
       return false;
