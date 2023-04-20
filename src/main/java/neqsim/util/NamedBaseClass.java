@@ -19,21 +19,13 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
     this.name = name;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Getter for property name
-   */
+  /** {@inheritDoc} */
   @Override
   public String getName() {
     return this.name;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Setter for property name
-   */
+  /** {@inheritDoc} */
   @Override
   public void setName(String name) {
     this.name = name;

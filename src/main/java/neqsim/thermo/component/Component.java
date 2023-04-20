@@ -1832,9 +1832,7 @@ abstract class Component implements ComponentInterface {
     return componentType;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public double getHenryCoef(double temperature) {
     // System.out.println("henry " +

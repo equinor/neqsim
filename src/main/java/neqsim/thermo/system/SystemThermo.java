@@ -3092,9 +3092,9 @@ abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * @return a double
+   * getPdVtn. Todo: document
+   * 
+   * @return dpdv
    */
   public double getdPdVtn() {
     double dPdV = 0.0;
@@ -5144,13 +5144,7 @@ abstract class SystemThermo implements SystemInterface {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * addCharacterized.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
       double[] relativedensity) {
@@ -5162,13 +5156,7 @@ abstract class SystemThermo implements SystemInterface {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * addCharacterized.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
       double[] relativedensity, boolean lastIsPlusFraction, boolean lumpComponents,
@@ -5201,13 +5189,7 @@ abstract class SystemThermo implements SystemInterface {
     init(0);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * addOilFractions.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
       double[] relativedensity, boolean lastIsPlusFraction) {

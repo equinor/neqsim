@@ -103,6 +103,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    *
    * @return a {@link neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign} object
    */
+  @Override
   public AbsorberMechanicalDesign getMechanicalDesign() {
     return new AbsorberMechanicalDesign(this);
   }
