@@ -12,48 +12,48 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface SimulationInterface {
-    /**
-     * <p>
-     * getThermoSystem.
-     * </p>
-     *
-     * @return a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public SystemInterface getThermoSystem();
+  /**
+   * <p>
+   * getThermoSystem.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public SystemInterface getThermoSystem();
 
-    /**
-     * <p>
-     * setThermoSystem.
-     * </p>
-     *
-     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public void setThermoSystem(SystemInterface thermoSystem);
+  /**
+   * <p>
+   * setThermoSystem.
+   * </p>
+   *
+   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public void setThermoSystem(SystemInterface thermoSystem);
 
-    /**
-     * <p>
-     * getBaseThermoSystem.
-     * </p>
-     *
-     * @return a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public SystemInterface getBaseThermoSystem();
+  /**
+   * <p>
+   * getBaseThermoSystem.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public SystemInterface getBaseThermoSystem();
 
-    /**
-     * <p>
-     * run.
-     * </p>
-     */
-    public void run();
+  /**
+   * <p>
+   * run.
+   * </p>
+   */
+  public void run();
 
-    /**
-     * <p>
-     * getOptimizer.
-     * </p>
-     *
-     * @return a
-     *         {@link neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt}
-     *         object
-     */
-    public LevenbergMarquardt getOptimizer();
+  /**
+   * <p>
+   * getOptimizer.
+   * </p>
+   *
+   * @return a
+   *         {@link neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt}
+   *         object
+   */
+  public LevenbergMarquardt getOptimizer();
 }
