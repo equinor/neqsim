@@ -126,9 +126,9 @@
 				<version>3.3.0</version>
 				<configuration>
 					<archive>
-					  <manifest>
-						  <mainClass>neqsim.thermo.util.benchmark.TPflash_benchmark</mainClass>
-					  </manifest>
+						<manifest>
+							<mainClass>neqsim.thermo.util.benchmark.TPflash_benchmark</mainClass>
+						</manifest>
 					</archive>
 				</configuration>
 			</plugin>
