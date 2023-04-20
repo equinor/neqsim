@@ -43,11 +43,11 @@ public interface MixerInterface extends ProcessEquipmentInterface {
    * getOutStream.
    * </p>
    *
-   * @deprecated use {@link #getOutletStream} instead
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @deprecated use {@link #getOutletStream} instead
    */
   @Deprecated
-  default public StreamInterface getOutStream() {
+  public default StreamInterface getOutStream() {
     return getOutletStream();
   }
 
@@ -65,9 +65,11 @@ public interface MixerInterface extends ProcessEquipmentInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface getThermoSystem();
-  
+
   /**
-   * <p>removeInputStream.</p>
+   * <p>
+   * removeInputStream.
+   * </p>
    *
    * @param i a int
    */

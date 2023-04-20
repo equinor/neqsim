@@ -189,5 +189,4 @@ class ComponentSplitterTest {
     assertEquals(5.0, exportStream.getFlowRate("MSm3/day"), 1e-6);
     assertEquals(0.0, resycStream1.getFlowRate("MSm3/day"), 1e-6);
   }
-
 }

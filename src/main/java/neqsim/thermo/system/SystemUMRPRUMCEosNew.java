@@ -1,21 +1,12 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
-
 package neqsim.thermo.system;
-/**
- * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
- * 
- * @author Even Solbraa
- * @version
- */
 
 import neqsim.thermo.phase.PhasePrEosvolcor;
 
 /**
- * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
+ * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state.
+ *
+ * @author Even Solbraa
+ * @version
  */
 public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
 
@@ -55,5 +46,4 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
       phaseArray[i].useVolumeCorrection(false);
     }
   }
-
 }

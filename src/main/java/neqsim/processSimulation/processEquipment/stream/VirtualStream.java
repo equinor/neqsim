@@ -59,7 +59,6 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
     refStream = stream;
   }
 
-
   /**
    * <p>Setter for the field <code>flowRate</code>.</p>
    *
@@ -95,7 +94,6 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
     temperatureUnit = unit;
     setTemperature = true;
   }
-
 
   /**
    * <p>Setter for the field <code>pressure</code>.</p>

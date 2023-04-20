@@ -33,6 +33,5 @@ class SaturationPressureTest extends neqsim.NeqSimTest {
       SimulationInterface satPresSim = new SaturationPressure(tempSystem);
       satPresSim.run();
       assertEquals(satPresSim.getThermoSystem().getPressure(), 122.28338813781738, 0.1);
-  }
-
+    }
 }

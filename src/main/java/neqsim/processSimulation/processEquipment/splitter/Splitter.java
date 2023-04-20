@@ -33,8 +33,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   double[] flowRates;
   String flowUnit = "mole/sec";
 
-
-
   /**
    * <p>
    * Constructor for Splitter.

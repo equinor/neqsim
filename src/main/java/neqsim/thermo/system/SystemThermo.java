@@ -14,8 +14,6 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -2238,8 +2236,6 @@ abstract class SystemThermo implements SystemInterface {
     // getPhase(i) without try/catch
     return phaseArray[phaseIndex[i]] != null;
   }
-
-
 
   /** {@inheritDoc} */
   @Override
@@ -5079,13 +5075,11 @@ abstract class SystemThermo implements SystemInterface {
     this.forcePhaseTypes = forcePhaseTypes;
   }
 
-
   /** {@inheritDoc} */
   @Override
   public SystemProperties getProperties() {
     return new SystemProperties(this);
   }
-
 
   /**
    * Wrapper function for addComponent to set fluid type and specify mole fractions.
@@ -5220,7 +5214,6 @@ abstract class SystemThermo implements SystemInterface {
     addOilFractions(charNames, charFlowrate, molarMass, relativedensity, lastIsPlusFraction, true,
         12);
   }
-
 
   /** {@inheritDoc} */
   public double getIdealLiquidDensity(String unit) {
