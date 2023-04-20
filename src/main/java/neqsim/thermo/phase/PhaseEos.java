@@ -511,6 +511,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
+   * Get a.
+   *
    * @return double
    */
   double geta() {

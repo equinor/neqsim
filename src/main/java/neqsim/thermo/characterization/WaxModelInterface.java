@@ -65,6 +65,15 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
 
   /**
    * <p>
+   * setParameterWaxHeatOfFusion.
+   * </p>
+   *
+   * @param parameterWaxHeatOfFusion an array of {@link double} objects
+   */
+  public void setParameterWaxHeatOfFusion(double[] parameterWaxHeatOfFusion);
+
+  /**
+   * <p>
    * removeWax.
    * </p>
    */
@@ -78,15 +87,6 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
    * @return an array of {@link double} objects
    */
   public double[] getParameterWaxHeatOfFusion();
-
-  /**
-   * <p>
-   * setParameterWaxHeatOfFusion.
-   * </p>
-   *
-   * @param parameterWaxHeatOfFusion an array of {@link double} objects
-   */
-  public void setParameterWaxHeatOfFusion(double[] parameterWaxHeatOfFusion);
 
   /**
    * <p>
