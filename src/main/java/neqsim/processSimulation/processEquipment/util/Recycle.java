@@ -39,7 +39,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   double temperatureAccuracy = 1.0;
   double flowAccuracy = 1.0;
 
-
   /**
    * <p>Setter for the field <code>compositionAccuracy</code>.</p>
    *
@@ -389,7 +388,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       // mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx());
       error += Math.abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx()
           - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
-
 
     }
     return Math.abs(error);

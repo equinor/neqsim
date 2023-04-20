@@ -64,5 +64,4 @@ class CompressorPropertyProfileTest extends neqsim.NeqSimTest {
       assert (true);
     }
   }
-
 }

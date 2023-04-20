@@ -156,7 +156,5 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
     System.out.println("gas flow " + responsAl.gasExportRate);
     System.out.println("oil flow " + responsAl.oilExportRate);
     System.out.println("total flow " + responsAl.totalExportRate);
-
   }
-
 }

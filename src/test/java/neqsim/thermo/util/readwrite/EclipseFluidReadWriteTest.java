@@ -54,7 +54,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
-
   }
 
   @Test
@@ -75,5 +74,4 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
   }
-
 }

@@ -11,7 +11,6 @@ import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-
 /**
  * <p>
  * NeqSimDataBase class.
@@ -358,7 +357,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     // NeqSimDataBase.initDatabaseFromCSVfiles();
     NeqSimDataBase database = new NeqSimDataBase();
     NeqSimDataBase.updateTable("COMP", "/workspaces/neqsim/src/main/resources/data/COMP.csv");
-
 
     try (ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
       dataSet.next();

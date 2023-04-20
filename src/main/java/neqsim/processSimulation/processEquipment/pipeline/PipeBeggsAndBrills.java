@@ -159,7 +159,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * <p>Setter for the field <code>elevation</code>.</p>
+   * <p>
+   * Setter for the field <code>elevation</code>.
+   * </p>
    *
    * @param elevation a double
    */
@@ -169,7 +171,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * <p>Setter for the field <code>angle</code>.</p>
+   * <p>
+   * Setter for the field <code>angle</code>.
+   * </p>
    *
    * @param angle a double
    */
@@ -178,7 +182,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * <p>Setter for the field <code>numberOfIncrements</code>.</p>
+   * <p>
+   * Setter for the field <code>numberOfIncrements</code>.
+   * </p>
    *
    * @param numberOfIncrements a int
    */
@@ -199,7 +205,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * <p>convertSystemUnitToImperial.</p>
+   * <p>
+   * convertSystemUnitToImperial.
+   * </p>
    */
   public void convertSystemUnitToImperial() {
     insideDiameter = insideDiameter * 3.2808399;
@@ -210,7 +218,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * <p>convertSystemUnitToMetric.</p>
+   * <p>
+   * convertSystemUnitToMetric.
+   * </p>
    */
   public void convertSystemUnitToMetric() {
     insideDiameter = insideDiameter / 3.2808399;
@@ -223,7 +233,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * <p>calcFlowRegime.</p>
+   * <p>
+   * calcFlowRegime.
+   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -231,75 +243,72 @@ public class PipeBeggsAndBrills extends Pipeline {
 
     // Calc input volume fraction
     area = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
-    if (system.getNumberOfPhases() != 1){
+    if (system.getNumberOfPhases() != 1) {
       supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
       supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
       supMixVel = supLiquidVel + supGasVel;
       mixtureFroudeNumber = Math.pow(supMixVel, 2) / (32.174 * insideDiameter);
       inputVolumeFractionLiquid = supLiquidVel / supMixVel;
       /*
-      * Unlike the Gray or the Hagedorn and Brown correlations, the Beggs and Brill correlation
-      * requires that a flow pattern be determined. Since the original flow pattern map was created,
-      * it has been modified. We have used this modified flow pattern map for our calculations. The
-      * transition lines for the modified correlation are defined as follows
-      */
-    }
-      else{
-        if (system.hasPhaseType("gas")){
-          supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
-          supMixVel = supGasVel;
-          inputVolumeFractionLiquid = 0.0;
-          flowPattern = "Single Phase";
-        }
-        else{
-          supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
-          supMixVel = supLiquidVel;
-          inputVolumeFractionLiquid = 1.0;
-          flowPattern = "Single Phase";
-        }
-        System.out.println("Only one phase in the pipe");
-      }
-
-
-
-      double L1 = 316 * Math.pow(inputVolumeFractionLiquid, 0.302);
-      double L2 = 0.0009252 * Math.pow(inputVolumeFractionLiquid, -2.4684);
-      double L3 = 0.1 * Math.pow(inputVolumeFractionLiquid, -1.4516);
-      double L4 = 0.5 * Math.pow(inputVolumeFractionLiquid, -6.738);
-
-      if (flowPattern != "Single Phase"){
-         // The flow type can then be readily determined either from a representative flow pattern map or
-      // according to the following conditions
-        if ((inputVolumeFractionLiquid < 0.01 && mixtureFroudeNumber < L1)
-        || (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber < L2)) {
-      flowPattern = "SEGREGATED";
-    } else if ((inputVolumeFractionLiquid < 0.4 && inputVolumeFractionLiquid >= 0.01
-        && mixtureFroudeNumber <= L1 && mixtureFroudeNumber > L3)
-        || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber <= L4
-            && mixtureFroudeNumber > L3)) {
-      flowPattern = "INTERMITTENT";
-    } else if ((inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber >= L4)
-        || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber > L4)) {
-      flowPattern = "DISTRIBUTED";
-    } else if (mixtureFroudeNumber > L2 && mixtureFroudeNumber < L3) {
-      flowPattern = "TRANSITION";
-    } else if (inputVolumeFractionLiquid < 0.1 || inputVolumeFractionLiquid > 0.9) {
-      flowPattern = "Single Phase";
+       * Unlike the Gray or the Hagedorn and Brown correlations, the Beggs and Brill correlation
+       * requires that a flow pattern be determined. Since the original flow pattern map was
+       * created, it has been modified. We have used this modified flow pattern map for our
+       * calculations. The transition lines for the modified correlation are defined as follows
+       */
     } else {
-      logger.debug("Flow regime is not found");
-  }
-
-
+      if (system.hasPhaseType("gas")) {
+        supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
+        supMixVel = supGasVel;
+        inputVolumeFractionLiquid = 0.0;
+        flowPattern = "Single Phase";
+      } else {
+        supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
+        supMixVel = supLiquidVel;
+        inputVolumeFractionLiquid = 1.0;
+        flowPattern = "Single Phase";
       }
-     
-      A = (L3 - mixtureFroudeNumber) / (L3 - L2);
+      System.out.println("Only one phase in the pipe");
+    }
+
+    double L1 = 316 * Math.pow(inputVolumeFractionLiquid, 0.302);
+    double L2 = 0.0009252 * Math.pow(inputVolumeFractionLiquid, -2.4684);
+    double L3 = 0.1 * Math.pow(inputVolumeFractionLiquid, -1.4516);
+    double L4 = 0.5 * Math.pow(inputVolumeFractionLiquid, -6.738);
+
+    if (flowPattern != "Single Phase") {
+      // The flow type can then be readily determined either from a representative flow pattern map
+      // or
+      // according to the following conditions
+      if ((inputVolumeFractionLiquid < 0.01 && mixtureFroudeNumber < L1)
+          || (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber < L2)) {
+        flowPattern = "SEGREGATED";
+      } else if ((inputVolumeFractionLiquid < 0.4 && inputVolumeFractionLiquid >= 0.01
+          && mixtureFroudeNumber <= L1 && mixtureFroudeNumber > L3)
+          || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber <= L4
+              && mixtureFroudeNumber > L3)) {
+        flowPattern = "INTERMITTENT";
+      } else if ((inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber >= L4)
+          || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber > L4)) {
+        flowPattern = "DISTRIBUTED";
+      } else if (mixtureFroudeNumber > L2 && mixtureFroudeNumber < L3) {
+        flowPattern = "TRANSITION";
+      } else if (inputVolumeFractionLiquid < 0.1 || inputVolumeFractionLiquid > 0.9) {
+        flowPattern = "Single Phase";
+      } else {
+        logger.debug("Flow regime is not found");
+      }
+
+    }
+
+    A = (L3 - mixtureFroudeNumber) / (L3 - L2);
 
     return flowPattern;
   }
 
-
   /**
-   * <p>calcHydrostaticPressureDifference.</p>
+   * <p>
+   * calcHydrostaticPressureDifference.
+   * </p>
    *
    * @return a double
    */
@@ -384,81 +393,73 @@ public class PipeBeggsAndBrills extends Pipeline {
       El = BThetta * El;
 
       mixtureDensity =
-        system.getPhase(1).getDensity("lb/ft3") * El + system.getPhase(0).getDensity() * (1 - El);
-      }
-      else{
-      if (system.hasPhaseType("gas")){
-        mixtureDensity =
-        system.getPhase(0).getDensity("lb/ft3");
-      }
-      else{
-        mixtureDensity =
-        system.getPhase(1).getDensity("lb/ft3");
+          system.getPhase(1).getDensity("lb/ft3") * El + system.getPhase(0).getDensity() * (1 - El);
+    } else {
+      if (system.hasPhaseType("gas")) {
+        mixtureDensity = system.getPhase(0).getDensity("lb/ft3");
+      } else {
+        mixtureDensity = system.getPhase(1).getDensity("lb/ft3");
       }
     }
-    
-      
-      
-    hydrostaticPressureDrop = mixtureDensity * 32.2 * elevation;
 
+    hydrostaticPressureDrop = mixtureDensity * 32.2 * elevation;
     return hydrostaticPressureDrop;
   }
 
   /**
-   * <p>calcFrictionPressureLoss.</p>
+   * <p>
+   * calcFrictionPressureLoss.
+   * </p>
    *
    * @return a double
    */
   public double calcFrictionPressureLoss() {
     double S = 0;
-
-    double rhoNoSlip =0;
-  
+    double rhoNoSlip = 0;
     double muNoSlip = 0;
 
     if (system.getNumberOfPhases() != 1) {
-      if (flowPattern != "Single Phase"){
+      if (flowPattern != "Single Phase") {
         double y = Math.log(inputVolumeFractionLiquid / (Math.pow(El, 2)));
         S = y / (-0.0523 + 3.18 * y - 0.872 * Math.pow(y, 2.0) + 0.01853 * Math.pow(y, 4));
-      rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
-      + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-      muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
-      + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
-      }
-      else{
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
-        + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
+            + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
         muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
-        + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+            + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+      } else {
+        rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
+            + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
+        muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
+            + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
       }
-      }
-
-    else{
-      if (system.hasPhaseType("gas")){
+    } else {
+      if (system.hasPhaseType("gas")) {
         rhoNoSlip = (system.getPhase(0).getDensity("lb/ft3"));
         muNoSlip = (system.getPhase(0).getViscosity("cP"));
-      }
-      else{
+      } else {
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3"));
         muNoSlip = (system.getPhase(1).getViscosity("cP"));
       }
     }
 
-    double ReNoSlip = rhoNoSlip * supMixVel * insideDiameter*(16/(3.28*3.28)) / (0.001*muNoSlip);
+    double ReNoSlip =
+        rhoNoSlip * supMixVel * insideDiameter * (16 / (3.28 * 3.28)) / (0.001 * muNoSlip);
 
     double E = pipeWallRoughness / insideDiameter;
 
     // Haaland equation
-    double frictionFactor = Math.pow(1 / (-1.8 * Math.log10((E / 3.7) + (6.9 / ReNoSlip))), 2); 
+    double frictionFactor = Math.pow(1 / (-1.8 * Math.log10((E / 3.7) + (6.9 / ReNoSlip))), 2);
     double frictionTwoPhase = frictionFactor * Math.exp(S);
 
-    frictionPressureLoss = frictionTwoPhase * Math.pow(supMixVel, 2) * rhoNoSlip * (length)
-        / (2*insideDiameter);
+    frictionPressureLoss =
+        frictionTwoPhase * Math.pow(supMixVel, 2) * rhoNoSlip * (length) / (2 * insideDiameter);
     return frictionPressureLoss;
   }
 
   /**
-   * <p>calcPressureDrop.</p>
+   * <p>
+   * calcPressureDrop.
+   * </p>
    *
    * @return a double
    */
@@ -472,7 +473,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     return pressureDrop;
   }
 
-
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -483,15 +483,14 @@ public class PipeBeggsAndBrills extends Pipeline {
     system.initProperties();
     double enthalpyInlet = system.getEnthalpy();
     for (int i = 1; i <= numberOfIncrements; i++) {
-      System.out.println(system.getNumberOfPhases());  
+      System.out.println(system.getNumberOfPhases());
       System.out.println(system.hasPhaseType("gas"));
-      System.out.println(system.hasPhaseType("oil")); 
+      System.out.println(system.hasPhaseType("oil"));
       System.out.println(system.getFlowRate("kg/hr"));
       System.out.println(system.getComponent("methane").getz());
-      //System.out.println(system.getComponent("n-heptane").getz());
+      // System.out.println(system.getComponent("n-heptane").getz());
       inletPressure = system.getPressure();
       pressureDrop = calcPressureDrop();
-
 
       pressureOut = inletPressure - pressureDrop;
       system.setPressure(pressureOut);
@@ -511,7 +510,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * <p>getSuperficialVelocity.</p>
+   * <p>
+   * getSuperficialVelocity.
+   * </p>
    *
    * @return a double
    */
@@ -565,7 +566,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * <p>getFlowRegime.</p>
+   * <p>
+   * getFlowRegime.
+   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -583,8 +586,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   public void setDiameter(double diameter) {
     insideDiameter = diameter;
   }
-
-
 
   /**
    * <p>
@@ -609,7 +610,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * <p>Getter for the field <code>pressureDrop</code>.</p>
+   * <p>
+   * Getter for the field <code>pressureDrop</code>.
+   * </p>
    *
    * @return a double
    */
@@ -675,14 +678,11 @@ public class PipeBeggsAndBrills extends Pipeline {
     pipe.setAngle(0);
     pipe.setNumberOfIncrements(2);
 
-
-
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
     operations.run();
-
 
   }
 

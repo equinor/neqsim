@@ -833,9 +833,7 @@ abstract class Component implements ComponentInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * Units in m*e10
+   * {@inheritDoc} Units in m*e10
    */
   @Override
   public double getLennardJonesMolecularDiameter() {
@@ -855,11 +853,9 @@ abstract class Component implements ComponentInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure comonent solid vapor pressure (bar) with the C-C equation, based on Hsub
-   * Should only be used in the valid temperature range below the triple point (specified in
-   * component database).
+   * {@inheritDoc} Calculates the pure comonent solid vapor pressure (bar) with the C-C equation,
+   * based on Hsub Should only be used in the valid temperature range below the triple point
+   * (specified in component database).
    */
   @Override
   public double getCCsolidVaporPressure(double temperature) {
@@ -868,11 +864,9 @@ abstract class Component implements ComponentInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * Calculates the DT of pure comonent solid vapor pressure (bar) with the C-C equation, based on
-   * Hsub Should only be used in the valid temperature range below the triple point (specified in
-   * component database).
+   * {@inheritDoc} Calculates the DT of pure comonent solid vapor pressure (bar) with the C-C
+   * equation, based on Hsub Should only be used in the valid temperature range below the triple
+   * point (specified in component database).
    */
   @Override
   public double getCCsolidVaporPressuredT(double temperature) {
@@ -881,10 +875,8 @@ abstract class Component implements ComponentInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure component solid density in kg/liter Should only be used in the valid
-   * temperature range (specified in component database).
+   * {@inheritDoc} Calculates the pure component solid density in kg/liter Should only be used in
+   * the valid temperature range (specified in component database).
    */
   @Override
   public double getPureComponentSolidDensity(double temperature) {
@@ -896,11 +888,9 @@ abstract class Component implements ComponentInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure component liquid density in kg/liter Should only be used in the valid
-   * temperature range (specified in component database). This method seems to give bad results at
-   * the moment
+   * {@inheritDoc} Calculates the pure component liquid density in kg/liter Should only be used in
+   * the valid temperature range (specified in component database). This method seems to give bad
+   * results at the moment
    */
   @Override
   public double getPureComponentLiquidDensity(double temperature) {
@@ -1158,18 +1148,6 @@ abstract class Component implements ComponentInterface {
     return voli;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public final double getChemicalPotentialdT(PhaseInterface phase) {
-    return -getEntropy(phase.getTemperature(), phase.getPressure()) / numberOfMolesInPhase;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final double getChemicalPotentialdV(PhaseInterface phase) {
-    return getChemicalPotentialdP() * phase.getdPdVTn();
-  }
-
   /**
    * <p>
    * getChemicalPotentialdP.
@@ -1185,6 +1163,18 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public final double getChemicalPotentialdT(PhaseInterface phase) {
+    return -getEntropy(phase.getTemperature(), phase.getPressure()) / numberOfMolesInPhase;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final double getChemicalPotentialdV(PhaseInterface phase) {
+    return getChemicalPotentialdP() * phase.getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setComponentNumber(int numb) {
     componentNumber = numb;
   }
@@ -1193,33 +1183,14 @@ abstract class Component implements ComponentInterface {
   @Override
   public double getAntoineVaporPressure(double temp) {
     if (antoineLiqVapPresType.equals("pow10")) {
-      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15))); // equation
-                                                                                 // and
-                                                                                 // parameter
-                                                                                 // from
-                                                                                 // properties
-                                                                                 // o liquids
-                                                                                 // and
-                                                                                 // gases
-                                                                                 // (poling
-                                                                                 // 5th ed)
+      // equation and parameter from properties o and gases (poling 5th ed)
+      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15)));
     } else if (antoineLiqVapPresType.equals("pow10KPa")) {
-      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC)))/1.0e5; // equation
-                                                                                 // and
-                                                                                 // parameter
-                                                                                 // from
-                                                                                 // properties
-                                                                                 // o liquids
-                                                                                 // and
-                                                                                 // gases
-                                                                                 // (poling
-                                                                                 // 5th ed)
-    }
-    else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
-      return Math.exp(AntoineA - (AntoineB / (temp + AntoineC))); // equation and parameter
-                                                                  // from properties o
-                                                                  // liquids and gases (poling
-                                                                  // 5th ed)
+      // equation and parameter from properties o and gases (poling 5th ed)
+      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC))) / 1.0e5;
+    } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
+      // equation and parameter from properties o and gases (poling 5th ed)
+      return Math.exp(AntoineA - (AntoineB / (temp + AntoineC)));
     } else if (Math.abs(AntoineE) > 1e-12) {
       return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp)
           + AntoineD * Math.pow(temp, AntoineE)) / 100000;
@@ -1879,9 +1850,8 @@ abstract class Component implements ComponentInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT + C4*T
+   * {@inheritDoc} Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT +
+   * C4*T
    */
   @Override
   public double getHenryCoef(double temperature) {
@@ -2310,11 +2280,9 @@ abstract class Component implements ComponentInterface {
       return numberOfMolesInPhase * getMolarMass() * 60.0;
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMolesInPhase * getMolarMass() * 3600.0;
-    }
-      else if (flowunit.equals("tonnes/year")){
-      return numberOfMolesInPhase * getMolarMass()*3600.0*24.0*365.0/1000.0;
-    }
-      else if (flowunit.equals("m3/hr")) {
+    } else if (flowunit.equals("tonnes/year")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 365.0 / 1000.0;
+    } else if (flowunit.equals("m3/hr")) {
       return getVoli() / 1.0e5 * 3600.0;
     } else if (flowunit.equals("m3/min")) {
       return getVoli() / 1.0e5 * 60.0;
@@ -2330,8 +2298,6 @@ abstract class Component implements ComponentInterface {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
   }
-
-
 
   /** {@inheritDoc} */
   @Override
@@ -2352,7 +2318,7 @@ abstract class Component implements ComponentInterface {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
   }
-  
+
 
   /**
    * Indexed getter for property matiascopemanParamsUMRPRU.
