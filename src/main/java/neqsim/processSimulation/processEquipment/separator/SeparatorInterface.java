@@ -18,21 +18,21 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface SeparatorInterface extends SimulationInterface {
-    /**
-     * <p>
-     * getThermoSystem.
-     * </p>
-     *
-     * @return a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public SystemInterface getThermoSystem();
+  /**
+   * <p>
+   * getThermoSystem.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public SystemInterface getThermoSystem();
 
-    /**
-     * <p>
-     * setInternalDiameter.
-     * </p>
-     *
-     * @param diam a double
-     */
-    public void setInternalDiameter(double diam);
+  /**
+   * <p>
+   * setInternalDiameter.
+   * </p>
+   *
+   * @param diam a double
+   */
+  public void setInternalDiameter(double diam);
 }

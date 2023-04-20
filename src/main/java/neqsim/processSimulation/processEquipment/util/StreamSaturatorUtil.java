@@ -47,12 +47,11 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>inletStream</code>.
    * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
    */
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
@@ -114,10 +113,12 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     this.multiPhase = multiPhase;
   }
 
-
-
   /**
-   * @param approachToSaturation
+   * <p>
+   * setApprachToSaturation.
+   * </p>
+   *
+   * @param approachToSaturation a double
    */
   public void setApprachToSaturation(double approachToSaturation) {
     this.approachToSaturation = approachToSaturation;

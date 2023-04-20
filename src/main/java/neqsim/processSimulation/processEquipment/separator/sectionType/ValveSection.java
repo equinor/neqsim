@@ -27,10 +27,14 @@ public class ValveSection extends SeparatorSection {
     super(name, type, sep);
   }
 
-
   /**
-   * @return DistillationTraySection
+   * {@inheritDoc}
+   * 
+   * @return a
+   *         {@link neqsim.processSimulation.mechanicalDesign.separator.sectionType.DistillationTraySection}
+   *         object
    */
+  @Override
   public DistillationTraySection getMechanicalDesign() {
     return new DistillationTraySection(this);
   }

@@ -307,8 +307,13 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     return 1470.0;
   }
 
-  // return speed of JT coefficient of water at K/bar (assumed constant)
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Return speed of JT coefficient of water at K/bar (assumed constant) -0.0125
+   * </p>
+   */
   @Override
   public double getJouleThomsonCoefficient() {
     return -0.125 / 10.0;
@@ -317,7 +322,9 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * note: at the moment return density of water (997 kg/m3)
+   * </p>
    */
   @Override
   public double getDensity() {

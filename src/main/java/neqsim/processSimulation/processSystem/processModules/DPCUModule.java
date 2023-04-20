@@ -46,6 +46,11 @@ public class DPCUModule extends ProcessModuleBaseClass {
   Mixer mixer;
   DistillationColumn distColumn;
 
+  /**
+   * <p>Constructor for DPCUModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public DPCUModule(String name) {
     super(name);
   }

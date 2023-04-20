@@ -60,6 +60,11 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   double reboilerTemperature = 273.15 + 204.0;
   double regenerationPressure = 1.4;
 
+  /**
+   * <p>Constructor for GlycolDehydrationlModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public GlycolDehydrationlModule(String name) {
     super(name);
   }

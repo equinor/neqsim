@@ -28,7 +28,7 @@ public class CharCoalFilter extends Filter {
 
     /**
      * Constructor for CharCoalFilter.
-     * 
+     *
      * @param name name of filter
      * @param inStream input stream
      */

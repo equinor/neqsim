@@ -1,5 +1,7 @@
 package neqsim.processSimulation.measurementDevice;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -13,6 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  */
 class WellAllocatorTest extends neqsim.NeqSimTest {
+  static Logger logger = LogManager.getLogger(WellAllocatorTest.class);
 
   /**
    * @throws java.lang.Exception
@@ -78,12 +81,11 @@ class WellAllocatorTest extends neqsim.NeqSimTest {
 
     WellAllocatorResponse responsAl = new WellAllocatorResponse(wellAlloc);
 
-    System.out.println("name " + responsAl.name);
-    System.out.println("gas flow " + responsAl.gasExportRate);
-    System.out.println("oil flow " + responsAl.oilExportRate);
-    System.out.println("total flow " + responsAl.totalExportRate);
+    logger.info("name " + responsAl.name);
+    logger.info("gas flow " + responsAl.gasExportRate);
+    logger.info("oil flow " + responsAl.oilExportRate);
+    logger.info("total flow " + responsAl.totalExportRate);
     // stream_1.displayResult();
     // stream_1.displayResult();
   }
-
 }

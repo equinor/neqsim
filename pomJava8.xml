@@ -8,7 +8,7 @@
 	<version>${revision}${sha1}${changelist}-Java8</version>
 
 	<properties>
-		<revision>2.4.0</revision>
+		<revision>2.4.6</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1/>
@@ -34,10 +34,15 @@
 			<version>2.19.0</version>
 		</dependency>
 		<dependency>
-		    <groupId>org.junit.jupiter</groupId>
-		    <artifactId>junit-jupiter</artifactId>
-		    <version>5.9.1</version>
-		    <scope>test</scope>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+			<version>1.4.20</version>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.9.1</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>colt</groupId>
@@ -55,15 +60,11 @@
 			<artifactId>commons-math3</artifactId>
 			<version>3.6.1</version>
 		</dependency>
-    <dependency>
-        <groupId>org.apache.derby</groupId>
-        <artifactId>derby</artifactId>
-        <version>10.14.2.0</version>
-    </dependency>
+		<!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
 		<dependency>
- 			<groupId>org.apache.derby</groupId>
-			<artifactId>derbytools</artifactId>
-			<version>10.15.2.0</version>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>2.1.214</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ejml</groupId>
@@ -124,11 +125,11 @@
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>3.3.0</version>
 				<configuration>
-	  				<archive>
+					<archive>
 						<manifest>
 							<mainClass>neqsim.thermo.util.benchmark.TPflash_benchmark</mainClass>
 						</manifest>
-	  				</archive>
+					</archive>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -169,13 +170,14 @@
 				</executions>
 			</plugin>
 			<plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.10.1</version>
-        <configuration>
-          <release>8</release>
-        </configuration>
-      </plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.10.1</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>

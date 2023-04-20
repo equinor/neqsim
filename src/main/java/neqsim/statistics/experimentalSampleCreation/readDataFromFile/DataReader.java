@@ -75,7 +75,7 @@ public class DataReader implements DataReaderInterface {
    * Getter for the field <code>sampleObjectList</code>.
    * </p>
    *
-   * @return a {@link java.util.ArrayList} of {@link DataObject}
+   * @return a {@link java.util.ArrayList} of {@link neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataObject}
    */
   public ArrayList<DataObject> getSampleObjectList() {
     return sampleObjectList;

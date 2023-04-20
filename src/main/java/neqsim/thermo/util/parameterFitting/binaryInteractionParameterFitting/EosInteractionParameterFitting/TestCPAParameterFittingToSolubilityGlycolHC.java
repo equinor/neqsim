@@ -87,7 +87,6 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
       logger.error("database error" + ex);
     }
 
-
     try (ResultSet dataSet = database.getResultSet(
         "SELECT * FROM HCGlycolLLdata WHERE comp1='n-heptane' AND comp2='MEG' AND reference='Lindboe2002' ORDER BY Temperature,Pressure")) {
       int p = 0;

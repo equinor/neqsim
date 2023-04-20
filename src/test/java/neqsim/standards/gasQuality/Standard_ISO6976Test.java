@@ -158,13 +158,12 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
     // standard.display("test");
     /*
      * StandardInterface standardUK = new UKspecifications_ICF_SI(testSystem);
-     * standardUK.calculate(); System.out.println("ICF " +
+     * standardUK.calculate(); logger.info("ICF " +
      * standardUK.getValue("IncompleteCombustionFactor", ""));
      * 
-     * System.out.println("HID " + testSystem.getPhase(0).getComponent("methane").getHID(273.15 -
-     * 150.0)); System.out.println("Hres " +
-     * testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 - 150.0));
+     * logger.info("HID " + testSystem.getPhase(0).getComponent("methane").getHID(273.15 - 150.0));
+     * logger.info("Hres " + testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 -
+     * 150.0));
      */
   }
-
 }

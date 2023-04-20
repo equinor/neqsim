@@ -85,21 +85,21 @@ public interface StandardInterface {
 
   /**
    * <p>
-   * getName.
-   * </p>
-   *
-   * @return a {@link java.lang.String} object
-   */
-  public String getName();
-
-  /**
-   * <p>
    * setSalesContract.
    * </p>
    *
    * @param salesContract a {@link neqsim.standards.salesContract.ContractInterface} object
    */
   public void setSalesContract(ContractInterface salesContract);
+
+  /**
+   * <p>
+   * getName.
+   * </p>
+   *
+   * @return a {@link java.lang.String} object
+   */
+  public String getName();
 
   /**
    * <p>

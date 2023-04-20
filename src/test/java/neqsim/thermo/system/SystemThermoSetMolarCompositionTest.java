@@ -1,12 +1,15 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest{
     SystemInterface sys;
+    static Logger logger = LogManager.getLogger(SystemThermoSetMolarCompositionTest.class);
 
     @BeforeEach
     void setup() {
@@ -16,7 +19,6 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest{
         sys.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.88);
     }
 
-
     @Test
     void testSetMolarComposition() {
         sys.setMolarComposition(new double[] { 1, 1.5, 1.75 });
@@ -25,7 +27,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest{
         Assertions.assertEquals(0.35294117647058826, molarComposition[1], 0.0000001);
         Assertions.assertEquals(0.411764705882353, molarComposition[2], 0.0000001);
 
-        System.out.println(sys);
+        logger.info(sys);
     }
 
     @Test
@@ -37,7 +39,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest{
         Assertions.assertEquals(0.3999998435802131, molarComposition[0], 0.0000001);
         Assertions.assertEquals(0.17255098326920942, molarComposition[1], 0.0000001);
         Assertions.assertEquals(0.1310217963111427, molarComposition[2], 0.0000001);
-        System.out.println(sys);
+        logger.info(sys);
     }
 
     @Test
@@ -48,7 +50,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest{
         Assertions.assertEquals(0.39999999999999997, molarComposition[0], 0.0000001);
         Assertions.assertEquals(0.6, molarComposition[1], 0.0000001);
         Assertions.assertEquals(0.0, molarComposition[2], 0.0000001);
-        System.out.println(sys);
+        logger.info(sys);
     }
 
     @Test

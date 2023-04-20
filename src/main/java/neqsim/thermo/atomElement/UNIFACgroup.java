@@ -216,6 +216,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     this.groupName = groupName;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int compareTo(UNIFACgroup o) {
     if (o.getSubGroup() < getSubGroup()) {

@@ -27,10 +27,14 @@ public class NozzleSection extends SeparatorSection {
     super(name, type, sep);
   }
 
-
   /**
-   * @return MechNozzleSection
+   * {@inheritDoc}
+   *
+   * @return a
+   *         {@link neqsim.processSimulation.mechanicalDesign.separator.sectionType.MechNozzleSection}
+   *         object
    */
+  @Override
   public MechNozzleSection getMechanicalDesign() {
     return new MechNozzleSection(this);
   }

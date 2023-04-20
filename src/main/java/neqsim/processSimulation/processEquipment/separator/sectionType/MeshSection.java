@@ -29,8 +29,11 @@ public class MeshSection extends SeparatorSection {
 
 
   /**
+   * {@inheritDoc}
+   * 
    * @return MecMeshSection
    */
+  @Override
   public MecMeshSection getMechanicalDesign() {
     return new MecMeshSection(this);
   }

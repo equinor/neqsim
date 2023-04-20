@@ -14,6 +14,9 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
 public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for InterphaseStirredCellFlow.</p>
+     */
     public InterphaseStirredCellFlow() {}
 
     /**

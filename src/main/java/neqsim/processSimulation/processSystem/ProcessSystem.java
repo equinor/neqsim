@@ -467,12 +467,11 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * runTransient.
    * </p>
-   *
-   * @param dt Delta time [s]
-   * @param id Calculation identifier
    */
   @Override
   public void runTransient(double dt, UUID id) {
@@ -494,7 +493,6 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     setCalculationIdentifier(id);
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -704,11 +702,11 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>name</code>.
    * </p>
-   *
-   * @param name the name to set
    */
   public void setName(String name) {
     this.name = name;

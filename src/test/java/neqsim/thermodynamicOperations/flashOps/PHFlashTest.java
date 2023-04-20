@@ -45,5 +45,4 @@ class PHFlashTest {
     testOps.PHflash(enthalpy);
     assertEquals(enthalpy, testSystem.getEnthalpy(), 1e-2);
   }
-
 }

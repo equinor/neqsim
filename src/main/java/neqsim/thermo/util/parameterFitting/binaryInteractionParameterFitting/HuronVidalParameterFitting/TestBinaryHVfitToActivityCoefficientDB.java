@@ -75,7 +75,6 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
       logger.error("database error" + ex);
     }
 
-
     try (ResultSet dataSet = database.getResultSet(
         "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MDEA' ORDER BY FreezingTemperature")) {
       while (!dataSet.next()) {

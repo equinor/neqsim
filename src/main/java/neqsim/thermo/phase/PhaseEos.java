@@ -510,17 +510,19 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         / numberOfMolesInPhase;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return calcB(phase, temperature, pressure, numbcomp) / numberOfMolesInPhase;
-  }
-
   /**
+   * Get a.
+   *
    * @return double
    */
   double geta() {
     return loc_A / numberOfMolesInPhase / numberOfMolesInPhase;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getA() {
+    return loc_A;
   }
 
   /**
@@ -532,8 +534,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getA() {
-    return loc_A;
+  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    return calcB(phase, temperature, pressure, numbcomp) / numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
@@ -609,18 +611,16 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
+   * </p>
    */
   @Override
   public double getKappa() {
     return -getCp() / getCv() * getVolume() / pressure * getdPdVTn();
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * method to get the Joule Thomson Coefficient of a phase
-   */
+  /** {@inheritDoc} */
   @Override
   public double getJouleThomsonCoefficient() {
     return -1.0 / getCp()
@@ -991,11 +991,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         - getNumberOfMolesInPhase() * R * temperature / Math.pow(getTotalVolume(), 2.0);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * method to get the speed of sound of a phase
-   */
+  /** {@inheritDoc} */
   @Override
   public double getSoundSpeed() {
     double bs = -1.0 / getVolume() * getCv() / getCp() / getdPdVTn();
@@ -1282,4 +1278,6 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(),
         temperature, pressure);
   }
+
+  
 }

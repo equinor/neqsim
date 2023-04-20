@@ -25,6 +25,9 @@ public class ChemicalEquilibrium extends BaseOperation {
 
   SystemInterface system;
 
+  /**
+   * <p>Constructor for ChemicalEquilibrium.</p>
+   */
   public ChemicalEquilibrium() {}
 
   /**

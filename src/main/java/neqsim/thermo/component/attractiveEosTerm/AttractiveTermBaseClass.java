@@ -23,8 +23,8 @@ public class AttractiveTermBaseClass implements AttractiveTermInterface {
 
   private ComponentEosInterface component = null;
   protected double m;
-  protected double parameters[] = new double[3];
-  protected double parametersSolid[] = new double[3];
+  protected double[] parameters = new double[3];
+  protected double[] parametersSolid = new double[3];
 
   static Logger logger = LogManager.getLogger(AttractiveTermBaseClass.class);
 
@@ -123,18 +123,19 @@ public class AttractiveTermBaseClass implements AttractiveTermInterface {
   }
 
   /**
-   * @return ComponentEosInterface
+   * Get component.
+   *
+   * @return ComponentEosInterface.
    */
   ComponentEosInterface getComponent() {
     return component;
   }
 
   /**
-   * @param component input components
-   * 
-   * 
+   * Set Component.
+   *
+   * @param component input components.
    */
-
   void setComponent(ComponentEosInterface component) {
     this.component = component;
   }

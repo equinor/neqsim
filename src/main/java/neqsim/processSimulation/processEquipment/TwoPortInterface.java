@@ -4,6 +4,9 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  * Interface for processEquipment with one inlet and one outlet.
+ *
+ * @author ASMF
+ * @version $Id: $Id
  */
 public interface TwoPortInterface {
   /**

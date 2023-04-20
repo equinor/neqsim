@@ -6,12 +6,16 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  * This class defines a thermodynamic system using the Kent Eisenberg model.
- * 
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemKentEisenberg extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for SystemKentEisenberg.</p>
+   */
   public SystemKentEisenberg() {
     super();
     modelName = "Kent Eisenberg-model";
