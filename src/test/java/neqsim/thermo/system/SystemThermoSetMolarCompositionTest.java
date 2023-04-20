@@ -11,7 +11,6 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest{
     SystemInterface sys;
     static Logger logger = LogManager.getLogger(SystemThermoSetMolarCompositionTest.class);
 
-
     @BeforeEach
     void setup() {
         sys = new SystemSrkEos(298.0, 300.0);
@@ -19,7 +18,6 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest{
         sys.addTBPfraction("C7", 1.06, 92.2 / 1000.0, 0.7324);
         sys.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.88);
     }
-
 
     @Test
     void testSetMolarComposition() {

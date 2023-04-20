@@ -191,7 +191,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public double getIsobaricThermalExpansivity();
 
-
   /**
    * <p>
    * getdrhodN.

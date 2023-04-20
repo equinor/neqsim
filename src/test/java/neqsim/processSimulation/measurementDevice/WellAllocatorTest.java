@@ -88,5 +88,4 @@ class WellAllocatorTest extends neqsim.NeqSimTest {
     // stream_1.displayResult();
     // stream_1.displayResult();
   }
-
 }

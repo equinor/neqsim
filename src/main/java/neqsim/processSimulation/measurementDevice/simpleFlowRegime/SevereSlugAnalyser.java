@@ -24,7 +24,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   SevereSlugAnalyser severeSlug;
   Stream streamS;
 
-
   final double gravAcc = neqsim.thermo.ThermodynamicConstantsInterface.gravity;
 
   // Severe slug problem
@@ -97,7 +96,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   double holdUp;
   double function2;
   double function1;
-
 
   double iter;
 
@@ -202,7 +200,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     this.setSimulationTime(simulationTime);
     this.setNumberOfTimeSteps(numberOfTimeSteps);
   }
-
 
   // Encapsulation
   // 1. Superficial Liquid Velocity Encapsulation
@@ -496,21 +493,19 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
     deltaT = 0.001; // severeSlug.getSimulationTime() / severeSlug.getNumberOfTimeSteps();
     mixDensity = fluid.getLiqDensity();
+    // Initial condition
     pressure =
-        severeSlug.getOutletPressure() + mixDensity * severeSlug.gravAcc * pipe.getRightLength(); // Initial
-                                                                                                  // condition
+        severeSlug.getOutletPressure() + mixDensity * severeSlug.gravAcc * pipe.getRightLength();
     Um = severeSlug.getSuperficialGasVelocity();
     holdUp = severeSlug.stratifiedHoldUp(fluid, pipe, severeSlug);
-    driftVel = 0.35 * Math.sqrt(gravAcc * pipe.getInternalDiameter()); // Drift velocity for the
-                                                                       // vertical flows
+    // Drift velocity for the vertical flows
+    driftVel = 0.35 * Math.sqrt(gravAcc * pipe.getInternalDiameter());
     alfaLeft = 1 - holdUp;
 
-    for (int i = 0; i < severeSlug.numberOfTimeSteps; i++)
-
-    {
+    for (int i = 0; i < severeSlug.numberOfTimeSteps; i++) {
       slugLength = -z + pipe.getRightLength() * (1 - alfaRiser); // Slug Length
-      Re = fluid.getLiqDensity() * Math.abs(Um) * pipe.getInternalDiameter() / fluid.getliqVisc(); // Reynolds
-                                                                                                   // number
+      // Reynolds number
+      Re = fluid.getLiqDensity() * Math.abs(Um) * pipe.getInternalDiameter() / fluid.getliqVisc();
       lambda = Math.max(0.34 * Math.pow(Re, -0.25), 64 / Re); // friction factor
       friction = 0.5 * lambda * fluid.getLiqDensity() * Um * Math.abs(Um) * slugLength
           / pipe.getInternalDiameter(); // frictional pressure loss
@@ -583,7 +578,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       resLiqHoldUpRiser[i] = (1 - alfaRiser);
       resLiqHeight[i] = z;
       resMixVelocity[i] = Um;
-
     }
   }
 
@@ -764,7 +758,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
   }
 
-
   // To be implemented
   // public void buildFlowMap(double ugmax, double ulmax, int numberOfStepsMap, FluidSevereSlug
   // fluid, Pipe pipe, SevereSlug severeSlug){
@@ -776,7 +769,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   // double usg2 = ugmax;
   // double usg_sol;
   // iter = 0;
-
 
   // while(Math.abs(usg1 - usg2) > 1e-5 && iter < 200){
 
@@ -818,7 +810,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   // System.out.println("Could not find the border");
   // }
   // else{
-
   // }
 
   // severeSlug.setSuperficialLiquidVelocity(usl);
@@ -841,12 +832,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   // stability2 = "Stable";
   // }
   // if (flowPattern1 != flowPattern2){
-
   // }
-
   // }
-
   // }
-
-
 }

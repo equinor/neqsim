@@ -13,7 +13,6 @@ public class StreamSaturatorUtilTest extends neqsim.NeqSimTest {
   double gasFlowRate = 5.0;
   ProcessSystem processOps = null;
 
-
   @Test
   void testRun() {
     testSystem = new SystemSrkEos(298.0, 10.0);

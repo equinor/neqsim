@@ -200,12 +200,11 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     return getFluid().getPressure(unit);
   }
 
-
-   /** {@inheritDoc} */
-   @Override
-   public void setPressure(double pressure) {
-     getFluid().setPressure(pressure);
-   }
+  /** {@inheritDoc} */
+  @Override
+  public void setPressure(double pressure) {
+    getFluid().setPressure(pressure);
+  }
 
   /** {@inheritDoc} */
   @Override

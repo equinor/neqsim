@@ -59,9 +59,17 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     this.setMixingRule(2);
   }
 
-
+  /**
+   * Calculate common temp.
+   *
+   * @param phase a PhaseInterface
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @param phasetype a int
+   */
   public void calcCommontemp(PhaseInterface phase, int numberOfComponents, double temperature,
-  double pressure, int phasetype) {
+      double pressure, int phasetype) {
     FCommontemp = 0;
     VCommontemp = 0;
     ComponentGEUnifac[] compArray = (ComponentGEUnifac[]) phase.getcomponentArray();
@@ -75,11 +83,11 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   public double getVCommontemp() {
     return VCommontemp;
   }
-  
+
   public double getFCommontemp() {
     return FCommontemp;
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public void addcomponent(String componentName, double moles, double molesInPhase,
@@ -113,12 +121,13 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
       double temperature, double pressure, int phasetype) {
     double GE = 0.0;
     calcCommontemp(phase, numberOfComponents, temperature, pressure, phasetype);
-    //((ComponentGEUnifacUMRPRU) phase.getComponents()[0]).commonInit(phase, numberOfComponents,
-        //temperature, pressure, phasetype);
+    // ((ComponentGEUnifacUMRPRU) phase.getComponents()[0]).commonInit(phase, numberOfComponents,
+    // temperature, pressure, phasetype);
 
     initQmix();
-    if (getInitType() > 2)
+    if (getInitType() > 2) {
       initQmixdN();
+    }
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEUniquac) componentArray[i])
           .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
@@ -167,8 +176,9 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   public double getQmix(String name) {
     // int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
     for (int i = 0; i < gropuNames.length; i++) {
-      if (name.equals(gropuNames[i]))
+      if (name.equals(gropuNames[i])) {
         return Qmix[i];
+      }
     }
     return 0.0;
   }
@@ -184,8 +194,9 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   public double[] getQmixdN(String name) {
     // int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
     for (int i = 0; i < gropuNames.length; i++) {
-      if (name.equals(gropuNames[i]))
+      if (name.equals(gropuNames[i])) {
         return QmixdN[i];
+      }
     }
     return QmixdN[0];
   }
