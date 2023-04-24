@@ -10,10 +10,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
@@ -60,26 +60,38 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     thermoSystem.init(0);
     ThermodynamicOperations thermoOps =
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
-    List<Double> jP = Arrays.asList(new Double[] {60.0 + 1.013});
-    List<Double> jT = Arrays.asList(new Double[] {373.15});
+
+    double temp = 373.15;
+    double press = 60.0 + 1.013;
+
+    List<Double> jP = Arrays.asList(new Double[] {press});
+    List<Double> jT = Arrays.asList(new Double[] {temp});
     CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
 
-    int numFrac = 2;
+    String[] propNames = SystemProperties.getPropertyNames();
+    Assertions.assertEquals(res.fluidProperties[0].length, propNames.length);
+
     List<List<Double>> onlineFractions =
+        createDummyRequest(thermoSystem.getMolarComposition(), 1);
+    CalculationResult res1 = thermoOps.propertyFlash(jP, jT, 1, null, onlineFractions);
+
+    Assertions.assertArrayEquals(res.fluidProperties[0], res1.fluidProperties[0]);
+
+    int numFrac = 3;
+    List<List<Double>> onlineFractions2 =
         createDummyRequest(thermoSystem.getMolarComposition(), numFrac);
 
-    List<Double> jP2 = Arrays.asList(new Double[] {60.0 + 1.013, 60.0 + 1.013});
-    List<Double> jT2 = Arrays.asList(new Double[] {373.15, 373.15});
+    List<Double> jP2 = Arrays.asList(new Double[] {press, press});
+    List<Double> jT2 = Arrays.asList(new Double[] {temp, temp});
     SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(273.15, 0.0);
     thermoSystem2.addComponents(components, fractions2);
     ThermodynamicOperations thermoOps2 =
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem2);
-    CalculationResult res2 = thermoOps2.propertyFlash(jP2, jT2, 1, null, onlineFractions);
+    CalculationResult res2 = thermoOps2.propertyFlash(jP2, jT2, 1, null, onlineFractions2);
+    Assertions.assertArrayEquals(res2.fluidProperties[0], res2.fluidProperties[1]);
 
+    // todo: add approximate check
     Assertions.assertArrayEquals(res.fluidProperties[0], res2.fluidProperties[0]);
-
-    String[] propNames = SystemProperties.getPropertyNames();
-    Assertions.assertEquals(res.fluidProperties[0].length, propNames.length);
   }
 
   @Test
@@ -216,6 +228,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
           fluid.addComponent(compNames.get(k), fractions.get(k));
         }
       }
+
+      fluid.init(0);
 
       ArrayList<Double> sp1 = (ArrayList<Double>) inputData.get("Sp1");
       ArrayList<Double> sp2 = (ArrayList<Double>) inputData.get("Sp2");

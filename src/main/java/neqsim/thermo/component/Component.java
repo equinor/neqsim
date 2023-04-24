@@ -533,11 +533,11 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void setProperties(ComponentInterface component) {
-    x = component.getx();
-    z = component.getz();
-    numberOfMolesInPhase = component.getNumberOfMolesInPhase();
-    numberOfMoles = component.getNumberOfmoles();
-    K = component.getK();
+    this.x = component.getx();
+    this.z = component.getz();
+    this.numberOfMolesInPhase = component.getNumberOfMolesInPhase();
+    this.numberOfMoles = component.getNumberOfmoles();
+    this.K = component.getK();
   }
 
   /** {@inheritDoc} */
@@ -550,15 +550,17 @@ abstract class Component implements ComponentInterface {
           "totalNumberOfMoles", "must be larger than 0"));
     }
     if (type == 0) {
-      K = Math.exp(Math.log(criticalPressure / pressure)
-          + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
-      z = numberOfMoles / totalNumberOfMoles;
-      x = z;
+      this.K = Math.exp(Math.log(this.criticalPressure / pressure) + 5.373
+          * (1.0 + this.srkacentricFactor) * (1.0 - this.criticalTemperature / temperature));
+
+      // todo: redundant setting of z here? will be overriden below
+      this.z = this.numberOfMoles / totalNumberOfMoles;
+      this.x = z;
       // System.out.println("K " + K);
     }
-    numberOfMolesInPhase = totalNumberOfMoles * x * beta;
-    numberOfMoles = totalNumberOfMoles * z; // added late by Even 22/10-06
-    z = numberOfMoles / totalNumberOfMoles;
+    this.numberOfMolesInPhase = totalNumberOfMoles * this.x * beta;
+    this.numberOfMoles = totalNumberOfMoles * z; // added late by Even 22/10-06
+    this.z = numberOfMoles / totalNumberOfMoles;
   }
 
   /** {@inheritDoc} */

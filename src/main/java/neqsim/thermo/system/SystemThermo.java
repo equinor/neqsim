@@ -4773,10 +4773,11 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double[] getMolarComposition() {
-    double[] comp = new double[getPhase(0).getNumberOfComponents()];
+    PhaseInterface mixPhase = this.getPhase(0);
+    double[] comp = new double[mixPhase.getNumberOfComponents()];
 
     for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
-      comp[compNumb] = getPhase(0).getComponent(compNumb).getz();
+      comp[compNumb] = mixPhase.getComponent(compNumb).getz();
     }
     return comp;
   }
