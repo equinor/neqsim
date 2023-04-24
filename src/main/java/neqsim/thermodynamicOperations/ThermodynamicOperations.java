@@ -2008,6 +2008,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
              * 0; comp < fraction.length; comp++) { sum[0] = sum[0] + fraction[comp]; }
              */
           }
+        } else {
+          double range = 1e-8;
+          if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
+              || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
+            calculationError[t] = "Sum of fractions must be equal to 1 or 100, currently ("
+                + String.valueOf(sum[t]) + ")";
+            logger.info("Sum of fractions must be equal to 1 or 100 for datapoint {}", t);
+            continue;
+          }
         }
 
         this.system.setPressure(Sp1);
