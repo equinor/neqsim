@@ -63,6 +63,9 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     private String conditionAnalysisMessage = "";
     private double conditionAnalysisMaxDeviation = 0.0;
 
+    /**
+     * <p>Constructor for MeasurementDeviceBaseClass.</p>
+     */
     public MeasurementDeviceBaseClass() {
         super("default");
     }

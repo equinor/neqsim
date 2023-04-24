@@ -216,6 +216,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     this.groupName = groupName;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int compareTo(UNIFACgroup o) {
     if (o.getSubGroup() < getSubGroup()) {
@@ -275,8 +276,8 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   /**
    * Getter for property xComp.
    *
-   * @return Value of property xComp.
    * @param component a {@link neqsim.thermo.component.ComponentGEUnifac} object
+   * @return Value of property xComp.
    */
   public double calcXComp(ComponentGEUnifac component) {
     double temp = 0.0;

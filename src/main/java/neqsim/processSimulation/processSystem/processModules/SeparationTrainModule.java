@@ -41,6 +41,11 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
   double firstStageCompressorAfterCoolerTemperature = 273.15 + 30;
   double exportOilTemperature = 273.15 + 30;
 
+  /**
+   * <p>Constructor for SeparationTrainModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public SeparationTrainModule(String name) {
     super(name);
   }
@@ -148,7 +153,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     double tolerance = 1e-10;
     HPliquidRecycle.setTolerance(tolerance);
     HPliquidRecycle.addStream(gasInletScrubber.getLiquidOutStream());
-    inletSeparator.addStream(HPliquidRecycle.getOutStream());
+    inletSeparator.addStream(HPliquidRecycle.getOutletStream());
 
     getOperations().add(inletSeparator);
     getOperations().add(liquidOutHeater);

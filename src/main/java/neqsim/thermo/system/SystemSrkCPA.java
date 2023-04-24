@@ -6,13 +6,16 @@ import neqsim.thermo.phase.PhaseSrkCPA;
 
 /**
  * This class defines a thermodynamic system using the CPA EoS equation of state.
- * 
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
-
 public class SystemSrkCPA extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for SystemSrkCPA.</p>
+   */
   public SystemSrkCPA() {
     super();
     modelName = "CPA-SRK-EOS";

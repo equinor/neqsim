@@ -47,12 +47,11 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>inletStream</code>.
    * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
    */
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
@@ -73,12 +72,12 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoOps.saturateWithWater();
 
-    if(thermoSystem.getPhase(0).hasComponent("water") && approachToSaturation<1.0){
-      try{
-      thermoSystem.addComponent("water", -thermoSystem.getComponent("water").getNumberOfmoles()*(1.0-approachToSaturation));
-      thermoOps.TPflash();
-      }
-      catch(Exception e){
+    if (thermoSystem.getPhase(0).hasComponent("water") && approachToSaturation < 1.0) {
+      try {
+        thermoSystem.addComponent("water",
+            -thermoSystem.getComponent("water").getNumberOfmoles() * (1.0 - approachToSaturation));
+        thermoOps.TPflash();
+      } catch (Exception e) {
         e.printStackTrace();
       }
     }
@@ -114,8 +113,14 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     this.multiPhase = multiPhase;
   }
 
-  
-  public void setApprachToSaturation(double approachToSaturation){
+  /**
+   * <p>
+   * setApprachToSaturation.
+   * </p>
+   *
+   * @param approachToSaturation a double
+   */
+  public void setApprachToSaturation(double approachToSaturation) {
     this.approachToSaturation = approachToSaturation;
   }
 }

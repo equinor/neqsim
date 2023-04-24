@@ -35,14 +35,13 @@ public class TestCPAParameterFittingToSolubilityData {
 
     // inserting samples from database
     NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='CO2' AND ComponentSolvent='water' AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>283.15 AND Temperature<373.15 AND Pressure<60.01325 ORDER BY Temperature");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // binarysolubilitydata WHERE ComponentSolute='methane' AND
     // ComponentSolvent='water' AND Temperature>278.0 AND Temperature<350.0");
     double parameterGuess[] = {-0.27686, 0.001121}; // , 0.000117974}; //cpa
 
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='CO2' AND ComponentSolvent='water' AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>283.15 AND Temperature<373.15 AND Pressure<60.01325 ORDER BY Temperature")) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 200) {

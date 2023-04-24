@@ -19,9 +19,17 @@ public class Fluid {
   private String thermoModel = "srk";
   private String thermoMixingRule = "classic";
 
+  /**
+   * <p>Constructor for Fluid.</p>
+   */
   public Fluid() {
   }
 
+  /**
+   * <p>Getter for the field <code>fluid</code>.</p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public neqsim.thermo.system.SystemInterface getFluid() {
     return fluid;
   }

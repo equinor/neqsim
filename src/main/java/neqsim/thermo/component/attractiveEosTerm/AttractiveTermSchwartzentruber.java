@@ -13,7 +13,8 @@ import neqsim.thermo.component.ComponentEosInterface;
 public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
   private static final long serialVersionUID = 1000;
 
-  private double c = 0.0, d = 0.0;
+  private double c = 0.0;
+  private double d = 0.0;
 
   /**
    * <p>
@@ -146,15 +147,13 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
   /** {@inheritDoc} */
   @Override
   public double diffdiffalphaT(double temperature) {
-    return 2.0 * Math
-        .pow(-m / Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC() / 2.0
-            + parameters[0]
-                / getComponent().getTC()
-                * (1.0
-                    + parameters[1] * temperature / getComponent().getTC()
-                    + parameters[2] * temperature * temperature
-                        / (getComponent().getTC() * getComponent().getTC()))
-            - parameters[0] * (1.0 - temperature / getComponent().getTC())
+    return 2.0 * Math.pow(-m / Math.sqrt(temperature / getComponent().getTC())
+        / getComponent().getTC() / 2.0
+                + parameters[0] / getComponent().getTC()
+                    * (1.0 + parameters[1] * temperature / getComponent().getTC()
+                        + parameters[2] * temperature * temperature
+                            / (getComponent().getTC() * getComponent().getTC()))
+                - parameters[0] * (1.0 - temperature / getComponent().getTC())
                     * (parameters[1] / getComponent().getTC() + 2.0 * parameters[2] * temperature
                         / (getComponent().getTC() * getComponent().getTC())),
                 2.0)

@@ -30,6 +30,9 @@ public class ContractSpecification extends NamedBaseClass {
   private String unit = "", comments = "";
 
   @Deprecated
+  /**
+   * <p>Constructor for ContractSpecification.</p>
+   */
   public ContractSpecification() {
     super("ContractSpecification");
   }

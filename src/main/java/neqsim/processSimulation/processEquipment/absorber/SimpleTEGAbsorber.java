@@ -592,7 +592,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * <p>
    * Setter for the field <code>waterInDryGas</code>.
    * </p>
-   * 
+   *
    * @param waterInDryGasInput water in dry gas
    */
   public void setWaterInDryGas(double waterInDryGasInput) {
@@ -600,6 +600,13 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     isSetWaterInDryGas = true;
   }
 
+  /**
+   * <p>
+   * isSetWaterInDryGas.
+   * </p>
+   *
+   * @param isSetwaterInDryGas a boolean
+   */
   public void isSetWaterInDryGas(boolean isSetwaterInDryGas) {
     this.isSetWaterInDryGas = isSetwaterInDryGas;
   }

@@ -35,7 +35,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
 
     NeqSimDataBase database = new NeqSimDataBase();
     ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-decane'");
+        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='nC10'");
 
     double parameterGuess[] = {188.385052774267, -0.84022345}; // , 2630.871733876947};
 
@@ -68,6 +68,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
+      dataSet.close();
     } catch (Exception ex) {
       logger.error("database error" + ex);
     }
@@ -104,6 +105,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
+      dataSet.close();
     } catch (Exception ex) {
       logger.error("database error" + ex);
     }
@@ -140,6 +142,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
+      dataSet.close();
     } catch (Exception ex) {
       logger.info("database error" + ex);
     }
@@ -176,6 +179,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
+      dataSet.close();
     } catch (Exception ex) {
       logger.error("database error" + ex);
     }
@@ -248,6 +252,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
+      dataSet.close();
     } catch (Exception ex) {
       logger.error("database error" + ex);
     }

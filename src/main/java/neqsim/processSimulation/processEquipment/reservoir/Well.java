@@ -23,7 +23,7 @@ public class Well extends NamedBaseClass {
      * <p>
      * Constructor for Well.
      * </p>
-     * 
+     *
      * @deprecated use {@link #Well(String)} instead
      */
     @Deprecated

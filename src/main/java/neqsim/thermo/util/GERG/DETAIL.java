@@ -79,14 +79,14 @@ public class DETAIL {
      double K3;
      double dPdDsave;
 
-    /**
-     * <p>
-     * sq.
-     * </p>
-     *
-     * @param x a double
-     * @return a double
-     */
+     /**
+      * <p>
+      * sq.
+      * </p>
+      *
+      * @param x a double
+      * @return a double
+      */
      public double sq(double x) {
         return x * x;
     }

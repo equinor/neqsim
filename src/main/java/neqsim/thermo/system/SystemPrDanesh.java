@@ -6,8 +6,9 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  * This class defines a thermodynamic system using the PR Danesh equation of state.
- * 
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemPrDanesh extends SystemPrEos {
   private static final long serialVersionUID = 1000;

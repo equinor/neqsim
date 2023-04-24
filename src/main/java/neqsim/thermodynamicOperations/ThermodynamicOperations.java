@@ -467,7 +467,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * PSflashGERG2008.
    * </p>
    * Run a flash at constant pressure and entropy using the GERG2008 EoS
-   * 
+   *
    * @param Sspec is the specidfied entropy
    */
   public void PSflashGERG2008(double Sspec) {
@@ -1931,10 +1931,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
   /**
    * Perform flashes and return System properties per set of Spec1 and Spec2.
-   * 
+   *
    * Possible to specify fractions for each value of Spec1.
-   * 
-   * 
+   *
    * @param Spec1 Flash pressure in bar absolute.
    * @param Spec2 Flash specification. Depends on FlashMode. Temperature in Kelvin, entalphy in
    *        J/mol or entropy in J/molK.

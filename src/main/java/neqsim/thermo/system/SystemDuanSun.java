@@ -7,8 +7,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * This class defines a thermodynamic system using the Duan Sun method used for CO2.
- * 
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemDuanSun extends SystemEos {
   private static final long serialVersionUID = 1000;

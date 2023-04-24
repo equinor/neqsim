@@ -90,8 +90,8 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
         // testSystem.addComponent("NaPlus", 1.0e-10);
         // testSystem.addComponent("methane", 1.1);
         testSystem.init(0);
-        double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
-        double standardDeviation1[] = {0.01};
+        double[] sample1 = {testSystem.getPressure(), testSystem.getTemperature()};
+        double[] standardDeviation1 = {0.01};
         double val = Double.parseDouble(dataSet.getString("L2"));
         double sdev = val / 100.0;
         SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -99,7 +99,7 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
         sample.setThermodynamicSystem(testSystem);
         sample.setReference(Double.toString(testSystem.getTemperature()));
         // double parameterGuess[] = {3932.0, -4127.0, -5.89, 8.9}; // HV CO2
-        double parameterGuess[] =
+        double[] parameterGuess =
             {4802.7795779589, -440.6638711230, -7.6109236981, 4.8742002317, 0.1, -0.0420817811}; // HV
                                                                                                  // methan570
         // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162
@@ -173,8 +173,8 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
         // testSystem.addComponent("NaPlus", 1.0e-10);
         // testSystem.addComponent("methane", 1.1);
         testSystem.init(0);
-        double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
-        double standardDeviation1[] = {0.01};
+        double[] sample1 = {testSystem.getPressure(), testSystem.getTemperature()};
+        double[] standardDeviation1 = {0.01};
         double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
         double sdev = val / 100.0;
         SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -182,7 +182,7 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
         sample.setThermodynamicSystem(testSystem);
         sample.setReference(Double.toString(testSystem.getTemperature()));
         // double parameterGuess[] = {3932.0, -4127.0, -5.89, 8.9}; // HV CO2
-        double parameterGuess[] =
+        double[] parameterGuess =
             {4802.7795779589, -440.6638711230, -7.6109236981, 4.8742002317, 0.1, -0.0420817811}; // HV
                                                                                                  // methan570
         // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162

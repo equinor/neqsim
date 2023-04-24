@@ -14,6 +14,8 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * Phase class.
+ *
  * @author Even Solbraa
  */
 abstract class Phase implements PhaseInterface {
@@ -307,14 +309,18 @@ abstract class Phase implements PhaseInterface {
     double[] comp = new double[getNumberOfComponents()];
 
     for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
-      if (unit.equals("molefraction"))
+      if (unit.equals("molefraction")) {
         comp[compNumb] = getComponent(compNumb).getx();
-      if (unit.equals("wtfraction"))
+      }
+      if (unit.equals("wtfraction")) {
         comp[compNumb] = getWtFrac(compNumb);
-      if (unit.equals("molespersec"))
+      }
+      if (unit.equals("molespersec")) {
         comp[compNumb] = getWtFrac(compNumb);
-      if (unit.equals("volumefraction"))
+      }
+      if (unit.equals("volumefraction")) {
         comp[compNumb] = getComponent(compNumb).getVoli() / getVolume();
+      }
     }
     return comp;
   }
@@ -476,25 +482,7 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getg() {
     return 1;
   }
 
@@ -541,6 +529,24 @@ abstract class Phase implements PhaseInterface {
   public double calcAij(int compNumb, int j, PhaseInterface phase, double temperature,
       double pressure, int numbcomp) {
     return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    return 1;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    return 1;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getg() {
+    return 1;
   }
 
   /** {@inheritDoc} */
@@ -953,6 +959,8 @@ abstract class Phase implements PhaseInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
         break;
+      default:
+        break;
     }
     return refCp * conversionFactor;
   }
@@ -980,6 +988,8 @@ abstract class Phase implements PhaseInterface {
         break;
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+        break;
+      default:
         break;
     }
     return refCv * conversionFactor;
@@ -1020,6 +1030,8 @@ abstract class Phase implements PhaseInterface {
         break;
       case "kJ/kg":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+        break;
+      default:
         break;
     }
     return refEnthalpy * conversionFactor;
@@ -1105,6 +1117,8 @@ abstract class Phase implements PhaseInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
         break;
+      default:
+        break;
     }
     return refEntropy * conversionFactor;
   }
@@ -1153,13 +1167,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  @Deprecated
-  public double getConductivity() {
-    return getPhysicalProperties().getConductivity();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getThermalConductivity(String unit) {
     double refConductivity = getThermalConductivity(); // conductivity in W/m*K
     double conversionFactor = 1.0;
@@ -1174,6 +1181,13 @@ abstract class Phase implements PhaseInterface {
         throw new RuntimeException();
     }
     return refConductivity * conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  @Deprecated
+  public double getConductivity() {
+    return getPhysicalProperties().getConductivity();
   }
 
   /** {@inheritDoc} */
@@ -1540,6 +1554,8 @@ abstract class Phase implements PhaseInterface {
       case "C/bar":
         conversionFactor = 1.0;
         break;
+      default:
+        break;
     }
     return JTcoef * conversionFactor;
   }
@@ -1567,6 +1583,9 @@ abstract class Phase implements PhaseInterface {
         break;
       case "mol/m3":
         conversionFactor = 1.0 / getMolarMass();
+        break;
+      case "lb/ft3":
+        conversionFactor = 0.0624279606;
         break;
       default:
         throw new RuntimeException(
@@ -1975,6 +1994,8 @@ abstract class Phase implements PhaseInterface {
       case "litre":
         conversionFactor = 1000.0;
         break;
+      default:
+        break;
     }
     return conversionFactor * getVolume() / 1.0e5;
   }
@@ -2110,6 +2131,8 @@ abstract class Phase implements PhaseInterface {
       return getVolume() / 1.0e5 * 60.0;
     } else if (flowunit.equals("m3/sec")) {
       return getVolume() / 1.0e5;
+    } else if (flowunit.equals("ft3/sec")) {
+      return getVolume() * Math.pow(3.2808399, 3) / 1.0e5;
     } else if (flowunit.equals("mole/sec")) {
       return numberOfMolesInPhase;
     } else if (flowunit.equals("mole/min")) {
@@ -2130,5 +2153,29 @@ abstract class Phase implements PhaseInterface {
    */
   public String getThermoPropertyModelName() {
     return thermoPropertyModelName;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCompressibilityX() {
+    return getTemperature() / getTotalVolume() * getdPdTVn() / getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCompressibilityY() {
+    return getPressure() / getTotalVolume() * 1.0 / getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getIsothermalCompressibility() {
+    return -1.0 / getTotalVolume() * 1.0 / getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getIsobaricThermalExpansivity() {
+    return 1.0 / getTotalVolume() * getdPdTVn() / getdPdVTn();
   }
 }

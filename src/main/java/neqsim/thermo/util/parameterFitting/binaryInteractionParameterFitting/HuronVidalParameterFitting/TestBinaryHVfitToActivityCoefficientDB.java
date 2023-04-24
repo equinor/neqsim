@@ -35,10 +35,9 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
 
     // inserting samples from database
     NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM activitycoefficienttable WHERE Component1='MDEA' AND Component2='water' AND Temperature>293.15  AND x1<=1.0 ORDER BY Temperature,x1");
 
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM activitycoefficienttable WHERE Component1='MDEA' AND Component2='water' AND Temperature>293.15  AND x1<=1.0 ORDER BY Temperature,x1")) {
       while (dataSet.next()) {
         BinaryHVparameterFitToActivityCoefficientFunction function =
             new BinaryHVparameterFitToActivityCoefficientFunction();
@@ -76,10 +75,8 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
       logger.error("database error" + ex);
     }
 
-    dataSet = database.getResultSet(
-        "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MDEA' ORDER BY FreezingTemperature");
-
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MDEA' ORDER BY FreezingTemperature")) {
       while (!dataSet.next()) {
         FreezeSolidFunction function = new FreezeSolidFunction();
         // double guess[] = {-1466.3924707953, 1197.4327552750,

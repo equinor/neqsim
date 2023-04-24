@@ -29,14 +29,19 @@ public class pTphaseEnvelopeNew extends BaseOperation {
   double[] cricondenTherm = new double[3];
   double[] cricondenBar = new double[3];
   double phaseFraction = 1e-10;
-  int i, j = 0, nummer = 0, iterations = 0, maxNumberOfIterations = 10000;
+  int i;
+  int j = 0;
+  int nummer = 0;
+  int iterations = 0;
+  int maxNumberOfIterations = 10000;
   double lowPres = 1.0;
   boolean outputToFile = false;
   JProgressBar monitor;
   JFrame mainFrame;
   String fileName = "c:/file";
   JPanel mainPanel;
-  double temp = 0, pres = 0;
+  double temp = 0;
+  double pres = 0;
   double[][] points = new double[2][];
   double[] pointsH = new double[10000];
   double[][] pointsH2 = new double[4][];
@@ -133,11 +138,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
           cricondenBar[1] = system.getPressure();
         }
 
-        if (Double.isNaN(system.getTemperature()) || Double.isNaN(system.getTemperature())) {// ||
-                                                                                             // system.getPressure()
-                                                                                             // <
-                                                                                             // lowPres)
-                                                                                             // {
+        if (Double.isNaN(system.getTemperature())) { // || system.getPressure() < lowPres) {
           points[0][np - 1] = points[0][np - 3];
           points[1][np - 1] = points[1][np - 3];
           pointsH[np - 1] = pointsH[np - 3];

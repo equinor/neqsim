@@ -1,5 +1,7 @@
 package neqsim.processSimulation.processSystem;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,7 +14,12 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 
+/**
+ * Test class for GlycolRig.
+ */
 public class GlycolRigTest extends neqsim.NeqSimTest {
+  static Logger logger = LogManager.getLogger(GlycolRigTest.class);
+
   ProcessSystem p;
   String _name = "TestProcess";
 
@@ -69,37 +76,32 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     recycleGasFromStripper.addStream(stripper.getGasOutStream());
     recycleGasFromStripper.setOutletStream(gasToReboiler);
 
-    Heater coolerPipe = new Heater(column.getGasOutStream());
-    coolerPipe.setName("heat loss cooling");
+    Heater coolerPipe = new Heater("heat loss cooling", column.getGasOutStream());
     coolerPipe.setOutTemperature(273.15 + 81.0);
 
-    Heater coolerRegenGas = new Heater(coolerPipe.getOutStream());
-    coolerRegenGas.setName("regen gas cooler");
+    Heater coolerRegenGas = new Heater("regen gas cooler", coolerPipe.getOutletStream());
     coolerRegenGas.setOutTemperature(273.15 + 25.0);
 
-    Separator sepregenGas = new Separator(coolerRegenGas.getOutStream());
-    sepregenGas.setName("regen gas separator");
+    Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
-    Compressor blower = new Compressor(sepregenGas.getGasOutStream());
+    Compressor blower = new Compressor("blower", sepregenGas.getGasOutStream());
     blower.setOutletPressure(0.2, "barg");
 
-    Heater gasHeater = new Heater(blower.getOutStream());
+    Heater gasHeater = new Heater("heater", blower.getOutletStream());
     gasHeater.setOutTemperature(273.15 + 53.0);
 
     Recycle recycleGasfEED = new Recycle("FEED gas recirc");
-    recycleGasfEED.addStream(gasHeater.getOutStream());
+    recycleGasfEED.addStream(gasHeater.getOutletStream());
     recycleGasfEED.setOutletStream(strippingGas);
     recycleGasfEED.setPriority(200);
 
-    Heater coolerStripper = new Heater(stripper.getSolventOutStream());
-    coolerStripper.setName("TEG cooler");
+    Heater coolerStripper = new Heater("TEG cooler", stripper.getSolventOutStream());
     coolerStripper.setOutTemperature(273.15 + 98.0);
 
-    Stream liquidToTreatment = new Stream(sepregenGas.getLiquidOutStream());
-    liquidToTreatment.setName("water to treatment");
+    Stream liquidToTreatment = new Stream("water to treatment", sepregenGas.getLiquidOutStream());
 
     Mixer TEGWaterMixer = new Mixer("TEG water mixer");
-    TEGWaterMixer.addStream(coolerStripper.getOutStream());
+    TEGWaterMixer.addStream(coolerStripper.getOutletStream());
     TEGWaterMixer.addStream(liquidToTreatment);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
@@ -132,9 +134,9 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
         column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
     double wtpWaterFromStripper =
         stripper.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
-    System.out.println("wtpRichTEG " + wtpWaterRichTEG);
-    System.out.println("wtpWaterFromReboil " + wtpWaterFromReboil);
-    System.out.println("wtpWaterFromStripper " + wtpWaterFromStripper);
+    logger.info("wtpRichTEG " + wtpWaterRichTEG);
+    logger.info("wtpWaterFromReboil " + wtpWaterFromReboil);
+    logger.info("wtpWaterFromStripper " + wtpWaterFromStripper);
     // double wtpWaterFromReboiler =
     // column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("water")*100.0
     // double wtpTEGSeparatorOut =
@@ -145,20 +147,20 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     // double wtWaterBufferTank =
     // liquidFromBufferTank.getFluid().getPhase("aqueous").getWtFrac("water")*100.0
     // TEGtoRegenerator.displayResult();
-    System.out.println("water to regenerator "
+    logger.info("water to regenerator "
         + TEGtoRegenerator.getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
-    System.out.println("TEG to regenerator "
+    logger.info("TEG to regenerator "
         + TEGtoRegenerator.getFluid().getComponent("TEG").getTotalFlowRate("kg/hr"));
-    // System.out.println("oxygen to regenerator "
+    // logger.info("oxygen to regenerator "
     // + TEGtoRegenerator.getFluid().getComponent("oxygen").getTotalFlowRate("kg/hr"));
-    System.out.println("nitrogen to regenerator "
+    logger.info("nitrogen to regenerator "
         + TEGtoRegenerator.getFluid().getComponent("nitrogen").getTotalFlowRate("kg/hr"));
 
-    System.out.println("water liquid from regenerator "
+    logger.info("water liquid from regenerator "
         + column.getLiquidOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
-    System.out.println("water gas from regenerator "
+    logger.info("water gas from regenerator "
         + column.getGasOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
-    System.out.println("water from stripping gas "
+    logger.info("water from stripping gas "
         + gasToReboiler.getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
 
     double waterBalanceColumn =
@@ -166,15 +168,15 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
             + column.getGasOutStream().getFluid().getComponent("water").getTotalFlowRate("kg/hr")
             - TEGtoRegenerator.getFluid().getComponent("water").getTotalFlowRate("kg/hr")
             - gasToReboiler.getFluid().getComponent("water").getTotalFlowRate("kg/hr");
-    System.out.println("water balance " + waterBalanceColumn);
+    logger.info("water balance " + waterBalanceColumn);
 
-    System.out.println("wt water to reboil "
+    logger.info("wt water to reboil "
         + TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0);
 
-    System.out.println("wt water from mixer "
+    logger.info("wt water from mixer "
         + TEGWaterMixer.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0);
     // strippingGas.displayResult();
-    System.out.println("stripping gas rate " + strippingGas.getFlowRate("kg/hr"));
+    logger.info("stripping gas rate " + strippingGas.getFlowRate("kg/hr"));
     Assertions.assertEquals(0.0, waterBalanceColumn, 1e-3);
   }
 
@@ -207,26 +209,26 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     operations.add(column);
 
     operations.run();
-/* 
-    System.out.println("wt n-hexane from column "
-        + column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("n-hexane") * 100.0);
-
-    System.out.println("wt methane from column "
-        + column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("methane") * 100.0);
-
-    System.out.println("wt propane from column "
-        + column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("propane") * 100.0);
-
-
-    System.out.println("wt n-hexane from gas column "
-        + column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("n-hexane") * 100.0);
-
-    System.out.println("wt methane from gas column "
-        + column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("methane") * 100.0);
-
-    System.out.println("wt propane from gas column "
-        + column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("propane") * 100.0);
-*/
+    /*
+     * logger.info("wt n-hexane from column " +
+     * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("n-hexane") * 100.0);
+     * 
+     * logger.info("wt methane from column " +
+     * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("methane") * 100.0);
+     * 
+     * logger.info("wt propane from column " +
+     * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("propane") * 100.0);
+     * 
+     * 
+     * logger.info("wt n-hexane from gas column " +
+     * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("n-hexane") * 100.0);
+     * 
+     * logger.info("wt methane from gas column " +
+     * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("methane") * 100.0);
+     * 
+     * logger.info("wt propane from gas column " +
+     * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("propane") * 100.0);
+     */
   }
 
   @Test
@@ -258,17 +260,17 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
 
     operations.run();
     /*
-     * System.out.println("wt n-hexane from column " +
+     * logger.info("wt n-hexane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("n-hexane") * 100.0);
      * 
-     * System.out.println("wt propane from column " +
+     * logger.info("wt propane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("propane") * 100.0);
      * 
      * 
-     * System.out.println("wt n-hexane from gas column " +
+     * logger.info("wt n-hexane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("n-hexane") * 100.0);
      * 
-     * System.out.println("wt propane from gas column " +
+     * logger.info("wt propane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("propane") * 100.0);
      */
   }
@@ -316,23 +318,23 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     operations.run();
 
     /*
-     * System.out.println("wt n-hexane from column " +
+     * logger.info("wt n-hexane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("n-hexane") * 100.0);
      * 
-     * System.out.println("wt ethane from column " +
+     * logger.info("wt ethane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("ethane") * 100.0);
      * 
      * 
-     * System.out.println("wt n-hexane from gas column " +
+     * logger.info("wt n-hexane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("n-hexane") * 100.0);
      * 
-     * System.out.println("wt ethane from gas column " +
+     * logger.info("wt ethane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("ethane") * 100.0);
      * 
-     * System.out.println("flow rate gas " +
+     * logger.info("flow rate gas " +
      * column.getGasOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr") + " kg/hr");
      * 
-     * System.out.println("flow rate oil " +
+     * logger.info("flow rate oil " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getFlowRate("kg/hr") + " kg/hr");
      * 
      * System.out .println("flow rate oil " + feedToRegenerator.getFluid().getFlowRate("kg/hr") +

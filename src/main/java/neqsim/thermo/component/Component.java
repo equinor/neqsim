@@ -6,6 +6,8 @@
 
 package neqsim.thermo.component;
 
+import java.sql.Connection;
+import java.sql.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -145,11 +147,11 @@ abstract class Component implements ComponentInterface {
    * </p>
    *
    * @param number a int
-   * @param TC a double
-   * @param PC a double
-   * @param M a double
-   * @param a a double
-   * @param moles a double
+   * @param TC Critical temperature
+   * @param PC Critical pressure
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Number of moles
    */
   public Component(int number, double TC, double PC, double M, double a, double moles) {
     criticalPressure = PC;
@@ -459,11 +461,14 @@ abstract class Component implements ComponentInterface {
         if (dataSet != null) {
           dataSet.close();
         }
-        if (database.getStatement() != null) {
-          database.getStatement().close();
+
+        Statement s = database.getStatement();
+        if (s != null) {
+          s.close();
         }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
+        Connection c = database.getConnection();
+        if (c != null) {
+          c.close();
         }
       } catch (Exception ex) {
         logger.error("error closing database.....", ex);
@@ -827,11 +832,7 @@ abstract class Component implements ComponentInterface {
     return liquidConductivityParameter[i];
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Units in m*e10
-   */
+  /** {@inheritDoc} */
   @Override
   public double getLennardJonesMolecularDiameter() {
     return lennardJonesMolecularDiameter;
@@ -849,38 +850,21 @@ abstract class Component implements ComponentInterface {
     return Hsub;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure comonent solid vapor pressure (bar) with the C-C equation, based on Hsub
-   * Should only be used in the valid temperature range below the triple point (specified in
-   * component database).
-   */
+  /** {@inheritDoc} */
   @Override
   public double getCCsolidVaporPressure(double temperature) {
     return triplePointPressure
         * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the DT of pure comonent solid vapor pressure (bar) with the C-C equation, based on
-   * Hsub Should only be used in the valid temperature range below the triple point (specified in
-   * component database).
-   */
+  /** {@inheritDoc} */
   @Override
   public double getCCsolidVaporPressuredT(double temperature) {
     return triplePointPressure * Hsub / R * (1.0 / (temperature * temperature))
         * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure component solid density in kg/liter Should only be used in the valid
-   * temperature range (specified in component database).
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPureComponentSolidDensity(double temperature) {
     return molarMass * 1000.0
@@ -890,13 +874,7 @@ abstract class Component implements ComponentInterface {
             + solidDensityCoefs[4] * Math.pow(temperature, 4.0));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure component liquid density in kg/liter Should only be used in the valid
-   * temperature range (specified in component database). This method seems to give bad results at
-   * the moment
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPureComponentLiquidDensity(double temperature) {
     return molarMass * 1000.0
@@ -908,11 +886,7 @@ abstract class Component implements ComponentInterface {
     // Math.pow(1.0 - temperature / liquidDensityCoefs[2], liquidDensityCoefs[3]));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure comonent heat of vaporization in J/mol
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPureComponentHeatOfVaporization(double temperature) {
     return 1.0e-3 * heatOfVaporizationCoefs[0]
@@ -994,8 +968,7 @@ abstract class Component implements ComponentInterface {
   @Override
   public double fugcoef(PhaseInterface phase) {
     fugacityCoefficient = 1.0; // this.fugcoef(phase, phase.getNumberOfComponents(),
-                               // phase.getTemperature(),
-                               // phase.getPressure());
+                               // phase.getTemperature(), phase.getPressure());
     logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -1158,18 +1131,6 @@ abstract class Component implements ComponentInterface {
     return voli;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public final double getChemicalPotentialdT(PhaseInterface phase) {
-    return -getEntropy(phase.getTemperature(), phase.getPressure()) / numberOfMolesInPhase;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final double getChemicalPotentialdV(PhaseInterface phase) {
-    return getChemicalPotentialdP() * phase.getdPdVTn();
-  }
-
   /**
    * <p>
    * getChemicalPotentialdP.
@@ -1185,6 +1146,18 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public final double getChemicalPotentialdT(PhaseInterface phase) {
+    return -getEntropy(phase.getTemperature(), phase.getPressure()) / numberOfMolesInPhase;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final double getChemicalPotentialdV(PhaseInterface phase) {
+    return getChemicalPotentialdP() * phase.getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setComponentNumber(int numb) {
     componentNumber = numb;
   }
@@ -1193,21 +1166,14 @@ abstract class Component implements ComponentInterface {
   @Override
   public double getAntoineVaporPressure(double temp) {
     if (antoineLiqVapPresType.equals("pow10")) {
-      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15))); // equation
-                                                                                 // and
-                                                                                 // parameter
-                                                                                 // from
-                                                                                 // properties
-                                                                                 // o liquids
-                                                                                 // and
-                                                                                 // gases
-                                                                                 // (poling
-                                                                                 // 5th ed)
+      // equation and parameter from properties o and gases (poling 5th ed)
+      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15)));
+    } else if (antoineLiqVapPresType.equals("pow10KPa")) {
+      // equation and parameter from properties o and gases (poling 5th ed)
+      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC))) / 1.0e5;
     } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
-      return Math.exp(AntoineA - (AntoineB / (temp + AntoineC))); // equation and parameter
-                                                                  // from properties o
-                                                                  // liquids and gases (poling
-                                                                  // 5th ed)
+      // equation and parameter from properties o and gases (poling 5th ed)
+      return Math.exp(AntoineA - (AntoineB / (temp + AntoineC)));
     } else if (Math.abs(AntoineE) > 1e-12) {
       return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp)
           + AntoineD * Math.pow(temp, AntoineE)) / 100000;
@@ -1866,11 +1832,7 @@ abstract class Component implements ComponentInterface {
     return componentType;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT + C4*T
-   */
+  /** {@inheritDoc} */
   @Override
   public double getHenryCoef(double temperature) {
     // System.out.println("henry " +
@@ -2298,6 +2260,8 @@ abstract class Component implements ComponentInterface {
       return numberOfMolesInPhase * getMolarMass() * 60.0;
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMolesInPhase * getMolarMass() * 3600.0;
+    } else if (flowunit.equals("tonnes/year")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 365.0 / 1000.0;
     } else if (flowunit.equals("m3/hr")) {
       return getVoli() / 1.0e5 * 3600.0;
     } else if (flowunit.equals("m3/min")) {
@@ -2334,6 +2298,7 @@ abstract class Component implements ComponentInterface {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
   }
+
 
   /**
    * Indexed getter for property matiascopemanParamsUMRPRU.

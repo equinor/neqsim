@@ -6,12 +6,16 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  * This class defines a thermodynamic system using the SRK EoS for gas and NRTL for liquids.
- * 
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemNRTL extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for SystemNRTL.</p>
+   */
   public SystemNRTL() {
     super();
     modelName = "NRTL-GE-model";

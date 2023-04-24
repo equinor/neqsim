@@ -6,8 +6,9 @@ import neqsim.thermo.phase.PhaseSrkPenelouxEos;
 
 /**
  * This class defines a thermodynamic system using the SRK Peneloux equation of state.
- * 
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemSrkPenelouxEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;

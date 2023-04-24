@@ -15,10 +15,10 @@ package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
  * @version $Id: $Id
  */
 public interface DataReaderInterface {
-    /**
-     * <p>
-     * readData.
-     * </p>
-     */
-    public void readData();
+  /**
+   * <p>
+   * readData.
+   * </p>
+   */
+  public void readData();
 }

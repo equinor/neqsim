@@ -5,12 +5,16 @@ import neqsim.thermo.phase.PhaseRK;
 
 /**
  * This class defines a thermodynamic system using the RK equation of state.
- * 
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemRKEos extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for SystemRKEos.</p>
+   */
   public SystemRKEos() {
     super();
     modelName = "RK-EOS";

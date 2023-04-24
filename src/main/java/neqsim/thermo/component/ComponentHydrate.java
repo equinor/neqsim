@@ -723,9 +723,9 @@ public class ComponentHydrate extends Component {
    * Getter for the field <code>cavprwat</code>.
    * </p>
    *
-   * @return the cavprwat
    * @param structure a int
    * @param cavityType a int
+   * @return the cavprwat
    */
   public double getCavprwat(int structure, int cavityType) {
     return getCavprwat()[structure][cavityType];

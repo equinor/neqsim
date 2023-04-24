@@ -1931,7 +1931,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
             if (wijCalcOrFitted[i][j] == 0) {
               if (compArray[j].getComponentName().equals("water")
                   || compArray[j].getComponentName().equals("MDEA")
-                  || compArray[j].getComponentName().equals("Piperazine")) {// compArray[j].getIonicCharge()==0){
+                  || compArray[j].getComponentName().equals("Piperazine")) { // compArray[j].getIonicCharge()==0){
                 wij[0][i][j] =
                     neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParam(2)
                         * compArray[i].getStokesCationicDiameter()
@@ -2473,6 +2473,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       mixingRuleName = "classic-CPA_T";
       return new ClassicSRKT2();
     } else if (i == 10) {
+      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii, classicOrHV,wij);}
       org.ejml.simple.SimpleMatrix mat1 = new org.ejml.simple.SimpleMatrix(intparamij);
       org.ejml.simple.SimpleMatrix mat2 = new org.ejml.simple.SimpleMatrix(intparamji);
       org.ejml.simple.SimpleMatrix mat3 = new org.ejml.simple.SimpleMatrix(intparamT);
@@ -2487,10 +2488,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         mixingRuleName = "classic-CPA_Tx";
         return new ClassicSRKT2x();
       }
-    } // else if(i==10){
-      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii, classicOrHV,
-      // wij);}
-    else {
+    } else {
       return new ClassicVdW();
     }
   }
@@ -2534,6 +2532,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       mixingRuleName = "classic-CPA_T";
       return new ClassicSRKT2();
     } else if (i == 10) {
+      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii, classicOrHV,wij);}
       org.ejml.simple.SimpleMatrix mat1 = new org.ejml.simple.SimpleMatrix(intparamij);
       org.ejml.simple.SimpleMatrix mat2 = new org.ejml.simple.SimpleMatrix(intparamji);
       org.ejml.simple.SimpleMatrix mat3 = new org.ejml.simple.SimpleMatrix(intparamT);
@@ -2548,10 +2547,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         mixingRuleName = "classic-CPA_Tx";
         return new ClassicSRKT2x();
       }
-    } // else if(i==10){
-      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii, classicOrHV,
-      // wij);}
-    else {
+    } else {
       return new ClassicVdW();
     }
   }

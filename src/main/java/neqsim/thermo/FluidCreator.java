@@ -7,18 +7,24 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * FluidCreator class.
  * </p>
- * 
+ *
  * @author esol
  * @version $Id: $Id
  */
 public class FluidCreator {
 
+  /** Constant <code>hasWater=false</code> */
   public static boolean hasWater = false;
+  /** Constant <code>autoSelectModel=false</code> */
   public static boolean autoSelectModel = false;
+  /** Constant <code>thermoModel="srk"</code> */
   public static String thermoModel = "srk";
+  /** Constant <code>thermoMixingRule="classic"</code> */
   public static String thermoMixingRule = "classic";
   
   /**
+   * Create SystemInterface.
+   *
    * @param componentNames name of components to be added to a fluid
    * @return a fluid object (SystemInterface)
    */
@@ -32,6 +38,8 @@ public class FluidCreator {
   }
 
   /**
+   * Create SystemInterface.
+   *
    * @param componentNames name of components to be added to a fluid
    * @param flowrate flow rate
    * @param unit unit of flow rate
@@ -46,9 +54,12 @@ public class FluidCreator {
     return fluid.createFluid(componentNames, flowrate, unit);
   }
 
-  /**"
-   * @param fluidType fluid type can  be "dry gas", "water", "air", "gas condensate", "combustion air"...
-   * @return
+  /**
+   * Create SystemInterface.
+   *
+   * @param fluidType fluid type can be "dry gas", "water", "air", "gas condensate", "combustion
+   *        air"...
+   * @return a fluid object (SystemInterface)
    */
   public static SystemInterface create(String fluidType) {
     Fluid fluid = new Fluid();

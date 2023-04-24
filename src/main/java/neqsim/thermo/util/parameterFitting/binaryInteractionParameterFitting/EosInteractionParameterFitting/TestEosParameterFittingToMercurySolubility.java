@@ -36,8 +36,6 @@ public class TestEosParameterFittingToMercurySolubility {
     // inserting samples from database
     NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
 
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM binarysolubilitydata WHERE ComponentSolute='mercury' AND ComponentSolvent='n-hexane'");
     // double parameterGuess[] = {0.13}; // mercury-methane
     // double parameterGuess[] = {0.0496811275399517}; // mercury-methane
     // double parameterGuess[] = {0.0704}; // mercury-ethane
@@ -45,7 +43,8 @@ public class TestEosParameterFittingToMercurySolubility {
     // double parameterGuess[] = {0.0674064646735}; // mercury-propane
     // double parameterGuess[] = { 0.3674008071}; // mercury-CO2
     // double parameterGuess[] = { 0.016529772608}; // mercury-nitrogen
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM binarysolubilitydata WHERE ComponentSolute='mercury' AND ComponentSolvent='n-hexane'")) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 40) {
