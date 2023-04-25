@@ -82,24 +82,22 @@ public class PhaseHydrate extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double molesInPhase, double moles,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    // componentArray[compNumber] = new ComponentHydrateStatoil(componentName,
-    // moles, molesInPhase, compNumber);
+  public void addcomponent(String name, double molesInPhase, double moles, int compNumber) {
+    super.addcomponent(name, molesInPhase);
+    // componentArray[compNumber] = new ComponentHydrateStatoil(name, moles, molesInPhase,
+    // compNumber);
     if (hydrateModel.equals("CPAHydrateModel")) {
-      componentArray[compNumber] =
-          new ComponentHydrateGF(componentName, moles, molesInPhase, compNumber);
+      componentArray[compNumber] = new ComponentHydrateGF(name, moles, molesInPhase, compNumber);
       // System.out.println("hydrate model: CPA-EoS hydrate model selected");
     } else {
       componentArray[compNumber] =
-          new ComponentHydratePVTsim(componentName, moles, molesInPhase, compNumber);
+          new ComponentHydratePVTsim(name, moles, molesInPhase, compNumber);
       // System.out.println("hydrate model: standard PVTsim hydrate model selected");
     }
-    // componentArray[compNumber] = new ComponentHydrateBallard(componentName,
-    // moles, molesInPhase, compNumber);
-    // componentArray[compNumber] = new ComponentHydratePVTsim(componentName, moles,
-    // molesInPhase, compNumber);
+    // componentArray[compNumber] = new ComponentHydrateBallard(name, moles, molesInPhase,
+    // compNumber);
+    // componentArray[compNumber] = new ComponentHydratePVTsim(name, moles, molesInPhase,
+    // compNumber);
   }
 
   /** {@inheritDoc} */

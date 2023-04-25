@@ -20,14 +20,16 @@ import neqsim.thermo.system.SystemInterface;
  */
 abstract class Phase implements PhaseInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Phase.class);
 
+
+  public int numberOfComponents = 0;
   public ComponentInterface[] componentArray;
   public boolean mixingRuleDefined = false;
 
   public boolean calcMolarVolume = true;
 
   private boolean constantPhaseVolume = false;
-  public int numberOfComponents = 0;
 
   public int physicalPropertyType = 0;
 
@@ -35,7 +37,6 @@ abstract class Phase implements PhaseInterface {
   public neqsim.physicalProperties.PhysicalPropertyHandler physicalPropertyHandler = null;
   public double numberOfMolesInPhase = 0;
   protected double molarVolume = 1.0;
-
   protected double phaseVolume = 1.0;
 
   public boolean chemSyst = false;
@@ -46,13 +47,11 @@ abstract class Phase implements PhaseInterface {
   private int initType = 0;
   int mixingRuleNumber = 0;
   double temperature = 0;
-
   double pressure = 0;
 
   protected PhaseInterface[] refPhase = null;
   int phaseType = 0;
   protected String phaseTypeName = "gas";
-  static Logger logger = LogManager.getLogger(Phase.class);
 
   /**
    * <p>
@@ -62,15 +61,6 @@ abstract class Phase implements PhaseInterface {
   public Phase() {
     componentArray = new ComponentInterface[MAX_NUMBER_OF_COMPONENTS];
   }
-
-  /**
-   * <p>
-   * Constructor for Phase.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.Phase} object
-   */
-  public Phase(Phase phase) {}
 
   /** {@inheritDoc} */
   @Override
@@ -97,27 +87,35 @@ abstract class Phase implements PhaseInterface {
 
   /**
    * <p>
-   * addcomponent.
+   * addcomponent. Increase number of components and add moles to phase.
    * </p>
    *
    * @param moles a double
    */
-  public void addcomponent(double moles) {
-    numberOfMolesInPhase += moles;
-    numberOfComponents++;
+  public void addcomponent(String name, double moles) {
+    if (moles < 0) {
+      throw new RuntimeException("Not possible to add negative moles.");
+    }
+
+    if (this.hasComponent(name)) {
+      throw new RuntimeException("Component already exists in phase.");
+    }
+
+    this.numberOfMolesInPhase += moles;
+    this.numberOfComponents++;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void removeComponent(String componentName, double moles, double molesInPhase,
+  public void removeComponent(String name, double moles, double molesInPhase,
       int compNumber) {
-    componentName = ComponentInterface.getComponentNameFromAlias(componentName);
+    name = ComponentInterface.getComponentNameFromAlias(name);
 
     ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();
 
     try {
       for (int i = 0; i < numberOfComponents; i++) {
-        if (!componentArray[i].getName().equals(componentName)) {
+        if (!componentArray[i].getName().equals(name)) {
           temp.add(this.componentArray[i]);
         }
       }
@@ -127,7 +125,7 @@ abstract class Phase implements PhaseInterface {
         this.getComponent(i).setComponentNumber(i);
       }
     } catch (Exception ex) {
-      logger.error("not able to remove " + componentName);
+      logger.error("not able to remove " + name);
     }
 
     // componentArray = (ComponentInterface[])temp.toArray();
@@ -1904,7 +1902,6 @@ abstract class Phase implements PhaseInterface {
         TPBfrac[7] += getComponent(i).getx();
       } else if (boilpoint >= 69.2) {
         TPBfrac[6] += getComponent(i).getx();
-      } else {
       }
     }
     return TPBfrac;

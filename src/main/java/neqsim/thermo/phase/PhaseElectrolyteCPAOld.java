@@ -113,11 +113,9 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(componentName, moles, molesInPhase, compNumber);
-    componentArray[compNumber] =
-        new ComponentElectrolyteCPA(componentName, moles, molesInPhase, compNumber);
+  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addcomponent(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentElectrolyteCPA(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */

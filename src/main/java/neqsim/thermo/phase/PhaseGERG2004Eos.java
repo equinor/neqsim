@@ -58,11 +58,9 @@ public class PhaseGERG2004Eos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGERG2004(componentName, moles, molesInPhase, compNumber);
+  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addcomponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentGERG2004(name, moles, molesInPhase, compNumber);
   }
 
   /**

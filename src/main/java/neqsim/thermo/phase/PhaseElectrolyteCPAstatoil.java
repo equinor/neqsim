@@ -30,11 +30,10 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(componentName, moles, molesInPhase, compNumber);
+  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addcomponent(name, moles, molesInPhase, compNumber);
     componentArray[compNumber] =
-        new ComponentElectrolyteCPAstatoil(componentName, moles, molesInPhase, compNumber);
+        new ComponentElectrolyteCPAstatoil(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */

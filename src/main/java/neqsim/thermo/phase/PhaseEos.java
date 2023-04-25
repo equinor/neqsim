@@ -76,12 +76,6 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(double moles) {
-    super.addcomponent(moles);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
       double beta) {
     if (!mixingRuleDefined) {
@@ -526,6 +520,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
+   * getb.
+   *
    * @return double
    */
   double getb() {

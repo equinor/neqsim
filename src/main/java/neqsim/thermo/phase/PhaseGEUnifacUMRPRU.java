@@ -90,11 +90,9 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGEUnifacUMRPRU(componentName, moles, molesInPhase, compNumber);
+  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addcomponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentGEUnifacUMRPRU(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */

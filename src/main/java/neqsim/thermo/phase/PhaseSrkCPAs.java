@@ -38,11 +38,9 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(componentName, moles, molesInPhase, compNumber);
-    componentArray[compNumber] =
-        new ComponentSrkCPAs(componentName, moles, molesInPhase, compNumber);
+  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addcomponent(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentSrkCPAs(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */

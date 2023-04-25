@@ -24,12 +24,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * addcomponent.
    * </p>
    *
-   * @param componentName a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param molesInPhase a double
    * @param moles a double
    * @param compNumber a int
    */
-  public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber);
+  public void addcomponent(String name, double molesInPhase, double moles, int compNumber);
 
   /**
    * <p>
@@ -398,12 +398,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * removeComponent.
    * </p>
    *
-   * @param componentName a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param moles a double
    * @param molesInPhase a double
    * @param compNumber a int
    */
-  public void removeComponent(String componentName, double moles, double molesInPhase,
+  public void removeComponent(String name, double moles, double molesInPhase,
       int compNumber);
 
   /**
@@ -463,12 +463,68 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
+   * getGibbsEnergy.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getGibbsEnergy();
+
+  /**
+   * <p>
    * getMixGibbsEnergy.
    * </p>
    *
    * @return a double
    */
   public double getMixGibbsEnergy();
+
+
+  /**
+   * <p>
+   * getExessGibbsEnergy.
+   * </p>
+   *
+   * @return a double
+   * @deprecated Replaced by {@link getExcessGibbsEnergy}.
+   */
+  @Deprecated
+  public default double getExessGibbsEnergy() {
+    return getExcessGibbsEnergy();
+  }
+
+  /**
+   * <p>
+   * getExessGibbsEnergySymetric.
+   * </p>
+   *
+   *
+   * @return a double
+   * @deprecated Replace by {@link getExcessGibbsEnergySymetric}.
+   */
+  @Deprecated
+  public default double getExessGibbsEnergySymetric() {
+    return getExcessGibbsEnergySymetric();
+  }
+
+  /**
+   * <p>
+   * getExcessGibbsEnergy.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getExcessGibbsEnergy();
+
+  /**
+   * <p>
+   * getExcessGibbsEnergySymetric.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getExcessGibbsEnergySymetric();
+
 
   /**
    * <p>
@@ -478,15 +534,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a boolean
    */
   public boolean hasPlusFraction();
-
-  /**
-   * <p>
-   * getExessGibbsEnergy.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getExessGibbsEnergy();
 
   /**
    * <p>
@@ -1312,15 +1359,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * getGibbsEnergy.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getGibbsEnergy();
-
-  /**
-   * <p>
    * clone.
    * </p>
    *
@@ -1867,15 +1905,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   public double getActivityCoefficientUnSymetric(int k);
-
-  /**
-   * <p>
-   * getExessGibbsEnergySymetric.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getExessGibbsEnergySymetric();
 
   /**
    * <p>

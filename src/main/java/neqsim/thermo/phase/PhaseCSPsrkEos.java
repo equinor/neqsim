@@ -57,11 +57,9 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentCSPsrk(componentName, moles, molesInPhase, compNumber);
+  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addcomponent(name, moles);
+    componentArray[compNumber] = new ComponentCSPsrk(name, moles, molesInPhase, compNumber);
     ((ComponentCSPsrk) componentArray[compNumber]).setRefPhaseBWRS(this);
   }
 

@@ -66,11 +66,9 @@ public class PhaseGEUniquac extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGEUniquac(componentName, moles, molesInPhase, compNumber);
+  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addcomponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentGEUniquac(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -88,20 +86,6 @@ public class PhaseGEUniquac extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
-    GE = 0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponents()[i].getx()
-          * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
-              temperature, pressure, phasetype, alpha, Dij, intparam, mixRule));
-    }
-
-    return R * temperature * numberOfMolesInPhase * GE;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getGibbsEnergy() {
     return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
   }
@@ -112,5 +96,19 @@ public class PhaseGEUniquac extends PhaseGE {
     // GE = getExessGibbsEnergy(this, numberOfComponents, temperature, pressure,
     // phaseType);
     return GE;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure, int phasetype) {
+    GE = 0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      GE += phase.getComponents()[i].getx()
+          * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
+              temperature, pressure, phasetype, alpha, Dij, intparam, mixRule));
+    }
+
+    return R * temperature * numberOfMolesInPhase * GE;
   }
 }

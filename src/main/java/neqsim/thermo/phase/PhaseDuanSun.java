@@ -30,11 +30,9 @@ public class PhaseDuanSun extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGeDuanSun(componentName, moles, molesInPhase, compNumber);
+  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addcomponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentGeDuanSun(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */

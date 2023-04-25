@@ -42,9 +42,8 @@ public class PhaseRK extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] = new ComponentRK(componentName, moles, molesInPhase, compNumber);
+  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addcomponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentRK(name, moles, molesInPhase, compNumber);
   }
 }
