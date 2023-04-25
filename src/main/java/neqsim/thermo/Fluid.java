@@ -358,7 +358,6 @@ public class Fluid {
    * <p>
    * Getter for the field <code>thermoMixingRule</code>.
    * </p>
-   * a
    *
    * @return a {@link java.lang.String} object
    */
