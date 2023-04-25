@@ -969,8 +969,9 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-    fugacityCoefficient = 1.0; // this.fugcoef(phase, phase.getNumberOfComponents(),
-                               // phase.getTemperature(), phase.getPressure());
+    fugacityCoefficient = 1.0;
+    // this.fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // phase.getPressure());
     logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -978,16 +979,18 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double logfugcoefdT(PhaseInterface phase) {
-    dfugdt = 0.0; // this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(),
-                  // phase.getTemperature(), phase.getPressure());
+    dfugdt = 0.0;
+    // this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // phase.getPressure());
     return dfugdt;
   }
 
   /** {@inheritDoc} */
   @Override
   public double logfugcoefdP(PhaseInterface phase) {
-    dfugdp = 0.0; // this.fugcoefDiffPres(phase, phase.getNumberOfComponents(),
-                  // phase.getTemperature(), phase.getPressure());
+    dfugdp = 0.0;
+    // this.fugcoefDiffPres(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // phase.getPressure());
     return dfugdp;
   }
 
@@ -1838,7 +1841,8 @@ abstract class Component implements ComponentInterface {
   @Override
   public double getHenryCoef(double temperature) {
     // System.out.println("henry " +
-    // Math.exp(henryCoefParameter[0]+henryCoefParameter[1]/temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
+    // Math.exp(henryCoefParameter[0]+henryCoefParameter[1] /
+    // temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
     return Math
         .exp(henryCoefParameter[0] + henryCoefParameter[1] / temperature
             + henryCoefParameter[2] * Math.log(temperature) + henryCoefParameter[3] * temperature)

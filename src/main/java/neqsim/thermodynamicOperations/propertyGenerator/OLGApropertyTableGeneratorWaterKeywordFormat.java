@@ -25,15 +25,46 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double stdPres = 1.01325, stdPresATM = 1, stdTemp = 288.15;
-  double[] molfracs, MW, dens;
+  double stdPres = 1.01325;
+  double stdPresATM = 1;
+  double stdTemp = 288.15;
+  double[] molfracs;
+  double[] MW;
+  double[] dens;
   String[] components;
-  double GOR, GLR, stdGasDens, stdLiqDens, stdWatDens;
-  double[] pressures, temperatureLOG, temperatures, pressureLOG = null;
+  double GOR;
+  double GLR;
+  double stdGasDens;
+  double stdLiqDens;
+  double stdWatDens;
+  double[] pressures;
+  double[] temperatureLOG;
+  double[] temperatures;
+  double[] pressureLOG = null;
   double[][] ROG = null; // DROGDP, DROHLDP, DROGDT, DROHLDT;
-  double[] bubP, bubT, dewP, bubPLOG, dewPLOG, bubTLOG;
-  double[][] ROL, CPG, CPHL, HG, HHL, TCG, TCHL, VISG, VISHL, SIGGHL, SEG, SEHL, RS;
-  double TC, PC, TCLOG, PCLOG;
+  double[] bubP;
+  double[] bubT;
+  double[] dewP;
+  double[] bubPLOG;
+  double[] dewPLOG;
+  double[] bubTLOG;
+  double[][] ROL;
+  double[][] CPG;
+  double[][] CPHL;
+  double[][] HG;
+  double[][] HHL;
+  double[][] TCG;
+  double[][] TCHL;
+  double[][] VISG;
+  double[][] VISHL;
+  double[][] SIGGHL;
+  double[][] SEG;
+  double[][] SEHL;
+  double[][] RS;
+  double TC;
+  double PC;
+  double TCLOG;
+  double PCLOG;
   double RSWTOB;
   double[][][] props;
   int nProps;
@@ -476,18 +507,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < temperatures.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // +
-                                                                                         // "
-                                                                                         // ROG
-                                                                                         // "
-                                                                                         // +
-                                                                                         // ROG[i][j]
-                                                                                         // +
-                                                                                         // "
-                                                                                         // ROL
-                                                                                         // "
-                                                                                         // +
-                                                                                         // ROL[i][j]);
+        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);
+        // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
       }
     }
     writeOLGAinpFile("");

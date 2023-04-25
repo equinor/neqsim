@@ -335,7 +335,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return -1.0 / (numberOfMolesInPhase * molarVolume - getB() + getC());
   }
 
-  //// derivative of small g with regards to c
+  // derivative of small g with regards to c
   /**
    * <p>gc.</p>
    *
@@ -346,7 +346,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return 1.0 / (numberOfMolesInPhase * molarVolume - getB() + getC());
   }
 
-  //// derivative of small f with regards to c-->equal to fv
+  // derivative of small f with regards to c-->equal to fv
   /**
    * <p>fc.</p>
    *
@@ -363,7 +363,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return -(calcf() + (numberOfMolesInPhase * molarVolume + getC()) * fv()) / getB();
   }
 
-  //// second derivative of small f with regards to cc-->equal to fvv
+  // second derivative of small f with regards to cc-->equal to fvv
   /**
    * <p>fcc.</p>
    *
@@ -373,7 +373,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return fVV();
   }
 
-  //// second derivative of small f with regards to bc-->equal to fvv
+  // second derivative of small f with regards to bc-->equal to fvv
   /**
    * <p>fbc.</p>
    *
@@ -383,7 +383,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return fBV();
   }
 
-  //// second derivative of small f with regards to cv-->equal to fvv
+  // second derivative of small f with regards to cv-->equal to fvv
   /**
    * <p>fcv.</p>
    *
@@ -393,21 +393,21 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return fVV();
   }
 
-  //// second derivative of small f with regards to bv-->
+  // second derivative of small f with regards to bv-->
   /** {@inheritDoc} */
   @Override
   public double fBV() {
     return -(2.0 * fv() + (numberOfMolesInPhase * molarVolume + getC()) * fVV()) / getB();
   }
 
-  //// second derivative of small f with regards to bb-->
+  // second derivative of small f with regards to bb-->
   /** {@inheritDoc} */
   @Override
   public double fBB() {
     return -(2.0 * fb() + (numberOfMolesInPhase * molarVolume + getC()) * fBV()) / getB();
   }
 
-  //// second derivative of small g with regards to bv-->
+  // second derivative of small g with regards to bv-->
   /** {@inheritDoc} */
   @Override
   public double gBV() {
@@ -415,7 +415,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return 1.0 / (val * val);
   }
 
-  //// second derivative of small g with regards to bb-->
+  // second derivative of small g with regards to bb-->
   /** {@inheritDoc} */
   @Override
   public double gBB() {
@@ -423,7 +423,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return -1.0 / (val * val);
   }
 
-  //// second derivative of small g with regards to bc-->
+  // second derivative of small g with regards to bc-->
   /**
    * <p>gBC.</p>
    *
@@ -434,7 +434,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return 1.0 / (val * val);
   }
 
-  //// second derivative of small g with regards to cv-->
+  // second derivative of small g with regards to cv-->
   /**
    * <p>gCV.</p>
    *
@@ -445,7 +445,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     return -1.0 / (val * val);
   }
 
-  //// second derivative of small g with regards to cc-->
+  // second derivative of small g with regards to cc-->
   /**
    * <p>gCC.</p>
    *

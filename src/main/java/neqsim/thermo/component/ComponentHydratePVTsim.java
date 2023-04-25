@@ -16,8 +16,8 @@ import neqsim.util.database.NeqSimDataBase;
 public class ComponentHydratePVTsim extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
 
-  double Ak[][] = new double[2][2]; // [structure][cavitytype]
-  double Bk[][] = new double[2][2]; // [structure][cavitytype]
+  double[][] Ak = new double[2][2]; // [structure][cavitytype]
+  double[][] Bk = new double[2][2]; // [structure][cavitytype]
   static Logger logger = LogManager.getLogger(ComponentHydratePVTsim.class);
 
   /**

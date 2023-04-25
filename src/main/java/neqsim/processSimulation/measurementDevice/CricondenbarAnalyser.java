@@ -17,6 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(CricondenbarAnalyser.class);
+
   protected StreamInterface stream = null;
 
   /**

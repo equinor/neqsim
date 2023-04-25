@@ -15,6 +15,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
  */
 public class VirtualStream extends ProcessEquipmentBaseClass {
   static Logger logger = LogManager.getLogger(VirtualStream.class);
+
   protected StreamInterface refStream = null;
   protected StreamInterface outStream = null;
   protected double flowRate;

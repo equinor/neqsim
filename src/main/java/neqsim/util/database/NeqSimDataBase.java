@@ -46,6 +46,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   /** Constant <code>dataBasePath=""</code>. */
   public static String dataBasePath = "";
   static Logger logger = LogManager.getLogger(NeqSimDataBase.class);
+
   private static boolean createTemporaryTables = false;
 
   // private static String dataBaseType = "Derby";

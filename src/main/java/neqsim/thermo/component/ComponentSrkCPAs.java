@@ -93,6 +93,6 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
         + 0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi() * 0.475 * getBi())
         / (temp * temp);
 
-    
+
   }
 }

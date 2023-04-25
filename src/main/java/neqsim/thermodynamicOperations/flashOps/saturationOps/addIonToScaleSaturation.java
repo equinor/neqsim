@@ -16,6 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(addIonToScaleSaturation.class);
+
   String saltName = "";
   String scaleSaltName = "";
   String nameOfIonToBeAdded = "";
