@@ -48,7 +48,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   int waterNumb = 0;
   int upMoles = 0;
   // double chem_pot_dilute[];
-  /// double chem_pot_pure[];
+  // double chem_pot_pure[];
   double[] b_element;
   Matrix b_matrix;
 

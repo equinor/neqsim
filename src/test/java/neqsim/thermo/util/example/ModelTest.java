@@ -48,7 +48,7 @@ public class ModelTest {
         // testSystem.addComponent("Cl-", 0.1);
         // testSystem.addComponent("MEG", 2.1);
          testSystem.addComponent("methanol", 20);
-        /// testSystem.addComponent("MEG", 5.3);
+         // testSystem.addComponent("MEG", 5.3);
         // testSystem.addComponent("MEG", 10.0);
         // testSystem.addTBPfraction("C8", 10.1, 90.0 / 1000.0, 0.8);
         //testSystem.addComponent("MEG", 10.5);

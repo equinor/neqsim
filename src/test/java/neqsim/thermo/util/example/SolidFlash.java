@@ -46,7 +46,7 @@ public class SolidFlash {
     // testSystem.addComponent("iC5", 0.1814);
     // testSystem.addComponent("n-pentane", 0.1702);
     // testSystem.addComponent("n-hexane", 0.1003);
-    //// testSystem.addComponent("n-heptane", 0.0449);
+    // testSystem.addComponent("n-heptane", 0.0449);
     // testSystem.addComponent("benzene", 180.0e-4);
     // testSystem.addComponent("H2S", 10.0);
     // testSystem.addComponent("nitrogen", 10e-6);

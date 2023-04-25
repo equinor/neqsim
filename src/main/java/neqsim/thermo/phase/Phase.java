@@ -469,7 +469,7 @@ abstract class Phase implements PhaseInterface {
     // if (physicalProperty == null || phaseTypeAtLastPhysPropUpdate != phaseType ||
     // !phaseTypeNameAtLastPhysPropUpdate.equals(phaseTypeName)) {
     // this.setPhysicalProperties();
-    //// }
+    // }
     // physicalProperty.init(this, type);
     getPhysicalProperties().init(this, type);
   }

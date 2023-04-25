@@ -751,7 +751,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    */
   public double F_DISP1_SAFT() {
     return getNumberOfMolesInPhase() * (-2.0 * ThermodynamicConstantsInterface.pi
-        * getF1dispVolTerm() * getF1dispSumTerm() * getF1dispI1()); /// (ThermodynamicConstantsInterface.R*temperature);
+        * getF1dispVolTerm() * getF1dispSumTerm() * getF1dispI1()); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**
@@ -765,7 +765,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
     return getNumberOfMolesInPhase() * (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV
         * getF1dispSumTerm() * getF1dispI1()
         - 2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm()
-            * F1dispI1dV); /// (ThermodynamicConstantsInterface.R*temperature);
+            * F1dispI1dV); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**
@@ -812,7 +812,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
         - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm()
             * F2dispI2dV * getF2dispZHC()
         - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm()
-            * getF2dispI2() * F2dispZHCdV); /// (ThermodynamicConstantsInterface.R*temperature);
+            * getF2dispI2() * F2dispZHCdV); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**

@@ -2717,8 +2717,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
 
-    /// String[][] table = new String[getPhases()[0].getNumberOfComponents() +
-    /// 30][7];
+    // String[][] table = new String[getPhases()[0].getNumberOfComponents() +
+    // 30][7];
     String[] names = new String[phase.getNumberOfComponents() + 1];
     names[0] = "";
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {

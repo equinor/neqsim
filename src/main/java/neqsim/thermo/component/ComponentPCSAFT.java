@@ -224,7 +224,7 @@ public class ComponentPCSAFT extends ComponentSrk {
             - ThermodynamicConstantsInterface.pi * ((PhasePCSAFT) phase).getmSAFT()
                 * ((PhasePCSAFT) phase).getF1dispVolTerm()
                 * ((PhasePCSAFT) phase).getF2dispSumTerm() * ((PhasePCSAFT) phase).getF2dispI2()
-                * F2dispZHCdn)); /// (ThermodynamicConstantsInterface.R*temperature);
+                * F2dispZHCdn)); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**

@@ -162,8 +162,8 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
       boundary.getNode(i).getBulkSystem().getPhases()[1].initPhysicalProperties();
       boundary.getNode(i).getBulkSystem().getPhases()[1].getPhysicalProperties()
           .calcEffectiveDiffusionCoefficients();
-      /// if(reactive)
-      /// boundary.getNode(i).getBulkSystem().getChemicalReactionOperations().calcReacRates(1);
+      // if(reactive)
+      // boundary.getNode(i).getBulkSystem().getChemicalReactionOperations().calcReacRates(1);
     }
 
     a[0] = 0.0;

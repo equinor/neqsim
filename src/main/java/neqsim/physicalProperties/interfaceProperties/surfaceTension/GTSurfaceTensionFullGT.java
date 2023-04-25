@@ -175,8 +175,8 @@ public class GTSurfaceTensionFullGT {
       this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
     }
 
-    /// @todo Change to \f$c_{ij} = (1-\beta_{ij})\sqrt{c_ic_j}\f$ when a
-    /// NeqSIM function for evaluating \f$\beta_{ij}\f$ becomes available.
+    // @todo Change to \f$c_{ij} = (1-\beta_{ij})\sqrt{c_ic_j}\f$ when a
+    // NeqSIM function for evaluating \f$\beta_{ij}\f$ becomes available.
     for (i = 0; i < ncomp; i++) {
       for (j = i; j < ncomp; j++) {
         cij[i][j] = 1.e18 * Math.sqrt(this.ci[i] * this.ci[j]); // Use nm as unit for length

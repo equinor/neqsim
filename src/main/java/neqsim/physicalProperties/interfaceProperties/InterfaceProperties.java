@@ -148,7 +148,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   @Override
   public double getSurfaceTension(int numb1, int numb2, String unit) {
     double val = getSurfaceTension(numb1, numb2);
-    /// ...conversion methods
+    // ...conversion methods
     return val;
   }
 

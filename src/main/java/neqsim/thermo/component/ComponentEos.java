@@ -651,7 +651,7 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     // 3.0) * (AA * TR + BB);
     // System.out.println("scale2 " + scale2);
     return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB);
-    /// Math.pow(ThermodynamicConstantsInterface.avagadroNumber, /// 2.0 / 3.0);
+    // Math.pow(ThermodynamicConstantsInterface.avagadroNumber, // 2.0 / 3.0);
   }
 
   /**
