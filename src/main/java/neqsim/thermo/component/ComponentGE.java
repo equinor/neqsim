@@ -59,9 +59,8 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
       } else {
         activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
       }
-      fugacityCoefficient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure(); // gamma*
-                                                                                                   // benyttes
-                                                                                                   // ikke
+      fugacityCoefficient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();
+      // gamma* benyttes ikke
       gammaRefCor = activinf;
     }
     logFugacityCoefficient = Math.log(fugacityCoefficient);

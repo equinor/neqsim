@@ -31,16 +31,16 @@ class pHProbeTest {
     testFluid.addComponent("water", 141.053);
     testFluid.setMixingRule(10);
     testFluid.setMultiPhaseCheck(true);
-    
+
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
-    
+
     pHProbe phmeasurement = new pHProbe(stream_1);
     phmeasurement.run();
     logger.info("pH " + phmeasurement.getMeasuredValue());
-    assertEquals(4.079098133484792, phmeasurement.getMeasuredValue(),0.01);
+    assertEquals(4.079098133484792, phmeasurement.getMeasuredValue(), 0.01);
   }
-  
+
   @Test
   void testGetMeasuredValueWithAlkanility() {
     SystemInterface testFluid = new SystemSrkCPAstatoil(318.15, 50.0);
@@ -57,24 +57,24 @@ class pHProbeTest {
     testFluid.addComponent("water", 141.053);
     testFluid.setMixingRule(10);
     testFluid.setMultiPhaseCheck(true);
-    
+
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
-    
+
     pHProbe phmeasurement = new pHProbe(stream_1);
     phmeasurement.setAlkanility(50.0);
     phmeasurement.run();
     logger.info("pH " + phmeasurement.getMeasuredValue());
-    assertEquals(5.629055432357595, phmeasurement.getMeasuredValue(),0.01);
+    assertEquals(5.629055432357595, phmeasurement.getMeasuredValue(), 0.01);
   }
 
   @Test
   void testPHProbe() {
-    //fail("Not yet implemented");
+    // fail("Not yet implemented");
   }
 
   @Test
   void testPHProbeStreamInterface() {
-    //fail("Not yet implemented");
+    // fail("Not yet implemented");
   }
 }

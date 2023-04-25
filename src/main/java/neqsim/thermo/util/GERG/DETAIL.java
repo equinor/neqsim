@@ -661,7 +661,7 @@ public class DETAIL {
         }
     }
 
-    /// The following routine must be called once before any other routine.
+    // The following routine must be called once before any other routine.
     /**
      * <p>
      * SetupDetail.

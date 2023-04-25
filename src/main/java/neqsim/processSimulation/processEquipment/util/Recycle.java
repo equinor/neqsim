@@ -22,6 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Recycle.class);
+
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   private ArrayList<String> downstreamProperty = new ArrayList<String>(0);
   protected int numberOfInputStreams = 0;

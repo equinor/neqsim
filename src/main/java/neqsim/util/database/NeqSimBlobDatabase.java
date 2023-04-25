@@ -18,6 +18,22 @@ import org.apache.logging.log4j.Logger;
  */
 public class NeqSimBlobDatabase
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+
+  private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NeqSimBlobDatabase.class);
+
+  /** Constant <code>dataBasePath=""</code>. */
+  public static String dataBasePath = "";
+  private static boolean createTemporaryTables = true;
+
+  private static String dataBaseType = "";
+  private static String connectionString = "";
+  private static String username = "";
+  private static String password = "";
+
+  private Statement statement = null;
+  protected Connection databaseConnection = null;
+
   /**
    * <p>
    * createTemporaryTables.
@@ -39,20 +55,6 @@ public class NeqSimBlobDatabase
   public void setCreateTemporaryTables(boolean createTemporaryTables) {
     NeqSimBlobDatabase.createTemporaryTables = createTemporaryTables;
   }
-
-  private static final long serialVersionUID = 1000;
-  /** Constant <code>dataBasePath=""</code>. */
-  public static String dataBasePath = "";
-  static Logger logger = LogManager.getLogger(NeqSimBlobDatabase.class);
-  private static boolean createTemporaryTables = true;
-
-  private static String dataBaseType = "";
-  private static String connectionString = "";
-  private static String username = "";
-  private static String password = "";
-
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
 
   /**
    * <p>

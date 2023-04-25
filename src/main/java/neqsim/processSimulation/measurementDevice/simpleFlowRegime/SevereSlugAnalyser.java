@@ -19,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   static Logger logger = LogManager.getLogger(SevereSlugAnalyser.class);
+
   FluidSevereSlug fluidSevereS;
   Pipe pipe;
   SevereSlugAnalyser severeSlug;

@@ -111,14 +111,14 @@ public class ComponentGEWilson extends ComponentGE {
    * @return a double
    */
   public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {
-    double param1 = 0.0; // ((ComponentWaxWilson)
-                         // phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
-    double param2 = 0.0; // ((ComponentWaxWilson)
-                         // phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
+    double param1 = 0.0;
+    // ((ComponentWaxWilson) phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
+    double param2 = 0.0;
+    // ((ComponentWaxWilson) phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
     if (comp1 == comp2) {
       return 1.0;
     }
-    // this need to be corrected accordint to how to select energy of shortest
+    // this need to be corrected according to how to select energy of shortest
     // carbon molecule .....
     if (phase1.getComponent(comp1).getMolarMass() > phase1.getComponent(comp2).getMolarMass()) {
       param1 = ((ComponentGEWilson) phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);

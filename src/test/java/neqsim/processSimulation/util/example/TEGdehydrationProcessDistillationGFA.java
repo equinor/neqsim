@@ -444,12 +444,12 @@ public class TEGdehydrationProcessDistillationGFA {
     double eff =
         ((HeatExchanger) operations.getUnit("rich TEG heat exchanger 2")).getThermalEffectiveness();
     System.out.println("HX2 thermal efficiency " + eff);
-    /// operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
+    // operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
     // ((DistillationColumn)operations.getUnit("TEG regeneration
-    /// column")).setTopPressure(1.2);
+    // column")).setTopPressure(1.2);
     // operations.run();
     // ((DistillationColumn)operations.getUnit("TEG regeneration
-    /// column")).setNumberOfTrays(2);
+    // column")).setNumberOfTrays(2);
     /*
      * System.out.println("water in wet gas  " + ((Stream)
      * operations.getUnit("water saturated feed gas")).getFluid()

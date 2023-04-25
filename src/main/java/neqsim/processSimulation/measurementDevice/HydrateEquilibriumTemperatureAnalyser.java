@@ -17,6 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(HydrateEquilibriumTemperatureAnalyser.class);
+
   protected StreamInterface stream = null;
   private double referencePressure = 0;
 
@@ -45,7 +46,8 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
   public void displayResult() {
     try {
       // System.out.println("total water production [kg/dag]" +
-      // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
+      // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles() *
+      // stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
       // System.out.println("water in phase 1 (ppm) " +
       // stream.getThermoSystem().getPhase(0).getComponent("water").getx()*1e6);
     } finally {

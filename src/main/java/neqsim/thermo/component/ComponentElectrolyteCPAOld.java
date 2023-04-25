@@ -16,6 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyteEos
     implements ComponentCPAInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentElectrolyteCPAOld.class);
 
   int cpaon = 1;
 
@@ -24,7 +25,6 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   double[] xsiteOld = new double[0];
   double[] xsitedV = new double[0];
   double[] xsitedT = new double[0];
-  static Logger logger = LogManager.getLogger(ComponentElectrolyteCPAOld.class);
 
   /**
    * <p>

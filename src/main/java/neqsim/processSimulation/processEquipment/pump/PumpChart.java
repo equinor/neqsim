@@ -22,6 +22,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class PumpChart implements PumpChartInterface, java.io.Serializable {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PumpChart.class);
+
   ArrayList<PumpCurve> chartValues = new ArrayList<PumpCurve>();
   boolean isSurge = false;
   double maxSpeedCurve = 0;

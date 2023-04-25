@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class Fluid {
   static Logger logger = LogManager.getLogger(Fluid.class);
+
   neqsim.thermo.system.SystemInterface fluid = null;
   private boolean hasWater = false;
   private boolean autoSelectModel = false;
@@ -20,13 +21,16 @@ public class Fluid {
   private String thermoMixingRule = "classic";
 
   /**
-   * <p>Constructor for Fluid.</p>
+   * <p>
+   * Constructor for Fluid.
+   * </p>
    */
-  public Fluid() {
-  }
+  public Fluid() {}
 
   /**
-   * <p>Getter for the field <code>fluid</code>.</p>
+   * <p>
+   * Getter for the field <code>fluid</code>.
+   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -75,8 +79,8 @@ public class Fluid {
    * @param unit a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public neqsim.thermo.system.SystemInterface create2(String[] componentNames,
-      double[] flowrate, String unit) {
+  public neqsim.thermo.system.SystemInterface create2(String[] componentNames, double[] flowrate,
+      String unit) {
     setThermoModel();
     createFluid(componentNames, flowrate, unit);
     if (isHasWater() == true) {
@@ -231,7 +235,7 @@ public class Fluid {
    */
   public neqsim.thermo.system.SystemInterface createFluid(String[] componentNames,
       double[] flowrate, String unit) {
-      setThermoModel();
+    setThermoModel();
     if (componentNames.length != flowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
     }
@@ -277,8 +281,7 @@ public class Fluid {
     fluid2.display();
     fluid2.getNumberOfComponents();
 
-    neqsim.thermo.system.SystemInterface fluid3 =
-    fluidCreator.create("black oil with water");
+    neqsim.thermo.system.SystemInterface fluid3 = fluidCreator.create("black oil with water");
     fluid3.display();
     fluid3.getNumberOfComponents();
   }
@@ -354,7 +357,7 @@ public class Fluid {
   /**
    * <p>
    * Getter for the field <code>thermoMixingRule</code>.
-   * </p>a
+   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -369,7 +372,7 @@ public class Fluid {
    *
    * @param thermoMixingRule a {@link java.lang.String} object
    */
-  public  void setThermoMixingRule(String thermoMixingRule) {
+  public void setThermoMixingRule(String thermoMixingRule) {
     this.thermoMixingRule = thermoMixingRule;
   }
 }
