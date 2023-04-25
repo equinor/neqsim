@@ -20,6 +20,7 @@ public class FugTestConstP extends constantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(FugTestConstP.class);
+
   public double temp = 0.0;
   public double pres = 0.0;
   public SystemInterface testSystem;

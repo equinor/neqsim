@@ -298,10 +298,10 @@ public class TEGdehydrationProcessDistillationAaHa {
     // operations.save("c:/temp/TEGprocessAaHa.neqsim");
     // operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
     // ((DistillationColumn)operations.getUnit("TEG regeneration
-    /// column")).setTopPressure(1.2);
+    // column")).setTopPressure(1.2);
     // operations.run();
     // ((DistillationColumn)operations.getUnit("TEG regeneration
-    /// column")).setNumberOfTrays(2);
+    // column")).setNumberOfTrays(2);
     /*
      * System.out.println("water in wet gas  " + ((Stream)
      * operations.getUnit("water saturated feed gas")).getFluid()

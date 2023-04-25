@@ -788,8 +788,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         * (numberOfMolesInPhase * molarVolume + delta2 * loc_B));
   }
 
-  ////// NYE metoder fredag 25.08.public double dFdN(PhaseInterface phase, int
-  ////// numberOfComponents, double temperature, double pressure, int phasetype){
+  // NYE metoder fredag 25.08.public double dFdN(PhaseInterface phase, int
+  // numberOfComponents, double temperature, double pressure, int phasetype){
   /** {@inheritDoc} */
   @Override
   public double FnV() {

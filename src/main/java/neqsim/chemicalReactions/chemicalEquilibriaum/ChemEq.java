@@ -20,7 +20,7 @@ public class ChemEq implements java.io.Serializable {
   double P = 51;
   double n_t;
   double agemo = 0;
-  // double [][] A_matrix = new double[NSPEC][NELE];
+  // double[][] A_matrix = new double[NSPEC][NELE];
   // double n_mol[] = new double[NSPEC];
   // double chem_ref[] = new double[NSPEC];
   double[] d_n;

@@ -86,7 +86,7 @@ public class SulfureDeposition {
      */
     // testSystem.addComponent("propane",1.05);
     // testSystem.addComponent("n-butane",0.06);
-    //// testSystem.addComponent("i-butane",0.6);
+    // testSystem.addComponent("i-butane",0.6);
     // testSystem.addComponent("n-pentane",0.01);
     // testSystem.addComponent("i-pentane",0.07);
     // testSystem.addComponent("benzene",79.9);

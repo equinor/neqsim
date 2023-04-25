@@ -647,7 +647,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
       double AAW2 = -1.3646E-16;
 
       return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AAW1 + AAW2 * TR + 0.5113e-16 * TR * TR);
-    } else if (componentName.equals("water2")) { /// THis is the old method from
+    } else if (componentName.equals("water2")) { // THis is the old method from
       double TR = 1.0 - temperature / getTC();
       AA = -2.2367E-16;
       BB = 2.83732E-16;

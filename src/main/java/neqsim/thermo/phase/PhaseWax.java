@@ -52,7 +52,7 @@ public class PhaseWax extends PhaseSolid {
     componentArray[compNumber] = new ComponentWax(componentName, moles, molesInPhase, compNumber);
     // componentArray[compNumber] = new ComponentWaxWilson(componentName, moles,
     // molesInPhase, compNumber);
-    //// componentArray[compNumber] = new ComponentWonWax(componentName, moles,
+    // componentArray[compNumber] = new ComponentWonWax(componentName, moles,
     // molesInPhase, compNumber);
   }
 }

@@ -30,7 +30,7 @@ public class FurstElectrolyteConstants implements java.io.Serializable {
   // -5.531E-8, -4.321E-5};
   // public static double[] furstParams = {8.806E-8, 6.905E-6, 35.09e-6, 6.004e-6,
   // -5.531E-8, -4.321E-5};
-  //// public static double[] furstParams = {8.717E-8, 8.309E-6, 2.435E-5,
+  // public static double[] furstParams = {8.717E-8, 8.309E-6, 2.435E-5,
   // 2.024E-4, -5.757E-8, -5.693E-5};
   // public static double[] furstParams = {9.8647e-8, 6.9638e-6, 7.713e-5,
   // -2.501e-5, -5.813E-8, -4.447E-5};; //{9.8647e-8, 6.9638e-6, 7.713E-5,

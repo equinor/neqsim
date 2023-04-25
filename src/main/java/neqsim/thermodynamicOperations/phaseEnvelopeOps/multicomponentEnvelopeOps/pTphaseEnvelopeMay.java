@@ -709,24 +709,18 @@ public class pTphaseEnvelopeMay extends BaseOperation {
     }
 
     if (beta <= 0.5) {
-      initTc = system.getPhase(0).getComponents()[lc].getTC(); // closer to bubble point get
-                                                               // the lightest
-                                                               // component
+      initTc = system.getPhase(0).getComponents()[lc].getTC();
+      // closer to bubble point get the lightest component
       initPc = system.getPhase(0).getComponents()[lc].getPC();
       initAc = system.getPhase(0).getComponents()[lc].getAcentricFactor();
     } else if (beta > 0.5) {
-      initTc = system.getPhase(0).getComponents()[hc].getTC(); // closer to dew point get the
-                                                               // heaviest component
+      initTc = system.getPhase(0).getComponents()[hc].getTC();
+      // closer to dew point get the heaviest component
       initPc = system.getPhase(0).getComponents()[hc].getPC();
       initAc = system.getPhase(0).getComponents()[hc].getAcentricFactor();
     }
-    Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc)); // initial
-                                                                                            // T
-                                                                                            // based
-                                                                                            // on
-                                                                                            // the
-                                                                                            // lighterst/heaviest
-                                                                                            // component
+    Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
+    // initial T based on the lighterst/heaviest component
 
     // solve for Tstart with Newton
     for (int i = 0; i < 1000; i++) {

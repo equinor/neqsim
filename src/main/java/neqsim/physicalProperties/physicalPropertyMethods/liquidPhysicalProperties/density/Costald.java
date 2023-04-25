@@ -25,7 +25,7 @@ public class Costald extends
 
   /**
    * <p>
-   * Constructor for Density.
+   * Constructor for Costald.
    * </p>
    */
   public Costald() {}

@@ -19,6 +19,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class EclipseFluidReadWrite {
   static Logger logger = LogManager.getLogger(EclipseFluidReadWrite.class);
+
   /** Constant <code>pseudoName=""</code> */
   public static String pseudoName = "";
 

@@ -38,7 +38,7 @@ public class TestMassTransfer {
       while (dataSet.next()) {
         MassTransferFunction function = new MassTransferFunction();
         double[] guess = {0.3311};
-        double bound[][] = {{0, 1.0},};
+        double[][] bound = {{0, 1.0},};
         function.setInitialGuess(guess);
         SystemInterface testSystem = new SystemSrkEos(280, 0.001);
         testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);

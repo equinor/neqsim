@@ -787,15 +787,14 @@ public class pTphaseEnvelope extends BaseOperation {
 
     try {
       if (beta <= 0.5) {
-        initTc = system.getPhase(0).getComponents()[lc].getTC(); // closer to bubble point
-                                                                 // get the lightest
-                                                                 // component
+        // closer to bubble point get the lightest component
+
+        initTc = system.getPhase(0).getComponents()[lc].getTC();
         initPc = system.getPhase(0).getComponents()[lc].getPC();
         initAc = system.getPhase(0).getComponents()[lc].getAcentricFactor();
       } else if (beta > 0.5) {
-        initTc = system.getPhase(0).getComponents()[hc].getTC(); // closer to dew point get
-                                                                 // the heaviest
-                                                                 // component
+        // closer to dew point get the heaviest component
+        initTc = system.getPhase(0).getComponents()[hc].getTC();
         initPc = system.getPhase(0).getComponents()[hc].getPC();
         initAc = system.getPhase(0).getComponents()[hc].getAcentricFactor();
       }

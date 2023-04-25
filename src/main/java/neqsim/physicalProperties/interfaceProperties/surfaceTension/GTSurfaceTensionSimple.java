@@ -70,9 +70,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     localSystem = system.clone();
 
     double surdenstemp = 0.0;
-    int referenceComponentNumber = getComponentWithHighestBoilingpoint(); // 2;
-                                                                          // //localSystem.getPhase(0).getNumberOfComponents()
-                                                                          // - 1;
+    int referenceComponentNumber = getComponentWithHighestBoilingpoint();
+    // localSystem.getPhase(0).getNumberOfComponents() // - 1;
     double[] del_den_interface = new double[localSystem.getPhase(0).getNumberOfComponents()];
     double[] del_den_interface_old = new double[localSystem.getPhase(0).getNumberOfComponents()];
     double[] mu_equi = new double[localSystem.getPhase(0).getNumberOfComponents()];
@@ -263,9 +262,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
           if (i != referenceComponentNumber) {
             err += Math.abs(ans2.getEntry(pp, 0) * 1e5) / totalDens;
-            del_den_interface[i] += 1e5 * ans2.getEntry(pp, 0); // * (iterations) /
-                                                                // (10.0
-                                                                // + iterations);
+            del_den_interface[i] += 1e5 * ans2.getEntry(pp, 0);
+            // * (iterations) / (10.0 + iterations);
             pp++;
           }
         }
@@ -278,7 +276,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
       double kappai = 0.0;
       double kappak = 0.0;
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-        double infli = influenceParam[i]; // localSystem.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
+        double infli = influenceParam[i];
+        // localSystem.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
         kappai = del_den_interface[i] / del_den_interface[referenceComponentNumber];
         mu_times_den[j] += den_interface[j][i] * (mu_inter[j][i] - mu_equi[i]);
         for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
@@ -288,7 +287,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
           } else {
             interact = 0.0;
           }
-          double inflk = influenceParam[k]; // localSystem.getPhase(0).getComponent(k).getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
+          double inflk = influenceParam[k];
+          // localSystem.getPhase(0).getComponent(k).getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
           kappak = del_den_interface[k] / del_den_interface[referenceComponentNumber];
           kappa += Math.sqrt(infli * inflk) * kappai * kappak * (1.0 - interact);
         }
@@ -300,8 +300,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         break;
       }
       surdenstemp +=
-          Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber]; // *
-                                                                                                  // thermo.ThermodynamicConstantsInterface.avagadroNumber;
+          Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber];
+      // * thermo.ThermodynamicConstantsInterface.avagadroNumber;
     }
 
     // System.out.println("del den ref " +
