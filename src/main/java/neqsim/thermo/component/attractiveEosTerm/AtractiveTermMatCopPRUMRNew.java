@@ -3,7 +3,9 @@ package neqsim.thermo.component.attractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>AtractiveTermMatCopPRUMRNew class.</p>
+ * <p>
+ * AtractiveTermMatCopPRUMRNew class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,7 +17,9 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
   boolean useStandardAlphaForSupercritical = false;
 
   /**
-   * <p>Constructor for AtractiveTermMatCopPRUMRNew.</p>
+   * <p>
+   * Constructor for AtractiveTermMatCopPRUMRNew.
+   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -28,7 +32,9 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
   }
 
   /**
-   * <p>Constructor for AtractiveTermMatCopPRUMRNew.</p>
+   * <p>
+   * Constructor for AtractiveTermMatCopPRUMRNew.
+   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param params an array of {@link double} objects

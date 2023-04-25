@@ -42,7 +42,8 @@ public class WATcalc extends constantDutyTemperatureFlash {
     // system.setHydrateCheck(true);
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     int iter = 0;
-    double funkOld = 0.0, deltaT = 1.0;
+    double funkOld = 0.0;
+    double deltaT = 1.0;
     double[] Ksolid = new double[system.getPhase(0).getNumberOfComponents()];
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       system.getPhases()[5].getComponent(i).setx(1.0);

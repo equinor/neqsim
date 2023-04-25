@@ -64,7 +64,10 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   public double alpha(double temperature) {
     double Tr = (temperature / getComponent().getTC());
     // System.out.println("alpha here " + Math.pow( 1.0 +
-    // m*(1.0-Math.sqrt(temperature/component.getTC()))-parameters[0]*(1.0-temperature/component.getTC())*(1.0+parameters[1]*temperature/component.getTC()+parameters[2]*Math.pow(temperature/component.getTC(),2.0)),2.0));
+    // m*(1.0-Math.sqrt(temperature/component.getTC())) -
+    // parameters[0]*(1.0-temperature/component.getTC()) *
+    // (1.0+parameters[1]*temperature/component.getTC() +
+    // parameters[2]*Math.pow(temperature/component.getTC(),2.0)),2.0));
     return Math.pow(Tr, a) * Math.exp(b * (1 - Math.pow(Tr, c)))
         + m * (Math.pow(Tr, d) * Math.exp(e * (1 - Math.pow(Tr, f)))
             - Math.pow(Tr, a) * Math.exp(b * (1 - Math.pow(Tr, c))));

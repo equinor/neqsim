@@ -38,10 +38,10 @@ class ComponentSplitterTest {
 
     ComponentSplitter splitter = new ComponentSplitter("splitter", inletStream);
     splitter.setSplitFactors(new double[] {1.00, 0.0, 0.0});
-    
+
     StreamInterface stream1 = new Stream("stream 1", splitter.getSplitStream(0));
-    StreamInterface stream2 = new Stream("stream 2",splitter.getSplitStream(1));
-    
+    StreamInterface stream2 = new Stream("stream 2", splitter.getSplitStream(1));
+
     processOps.add(inletStream);
     processOps.add(splitter);
     processOps.add(stream1);
@@ -51,8 +51,8 @@ class ComponentSplitterTest {
   @Test
   public void testRun() {
     processOps.run();
-    //((StreamInterface)processOps.getUnit("stream 1")).displayResult();
-    //((StreamInterface)processOps.getUnit("stream 2")).displayResult();
+    // ((StreamInterface)processOps.getUnit("stream 1")).displayResult();
+    // ((StreamInterface)processOps.getUnit("stream 2")).displayResult();
     assertEquals(((StreamInterface) processOps.getUnit("stream 1")).getFluid()
         .getComponent("methane").getx(), 1.0, 1e-6);
     assertEquals(((StreamInterface) processOps.getUnit("stream 2")).getFluid()

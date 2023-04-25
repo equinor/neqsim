@@ -29,11 +29,11 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
   double deviation = 0;
   double g0 = 0;
   double g1 = 0;
-  double lnOldOldK[];
-  double lnK[];
+  double[] lnOldOldK;
+  double[] lnK;
   double[] lnOldK;
-  double oldDeltalnK[];
-  double deltalnK[];
+  double[] oldDeltalnK;
+  double[] deltalnK;
   double[] tm = {1, 1};
   double beta = 1e-5;
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase

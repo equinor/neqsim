@@ -149,7 +149,8 @@ public class ComponentPCSAFT extends ComponentSrk {
                 * Math.log(((PhasePCSAFT) phase).getGhsSAFT())
             + ((PhasePCSAFT) phase).getMmin1SAFT() / phase.getNumberOfMolesInPhase()
                 * Math.log(((PhasePCSAFT) phase).getGhsSAFT())
-            - ((PhasePCSAFT) phase).getMmin1SAFT() * getDlogghsSAFTdi()); /// (ThermodynamicConstantsInterface.R*temperature);
+            - ((PhasePCSAFT) phase).getMmin1SAFT() * getDlogghsSAFTdi());
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**
@@ -172,7 +173,8 @@ public class ComponentPCSAFT extends ComponentSrk {
             - 2.0 * ThermodynamicConstantsInterface.pi * ((PhasePCSAFT) phase).getF1dispVolTerm()
                 * F1dispSumTermdn * ((PhasePCSAFT) phase).getF1dispI1()
             - 2.0 * ThermodynamicConstantsInterface.pi * ((PhasePCSAFT) phase).getF1dispVolTerm()
-                * ((PhasePCSAFT) phase).getF1dispSumTerm() * F1dispI1dn)); /// (ThermodynamicConstantsInterface.R*temperature);
+                * ((PhasePCSAFT) phase).getF1dispSumTerm() * F1dispI1dn));
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**
@@ -222,7 +224,7 @@ public class ComponentPCSAFT extends ComponentSrk {
             - ThermodynamicConstantsInterface.pi * ((PhasePCSAFT) phase).getmSAFT()
                 * ((PhasePCSAFT) phase).getF1dispVolTerm()
                 * ((PhasePCSAFT) phase).getF2dispSumTerm() * ((PhasePCSAFT) phase).getF2dispI2()
-                * F2dispZHCdn)); /// (ThermodynamicConstantsInterface.R*temperature);
+                * F2dispZHCdn)); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**

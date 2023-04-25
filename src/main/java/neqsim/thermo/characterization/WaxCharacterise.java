@@ -15,6 +15,7 @@ import neqsim.thermo.system.SystemInterface;
 public class WaxCharacterise implements java.io.Serializable, Cloneable {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(WaxCharacterise.class);
+
   SystemInterface thermoSystem = null;
   String name = "";
   protected WaxModelInterface model = new PedersenWaxModel();

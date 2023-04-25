@@ -22,13 +22,14 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable {
+  private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
+
   private PhysicalPropertiesInterface gasPhysicalProperties = null;
   private PhysicalPropertiesInterface oilPhysicalProperties = null;
   private PhysicalPropertiesInterface aqueousPhysicalProperties = null;
   private PhysicalPropertiesInterface solidPhysicalProperties = null;
   private neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule mixingRule = null;
-  static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
-  private static final long serialVersionUID = 1000;
 
   /**
    * <p>

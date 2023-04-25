@@ -53,7 +53,7 @@ public class DuanSun {
       double[] Tc = {304.2, 647.3};
       double[] Pc = {72.8, 217.6};
       double[] w = {0.225, 0.344};
-      double K12[][] = {{0.0, 0.2}, {0.2, 0.0}};
+      double[][] K12 = {{0.0, 0.2}, {0.2, 0.0}};
       double T = temperature;
       double S = salinity;
       // double[] x = {0.000554093, 1.0-0.000554093};
