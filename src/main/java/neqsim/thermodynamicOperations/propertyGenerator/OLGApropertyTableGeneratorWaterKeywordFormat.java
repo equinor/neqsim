@@ -507,18 +507,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < temperatures.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // +
-                                                                                         // "
-                                                                                         // ROG
-                                                                                         // "
-                                                                                         // +
-                                                                                         // ROG[i][j]
-                                                                                         // +
-                                                                                         // "
-                                                                                         // ROL
-                                                                                         // "
-                                                                                         // +
-                                                                                         // ROL[i][j]);
+        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);
+        // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
       }
     }
     writeOLGAinpFile("");

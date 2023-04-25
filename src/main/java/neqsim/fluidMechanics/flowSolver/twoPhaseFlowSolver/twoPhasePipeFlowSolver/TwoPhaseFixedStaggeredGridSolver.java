@@ -323,9 +323,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                 + diffMatrix.get(j, 0)
                     * pipe.getNode(j).getBulkSystem().getPhases()[phase].getMolarMass()
                     / pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp]
-                        .getMolarMass()); // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
-                                          // +
-                                          // 0.5*diff4Matrix[p].get(j,0));
+                        .getMolarMass());
+        // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
+        // + 0.5*diff4Matrix[p].get(j,0));
       }
 
       double xSum = 0.0;
@@ -723,12 +723,12 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     double fw = pipe.getNode(i - 1).getGeometry().getNodeLength()
         / (pipe.getNode(i).getGeometry().getNodeLength()
             + pipe.getNode(i - 1).getGeometry().getNodeLength());
-    double Ae = pipe.getNode(i).getArea(phase); // 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea()
-                                                // +
-                                                // fe/pipe.getNode(i+1).getGeometry().getArea());
-    double Aw = pipe.getNode(i - 1).getArea(phase); // 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea()
-                                                    // +
-                                                    // fw/pipe.getNode(i-1).getGeometry().getArea());
+    double Ae = pipe.getNode(i).getArea(phase);
+    // 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea() +
+    // fe/pipe.getNode(i+1).getGeometry().getArea());
+    double Aw = pipe.getNode(i - 1).getArea(phase);
+    // 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea() +
+    // fw/pipe.getNode(i-1).getGeometry().getArea());
     double vertposchange = (1 - fw) * (pipe.getNode(i).getVerticalPositionOfNode()
         - pipe.getNode(i - 1).getVerticalPositionOfNode());
 
@@ -953,9 +953,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
 
       for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); j++) {
-        oldComposition[phase][j][i] = xNew[phase][j][i]; // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx()
-                                                         // *
-                                                         // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+        oldComposition[phase][j][i] = xNew[phase][j][i];
+        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx() *
+        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
       }
     }
   }

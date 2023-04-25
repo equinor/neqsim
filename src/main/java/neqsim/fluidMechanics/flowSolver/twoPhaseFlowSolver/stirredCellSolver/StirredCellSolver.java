@@ -302,9 +302,9 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
                 + diffMatrix.get(j, 0)
                     * pipe.getNode(j).getBulkSystem().getPhases()[phase].getMolarMass()
                     / pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp]
-                        .getMolarMass()); // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
-                                          // +
-                                          // 0.5*diff4Matrix[p].get(j,0));
+                        .getMolarMass());
+        // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx() +
+        // 0.5*diff4Matrix[p].get(j,0));
       }
 
       double xSum = 0.0;

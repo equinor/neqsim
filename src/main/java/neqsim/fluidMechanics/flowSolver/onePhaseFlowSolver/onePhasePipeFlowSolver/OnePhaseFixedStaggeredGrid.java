@@ -283,9 +283,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           .getNumberOfComponents(); p++) {
         pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].setx(
             sol4Matrix[p].get(j, 0) * pipe.getNode(j).getBulkSystem().getPhases()[0].getMolarMass()
-                / pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getMolarMass()); // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
-                                                                                                     // +
-                                                                                                     // 0.5*diff4Matrix[p].get(j,0));
+                / pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getMolarMass());
+        // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx() +
+        // 0.5*diff4Matrix[p].get(j,0));
       }
 
       pipe.getNode(j).getBulkSystem().getPhases()[0].normalize();
@@ -555,13 +555,13 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     double fw = pipe.getNode(i - 1).getGeometry().getNodeLength()
         / (pipe.getNode(i).getGeometry().getNodeLength()
             + pipe.getNode(i - 1).getGeometry().getNodeLength());
-    double Ae = pipe.getNode(i).getGeometry().getArea(); // 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea()
-                                                         // +
-                                                         // fe/pipe.getNode(i+1).getGeometry().getArea());
+    double Ae = pipe.getNode(i).getGeometry().getArea();
+    // 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea() +
+    // fe/pipe.getNode(i+1).getGeometry().getArea());
 
-    double Aw = pipe.getNode(i - 1).getGeometry().getArea(); // 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea()
-                                                             // +
-                                                             // fw/pipe.getNode(i-1).getGeometry().getArea());
+    double Aw = pipe.getNode(i - 1).getGeometry().getArea();
+    // 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea() +
+    // fw/pipe.getNode(i-1).getGeometry().getArea());
 
     double vertposchange = (1 - fw) * (pipe.getNode(i).getVerticalPositionOfNode()
         - pipe.getNode(i - 1).getVerticalPositionOfNode());
@@ -575,7 +575,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                 - pipe.getNode(i).getBulkSystem().getTemperature())
             / (pipe.getNode(i).getGeometry().getDiameter())
             * pipe.getNode(i).getGeometry().getNodeLength();
-    double SP = 0; // -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
+    double SP = 0;
+    // -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
     double Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity()
         * pipe.getNode(i).getVelocityIn().doubleValue();
@@ -683,9 +684,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
       for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); j++) {
-        oldComposition[j][i] = sol4Matrix[j].get(i, 0); // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx()
-                                                        // *
-                                                        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+        oldComposition[j][i] = sol4Matrix[j].get(i, 0);
+        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx() *
+        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
       }
     }
   }

@@ -16,8 +16,10 @@ public class FrictionTheoryViscosityMethod extends Viscosity
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(FrictionTheoryViscosityMethod.class);
 
-  public double[] pureComponentViscosity, Fc, omegaVisc;
-  protected double chungE[] = new double[10];
+  public double[] pureComponentViscosity;
+  public double[] Fc;
+  public double[] omegaVisc;
+  protected double[] chungE = new double[10];
   static double TBPcorrection = 1.0;
   // SRK
   protected double kapac_fconst = -0.165302;
@@ -209,8 +211,13 @@ public class FrictionTheoryViscosityMethod extends Viscosity
    */
   public void initChungPureComponentViscosity() {
     double tempVar = 0;
-    double A = 1.16145, B = 0.14874, C = 0.52487, D = 0.77320, E = 2.16178, F = 2.43787;
+    double A = 1.16145;
 
+    double B = 0.14874;
+    double C = 0.52487;
+    double D = 0.77320;
+    double E = 2.16178;
+    double F = 2.43787;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       Fc[i] = 1.0 - 0.2756 * phase.getPhase().getComponents()[i].getAcentricFactor();
 
@@ -241,7 +248,8 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     double calcVisc = 0;
     int iter = 0;
     double err = 0.0;
-    double oldTemp = phase.getPhase().getTemperature(), oldPres = phase.getPhase().getPressure();
+    double oldTemp = phase.getPhase().getTemperature();
+    double oldPres = phase.getPhase().getPressure();
     phase.getPhase().setTemperature(temperature);
     phase.getPhase().setPressure(pressure);
     phase.getPhase().init();

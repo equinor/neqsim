@@ -104,8 +104,8 @@ public class CompressorChartAlternativeMapLookup
       int pos = bisect_left(speedArray, speed);
       if (pos == 0) { // speed is lower than the lowest reference speed
         closestRefSpeeds.add(speedArray[0]);
-      } else if (pos == chartSpeeds.size()) { // speed is higher than the highest reference
-                                              // speed
+      } else if (pos == chartSpeeds.size()) {
+        // speed is higher than the highest reference speed
         closestRefSpeeds.add(speedArray[speedArray.length - 1]);
       } else { // speed is in between two reference speeds
         closestRefSpeeds.add(speedArray[pos - 1]);
@@ -237,7 +237,8 @@ public class CompressorChartAlternativeMapLookup
   @Override
   public int getSpeed(double flow, double head) {
     int iter = 1;
-    double error = 1.0, derrordspeed = 1.0;
+    double error = 1.0;
+    double derrordspeed = 1.0;
     double newspeed = referenceSpeed;
     double newhead = 0.0;
     double oldspeed = newspeed + 1.0;

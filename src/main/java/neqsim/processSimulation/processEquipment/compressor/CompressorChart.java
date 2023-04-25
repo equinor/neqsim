@@ -80,10 +80,12 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     this.redflow = new double[flow.length][flow[0].length];
 
     for (int i = 0; i < speed.length; i++) {
-      if (speed[i] > maxSpeedCurve)
+      if (speed[i] > maxSpeedCurve) {
         maxSpeedCurve = speed[i];
-      if (speed[i] < minSpeedCurve)
+      }
+      if (speed[i] < minSpeedCurve) {
         minSpeedCurve = speed[i];
+      }
       CompressorCurve curve = new CompressorCurve(speed[i], flow[i], head[i], polyEff[i]);
       chartValues.add(curve);
       for (int j = 0; j < flow[i].length; j++) {
@@ -92,9 +94,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         redhead[i][j] = head[i][j] / speed[i] / speed[i];
         reducedHeadFitter.add(redflow[i][j], redhead[i][j]);
         reducedPolytropicEfficiencyFitter.add(redflow[i][j], redpolytropicEfficiency[i][j]);
-        double flowFanLaw = flow[i][j] * speed[i] / speed[0]; // MLLU: not correct. speed[0]
-                                                              // should be the
-                                                              // requested speed
+        double flowFanLaw = flow[i][j] * speed[i] / speed[0];
+        // todo: MLLU: not correct. speed[0] should be the requested speed
         fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
       }
     }
@@ -140,7 +141,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   @Override
   public int getSpeed(double flow, double head) {
     int iter = 1;
-    double error = 1.0, derrordspeed = 1.0;
+    double error = 1.0;
+    double derrordspeed = 1.0;
     double newspeed = referenceSpeed;
     double newhead = 0.0;
     double oldspeed = newspeed + 1.0;
@@ -344,12 +346,15 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     CompressorChart other = (CompressorChart) obj;
     return Arrays.equals(chartConditions, other.chartConditions)
         && Objects.equals(chartValues, other.chartValues)

@@ -305,8 +305,8 @@ public class LNGship
       double derrordn = (oldVolume - oldoldVolume) / (oldmolarBoilOffRate - oldoldmolarBoilOffRate);
       boilOffCorrection = (volume[numberOffTimeSteps - 1] - endVolume) / derrordn;
       if (iterations > 1) {
-        molarBoilOffRate += boilOffCorrection; // (volume[numberOffTimeSteps - 1] -
-                                               // endVolume) / derrordn;
+        molarBoilOffRate += boilOffCorrection;
+        // (volume[numberOffTimeSteps - 1] - endVolume) / derrordn;
       } else {
         molarBoilOffRate = molarBoilOffRate * volume[numberOffTimeSteps - 1] / endVolume;
       }

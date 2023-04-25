@@ -389,9 +389,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
                     + thermoSystem.getPhase("oil").getBeta()
                         * thermoSystem.getPhase("oil").getMolarMass());
           } else {
-            props[k][i][j] = 1.0; // thermoSystem.getPhase(phaseNumb).getBeta() *
-                                  // thermoSystem.getPhase(phaseNumb).getMolarMass() /
-                                  // thermoSystem.getMolarMass();
+            props[k][i][j] = 1.0;
+            // thermoSystem.getPhase(phaseNumb).getBeta() *
+            // thermoSystem.getPhase(phaseNumb).getMolarMass() / thermoSystem.getMolarMass();
           }
           names[k] = "GAS MASS FRACTION";
           units[k] = "-";
@@ -531,9 +531,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
           units[k] = "KG/M3-K";
           k++;
 
-          props[k][i][j] = 0.0; // thermoSystem.getPhase(phaseNumb).getBeta() *
-                                // thermoSystem.getPhase(phaseNumb).getMolarMass() /
-                                // thermoSystem.getMolarMass();
+          props[k][i][j] = 0.0;
+          // thermoSystem.getPhase(phaseNumb).getBeta() *
+          // thermoSystem.getPhase(phaseNumb).getMolarMass() / thermoSystem.getMolarMass();
           names[k] = "GAS MASS FRACTION";
           units[k] = "-";
           k++;
@@ -779,8 +779,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
           units[k] = "W/M-K";
           k++;
         } // setOilProperties();
-          // set gas properties
 
+        // set gas properties
         if (thermoSystem.hasPhaseType("aqueous") && acceptedFlash) {
           int phaseNumb = thermoSystem.getPhaseNumberOfPhase("aqueous");
           if (thermoSystem.hasPhaseType("gas")) {
@@ -1294,14 +1294,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < enthalpies.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " enthalpy " + enthalpiesLOG[j]); // + "
-                                                                                     // ROG "
-                                                                                     // +
-                                                                                     // ROG[i][j]
-                                                                                     // + "
-                                                                                     // ROL "
-                                                                                     // +
-                                                                                     // ROL[i][j]);
+        logger.info("pressure " + pressureLOG[i] + " enthalpy " + enthalpiesLOG[j]);
+        // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
       }
     }
     writeOLGAinpFile(fileName);

@@ -91,10 +91,11 @@ public class StoneWallCurve implements java.io.Serializable {
    * @return a boolean
    */
   public boolean isStoneWall(double head, double flow) {
-    if (getStoneWallFlow(head) < flow)
+    if (getStoneWallFlow(head) < flow) {
       return true;
-    else
+    } else {
       return false;
+    }
   }
 
   /**
@@ -127,16 +128,19 @@ public class StoneWallCurve implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     StoneWallCurve other = (StoneWallCurve) obj;
     return Arrays.equals(chartConditions, other.chartConditions) && Arrays.equals(flow, other.flow)
-    // && Objects.equals(flowFitter, other.flowFitter)
         && Objects.equals(flowFitterFunc, other.flowFitterFunc) && Arrays.equals(head, other.head)
         && isActive == other.isActive;
+    // && Objects.equals(flowFitter, other.flowFitter)
   }
 }

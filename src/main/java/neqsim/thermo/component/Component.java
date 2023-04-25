@@ -967,8 +967,9 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-    fugacityCoefficient = 1.0; // this.fugcoef(phase, phase.getNumberOfComponents(),
-                               // phase.getTemperature(), phase.getPressure());
+    fugacityCoefficient = 1.0;
+    // this.fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // phase.getPressure());
     logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -976,16 +977,18 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double logfugcoefdT(PhaseInterface phase) {
-    dfugdt = 0.0; // this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(),
-                  // phase.getTemperature(), phase.getPressure());
+    dfugdt = 0.0;
+    // this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // phase.getPressure());
     return dfugdt;
   }
 
   /** {@inheritDoc} */
   @Override
   public double logfugcoefdP(PhaseInterface phase) {
-    dfugdp = 0.0; // this.fugcoefDiffPres(phase, phase.getNumberOfComponents(),
-                  // phase.getTemperature(), phase.getPressure());
+    dfugdp = 0.0;
+    // this.fugcoefDiffPres(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // phase.getPressure());
     return dfugdp;
   }
 

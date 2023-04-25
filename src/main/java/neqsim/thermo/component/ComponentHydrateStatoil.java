@@ -146,7 +146,8 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     double val = 0.0;
     int numberOfSteps = 200;
     double endval = cavRadius[stucture][cavityType] - getSphericalCoreRadiusHydrate();
-    double x = 0.0, step = endval / numberOfSteps;
+    double x = 0.0;
+    double step = endval / numberOfSteps;
     x = step;
     for (int i = 1; i < numberOfSteps; i++) {
       val += step * ((getPot(x, stucture, cavityType, phase)

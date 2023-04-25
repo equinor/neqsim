@@ -23,6 +23,7 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentGEUnifac extends ComponentGEUniquac {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentGEUnifac.class);
 
   ArrayList<UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();
   UNIFACgroup[] unifacGroupsArray = new UNIFACgroup[0];
@@ -31,7 +32,6 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   double Q = 0.0;
   double R = 0.0;
   int numberOfUnifacSubGroups = 133;
-  static Logger logger = LogManager.getLogger(ComponentGEUnifac.class);
 
   /**
    * <p>

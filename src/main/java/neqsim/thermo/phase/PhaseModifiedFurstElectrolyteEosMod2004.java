@@ -796,8 +796,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * @return a double
    */
   public double dFLRdV() {
-    return (FLRV() + dFdAlphaLR() * alphaLRdV) * 1e-5; // + FLRGammaLR()*gammLRdV +
-                                                      // 0*FLRXLR()*XLRdGammaLR()*gammLRdV)*1e-5;
+    return (FLRV() + dFdAlphaLR() * alphaLRdV) * 1e-5;
+    // + FLRGammaLR()*gammLRdV + 0*FLRXLR()*XLRdGammaLR()*gammLRdV)*1e-5;
   }
 
   /**

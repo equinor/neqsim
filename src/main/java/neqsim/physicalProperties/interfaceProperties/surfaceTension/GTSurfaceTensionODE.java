@@ -64,8 +64,9 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
    */
   public GTSurfaceTensionODE(SystemInterface flashedSystem, int phase1, int phase2,
       int referenceComponent, double yscale) {
-    int i, idx = 0;
+    int i;
 
+    int idx = 0;
     // Setup local system clone and some parameters.
     this.yscale = yscale;
     this.sys = flashedSystem.clone();
@@ -106,7 +107,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     this.sys.getPhase(0).setTotalVolume(1.0);
     this.sys.useVolumeCorrection(false);
     this.sys.setEmptyFluid();
-    double nv[] = new double[this.ncomp];
+    double[] nv = new double[this.ncomp];
     for (i = 0; i < ncomp; i++) {
       nv[i] = this.rho_ph1[i] * Pa;
       // this.sys.addComponent(this.sys.getPhase(0).getComponent(i).getName(),
@@ -170,13 +171,18 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     double[] f = new double[this.ncomp];
     double[][] jac = new double[this.ncomp][this.ncomp];
     double[] rho = new double[this.ncomp];
-    double delta_omega, dsigma, cij;
+    double delta_omega;
+    double dsigma;
+    double cij;
     double rho0;
 
-    DMatrixRMaj df, dn_dnref, ms;
+    DMatrixRMaj df;
+    DMatrixRMaj dn_dnref;
+    DMatrixRMaj ms;
     SingularValueDecomposition<DMatrixRMaj> svd;
-    int i, j;
+    int i;
 
+    int j;
     if (!this.initialized) {
       this.initmu();
     }
@@ -253,8 +259,13 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
    */
   private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f,
       double[][] jac) {
-    double normf, norm0, norm, s;
-    int i, j, iter;
+    double normf;
+    double norm0;
+    double norm;
+    double s;
+    int i;
+    int j;
+    int iter;
     DMatrixRMaj A = new DMatrixRMaj(this.ncomp - 1, this.ncomp - 1);
     DMatrixRMaj b = new DMatrixRMaj(this.ncomp - 1, 1);
     DMatrixRMaj x = new DMatrixRMaj(this.ncomp - 1, 1);
@@ -353,10 +364,13 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
    * @param jac an array of {@link double} objects
    */
   public void fjacfun(double[] mu, double[][] dmu_drho, double[] f, double[][] jac) {
-    int i, j;
+    int i;
+    int j;
     double delta_muref;
-    double sqrtcref, sqrtci, scale;
+    double sqrtcref;
 
+    double sqrtci;
+    double scale;
     delta_muref = (this.mueq[this.refcomp] - mu[this.refcomp]);
     sqrtcref = Math.sqrt(this.ci[this.refcomp]);
     scale = 1.0 / sqrtcref;

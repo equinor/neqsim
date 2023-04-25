@@ -251,11 +251,8 @@ public class ComponentGeDuanSun extends ComponentGE {
               * Gmatrix[this.getComponentNumber()][f] / (sum * sum);
         }
         dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
-            - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp; // E/(C*C)*dCdn[p]*(tau2-D/C)
-                                                                                                     // +
-                                                                                                     // E/C*(-dDdn[p]/C
-                                                                                                     // +
-                                                                                                     // D/(C*C)*dCdn[p]);
+            - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
+        // E/(C*C)*dCdn[p]*(tau2-D/C) + E/C*(-dDdn[p]/C + D/(C*C)*dCdn[p]);
         dlngammadn[p] /= (nt);
       }
       // System.out.println("Dlngamdn: " + dlngammadn[p] + " x: " +
@@ -430,14 +427,14 @@ public class ComponentGeDuanSun extends ComponentGE {
               / (1000.0 * (R / 100.0) * phase.getTemperature()));
 
       if (componentName.equals("CO2")) {
-        fugacityCoefficient = activinf * K[0] * gamma * (1000 / 18.02) / phase.getPressure(); // +25.689/(gamma*K[0]))/
-                                                                                              // phase.getPressure();
+        fugacityCoefficient = activinf * K[0] * gamma * (1000 / 18.02) / phase.getPressure();
+        // +25.689/(gamma*K[0]))/ phase.getPressure();
       } else if (componentName.equals("nitrogen")) {
-        fugacityCoefficient = activinf * K[1] * gamma * (1000 / 18.02) / phase.getPressure(); // +50.585/(gamma*K[1]))/
-                                                                                              // phase.getPressure();
+        fugacityCoefficient = activinf * K[1] * gamma * (1000 / 18.02) / phase.getPressure();
+        // +50.585/(gamma*K[1]))/ phase.getPressure();
       } else if (componentName.equals("oxygen")) {
-        fugacityCoefficient = activinf * K[2] * gamma * (1000 / 18.02) / phase.getPressure(); // +46.9157/(gamma*K[2]))/
-                                                                                              // phase.getPressure();
+        fugacityCoefficient = activinf * K[2] * gamma * (1000 / 18.02) / phase.getPressure();
+        // +46.9157/(gamma*K[2]))/ phase.getPressure();
       } else if (componentName.contentEquals("water")) {
         fugacityCoefficient = activinf * K[3] * (1000 / 18.02) / phase.getPressure();
       } else {

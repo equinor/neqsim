@@ -171,8 +171,7 @@ public class FreezeOut extends constantDutyTemperatureFlash
           }
 
           testSystem.setTemperature(newTemp);
-        } // do lokke
-        while (((Math.abs(FugRatio - 1) >= 0.00001 && iterations < 100)) && noFreezeliq
+        } while (((Math.abs(FugRatio - 1) >= 0.00001 && iterations < 100)) && noFreezeliq
             && SolidForms);
         logger.info("noFreezeliq: " + noFreezeliq + " SolidForms: " + SolidForms);
 

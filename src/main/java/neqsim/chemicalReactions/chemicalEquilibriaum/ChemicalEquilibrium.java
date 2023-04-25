@@ -145,8 +145,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         // included
         M_matrix[i][k] = kronDelt
             / system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                .getNumberOfMolesInPhase(); // +system.getPhase(phasenumb).getComponent(i).logfugcoefdNi(system.getPhase(phasenumb),
-                                            // k);
+                .getNumberOfMolesInPhase();
+        // +system.getPhase(phasenumb).getComponent(i).logfugcoefdNi(system.getPhase(phasenumb),k);
+
         // System.out.println("dfugdn "
         // +system.getPhase(phasenumb).getComponent(i).logfugcoefdNi(this.system.getPhase(phasenumb),
         // i));
@@ -170,8 +171,10 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // System.out.println("Rank of Matrix A low: Numerical errors may occur ");
     double logactivity = 0.0;
     for (int i = 0; i < NSPEC; i++) {
-      logactivity = logactivityVec[i]; // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),
-                                       // components[waterNumb].getComponentNumber());
+      logactivity = logactivityVec[i];
+      // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),
+      // components[waterNumb].getComponentNumber());
+
       // calculates the reduced chemical potential mu/RT
       chem_pot[i] = chem_ref[i]
           + Math.log(system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]

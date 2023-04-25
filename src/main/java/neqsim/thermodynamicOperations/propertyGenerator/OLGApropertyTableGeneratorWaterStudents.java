@@ -389,9 +389,9 @@ public class OLGApropertyTableGeneratorWaterStudents
                     + thermoSystem.getPhase("oil").getBeta()
                         * thermoSystem.getPhase("oil").getMolarMass());
           } else {
-            props[k][i][j] = 1.0; // thermoSystem.getPhase(phaseNumb).getBeta() *
-                                  // thermoSystem.getPhase(phaseNumb).getMolarMass() /
-                                  // thermoSystem.getMolarMass();
+            props[k][i][j] = 1.0;
+            // thermoSystem.getPhase(phaseNumb).getBeta() *
+            // thermoSystem.getPhase(phaseNumb).getMolarMass() / thermoSystem.getMolarMass();
           }
           names[k] = "GAS MASS FRACTION";
           units[k] = "-";
@@ -532,9 +532,9 @@ public class OLGApropertyTableGeneratorWaterStudents
           units[k] = "KG/M3-K";
           k++;
 
-          props[k][i][j] = 0.0; // thermoSystem.getPhase(phaseNumb).getBeta() *
-                                // thermoSystem.getPhase(phaseNumb).getMolarMass() /
-                                // thermoSystem.getMolarMass();
+          props[k][i][j] = 0.0;
+          // thermoSystem.getPhase(phaseNumb).getBeta() *
+          // thermoSystem.getPhase(phaseNumb).getMolarMass() / thermoSystem.getMolarMass();
           names[k] = "GAS MASS FRACTION";
           units[k] = "-";
           k++;
@@ -782,8 +782,8 @@ public class OLGApropertyTableGeneratorWaterStudents
           units[k] = "W/M-K";
           k++;
         } // setOilProperties();
-          // set gas properties
 
+        // set gas properties
         if (thermoSystem.hasPhaseType("aqueous") && acceptedFlash) {
           int phaseNumb = thermoSystem.getPhaseNumberOfPhase("aqueous");
           if (thermoSystem.hasPhaseType("gas")) {

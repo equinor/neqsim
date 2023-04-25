@@ -20,14 +20,14 @@ public class SolidFlash1 extends TPflash {
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
-  double dQdbeta[];
+  double[] dQdbeta;
   double[][] Qmatrix;
-  double E[];
+  double[] E;
   double Q = 0;
   int solidsNumber = 0;
   int solidIndex = 0;
   double totalSolidFrac = 0.0;
-  int FluidPhaseActiveDescriptors[]; // 1 = active; 0 = inactive
+  int[] FluidPhaseActiveDescriptors; // 1 = active; 0 = inactive
 
   /**
    * <p>
@@ -232,7 +232,7 @@ public class SolidFlash1 extends TPflash {
    * </p>
    */
   public void solveBeta() {
-    double oldBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
+    double[] oldBeta = new double[system.getNumberOfPhases() - solidsNumber];
     // double newBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
     int iter = 0;
     Matrix ans = new Matrix(system.getNumberOfPhases() - solidsNumber, 1);
@@ -340,7 +340,8 @@ public class SolidFlash1 extends TPflash {
    * </p>
    */
   public void checkGibbs() {
-    double gibbs1 = 0, gibbs2 = 0;
+    double gibbs1 = 0;
+    double gibbs2 = 0;
     for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
       system.setPhaseType(i, 0);
       system.init(1);
@@ -414,7 +415,8 @@ public class SolidFlash1 extends TPflash {
     // if (system.getPhase(0).getNumberOfComponents() <= 2) {
     // solvebeta1();
     // }else{
-    double oldBeta = 0.0, beta = 0.0;
+    double oldBeta = 0.0;
+    double beta = 0.0;
     do {
       oldBeta = beta;
       iter++;
