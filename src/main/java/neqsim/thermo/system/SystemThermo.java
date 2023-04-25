@@ -36,29 +36,32 @@ import neqsim.thermo.phase.PhaseSolidComplex;
 import neqsim.thermo.phase.PhaseWax;
 import neqsim.util.database.NeqSimDataBase;
 
-/*
- * This is the base class of the System classes. The purpose of this class is to give common
- * variables and methods to sub classes. The methods and variables in this class are: Date Method
- * Purpose 7/3-00 System_Thermo(double, double) Constructor 7/3-00 addcomponent(String, double)
- * addding components from text-file: "Component_Data.txt" 7/3-00 init() initializing
+/**
+ * Base class for systems (fluids). Systems have may have multiple phases with
  */
-
 abstract class SystemThermo implements SystemInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(SystemThermo.class);
+
   // Class variables
+  private static final int MAX_PHASES = 6;
+
+  // Object metadata
+  protected String fluidInfo = "No Information Available";
+  protected String fluidName = "DefaultName";
+  protected String modelName = "Default";
+
+  // Initialization
+  boolean isInitialized = false;
+  protected boolean numericDerivatives = false;
+  protected int initType = 3;
+
 
   private boolean implementedTemperatureDeriativesofFugacity = true;
   private boolean implementedPressureDeriativesofFugacity = true;
   private boolean implementedCompositionDeriativesofFugacity = true;
   protected double criticalTemperature = 0;
   protected String[][] resultTable = null;
-  boolean isInitialized = false;
-  protected String fluidInfo = "No Information Available";
-  protected String fluidName = "DefaultName";
-
-  protected String modelName = "Default";
-
-  protected boolean numericDerivatives = false;
 
   protected boolean allowPhaseShift = true;
 
@@ -67,10 +70,9 @@ abstract class SystemThermo implements SystemInterface {
   private double totalNumberOfMoles = 0;
   public String componentNameTag = "";
   protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;
-  protected double[] beta = new double[6];
+  protected double[] beta = new double[MAX_PHASES];
   protected int a;
 
-  protected int initType = 3;
 
   private ArrayList<String> componentNames = new ArrayList<String>();
   // protected ArrayList<String> resultArray1 = new ArrayList<String>();
@@ -107,9 +109,7 @@ abstract class SystemThermo implements SystemInterface {
   protected boolean chemicalSystem = false;
 
   protected boolean solidPhaseCheck = false;
-
   protected boolean multiPhaseCheck = false;
-
   protected boolean hydrateCheck = false;
 
   protected boolean checkStability = true;
@@ -119,7 +119,6 @@ abstract class SystemThermo implements SystemInterface {
   protected InterphasePropertiesInterface interfaceProp = null;
   private boolean multiphaseWaxCheck = false;
   private boolean forcePhaseTypes = false;
-  static Logger logger = LogManager.getLogger(SystemThermo.class);
 
   /**
    * <p>
@@ -127,7 +126,7 @@ abstract class SystemThermo implements SystemInterface {
    * </p>
    */
   public SystemThermo() {
-    phaseArray = new PhaseInterface[6];
+    phaseArray = new PhaseInterface[MAX_PHASES];
     characterization = new Characterise(this);
     interfaceProp = new InterfaceProperties(this);
   }
@@ -1397,7 +1396,7 @@ abstract class SystemThermo implements SystemInterface {
     double maxBeta = 1.0 - tolerance;
     double g0 = -1.0;
     double g1 = 1.0;
-    nybeta = beta[0];
+    nybeta = this.beta[0];
     betal = 1.0 - nybeta;
 
     for (i = 0; i < numberOfComponents; i++) {
@@ -1414,14 +1413,14 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     if (g0 < 0) {
-      beta[1] = 1.0 - tolerance;
-      beta[0] = tolerance;
-      return beta[0];
+      this.beta[1] = 1.0 - tolerance;
+      this.beta[0] = tolerance;
+      return this.beta[0];
     }
     if (g1 > 0) {
-      beta[1] = tolerance;
-      beta[0] = 1.0 - tolerance;
-      return beta[0];
+      this.beta[1] = tolerance;
+      this.beta[0] = 1.0 - tolerance;
+      return this.beta[0];
     }
 
     nybeta = (minBeta + maxBeta) / 2.0;
@@ -1538,8 +1537,8 @@ abstract class SystemThermo implements SystemInterface {
       phase = 2;
     } // two-phase liquid-gas
 
-    beta[0] = nybeta;
-    beta[1] = 1.0 - nybeta;
+    this.beta[0] = nybeta;
+    this.beta[1] = 1.0 - nybeta;
 
     if (iterations >= maxIterations) {
       throw new neqsim.util.exception.TooManyIterationsException(this, "calcBeta", maxIterations);
@@ -1551,17 +1550,16 @@ abstract class SystemThermo implements SystemInterface {
        */
       throw new neqsim.util.exception.IsNaNException(this, "calcBeta", "beta");
     }
-    return beta[0];
+    return this.beta[0];
   }
 
   /** {@inheritDoc} */
   @Override
-  public final double initBeta() {
+  public final void initBeta() {
     for (int i = 0; i < numberOfPhases; i++) {
-      beta[phaseIndex[i]] = getPhase(i).getNumberOfMolesInPhase() / getTotalNumberOfMoles();
+      this.beta[phaseIndex[i]] = getPhase(i).getNumberOfMolesInPhase() / getTotalNumberOfMoles();
       // System.out.println("beta " + beta[i]);
     }
-    return beta[phaseIndex[0]];
   }
 
   /** {@inheritDoc} */
@@ -1729,8 +1727,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void init(int type) {
-    isInitialized = true;
-    if (numericDerivatives) {
+    if (this.numericDerivatives) {
       initNumeric(type);
     } else {
       initAnalytic(type);
@@ -1740,8 +1737,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void init(int type, int phase) {
-    isInitialized = true;
-    if (numericDerivatives) {
+    if (this.numericDerivatives) {
       initNumeric(type, phase);
     } else {
       initAnalytic(type, phase);
@@ -1849,6 +1845,7 @@ abstract class SystemThermo implements SystemInterface {
         }
       }
     }
+    this.isInitialized = true;
   }
 
   /**
@@ -1903,6 +1900,7 @@ abstract class SystemThermo implements SystemInterface {
         tmpPhase.setPhaseTypeName("oil");
       }
     }
+    this.isInitialized = true;
   }
 
   /**
@@ -2021,6 +2019,7 @@ abstract class SystemThermo implements SystemInterface {
         }
       }
     }
+    this.isInitialized = true;
   }
 
   /** {@inheritDoc} */

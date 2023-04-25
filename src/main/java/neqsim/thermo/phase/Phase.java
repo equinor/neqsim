@@ -35,7 +35,6 @@ abstract class Phase implements PhaseInterface {
   public neqsim.physicalProperties.PhysicalPropertyHandler physicalPropertyHandler = null;
   public double numberOfMolesInPhase = 0;
   protected double molarVolume = 1.0;
-
   protected double phaseVolume = 1.0;
 
   public boolean chemSyst = false;
@@ -62,15 +61,6 @@ abstract class Phase implements PhaseInterface {
   public Phase() {
     componentArray = new ComponentInterface[MAX_NUMBER_OF_COMPONENTS];
   }
-
-  /**
-   * <p>
-   * Constructor for Phase.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.Phase} object
-   */
-  public Phase(Phase phase) {}
 
   /** {@inheritDoc} */
   @Override

@@ -46,6 +46,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
+   * setComponentNameTag.
+   * </p>
+   *
+   * @param nameTag a {@link java.lang.String} object
+   */
+  public void setComponentNameTag(String nameTag);
+
+  /**
+   * <p>
    * setComponentNameTagOnNormalComponents.
    * </p>
    *
@@ -81,25 +90,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       String fromPhaseName, String toPhaseName);
 
   /**
-   * <p>
-   * renameComponent.
-   * </p>
-   *
-   * @param oldName a {@link java.lang.String} object
-   * @param newName a {@link java.lang.String} object
-   */
-  public void renameComponent(String oldName, String newName);
-
-  /**
-   * <p>
-   * setComponentNameTag.
-   * </p>
-   *
-   * @param nameTag a {@link java.lang.String} object
-   */
-  public void setComponentNameTag(String nameTag);
-
-  /**
    * Add named components to a System. Does nothing if components already exist in System.
    *
    * @param names Names of the components to be added. See NeqSim database for available components
@@ -124,6 +114,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       addComponent(names[i], moles[i]);
     }
   }
+
+  /**
+   * <p>
+   * renameComponent.
+   * </p>
+   *
+   * @param oldName a {@link java.lang.String} object
+   * @param newName a {@link java.lang.String} object
+   */
+  public void renameComponent(String oldName, String newName);
 
   /**
    * <p>
@@ -182,6 +182,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMolarCompositionOfPlusFluid(double[] molefractions);
 
   /**
+   * method to return exergy defined as (h1-T0*s1) in a unit Joule.
+   *
+   * @param temperatureOfSurroundings in Kelvin
+   * @return a double
+   */
+  public double getExergy(double temperatureOfSurroundings);
+
+  /**
    * method to return exergy in a specified unit.
    *
    * @param temperatureOfSurroundings in Kelvin
@@ -189,14 +197,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return exergy in specified unit
    */
   public double getExergy(double temperatureOfSurroundings, String exergyUnit);
-
-  /**
-   * method to return exergy defined as (h1-T0*s1) in a unit Joule.
-   *
-   * @param temperatureOfSurroundings in Kelvin
-   * @return a double
-   */
-  public double getExergy(double temperatureOfSurroundings);
 
   /**
    * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis
@@ -233,7 +233,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMoleFractionsSum();
 
   /**
-   * method to get the speed of sound of a system. THe sound speed is implemented based on a molar
+   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
    * average over the phases
    *
    * @param unit Supported units are m/s, km/h
@@ -242,7 +242,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getSoundSpeed(String unit);
 
   /**
-   * method to get the speed of sound of a system. THe sound speed is implemented based on a molar
+   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
    * average over the phases
    *
    * @return speed of sound in m/s
@@ -1813,10 +1813,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * <p>
    * initBeta.
    * </p>
-   *
-   * @return a double
    */
-  public double initBeta();
+  public void initBeta();
 
   /**
    * <p>
