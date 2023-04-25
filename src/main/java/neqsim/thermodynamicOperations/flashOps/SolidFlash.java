@@ -140,7 +140,8 @@ public class SolidFlash extends TPflash {
       // if(
     }
     // E[solidComponent] +=
-    // system.getBeta(system.getNumberOfPhases()-1)/system.getPhase(3).getComponent(solidComponent).getFugacityCoefficient();
+    // system.getBeta(system.getNumberOfPhases()-1) /
+    // system.getPhase(3).getComponent(solidComponent).getFugacityCoefficient();
     E[solidComponent] = system.getPhase(0).getComponent(solidComponent).getz()
         / system.getPhases()[3].getComponents()[solidComponent].getFugacityCoefficient();
     // logger.info("Ei " +E[solidComponent]);

@@ -1476,7 +1476,8 @@ abstract class Phase implements PhaseInterface {
   // double ions=0.0;
   // for(int j=0;j<this.numberOfComponents;j++){
   // if(getComponent(j).getIonicCharge()!=0) ions +=
-  // getComponent(j).getNumberOfMolesInPhase()/getComponent(watNumb).getNumberOfMolesInPhase()/getComponent(watNumb).getMolarMass();
+  // getComponent(j).getNumberOfMolesInPhase() /
+  // getComponent(watNumb).getNumberOfMolesInPhase()/getComponent(watNumb).getMolarMass();
   // //*Math.abs(getComponent(j).getIonicCharge());
   // }
   // double val = - Math.log(oldFug*getComponent(watNumb).getx()/pureFug) *
@@ -1719,7 +1720,8 @@ abstract class Phase implements PhaseInterface {
     // for(int i = 0; i<numberOfComponents; i++) {
     // if(componentArray[i].getName().equals("H3O+")){
     // return
-    // -Math.log10(componentArray[i].getNumberOfMolesInPhase()*getPhysicalProperties().getDensity()/(numberOfMolesInPhase*getMolarMass())*1e-3);
+    // -Math.log10(componentArray[i].getNumberOfMolesInPhase()*getPhysicalProperties().getDensity()
+    // / (numberOfMolesInPhase*getMolarMass())*1e-3);
     // }
     // }
     // System.out.println("no H3Oplus");

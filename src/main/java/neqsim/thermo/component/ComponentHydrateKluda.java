@@ -329,21 +329,25 @@ public class ComponentHydrateKluda extends Component {
     // intnumb++;
     // pot += 2.0*coordNumb[intnumb][struccture][cavityType]*lenjonsenergy*(
     // (Math.pow(diam,12.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],11.0)*
-    // radius)*(delt(intnumb,10.0,radius,struccture,cavityType,phase)+corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,11.0,radius,struccture,cavityType,phase)))
+    // radius)*(delt(intnumb,10.0,radius,struccture,cavityType,phase) +
+    // corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,11.0,radius,struccture,cavityType,phase)))
     // -
     // (Math.pow(diam,6.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],5.0)*
     // radius)*(delt(intnumb,
-    // 4.0,radius,struccture,cavityType,phase)+corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,5.0,radius,struccture,cavityType,phase)))
+    // 4.0,radius,struccture,cavityType,phase) +
+    // corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,5.0,radius,struccture,cavityType,phase)))
     // );
 
     // intnumb++;
     // pot += 2.0*coordNumb[intnumb][struccture][cavityType]*lenjonsenergy*(
     // (Math.pow(diam,12.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],11.0)*
-    // radius)*(delt(intnumb,10.0,radius,struccture,cavityType,phase)+corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,11.0,radius,struccture,cavityType,phase)))
+    // radius)*(delt(intnumb,10.0,radius,struccture,cavityType,phase) +
+    // corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,11.0,radius,struccture,cavityType,phase)))
     // -
     // (Math.pow(diam,6.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],5.0)*
     // radius)*(delt(intnumb,
-    // 4.0,radius,struccture,cavityType,phase)+corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,5.0,radius,struccture,cavityType,phase)))
+    // 4.0,radius,struccture,cavityType,phase) +
+    // corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,5.0,radius,struccture,cavityType,phase)))
     // );
 
     // System.out.println("lenjones " +this.getLennardJonesMolecularDiameter() );

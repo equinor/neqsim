@@ -1839,7 +1839,8 @@ abstract class Component implements ComponentInterface {
   @Override
   public double getHenryCoef(double temperature) {
     // System.out.println("henry " +
-    // Math.exp(henryCoefParameter[0]+henryCoefParameter[1]/temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
+    // Math.exp(henryCoefParameter[0]+henryCoefParameter[1] /
+    // temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
     return Math
         .exp(henryCoefParameter[0] + henryCoefParameter[1] / temperature
             + henryCoefParameter[2] * Math.log(temperature) + henryCoefParameter[3] * temperature)

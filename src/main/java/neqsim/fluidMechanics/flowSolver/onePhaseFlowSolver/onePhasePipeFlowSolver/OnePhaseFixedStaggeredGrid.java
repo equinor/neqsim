@@ -266,7 +266,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       pipe.getNode(i).init();
 
       // System.out.println("cp: " +
-      // (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp()/pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass()));
+      // (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp() /
+      // pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase() /
+      // pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass()));
     }
   }
 
@@ -576,7 +578,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
             / (pipe.getNode(i).getGeometry().getDiameter())
             * pipe.getNode(i).getGeometry().getNodeLength();
     double SP = 0;
-    // -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
+    // -pipe.getNode(i).getGeometry().getArea() *
+    // 4.0*12.0 /
+    // (pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
     double Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity()
         * pipe.getNode(i).getVelocityIn().doubleValue();
@@ -644,7 +648,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
     int i = numberOfNodes - 1;
     // double fw =
-    // pipe.getNode(i-1).getGeometry().getNodeLength()/(pipe.getNode(i).getGeometry().getNodeLength()+pipe.getNode(i-1).getGeometry().getNodeLength());
+    // pipe.getNode(i-1).getGeometry().getNodeLength() /
+    // (pipe.getNode(i).getGeometry().getNodeLength()+pipe.getNode(i-1).getGeometry().getNodeLength());
     double Ae = pipe.getNode(i).getGeometry().getArea();
     double Aw = pipe.getNode(i - 1).getGeometry().getArea();
 
@@ -686,7 +691,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           .getNumberOfComponents(); j++) {
         oldComposition[j][i] = sol4Matrix[j].get(i, 0);
         // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx() *
-        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass() /
+        // pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
       }
     }
   }

@@ -470,7 +470,8 @@ public class ComponentGeDuanSun extends ComponentGE {
     // double salinity2=0;
 
     // if(isIsIon()) {
-    // salinity2=getNumberOfMolesInPhase()/(phase.getComponent("water").getNumberOfMolesInPhase()*phase.getComponent("water").getMolarMass());
+    // salinity2 = getNumberOfMolesInPhase() /
+    // (phase.getComponent("water").getNumberOfMolesInPhase()*phase.getComponent("water").getMolarMass());
     // }
 
     // double S=salinity;

@@ -148,21 +148,13 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     this.initialized = true;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Return the dimension of the ODE problem to the solver.
-   */
+  /** {@inheritDoc} */
   @Override
   public int getDimension() {
     return 1;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Compute the ODE differential ydot = f(t, y)
-   */
+  /** {@inheritDoc} */
   @Override
   public void computeDerivatives(double t, double[] y, double[] yDot) {
     double[] mu = new double[this.ncomp];
@@ -176,11 +168,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     double cij;
     double rho0;
 
-    DMatrixRMaj df;
     DMatrixRMaj dn_dnref;
-    DMatrixRMaj ms;
-    SingularValueDecomposition<DMatrixRMaj> svd;
-    int i;
 
     int j;
     if (!this.initialized) {
@@ -189,18 +177,19 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
 
     rho0 = this.rho_ph1[this.refcomp];
     rho[this.refcomp] = t * this.rhoref_span + rho0;
-    for (i = 0; i < this.ncomp - 1; i++) {
+    for (int i = 0; i < this.ncomp - 1; i++) {
       rho[this.algidx[i]] = this.rho_k[this.algidx[i]];
     }
     // System.out.printf("t: %e, rho_ref: %e\n", t, rho[this.refcomp]);
     solveRho(rho, mu, dmu_drho, p, f, jac);
-    for (i = 0; i < this.ncomp; i++) {
+    for (int i = 0; i < this.ncomp; i++) {
       this.rho_k[i] = rho[i];
     }
 
-    df = new DMatrixRMaj(jac);
-    ms = new DMatrixRMaj(df.numRows, 1);
-    svd = DecompositionFactory_DDRM.svd(df.numRows, df.numCols, true, true, true);
+    DMatrixRMaj df = new DMatrixRMaj(jac);
+    DMatrixRMaj ms = new DMatrixRMaj(df.numRows, 1);
+    SingularValueDecomposition<DMatrixRMaj> svd =
+        DecompositionFactory_DDRM.svd(df.numRows, df.numCols, true, true, true);
     if (!svd.decompose(df)) {
       throw new RuntimeException("Decomposition failed");
     }
@@ -208,12 +197,12 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         SingularOps_DDRM.nullSpace((SingularValueDecomposition_F64<DMatrixRMaj>) svd, ms, 1e-12); // UtilEjml.EPS);
     CommonOps_DDRM.divide(dn_dnref.get(this.refcomp, 0), dn_dnref);
     delta_omega = -(p[0] - this.p0[0]);
-    for (i = 0; i < this.ncomp; i++) {
+    for (int i = 0; i < this.ncomp; i++) {
       delta_omega += (mu[i] - this.mueq[i]) * rho[i];
     }
 
     dsigma = 0.0;
-    for (i = 0; i < this.ncomp; i++) {
+    for (int i = 0; i < this.ncomp; i++) {
       for (j = 0; j < this.ncomp; j++) {
         cij = Math.sqrt(this.ci[i] * this.ci[j]);
         dsigma += cij * dn_dnref.get(i, 0) * dn_dnref.get(j, 0);
@@ -246,10 +235,9 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
   }
 
   /**
-   * SolveRho. Solve for the equilibrium density in the interface.
+   * SolveRho. Solve for the equilibrium density in the interface. Solves the equilibrium relations
+   * with the Newton-Raphson method.
    *
-   * Solves the equilibrium relations with the Newton-Raphson method.
-   * 
    * @param rho Number density [mol/m3]
    * @param mu Chemical potential [J/mol]
    * @param dmu_drho Chemical potential derivative with respect to mole numbers [J/mol^2]

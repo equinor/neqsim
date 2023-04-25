@@ -295,7 +295,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
     setF2dispZHCdm(calcF2dispZHCdm());
     F2dispZHCdV = F2dispZHCdN * getDnSAFTdV();
-    F2dispZHCdVdV = F2dispZHCdNdN * getDnSAFTdV() * getDnSAFTdV() + F2dispZHCdN * dnSAFTdVdV; // F2dispZHCdNdN*dnSAFTdVdV*0;
+    F2dispZHCdVdV = F2dispZHCdNdN * getDnSAFTdV() * getDnSAFTdV() + F2dispZHCdN * dnSAFTdVdV;
+    // F2dispZHCdNdN*dnSAFTdVdV*0;
     F2dispZHCdVdVdV = F2dispZHCdNdNdN * getDnSAFTdV() * getDnSAFTdV() * getDnSAFTdV()
         + F2dispZHCdNdN * 2.0 * getDnSAFTdV() * dnSAFTdVdV + F2dispZHCdNdN * dnSAFTdVdV
         + F2dispZHCdN * dnSAFTdVdVdV;
@@ -899,14 +900,16 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   @Override
   public double F_HC_SAFT() {
     return getNumberOfMolesInPhase()
-        * (getmSAFT() * getAHSSAFT() - getMmin1SAFT() * Math.log(getGhsSAFT())); /// (ThermodynamicConstantsInterface.R*temperature);
+        * (getmSAFT() * getAHSSAFT() - getMmin1SAFT() * Math.log(getGhsSAFT()));
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dF_HC_SAFTdV() {
     return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdN * getDnSAFTdV()
-        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * getDnSAFTdV()); /// (ThermodynamicConstantsInterface.R*temperature);
+        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * getDnSAFTdV());
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   // edited by Rahmat
@@ -925,7 +928,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    */
   public double dF_HC_SAFTdT() {
     return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdN * dNSAFTdT
-        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dNSAFTdT); /// (ThermodynamicConstantsInterface.R*temperature);
+        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dNSAFTdT);
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /** {@inheritDoc} */
@@ -936,7 +940,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         + getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * Math.pow(getDgHSSAFTdN(), 2.0)
             * getDnSAFTdV() * getDnSAFTdV()
         - getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdV
-        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV); // (ThermodynamicConstantsInterface.R*temperature);
+        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV);
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
   // additonal dF_HC_SAFTdVdVdV (by Rahmat)
 
@@ -1056,7 +1061,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   @Override
   public double F_DISP2_SAFT() {
     return getNumberOfMolesInPhase() * (-ThermodynamicConstantsInterface.pi * getmSAFT()
-        * getF1dispVolTerm() * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC()); /// (ThermodynamicConstantsInterface.R*temperature);
+        * getF1dispVolTerm() * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC());
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /** {@inheritDoc} */

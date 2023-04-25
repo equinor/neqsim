@@ -402,9 +402,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         return step;
       } else {
         // chem_pot_omega[i] = R*T*(chem_ref[i]+ Math.log(n_omega[i]/n_t) +
-        // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()/chem_pot_pure[i]));
+        // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
+        // / chem_pot_pure[i]));
         // chem_pot[i] = R*T*(chem_ref[i] + Math.log(n_mol[i]/n_t)+
-        // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()/chem_pot_pure[i]));
+        // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
+        // / chem_pot_pure[i]));
 
         if (system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
             .getReferenceStateType().equals("solvent")) {
@@ -412,17 +414,21 @@ public class ChemicalEquilibrium implements java.io.Serializable {
               * (chem_ref[i] + Math.log(
                   system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
                       .getNumberOfMolesInPhase())
-                  - Math.log(n_t) + logactivityVec[i]); // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
+                  - Math.log(n_t) + logactivityVec[i]);
+          // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
           // System.out.println("solvent activ: "+ i + " " +
-          // system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()/chem_pot_pure[i]);
+          // system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
+          // / chem_pot_pure[i]);
         } else {
           chem_pot[i] = R * system.getPhase(phasenumb).getTemperature()
               * (chem_ref[i] + Math.log(
                   system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
                       .getNumberOfMolesInPhase())
-                  - Math.log(n_t) + logactivityVec[i]); // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
+                  - Math.log(n_t) + logactivityVec[i]);
+          // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
           // System.out.println("solute activ : " + i + " " +
-          // system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()/chem_pot_dilute[i]);
+          // system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
+          // / chem_pot_dilute[i]);
         }
         chem_pot_omega[i] = R * system.getPhase(phasenumb).getTemperature()
             * (chem_ref[i] + Math.log(n_omega[i]) - Math.log(n_t) + logactivityVec[i]);

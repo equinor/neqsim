@@ -48,7 +48,8 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
   public void displayResult() {
     try {
       // System.out.println("total water production [kg/dag]" +
-      // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
+      // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles() *
+      // stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
       // System.out.println("water in phase 1 (ppm) " +
       // stream.getThermoSystem().getPhase(0).getComponent("water").getx()*1e6);
     } finally {

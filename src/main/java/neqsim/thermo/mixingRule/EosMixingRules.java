@@ -1282,9 +1282,17 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         gePhase = new PhaseGEUnifac(orgPhase, HValpha, HVDij, mixRule, intparam);
       }
       gePhase.setProperties(phase);
-      // gePhase.init(phase.getNumberOfMolesInPhase(),phase.getNumberOfComponents(),0,phase.getPhaseType(),phase.getBeta());
+      // gePhase.init(phase.getNumberOfMolesInPhase() ,
+      // phase.getNumberOfComponents(),0,phase.getPhaseType(),phase.getBeta());
     }
 
+    /**
+     *
+     * @param phase
+     * @param temperature
+     * @param pressure
+     * @param numbcomp
+     */
     public void init(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -1292,7 +1300,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setParams(phase, HValpha, HVDij, HVDijT, classicOrHV, intparam);
 
       if (mixingRuleGEModel.equals("NRTL")) {
-        // gePhase.init(phase.getNumberOfMolesInPhase(),phase.getNumberOfComponents(),3,phase.getPhaseType(),phase.getBeta());
+        // gePhase.init(phase.getNumberOfMolesInPhase() ,
+        // phase.getNumberOfComponents(),3,phase.getPhaseType(),phase.getBeta());
         gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
       } else {
         gePhase.init((phase.getNumberOfMolesInPhase() / phase.getBeta()),
@@ -1601,7 +1610,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setProperties(phase);
 
       if (mixingRuleGEModel.equals("NRTL")) {
-        // gePhase.init(phase.getNumberOfMolesInPhase(),phase.getNumberOfComponents(),3,phase.getPhaseType(),phase.getBeta());
+        // gePhase.init(phase.getNumberOfMolesInPhase(),
+        // phase.getNumberOfComponents(),3,phase.getPhaseType(),phase.getBeta());
         gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
       } else {
         gePhase.init(phase.getNumberOfMolesInPhase(), phase.getNumberOfComponents(), 3,
