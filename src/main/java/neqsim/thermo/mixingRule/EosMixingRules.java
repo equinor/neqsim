@@ -1015,7 +1015,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
               * Math.log((1.0 + compArray[0].getDeltaEosParameters()[1])
                   / (1.0 + compArray[0].getDeltaEosParameters()[0]));
       gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, mixRule, intparam);
-      gePhase.getExessGibbsEnergy(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+      gePhase.getExcessGibbsEnergy(phase, phase.getNumberOfComponents(), phase.getTemperature(),
           phase.getPressure(), 1);
       gePhase.setProperties(phase);
     }
@@ -1029,7 +1029,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
               * Math.log((1.0 + compArray[0].getDeltaEosParameters()[1])
                   / (1.0 + compArray[0].getDeltaEosParameters()[0]));
       gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, HVDijT, mixRule, intparam);
-      gePhase.getExessGibbsEnergy(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+      gePhase.getExcessGibbsEnergy(phase, phase.getNumberOfComponents(), phase.getTemperature(),
           phase.getPressure(), 1);
       gePhase.setProperties(phase);
     }
@@ -1094,7 +1094,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         A += compArray[i].getNumberOfMolesInPhase() * aij;
       }
       A = calcB(phase, temperature, pressure, numbcomp) * (A - phase.getNumberOfMolesInPhase()
-          * gePhase.getExessGibbsEnergy(phase, phase.getNumberOfComponents(),
+          * gePhase.getExcessGibbsEnergy(phase, phase.getNumberOfComponents(),
               phase.getTemperature(), phase.getPressure(), 0)
           / gePhase.getNumberOfMolesInPhase() / hwfc);
       Atot = A;
@@ -1307,7 +1307,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
       if (mixingRuleGEModel.equals("NRTL")) {
         // gePhase.init(phase.getNumberOfMolesInPhase(),phase.getNumberOfComponents(),3,phase.getPhaseType(),phase.getBeta());
-        gePhase.getExessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
+        gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
       } else {
         gePhase.init((phase.getNumberOfMolesInPhase() / phase.getBeta()),
             phase.getNumberOfComponents(), phase.getInitType(), phase.getPhaseType(),
@@ -1619,7 +1619,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
       if (mixingRuleGEModel.equals("NRTL")) {
         // gePhase.init(phase.getNumberOfMolesInPhase(),phase.getNumberOfComponents(),3,phase.getPhaseType(),phase.getBeta());
-        gePhase.getExessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
+        gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
       } else {
         gePhase.init(phase.getNumberOfMolesInPhase(), phase.getNumberOfComponents(), 3,
             phase.getPhaseType(), phase.getBeta());

@@ -1903,36 +1903,48 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
   /**
    * <p>
-   * flash.
+   * Wrapper for flash calculations.
    * </p>
    *
-   * @param flashType a {@link java.lang.String} object
-   * @param spec1 a double
-   * @param spec2 a double
-   * @param unitSpec1 a {@link java.lang.String} object
-   * @param unitSpec2 a {@link java.lang.String} object
+   * @param flashType Type of flash.
+   * @param spec1 Value of spec1
+   * @param spec2 Value of spec2
+   * @param unitSpec1 Unit of spec1
+   * @param unitSpec2 Unit of spec2
    */
-  public void flash(String flashType, double spec1, double spec2, String unitSpec1,
+  public void flash(FlashType flashType, double spec1, double spec2, String unitSpec1,
       String unitSpec2) {
-    if (flashType.equals("TP")) {
-      system.setTemperature(spec1, unitSpec1);
-      system.setPressure(spec2, unitSpec2);
-    } else if (flashType.equals("TV")) {
-      system.setTemperature(spec1, unitSpec1);
-      TVflash(spec2, unitSpec2);
-    } else if (flashType.equals("PH")) {
-      system.setPressure(spec1, unitSpec1);
-      PHflash(spec2, unitSpec2);
-    } else if (flashType.equals("TS")) {
-      system.setTemperature(spec1, unitSpec1);
-      TSflash(spec2, unitSpec2);
+    switch (flashType) {
+      case PT:
+        system.setPressure(spec1, unitSpec1);
+        system.setTemperature(spec2, unitSpec2);
+        TPflash();
+        break;
+      case TP:
+        system.setTemperature(spec1, unitSpec1);
+        system.setPressure(spec2, unitSpec2);
+        TPflash();
+        break;
+      case TV:
+        system.setTemperature(spec1, unitSpec1);
+        TVflash(spec2, unitSpec2);
+        break;
+      case PH:
+        system.setPressure(spec1, unitSpec1);
+        PHflash(spec2, unitSpec2);
+        break;
+      case TS:
+        system.setTemperature(spec1, unitSpec1);
+        TSflash(spec2, unitSpec2);
+        break;
+      default:
+        break;
     }
   }
 
   /**
-   * Perform flashes and return System properties per set of Spec1 and Spec2.
-   *
-   * Possible to specify fractions for each value of Spec1.
+   * Perform flashes and return System properties per set of Spec1 and Spec2. Possible to specify
+   * fractions for each value of Spec1.
    *
    * @param Spec1 Flash pressure in bar absolute.
    * @param Spec2 Flash specification. Depends on FlashMode. Temperature in Kelvin, entalphy in
@@ -1945,6 +1957,16 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public CalculationResult propertyFlash(List<Double> Spec1, List<Double> Spec2, int FlashMode,
       List<String> components, List<List<Double>> onlineFractions) {
+    FlashType flashType;
+    if (FlashMode == 1) {
+      flashType = FlashType.PT;
+    } else if (FlashMode == 2) {
+      flashType = FlashType.PH;
+    } else if (FlashMode == 3) {
+      flashType = FlashType.PS;
+    } else {
+      flashType = null;
+    }
 
     Double[][] fluidProperties = new Double[Spec1.size()][SystemProperties.nCols];
     String[] calculationError = new String[Spec1.size()];
@@ -1972,6 +1994,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     for (int t = 0; t < Spec1.size(); t++) {
       try {
+        if (flashType == null) {
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+              "ThermodynamicOperations", "propertyFlash", "FlashMode", "must be 1, 2 or 3"));
+        }
+
         Double Sp1 = Spec1.get(t);
         Double Sp2 = Spec2.get(t);
 
@@ -2013,16 +2040,20 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
 
         this.system.setPressure(Sp1);
-        if (FlashMode == 1) {
-          this.system.setTemperature(Sp2);
-          this.TPflash();
-        } else if (FlashMode == 2) {
-          this.PHflash(Sp2, "J/mol");
-        } else if (FlashMode == 3) {
-          this.PSflash(Sp2, "J/molK");
-        } else {
-          throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-              "ThermodynamicOperations", "propertyFlash", "mode", "must be 1, 2 or 3"));
+        switch (flashType) {
+          case PT:
+            this.system.setTemperature(Sp2);
+            this.TPflash();
+            break;
+          case PH:
+            this.PHflash(Sp2, "J/mol");
+            break;
+          case PS:
+            this.PSflash(Sp2, "J/molK");
+            break;
+          default:
+            throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+                "ThermodynamicOperations", "propertyFlash", "FlashMode", "must be 1, 2 or 3"));
         }
         this.system.init(2);
         this.system.initPhysicalProperties();
@@ -2035,5 +2066,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     return new CalculationResult(fluidProperties, calculationError);
+  }
+
+  /**
+   * Definitions of flash types.
+   */
+  public static enum FlashType {
+    TP, PT, PH, PS, TV, TS
   }
 }

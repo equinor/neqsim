@@ -171,15 +171,15 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy() {
-    // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,
+  public double getExcessGibbsEnergy() {
+    // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
     // pressure, phaseType);
     return GE;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {

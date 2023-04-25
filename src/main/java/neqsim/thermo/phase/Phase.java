@@ -330,12 +330,12 @@ abstract class Phase implements PhaseInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       gmix += getComponent(i).getx() * Math.log(getComponent(i).getx());
     }
-    return getExessGibbsEnergy() + R * temperature * gmix * numberOfMolesInPhase;
+    return getExcessGibbsEnergy() + R * temperature * gmix * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy() {
+  public double getExcessGibbsEnergy() {
     double GE = 0.0;
     if (refPhase == null) {
       initRefPhases(false);
@@ -348,7 +348,7 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergySymetric() {
+  public double getExcessGibbsEnergySymetric() {
     double GE = 0.0;
     if (refPhase == null) {
       initRefPhases(true);
