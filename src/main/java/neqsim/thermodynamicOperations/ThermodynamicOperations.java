@@ -1930,9 +1930,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Perform flashes and return System properties per set of Spec1 and Spec2.
-   *
-   * Possible to specify fractions for each value of Spec1.
+   * Perform flashes and return System properties per set of Spec1 and Spec2. Possible to specify
+   * fractions for each value of Spec1.
    *
    * @param Spec1 Flash pressure in bar absolute.
    * @param Spec2 Flash specification. Depends on FlashMode. Temperature in Kelvin, entalphy in
@@ -1963,10 +1962,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         this.system.setTotalNumberOfMoles(1);
       }
     } else {
-      double[] fraction = this.system.getMolarComposition();
-      sum[0] = 0.0;
-      for (int comp = 0; comp < fraction.length; comp++) {
-        sum[0] = sum[0] + fraction[comp];
+      sum[0] = this.system.getMoleFractionsSum();
+      if (sum[0] == 0) {
+        this.system.init(0);
       }
     }
 
@@ -2001,23 +1999,20 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             if (this.system.getNumberOfMoles() == 0) {
               this.system.setTotalNumberOfMoles(1);
             }
-            /*
-             * if (this.system.getMoleFractionsSum() == 0) { this.system.init(0); }
-             * 
-             * double[] fraction = this.system.getMolarComposition(); sum[0] = 0.0; for (int comp =
-             * 0; comp < fraction.length; comp++) { sum[0] = sum[0] + fraction[comp]; }
-             */
           }
+          this.system.init(0);
         } else {
           double range = 1e-8;
           if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
               || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
-            calculationError[t] = "Sum of fractions must be equal to 1 or 100, currently ("
+            calculationError[t] = "Sum of 'fraction's must be equal to 1 or 100, currently ("
                 + String.valueOf(sum[t]) + ")";
             logger.info("Sum of fractions must be equal to 1 or 100 for datapoint {}", t);
             continue;
           }
         }
+
+        this.system.setMolarComposition(null);
 
         this.system.setPressure(Sp1);
         if (FlashMode == 1) {

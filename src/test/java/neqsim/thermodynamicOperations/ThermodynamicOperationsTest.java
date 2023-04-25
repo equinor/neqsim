@@ -23,7 +23,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
   @Test
   void testNeqSimPython() {
-
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(280.0, 10.0);
     thermoSystem.addComponent("methane", 0.7);
     thermoSystem.addComponent("ethane", 0.3);
