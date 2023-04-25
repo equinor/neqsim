@@ -26,7 +26,26 @@ public interface PhaseGEInterface {
    * @param pressure a double
    * @param phasetype a int
    * @return a double
+   * @deprecated Replaced by {@link getExcessGibbsEnergy}.
    */
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+  @Deprecated
+  public default double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure, int phasetype) {
+    return getExcessGibbsEnergy(phase, numberOfComponents, temperature, pressure, phasetype);
+  }
+
+  /**
+   * <p>
+   * getExcessGibbsEnergy.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @param phasetype a int
+   * @return a double
+   */
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype);
 }

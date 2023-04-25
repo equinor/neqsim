@@ -207,7 +207,7 @@ public class ComponentGeDuanSun extends ComponentGE {
     // tot2 = -2*A/B/B + F2T;
     // dlngammadt = (lngammaold-lngamma)/0.002;
 
-    // phaseny.getExessGibbsEnergy(numberOfComponents, temperature, pressure,
+    // phaseny.getExcessGibbsEnergy(numberOfComponents, temperature, pressure,
     // phasetype)
     gamma = Math.exp(lngamma);
     // System.out.println("gamma " +gamma);

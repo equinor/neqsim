@@ -99,7 +99,7 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
 
     /** {@inheritDoc} */
     @Override
-    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+    public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
             double temperature, double pressure, int phasetype) {
         double GE = 0;
         for (int i = 0; i < numberOfComponents; i++) {
