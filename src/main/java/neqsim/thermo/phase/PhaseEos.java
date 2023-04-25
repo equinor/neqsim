@@ -146,11 +146,11 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       }
 
       if (getVolume() / getB() > 1.75) {
-        phaseTypeName = "gas";
+        this.phaseTypeName = "gas";
       } else if (sumHydrocarbons > sumAqueous) {
-        phaseTypeName = "oil";
+        this.phaseTypeName = "oil";
       } else {
-        phaseTypeName = "aqueous";
+        this.phaseTypeName = "aqueous";
       }
 
       // if ((hasComponent("water") && getVolume() / getB() < 1.75 &&
@@ -349,7 +349,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = phase == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+          BonV = phaseType == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
               : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {

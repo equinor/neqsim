@@ -37,7 +37,7 @@ import neqsim.thermo.phase.PhaseWax;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * Base class for systems (fluids). Systems have may have multiple phases with
+ * Base class for systems (fluids). Systems may have multiple phases with
  */
 abstract class SystemThermo implements SystemInterface {
   private static final long serialVersionUID = 1000;
@@ -68,6 +68,10 @@ abstract class SystemThermo implements SystemInterface {
   private boolean useTVasIndependentVariables = false;
   protected double criticalPressure = 0;
   private double totalNumberOfMoles = 0;
+
+  // todo: componentNameTag is not working yet, a kind of alias-postfix for Components from this
+  // system that will be passed on to other systems. used to find originator of specific components
+  // or
   public String componentNameTag = "";
   protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;
   protected double[] beta = new double[MAX_PHASES];
@@ -100,10 +104,17 @@ abstract class SystemThermo implements SystemInterface {
   protected int numberOfPhases = 2;
   public int maxNumberOfPhases = 2;
   protected int attractiveTermNumber = 0;
-  protected int phase = 2;
-  protected int onePhaseType = 1; // 0 - liquid 1 - gas
+
+  // phasetype to be enum
   protected int[] phaseType = {1, 0, 0, 0, 0, 0};
+
+  // Index refers to position in phaseArray. First value of phaseIndex is the phase which is created
+  // first and the last is the phase created last.
   protected int[] phaseIndex = {0, 1, 2, 3, 4, 5};
+
+  // All phases of System. Flashes reorders phaseArray by density.
+  protected PhaseInterface[] phaseArray;
+
   protected ChemicalReactionOperations chemicalReactionOperations = null;
   private int mixingRule = 1;
   protected boolean chemicalSystem = false;
@@ -113,7 +124,6 @@ abstract class SystemThermo implements SystemInterface {
   protected boolean hydrateCheck = false;
 
   protected boolean checkStability = true;
-  protected PhaseInterface[] phaseArray;
   public neqsim.thermo.characterization.Characterise characterization = null;
   protected neqsim.standards.StandardInterface standard = null;
   protected InterphasePropertiesInterface interfaceProp = null;
@@ -180,8 +190,6 @@ abstract class SystemThermo implements SystemInterface {
     phaseType[1] = 0;
     numberOfComponents = 0;
     setNumberOfPhases(2);
-    phase = 2;
-    onePhaseType = 1;
     beta[0] = 1.0;
     beta[1] = 1.0;
     beta[2] = 1.0;
@@ -1527,14 +1535,14 @@ abstract class SystemThermo implements SystemInterface {
 
     // System.out.println("beta: " + nybeta + " iterations: " + iterations);
     if (nybeta <= tolerance) {
-      phase = 1;
+      // this.phase = 1;
       nybeta = tolerance;
     } else if (nybeta >= 1.0 - tolerance) {
-      phase = 0;
+      // this.phase = 0;
       nybeta = 1.0 - tolerance;
       // superheated vapour
     } else {
-      phase = 2;
+      // this.phase = 2;
     } // two-phase liquid-gas
 
     this.beta[0] = nybeta;

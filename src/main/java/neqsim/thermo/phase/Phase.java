@@ -87,14 +87,17 @@ abstract class Phase implements PhaseInterface {
 
   /**
    * <p>
-   * addcomponent.
+   * addcomponent. Increase number of components and add moles to phase.
    * </p>
    *
    * @param moles a double
    */
   public void addcomponent(double moles) {
-    numberOfMolesInPhase += moles;
-    numberOfComponents++;
+    if (moles < 0) {
+      throw new RuntimeException("Not possible to add negative moles.");
+    }
+    this.numberOfMolesInPhase += moles;
+    this.numberOfComponents++;
   }
 
   /** {@inheritDoc} */

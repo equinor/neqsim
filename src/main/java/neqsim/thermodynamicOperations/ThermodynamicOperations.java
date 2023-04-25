@@ -1917,6 +1917,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (flashType.equals("TP")) {
       system.setTemperature(spec1, unitSpec1);
       system.setPressure(spec2, unitSpec2);
+      TPflash();
     } else if (flashType.equals("TV")) {
       system.setTemperature(spec1, unitSpec1);
       TVflash(spec2, unitSpec2);
@@ -1996,6 +1997,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
               fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
             }
 
+            this.system.setEmptyFluid();
+
             if (this.system.getNumberOfMoles() == 0) {
               this.system.setTotalNumberOfMoles(1);
             }
@@ -2011,8 +2014,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             continue;
           }
         }
-
-        this.system.setMolarComposition(null);
 
         this.system.setPressure(Sp1);
         if (FlashMode == 1) {
