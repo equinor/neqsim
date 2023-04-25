@@ -117,7 +117,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     double GE = 0.0;
     calcCommontemp(phase, numberOfComponents, temperature, pressure, phasetype);

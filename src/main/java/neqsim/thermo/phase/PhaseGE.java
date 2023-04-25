@@ -63,7 +63,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
-    this.getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, type);
+    this.getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, type);
 
     double sumHydrocarbons = 0.0;
     double sumAqueous = 0.0;
@@ -89,7 +89,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
     if (initType != 0) {
-      getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, phase);
+      getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, phase);
     }
 
     double sumHydrocarbons = 0.0;
@@ -183,7 +183,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     logger.error("this getExxess should never be used.......");
     return 0;
@@ -197,7 +197,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy() {
+  public double getExcessGibbsEnergy() {
     logger.error("this getExxess should never be used.......");
     return 0;
   }
@@ -239,7 +239,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     refPhase[k].setTemperature(temperature);
     refPhase[k].setPressure(pressure);
     refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getPhaseType(), 1.0);
-    ((PhaseGEInterface) refPhase[k]).getExessGibbsEnergy(refPhase[k], 2,
+    ((PhaseGEInterface) refPhase[k]).getExcessGibbsEnergy(refPhase[k], 2,
         refPhase[k].getTemperature(), refPhase[k].getPressure(), refPhase[k].getPhaseType());
     return ((ComponentGEInterface) refPhase[k].getComponent(0)).getGamma();
   }
@@ -258,7 +258,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     dilphase.getComponent(k).setx(1e-10);
     dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1,
         dilphase.getPhaseType(), 1.0);
-    ((PhaseGEInterface) dilphase).getExessGibbsEnergy(dilphase, 2, dilphase.getTemperature(),
+    ((PhaseGEInterface) dilphase).getExcessGibbsEnergy(dilphase, 2, dilphase.getTemperature(),
         dilphase.getPressure(), dilphase.getPhaseType());
     return ((ComponentGEInterface) dilphase.getComponent(0)).getGamma();
   }

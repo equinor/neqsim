@@ -37,7 +37,7 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     double GE = 0;
 
