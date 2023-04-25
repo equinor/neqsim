@@ -1965,8 +1965,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else if (FlashMode == 3) {
       flashType = FlashType.PS;
     } else {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-          "ThermodynamicOperations", "propertyFlash", "FlashMode", "must be 1, 2 or 3"));
+      flashType = null;
     }
 
     Double[][] fluidProperties = new Double[Spec1.size()][SystemProperties.nCols];
@@ -1995,6 +1994,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     for (int t = 0; t < Spec1.size(); t++) {
       try {
+        if (flashType == null) {
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+              "ThermodynamicOperations", "propertyFlash", "FlashMode", "must be 1, 2 or 3"));
+        }
+
         Double Sp1 = Spec1.get(t);
         Double Sp2 = Spec2.get(t);
 
@@ -2048,7 +2052,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             this.PSflash(Sp2, "J/molK");
             break;
           default:
-            break;
+            throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+                "ThermodynamicOperations", "propertyFlash", "FlashMode", "must be 1, 2 or 3"));
         }
         this.system.init(2);
         this.system.initPhysicalProperties();
