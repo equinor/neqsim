@@ -23,8 +23,8 @@ import neqsim.thermo.system.SystemSrkEos;
 public class CompressorChartAlternativeMapLookup
     implements CompressorChartInterface, java.io.Serializable {
   private static final long serialVersionUID = 1000;
-
   static Logger logger = LogManager.getLogger(CompressorChart.class);
+
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
   ArrayList<Double> chartSpeeds = new ArrayList<Double>();
   private SurgeCurve surgeCurve = new SurgeCurve();

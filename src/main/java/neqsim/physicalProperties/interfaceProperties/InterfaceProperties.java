@@ -28,6 +28,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class InterfaceProperties implements InterphasePropertiesInterface, java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(InterfaceProperties.class);
 
   SystemInterface system;
   SurfaceTensionInterface gasLiquidSurfaceTensionCalc = null;
@@ -37,7 +38,6 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   double[] surfaceTension;
   int numberOfInterfaces = 1;
   private int interfacialTensionModel = 0;
-  static Logger logger = LogManager.getLogger(InterfaceProperties.class);
 
   /**
    * <p>

@@ -13,6 +13,7 @@ abstract class Viscosity extends
     neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Viscosity.class);
+
   public double[] pureComponentViscosity;
 
   /**

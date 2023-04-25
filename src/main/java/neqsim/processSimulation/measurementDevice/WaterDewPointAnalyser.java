@@ -18,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(WaterDewPointAnalyser.class);
+
   protected StreamInterface stream = null;
   private double referencePressure = 70.0;
   private String method = "Bukacek";

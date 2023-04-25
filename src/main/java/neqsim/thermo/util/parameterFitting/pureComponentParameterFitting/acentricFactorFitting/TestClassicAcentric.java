@@ -50,7 +50,7 @@ public class TestClassicAcentric {
       while (dataSet.next()) {
         ClassicAcentricFunction function = new ClassicAcentricFunction();
         double guess[] = {0.3311};
-        double bound[][] = {{0, 1.0},};
+        double[][] bound = {{0, 1.0},};
         function.setInitialGuess(guess);
 
         SystemInterface testSystem = new SystemSrkEos(280, 0.001);

@@ -15,6 +15,7 @@ import neqsim.thermo.system.SystemInterface;
 public class calcSaltSatauration extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(calcSaltSatauration.class);
+
   String saltName;
 
   /**

@@ -797,13 +797,13 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
-  public double getaSAFT(int i, double m, double ab[][]) {
+  public double getaSAFT(int i, double m, double[][] ab) {
     return ab[0][i] + (m - 1.0) / m * ab[1][i] + (m - 1.0) / m * (m - 2.0) / m * ab[2][i];
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getaSAFTdm(int i, double m, double ab[][]) {
+  public double getaSAFTdm(int i, double m, double[][] ab) {
     return (m - (m - 1.0)) / (m * m) * ab[1][i]
         + ((2.0 * m - 3.0) * m * m - 2 * m * (m * m - 3 * m + 2)) / Math.pow(m, 4.0) * ab[2][i];
   }

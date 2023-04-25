@@ -22,6 +22,7 @@ public class FreezeOut extends constantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(FreezeOut.class);
+
   public double[] FCompTemp = new double[10];
   public String[] FCompNames = new String[10];
   public boolean noFreezeFlash = true;

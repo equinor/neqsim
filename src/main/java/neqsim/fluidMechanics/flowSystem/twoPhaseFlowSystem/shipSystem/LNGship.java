@@ -22,6 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class LNGship
     extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(LNGship.class);
 
   double[] temperature = null;
   double dailyBoilOffRatio = 0.005;
@@ -67,7 +68,6 @@ public class LNGship
   private String[][] resultTable = null;
   private boolean backCalculate = false;
   double endVolume = 0.0;
-  static Logger logger = LogManager.getLogger(LNGship.class);
 
   /**
    * <p>

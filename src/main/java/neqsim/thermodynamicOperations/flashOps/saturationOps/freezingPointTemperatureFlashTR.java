@@ -21,6 +21,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashTR.class);
+
   public boolean noFreezeFlash = true;
   public int Niterations = 0;
   public String[] FCompNames = new String[10];
@@ -28,7 +30,6 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
   public int compnr;
   public String name = "Frz";
   public boolean CCequation = true;
-  static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashTR.class);
 
   /**
    * <p>

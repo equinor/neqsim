@@ -19,18 +19,18 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
   Matrix diffMatrix;
-  double dn[][];
+  double[][] dn;
   int iter = 0;
   Matrix[] diff4Matrix;
   double[][][] xNew;
-  protected double oldMass[][];
-  protected double oldComp[][];
-  protected double oldDensity[][];
-  protected double oldVelocity[][];
+  protected double[][] oldMass;
+  protected double[][] oldComp;
+  protected double[][] oldDensity;
+  protected double[][] oldVelocity;
   protected double[][][] oldComposition;
-  protected double oldInternalEnergy[][];
-  protected double oldImpuls[][];
-  protected double oldEnergy[][];
+  protected double[][] oldInternalEnergy;
+  protected double[][] oldImpuls;
+  protected double[][] oldEnergy;
 
   /**
    * <p>

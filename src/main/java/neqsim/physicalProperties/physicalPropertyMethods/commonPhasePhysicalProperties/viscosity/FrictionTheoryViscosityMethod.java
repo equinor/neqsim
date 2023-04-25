@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 public class FrictionTheoryViscosityMethod extends Viscosity
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(FrictionTheoryViscosityMethod.class);
 
   public double[] pureComponentViscosity, Fc, omegaVisc;
   protected double chungE[] = new double[10];
@@ -30,7 +31,6 @@ public class FrictionTheoryViscosityMethod extends Viscosity
       {0.566713, -1.0086e-4, 5.17459e-5}, {-7.29995e-2, 5.17459e-5, -5.68708e-9}};
 
   protected double kaprr_fconst = 1.35994e-8;
-  static Logger logger = LogManager.getLogger(FrictionTheoryViscosityMethod.class);
 
   // PR
   // protected double kapac_fconst = -0.140464;

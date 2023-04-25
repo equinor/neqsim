@@ -34,32 +34,25 @@ import neqsim.util.database.NeqSimDataBase;
  */
 public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(EosMixingRules.class);
 
   public double Atot = 0;
-
   public double Btot = 0;
-
   public double Ai = 0;
-
   public double Bi = 0;
-
   public double A;
-
   public double B;
 
   public String mixingRuleGEModel = "NRTL";
   public String mixingRuleName = "no (kij=0)";
-  public double intparam[][];
 
-  public double intparamT[][];
+  public double[][] intparam;
+  public double[][] intparamT;
+  public double[][] WSintparam;
+  public double[][] intparamij;
+  public double[][] intparamji;
+  public int[][] intparamTType;
 
-  public double WSintparam[][];
-
-  public double intparamij[][];
-
-  public double intparamji[][];
-
-  public int intparamTType[][];
   double[][] HVDij;
 
   double[][] HValpha;
@@ -82,8 +75,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   /** Constant <code>calcEOSInteractionParameters=false</code>. */
   public static boolean calcEOSInteractionParameters = false;
   private int bmixType = 0;
-
-  static Logger logger = LogManager.getLogger(EosMixingRules.class);
 
   /**
    * <p>

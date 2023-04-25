@@ -24,12 +24,12 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   Matrix diffMatrix;
   int iter = 0;
   Matrix[] diff4Matrix;
-  double xNew[][];
+  double[][] xNew;
   protected double[] oldMass;
   protected double[] oldComp;
   protected double[] oldDensity;
   protected double[] oldVelocity;
-  protected double oldComposition[][];
+  protected double[][] oldComposition;
   protected double[] oldInternalEnergy;
   protected double[] oldImpuls;
   protected double[] oldEnergy;

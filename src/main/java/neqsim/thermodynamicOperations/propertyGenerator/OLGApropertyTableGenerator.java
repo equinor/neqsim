@@ -24,10 +24,30 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double[] pressures, temperatureLOG, temperatures, pressureLOG = null;
-  double[][] ROG = null, DROGDP, DROHLDP, DROGDT, DROHLDT;
-  double[][] ROL, CPG, CPHL, HG, HHL, TCG, TCHL, VISG, VISHL, SIGGHL, SEG, SEHL, RS;
-  double TC, PC;
+  double[] pressures;
+  double[] temperatureLOG;
+  double[] temperatures;
+  double[] pressureLOG = null;
+  double[][] ROG = null;
+  double[][] DROGDP;
+  double[][] DROHLDP;
+  double[][] DROGDT;
+  double[][] DROHLDT;
+  double[][] ROL;
+  double[][] CPG;
+  double[][] CPHL;
+  double[][] HG;
+  double[][] HHL;
+  double[][] TCG;
+  double[][] TCHL;
+  double[][] VISG;
+  double[][] VISHL;
+  double[][] SIGGHL;
+  double[][] SEG;
+  double[][] SEHL;
+  double[][] RS;
+  double TC;
+  double PC;
 
   /**
    * <p>
