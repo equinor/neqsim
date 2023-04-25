@@ -9,12 +9,40 @@ import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicOperations.ThermodynamicOperations.FlashType;
 
 public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
+  @Test
+  void testFlash() {
+    SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(280.0, 10.0);
+    thermoSystem.addComponent("methane", 0.7);
+    thermoSystem.addComponent("ethane", 0.3);
+    ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
+
+    double P = 10;
+    double T = 20;
+    String unitP = "Bar";
+    String unitT = "C";
+
+    ops.flash(FlashType.PT, P, T, unitP, unitT);
+    ops.system.init(2);
+    ops.system.initPhysicalProperties();
+    Double[] PTfluidProperties = ops.system.getProperties().getValues();
+
+    ops.system.init(0);
+    ops.flash(FlashType.TP, T, P, unitT, unitP);
+    ops.system.init(2);
+    ops.system.initPhysicalProperties();
+    Double[] TPfluidProperties = ops.system.getProperties().getValues();
+
+    for (int k = 0; k < PTfluidProperties.length; k++) {
+      Assertions.assertEquals(PTfluidProperties[k], TPfluidProperties[k]);
+    }
+  }
+
 
   @Test
   void testNeqSimPython() {
-
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(280.0, 10.0);
     thermoSystem.addComponent("methane", 0.7);
     thermoSystem.addComponent("ethane", 0.3);
@@ -33,7 +61,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     CalculationResult res2 = thermoOps.propertyFlash(jP, jT, 0, null, null);
     Assertions.assertEquals(res2.calculationError[0],
-        "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input mode must be 1, 2 or 3");
+        "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input FlashMode must be 1, 2 or 3");
   }
 
   @Test
