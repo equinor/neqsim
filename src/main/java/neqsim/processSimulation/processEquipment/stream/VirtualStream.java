@@ -14,6 +14,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
  * @version $Id: $Id
  */
 public class VirtualStream extends ProcessEquipmentBaseClass {
+  private static final long serialVersionUID = 1L;
   static Logger logger = LogManager.getLogger(VirtualStream.class);
 
   protected StreamInterface refStream = null;
@@ -32,7 +33,9 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   protected boolean setComposition = false;
 
   /**
-   * <p>Constructor for VirtualStream.</p>
+   * <p>
+   * Constructor for VirtualStream.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
@@ -43,7 +46,9 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Constructor for VirtualStream.</p>
+   * <p>
+   * Constructor for VirtualStream.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -52,7 +57,9 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>setReferenceStream.</p>
+   * <p>
+   * setReferenceStream.
+   * </p>
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
@@ -61,7 +68,9 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Setter for the field <code>flowRate</code>.</p>
+   * <p>
+   * Setter for the field <code>flowRate</code>.
+   * </p>
    *
    * @param rate a double
    * @param unit a {@link java.lang.String} object
@@ -73,7 +82,9 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Setter for the field <code>composition</code>.</p>
+   * <p>
+   * Setter for the field <code>composition</code>.
+   * </p>
    *
    * @param comps an array of {@link double} objects
    * @param unit a {@link java.lang.String} object
@@ -85,7 +96,9 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Setter for the field <code>temperature</code>.</p>
+   * <p>
+   * Setter for the field <code>temperature</code>.
+   * </p>
    *
    * @param temp a double
    * @param unit a {@link java.lang.String} object
@@ -97,7 +110,9 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Setter for the field <code>pressure</code>.</p>
+   * <p>
+   * Setter for the field <code>pressure</code>.
+   * </p>
    *
    * @param pres a double
    * @param unit a {@link java.lang.String} object
@@ -129,7 +144,9 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Getter for the field <code>outStream</code>.</p>
+   * <p>
+   * Getter for the field <code>outStream</code>.
+   * </p>
    *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
