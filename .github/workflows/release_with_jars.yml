@@ -93,6 +93,7 @@ jobs:
                     
   create_release:
     name: Create release v${{ needs.get_versions.outputs.version_8 }}
+    if: false
     runs-on: ubuntu-latest
     needs: [get_versions, compile_java_8, compile_java_11]
     
