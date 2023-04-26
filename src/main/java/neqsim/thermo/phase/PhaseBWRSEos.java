@@ -46,7 +46,6 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   @Override
   public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addcomponent(name, moles, molesInPhase, compNumber);
-
     componentArray[compNumber] = new ComponentBWRS(name, moles, molesInPhase, compNumber);
     ((ComponentBWRS) componentArray[compNumber]).setRefPhaseBWRS(this);
   }
