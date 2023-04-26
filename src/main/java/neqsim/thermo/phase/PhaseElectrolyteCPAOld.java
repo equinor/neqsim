@@ -578,7 +578,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
     }
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
     int iterations = 0;
-
+    int maxIterations = 101;
     do {
       this.volInit();
       gcpa = calc_g();
@@ -626,7 +626,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
       setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
       Z = pressure * getMolarVolume() / (R * temperature);
       // System.out.println("Z" + Z);
-    } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < 101);
+    } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < maxIterations);
     // System.out.println("Z" + Z + " iterations " + iterations);
     // System.out.println("pressure " + Z*R*temperature/molarVolume);
     // if(iterations>=100) throw new util.exception.TooManyIterationsException();
