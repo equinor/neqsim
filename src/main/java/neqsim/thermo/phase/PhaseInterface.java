@@ -479,7 +479,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public double getMixGibbsEnergy();
 
-
   /**
    * <p>
    * getExessGibbsEnergy.
@@ -524,7 +523,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   public double getExcessGibbsEnergySymetric();
-
 
   /**
    * <p>

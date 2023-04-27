@@ -27,7 +27,6 @@ public class MeshSection extends SeparatorSection {
     super(name, type, sep);
   }
 
-
   /**
    * {@inheritDoc}
    *
