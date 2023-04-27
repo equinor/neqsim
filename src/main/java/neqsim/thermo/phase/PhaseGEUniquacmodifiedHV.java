@@ -32,6 +32,7 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
     super.addcomponent(name, molesInPhase);
     // componentArray[compNumber] = new ComponentGEUniquacmodifiedHV(name, moles, molesInPhase,
     // compNumber);
+    // creates PhaseGEUniquac type component
   }
 
   /** {@inheritDoc} */
