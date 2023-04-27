@@ -60,7 +60,9 @@ abstract class Component implements ComponentInterface {
   protected double criticalTemperature;
   protected double molarMass;
   protected double acentricFactor;
+  /** numberOfMoles = totalNumberOfMoles * z. */
   protected double numberOfMoles = 0.0;
+  /** totalNumberOfMoles * x * beta. */
   protected double numberOfMolesInPhase = 0.0;
   protected double normalLiquidDensity = 0;
   protected double reducedPressure;
@@ -222,6 +224,14 @@ abstract class Component implements ComponentInterface {
   @Override
   public void createComponent(String component_name, double moles, double molesInPhase,
       int compnumber) {
+    if (component_name == null) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "createComponent", "component_name", "can not be null"));
+    }
+    if (component_name.trim() == "") {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "createComponent", "component_name", "can not be empty"));
+    }
     component_name = ComponentInterface.getComponentNameFromAlias(component_name);
     componentName = component_name;
     numberOfMoles = moles;
@@ -2302,7 +2312,6 @@ abstract class Component implements ComponentInterface {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
   }
-
 
   /**
    * Indexed getter for property matiascopemanParamsUMRPRU.
