@@ -60,7 +60,9 @@ abstract class Component implements ComponentInterface {
   protected double criticalTemperature;
   protected double molarMass;
   protected double acentricFactor;
+  /** numberOfMoles = totalNumberOfMoles * z. */
   protected double numberOfMoles = 0.0;
+  /** totalNumberOfMoles * x * beta. */
   protected double numberOfMolesInPhase = 0.0;
   protected double normalLiquidDensity = 0;
   protected double reducedPressure;
