@@ -359,18 +359,17 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * @return a double
    */
   public double massBalanceCheck2() {
-    double sum_errorFlow = 0.0;
+    double abs_sum_errorFlow = 0.0;
     if (mixedStream.getFlowRate("kg/sec") < 1.0) {
-      sum_errorFlow +=
+      abs_sum_errorFlow +=
           Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"));
     } else {
-      sum_errorFlow +=
+      abs_sum_errorFlow +=
           Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"))
               / mixedStream.getFlowRate("kg/sec") * 100.0;
     }
 
-    // TODO: Why abs of sum of abs
-    return Math.abs(sum_errorFlow);
+    return abs_sum_errorFlow;
   }
 
   /**
@@ -392,20 +391,18 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       return 10.0;
     }
 
-    double sum_error = 0.0;
+    double abs_sum_error = 0.0;
     for (int i = 0; i < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
       // logger.info("x last " +
       // lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
       // logger.info("x new " +
       // mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx());
 
-      // TODO: A bit weird to sum the absolute errors?
-      sum_error += Math.abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx()
+      abs_sum_error += Math.abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx()
           - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
-
     }
-    // TODO: why abs of a sum of abs?
-    return Math.abs(sum_error);
+
+    return abs_sum_error;
   }
 
   /** {@inheritDoc} */
