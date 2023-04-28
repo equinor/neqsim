@@ -32,12 +32,12 @@ public class TestSolidComplexFunction {
   public static void main(String[] args) {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
-    NeqSimDataBase database = new NeqSimDataBase();
 
     // double parameterGuess[] = {0.1640550024}; //, 7578.080}; //, 245.0};
     double parameterGuess[] = {0.119803125, 4482.0};
 
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM comlexsolidfreezingdata WHERE Component1='TEG' AND Component2='water'")) {
       while (dataSet.next()) {
         SolidComplexFunction function = new SolidComplexFunction();
