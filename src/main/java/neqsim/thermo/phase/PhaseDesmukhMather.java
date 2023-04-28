@@ -33,11 +33,9 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentDesmukhMather(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentDesmukhMather(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -170,19 +168,6 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
-    GE = 0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponents()[i].getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
-    }
-    // System.out.println("ge " + GE);
-    return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getGibbsEnergy() {
     return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
   }
@@ -193,6 +178,19 @@ public class PhaseDesmukhMather extends PhaseGE {
     // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
     // pressure, phaseType);
     return GE;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure, int phasetype) {
+    GE = 0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      GE += phase.getComponents()[i].getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
+          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
+    }
+    // System.out.println("ge " + GE);
+    return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
   }
 
   /** {@inheritDoc} */

@@ -234,10 +234,10 @@ public class ComponentSolid extends ComponentSrk {
         refPhase.setTemperature(273.0);
         refPhase.setPressure(1.0);
         try {
-          refPhase.addcomponent(componentName, 10.0, 10.0, 0);
+          refPhase.addComponent(componentName, 10.0, 10.0, 0);
         } catch (Exception ex) {
           logger.error("error occured in setSolidRefFluidPhase ", ex);
-          refPhase.addcomponent("methane", 10.0, 10.0, 0);
+          refPhase.addComponent("methane", 10.0, 10.0, 0);
           refPhase.getComponent("methane").setComponentName(componentName);
         }
         refPhase.getComponent(componentName)

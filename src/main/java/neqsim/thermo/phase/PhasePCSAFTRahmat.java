@@ -162,11 +162,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentPCSAFT(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentPCSAFT(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
