@@ -60,7 +60,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
 
     // clonedSystem.molarMassTransferFlux = (double[])
-    // clonedSystem.molarMassTransferFlux.clone();;
+    // clonedSystem.molarMassTransferFlux.clone();
     // clonedSystem.molarMassTransfer = (double[])
     // clonedSystem.molarMassTransferFlux.clone();
     clonedSystem.fluidBoundary = fluidBoundary.clone();
