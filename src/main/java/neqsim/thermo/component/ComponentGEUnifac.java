@@ -57,6 +57,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
       logger.info("adding unifac pseudo.." + intNumb);
       return;
     }
+
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
@@ -79,7 +80,6 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         }
       }
 
-      dataSet.close();
     } catch (Exception ex) {
       logger.error(ex.toString());
     }

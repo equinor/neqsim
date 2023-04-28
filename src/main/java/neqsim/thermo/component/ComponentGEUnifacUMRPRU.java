@@ -86,8 +86,6 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
           // p);
         }
       }
-
-      dataSet.close();
     } catch (Exception ex) {
       logger.error(ex.toString());
     }

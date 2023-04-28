@@ -4074,7 +4074,6 @@ abstract class SystemThermo implements SystemInterface {
       // System.out.println(test);
       // dataSet.next();
       // dataSet.updateString(1,"tesst");
-      database.getConnection().close();
     } catch (Exception ex) {
       logger.error("failed " + ex.toString());
     }

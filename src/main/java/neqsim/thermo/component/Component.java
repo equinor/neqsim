@@ -454,14 +454,6 @@ abstract class Component implements ComponentInterface {
       componentNumber = compnumber;
     } catch (Exception ex) {
       logger.error("error in comp", ex);
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
-      } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
-      }
     }
 
     srkacentricFactor = acentricFactor;

@@ -273,14 +273,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         }
       } catch (Exception ex) {
         logger.error(ex.toString(), ex);
-      } finally {
-        try {
-          if (dataSet != null) {
-            dataSet.close();
-          }
-        } catch (Exception ex) {
-          logger.error("err closing dataSet...", ex);
-        }
       }
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");

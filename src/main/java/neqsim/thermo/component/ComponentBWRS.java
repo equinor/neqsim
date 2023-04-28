@@ -69,7 +69,6 @@ public class ComponentBWRS extends ComponentSrk {
       rhoc = Double.parseDouble(dataSet.getString("rhoc"));
       gammaBWRS = 1.0 / (rhoc * rhoc);
       // logger.info("gamma " + gammaBWRS);
-      dataSet.close();
     } catch (Exception ex) {
       logger.error(ex.toString());
     }
