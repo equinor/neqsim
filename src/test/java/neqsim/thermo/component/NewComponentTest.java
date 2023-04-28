@@ -21,14 +21,14 @@ public class NewComponentTest extends neqsim.NeqSimTest {
   public void createComponentTest() {
     PhaseSrkEos p = new PhaseSrkEos();
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
-      p.addcomponent("", 0, 0, 0);
+      p.addComponent("", 0, 0, 0);
     });
     Assertions.assertEquals(
         "neqsim.util.exception.InvalidInputException: ComponentSrk:createComponent - Input component_name can not be empty",
         thrown.getMessage());
 
     RuntimeException thrown_2 = Assertions.assertThrows(RuntimeException.class, () -> {
-      p.addcomponent(null, 0, 0, 0);
+      p.addComponent(null, 0, 0, 0);
     });
     Assertions.assertEquals(
         "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be null",

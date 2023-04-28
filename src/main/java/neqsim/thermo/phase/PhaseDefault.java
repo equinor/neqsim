@@ -47,8 +47,8 @@ public class PhaseDefault extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addcomponent(name, moles);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, moles);
     try {
       componentArray[compNumber] = defComponent.getClass().getDeclaredConstructor().newInstance();
     } catch (Exception ex) {

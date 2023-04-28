@@ -24,8 +24,8 @@ public class PhaseKentEisenberg extends PhaseGENRTL {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addcomponent(name, molesInPhase);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
     componentArray[compNumber] = new ComponentKentEisenberg(name, moles, molesInPhase, compNumber);
   }
 

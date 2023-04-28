@@ -29,7 +29,23 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param molesInPhase a double
    * @param compNumber a int
    */
-  public void addcomponent(String name, double moles, double molesInPhase, int compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber);
+
+  /**
+   * <p>
+   * addcomponent.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param moles a double
+   * @param molesInPhase a double
+   * @param compNumber a int
+   * @deprecated Replaced by {@link addComponent}
+   */
+  @Deprecated
+  public default void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    this.addComponent(name, moles, molesInPhase, compNumber);
+  }
 
   /**
    * <p>

@@ -522,8 +522,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addcomponent(name, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, moles, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentSrkCPA(name, moles, molesInPhase, compNumber);
   }
 

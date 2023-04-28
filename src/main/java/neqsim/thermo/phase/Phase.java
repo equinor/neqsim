@@ -93,7 +93,7 @@ abstract class Phase implements PhaseInterface {
    *
    * @param moles a double
    */
-  public void addcomponent(String name, double moles) {
+  public void addComponent(String name, double moles) {
     if (name == null) {
       // Will fail anyhow creating component with no name
       throw new RuntimeException(
@@ -1244,7 +1244,7 @@ abstract class Phase implements PhaseInterface {
       refPhase[i].setPressure(pressure);
       if (getComponent(i).getReferenceStateType().equals("solvent") || onlyPure) {
         if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
-          refPhase[i].addcomponent("default", 10.0, 10.0, 0);
+          refPhase[i].addComponent("default", 10.0, 10.0, 0);
           refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
           refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
           refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
@@ -1252,7 +1252,7 @@ abstract class Phase implements PhaseInterface {
           refPhase[i].getComponent(0).setComponentType("TBPfraction");
           refPhase[i].getComponent(0).setIsTBPfraction(true);
         } else {
-          refPhase[i].addcomponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
+          refPhase[i].addComponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
         }
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
         refPhase[i].setMixingRule(this.getMixingRuleNumber());
@@ -1261,7 +1261,7 @@ abstract class Phase implements PhaseInterface {
       } else {
         // System.out.println("ref " + name);
         if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
-          refPhase[i].addcomponent("default", 10.0, 10.0, 0);
+          refPhase[i].addComponent("default", 10.0, 10.0, 0);
           refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
           refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
           refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
@@ -1269,9 +1269,9 @@ abstract class Phase implements PhaseInterface {
           refPhase[i].getComponent(0).setComponentType("TBPfraction");
           refPhase[i].getComponent(0).setIsTBPfraction(true);
         } else {
-          refPhase[i].addcomponent(getComponent(i).getComponentName(), 1.0e-10, 1.0e-10, 0);
+          refPhase[i].addComponent(getComponent(i).getComponentName(), 1.0e-10, 1.0e-10, 0);
         }
-        refPhase[i].addcomponent(name, 10.0, 10.0, 1);
+        refPhase[i].addComponent(name, 10.0, 10.0, 1);
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
         refPhase[i].setMixingRule(this.getMixingRuleNumber());
         refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getPhaseType(), 1.0);

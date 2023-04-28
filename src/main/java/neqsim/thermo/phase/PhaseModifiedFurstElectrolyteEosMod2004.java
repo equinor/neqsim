@@ -191,8 +191,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addcomponent(name, molesInPhase);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
     componentArray[compNumber] =
         new neqsim.thermo.component.ComponentModifiedFurstElectrolyteEosMod2004(name, moles,
             molesInPhase, compNumber);

@@ -30,7 +30,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     super();
     refBWRSPhase = new PhaseBWRSEos();
     // refBWRSPhase = new PhaseSrkEos();
-    refBWRSPhase.addcomponent("methane", 1.0, 1.0, 0);
+    refBWRSPhase.addComponent("methane", 1.0, 1.0, 0);
     refBWRSPhase.calcMolarVolume(false);
     brefBWRSPhase = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R
         * refBWRSPhase.getComponent(0).getTC() / refBWRSPhase.getComponent(0).getPC();
@@ -57,8 +57,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addcomponent(name, molesInPhase);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
     componentArray[compNumber] = new ComponentCSPsrk(name, moles, molesInPhase, compNumber);
     ((ComponentCSPsrk) componentArray[compNumber]).setRefPhaseBWRS(this);
   }

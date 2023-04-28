@@ -37,8 +37,8 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addcomponent(name, molesInPhase);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
     componentArray[compNumber] = new ComponentSrkPeneloux(name, moles, molesInPhase, compNumber);
   }
 }
