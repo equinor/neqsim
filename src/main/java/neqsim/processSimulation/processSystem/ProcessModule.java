@@ -93,8 +93,6 @@ public class ProcessModule extends SimulationBaseClass {
     return operationsIndex;
   }
 
-
-
   /**
    * Get the list of added process modules.
    *

@@ -49,7 +49,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     }
   }
 
-
   @Test
   void testNeqSimPython() {
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(280.0, 10.0);
