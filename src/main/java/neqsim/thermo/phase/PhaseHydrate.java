@@ -82,7 +82,7 @@ public class PhaseHydrate extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String name, double molesInPhase, double moles, int compNumber) {
+  public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addcomponent(name, molesInPhase);
     // componentArray[compNumber] = new ComponentHydrateStatoil(name, moles, molesInPhase,
     // compNumber);
