@@ -299,7 +299,6 @@ public class PipeBeggsAndBrills extends Pipeline {
       }
     }
 
-
     A = (L3 - mixtureFroudeNumber) / (L3 - L2);
 
     return flowPattern;
