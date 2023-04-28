@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * Phase class.
@@ -93,12 +94,21 @@ abstract class Phase implements PhaseInterface {
    * @param moles a double
    */
   public void addcomponent(String name, double moles) {
+    if (name == null) {
+      // Will fail anyhow creating component with no name
+      throw new RuntimeException(
+          new InvalidInputException(this, "addcomponent", "name", "can not be null"));
+    }
+
     if (moles < 0) {
-      throw new RuntimeException("Not possible to add negative moles.");
+      // should use addMoles/addMolesChemreac if subtracting moles.
+      throw new RuntimeException(
+          new InvalidInputException(this, "addComponent", "moles", "can not be negative"));
     }
 
     if (this.hasComponent(name)) {
-      throw new RuntimeException("Component already exists in phase.");
+      // should use addMoles/addMolesChemreac if adding/subtracting moles for component.
+      throw new RuntimeException("Component already exists in phase");
     }
 
     this.numberOfMolesInPhase += moles;
@@ -107,8 +117,7 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void removeComponent(String name, double moles, double molesInPhase,
-      int compNumber) {
+  public void removeComponent(String name, double moles, double molesInPhase, int compNumber) {
     name = ComponentInterface.getComponentNameFromAlias(name);
 
     ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();

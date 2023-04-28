@@ -31,7 +31,7 @@ public class NewComponentTest extends neqsim.NeqSimTest {
       p.addcomponent(null, 0, 0, 0);
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: ComponentSrk:createComponent - Input component_name can not be null",
+        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be null",
         thrown_2.getMessage());
   }
 
