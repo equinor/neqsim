@@ -52,7 +52,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addcomponent(name, moles);
+    super.addcomponent(name, molesInPhase);
     componentArray[compNumber] = new ComponentSolid(name, moles, molesInPhase, compNumber);
   }
 
