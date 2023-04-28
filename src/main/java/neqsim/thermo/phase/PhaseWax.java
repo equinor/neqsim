@@ -47,7 +47,7 @@ public class PhaseWax extends PhaseSolid {
   /** {@inheritDoc} */
   @Override
   public void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addcomponent(name, moles);
+    super.addcomponent(name, molesInPhase);
     componentArray[compNumber] = new ComponentWax(name, moles, molesInPhase, compNumber);
     // componentArray[compNumber] = new ComponentWaxWilson(componentName, moles,
     // molesInPhase, compNumber);
