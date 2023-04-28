@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * Phase class.
@@ -20,14 +21,16 @@ import neqsim.thermo.system.SystemInterface;
  */
 abstract class Phase implements PhaseInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Phase.class);
 
+
+  public int numberOfComponents = 0;
   public ComponentInterface[] componentArray;
   public boolean mixingRuleDefined = false;
 
   public boolean calcMolarVolume = true;
 
   private boolean constantPhaseVolume = false;
-  public int numberOfComponents = 0;
 
   public int physicalPropertyType = 0;
 
@@ -45,13 +48,11 @@ abstract class Phase implements PhaseInterface {
   private int initType = 0;
   int mixingRuleNumber = 0;
   double temperature = 0;
-
   double pressure = 0;
 
   protected PhaseInterface[] refPhase = null;
   int phaseType = 0;
   protected String phaseTypeName = "gas";
-  static Logger logger = LogManager.getLogger(Phase.class);
 
   /**
    * <p>
@@ -92,25 +93,38 @@ abstract class Phase implements PhaseInterface {
    *
    * @param moles a double
    */
-  public void addcomponent(double moles) {
-    if (moles < 0) {
-      throw new RuntimeException("Not possible to add negative moles.");
+  public void addComponent(String name, double moles) {
+    if (name == null) {
+      // Will fail anyhow creating component with no name
+      throw new RuntimeException(
+          new InvalidInputException(this, "addcomponent", "name", "can not be null"));
     }
+
+    if (moles < 0) {
+      // should use addMoles/addMolesChemreac if subtracting moles.
+      throw new RuntimeException(
+          new InvalidInputException(this, "addComponent", "moles", "can not be negative"));
+    }
+
+    if (this.hasComponent(name)) {
+      // should use addMoles/addMolesChemreac if adding/subtracting moles for component.
+      throw new RuntimeException("Component already exists in phase");
+    }
+
     this.numberOfMolesInPhase += moles;
     this.numberOfComponents++;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void removeComponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    componentName = ComponentInterface.getComponentNameFromAlias(componentName);
+  public void removeComponent(String name, double moles, double molesInPhase, int compNumber) {
+    name = ComponentInterface.getComponentNameFromAlias(name);
 
     ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();
 
     try {
       for (int i = 0; i < numberOfComponents; i++) {
-        if (!componentArray[i].getName().equals(componentName)) {
+        if (!componentArray[i].getName().equals(name)) {
           temp.add(this.componentArray[i]);
         }
       }
@@ -120,7 +134,7 @@ abstract class Phase implements PhaseInterface {
         this.getComponent(i).setComponentNumber(i);
       }
     } catch (Exception ex) {
-      logger.error("not able to remove " + componentName);
+      logger.error("not able to remove " + name);
     }
 
     // componentArray = (ComponentInterface[])temp.toArray();
@@ -1230,7 +1244,7 @@ abstract class Phase implements PhaseInterface {
       refPhase[i].setPressure(pressure);
       if (getComponent(i).getReferenceStateType().equals("solvent") || onlyPure) {
         if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
-          refPhase[i].addcomponent("default", 10.0, 10.0, 0);
+          refPhase[i].addComponent("default", 10.0, 10.0, 0);
           refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
           refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
           refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
@@ -1238,7 +1252,7 @@ abstract class Phase implements PhaseInterface {
           refPhase[i].getComponent(0).setComponentType("TBPfraction");
           refPhase[i].getComponent(0).setIsTBPfraction(true);
         } else {
-          refPhase[i].addcomponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
+          refPhase[i].addComponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
         }
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
         refPhase[i].setMixingRule(this.getMixingRuleNumber());
@@ -1247,7 +1261,7 @@ abstract class Phase implements PhaseInterface {
       } else {
         // System.out.println("ref " + name);
         if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
-          refPhase[i].addcomponent("default", 10.0, 10.0, 0);
+          refPhase[i].addComponent("default", 10.0, 10.0, 0);
           refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
           refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
           refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
@@ -1255,9 +1269,9 @@ abstract class Phase implements PhaseInterface {
           refPhase[i].getComponent(0).setComponentType("TBPfraction");
           refPhase[i].getComponent(0).setIsTBPfraction(true);
         } else {
-          refPhase[i].addcomponent(getComponent(i).getComponentName(), 1.0e-10, 1.0e-10, 0);
+          refPhase[i].addComponent(getComponent(i).getComponentName(), 1.0e-10, 1.0e-10, 0);
         }
-        refPhase[i].addcomponent(name, 10.0, 10.0, 1);
+        refPhase[i].addComponent(name, 10.0, 10.0, 1);
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
         refPhase[i].setMixingRule(this.getMixingRuleNumber());
         refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getPhaseType(), 1.0);
@@ -1899,7 +1913,6 @@ abstract class Phase implements PhaseInterface {
         TPBfrac[7] += getComponent(i).getx();
       } else if (boilpoint >= 69.2) {
         TPBfrac[6] += getComponent(i).getx();
-      } else {
       }
     }
     return TPBfrac;

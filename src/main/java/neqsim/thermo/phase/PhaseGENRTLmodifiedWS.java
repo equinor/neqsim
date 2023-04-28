@@ -90,11 +90,10 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
     componentArray[compNumber] =
-        new ComponentGENRTLmodifiedWS(componentName, moles, molesInPhase, compNumber);
+        new ComponentGENRTLmodifiedWS(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
