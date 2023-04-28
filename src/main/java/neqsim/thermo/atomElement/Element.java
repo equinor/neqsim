@@ -45,7 +45,7 @@ public class Element implements ThermodynamicConstantsInterface {
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
-            database.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"));) {
+            database.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"))) {
       dataSet.next();
       // System.out.println("comp name " + dataSet.getString("componentname"));
       do {

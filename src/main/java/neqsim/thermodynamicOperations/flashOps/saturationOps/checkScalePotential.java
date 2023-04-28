@@ -67,7 +67,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
     double numberOfMolesMEG = 0.0;
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt");) {
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt")) {
       if (system.getPhase(phaseNumber).hasComponent("MEG")) {
         numberOfMolesMEG =
             system.getPhase(phaseNumber).getComponent("MEG").getNumberOfMolesInPhase();

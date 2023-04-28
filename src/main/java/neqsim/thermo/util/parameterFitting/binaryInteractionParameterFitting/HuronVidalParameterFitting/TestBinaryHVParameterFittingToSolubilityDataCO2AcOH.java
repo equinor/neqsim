@@ -36,7 +36,7 @@ public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    try (NeqSimDataBase database = new NeqSimDataBase();) {
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
       ResultSet dataSet = database.getResultSet("SELECT * FROM CO2AcOHdata WHERE X>0 AND y>0");
 
       logger.info("adding....");

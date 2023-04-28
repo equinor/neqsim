@@ -145,7 +145,7 @@ public class TestBinaryHVParameterFitting_MDEA {
      * logger.info("database error" + ex); }
      */
     ResultSet dataSet = null;
-    try (NeqSimDataBase database = new NeqSimDataBase();) {
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
       dataSet = database.getResultSet("SELECT * FROM WaterMDEAactivity WHERE ID<20");
 
       int i = 0;

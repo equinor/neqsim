@@ -46,7 +46,7 @@ public class TestEosInteractionParameterFitting {
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM binaryequilibriumdata WHERE Component1='methane' AND Component2='ethane'");) {
+            "SELECT * FROM binaryequilibriumdata WHERE Component1='methane' AND Component2='ethane'")) {
       logger.info("adding....");
       while (dataSet.next()) {
         EosInteractionParameterFittingFunction function =

@@ -34,8 +34,7 @@ public class ComponentDesmukhMather extends ComponentGE {
     super(component_name, moles, molesInPhase, compnumber);
     java.sql.ResultSet dataSet = null;
 
-    try (
-        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();) {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       if (!component_name.equals("default")) {
         try {
           dataSet =

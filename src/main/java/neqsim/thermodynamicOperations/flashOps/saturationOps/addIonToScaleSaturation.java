@@ -83,7 +83,7 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
     }
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt");) {
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt")) {
       while (dataSet.next()) {
         saltName = dataSet.getString("SaltName").trim();
         name1 = dataSet.getString("ion1").trim();

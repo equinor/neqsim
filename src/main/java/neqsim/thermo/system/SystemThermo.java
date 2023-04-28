@@ -751,8 +751,8 @@ abstract class SystemThermo implements SystemInterface {
     double val1 = 1e-20;
     double val2 = 1e-20;
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet =
-        database.getResultSet("SELECT * FROM compsalt WHERE SaltName='" + componentName + "'")) {
+        java.sql.ResultSet dataSet = database
+            .getResultSet("SELECT * FROM compsalt WHERE SaltName='" + componentName + "'")) {
       dataSet.next();
       String name1 = dataSet.getString("ion1").trim();
       val1 = Double.parseDouble(dataSet.getString("stoc1")) * value;
@@ -1185,7 +1185,7 @@ abstract class SystemThermo implements SystemInterface {
     double boilp = 0.0;
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
-            database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"));) {
+            database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"))) {
       dataSet.next();
       molarmass = Double.parseDouble(dataSet.getString("molarmass")) / 1000.0;
       stddens = Double.parseDouble(dataSet.getString("stddens"));
@@ -1280,7 +1280,7 @@ abstract class SystemThermo implements SystemInterface {
     double boilp = 0.0;
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
-            database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"));) {
+            database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"))) {
       dataSet.next();
       molarmass = Double.parseDouble(dataSet.getString("molarmass")) / 1000.0;
       stddens = Double.parseDouble(dataSet.getString("stddens"));
@@ -3074,7 +3074,7 @@ abstract class SystemThermo implements SystemInterface {
 
   /**
    * getPdVtn. Todo: document
-   * 
+   *
    * @return dpdv
    */
   public double getdPdVtn() {
@@ -4380,7 +4380,7 @@ abstract class SystemThermo implements SystemInterface {
     return getPhase(0).getComponent(number);
   }
 
-  
+
 
   /** {@inheritDoc} */
   @Override

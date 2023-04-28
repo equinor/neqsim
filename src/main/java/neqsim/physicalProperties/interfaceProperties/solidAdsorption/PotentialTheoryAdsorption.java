@@ -157,7 +157,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
           java.sql.ResultSet dataSet =
               database.getResultSet(("SELECT * FROM adsorptionparameters WHERE name='"
                   + system.getPhase(0).getComponent(comp).getComponentName() + "' AND Solid='"
-                  + solidMaterial + "'"));) {
+                  + solidMaterial + "'"))) {
         dataSet.next();
 
         eps0[comp] = Double.parseDouble(dataSet.getString("eps"));

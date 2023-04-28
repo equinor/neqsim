@@ -66,8 +66,7 @@ public class TestCPA2 {
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
-            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
-    ) {
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");) {
       while (dataSet.next()) {
         CPAFunction function = new CPAFunction();
         SystemInterface testSystem =
@@ -111,7 +110,7 @@ public class TestCPA2 {
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
-            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");) {
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2")) {
       while (dataSet.next()) {
         CPAFunctionDens function = new CPAFunctionDens(1);
         SystemInterface testSystem =
@@ -149,8 +148,7 @@ public class TestCPA2 {
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
-            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
-    ) {
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");) {
       while (dataSet.next()) {
         CPAFunctionDens function = new CPAFunctionDens(0);
         SystemInterface testSystem = new SystemSrkCPA(280, 5.001);

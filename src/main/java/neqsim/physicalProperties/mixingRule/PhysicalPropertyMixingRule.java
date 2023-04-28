@@ -98,7 +98,7 @@ public class PhysicalPropertyMixingRule
                   database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='" + component_name
                       + "' AND COMP2='" + phase.getComponents()[k].getComponentName()
                       + "') OR (COMP1='" + phase.getComponents()[k].getComponentName()
-                      + "' AND COMP2='" + component_name + "')");) {
+                      + "' AND COMP2='" + component_name + "')")) {
             if (dataSet.next()) {
               Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
             } else {

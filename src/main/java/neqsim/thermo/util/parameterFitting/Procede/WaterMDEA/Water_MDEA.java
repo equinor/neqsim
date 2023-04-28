@@ -43,7 +43,7 @@ public class Water_MDEA {
     double x1;
     double x2;
 
-    try (NeqSimDataBase database = new NeqSimDataBase();) {
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
       ResultSet dataSet = database.getResultSet("SELECT * FROM WaterMDEA");
 
       while (dataSet.next()) {

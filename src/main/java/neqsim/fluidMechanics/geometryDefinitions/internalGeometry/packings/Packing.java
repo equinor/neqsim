@@ -6,6 +6,8 @@
 
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.util.NamedBaseClass;
 
 /**
@@ -18,7 +20,10 @@ import neqsim.util.NamedBaseClass;
  */
 public class Packing extends NamedBaseClass implements PackingInterface {
   private static final long serialVersionUID = 1L;
-  double voidFractionPacking = 0.951, size = 0, surfaceAreaPrVolume = 112.6;
+  static Logger logger = LogManager.getLogger(Packing.class);
+  double voidFractionPacking = 0.951;
+  double size = 0;
+  double surfaceAreaPrVolume = 112.6;
 
   /**
    * <p>

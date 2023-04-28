@@ -47,7 +47,7 @@ public class ChemicalReactionFactory {
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
-            database.getResultSet("SELECT * FROM reactionkspdata where name='" + name + "'");) {
+            database.getResultSet("SELECT * FROM reactionkspdata where name='" + name + "'")) {
 
       dataSet.next();
       String reacname = dataSet.getString("name");

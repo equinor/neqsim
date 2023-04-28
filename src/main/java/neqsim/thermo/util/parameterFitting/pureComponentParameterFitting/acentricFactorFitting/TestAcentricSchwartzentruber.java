@@ -51,7 +51,7 @@ public class TestAcentricSchwartzentruber {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // PureComponentVapourPressures WHERE ComponentName='TEG' AND VapourPressure<0.5
     // ORDER BY Reference,Temperature");
-    try (NeqSimDataBase database = new NeqSimDataBase();) {
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
       ResultSet dataSet = database.getResultSet(
           "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='mercury' AND VapourPressure<40 ORDER BY Reference,Temperature");
 
