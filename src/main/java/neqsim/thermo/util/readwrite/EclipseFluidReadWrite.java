@@ -338,8 +338,8 @@ public class EclipseFluidReadWrite {
         } else {
           // fluid.changeComponentName(name, names.get(counter));
         }
-
       }
+
       // System.out.println(st);
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);

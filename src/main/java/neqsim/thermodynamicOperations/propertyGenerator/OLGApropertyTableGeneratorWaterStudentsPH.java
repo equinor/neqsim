@@ -930,7 +930,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
           if (thermoSystem.getPhase(0).hasComponent("water")) {
             props[k][i][j] = thermoSystem.getPhase(0).getComponent("water").getz()
                 * thermoSystem.getPhase(0).getComponent("water").getMolarMass()
-                / thermoSystem.getPhase(0).getMolarMass();;
+                / thermoSystem.getPhase(0).getMolarMass();
           } else {
             props[k][i][j] = 0.0;
           }

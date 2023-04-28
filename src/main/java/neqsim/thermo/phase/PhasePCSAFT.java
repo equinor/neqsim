@@ -212,7 +212,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
     F2dispI2dNdN = calcF2dispI2dNdN();
     F2dispI2dm = calcF2dispI2dm();
     F2dispI2dV = F2dispI2dN * getDnSAFTdV();
-    F2dispI2dVdV = F2dispI2dNdN * getDnSAFTdV() * getDnSAFTdV() + F2dispI2dN * dnSAFTdVdV; // F2dispI2dNdN*dnSAFTdVdV;;
+    F2dispI2dVdV = F2dispI2dNdN * getDnSAFTdV() * getDnSAFTdV() + F2dispI2dN * dnSAFTdVdV; // F2dispI2dNdN*dnSAFTdVdV;
 
     F2dispZHC = calcF2dispZHC();
     F2dispZHCdN = calcF2dispZHCdN();

@@ -390,7 +390,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
       volRefT = 15.0;
       logger.error("volume reference temperature not in valid range...setting it to 15C");
     }
-
   }
 
   /** {@inheritDoc} */

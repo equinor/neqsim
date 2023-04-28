@@ -23,7 +23,6 @@ abstract class Phase implements PhaseInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Phase.class);
 
-
   public int numberOfComponents = 0;
   public ComponentInterface[] componentArray;
   public boolean mixingRuleDefined = false;

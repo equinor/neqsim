@@ -261,7 +261,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
       ArrayList<Double> sp1 = (ArrayList<Double>) inputData.get("Sp1");
       ArrayList<Double> sp2 = (ArrayList<Double>) inputData.get("Sp2");
 
-
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
       int flashMode = (int) inputData.get("FlashMode");
       CalculationResult s =

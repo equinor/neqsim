@@ -215,7 +215,6 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     makeupMixer.addStream(stripper.getLiquidOutStream());
     makeupMixer.addStream(makeupTEG);
 
-
     Pump hotLeanTEGPump = new Pump("lean TEG LP pump", makeupMixer.getOutletStream());
     hotLeanTEGPump.setOutletPressure(39.67967207899729);
     hotLeanTEGPump.setIsentropicEfficiency(0.9);
@@ -232,7 +231,6 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     resycleLeanTEG.setOutletStream(TEGFeed);
     resycleLeanTEG.setPriority(200);
     resycleLeanTEG.setDownstreamProperty("flow rate");
-
 
     neqsim.processSimulation.processSystem.ProcessSystem operations1 =
         new neqsim.processSimulation.processSystem.ProcessSystem();

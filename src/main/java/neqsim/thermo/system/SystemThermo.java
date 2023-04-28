@@ -56,7 +56,6 @@ abstract class SystemThermo implements SystemInterface {
   protected boolean numericDerivatives = false;
   protected int initType = 3;
 
-
   private boolean implementedTemperatureDeriativesofFugacity = true;
   private boolean implementedPressureDeriativesofFugacity = true;
   private boolean implementedCompositionDeriativesofFugacity = true;
@@ -76,7 +75,6 @@ abstract class SystemThermo implements SystemInterface {
   protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;
   protected double[] beta = new double[MAX_PHASES];
   protected int a;
-
 
   private ArrayList<String> componentNames = new ArrayList<String>();
   // protected ArrayList<String> resultArray1 = new ArrayList<String>();
@@ -859,7 +857,7 @@ abstract class SystemThermo implements SystemInterface {
       // // refSystem.setPressure(1.01325);
       // // refSystem.init(1);
       // //refSystem.initPhysicalProperties();
-      // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
+      // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();
       // sammenligne med API-standard for tetthet - og sette Penloux dt
     } catch (Exception ex) {
       logger.error("error", ex);
@@ -1003,7 +1001,7 @@ abstract class SystemThermo implements SystemInterface {
       // // refSystem.setPressure(1.01325);
       // // refSystem.init(1);
       // // refSystem.initPhysicalProperties();
-      // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
+      // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();
       // // sammenligne med API-standard for tetthet - og sette Penloux dt
     } catch (Exception ex) {
       logger.error("error", ex);
