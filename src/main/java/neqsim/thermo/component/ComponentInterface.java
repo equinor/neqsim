@@ -763,7 +763,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * The mole fraction of a component in the actual phase.
+   * The mole fraction of a component in the actual phase. NB! init must be called first.
    * </p>
    *
    * @return a double
@@ -772,7 +772,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * The mole fraction of a component in the total fluid.
+   * The mole fraction of a component in the total fluid. NB! init must be called first.
    * </p>
    *
    * @return a double
@@ -781,7 +781,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * The distribution coefficient y/x between gas and lidquid for a component.
+   * The distribution coefficient y/x between gas and lidquid for a component. NB! init must be
+   * called first.
    * </p>
    *
    * @return a double

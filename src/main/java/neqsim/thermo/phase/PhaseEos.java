@@ -1264,6 +1264,4 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(),
         temperature, pressure);
   }
-
-  
 }

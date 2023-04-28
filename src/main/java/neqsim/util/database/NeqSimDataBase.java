@@ -369,7 +369,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       logger.error("failed " + ex.toString());
       throw new RuntimeException(ex);
     }
-
   }
 
   /**

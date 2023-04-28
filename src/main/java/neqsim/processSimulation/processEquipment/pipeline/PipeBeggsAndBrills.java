@@ -297,7 +297,6 @@ public class PipeBeggsAndBrills extends Pipeline {
       } else {
         logger.debug("Flow regime is not found");
       }
-
     }
 
     A = (L3 - mixtureFroudeNumber) / (L3 - L2);
