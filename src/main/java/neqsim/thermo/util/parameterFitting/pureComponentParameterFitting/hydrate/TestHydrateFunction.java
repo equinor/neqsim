@@ -34,7 +34,6 @@ public class TestHydrateFunction {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
 
     double[] guess = {155.8090060223, 3.1907109417, 0.4069986258}; // methane fitted statoil
                                                                   // sCPA-MC
@@ -56,7 +55,8 @@ public class TestHydrateFunction {
     // ljeps, ljdiam,a
 
     int numb = 0;
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM HydratePureComp WHERE GuestMolecule='methane' AND Type<>'IHV' AND Pressure<57  AND Temperature>273.15")) {
       logger.info("adding....");
       while (dataSet.next() && numb < 6) {

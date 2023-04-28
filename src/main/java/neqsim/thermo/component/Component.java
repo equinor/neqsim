@@ -6,8 +6,6 @@
 
 package neqsim.thermo.component;
 
-import java.sql.Connection;
-import java.sql.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -20,8 +18,11 @@ abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
 
   double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
+  /** Index number of component in database. */
   protected int index;
+  /** Index number of component in Phase object component array. */
   protected int componentNumber;
+
   protected int attractiveTermNumber = 0;
   protected int numberOfAssociationSites = 0;
   protected double logFugacityCoefficient = 0.0;
@@ -181,16 +182,16 @@ abstract class Component implements ComponentInterface {
   @Override
   public void insertComponentIntoDatabase(String databaseName) {
     databaseName = "comptemp";
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       int isW = 0;
       if (isWaxFormer()) {
         isW = 1;
       }
+      index = 1000 + componentNumber;
       if (NeqSimDataBase.createTemporaryTables()) {
         database.execute("insert into comptemp VALUES (" + (1000 + componentNumber) + ", '"
             + componentName + "', '00-00-0','" + getComponentType() + "', "
-            + (1000 + componentNumber) + ", 'HC', " + (molarMass * 1000.0) + ", "
+            + index + ", 'HC', " + (molarMass * 1000.0) + ", "
             + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", "
             + getAcentricFactor() + "," + (getNormalBoilingPoint() - 273.15)
             + ", 39.948, 74.9, 'Classic', 0, " + getCpA() + ", " + getCpB() + ", " + getCpC() + ", "
@@ -202,21 +203,9 @@ abstract class Component implements ComponentInterface {
             + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
             + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
       }
-      index = 1000 + componentNumber;
       CASnumber = "00-00-0";
     } catch (Exception ex) {
       logger.error("error in inserting to database", ex);
-    } finally {
-      try {
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
-      }
     }
   }
 
@@ -236,9 +225,8 @@ abstract class Component implements ComponentInterface {
     componentName = component_name;
     numberOfMoles = moles;
     numberOfMolesInPhase = molesInPhase;
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       if (!component_name.equals("default")) {
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
@@ -470,15 +458,6 @@ abstract class Component implements ComponentInterface {
       try {
         if (dataSet != null) {
           dataSet.close();
-        }
-
-        Statement s = database.getStatement();
-        if (s != null) {
-          s.close();
-        }
-        Connection c = database.getConnection();
-        if (c != null) {
-          c.close();
         }
       } catch (Exception ex) {
         logger.error("error closing database.....", ex);
@@ -1374,14 +1353,12 @@ abstract class Component implements ComponentInterface {
   @Override
   public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
-    double temp1 = 0.0;
-    double temp2 = 0.0;
     double dp = phase.getPressure() / 1.0e5;
-    temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setPressure(phase.getPressure() - dp);
     phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
-    temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setPressure(phase.getPressure() + dp);
     phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
@@ -1393,14 +1370,12 @@ abstract class Component implements ComponentInterface {
   @Override
   public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
-    double temp1 = 0.0;
-    double temp2 = 0.0;
     double dt = phase.getTemperature() / 1.0e6;
-    temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setTemperature(phase.getTemperature() - dt);
     phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
-    temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     // phase.setTemperature(phase.getTemperature()+dt);
     // System.out.println("temp " + phase.getTemperature());
     // phase.init(numberOfMolesInPhase, numberOfComponents, 1,phase.getPhaseType(),

@@ -54,8 +54,6 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
   public void run() {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     double ksp = 0.0;
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt");
     resultTable = new String[10][3];
     double stoc1 = 1e-20;
     double stoc2 = 1e-20;
@@ -84,7 +82,8 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
       system.getChemicalReactionOperations().solveChemEq(phaseNumber, 1);
     }
 
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt");) {
       while (dataSet.next()) {
         saltName = dataSet.getString("SaltName").trim();
         name1 = dataSet.getString("ion1").trim();

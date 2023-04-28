@@ -204,7 +204,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   /** {@inheritDoc} */
   @Override
   public void calcaij() {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
 
     aij = new double[((ComponentGEUnifac) getComponent(0))
@@ -212,7 +211,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
-      try {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
           dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umrmc WHERE MainGroup="
               + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
@@ -239,16 +239,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         }
       }
     }
-    try {
-      if (database.getStatement() != null) {
-        database.getStatement().close();
-      }
-      if (database.getConnection() != null) {
-        database.getConnection().close();
-      }
-    } catch (Exception ex) {
-      logger.error("error closing database.....", ex);
-    }
     // System.out.println("finished finding interaction coefficient...C_UMR");
   }
 
@@ -258,7 +248,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    */
   public void calcbij() {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
 
     bij = new double[((ComponentGEUnifac) getComponent(0))
@@ -266,7 +255,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
-      try {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
           dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umrmc WHERE MainGroup="
               + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
@@ -293,16 +283,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         }
       }
     }
-    try {
-      if (database.getStatement() != null) {
-        database.getStatement().close();
-      }
-      if (database.getConnection() != null) {
-        database.getConnection().close();
-      }
-    } catch (Exception ex) {
-      logger.error("error closing database.....", ex);
-    }
     // System.out.println("finished finding interaction coefficient...C_UMR");
   }
 
@@ -312,7 +292,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    */
   public void calccij() {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
 
     cij = new double[((ComponentGEUnifac) getComponent(0))
@@ -320,7 +299,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
-      try {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
           dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umrmc WHERE MainGroup="
               + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
@@ -346,16 +326,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           logger.error("err closing dataSet...", ex);
         }
       }
-    }
-    try {
-      if (database.getStatement() != null) {
-        database.getStatement().close();
-      }
-      if (database.getConnection() != null) {
-        database.getConnection().close();
-      }
-    } catch (Exception ex) {
-      logger.error("error closing database.....", ex);
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");
   }

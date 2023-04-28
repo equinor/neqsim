@@ -42,10 +42,10 @@ public class Element implements ThermodynamicConstantsInterface {
   public Element(String name) {
     ArrayList<String> names = new ArrayList<String>();
     ArrayList<String> stocCoef = new ArrayList<String>();
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    try {
-      java.sql.ResultSet dataSet =
-          database.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"));
+
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"));) {
       dataSet.next();
       // System.out.println("comp name " + dataSet.getString("componentname"));
       do {
@@ -60,15 +60,8 @@ public class Element implements ThermodynamicConstantsInterface {
         coefArray[i] = Double.parseDouble(stocCoef.get(i));
         nameArray[i] = names.get(i);
       }
-      dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
       logger.error(ex.toString());
-      try {
-        database.getConnection().close();
-      } catch (Exception ex2) {
-        logger.error(ex2);
-      }
     }
   }
 

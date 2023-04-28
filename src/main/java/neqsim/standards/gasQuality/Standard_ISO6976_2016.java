@@ -65,10 +65,9 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     Hinf20 = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
     Hinf25 = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
     Hinf60F = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
-    try {
-      neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    try (
+        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();) {
       java.sql.ResultSet dataSet = null;
-
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         try {
           dataSet =
@@ -129,7 +128,6 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
       }
 
       dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
       String err = ex.toString();
       logger.error(err);

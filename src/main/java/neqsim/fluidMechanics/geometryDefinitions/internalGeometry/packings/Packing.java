@@ -39,9 +39,8 @@ public class Packing extends NamedBaseClass implements PackingInterface {
    */
   public Packing(String name) {
     super(name);
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       System.out.println("init packing");
-      neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
       java.sql.ResultSet dataSet =
           database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
       dataSet.next();
@@ -49,9 +48,7 @@ public class Packing extends NamedBaseClass implements PackingInterface {
       surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));
       voidFractionPacking = Double.parseDouble(dataSet.getString("voidFraction"));
       System.out.println("packing ok");
-    }
-
-    catch (Exception ex) {
+    } catch (Exception ex) {
       String err = ex.toString();
       System.out.println(err);
     }
@@ -68,9 +65,8 @@ public class Packing extends NamedBaseClass implements PackingInterface {
    */
   public Packing(String name, String material, int size) {
     super(name);
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       System.out.println("init packing");
-      neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
       java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='"
           + name + "' AND size=" + size + " AND material='" + material + "'"));
       dataSet.next();
@@ -78,9 +74,7 @@ public class Packing extends NamedBaseClass implements PackingInterface {
       surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));
       voidFractionPacking = Double.parseDouble(dataSet.getString("voidFraction"));
       System.out.println("packing ok");
-    }
-
-    catch (Exception ex) {
+    } catch (Exception ex) {
       String err = ex.toString();
       System.out.println(err);
     }
