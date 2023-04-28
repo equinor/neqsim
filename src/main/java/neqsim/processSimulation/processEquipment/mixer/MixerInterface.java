@@ -12,7 +12,7 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
- * MixerInterface interface.
+ * Interface for processEquipment with multiple inlet streams and a single outlet stream.
  * </p>
  *
  * @author esol
