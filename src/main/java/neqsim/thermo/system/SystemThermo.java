@@ -37,10 +37,7 @@ import neqsim.thermo.phase.PhaseWax;
 import neqsim.util.database.NeqSimDataBase;
 
 /*
- * This is the base class of the System classes. The purpose of this class is to give common
- * variables and methods to sub classes. The methods and variables in this class are: Date Method
- * Purpose 7/3-00 System_Thermo(double, double) Constructor 7/3-00 addcomponent(String, double)
- * addding components from text-file: "Component_Data.txt" 7/3-00 init() initializing
+ * This is the base class of the System classes.
  */
 
 abstract class SystemThermo implements SystemInterface {
@@ -326,12 +323,12 @@ abstract class SystemThermo implements SystemInterface {
     phaseArray[3].setPressure(phaseArray[0].getPressure());
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
-        phaseArray[3].addcomponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
+        phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
             getPhase(0).getComponent(i).getNumberOfmoles(), i);
         phaseArray[3].getComponent(i).setComponentName(getPhase(0).getComponent(i).getName());
         phaseArray[3].getComponent(i).setIsPlusFraction(true);
       } else {
-        phaseArray[3].addcomponent(getPhase(0).getComponent(i).getName(),
+        phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
             getPhase(0).getComponent(i).getNumberOfmoles(),
             getPhase(0).getComponent(i).getNumberOfmoles(), i);
       }
@@ -357,12 +354,12 @@ abstract class SystemThermo implements SystemInterface {
     phaseArray[3].setPressure(phaseArray[0].getPressure());
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
-        phaseArray[3].addcomponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
+        phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
             getPhase(0).getComponent(i).getNumberOfmoles(), i);
         phaseArray[3].getComponent("default")
             .setComponentName(getPhase(0).getComponent(i).getName());
       } else {
-        phaseArray[3].addcomponent(getPhase(0).getComponent(i).getName(),
+        phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
             getPhase(0).getComponent(i).getNumberOfmoles(),
             getPhase(0).getComponent(i).getNumberOfmoles(), i);
       }
@@ -388,12 +385,12 @@ abstract class SystemThermo implements SystemInterface {
     phaseArray[5].setPhaseTypeName("wax");
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
-        phaseArray[5].addcomponent(getPhase(0).getComponent(i).getName(),
+        phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(),
             getPhase(0).getComponent(i).getNumberOfmoles(),
             getPhase(0).getComponent(i).getNumberOfmoles(), i);
         phaseArray[5].getComponent(i).setIsPlusFraction(true);
       } else {
-        phaseArray[5].addcomponent(getPhase(0).getComponent(i).getName(),
+        phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(),
             getPhase(0).getComponent(i).getNumberOfmoles(),
             getPhase(0).getComponent(i).getNumberOfmoles(), i);
       }
@@ -419,12 +416,12 @@ abstract class SystemThermo implements SystemInterface {
       phaseArray[3].setPhaseTypeName("solid");
       for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
         if (getPhase(0).getComponent(i).isIsTBPfraction()) {
-          phaseArray[3].addcomponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
+          phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
               getPhase(0).getComponent(i).getNumberOfmoles(), i);
           phaseArray[3].getComponent(i).setComponentName(getPhase(0).getComponent(i).getName());
           phaseArray[3].getComponent(i).setIsTBPfraction(true);
         } else {
-          phaseArray[3].addcomponent(getPhase(0).getComponent(i).getName(),
+          phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
               getPhase(0).getComponent(i).getNumberOfmoles(),
               getPhase(0).getComponent(i).getNumberOfmoles(), i);
         }
@@ -438,12 +435,12 @@ abstract class SystemThermo implements SystemInterface {
     phaseArray[4].setPhaseTypeName("hydrate");
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
-        phaseArray[4].addcomponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
+        phaseArray[4].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
             getPhase(0).getComponent(i).getNumberOfmoles(), i);
         phaseArray[4].getComponent(i).setComponentName(getPhase(0).getComponent(i).getName());
         phaseArray[4].getComponent(i).setIsTBPfraction(true);
       } else {
-        phaseArray[4].addcomponent(getPhase(0).getComponent(i).getName(),
+        phaseArray[4].addComponent(getPhase(0).getComponent(i).getName(),
             getPhase(0).getComponent(i).getNumberOfmoles(),
             getPhase(0).getComponent(i).getNumberOfmoles(), i);
       }
@@ -1149,7 +1146,7 @@ abstract class SystemThermo implements SystemInterface {
       // System.out.println("adding " + componentName);
       componentNames.add(componentName);
       for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-        getPhase(i).addcomponent(componentName, moles, moles, numberOfComponents);
+        getPhase(i).addComponent(componentName, moles, moles, numberOfComponents);
         getPhase(i).setAttractiveTerm(attractiveTermNumber);
       }
       numberOfComponents++;
@@ -1267,7 +1264,7 @@ abstract class SystemThermo implements SystemInterface {
       } else {
         k = 1.0e-30;
       }
-      getPhase(i).addcomponent(componentName, moles, moles * k, numberOfComponents);
+      getPhase(i).addComponent(componentName, moles, moles * k, numberOfComponents);
       getPhase(i).setAttractiveTerm(attractiveTermNumber);
     }
     numberOfComponents++;

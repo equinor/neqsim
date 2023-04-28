@@ -30,7 +30,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     super();
     refBWRSPhase = new PhaseBWRSEos();
     // refBWRSPhase = new PhaseSrkEos();
-    refBWRSPhase.addcomponent("methane", 1.0, 1.0, 0);
+    refBWRSPhase.addComponent("methane", 1.0, 1.0, 0);
     refBWRSPhase.calcMolarVolume(false);
     brefBWRSPhase = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R
         * refBWRSPhase.getComponent(0).getTC() / refBWRSPhase.getComponent(0).getPC();
@@ -57,11 +57,9 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentCSPsrk(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentCSPsrk(name, moles, molesInPhase, compNumber);
     ((ComponentCSPsrk) componentArray[compNumber]).setRefPhaseBWRS(this);
   }
 
@@ -224,41 +222,33 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     if (BonV > 1.0) {
       BonV = 1.0;
     }
-    double BonVold = BonV;
-    double Btemp = 0;
-    double Dtemp = 0;
-    double h = 0;
-    double dh = 0;
-    double gvvv = 0;
-    double fvvv = 0;
-    double dhh = 0;
-    double d1 = 0;
-    double d2 = 0;
-    Btemp = getB();
-    Dtemp = getA();
 
+    double Btemp = getB();
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
+
+    double Dtemp = getA();
+    double BonVold = 0;
     int iterations = 0;
     int maxIterations = 1000;
     do {
       iterations++;
       BonVold = BonV;
-      h = BonV + Btemp * gV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fv()
+      double h = BonV + Btemp * gV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fv()
           - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
-      dh = 1.0 - Btemp / (BonV * BonV)
+      double dh = 1.0 - Btemp / (BonV * BonV)
           * (Btemp * gVV() + Btemp * Dtemp * fVV() / (numberOfMolesInPhase * temperature));
-      fvvv = 1.0 / (R * Btemp * (delta1 - delta2))
+      double fvvv = 1.0 / (R * Btemp * (delta1 - delta2))
           * (2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() + Btemp * delta1, 3.0)
               - 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() + Btemp * delta2, 3.0));
-      gvvv = 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() - Btemp, 3.0)
+      double gvvv = 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() - Btemp, 3.0)
           - 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume(), 3.0);
-      dhh = 2.0 * Btemp / Math.pow(BonV, 3.0)
+      double dhh = 2.0 * Btemp / Math.pow(BonV, 3.0)
           * (Btemp * gVV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fVV())
           + Btemp * Btemp / Math.pow(BonV, 4.0)
               * (Btemp * gvvv + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fvvv);
 
-      d1 = -h / dh;
-      d2 = -dh / dhh;
+      double d1 = -h / dh;
+      double d2 = -dh / dhh;
 
       if (Math.abs(d1 / d2) <= 1.0) {
         BonV += d1 * (1.0 + 0.5 * d1 / d2);
