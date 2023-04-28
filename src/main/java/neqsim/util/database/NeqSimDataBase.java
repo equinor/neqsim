@@ -371,8 +371,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
   }
 
-
-
   /**
    * <p>
    * getComponentNames.

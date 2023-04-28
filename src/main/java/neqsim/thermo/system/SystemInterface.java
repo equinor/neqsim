@@ -1813,8 +1813,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * <p>
    * initBeta.
    * </p>
+   *
+   * @return a double
    */
-  public void initBeta();
+  public double initBeta();
 
   /**
    * <p>

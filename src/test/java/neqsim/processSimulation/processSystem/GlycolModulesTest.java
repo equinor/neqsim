@@ -1,6 +1,4 @@
 package neqsim.processSimulation.processSystem;
-
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.measurementDevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.processSimulation.measurementDevice.WaterDewPointAnalyser;
@@ -19,12 +17,11 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
-public class GlycolModulesTest extends neqsim.NeqSimTest {
-  @Disabled
+public class GlycolModulesTest extends  neqsim.NeqSimTest {
   @Test
-  public void runProcessTEG() throws InterruptedException {
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+  public void runProcessTEG() throws InterruptedException  {
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
+    10.00);
     feedGas.addComponent("nitrogen", 0.75287);
     feedGas.addComponent("CO2", 2.56408);
     feedGas.addComponent("methane", 77.9734);
@@ -59,23 +56,18 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     feedTPsetterToAbsorber.setOutPressure(39.67967207899729, "bara");
     feedTPsetterToAbsorber.setOutTemperature(31.40346842493481, "C");
 
-    Stream feedToAbsorber =
-        new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
+    Stream feedToAbsorber = new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
 
-    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser2 =
-        new HydrateEquilibriumTemperatureAnalyser(feedToAbsorber);
+    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser2 = new HydrateEquilibriumTemperatureAnalyser(feedToAbsorber);
     hydrateTAnalyser2.setName("hydrate temperature gas to absorber");
 
-    WaterDewPointAnalyser waterDewPointAnalyserToAbsorber =
-        new WaterDewPointAnalyser(feedToAbsorber);
+    WaterDewPointAnalyser waterDewPointAnalyserToAbsorber = new WaterDewPointAnalyser(feedToAbsorber);
     waterDewPointAnalyserToAbsorber.setMethod("multiphase");
     waterDewPointAnalyserToAbsorber.setReferencePressure(39.67967207899729);
     waterDewPointAnalyserToAbsorber.setName("water dew point gas to absorber");
 
-    neqsim.thermo.system.SystemInterface feedTEG =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.00, 0.0, 0.0, 0.0, 1.0});
+    neqsim.thermo.system.SystemInterface feedTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00,0.0,0.0, 0.0, 1.0 });
 
     Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
     TEGFeed.setFlowRate(8923.576745846813, "kg/hr");
@@ -92,29 +84,27 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     Stream dehydratedGas = new Stream("dry gas from absorber", absorber.getGasOutStream());
 
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getLiquidOutStream());
-    HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser(dehydratedGas);
+    HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
+        dehydratedGas);
     waterDewPointAnalyser.setReferencePressure(70.0);
     waterDewPointAnalyser.setName("hydrate dew point analyser");
 
     WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser(dehydratedGas);
     waterDewPointAnalyser2.setReferencePressure(70.0);
     waterDewPointAnalyser2.setName("water dew point analyser");
-
+    
     Heater condHeat = new Heater("Condenser heat exchanger", richTEG);
 
     ThrottlingValve glycol_flash_valve =
         new ThrottlingValve("Flash valve", condHeat.getOutletStream());
     glycol_flash_valve.setName("Rich TEG HP flash valve");
     glycol_flash_valve.setOutletPressure(7.513533287063168);
-
+    
     Heater heatEx2 = new Heater("rich TEG heat exchanger 1", glycol_flash_valve.getOutletStream());
     heatEx2.setOutTemperature(273.15 + 90);
 
-    neqsim.thermo.system.SystemInterface feedWater =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedWater.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.00, 0.0, 0.0, 1.0, 0.0});
+    neqsim.thermo.system.SystemInterface feedWater = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    feedWater.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00,0.0,0.0, 1.0, 0.0 });
 
     Stream waterFeed = new Stream("lean TEG to absorber", feedWater);
     waterFeed.setFlowRate(0.0, "kg/hr");
@@ -140,8 +130,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     glycol_flash_valve2.setName("Rich TEG LP flash valve");
     glycol_flash_valve2.setOutletPressure(1.1714901511485545);
 
-    neqsim.thermo.system.SystemInterface stripGas =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    neqsim.thermo.system.SystemInterface stripGas = (neqsim.thermo.system.SystemInterface) feedGas.clone();
 
     Stream strippingGas = new Stream("stripGas", stripGas);
     strippingGas.setFlowRate(200, "kg/hr");
@@ -172,8 +161,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     splitterGasToFlare.setSplitNumber(2);
     splitterGasToFlare.setFlowRates(new double[] {200, -1}, "kg/hr");
 
-    Heater strippingFlareGasTPsetter =
-        new Heater("TP of stripping gas + flare", splitterGasToFlare.getSplitStream(0));
+    Heater strippingFlareGasTPsetter = new Heater("TP of stripping gas + flare", splitterGasToFlare.getSplitStream(0));
     strippingFlareGasTPsetter.setOutPressure(1.1714901511485545, "bara");
     strippingFlareGasTPsetter.setOutTemperature(185.4402968739743, "C");
 
@@ -194,10 +182,8 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     recycleFlareGas.setOutletStream(strippingGas);
     recycleFlareGas.setPriority(1000);
 
-    neqsim.thermo.system.SystemInterface pureTEG =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    pureTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 1.0});
+    neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0,0.0,0.0, 1.0 });
 
     Stream makeupTEG = new Stream("makeup TEG", pureTEG);
     makeupTEG.setFlowRate(1e-6, "kg/hr");
@@ -215,6 +201,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     makeupMixer.addStream(stripper.getLiquidOutStream());
     makeupMixer.addStream(makeupTEG);
 
+    
     Pump hotLeanTEGPump = new Pump("lean TEG LP pump", makeupMixer.getOutletStream());
     hotLeanTEGPump.setOutletPressure(39.67967207899729);
     hotLeanTEGPump.setIsentropicEfficiency(0.9);
@@ -231,97 +218,88 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     resycleLeanTEG.setOutletStream(TEGFeed);
     resycleLeanTEG.setPriority(200);
     resycleLeanTEG.setDownstreamProperty("flow rate");
+  
+  
+      neqsim.processSimulation.processSystem.ProcessSystem operations1 = new neqsim.processSimulation.processSystem.ProcessSystem();
+      operations1.add(dryFeedGas);
+      operations1.add(saturatedFeedGas);
+      operations1.add(feedTPsetterToAbsorber);
+      operations1.add(hydrateTAnalyser2);
+      operations1.add(waterDewPointAnalyserToAbsorber);
+      
+      neqsim.processSimulation.processSystem.ProcessSystem operations2 = new neqsim.processSimulation.processSystem.ProcessSystem();
+      // Rec module TEG 
+      operations2.add(TEGFeed);
+      operations2.add(feedToAbsorber);
+      operations2.add(absorber);
+      operations2.add(richTEG);
+      operations2.add(condHeat);
+      operations2.add(glycol_flash_valve);
+      operations2.add(heatEx2);
+      operations2.add(waterFeed);
+      operations2.add(flashSep);
+      operations2.add(flashGas);
+      operations2.add(flashLiquid);
+      operations2.add(filter);
+      operations2.add(heatEx);  
+      operations2.add(strippingGas);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations1 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
-    operations1.add(dryFeedGas);
-    operations1.add(saturatedFeedGas);
-    operations1.add(feedTPsetterToAbsorber);
-    operations1.add(hydrateTAnalyser2);
-    operations1.add(waterDewPointAnalyserToAbsorber);
+      neqsim.processSimulation.processSystem.ProcessSystem operations3 = new neqsim.processSimulation.processSystem.ProcessSystem();
+      // Rec module gas to rebo,0
+      operations3.add(gasToReboiler);
+      operations3.add(glycol_flash_valve2);
+      operations3.add(column);
+      operations3.add(stripper);
+      operations3.add(recycleGasFromStripper);
+      operations3.add(coolerRegenGas);
+      operations3.add(sepregenGas);
+      operations3.add(gasToFlare);
+      operations3.add(splitterGasToFlare);
+      operations3.add(strippingFlareGasTPsetter);
+      operations3.add(recycleFlareGas);
+      // Finish Rec Stripping gas
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations2 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
-    // Rec module TEG
-    operations2.add(TEGFeed);
-    operations2.add(feedToAbsorber);
-    operations2.add(absorber);
-    operations2.add(richTEG);
-    operations2.add(condHeat);
-    operations2.add(glycol_flash_valve);
-    operations2.add(heatEx2);
-    operations2.add(waterFeed);
-    operations2.add(flashSep);
-    operations2.add(flashGas);
-    operations2.add(flashLiquid);
-    operations2.add(filter);
-    operations2.add(heatEx);
-    operations2.add(strippingGas);
+      neqsim.processSimulation.processSystem.ProcessSystem operations4 = new neqsim.processSimulation.processSystem.ProcessSystem();
+      operations4.add(liquidToTrreatment);
+      operations4.add(makeupTEG);
+      operations4.add(makeupCalculator);
+      operations4.add(makeupMixer);
+      operations4.add(hotLeanTEGPump);
+      operations4.add(coolerhOTteg3);
+      operations4.add(leanTEGtoabs);
+      operations4.add(resycleLeanTEG);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations3 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
-    // Rec module gas to rebo,0
-    operations3.add(gasToReboiler);
-    operations3.add(glycol_flash_valve2);
-    operations3.add(column);
-    operations3.add(stripper);
-    operations3.add(recycleGasFromStripper);
-    operations3.add(coolerRegenGas);
-    operations3.add(sepregenGas);
-    operations3.add(gasToFlare);
-    operations3.add(splitterGasToFlare);
-    operations3.add(strippingFlareGasTPsetter);
-    operations3.add(recycleFlareGas);
-    // Finish Rec Stripping gas
+      neqsim.processSimulation.processSystem.ProcessSystem operations5 = new neqsim.processSimulation.processSystem.ProcessSystem();
+      //Finish Rec Lean TEG l  
+      operations5.add(dehydratedGas);
+      operations5.add(waterDewPointAnalyser);
+      operations5.add(waterDewPointAnalyser2);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations4 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
-    operations4.add(liquidToTrreatment);
-    operations4.add(makeupTEG);
-    operations4.add(makeupCalculator);
-    operations4.add(makeupMixer);
-    operations4.add(hotLeanTEGPump);
-    operations4.add(coolerhOTteg3);
-    operations4.add(leanTEGtoabs);
-    operations4.add(resycleLeanTEG);
+      neqsim.processSimulation.processSystem.ProcessModule module1 = new neqsim.processSimulation.processSystem.ProcessModule("Start process");
+      module1.add(operations1);
+      module1.add(operations2);
+      
+      neqsim.processSimulation.processSystem.ProcessModule module2 = new neqsim.processSimulation.processSystem.ProcessModule("Column recycle"); 
+      module2.add(operations3); 
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations5 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
-    // Finish Rec Lean TEG l
-    operations5.add(dehydratedGas);
-    operations5.add(waterDewPointAnalyser);
-    operations5.add(waterDewPointAnalyser2);
+      neqsim.processSimulation.processSystem.ProcessModule module3 = new neqsim.processSimulation.processSystem.ProcessModule("TEG recycle"); 
+      module3.add(operations2); 
+      module3.add(module2);
+      module3.add(operations4);  
 
-    neqsim.processSimulation.processSystem.ProcessModule module1 =
-        new neqsim.processSimulation.processSystem.ProcessModule("Start process");
-    module1.add(operations1);
-    module1.add(operations2);
+      neqsim.processSimulation.processSystem.ProcessModule module4 = new neqsim.processSimulation.processSystem.ProcessModule("Finish Process"); 
+      module4.add(operations5); 
 
-    neqsim.processSimulation.processSystem.ProcessModule module2 =
-        new neqsim.processSimulation.processSystem.ProcessModule("Column recycle");
-    module2.add(operations3);
+      neqsim.processSimulation.processSystem.ProcessModule modules = new neqsim.processSimulation.processSystem.ProcessModule("Modules wrapper");
+      modules.add(module1);
+      modules.add(module2);
+      modules.add(module3); 
+      modules.add(module4);     
 
-    neqsim.processSimulation.processSystem.ProcessModule module3 =
-        new neqsim.processSimulation.processSystem.ProcessModule("TEG recycle");
-    module3.add(operations2);
-    module3.add(module2);
-    module3.add(operations4);
-
-    neqsim.processSimulation.processSystem.ProcessModule module4 =
-        new neqsim.processSimulation.processSystem.ProcessModule("Finish Process");
-    module4.add(operations5);
-
-    neqsim.processSimulation.processSystem.ProcessModule modules =
-        new neqsim.processSimulation.processSystem.ProcessModule("Modules wrapper");
-    modules.add(module1);
-    modules.add(module2);
-    modules.add(module3);
-    modules.add(module4);
-
-    Thread runThr = modules.runAsThread();
-    try {
-      runThr.join(100000);
-    } catch (Exception ex) {
-    }
+      Thread runThr = modules.runAsThread();
+      try {
+        runThr.join(100000);
+      } catch (Exception ex) {
+      }
   }
 }
