@@ -70,7 +70,6 @@ public class ComponentBWRS extends ComponentSrk {
       gammaBWRS = 1.0 / (rhoc * rhoc);
       // logger.info("gamma " + gammaBWRS);
       dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
       logger.error(ex.toString());
     }

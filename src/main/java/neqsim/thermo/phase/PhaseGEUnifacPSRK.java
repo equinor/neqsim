@@ -121,7 +121,6 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
               "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
           // System.out.println("aij " + aij[i][j]);
           dataSet.close();
-          database.getConnection().close();
         } catch (Exception ex) {
           logger.error(ex.toString(), ex);
         }
@@ -160,7 +159,6 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
               "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
           // System.out.println("aij " + aij[i][j]);
           dataSet.close();
-          database.getConnection().close();
         } catch (Exception ex) {
           logger.error(ex.toString(), ex);
         }

@@ -66,7 +66,6 @@ public class ComponentGEUniquac extends ComponentGE {
       q = Double.parseDouble(dataSet.getString("qUNIQUAQ"));
 
       dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
       logger.error(ex.toString());
     }

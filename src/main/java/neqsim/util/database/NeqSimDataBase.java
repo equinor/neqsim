@@ -375,7 +375,6 @@ public class NeqSimDataBase
       System.out.println("dataset " + dataSet.getString("molarmass"));
       logger.info("dataset " + dataSet.getString("molarmass"));
       dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
       logger.error("failed " + ex.toString());
       throw new RuntimeException(ex);

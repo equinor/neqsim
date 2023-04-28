@@ -80,7 +80,6 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
       }
 
       dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
       logger.error(ex.toString());
     }

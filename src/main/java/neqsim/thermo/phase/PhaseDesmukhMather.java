@@ -58,45 +58,49 @@ public class PhaseDesmukhMather extends PhaseGE {
     super.setMixingRule(type);
     this.aij = new double[numberOfComponents][numberOfComponents];
     this.bij = new double[numberOfComponents][numberOfComponents];
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    for (int k = 0; k < getNumberOfComponents(); k++) {
-      String component_name = getComponents()[k].getComponentName();
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+      for (int k = 0; k < getNumberOfComponents(); k++) {
+        String component_name = getComponents()[k].getComponentName();
 
-      for (int l = k; l < getNumberOfComponents(); l++) {
-        try {
-          if (k == l) {
-            if (getComponents()[l].getComponentName().equals("MDEA")
-                && getComponents()[k].getComponentName().equals("MDEA")) {
-              aij[k][l] = -0.0828487;
+        for (int l = k; l < getNumberOfComponents(); l++) {
+          try {
+            if (k == l) {
+              if (getComponents()[l].getComponentName().equals("MDEA")
+                  && getComponents()[k].getComponentName().equals("MDEA")) {
+                aij[k][l] = -0.0828487;
+                this.aij[l][k] = this.aij[k][l];
+              }
+            } else {
+              // int templ = l, tempk = k;
+              // database = new util.database.NeqSimDataBase();
+              java.sql.ResultSet dataSet =
+                  database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
+                      + "' AND comp2='" + getComponents()[l].getComponentName() + "') OR (comp1='"
+                      + getComponents()[l].getComponentName() + "' AND comp2='" + component_name
+                      + "')");
+              dataSet.next();
+
+              if (dataSet.getString("comp1").trim().equals(getComponents()[l].getComponentName())) {
+                // templ = k;
+                // tempk = l;
+              }
+              this.aij[k][l] = Double.parseDouble(dataSet.getString("aijDesMath"));
+              this.bij[k][l] = Double.parseDouble(dataSet.getString("bijDesMath"));
               this.aij[l][k] = this.aij[k][l];
-            }
-          } else {
-            // int templ = l, tempk = k;
-            // database = new util.database.NeqSimDataBase();
-            java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='"
-                + component_name + "' AND comp2='" + getComponents()[l].getComponentName()
-                + "') OR (comp1='" + getComponents()[l].getComponentName() + "' AND comp2='"
-                + component_name + "')");
-            dataSet.next();
+              this.bij[l][k] = this.bij[k][l];
 
-            if (dataSet.getString("comp1").trim().equals(getComponents()[l].getComponentName())) {
-              // templ = k;
-              // tempk = l;
+              // System.out.println("aij " + this.aij[l][k]);
+              dataSet.close();
             }
-            this.aij[k][l] = Double.parseDouble(dataSet.getString("aijDesMath"));
-            this.bij[k][l] = Double.parseDouble(dataSet.getString("bijDesMath"));
-            this.aij[l][k] = this.aij[k][l];
-            this.bij[l][k] = this.bij[k][l];
-
-            // System.out.println("aij " + this.aij[l][k]);
-            dataSet.close();
-            // database.getConnection().close();
+          } catch (Exception ex) {
+            logger.info("comp names " + component_name);
+            logger.error(ex.toString());
           }
-        } catch (Exception ex) {
-          logger.info("comp names " + component_name);
-          logger.error(ex.toString());
         }
+
       }
+    } catch (Exception ex) {
+      logger.error(ex.toString());
     }
   }
 
