@@ -761,7 +761,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * setEmptyFluid.
+   * Set the flow rate (moles) of all components to zero.
    * </p>
    */
   public void setEmptyFluid();

@@ -471,7 +471,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
-   * Set the flow rate of all components to zero.
+   * Set the flow rate (moles) of all components to zero.
    */
   public void setEmptyFluid();
 
