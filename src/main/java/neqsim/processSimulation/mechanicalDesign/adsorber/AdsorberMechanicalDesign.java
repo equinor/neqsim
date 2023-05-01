@@ -66,12 +66,17 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
     SimpleAdsorber separator = (SimpleAdsorber) getProcessEquipment();
     // double Fg = 1.0;
 
-    double emptyVesselWeight = 0.0, internalsWeight = 0.0, externalNozzelsWeight = 0.0;
-    double pipingWeight = 0.0, structualWeight = 0.0, electricalWeight = 0.0;
+    double emptyVesselWeight = 0.0;
+    double internalsWeight = 0.0;
+    double externalNozzelsWeight = 0.0;
+    double pipingWeight = 0.0;
+    double structualWeight = 0.0;
+    double electricalWeight = 0.0;
     double totalSkidWeight = 0.0;
 
-    double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
-
+    double moduleWidth = 0.0;
+    double moduleHeight = 0.0;
+    double moduleLength = 0.0;
     double materialsCost = 0.0;
     // double sepLength = 0.0;
 

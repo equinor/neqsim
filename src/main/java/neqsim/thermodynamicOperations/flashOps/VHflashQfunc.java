@@ -18,7 +18,8 @@ public class VHflashQfunc extends Flash {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(VHflashQfunc.class);
 
-  double Vspec = 0, Hspec = 0.0;
+  double Vspec = 0;
+  double Hspec = 0.0;
   Flash tpFlash;
 
   /**
@@ -107,8 +108,10 @@ public class VHflashQfunc extends Flash {
    * @return a double
    */
   public double solveQ() {
-    double oldPres = system.getPressure(), nyPres = system.getPressure(),
-        nyTemp = system.getTemperature(), oldTemp = system.getTemperature();
+    double oldPres = system.getPressure();
+    double nyPres = system.getPressure();
+    double nyTemp = system.getTemperature();
+    double oldTemp = system.getTemperature();
     double iterations = 1;
     // logger.info("Vspec: " + Vspec);
     // logger.info("Uspec: " + Uspec);

@@ -34,6 +34,9 @@ public class GORfitter extends TwoPortEquipment {
   String unitP = "bara";
 
   @Deprecated
+  /**
+   * <p>Constructor for GORfitter.</p>
+   */
   public GORfitter() {
     super("GOR fitter");
   }
@@ -62,17 +65,21 @@ public class GORfitter extends TwoPortEquipment {
     super(name, stream);
   }
 
+  /**
+   * <p>getGFV.</p>
+   *
+   * @return a double
+   */
   public double getGFV() {
     return GVF;
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>inletStream</code>.
    * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
    */
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
@@ -304,12 +311,21 @@ public class GORfitter extends TwoPortEquipment {
     this.GOR = gOR;
   }
 
+  /**
+   * <p>
+   * setGVF.
+   * </p>
+   *
+   * @param gvf a double
+   */
   public void setGVF(double gvf) {
     fitAsGVF = true;
     this.GOR = gvf;
   }
 
   /**
+   * <p>Getter for the field <code>referenceConditions</code>.</p>
+   *
    * @return the referenceConditions
    */
   public String getReferenceConditions() {
@@ -317,6 +333,8 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
+   * <p>Setter for the field <code>referenceConditions</code>.</p>
+   *
    * @param referenceConditions the referenceConditions to set
    */
   public void setReferenceConditions(String referenceConditions) {
@@ -324,6 +342,8 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
+   * <p>isFitAsGVF.</p>
+   *
    * @return the fitAsGVF
    */
   public boolean isFitAsGVF() {
@@ -331,6 +351,8 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
+   * <p>Setter for the field <code>fitAsGVF</code>.</p>
+   *
    * @param fitAsGVF the fitAsGVF to set
    */
   public void setFitAsGVF(boolean fitAsGVF) {

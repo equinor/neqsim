@@ -46,6 +46,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
+   * setComponentNameTag.
+   * </p>
+   *
+   * @param nameTag a {@link java.lang.String} object
+   */
+  public void setComponentNameTag(String nameTag);
+
+  /**
+   * <p>
    * setComponentNameTagOnNormalComponents.
    * </p>
    *
@@ -81,25 +90,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       String fromPhaseName, String toPhaseName);
 
   /**
-   * <p>
-   * renameComponent.
-   * </p>
-   *
-   * @param oldName a {@link java.lang.String} object
-   * @param newName a {@link java.lang.String} object
-   */
-  public void renameComponent(String oldName, String newName);
-
-  /**
-   * <p>
-   * setComponentNameTag.
-   * </p>
-   *
-   * @param nameTag a {@link java.lang.String} object
-   */
-  public void setComponentNameTag(String nameTag);
-
-  /**
    * Add named components to a System. Does nothing if components already exist in System.
    *
    * @param names Names of the components to be added. See NeqSim database for available components
@@ -124,6 +114,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       addComponent(names[i], moles[i]);
     }
   }
+
+  /**
+   * <p>
+   * renameComponent.
+   * </p>
+   *
+   * @param oldName a {@link java.lang.String} object
+   * @param newName a {@link java.lang.String} object
+   */
+  public void renameComponent(String oldName, String newName);
 
   /**
    * <p>
@@ -182,21 +182,21 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMolarCompositionOfPlusFluid(double[] molefractions);
 
   /**
-   * method to return exergy in a specified unit.
-   *
-   * @param temperatureOfSurroundings in Kelvin
-   * @return exergy in specified unit
-   * @param exergyUnit a {@link java.lang.String} object
-   */
-  public double getExergy(double temperatureOfSurroundings, String exergyUnit);
-
-  /**
    * method to return exergy defined as (h1-T0*s1) in a unit Joule.
    *
    * @param temperatureOfSurroundings in Kelvin
    * @return a double
    */
   public double getExergy(double temperatureOfSurroundings);
+
+  /**
+   * method to return exergy in a specified unit.
+   *
+   * @param temperatureOfSurroundings in Kelvin
+   * @param exergyUnit a {@link java.lang.String} object
+   * @return exergy in specified unit
+   */
+  public double getExergy(double temperatureOfSurroundings, String exergyUnit);
 
   /**
    * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis
@@ -233,7 +233,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMoleFractionsSum();
 
   /**
-   * method to get the speed of sound of a system. THe sound speed is implemented based on a molar
+   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
    * average over the phases
    *
    * @param unit Supported units are m/s, km/h
@@ -242,7 +242,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getSoundSpeed(String unit);
 
   /**
-   * method to get the speed of sound of a system. THe sound speed is implemented based on a molar
+   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
    * average over the phases
    *
    * @return speed of sound in m/s
@@ -398,7 +398,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to set the temperature of a fluid (same temperature for all phases).
    *
    * @param newTemperature in specified unit
-   * @param unit unit can be C or K (Celcius of Kelvin)
+   * @param unit unit can be C or K (Celsius or Kelvin)
    */
   public void setTemperature(double newTemperature, String unit);
 
@@ -618,8 +618,20 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param i Phase number
    * @return True if phase exists, false if not.
+   * @deprecated use {@link #isPhase(int i)} instead
    */
-  public boolean IsPhase(int i);
+  @Deprecated
+  public default boolean IsPhase(int i) {
+    return isPhase(i);
+  }
+
+  /**
+   * Returns true if phase exists and is not null.
+   *
+   * @param i Phase number
+   * @return True if phase exists, false if not.
+   */
+  public boolean isPhase(int i);
 
   /**
    * Get phase number i from SystemInterface object.
@@ -655,7 +667,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param flowRate a double
-   * @param flowunit a {@link java.lang.String} object
+   * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr
+   *        m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr, Sm3/hr, Sm3/day, idSm3/hr, idSm3/day
    */
   public void setTotalFlowRate(double flowRate, String flowunit);
 
@@ -1267,7 +1280,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * hasPlusFraction.
+   * Getter for property hasPlusFraction.
    * </p>
    *
    * @return a boolean
@@ -1470,7 +1483,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to calculate thermodynamic properties of the fluid. The temperature, pressure, number of
    * phases and composition of the phases will be used as basis for calculation.
-   * 
    *
    * @param number - The number can be 0, 1, 2 or 3. 0: Set feed composition for all phases. 1:
    *        Calculation of density, fugacities and Z-factor 2: 1 + calculation of enthalpy, entropy,
@@ -1688,10 +1700,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void reInitPhaseType();
 
   /**
-   * specify the type for the physical properties you want to use. Type 0 Orginal/default 1 Water 2
-   * Glycol 3 Amine.
+   * Set the physical property model type for each phase of the System.
    *
-   * @param type a int
+   * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
    */
   public void setPhysicalPropertyModel(int type);
 
@@ -1802,10 +1813,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * <p>
    * initBeta.
    * </p>
-   *
-   * @return a double
    */
-  public double initBeta();
+  public void initBeta();
 
   /**
    * <p>
@@ -2057,7 +2066,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return kappa
    */
-
   public double getKappa();
 
   /**
@@ -2467,6 +2475,62 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   @Override
   public int hashCode();
 
-  /** {@inheritDoc} */
+  /**
+   * Add to component names.
+   *
+   * @param name Component name to add
+   */
   public void addToComponentNames(java.lang.String name);
+
+  /**
+   * <p>
+   * addCharacterized.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   * @param lastIsPlusFraction True if last fraction is a Plus fraction
+   */
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction);
+
+  /**
+   * <p>
+   * addCharacterized.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   * @param lastIsPlusFraction True if last fraction is a Plus fraction
+   * @param lumpComponents True if component should be lumped
+   * @param numberOfPseudoComponents number of pseudo components
+   */
+  public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity, boolean lastIsPlusFraction, boolean lumpComponents,
+      int numberOfPseudoComponents);
+
+  /**
+   * <p>
+   * addCharacterized.
+   * </p>
+   *
+   * @param charNames an array of {@link java.lang.String} objects
+   * @param charFlowrate an array of {@link double} objects
+   * @param molarMass an array of {@link double} objects
+   * @param relativedensity an array of {@link double} objects
+   */
+  public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
+      double[] relativedensity);
+
+  /**
+   * Get ideal liquid density of fluid in given unit.
+   *
+   * @param unit {@link java.lang.String} Supported units are kg/m3 and gr/cm3
+   * @return a double
+   */
+  public double getIdealLiquidDensity(String unit);
 }

@@ -33,22 +33,35 @@ public class pTphaseEnvelopeMay extends BaseOperation {
   double[] cricondenTherm = new double[3];
   double[] cricondenBar = new double[3];
   double phaseFraction = 1e-10;
-  int i, j = 0, nummer = 0, iterations = 0, maxNumberOfIterations = 10000;
-  double gibbsEnergy = 0, gibbsEnergyOld = 0;
-  double Kold, deviation = 0, g0 = 0, g1 = 0, lowPres = 1.0;
-  double lnOldOldK[], lnK[];
+  int i;
+  int j = 0;
+  int nummer = 0;
+  int iterations = 0;
+  int maxNumberOfIterations = 10000;
+  double gibbsEnergy = 0;
+  double gibbsEnergyOld = 0;
+  double Kold;
+  double deviation = 0;
+  double g0 = 0;
+  double g1 = 0;
+  double lowPres = 1.0;
+  double lnOldOldK[];
+  double lnK[];
   boolean outputToFile = false;
-  double lnOldK[];
-  double lnKwil[];
-  double oldDeltalnK[], deltalnK[];
-  double tm[] = {1, 1};
+  double[] lnOldK;
+  double[] lnKwil;
+  double oldDeltalnK[];
+  double deltalnK[];
+  double[] tm = {1, 1};
   double beta = 1e-5;
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
   JProgressBar monitor;
   JFrame mainFrame;
   String fileName = "c:/file";
   JPanel mainPanel;
-  double temp = 0, pres = 0, startPres = 0;
+  double temp = 0;
+  double pres = 0;
+  double startPres = 0;
   double[][] points = new double[2][];
   double[] pointsH;
   double[][] pointsH2 = new double[4][];
@@ -696,24 +709,18 @@ public class pTphaseEnvelopeMay extends BaseOperation {
     }
 
     if (beta <= 0.5) {
-      initTc = system.getPhase(0).getComponents()[lc].getTC(); // closer to bubble point get
-                                                               // the lightest
-                                                               // component
+      initTc = system.getPhase(0).getComponents()[lc].getTC();
+      // closer to bubble point get the lightest component
       initPc = system.getPhase(0).getComponents()[lc].getPC();
       initAc = system.getPhase(0).getComponents()[lc].getAcentricFactor();
     } else if (beta > 0.5) {
-      initTc = system.getPhase(0).getComponents()[hc].getTC(); // closer to dew point get the
-                                                               // heaviest component
+      initTc = system.getPhase(0).getComponents()[hc].getTC();
+      // closer to dew point get the heaviest component
       initPc = system.getPhase(0).getComponents()[hc].getPC();
       initAc = system.getPhase(0).getComponents()[hc].getAcentricFactor();
     }
-    Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc)); // initial
-                                                                                            // T
-                                                                                            // based
-                                                                                            // on
-                                                                                            // the
-                                                                                            // lighterst/heaviest
-                                                                                            // component
+    Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
+    // initial T based on the lighterst/heaviest component
 
     // solve for Tstart with Newton
     for (int i = 0; i < 1000; i++) {

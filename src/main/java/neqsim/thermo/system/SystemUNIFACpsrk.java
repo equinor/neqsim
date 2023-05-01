@@ -6,12 +6,16 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  * This class defines a thermodynamic system using the UNIFAC for liquid and PSRK EoS for gas.
- * 
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemUNIFACpsrk extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for SystemUNIFACpsrk.</p>
+   */
   public SystemUNIFACpsrk() {
     super();
     modelName = "UNIFAC-GE-model";

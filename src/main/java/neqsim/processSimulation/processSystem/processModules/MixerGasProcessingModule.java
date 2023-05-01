@@ -44,6 +44,11 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
   Pump oilPump;
   Cooler secondStageAfterCooler;
 
+  /**
+   * <p>Constructor for MixerGasProcessingModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public MixerGasProcessingModule(String name) {
     super(name);
   }
@@ -102,7 +107,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     double tolerance = 1e-2;
     HPliquidRecycle.setTolerance(tolerance);
     HPliquidRecycle.addStream(gasScrubber.getLiquidOutStream());
-    inletSeparator.addStream(HPliquidRecycle.getOutStream());
+    inletSeparator.addStream(HPliquidRecycle.getOutletStream());
 
     Compressor firstStageCompressor =
         new Compressor("1st stage compressor", gasScrubber.getGasOutStream());

@@ -109,8 +109,8 @@ public class TPflash extends Flash {
    * </p>
    */
   public void accselerateSucsSubs() {
-    double prod1 = 0.0, prod2 = 0.0;
-
+    double prod1 = 0.0;
+    double prod2 = 0.0;
     for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       prod1 += oldDeltalnK[i] * oldoldDeltalnK[i];
       prod2 += oldoldDeltalnK[i] * oldoldDeltalnK[i];
@@ -370,7 +370,9 @@ public class TPflash extends Flash {
     int newtonLimit = 20;
     int timeFromLastGibbsFail = 0;
 
-    double chemdev = 0, oldChemDiff = 1.0, diffChem = 1.0;
+    double chemdev = 0;
+    double oldChemDiff = 1.0;
+    double diffChem = 1.0;
     do {
       iterations = 0;
       do {
@@ -421,7 +423,7 @@ public class TPflash extends Flash {
         oldChemDiff = chemdev;
         chemdev = 0.0;
 
-        double xchem[] = new double[system.getPhase(0).getNumberOfComponents()];
+        double[] xchem = new double[system.getPhase(0).getNumberOfComponents()];
 
         for (int phase = 1; phase < system.getNumberOfPhases(); phase++) {
           for (i = 0; i < system.getPhases()[phase].getNumberOfComponents(); i++) {

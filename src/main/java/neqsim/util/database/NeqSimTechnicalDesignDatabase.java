@@ -41,11 +41,15 @@ public class NeqSimTechnicalDesignDatabase
   }
 
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NeqSimTechnicalDesignDatabase.class);
+
   /** Constant <code>dataBasePath=""</code>. */
   public static String dataBasePath = "";
 
-  public static String username = "", password = "";
-  static Logger logger = LogManager.getLogger(NeqSimTechnicalDesignDatabase.class);
+  /** Constant <code>username=""</code> */
+  public static String username = "";
+  /** Constant <code>password=""</code> */
+  public static String password = "";
   private static boolean createTemporaryTables = false;
 
   private static String dataBaseType = "MSAccessUCanAccess";

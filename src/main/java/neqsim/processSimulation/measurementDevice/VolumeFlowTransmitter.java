@@ -12,10 +12,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  */
 public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
     private static final long serialVersionUID = 1000;
-
-    protected int streamNumber = 0;
-    /** Constant <code>numberOfStreams=0</code> */
-    protected static int numberOfStreams = 0;
     protected StreamInterface stream = null;
     private int measuredPhaseNumber = 0;
 
@@ -36,8 +32,6 @@ public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
      */
     public VolumeFlowTransmitter(StreamInterface stream) {
         this.stream = stream;
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
         name = "volume flow rate";
         unit = "m^3/hr";
     }

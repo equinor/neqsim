@@ -38,11 +38,22 @@ public class TestIonicInteractionParameterFittingCH4 {
     NeqSimDataBase database = new NeqSimDataBase();
     ResultSet dataSet = database.getResultSet("SELECT * FROM CO2CH4MDEA");
 
-    double ID, x1, x2, x3, x4, y1, y2, y3, y4, temperature, pressure, loading;
+    double ID;
 
+    double x1;
+    double x2;
+    double x3;
+    double x4;
+    double y1;
+    double y2;
+    double y3;
+    double y4;
+    double temperature;
+    double pressure;
+    double loading;
     // double guess[] = {0.0005447481}; //Case I
     // double guess[] = {0.0004929757}; //Case II
-    double guess[] = {0.0004929757, 1e-10}; // Case II and CO2-CH4 parameter also regressed
+    double[] guess = {0.0004929757, 1e-10}; // Case II and CO2-CH4 parameter also regressed
 
     try {
       int i = 0;
@@ -79,8 +90,8 @@ public class TestIonicInteractionParameterFittingCH4 {
         testSystem.setMixingRule(4);
         testSystem.init(0);
 
-        double sample1[] = {loading};
-        double standardDeviation1[] = {0.01};
+        double[] sample1 = {loading};
+        double[] standardDeviation1 = {0.01};
         SampleValue sample =
             new SampleValue(pressure, pressure / 100.0, sample1, standardDeviation1);
         function.setInitialGuess(guess);
@@ -90,8 +101,8 @@ public class TestIonicInteractionParameterFittingCH4 {
         sample.setThermodynamicSystem(testSystem);
         sampleList.add(sample);
 
-        double sample2[] = {loading};
-        double standardDeviation2[] = {0.01};
+        double[] sample2 = {loading};
+        double[] standardDeviation2 = {0.01};
         SampleValue sample3 =
             new SampleValue(pressure * y2, y2 * pressure / 100.0, sample2, standardDeviation2);
         function1.setInitialGuess(guess);

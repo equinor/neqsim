@@ -94,12 +94,12 @@ public class TEGdehydrationProcessDistillation {
     heatEx2.setGuessOutTemperature(273.15 + 62.0);
     heatEx2.setUAvalue(220.0);
 
-    Separator flashSep = new Separator("degasing separator", heatEx2.getOutStream(0));
+    Separator flashSep = new Separator("degassing separator", heatEx2.getOutStream(0));
 
-    Stream flashGas = new Stream("gas from degasing separator", flashSep.getGasOutStream());
+    Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
     Stream flashLiquid =
-        new Stream("liquid from degasing separator", flashSep.getLiquidOutStream());
+        new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
 
     HeatExchanger heatEx = new HeatExchanger("rich TEG heat exchanger 2", flashLiquid);
     heatEx.setGuessOutTemperature(273.15 + 130.0);
@@ -239,12 +239,12 @@ public class TEGdehydrationProcessDistillation {
     // operations.run();
 
     operations.save("c:/temp/TEGprocessHX.neqsim");
-    /// operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
+    // operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
     // ((DistillationColumn)operations.getUnit("TEG regeneration
-    /// column")).setTopPressure(1.2);
+    // column")).setTopPressure(1.2);
     // operations.run();
     // ((DistillationColumn)operations.getUnit("TEG regeneration
-    /// column")).setNumberOfTrays(2);
+    // column")).setNumberOfTrays(2);
     System.out.println("water in wet gas  "
         + ((Stream) operations.getUnit("water saturated feed gas")).getFluid().getPhase(0)
             .getComponent("water").getz() * 1.0e6 * 0.01802 * 101325.0 / (8.314 * 288.15));

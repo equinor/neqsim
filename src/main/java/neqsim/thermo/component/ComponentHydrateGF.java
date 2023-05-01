@@ -15,8 +15,8 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentHydrateGF extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
 
-  double Ak[][] = new double[2][2]; // [structure][cavitytype]
-  double Bk[][] = new double[2][2]; // [structure][cavitytype]
+  double[][] Ak = new double[2][2]; // [structure][cavitytype]
+  double[][] Bk = new double[2][2]; // [structure][cavitytype]
   static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
   /**
@@ -33,10 +33,10 @@ public class ComponentHydrateGF extends ComponentHydrate {
       int compnumber) {
     super(component_name, moles, molesInPhase, compnumber);
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
     if (!component_name.equals("default")) {
-      try {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         // System.out.println("reading GF hydrate parameters ..............");
         try {
           dataSet =
@@ -45,6 +45,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
           dataSet.getString("ID");
         } catch (Exception ex) {
           logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
+          dataSet.close();
           dataSet =
               database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
           dataSet.next();
@@ -64,7 +65,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
       } finally {
         try {
           dataSet.close();
-          database.getConnection().close();
         } catch (Exception ex) {
           logger.error("error closing database.....", ex);
           // logger.error(ex.getMessage());
@@ -168,8 +168,10 @@ public class ComponentHydrateGF extends ComponentHydrate {
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, 0, 1.0);
       double refWaterFugacityCoef = Math.log(refPhase.getComponent("water").fugcoef(refPhase));
 
-      double dhf = 6010.0, tmi = 273.15, dcp = 37.29;
+      double dhf = 6010.0;
 
+      double tmi = 273.15;
+      double dcp = 37.29;
       double LNFUG_ICEREF = refWaterFugacityCoef - (dhf / (R * tmi)) * (tmi / temp - 1.0)
           + (dcp / R) * ((tmi / temp) - 1.0 - Math.log(tmi / temp));
       double VM = 0.0;

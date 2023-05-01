@@ -39,18 +39,21 @@ public class DuanSun {
    */
   public double bublePointPressure(double temperature, double x_CO2, double salinity) {
     // Type manually the pressure limits according to the expected pressure
-    double P = 9.0, Pold = 9.0, Poldold = 9.0;
-    double y[] = {0.9, 0.1};
+    double P = 9.0;
+    double Pold = 9.0;
+    double Poldold = 9.0;
+    double[] y = {0.9, 0.1};
     double[] x = {x_CO2, 1.0 - x_CO2};
-    double error = 1e10, errorOld = 1e10;
+    double error = 1e10;
+    double errorOld = 1e10;
     int iter = 1;
     do {
       // while (P < 15.0) {
       iter++;
-      double Tc[] = {304.2, 647.3};
-      double Pc[] = {72.8, 217.6};
-      double w[] = {0.225, 0.344};
-      double K12[][] = {{0.0, 0.2}, {0.2, 0.0}};
+      double[] Tc = {304.2, 647.3};
+      double[] Pc = {72.8, 217.6};
+      double[] w = {0.225, 0.344};
+      double[][] K12 = {{0.0, 0.2}, {0.2, 0.0}};
       double T = temperature;
       double S = salinity;
       // double[] x = {0.000554093, 1.0-0.000554093};
@@ -69,16 +72,16 @@ public class DuanSun {
       double R = 8.314 * Math.pow(10.0, -2.0);
 
       // Calculate A and B of pure compound
-      double Tr[] = {0.0, 0.0};
+      double[] Tr = {0.0, 0.0};
       double ac = 0.45724;
       double bc = 0.07780;
-      double d[] = {0.384401, 1.52276, -0.213808, 0.034616, -0.001976};
-      double dm[] = {0.0, 0.0};
-      double ag[] = {0.0, 0.0};
-      double asmal[] = {0.0, 0.0};
-      double bsmal[] = {0.0, 0.0};
-      double a[] = {0.0, 0.0};
-      double b[] = {0.0, 0.0};
+      double[] d = {0.384401, 1.52276, -0.213808, 0.034616, -0.001976};
+      double[] dm = {0.0, 0.0};
+      double[] ag = {0.0, 0.0};
+      double[] asmal = {0.0, 0.0};
+      double[] bsmal = {0.0, 0.0};
+      double[] a = {0.0, 0.0};
+      double[] b = {0.0, 0.0};
 
       for (int i = 0; i < 2; i++) {
         Tr[i] = T / Tc[i];
@@ -103,7 +106,7 @@ public class DuanSun {
 
       double av = 0.0;
       double bv = 0.0;
-      double sumav[] = {0.0, 0.0};
+      double[] sumav = {0.0, 0.0};
       double aij = 0.0;
 
       for (int i = 0; i < 2; i++) {
@@ -143,8 +146,8 @@ public class DuanSun {
 
       // PZEROS
       double OMEGA = 0.0;
-      double ROOT[] = {0.0, 0.0, 0.0};
-      double W[] = {0.0, 0.0, 0.0};
+      double[] ROOT = {0.0, 0.0, 0.0};
+      double[] W = {0.0, 0.0, 0.0};
       double k = 0.0;
       double NRR = 0.0;
       double PHI = 0.0;
@@ -209,11 +212,11 @@ public class DuanSun {
       // System.out.println("VV = " + VV);
 
       // Correction of volume
-      double trans[] = {0.0, 0.0};
-      double bh[] = {0.0, 0.0};
-      double t0[] = {0.0, 0.0};
-      double ti[] = {0.0, 0.0};
-      double zc[] = {0.0, 0.0};
+      double[] trans = {0.0, 0.0};
+      double[] bh = {0.0, 0.0};
+      double[] t0 = {0.0, 0.0};
+      double[] ti = {0.0, 0.0};
+      double[] zc = {0.0, 0.0};
       double TEV = 0.0;
       double zceos = 0.3074;
       double dk0 = -0.014471;
@@ -239,8 +242,8 @@ public class DuanSun {
 
       // Calculate fugacity coefficient (FC) for all components and phases
 
-      double dlnfc[] = {0.0, 0.0};
-      double fcv[] = {0.0, 0.0};
+      double[] dlnfc = {0.0, 0.0};
+      double[] fcv = {0.0, 0.0};
 
       for (int i = 0; i < 2; i++) {
         dlnfc[i] = (b[i] / bv) * (zv - 1.0) - Math.log(zv - bv) - (av / (2.0 * Math.sqrt(2.0) * bv))
@@ -251,7 +254,7 @@ public class DuanSun {
       // System.out.println("fcv0 = " + fcv[0]);
       // System.out.println("fcv1 = " + fcv[1]);
 
-      double fv[] = {0.0, 0.0};
+      double[] fv = {0.0, 0.0};
 
       for (int i = 0; i < 2; i++) {
         fv[i] = fcv[i] * y[i] * P;
@@ -299,7 +302,7 @@ public class DuanSun {
 
       // System.out.println("HCO2 = " + HCO2);
 
-      double fl[] = {0.0, 0.0};
+      double[] fl = {0.0, 0.0};
       fl[0] = x[0] * HCO2;
 
       // System.out.println("fl0 = " + fl[0]);
@@ -362,10 +365,11 @@ public class DuanSun {
       Poldold = Pold;
       Pold = P;
 
-      if (iter < 5)
+      if (iter < 5) {
         P = P + Math.pow(10.0, -7.0) * P;
-      else
+      } else {
         P = P - 0.1 * (error - errorOld) / (Pold - Poldold);
+      }
       System.out.println("P = " + P + " bar " + " error " + error);
     } while (Math.abs(error) > 1e-6);
     return P;
@@ -405,7 +409,7 @@ public class DuanSun {
     double c14 = 0;
     double c15 = 0;
     // double c[]= {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    double parcdpsat[] = {85.530, -3481.3, -11.336, 0.021505, 1.0};
+    double[] parcdpsat = {85.530, -3481.3, -11.336, 0.021505, 1.0};
     // for (int i=0;i<parcdpsat.length;i++)
     // {
     // System.out.println(parcdpsat[i]);

@@ -40,6 +40,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double TintValue = 0.0;
   private double Tderiv = 300.0;
 
+  /**
+   * <p>Constructor for ControllerDeviceBaseClass.</p>
+   */
   public ControllerDeviceBaseClass() {
     super("controller");
   }

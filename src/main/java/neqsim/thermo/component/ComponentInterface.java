@@ -132,19 +132,18 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getVolumeCorrectionT_CPA();
 
   /**
-   * method to return flow rate of a component
+   * method to return flow rate of a component.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, m3/sec, m3/min,
-   *                 m3/hr, mole/sec, mole/min, mole/hr
+   * @param flowunit Supported units are kg/sec, kg/min, m3/sec, m3/min, m3/hr, mole/sec, mole/min,
+   *        mole/hr
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
 
   /**
-   * method to return total flow rate of a component
+   * method to return total flow rate of a component.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, mole/sec, mole/min,
-   *                 mole/hr
+   * @param flowunit Supported units are kg/sec, kg/min, mole/sec, mole/min, mole/hr
    * @return flow rate in specified unit
    */
   public double getTotalFlowRate(String flowunit);
@@ -347,6 +346,25 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @return a double
    */
   public double getChemicalPotential(PhaseInterface phase);
+
+  /**
+   * <p>
+   * getChemicalPotential.
+   * </p>
+   *
+   * @param temperature a double
+   * @param pressure a double
+   * @return a double
+   */
+  public double getChemicalPotential(double temperature, double pressure);
+  // public double fugcoef(PhaseInterface phase, int numberOfComponents, double
+  // temperature, double pressure);
+  // public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents,
+  // double temperature, double pressure);
+  // public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents,
+  // double temperature, double pressure);
+  // public double[] fugcoefDiffN(PhaseInterface phase, int numberOfComponents,
+  // double temperature, double pressure);
 
   /**
    * <p>
@@ -715,14 +733,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * Initialize component
+   * Initialize component.
    * </p>
    *
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @param totalNumberOfMoles a double
-   * @param beta               a double
-   * @param type               a int
+   * @param beta a double
+   * @param type a int
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
       int type);
@@ -745,7 +763,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getx.
+   * The mole fraction of a component in the actual phase. NB! init must be called first.
    * </p>
    *
    * @return a double
@@ -754,7 +772,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getz.
+   * The mole fraction of a component in the total fluid. NB! init must be called first.
    * </p>
    *
    * @return a double
@@ -763,7 +781,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getK.
+   * The distribution coefficient y/x between gas and lidquid for a component. NB! init must be
+   * called first.
    * </p>
    *
    * @return a double
@@ -772,7 +791,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getTC.
+   * Returns the critical temperature of the component.
    * </p>
    *
    * @return a double
@@ -1057,7 +1076,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getCp0.
+   * Return the ideal-gas molar heat capacity of a chemical using polynomial regressed coefficients
+   * as described by Poling, Bruce E. The Properties of Gases and Liquids. 5th edition. New York:
+   * McGraw-Hill Professional, 2000.
    * </p>
    *
    * @param temperature a double
@@ -1109,7 +1130,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getLennardJonesMolecularDiameter.
    * </p>
    *
-   * @return a double
+   * @return Units in m*e10
    */
   public double getLennardJonesMolecularDiameter();
 
@@ -1262,25 +1283,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getChemicalPotential.
-   * </p>
-   *
-   * @param temperature a double
-   * @param pressure    a double
-   * @return a double
-   */
-  public double getChemicalPotential(double temperature, double pressure);
-  // public double fugcoef(PhaseInterface phase, int numberOfComponents, double
-  // temperature, double pressure);
-  // public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents,
-  // double temperature, double pressure);
-  // public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents,
-  // double temperature, double pressure);
-  // public double[] fugcoefDiffN(PhaseInterface phase, int numberOfComponents,
-  // double temperature, double pressure);
-
-  /**
-   * <p>
    * getGibbsEnergy.
    * </p>
    *
@@ -1301,7 +1303,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getDebyeDipoleMoment.
+   * This function handles the retrieval of a chemical’s dipole moment. Dipole moment, [debye] as a
+   * double
    * </p>
    *
    * @return a double
@@ -1476,21 +1479,24 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getPureComponentSolidDensity.
+   * getPureComponentSolidDensity. Calculates the pure component solid density in kg/liter Should
+   * only be used in the valid temperature range (specified in component database).
    * </p>
    *
    * @param temperature a double
-   * @return a double
+   * @return pure component solid density in kg/liter
    */
   public double getPureComponentSolidDensity(double temperature);
 
   /**
    * <p>
-   * getPureComponentLiquidDensity.
+   * getPureComponentLiquidDensity. Calculates the pure component liquid density in kg/liter Should
+   * only be used in the valid temperature range (specified in component database). This method
+   * seems to give bad results at the moment
    * </p>
    *
    * @param temperature a double
-   * @return a double
+   * @return pure component liquid density in kg/liter
    */
   public double getPureComponentLiquidDensity(double temperature);
 
@@ -1505,9 +1511,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getChemicalPotentialdV(PhaseInterface phase);
 
   /**
-   * <p>
-   * getPureComponentHeatOfVaporization.
-   * </p>
+   * Calculates the pure component heat of vaporization in J/mol.
    *
    * @param temperature a double
    * @return a double
@@ -1863,21 +1867,25 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getCCsolidVaporPressure.
+   * getCCsolidVaporPressure. Calculates the pure comonent solid vapor pressure (bar) with the C-C
+   * equation, based on Hsub Should only be used in the valid temperature range below the triple
+   * point (specified in component database).
    * </p>
    *
    * @param temperature a double
-   * @return a double
+   * @return Calculated solid vapor pressure in bar.
    */
   public double getCCsolidVaporPressure(double temperature);
 
   /**
    * <p>
-   * getCCsolidVaporPressuredT.
+   * getCCsolidVaporPressuredT. Calculates the DT of pure comonent solid vapor pressure (bar) with
+   * the C-C equation, based on Hsub Should only be used in the valid temperature range below the
+   * triple point (specified in component database).
    * </p>
    *
    * @param temperature a double
-   * @return a double
+   * @return Calculated solid vapor pressure in bar.
    */
   public double getCCsolidVaporPressuredT(double temperature);
 
@@ -1910,11 +1918,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getHenryCoef.
+   * getHenryCoef. Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT +
+   * C4*T
    * </p>
    *
    * @param temperature a double
-   * @return a double
+   * @return Henrys Coefficient in bar
    */
   public double getHenryCoef(double temperature);
 
@@ -2182,8 +2191,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    */
   public void setCpE(double CpE);
 
-  static public String getComponentNameFromAlias(String name) {
-    LinkedHashMap<String, String> c = getComponentMap();
+  /**
+   * getComponentNameFromAlias.
+   *
+   * @param name a {@link java.lang.String} Component name or alias of component name.
+   * @return a {@link java.lang.String} Component name
+   */
+  public static String getComponentNameFromAlias(String name) {
+    LinkedHashMap<String, String> c = getComponentNameMap();
     if (c.containsKey(name)) {
       return c.get(name);
     } else {
@@ -2191,7 +2206,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     }
   }
 
-  static public LinkedHashMap<String, String> getComponentMap() {
+  /**
+   * Get lookup map for component name alias.
+   *
+   * @return a {@link java.util.LinkedHashMap} Map with component alias name as key and component
+   *         name as value.
+   */
+  public static LinkedHashMap<String, String> getComponentNameMap() {
     LinkedHashMap<String, String> c = new LinkedHashMap<>();
     c.put("H2O", "water");
     c.put("N2", "nitrogen");

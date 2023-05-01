@@ -48,7 +48,11 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
   @SuppressWarnings("unused")
   public void setFittingParams(int i, double value) {
     params[i] = value;
-    int PiperazineplusNumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, PiperazineNumb = 0;
+    int PiperazineplusNumb = 0;
+    int CO2Numb = 0;
+    int HCO3numb = 0;
+    int Waternumb = 0;
+    int PiperazineNumb = 0;
     int j = 0;
     do {
       PiperazineNumb = j;
@@ -263,7 +267,11 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
    */
   public void setFittingParams5(int i, double value) {
     params[i] = value;
-    int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
+    int MDEAplusNumb = 0;
+    int MDEANumb = 0;
+    int CO2Numb = 0;
+    int HCO3numb = 0;
+    int Waternumb = 0;
     int j = 0;
     do {
       MDEAplusNumb = j;
@@ -356,7 +364,11 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
   @SuppressWarnings("unused")
   public void setFittingParams3(int i, double value) {
     params[i] = value;
-    int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
+    int MDEAplusNumb = 0;
+    int MDEANumb = 0;
+    int CO2Numb = 0;
+    int HCO3numb = 0;
+    int Waternumb = 0;
     int j = 0;
     do {
       MDEAplusNumb = j;

@@ -64,7 +64,7 @@ public class TestIonicInteractionParameterFitting {
     // 0.311975E-4}; //,0.0001439}; //, 0.00000001439}; //, -0.0000745697}; //, 263.73,
     // 466.41,0.1,0.1}; //, 1.0,1.0}; //;{-2.9222e-6, -7.991E-6, 3.924E-6}; //,1.0,1.0}; //,
     // -7.223e-4};
-    // //double bounds[][] =
+    // //double[][] bounds =
     // {{-0.0055,0.0055}};
     // //,{-0.0055,0.0055},{-10.001,10.001},{-1.0015,1.0015},{-320.0015,320.0015},{-320.901,320.900195},{-1.0,1000},{-0.800001,0.8},{-80000.01,20000.8},{-0.01,10.6},{-0.01,0.0015},{-0.01,0.0015}};
     // //double guess[] = {0.0000231069, 0.0001092540, 0.00001046762}; //, -0.0001190554}; //,
@@ -114,7 +114,7 @@ public class TestIonicInteractionParameterFitting {
     // logger.error("database error" + ex);
     // }
 
-    double guess[] = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
+    double[] guess = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
     ResultSet dataSet = database.getResultSet(
         "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND PressureCO2<'20' AND Reference<>'GPA'");
 
@@ -144,7 +144,7 @@ public class TestIonicInteractionParameterFitting {
         // 0.311975E-4}; //,0.0001439}; //, 0.00000001439}; //, -0.0000745697}; //, 263.73,
         // 466.41,0.1,0.1}; //, 1.0,1.0}; //;{-2.9222e-6, -7.991E-6,
         // 3.924E-6}; //,1.0,1.0}; //, -7.223e-4};
-        // double bounds[][] =
+        // double[][] bounds =
         // {{-0.0055,0.0055}};
         // //,{-0.0055,0.0055},{-10.001,10.001},{-1.0015,1.0015},{-320.0015,320.0015},{-320.901,320.900195},{-1.0,1000},{-0.800001,0.8},{-80000.01,20000.8},{-0.01,10.6},{-0.01,0.0015},{-0.01,0.0015}};
         // double guess[] = {0.0000231069, 0.0001092540, 0.00001046762}; //,
@@ -177,9 +177,9 @@ public class TestIonicInteractionParameterFitting {
         // testSystem.createDatabase(true);
         testSystem.setMixingRule(4);
         testSystem.init(0);
-        double sample1[] = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
+        double[] sample1 = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
             / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()};
-        double standardDeviation1[] = {0.01};
+        double[] standardDeviation1 = {0.01};
         double stddev = pressure; // Double.parseDouble(dataSet.getString("StandardDeviation"))
         SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
         function.setInitialGuess(guess);
@@ -222,7 +222,7 @@ public class TestIonicInteractionParameterFitting {
         // 0.311975E-4}; //,0.0001439}; //, 0.00000001439}; //, -0.0000745697}; //, 263.73,
         // 466.41,0.1,0.1}; //, 1.0,1.0}; //;{-2.9222e-6, -7.991E-6,
         // 3.924E-6}; //,1.0,1.0}; //, -7.223e-4};
-        // double bounds[][] =
+        // double[][] bounds =
         // {{-0.0055,0.0055}};
         // //,{-0.0055,0.0055},{-10.001,10.001},{-1.0015,1.0015},{-320.0015,320.0015},{-320.901,320.900195},{-1.0,1000},{-0.800001,0.8},{-80000.01,20000.8},{-0.01,10.6},{-0.01,0.0015},{-0.01,0.0015}};
         // double guess[] = {0.0000231069, 0.0001092540, 0.00001046762}; //,
@@ -255,9 +255,9 @@ public class TestIonicInteractionParameterFitting {
         // testSystem.createDatabase(true);
         testSystem.setMixingRule(4);
         testSystem.init(0);
-        double sample1[] = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
+        double[] sample1 = {testSystem.getPhase(0).getComponent(0).getNumberOfmoles()
             / testSystem.getPhase(0).getComponent(1).getNumberOfmoles()};
-        double standardDeviation1[] = {0.01};
+        double[] standardDeviation1 = {0.01};
         double stddev = pressure; // Double.parseDouble(dataSet.getString("StandardDeviation"))
         SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
         function.setInitialGuess(guess);

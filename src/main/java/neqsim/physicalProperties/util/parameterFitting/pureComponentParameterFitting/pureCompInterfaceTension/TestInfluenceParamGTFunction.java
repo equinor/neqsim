@@ -34,15 +34,13 @@ public class TestInfluenceParamGTFunction {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM purecomponentsurfacetension2 WHERE ComponentName IN ('n-pentane','ethane','methane', 'propane','CO2', 'c-hexane','M-cy-C5', 'n-pentane','n-hexane', 'n-nonane','nC10')"); // AND
-                                                                                                                                                                                                 // ComponentName<>'nC10'
-                                                                                                                                                                                                 // AND
-                                                                                                                                                                                                 // ComponentName<>'nC11'
-                                                                                                                                                                                                 // AND
-                                                                                                                                                                                                 // ComponentName<>'nC12'
-                                                                                                                                                                                                 // AND
-                                                                                                                                                                                                 // ComponentName<>'nC13'");
+    // ComponentName<>'nC10'
+    // AND
+    // ComponentName<>'nC11'
+    // AND
+    // ComponentName<>'nC12'
+    // AND
+    // ComponentName<>'nC13'");
     boolean includePureCompData = true;
 
     // double guess[] = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630,
@@ -55,7 +53,9 @@ public class TestInfluenceParamGTFunction {
     // double guess[] = {-5.2897559010400935E-17, 7.103588505598196E-17}; //,
     // 1.1161368619, 0.8363538313}; // PR param
 
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM purecomponentsurfacetension2 WHERE ComponentName IN ('n-pentane','ethane','methane', 'propane','CO2', 'c-hexane','M-cy-C5', 'n-pentane','n-hexane', 'n-nonane','nC10')") // AND
+    ) {
       while (dataSet.next() && includePureCompData) {
         InfluenceParamGTFunction function = new InfluenceParamGTFunction();
         function.setInitialGuess(guess);

@@ -13,7 +13,9 @@ import neqsim.thermo.component.ComponentEosInterface;
 public class AttractiveTermTwuCoonStatoil extends AttractiveTermBaseClass {
   private static final long serialVersionUID = 1000;
 
-  private double a = 0.0, b = 0.0, c = 0.0;
+  private double a = 0.0;
+  private double b = 0.0;
+  private double c = 0.0;
 
   /**
    * <p>
@@ -74,7 +76,10 @@ public class AttractiveTermTwuCoonStatoil extends AttractiveTermBaseClass {
     double TC = getComponent().getTC();
     double Tr = (t / TC);
     // System.out.println("alpha here " + Math.pow( 1.0 +
-    // m*(1.0-Math.sqrt(temperature/component.getTC()))-parameters[0]*(1.0-temperature/component.getTC())*(1.0+parameters[1]*temperature/component.getTC()+parameters[2]*Math.pow(temperature/component.getTC(),2.0)),2.0));
+    // m*(1.0-Math.sqrt(temperature/component.getTC())) -
+    // parameters[0]*(1.0-temperature/component.getTC()) *
+    // (1.0+parameters[1]*temperature/component.getTC() +
+    // parameters[2]*Math.pow(temperature/component.getTC(),2.0)),2.0));
     return Math.pow((Tr), (c * (b - 1))) * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
   }
 
@@ -88,7 +93,9 @@ public class AttractiveTermTwuCoonStatoil extends AttractiveTermBaseClass {
   // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
   // d = 1.0-1.0/d;
   // return
-  // -2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/component.getTC(),1.0*d))),2.0)*c*Math.pow(temperature/component.getTC(),1.0*d)*d/temperature;
+  // -2.0*Math.pow(Math.exp(c*(1.0
+  // -
+  // Math.pow(temperature/component.getTC(),1.0*d))),2.0)*c*Math.pow(temperature/component.getTC(),1.0*d)*d/temperature;
   // }
 
   // private double diffdiffalphaCritT(double temperature){
@@ -96,7 +103,9 @@ public class AttractiveTermTwuCoonStatoil extends AttractiveTermBaseClass {
   // d = 1-1.0/d;
   // double TC = component.getTC();
   // return
-  // 4.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*c*Math.pow(Math.pow(temperature/TC,1.0*d),2.0)*d*d/(temperature*temperature)-2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(temperature/TC,1.0*d)*d*d/(temperature*
+  // 4.0 * Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0) *
+  // c*c*Math.pow(Math.pow(temperature/TC,1.0*d),2.0)*d*d/(temperature*temperature)-2.0 *
+  // Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(temperature/TC,1.0*d)*d*d/(temperature*
   // temperature)+2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(
   // temperature/TC,1.0*d)*d/(temperature*temperature);
   // }

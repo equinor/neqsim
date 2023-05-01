@@ -33,15 +33,13 @@ public class TestBinaryHVParameterFittingToDewPointData {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-    // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM dewpointquaternary WHERE temperature>173.1 AND x4>0.0000021 ORDER BY x4,pressure");
-    // ResultSet dataSet = database.getResultSet( "SELECT * FROM
+    // inserting samples from database // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
     // testSystem.addComponent(dataSet.getString("ComponentSolute"), 1.0);
     // testSystem.addComponent(dataSet.getString("ComponentSolvent"), 1.0);
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM dewpointquaternary WHERE temperature>173.1 AND x4>0.0000021 ORDER BY x4,pressure")) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 300) {

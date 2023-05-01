@@ -41,11 +41,9 @@ public class TestCPAParameterFittingToDewPointData {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM waterdewpointpaper WHERE gascomponent='nitrogen' AND reference='Gil'");
-
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM waterdewpointpaper WHERE gascomponent='nitrogen' AND reference='Gil'")) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 500) {
@@ -69,9 +67,9 @@ public class TestCPAParameterFittingToDewPointData {
         testSystem.setMixingRule(8);
 
         testSystem.init(0);
-        double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
+        double[] sample1 = {testSystem.getPressure(), testSystem.getTemperature()};
 
-        double standardDeviation1[] = {0.13};
+        double[] standardDeviation1 = {0.13};
         SampleValue sample =
             new SampleValue(testSystem.getTemperature(), 1.0, sample1, standardDeviation1);
         sample.setFunction(function);
@@ -79,7 +77,7 @@ public class TestCPAParameterFittingToDewPointData {
         sample.setDescription(Double.toString(valueppm));
         sample.setReference(dataSet.getString("reference"));
 
-        double parameterGuess[] = {0.001}; // cpa
+        double[] parameterGuess = {0.001}; // cpa
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }

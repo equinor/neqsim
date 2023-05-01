@@ -11,12 +11,12 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
  * @version $Id: $Id
  */
 public interface DistillationInterface extends ProcessEquipmentInterface {
-    /**
-     * <p>
-     * setNumberOfTrays.
-     * </p>
-     *
-     * @param number a int
-     */
-    public void setNumberOfTrays(int number);
+  /**
+   * <p>
+   * setNumberOfTrays.
+   * </p>
+   *
+   * @param number a int
+   */
+  public void setNumberOfTrays(int number);
 }

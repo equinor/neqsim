@@ -11,12 +11,12 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
  * @version $Id: $Id
  */
 public interface AbsorberInterface extends ProcessEquipmentInterface {
-    /**
-     * <p>
-     * setAproachToEquilibrium.
-     * </p>
-     *
-     * @param eff a double
-     */
-    public void setAproachToEquilibrium(double eff);
+  /**
+   * <p>
+   * setAproachToEquilibrium.
+   * </p>
+   *
+   * @param eff a double
+   */
+  public void setAproachToEquilibrium(double eff);
 }

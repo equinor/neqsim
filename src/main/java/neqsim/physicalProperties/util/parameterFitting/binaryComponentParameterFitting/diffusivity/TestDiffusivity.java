@@ -34,15 +34,13 @@ public class TestDiffusivity {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM binaryliquiddiffusioncoefficientdata WHERE ComponentSolute='CO2' AND ComponentSolvent='water'");
-
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM binaryliquiddiffusioncoefficientdata WHERE ComponentSolute='CO2' AND ComponentSolvent='water'")) {
       logger.info("adding....");
       while (dataSet.next()) {
         DiffusivityFunction function = new DiffusivityFunction();
-        double guess[] = {0.001};
+        double[] guess = {0.001};
         function.setInitialGuess(guess);
         SystemInterface testSystem = new SystemSrkEos(280, 0.001);
         testSystem.addComponent(dataSet.getString("ComponentSolute"), 1.0e-10);
@@ -53,8 +51,8 @@ public class TestDiffusivity {
         testSystem.init(0);
         testSystem.setPhysicalPropertyModel(4);
         testSystem.initPhysicalProperties();
-        double sample1[] = {testSystem.getTemperature()};
-        double standardDeviation1[] = {0.1};
+        double[] sample1 = {testSystem.getTemperature()};
+        double[] standardDeviation1 = {0.1};
         SampleValue sample =
             new SampleValue(Double.parseDouble(dataSet.getString("DiffusionCoefficient")), 0.01,
                 sample1, standardDeviation1);

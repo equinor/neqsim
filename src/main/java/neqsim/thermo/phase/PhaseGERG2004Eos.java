@@ -17,11 +17,21 @@ public class PhaseGERG2004Eos extends PhaseEos {
   private GERG2004EOS gergEOS = new GERG2004EOS();
   double[] xFracGERG = new double[18];
 
-  ;
   int IPHASE = 0;
   boolean okVolume = true;
-  double enthalpy = 0.0, entropy = 0.0, gibbsEnergy = 0.0, CpGERG = 0.0, CvGERG = 0.0,
-      internalEnery = 0.0, JTcoef = 0.0;
+  double enthalpy = 0.0;
+
+  double entropy = 0.0;
+
+  double gibbsEnergy = 0.0;
+
+  double CpGERG = 0.0;
+
+  double CvGERG = 0.0;
+
+  double internalEnery = 0.0;
+
+  double JTcoef = 0.0;
 
   /**
    * <p>
@@ -48,11 +58,9 @@ public class PhaseGERG2004Eos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGERG2004(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentGERG2004(name, moles, molesInPhase, compNumber);
   }
 
   /**
