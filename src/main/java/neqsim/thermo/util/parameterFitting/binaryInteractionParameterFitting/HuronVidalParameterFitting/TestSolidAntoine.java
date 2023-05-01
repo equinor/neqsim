@@ -34,12 +34,9 @@ public class TestSolidAntoine {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY FreezingTemperature");
-
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY FreezingTemperature")) {
       while (dataSet.next()) {
         FreezeSolidFunction function = new FreezeSolidFunction();
         double guess[] = {-7566.84658558, 17.38710706}; // MEG

@@ -34,12 +34,12 @@ public class TestCPA {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
-    try (ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MDEA' AND VapourPressure>0")) {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MDEA' AND VapourPressure>0")) {
       while (dataSet.next()) {
         CPAFunction function = new CPAFunction();
 
@@ -80,8 +80,9 @@ public class TestCPA {
       logger.error("database error" + ex);
     }
 
-    try (ResultSet dataSet =
-        database.getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA'")) {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database
+            .getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA'")) {
       while (dataSet.next()) {
         CPAFunctionDens function = new CPAFunctionDens();
         SystemInterface testSystem = new SystemSrkCPAs(280, 0.001);

@@ -34,12 +34,10 @@ public class TestSolidAntoine_S8 {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
+      ResultSet dataSet = database.getResultSet(
+          "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='S8' AND VapourPressure<100");
 
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='S8' AND VapourPressure<100");
-
-    try {
       while (dataSet.next()) {
         AntoineSolidFunctionS8 function = new AntoineSolidFunctionS8();
         // double guess[] = {8.046, -4600.0, -144.0}; // S8

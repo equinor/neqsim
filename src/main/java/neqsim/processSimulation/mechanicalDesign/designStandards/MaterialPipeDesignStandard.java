@@ -146,36 +146,19 @@ public class MaterialPipeDesignStandard extends DesignStandard {
 
     neqsim.util.database.NeqSimTechnicalDesignDatabase database =
         new neqsim.util.database.NeqSimTechnicalDesignDatabase();
-    java.sql.ResultSet dataSet = null;
-    try {
-      try {
-        dataSet = database
-            .getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
-                + specificationNumber + "' AND grade='" + grade + "'"));
-        while (dataSet.next()) {
-          minimumYeildStrength =
-              (Double.parseDouble(dataSet.getString("minimumYeildStrength"))) * 0.00689475729;
-
-          // design factor table has to be developed
-          // Efactor table has to be implemented
-          // temperatureDeratingFactor has to be implemented
-        }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage());
+    try (java.sql.ResultSet dataSet =
+        database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
+            + specificationNumber + "' AND grade='" + grade + "'"))) {
+      while (dataSet.next()) {
+        minimumYeildStrength =
+            (Double.parseDouble(dataSet.getString("minimumYeildStrength"))) * 0.00689475729;
+        // design factor table has to be developed
+        // Efactor table has to be implemented
+        // temperatureDeratingFactor has to be implemented
       }
-
-      // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
     } catch (Exception ex) {
       logger.error(ex.getMessage());
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
-      } catch (Exception ex) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
-        logger.error(ex.getMessage());
-      }
     }
+    // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
   }
 }

@@ -38,18 +38,17 @@ public class TestBinaryHVParameterFittingToEquilibriumData_N2O {
     double error = 5;
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // Reference = 'Versteeg' OR Reference='Al-Ghawas' OR Reference = 'Pawlak' OR
     // Reference ='Haimour' Reference='Al-Ghawas' OR
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM CO2MDEA WHERE Reference='Jou' OR  Reference = 'Pawlak' OR Reference = 'Versteeg' OR Reference ='Haimour'");
 
     // double guess[] = {493.2862980752, 265.1993459038, -0.4817235596,
     // -0.6827900771, -0.7855706585}; //First one
     double guess[] = {-387.8913684529, -2028.8216959926, 6.1851396710, 3.4677644464, -0.2029288678}; // Second
                                                                                                      // one
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM CO2MDEA WHERE Reference='Jou' OR  Reference = 'Pawlak' OR Reference = 'Versteeg' OR Reference ='Haimour'")) {
       while (dataSet.next()) {
         BinaryHVParameterFittingFunction_N2O function = new BinaryHVParameterFittingFunction_N2O();
 
