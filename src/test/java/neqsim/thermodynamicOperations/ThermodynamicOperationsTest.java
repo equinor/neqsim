@@ -62,7 +62,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     List<Double> jT = Arrays.asList(new Double[] {280.0});
     CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
     Assertions.assertEquals(1.0, res.fluidProperties[0][0], "Number of phases mismatch");
-    Assertions.assertEquals(thermoSystem.getPressure("Pa"), res.fluidProperties[0][1], 1e-5,
+    Assertions.assertEquals(thermoSystem.getPressure("Pa"), res.fluidProperties[0][1], 1e-8,
         "Pressure mismatch");
     Assertions.assertEquals(thermoSystem.getTemperature("K"), res.fluidProperties[0][2], 1e-5,
         "Temperature mismatch");
@@ -79,8 +79,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.990, 2.399, 0.355, 0.172, 0.088,
         0.076, 0.036, 0.1656};
 
-    double[] fractions2 = new double[] {0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172, 0.088,
-        0.076, 0.036, 0.1656};
 
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
     thermoSystem.addComponents(components, fractions);
@@ -111,6 +109,9 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     List<Double> jP2 = Arrays.asList(new Double[] {press, press});
     List<Double> jT2 = Arrays.asList(new Double[] {temp, temp});
     SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(273.15, 0.0);
+    double[] fractions2 = new double[] {0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172, 0.088,
+        0.076, 0.036, 0.1656};
+    thermoSystem2.setEmptyFluid();
     thermoSystem2.addComponents(components, fractions2);
     ThermodynamicOperations thermoOps2 =
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem2);
@@ -250,7 +251,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
          */
         continue;
       } else {
-
         for (int k = 0; k < compNames.size(); k++) {
           fluid.addComponent(compNames.get(k), fractions.get(k));
         }

@@ -1968,19 +1968,27 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       flashType = null;
     }
 
+
     Double[][] fluidProperties = new Double[Spec1.size()][SystemProperties.nCols];
     String[] calculationError = new String[Spec1.size()];
 
     Double[] sum = new Double[Spec1.size()];
 
-    if (onlineFractions != null) {
+    // Verify that sum of fractions equals 1/100, i.e., assume percentages
+    Boolean hasOnlineFractions = onlineFractions != null;
+    if (hasOnlineFractions) {
+      double range = 5;
       for (int t = 0; t < sum.length; t++) {
         sum[t] = 0.0;
         for (int comp = 0; comp < onlineFractions.size(); comp++) {
           sum[t] = sum[t] + onlineFractions.get(comp).get(t).doubleValue();
         }
+        if (!((sum[t] >= 1 - range / 100 && sum[t] <= 1 + range / 100)
+            || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
+          calculationError[t] = "Sum of fractions must be approximately 1 or 100, currently ("
+              + String.valueOf(sum[t]) + ")";
+        }
       }
-
       if (this.system.getNumberOfMoles() == 0) {
         this.system.setTotalNumberOfMoles(1);
       }
@@ -1988,6 +1996,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       sum[0] = this.system.getMoleFractionsSum();
       if (sum[0] == 0) {
         this.system.init(0);
+      }
+
+      double range = 1e-8;
+      if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
+          || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
+        for (int t = 0; t < Spec1.size(); t++) {
+          calculationError[t] = "Sum of fractions must be equal to 1 or 100, currently ("
+              + String.valueOf(sum[0]) + ")";
+        }
       }
     }
 
@@ -2007,39 +2024,26 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
           continue;
         }
 
-        if (onlineFractions != null) {
-          double range = 5;
-          if (!((sum[t] >= 1 - range / 100 && sum[t] <= 1 + range / 100)
-              || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
-            calculationError[t] = "Sum of fractions must be approximately 1 or 100, currently ("
-                + String.valueOf(sum[t]) + ")";
-            logger.info("Online fraction does not sum to approximately 1 or 100 for datapoint {}",
-                t);
-            continue;
-          } else {
-            // Remaining fractions will be set to 0.0
-            double[] fraction = new double[this.system.getNumberOfComponents()];
+        // Skip if sum is not similar to 100%
+        if (calculationError[t] != null) {
+          logger.info("{}", calculationError[t]);
+          continue;
+        }
 
-            for (int comp = 0; comp < onlineFractions.size(); comp++) {
-              fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
-            }
+        if (hasOnlineFractions) {
+          this.system.setEmptyFluid();
 
-            this.system.setEmptyFluid();
+          // Components in system with no corresponding value in onlineFractions will be zero.
+          for (int componentNumber = 0; componentNumber < onlineFractions
+              .size(); componentNumber++) {
+            this.system.addComponent(componentNumber,
+                onlineFractions.get(componentNumber).get(t).doubleValue());
+          }
 
-            if (this.system.getNumberOfMoles() == 0) {
-              this.system.setTotalNumberOfMoles(1);
-            }
+          if (this.system.getNumberOfMoles() < 1e-5) {
+            this.system.setTotalNumberOfMoles(1);
           }
           this.system.init(0);
-        } else {
-          double range = 1e-8;
-          if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
-              || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
-            calculationError[t] = "Sum of 'fraction's must be equal to 1 or 100, currently ("
-                + String.valueOf(sum[t]) + ")";
-            logger.info("Sum of fractions must be equal to 1 or 100 for datapoint {}", t);
-            continue;
-          }
         }
 
         this.system.setPressure(Sp1);
@@ -2067,7 +2071,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         logger.error(ex.getMessage());
       }
     }
-
     return new CalculationResult(fluidProperties, calculationError);
   }
 
