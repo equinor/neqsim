@@ -597,7 +597,6 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
    * @return a {@link neqsim.thermo.mixingRule.CPAMixingInterface} object
    */
   public CPAMixingInterface getMixingRule(int i, PhaseInterface phase) {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     assosSchemeType = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     cpaBetaCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     cpaEpsCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
@@ -610,7 +609,8 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         if (k == l || phase.getComponent(l).getNumberOfAssociationSites() == 0
             || phase.getComponent(k).getNumberOfAssociationSites() == 0) {
         } else {
-          try {
+          try (neqsim.util.database.NeqSimDataBase database =
+              new neqsim.util.database.NeqSimDataBase()) {
             // database = new util.database.NeqSimDataBase();
             if (NeqSimDataBase.createTemporaryTables()) {
               dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
@@ -641,16 +641,6 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
           }
         }
       }
-    }
-    try {
-      if (database.getStatement() != null) {
-        database.getStatement().close();
-      }
-      if (database.getConnection() != null) {
-        database.getConnection().close();
-      }
-    } catch (Exception ex) {
-      logger.error("error", ex);
     }
 
     if (i == 1) {

@@ -34,11 +34,11 @@ public class TestBinaryHVParameterFittingToEquilibriumData {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM BinaryEquilibriumData WHERE Component1='methane' AND Component2='ethane'")) {
       logger.info("adding....");
       while (dataSet.next()) {

@@ -34,9 +34,8 @@ public class TestGrunbergNissanFit {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-
-    try (ResultSet dataSet =
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet =
         database.getResultSet("SELECT * FROM binarysystemviscosity WHERE ComponentName1='TEG'")) {
       logger.info("adding....");
       while (dataSet.next()) {

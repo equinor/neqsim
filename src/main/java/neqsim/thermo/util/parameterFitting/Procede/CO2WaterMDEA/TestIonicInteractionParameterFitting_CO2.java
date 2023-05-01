@@ -42,8 +42,6 @@ public class TestIonicInteractionParameterFitting_CO2 {
     double x3;
     double loading;
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEA WHERE ID<231");
 
     // Water, HCO3-, MDEA, CO2, Co3--
 
@@ -78,7 +76,8 @@ public class TestIonicInteractionParameterFitting_CO2 {
     // more iterations diff. Water - MDEA HV parameter
     // double guess[] = {1e-10, 1e-10, 1e-10, 1e-10, 1e-10}; //Debye - Huckle type
     // equation
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEA WHERE ID<231")) {
       int i = 0;
       logger.info("adding....");
       while (dataSet.next()) {
@@ -140,9 +139,9 @@ public class TestIonicInteractionParameterFitting_CO2 {
       logger.error("database error" + ex);
     }
 
-    dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEA WHERE ID>230");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEA WHERE ID>230")) {
       int i = 0;
 
       logger.info("adding....");
@@ -208,9 +207,9 @@ public class TestIonicInteractionParameterFitting_CO2 {
       logger.error("database error" + ex);
     }
 
-    dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEAtest");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEAtest")) {
       int i = 0;
       logger.info("adding....");
       while (dataSet.next()) {
