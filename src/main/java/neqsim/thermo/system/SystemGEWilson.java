@@ -6,12 +6,16 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  * This class defines a thermodynamic system using the Wilson GE model.
- * 
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemGEWilson extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for SystemGEWilson.</p>
+   */
   public SystemGEWilson() {
     super();
     modelName = "UNIFAC-GE-model";

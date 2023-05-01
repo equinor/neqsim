@@ -40,6 +40,9 @@ public class BaseContract implements ContractInterface {
   ContractSpecification[] spesifications = new ContractSpecification[50];
   private int specificationsNumber = 0;
 
+  /**
+   * <p>Constructor for BaseContract.</p>
+   */
   public BaseContract() {}
 
   /**
@@ -67,11 +70,10 @@ public class BaseContract implements ContractInterface {
   public BaseContract(SystemInterface system, String terminal, String country) {
     int numb = 0;
     this.setContractName(contractName);
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    java.sql.ResultSet dataSet = null;
-    try {
-      dataSet = database.getResultSet("SELECT * FROM gascontractspecifications WHERE TERMINAL='"
-          + terminal + "'" + " AND COUNTRY='" + country + "'");
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet("SELECT * FROM gascontractspecifications WHERE TERMINAL='"
+                + terminal + "'" + " AND COUNTRY='" + country + "'")) {
       while (dataSet.next()) {
         numb++;
         StandardInterface method = getMethod(system, dataSet.getString("METHOD"));
@@ -89,20 +91,6 @@ public class BaseContract implements ContractInterface {
       logger.error(ex.getMessage());
     } finally {
       specificationsNumber = numb;
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception ex) {
-        System.out.println("error closing database.....");
-        logger.error(ex.getMessage());
-      }
     }
   }
 

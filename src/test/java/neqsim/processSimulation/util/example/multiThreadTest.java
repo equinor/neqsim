@@ -101,7 +101,7 @@ public class multiThreadTest {
     Recycle resyc = new Recycle("resyc");
     resyc.addStream(separator3.getLiquidOutStream());
 
-    mixer2.addStream(resyc.getOutStream());
+    mixer2.addStream(resyc.getOutletStream());
 
     // mixer2.addStream(stream_222);
     neqsim.processSimulation.processSystem.ProcessSystem operations2 =
@@ -135,7 +135,7 @@ public class multiThreadTest {
     }
     // } while (processThread1.isAlive()); // && processThread2.isAlive());
 
-    System.out.println("Time taken for simulation = " + (System.currentTimeMillis() - time));
+    logger.info("Time taken for simulation = " + (System.currentTimeMillis() - time));
 
     ((Compressor) operations.getUnit("comp1")).displayResult();
     ((Compressor) operations2.getUnit("comp22")).displayResult();

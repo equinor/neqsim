@@ -25,7 +25,7 @@ public class HydrateFlash2 {
    *
    * @param args an array of {@link java.lang.String} objects
    */
-  public static void main(String args[]) {
+  public static void main(String[] args) {
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 10, 122.0);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

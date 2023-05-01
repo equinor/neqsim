@@ -5,6 +5,9 @@ import neqsim.util.NamedBaseClass;
 
 /**
  * Base class for process simulation objects.
+ *
+ * @author ASMF
+ * @version $Id: $Id
  */
 public abstract class SimulationBaseClass extends NamedBaseClass implements SimulationInterface {
   private static final long serialVersionUID = 1L;
@@ -16,6 +19,11 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
   protected boolean calculateSteadyState = true;
   protected double time = 0;
 
+  /**
+   * <p>Constructor for SimulationBaseClass.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public SimulationBaseClass(String name) {
     super(name);
   }

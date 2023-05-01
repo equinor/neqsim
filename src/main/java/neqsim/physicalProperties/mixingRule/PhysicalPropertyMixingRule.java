@@ -81,10 +81,6 @@ public class PhysicalPropertyMixingRule
   public void initMixingRules(PhaseInterface phase) {
     // logger.info("reading mix Gij viscosity..");
     Gij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    neqsim.util.database.NeqSimDataBase database = null;
-    java.sql.ResultSet dataSet = null;
-
-    database = new neqsim.util.database.NeqSimDataBase();
     for (int l = 0; l < phase.getNumberOfComponents(); l++) {
       if (phase.getComponent(l).isIsTBPfraction() || phase.getComponent(l).getIonicCharge() != 0) {
         break;
@@ -95,11 +91,14 @@ public class PhysicalPropertyMixingRule
             || phase.getComponent(k).isIsTBPfraction()) {
           break;
         } else {
-          try {
-            dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='"
-                + component_name + "' AND COMP2='" + phase.getComponents()[k].getComponentName()
-                + "') OR (COMP1='" + phase.getComponents()[k].getComponentName() + "' AND COMP2='"
-                + component_name + "')");
+          try (
+              neqsim.util.database.NeqSimDataBase database =
+                  new neqsim.util.database.NeqSimDataBase();
+              java.sql.ResultSet dataSet =
+                  database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='" + component_name
+                      + "' AND COMP2='" + phase.getComponents()[k].getComponentName()
+                      + "') OR (COMP1='" + phase.getComponents()[k].getComponentName()
+                      + "' AND COMP2='" + component_name + "')")) {
             if (dataSet.next()) {
               Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
             } else {
@@ -110,27 +109,9 @@ public class PhysicalPropertyMixingRule
             logger.error("err in phys prop.....");
             String err = ex.toString();
             logger.error(err);
-          } finally {
-            try {
-              if (dataSet != null) {
-                dataSet.close();
-              }
-            } catch (Exception ex) {
-              logger.error("err closing dataSet in physical property mixing rule...", ex);
-            }
           }
         }
       }
-    }
-    try {
-      if (database.getStatement() != null) {
-        database.getStatement().close();
-      }
-      if (database.getConnection() != null) {
-        database.getConnection().close();
-      }
-    } catch (Exception ex) {
-      logger.error("error closing database.....", ex);
     }
   }
 }

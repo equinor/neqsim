@@ -323,9 +323,9 @@ public class OLGApropertyTableGeneratorWaterEven
                     + thermoSystem.getPhase("oil").getBeta()
                         * thermoSystem.getPhase("oil").getMolarMass());
           } else {
-            props[k][i][j] = 1.0; // thermoSystem.getPhase(phaseNumb).getBeta() *
-                                  // thermoSystem.getPhase(phaseNumb).getMolarMass() /
-                                  // thermoSystem.getMolarMass();
+            props[k][i][j] = 1.0;
+            // thermoSystem.getPhase(phaseNumb).getBeta() *
+            // thermoSystem.getPhase(phaseNumb).getMolarMass() / thermoSystem.getMolarMass();
           }
           names[k] = "GAS MASS FRACTION";
           units[k] = "-";
@@ -589,7 +589,7 @@ public class OLGApropertyTableGeneratorWaterEven
           units[k] = "N/M";
           k++;
         } else {
-          if (continuousDerivativesExtrapolation) {// && (i >= 2 || j >= 2)) {
+          if (continuousDerivativesExtrapolation) { // && (i >= 2 || j >= 2)) {
             if (!thermoSystem.hasPhaseType("gas")) {
               if (i > 2 && j >= 2) {
                 // props[k][i][j] = props[k][i][j - 1] + (props[k][i][j - 1] -
@@ -634,7 +634,7 @@ public class OLGApropertyTableGeneratorWaterEven
           units[k] = "N/M";
           k++;
         } else {
-          if (continuousDerivativesExtrapolation) {// && (i >= 2 || j >= 2)) {
+          if (continuousDerivativesExtrapolation) { // && (i >= 2 || j >= 2)) {
             if (!thermoSystem.hasPhaseType("gas")) {
               if (j >= 2) {
                 // props[k][i][j] = props[k][i][j - 1] + (props[k][i][j - 1] -
@@ -686,7 +686,7 @@ public class OLGApropertyTableGeneratorWaterEven
           units[k] = "N/M";
           k++;
         } else {
-          if (continuousDerivativesExtrapolation) {// && (i >= 2 || j >= 2)) {
+          if (continuousDerivativesExtrapolation) { // && (i >= 2 || j >= 2)) {
             if (i < 2) {
               props[k][i][j] = props[k][i][j - 1] + (props[k][i][j - 1] - props[k][i][j - 2])
                   / (temperatures[j - 1] - temperatures[j - 2])
@@ -730,18 +730,8 @@ public class OLGApropertyTableGeneratorWaterEven
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < temperatures.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // +
-                                                                                         // "
-                                                                                         // ROG
-                                                                                         // "
-                                                                                         // +
-                                                                                         // ROG[i][j]
-                                                                                         // +
-                                                                                         // "
-                                                                                         // ROL
-                                                                                         // "
-                                                                                         // +
-                                                                                         // ROL[i][j]);
+        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);
+        // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
       }
     }
     writeOLGAinpFile("");

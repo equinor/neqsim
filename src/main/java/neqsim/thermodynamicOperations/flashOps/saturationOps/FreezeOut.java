@@ -22,6 +22,7 @@ public class FreezeOut extends constantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(FreezeOut.class);
+
   public double[] FCompTemp = new double[10];
   public String[] FCompNames = new String[10];
   public boolean noFreezeFlash = true;
@@ -53,12 +54,21 @@ public class FreezeOut extends constantDutyTemperatureFlash
     // double[][] Fug = new double[12][35];
     // double[][] Fugrel = new double[2][40];
     int iterations = 0;
-    double newTemp = 0, OldTemp = 0;
+    double newTemp = 0;
+    double OldTemp = 0;
     double FugRatio;
-    double T2low = 0, T2high = 0;
-    boolean Left = true, half = false;
-    double SolidFug = 0.0, FluidFug = 0.0, temp = 0.0, pres = 0.0, Pvapsolid = 0.0;
-    double solvol = 0.0, soldens = 0.0, trpTemp = 0.0;
+    double T2low = 0;
+    double T2high = 0;
+    boolean Left = true;
+    boolean half = false;
+    double SolidFug = 0.0;
+    double FluidFug = 0.0;
+    double temp = 0.0;
+    double pres = 0.0;
+    double Pvapsolid = 0.0;
+    double solvol = 0.0;
+    double soldens = 0.0;
+    double trpTemp = 0.0;
     boolean CCequation = true;
     boolean noFreezeliq = true;
     boolean SolidForms = true;
@@ -161,8 +171,7 @@ public class FreezeOut extends constantDutyTemperatureFlash
           }
 
           testSystem.setTemperature(newTemp);
-        } // do lokke
-        while (((Math.abs(FugRatio - 1) >= 0.00001 && iterations < 100)) && noFreezeliq
+        } while (((Math.abs(FugRatio - 1) >= 0.00001 && iterations < 100)) && noFreezeliq
             && SolidForms);
         logger.info("noFreezeliq: " + noFreezeliq + " SolidForms: " + SolidForms);
 

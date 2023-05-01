@@ -108,15 +108,6 @@ public interface GeometryDefinitionInterface extends Cloneable {
 
   /**
    * <p>
-   * getNodeLength.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getNodeLength();
-
-  /**
-   * <p>
    * getRelativeRoughnes.
    * </p>
    *
@@ -124,6 +115,15 @@ public interface GeometryDefinitionInterface extends Cloneable {
    * @return a double
    */
   public double getRelativeRoughnes(double diameter);
+
+  /**
+   * <p>
+   * getNodeLength.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getNodeLength();
 
   /**
    * <p>

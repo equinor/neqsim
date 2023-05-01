@@ -59,7 +59,7 @@ public class gasPipeline {
         // operations.add(simplePipeline2phase);
 
         operations.run();
-        pipeline.getOutletStream().displayResult();
+        //pipeline.getOutletStream().displayResult();
         // simplePipeline.getOutStream().displayResult();
         // simplePipeline2phase.getOutStream().displayResult();
 

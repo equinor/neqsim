@@ -1,8 +1,8 @@
 package neqsim.processSimulation.mechanicalDesign.absorber;
 
-import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.mechanicalDesign.designStandards.PressureVesselDesignStandard;
 import neqsim.processSimulation.mechanicalDesign.designStandards.SeparatorDesignStandard;
+import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -17,7 +17,7 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  * @author esol
  * @version $Id: $Id
  */
-public class AbsorberMechanicalDesign extends MechanicalDesign {
+public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
   private static final long serialVersionUID = 1000;
 
   private double wallThickness = 0.02;

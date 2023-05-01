@@ -1,12 +1,12 @@
 package neqsim.PVTsimulation.simulation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-class SaturationPressureTest {
+class SaturationPressureTest extends neqsim.NeqSimTest {
 
   @BeforeAll
   static void setUpBeforeClass() throws Exception {}
@@ -33,6 +33,5 @@ class SaturationPressureTest {
       SimulationInterface satPresSim = new SaturationPressure(tempSystem);
       satPresSim.run();
       assertEquals(satPresSim.getThermoSystem().getPressure(), 122.28338813781738, 0.1);
-  }
-
+    }
 }

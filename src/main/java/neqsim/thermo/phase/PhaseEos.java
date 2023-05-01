@@ -76,12 +76,6 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(double moles) {
-    super.addcomponent(moles);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
       double beta) {
     if (!mixingRuleDefined) {
@@ -214,41 +208,31 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       BonV = 1.0;
     }
     double BonVold = BonV;
-    double Btemp = 0;
-    double Dtemp = 0;
-    double h = 0;
-    double dh = 0;
-    double gvvv = 0;
-    double fvvv = 0;
-    double dhh = 0;
-    double d1 = 0;
-    double d2 = 0;
-    Btemp = getB();
-    Dtemp = getA();
+    double Btemp = getB();
+    double Dtemp = getA();
 
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
     int iterations = 0;
     int maxIterations = 1000;
-
     do {
       iterations++;
       BonVold = BonV;
-      h = BonV + Btemp * gV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fv()
+      double h = BonV + Btemp * gV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fv()
           - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
-      dh = 1.0 - Btemp / (BonV * BonV)
+      double dh = 1.0 - Btemp / (BonV * BonV)
           * (Btemp * gVV() + Btemp * Dtemp * fVV() / (numberOfMolesInPhase * temperature));
-      fvvv = 1.0 / (R * Btemp * (delta1 - delta2))
+      double fvvv = 1.0 / (R * Btemp * (delta1 - delta2))
           * (2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() + Btemp * delta1, 3.0)
               - 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() + Btemp * delta2, 3.0));
-      gvvv = 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() - Btemp, 3.0)
+      double gvvv = 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() - Btemp, 3.0)
           - 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume(), 3.0);
-      dhh = 2.0 * Btemp / Math.pow(BonV, 3.0)
+      double dhh = 2.0 * Btemp / Math.pow(BonV, 3.0)
           * (Btemp * gVV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fVV())
           + Btemp * Btemp / Math.pow(BonV, 4.0)
               * (Btemp * gvvv + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fvvv);
 
-      d1 = -h / dh;
-      d2 = -dh / dhh;
+      double d1 = -h / dh;
+      double d2 = -dh / dhh;
 
       if (Math.abs(d1 / d2) <= 1.0) {
         BonV += d1 * (1.0 + 0.5 * d1 / d2);
@@ -510,20 +494,24 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         / numberOfMolesInPhase;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return calcB(phase, temperature, pressure, numbcomp) / numberOfMolesInPhase;
-  }
-
   /**
+   * Get a.
+   *
    * @return double
    */
   double geta() {
     return loc_A / numberOfMolesInPhase / numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getA() {
+    return loc_A;
+  }
+
   /**
+   * getb.
+   *
    * @return double
    */
   double getb() {
@@ -532,8 +520,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getA() {
-    return loc_A;
+  public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    return calcB(phase, temperature, pressure, numbcomp) / numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
@@ -609,18 +597,16 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
+   * </p>
    */
   @Override
   public double getKappa() {
     return -getCp() / getCv() * getVolume() / pressure * getdPdVTn();
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * method to get the Joule Thomson Coefficient of a phase
-   */
+  /** {@inheritDoc} */
   @Override
   public double getJouleThomsonCoefficient() {
     return -1.0 / getCp()
@@ -788,8 +774,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         * (numberOfMolesInPhase * molarVolume + delta2 * loc_B));
   }
 
-  ////// NYE metoder fredag 25.08.public double dFdN(PhaseInterface phase, int
-  ////// numberOfComponents, double temperature, double pressure, int phasetype){
+  // NYE metoder fredag 25.08.public double dFdN(PhaseInterface phase, int
+  // numberOfComponents, double temperature, double pressure, int phasetype){
   /** {@inheritDoc} */
   @Override
   public double FnV() {
@@ -991,11 +977,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         - getNumberOfMolesInPhase() * R * temperature / Math.pow(getTotalVolume(), 2.0);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * method to get the speed of sound of a phase
-   */
+  /** {@inheritDoc} */
   @Override
   public double getSoundSpeed() {
     double bs = -1.0 / getVolume() * getCv() / getCp() / getdPdVTn();

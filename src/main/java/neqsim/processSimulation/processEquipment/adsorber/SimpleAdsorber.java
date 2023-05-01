@@ -76,7 +76,11 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     outStream[1].run();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public SimpleAdsorber(String name) {
     super(name);
   }
@@ -114,6 +118,13 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     outStream[1].run();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @return a {@link neqsim.processSimulation.mechanicalDesign.adsorber.AdsorberMechanicalDesign}
+   *         object
+   */
+  @Override
   public AdsorberMechanicalDesign getMechanicalDesign() {
     return new AdsorberMechanicalDesign(this);
   }

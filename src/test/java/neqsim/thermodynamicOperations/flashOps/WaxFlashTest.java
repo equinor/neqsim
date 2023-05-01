@@ -70,5 +70,4 @@ class WaxFlashTest {
       waxVolumeFrac = testSystem.getWtFraction(testSystem.getPhaseIndexOfPhase("wax"));
     }
   }
-
 }

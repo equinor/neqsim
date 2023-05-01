@@ -66,7 +66,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
   /**
    * Constructor for Pump.
-   * 
+   *
    * @param name name of pump
    */
   public Pump(String name) {

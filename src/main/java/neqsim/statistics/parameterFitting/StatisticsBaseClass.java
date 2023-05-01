@@ -42,11 +42,11 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
 
   protected Matrix parameterCorrelationMatrix;
 
-  protected double xVal[][];
+  protected double[][] xVal;
   protected double[] expVal;
-  protected double absDev[];
+  protected double[] absDev;
 
-  protected double reldeviation[];
+  protected double[] reldeviation;
 
   protected double[] calcVal;
   protected String[][] valTable;

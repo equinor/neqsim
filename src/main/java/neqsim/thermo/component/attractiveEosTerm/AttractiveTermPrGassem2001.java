@@ -13,7 +13,11 @@ import neqsim.thermo.component.ComponentEosInterface;
 public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
   private static final long serialVersionUID = 1000;
 
-  protected double A = 2.0, B = 0.836, C = 0.134, D = 0.508, E = -0.0467;
+  protected double A = 2.0;
+  protected double B = 0.836;
+  protected double C = 0.134;
+  protected double D = 0.508;
+  protected double E = -0.0467;
 
   /**
    * <p>

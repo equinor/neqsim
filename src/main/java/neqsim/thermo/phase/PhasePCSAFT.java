@@ -131,11 +131,9 @@ public class PhasePCSAFT extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentPCSAFT(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentPCSAFT(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -214,14 +212,15 @@ public class PhasePCSAFT extends PhaseSrkEos {
     F2dispI2dNdN = calcF2dispI2dNdN();
     F2dispI2dm = calcF2dispI2dm();
     F2dispI2dV = F2dispI2dN * getDnSAFTdV();
-    F2dispI2dVdV = F2dispI2dNdN * getDnSAFTdV() * getDnSAFTdV() + F2dispI2dN * dnSAFTdVdV; // F2dispI2dNdN*dnSAFTdVdV;;
+    F2dispI2dVdV = F2dispI2dNdN * getDnSAFTdV() * getDnSAFTdV() + F2dispI2dN * dnSAFTdVdV; // F2dispI2dNdN*dnSAFTdVdV;
 
     F2dispZHC = calcF2dispZHC();
     F2dispZHCdN = calcF2dispZHCdN();
     F2dispZHCdNdN = calcF2dispZHCdNdN();
     setF2dispZHCdm(calcF2dispZHCdm());
     F2dispZHCdV = F2dispZHCdN * getDnSAFTdV();
-    F2dispZHCdVdV = F2dispZHCdNdN * getDnSAFTdV() * getDnSAFTdV() + F2dispZHCdN * dnSAFTdVdV; // F2dispZHCdNdN*dnSAFTdVdV*0;
+    F2dispZHCdVdV = F2dispZHCdNdN * getDnSAFTdV() * getDnSAFTdV() + F2dispZHCdN * dnSAFTdVdV;
+    // F2dispZHCdNdN*dnSAFTdVdV*0;
   }
 
   /**
@@ -532,7 +531,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * @param ab an array of {@link double} objects
    * @return a double
    */
-  public double getaSAFT(int i, double m, double ab[][]) {
+  public double getaSAFT(int i, double m, double[][] ab) {
     return ab[0][i] + (m - 1.0) / m * ab[1][i] + (m - 1.0) / m * (m - 2.0) / m * ab[2][i];
   }
 
@@ -546,7 +545,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * @param ab an array of {@link double} objects
    * @return a double
    */
-  public double getaSAFTdm(int i, double m, double ab[][]) {
+  public double getaSAFTdm(int i, double m, double[][] ab) {
     return (m - (m - 1.0)) / (m * m) * ab[1][i]
         + ((2.0 * m - 3.0) * m * m - 2 * m * (m * m - 3 * m + 2)) / Math.pow(m, 4.0) * ab[2][i];
   }
@@ -696,7 +695,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
    */
   public double F_HC_SAFT() {
     return getNumberOfMolesInPhase()
-        * (getmSAFT() * getAHSSAFT() - getMmin1SAFT() * Math.log(getGhsSAFT())); /// (ThermodynamicConstantsInterface.R*temperature);
+        * (getmSAFT() * getAHSSAFT() - getMmin1SAFT() * Math.log(getGhsSAFT()));
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**
@@ -708,7 +708,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
    */
   public double dF_HC_SAFTdV() {
     return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdN * getDnSAFTdV()
-        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * getDnSAFTdV()); /// (ThermodynamicConstantsInterface.R*temperature);
+        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * getDnSAFTdV());
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**
@@ -724,7 +725,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
         + getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * Math.pow(getDgHSSAFTdN(), 2.0)
             * getDnSAFTdV()
         - getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdV
-        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV); // (ThermodynamicConstantsInterface.R*temperature);
+        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV);
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**
@@ -747,7 +749,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    */
   public double F_DISP1_SAFT() {
     return getNumberOfMolesInPhase() * (-2.0 * ThermodynamicConstantsInterface.pi
-        * getF1dispVolTerm() * getF1dispSumTerm() * getF1dispI1()); /// (ThermodynamicConstantsInterface.R*temperature);
+        * getF1dispVolTerm() * getF1dispSumTerm() * getF1dispI1()); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**
@@ -761,7 +763,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
     return getNumberOfMolesInPhase() * (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV
         * getF1dispSumTerm() * getF1dispI1()
         - 2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm()
-            * F1dispI1dV); /// (ThermodynamicConstantsInterface.R*temperature);
+            * F1dispI1dV); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**
@@ -791,7 +793,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
    */
   public double F_DISP2_SAFT() {
     return getNumberOfMolesInPhase() * (-ThermodynamicConstantsInterface.pi * getmSAFT()
-        * getF1dispVolTerm() * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC()); /// (ThermodynamicConstantsInterface.R*temperature);
+        * getF1dispVolTerm() * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC());
+    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**
@@ -807,7 +810,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
         - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm()
             * F2dispI2dV * getF2dispZHC()
         - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm()
-            * getF2dispI2() * F2dispZHCdV); /// (ThermodynamicConstantsInterface.R*temperature);
+            * getF2dispI2() * F2dispZHCdV); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /**

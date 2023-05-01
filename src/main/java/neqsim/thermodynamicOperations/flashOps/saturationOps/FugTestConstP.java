@@ -20,9 +20,13 @@ public class FugTestConstP extends constantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(FugTestConstP.class);
-  public double temp = 0.0, pres = 0.0;
-  public SystemInterface testSystem, testSystem2;
-  public ThermodynamicOperations testOps, testOps2;
+
+  public double temp = 0.0;
+  public double pres = 0.0;
+  public SystemInterface testSystem;
+  public SystemInterface testSystem2;
+  public ThermodynamicOperations testOps;
+  public ThermodynamicOperations testOps2;
   public int compNumber = 0;
   public String compName;
   public boolean compNameGiven = false;
@@ -79,9 +83,13 @@ public class FugTestConstP extends constantDutyTemperatureFlash
   /** {@inheritDoc} */
   @Override
   public void run() {
-    double SolidFug = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0;
+    double SolidFug = 0.0;
+    double Pvapsolid = 0.0;
+    double SolVapFugCoeff = 0.0;
     // double dfugdt = 0.0;
-    double solvol = 0.0, soldens = 0.0, trpTemp = 0.0;
+    double solvol = 0.0;
+    double soldens = 0.0;
+    double trpTemp = 0.0;
     boolean CCequation = true;
     double[][] Fug = new double[4][20];
     double[][] Fugrel = new double[2][20];

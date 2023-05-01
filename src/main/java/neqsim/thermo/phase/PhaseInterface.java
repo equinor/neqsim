@@ -24,12 +24,28 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * addcomponent.
    * </p>
    *
-   * @param componentName a {@link java.lang.String} object
-   * @param molesInPhase a double
+   * @param name a {@link java.lang.String} object
    * @param moles a double
+   * @param molesInPhase a double
    * @param compNumber a int
    */
-  public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber);
+
+  /**
+   * <p>
+   * addcomponent.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param moles a double
+   * @param molesInPhase a double
+   * @param compNumber a int
+   * @deprecated Replaced by {@link addComponent}
+   */
+  @Deprecated
+  public default void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
+    this.addComponent(name, moles, molesInPhase, compNumber);
+  }
 
   /**
    * <p>
@@ -76,14 +92,14 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getDensity_AGA8();
 
   /**
-   * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos.
+   * method to get the Joule Thomson Coefficient of a phase.
    *
    * @return Joule Thomson coefficient in K/bar
    */
   public double getJouleThomsonCoefficient();
 
   /**
-   * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos.
+   * method to get the Joule Thomson Coefficient of a phase.
    *
    * @param unit Supported units are K/bar, C/bar
    * @return Joule Thomson coefficient in specified unit
@@ -154,6 +170,42 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   public double getWtFractionOfWaxFormingComponents();
+
+  /**
+   * <p>
+   * getCompressibilityX.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getCompressibilityX();
+
+  /**
+   * <p>
+   * getCompressibilityY.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getCompressibilityY();
+
+  /**
+   * <p>
+   * getIsothermalCompressibility.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getIsothermalCompressibility();
+
+  /**
+   * <p>
+   * getIsobaricThermalExpansivity.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getIsobaricThermalExpansivity();
 
   /**
    * <p>
@@ -362,12 +414,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * removeComponent.
    * </p>
    *
-   * @param componentName a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param moles a double
    * @param molesInPhase a double
    * @param compNumber a int
    */
-  public void removeComponent(String componentName, double moles, double molesInPhase,
+  public void removeComponent(String name, double moles, double molesInPhase,
       int compNumber);
 
   /**
@@ -427,6 +479,15 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
+   * getGibbsEnergy.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getGibbsEnergy();
+
+  /**
+   * <p>
    * getMixGibbsEnergy.
    * </p>
    *
@@ -436,21 +497,57 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
+   * getExessGibbsEnergy.
+   * </p>
+   *
+   * @return a double
+   * @deprecated Replaced by {@link getExcessGibbsEnergy}.
+   */
+  @Deprecated
+  public default double getExessGibbsEnergy() {
+    return getExcessGibbsEnergy();
+  }
+
+  /**
+   * <p>
+   * getExessGibbsEnergySymetric.
+   * </p>
+   *
+   *
+   * @return a double
+   * @deprecated Replace by {@link getExcessGibbsEnergySymetric}.
+   */
+  @Deprecated
+  public default double getExessGibbsEnergySymetric() {
+    return getExcessGibbsEnergySymetric();
+  }
+
+  /**
+   * <p>
+   * getExcessGibbsEnergy.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getExcessGibbsEnergy();
+
+  /**
+   * <p>
+   * getExcessGibbsEnergySymetric.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getExcessGibbsEnergySymetric();
+
+  /**
+   * <p>
    * hasPlusFraction.
    * </p>
    *
    * @return a boolean
    */
   public boolean hasPlusFraction();
-
-  /**
-   * <p>
-   * getExessGibbsEnergy.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getExessGibbsEnergy();
 
   /**
    * <p>
@@ -678,11 +775,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * specify the type model for the physical properties you want to use. Type: 0 Orginal/default 1
-   * Water 2 Glycol 3 Amine
+   * specify the type model for the physical properties you want to use.
    * </p>
    *
-   * @param type a int
+   * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
    */
   public void setPhysicalProperties(int type);
 
@@ -987,11 +1083,9 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * method to return conductivity in a specified unit.
-   * 
    *
    * @param unit Supported units are W/mK, W/cmK
    * @return conductivity in specified unit
-   *
    * @deprecated use {@link #getThermalConductivity(String unit)} instead.
    */
   @Deprecated
@@ -1276,15 +1370,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public double getATT();
   // public double getAiT();
-
-  /**
-   * <p>
-   * getGibbsEnergy.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getGibbsEnergy();
 
   /**
    * <p>
@@ -1834,15 +1919,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   public double getActivityCoefficientUnSymetric(int k);
-
-  /**
-   * <p>
-   * getExessGibbsEnergySymetric.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getExessGibbsEnergySymetric();
 
   /**
    * <p>

@@ -37,12 +37,14 @@ public class Diamond {
    * @param args the command line arguments
    */
   public static void main(String[] args) {
-    double temperature, x, pressure, ID;
+    double temperature;
 
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM Diamond");
+    double x;
+    double pressure;
+    double ID;
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM Diamond")) {
       while (dataSet.next()) {
         ID = Double.parseDouble(dataSet.getString("ID"));
         temperature = Double.parseDouble(dataSet.getString("Temperature"));

@@ -38,10 +38,9 @@ public class TestBinaryHVParameterFittingToEquilibriumData_CH4 {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM CH4MDEA");
     double guess[] = {500, -500, 1e-10, 1e-10, 0.3};
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM CH4MDEA")) {
       while (dataSet.next()) {
         BinaryHVParameterFittingFunction_CH4 function = new BinaryHVParameterFittingFunction_CH4();
 

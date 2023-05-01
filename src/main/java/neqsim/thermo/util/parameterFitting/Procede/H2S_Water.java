@@ -38,10 +38,8 @@ public class H2S_Water {
     int i = 0;
     double aad;
 
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM H2SWater");
-
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM H2SWater")) {
       while (dataSet.next()) {
         i++;
         logger.info("Adding.... " + i);

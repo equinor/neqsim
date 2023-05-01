@@ -31,35 +31,20 @@ public class CompressorDesignStandard extends DesignStandard {
 
     neqsim.util.database.NeqSimTechnicalDesignDatabase database =
         new neqsim.util.database.NeqSimTechnicalDesignDatabase();
-    java.sql.ResultSet dataSet = null;
-    try {
-      try {
-        dataSet = database.getResultSet(
-            ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Compressor' AND Company='"
-                + standardName + "'"));
-        while (dataSet.next()) {
-          String specName = dataSet.getString("SPECIFICATION");
-          if (specName.equals("compressorFactor")) {
-            compressorFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          }
-        }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage());
-      }
 
-      // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
+    try (java.sql.ResultSet dataSet = database.getResultSet(
+        ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Compressor' AND Company='"
+            + standardName + "'"))) {
+      while (dataSet.next()) {
+        String specName = dataSet.getString("SPECIFICATION");
+        if (specName.equals("compressorFactor")) {
+          compressorFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
+        }
+      }
     } catch (Exception ex) {
       logger.error(ex.getMessage());
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
-      } catch (Exception ex) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
-        logger.error(ex.getMessage());
-      }
     }
+    // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
   }
 
   /**

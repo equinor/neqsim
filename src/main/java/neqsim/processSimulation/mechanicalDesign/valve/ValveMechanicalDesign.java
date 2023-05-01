@@ -9,7 +9,7 @@ import neqsim.processSimulation.costEstimation.valve.ValveCostEstimate;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.mechanicalDesign.designStandards.ValveDesignStandard;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;;
+import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
  * <p>

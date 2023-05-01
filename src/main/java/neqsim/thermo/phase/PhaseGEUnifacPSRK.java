@@ -54,11 +54,9 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGEUnifacPSRK(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentGEUnifacPSRK(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -81,7 +79,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     double GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
@@ -102,8 +100,8 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-        try {
-          neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        try (neqsim.util.database.NeqSimDataBase database =
+            new neqsim.util.database.NeqSimDataBase()) {
           java.sql.ResultSet dataSet = null;
           try {
             dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb WHERE MainGroup="
@@ -121,10 +119,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
               "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
           // System.out.println("aij " + aij[i][j]);
           dataSet.close();
-          database.getConnection().close();
-        }
-
-        catch (Exception ex) {
+        } catch (Exception ex) {
           logger.error(ex.toString(), ex);
         }
       }
@@ -143,8 +138,8 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-        try {
-          neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        try (neqsim.util.database.NeqSimDataBase database =
+            new neqsim.util.database.NeqSimDataBase()) {
           java.sql.ResultSet dataSet = null;
           try {
             dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc WHERE MainGroup="
@@ -162,10 +157,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
               "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
           // System.out.println("aij " + aij[i][j]);
           dataSet.close();
-          database.getConnection().close();
-        }
-
-        catch (Exception ex) {
+        } catch (Exception ex) {
           logger.error(ex.toString(), ex);
         }
       }

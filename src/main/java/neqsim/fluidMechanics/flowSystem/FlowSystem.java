@@ -36,14 +36,37 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   protected GeometryDefinitionInterface[] equipmentGeometry;
   protected SystemInterface thermoSystem;
   protected ThermodynamicOperations thermoOperations;
-  protected double inletTemperature = 0, inletPressure = 0, endPressure = 0, systemLength = 0;
-  protected int numberOfFlowLegs = 0, totalNumberOfNodes = 25;
+  protected double inletTemperature = 0;
+
+  protected double inletPressure = 0;
+
+  protected double endPressure = 0;
+
+  protected double systemLength = 0;
+
+  protected int numberOfFlowLegs = 0;
+
+  protected int totalNumberOfNodes = 25;
+
   int[] numberOfNodesInLeg;
-  double[] legHeights, legPositions, legOuterTemperatures, legOuterHeatTransferCoefficients,
-      legWallHeatTransferCoefficients;
+  double[] legHeights;
+
+  double[] legPositions;
+
+  double[] legOuterTemperatures;
+
+  double[] legOuterHeatTransferCoefficients;
+
+  double[] legWallHeatTransferCoefficients;
+
   protected FlowSolverInterface flowSolver;
-  double inletMolarLiquidFlowRate = 0, inletMolarGasFlowRate = 0;
-  boolean equilibriumHeatTransfer = true, equilibriumMassTransfer = false;
+  double inletMolarLiquidFlowRate = 0;
+
+  double inletMolarGasFlowRate = 0;
+
+  boolean equilibriumHeatTransfer = true;
+
+  boolean equilibriumMassTransfer = false;
 
   /**
    * <p>

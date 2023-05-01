@@ -54,10 +54,6 @@ public class WellStreamMixer {
         testSystem2.setMolarComposition(new double[] {1.0, 1.42, 70.1, 8, 3.54, 0.54, 0.2, 0.21,
                 0.19, 0.28, 5.0, 0.0, 0.0, 1, 1});
 
-        // testSystem.renameComponent("nitrogen", "nitrogen_well1");
-        // testSystem.setComponentNameTagOnNormalComponents("_well1");
-        // testSystem2.setComponentNameTag("_well2");
-
         Stream wellStream_1 = new Stream("well stream", testSystem);
         wellStream_1.setFlowRate(14.23, "MSm3/day");
         wellStream_1.setTemperature(40.0, "C");
