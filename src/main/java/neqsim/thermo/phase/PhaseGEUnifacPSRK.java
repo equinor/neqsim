@@ -100,8 +100,8 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-        try {
-          neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        try (neqsim.util.database.NeqSimDataBase database =
+            new neqsim.util.database.NeqSimDataBase()) {
           java.sql.ResultSet dataSet = null;
           try {
             dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb WHERE MainGroup="
@@ -119,7 +119,6 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
               "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
           // System.out.println("aij " + aij[i][j]);
           dataSet.close();
-          database.getConnection().close();
         } catch (Exception ex) {
           logger.error(ex.toString(), ex);
         }
@@ -139,8 +138,8 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-        try {
-          neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        try (neqsim.util.database.NeqSimDataBase database =
+            new neqsim.util.database.NeqSimDataBase()) {
           java.sql.ResultSet dataSet = null;
           try {
             dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc WHERE MainGroup="
@@ -158,7 +157,6 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
               "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
           // System.out.println("aij " + aij[i][j]);
           dataSet.close();
-          database.getConnection().close();
         } catch (Exception ex) {
           logger.error(ex.toString(), ex);
         }

@@ -63,8 +63,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
       }
       return;
     }
-    try {
-      neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
         dataSet = database
@@ -87,9 +86,6 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
           // p);
         }
       }
-
-      dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
       logger.error(ex.toString());
     }

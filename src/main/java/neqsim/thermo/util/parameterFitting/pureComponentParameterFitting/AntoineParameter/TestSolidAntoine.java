@@ -34,14 +34,14 @@ public class TestSolidAntoine {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
 
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY
     // FreezingTemperature");
     int i = 0;
-    try (ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY FreezingTemperature")) {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY FreezingTemperature")) {
       while (dataSet.next() && i < 4) {
         i++;
         AntoineSolidFunction function = new AntoineSolidFunction();

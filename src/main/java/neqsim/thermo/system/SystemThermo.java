@@ -753,12 +753,11 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void addSalt(String componentName, double value) {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-
     double val1 = 1e-20;
     double val2 = 1e-20;
-    try (java.sql.ResultSet dataSet =
-        database.getResultSet("SELECT * FROM compsalt WHERE SaltName='" + componentName + "'")) {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database
+            .getResultSet("SELECT * FROM compsalt WHERE SaltName='" + componentName + "'")) {
       dataSet.next();
       String name1 = dataSet.getString("ion1").trim();
       val1 = Double.parseDouble(dataSet.getString("stoc1")) * value;
@@ -1185,25 +1184,19 @@ abstract class SystemThermo implements SystemInterface {
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
       throw new RuntimeException("No component with name: " + componentName + " in database");
     }
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    java.sql.ResultSet dataSet =
-        database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"));
+
     double molarmass = 0.0;
     double stddens = 0.0;
     double boilp = 0.0;
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"))) {
       dataSet.next();
       molarmass = Double.parseDouble(dataSet.getString("molarmass")) / 1000.0;
       stddens = Double.parseDouble(dataSet.getString("stddens"));
       boilp = Double.parseDouble(dataSet.getString("normboil"));
     } catch (Exception ex) {
       logger.error("failed " + ex.toString());
-    } finally {
-      try {
-        dataSet.close();
-      } catch (Exception ex) {
-        logger.error("error", ex);
-      }
     }
     neqsim.util.unit.Unit unit =
         new neqsim.util.unit.RateUnit(value, unitName, molarmass, stddens, boilp);
@@ -1286,13 +1279,13 @@ abstract class SystemThermo implements SystemInterface {
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
       throw new RuntimeException("No component with name: " + componentName + " in database");
     }
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    java.sql.ResultSet dataSet =
-        database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"));
+
     double molarmass = 0.0;
     double stddens = 0.0;
     double boilp = 0.0;
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"))) {
       dataSet.next();
       molarmass = Double.parseDouble(dataSet.getString("molarmass")) / 1000.0;
       stddens = Double.parseDouble(dataSet.getString("stddens"));
@@ -1300,18 +1293,6 @@ abstract class SystemThermo implements SystemInterface {
     } catch (Exception ex) {
       logger.error("failed " + ex.toString());
       throw new RuntimeException(ex);
-    } finally {
-      try {
-        dataSet.close();
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception ex) {
-        logger.error("error", ex);
-      }
     }
     neqsim.util.unit.Unit unit =
         new neqsim.util.unit.RateUnit(value, name, molarmass, stddens, boilp);
@@ -3098,7 +3079,7 @@ abstract class SystemThermo implements SystemInterface {
 
   /**
    * getPdVtn. Todo: document
-   * 
+   *
    * @return dpdv
    */
   public double getdPdVtn() {
@@ -3541,9 +3522,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void resetDatabase() {
-    neqsim.util.database.NeqSimDataBase database = null;
-    try {
-      database = new neqsim.util.database.NeqSimDataBase();
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       if (NeqSimDataBase.createTemporaryTables()) {
         database.execute("delete FROM comptemp");
         database.execute("delete FROM intertemp");
@@ -3552,29 +3531,17 @@ abstract class SystemThermo implements SystemInterface {
       logger.error("error in SystemThermo Class...resetDatabase() method");
       logger.error("error in comp");
       logger.error("error", ex);
-    } finally {
-      try {
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
-      }
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public void createDatabase(boolean reset) {
-    neqsim.util.database.NeqSimDataBase database = null;
-    try {
-      if (reset) {
-        resetDatabase();
-      }
-      database = new neqsim.util.database.NeqSimDataBase();
+    if (reset) {
+      resetDatabase();
+    }
+
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       String names = new String();
 
       for (int k = 0; k < getPhase(0).getNumberOfComponents() - 1; k++) {
@@ -3602,17 +3569,6 @@ abstract class SystemThermo implements SystemInterface {
       }
     } catch (Exception ex) {
       logger.error("error in SystemThermo Class...createDatabase() method", ex);
-    } finally {
-      try {
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
-      }
     }
   }
 
@@ -4054,11 +4010,10 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void saveToDataBase() {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     // java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM
     // SYSTEMREPORT"));
     // double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       database.execute("delete FROM systemreport");
       int i = 0;
       for (; i < numberOfComponents; i++) {
@@ -4124,20 +4079,8 @@ abstract class SystemThermo implements SystemInterface {
       // System.out.println(test);
       // dataSet.next();
       // dataSet.updateString(1,"tesst");
-      database.getConnection().close();
     } catch (Exception ex) {
       logger.error("failed " + ex.toString());
-    } finally {
-      try {
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception ex) {
-        logger.error("err closing database IN MIX...", ex);
-      }
     }
   }
 
@@ -4442,7 +4385,7 @@ abstract class SystemThermo implements SystemInterface {
     return getPhase(0).getComponent(number);
   }
 
-  
+
 
   /** {@inheritDoc} */
   @Override

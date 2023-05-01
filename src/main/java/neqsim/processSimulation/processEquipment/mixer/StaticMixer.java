@@ -122,13 +122,11 @@ public class StaticMixer extends Mixer {
       if (Double.isNaN(enthalpy)) {
         logger.error("error in StaticMixer calc0 - enthalpy NaN");
         testOps.TPflash();
-      }
-      else {
+      } else {
         testOps.PHflash(enthalpy, 0);
       }
-      //System.out.println("enthalp ok "  + enthalpy);
-    }
-    catch (Exception e) {
+      // System.out.println("enthalp ok " + enthalpy);
+    } catch (Exception e) {
       logger.error("error", e);
     }
     // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());

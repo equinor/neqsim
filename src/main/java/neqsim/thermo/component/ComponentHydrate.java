@@ -73,9 +73,8 @@ public class ComponentHydrate extends Component {
     reffug[0] = 10.0;
     reffug[1] = 1.0;
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       if (!component_name.equals("default")) {
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
@@ -106,12 +105,6 @@ public class ComponentHydrate extends Component {
       try {
         if (dataSet != null) {
           dataSet.close();
-        }
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
         }
       } catch (Exception ex) {
         logger.error("error closing database.....", ex);

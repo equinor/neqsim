@@ -53,10 +53,10 @@ public class CO2_MDEA {
     double x2;
     double x3;
     double bias;
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEA WHERE ID>196 AND ID<231");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet =
+            database.getResultSet("SELECT * FROM CO2WaterMDEA WHERE ID>196 AND ID<231")) {
       while (dataSet.next()) {
         i += 1;
         logger.info("Adding.... " + i);

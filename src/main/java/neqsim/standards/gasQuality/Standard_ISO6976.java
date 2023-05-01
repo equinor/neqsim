@@ -118,9 +118,9 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     Hinf20 = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
     Hinf25 = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
     Hinf60F = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+      java.sql.ResultSet dataSet = null;
+
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         try {
           dataSet = database.getResultSet(("SELECT * FROM iso6976constants WHERE ComponentName='"
@@ -173,13 +173,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     } catch (Exception ex) {
       String err = ex.toString();
       System.out.println(err);
-    } finally {
-      try {
-        dataSet.close();
-        database.getConnection().close();
-      } catch (Exception ex) {
-        logger.error(ex.getMessage());
-      }
     }
     // logger.info("ok adding components in " + getName());
   }
@@ -376,7 +369,9 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * <p>checkReferenceCondition.</p>
+   * <p>
+   * checkReferenceCondition.
+   * </p>
    */
   public void checkReferenceCondition() {
 
