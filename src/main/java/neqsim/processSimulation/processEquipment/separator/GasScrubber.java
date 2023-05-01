@@ -65,7 +65,7 @@ public class GasScrubber extends Separator {
 
   /**
    * Constructor for GasScrubber.
-   * 
+   *
    * @param name name of gas scrubber
    */
   public GasScrubber(String name) {
@@ -86,16 +86,24 @@ public class GasScrubber extends Separator {
     this.setOrientation("vertical");
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @return a
+   *         {@link neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign}
+   *         object
+   */
+  @Override
   public GasScrubberMechanicalDesign getMechanicalDesign() {
     return new GasScrubberMechanicalDesign(this);
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>inletStream</code>.
    * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
    */
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;

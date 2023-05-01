@@ -21,6 +21,11 @@ import org.apache.logging.log4j.Logger;
 public class ChemicalReactionFactory {
   static Logger logger = LogManager.getLogger(ChemicalReactionFactory.class);
 
+  /**
+   * <p>
+   * Constructor for ChemicalReactionFactory.
+   * </p>
+   */
   public ChemicalReactionFactory() {}
 
   /**
@@ -38,11 +43,11 @@ public class ChemicalReactionFactory {
     double refT = 0;
     double rateFactor = 0;
     double activationEnergy = 0;
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
-    try {
-      java.sql.ResultSet dataSet = null;
-      dataSet = database.getResultSet("SELECT * FROM reactionkspdata where name='" + name + "'");
+
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet("SELECT * FROM reactionkspdata where name='" + name + "'")) {
 
       dataSet.next();
       String reacname = dataSet.getString("name");
@@ -64,16 +69,11 @@ public class ChemicalReactionFactory {
       } while (dataSet2.next());
 
       // System.out.println("reaction added ok...");
-      dataSet.close();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
       System.out.println("could not add reacton: " + ex.toString());
     }
-    try {
-      database.getConnection().close();
-    } catch (Exception ex) {
-      System.out.println("err closing database");
-    }
+
     String[] nameArray = new String[names.size()];
     double[] stocCoefArray = new double[names.size()];
     for (int i = 0; i < names.size(); i++) {

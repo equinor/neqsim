@@ -1,19 +1,21 @@
 package neqsim.util;
 
+/**
+ * <p>NamedInterface interface.</p>
+ *
+ * @author ASMF
+ * @version $Id: $Id
+ */
 public interface NamedInterface {
     /**
-     * <p>
-     * getName.
-     * </p>
+     * Getter for property Name.
      *
      * @return a {@link java.lang.String} object
      */
     public String getName();
 
     /**
-     * <p>
-     * setName.
-     * </p>
+     * Setter for property Name.
      *
      * @param name a {@link java.lang.String} object
      */

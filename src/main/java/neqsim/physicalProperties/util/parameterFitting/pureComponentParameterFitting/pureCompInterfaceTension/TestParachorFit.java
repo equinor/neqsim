@@ -33,11 +33,9 @@ public class TestParachorFit {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database
-        .getResultSet("SELECT * FROM purecomponentsurfacetension WHERE ComponentName='MEG'");
-
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database
+        .getResultSet("SELECT * FROM purecomponentsurfacetension WHERE ComponentName='MEG'")) {
       while (dataSet.next()) {
         ParachorFunction function = new ParachorFunction();
         double guess[] = {207.2}; // methane

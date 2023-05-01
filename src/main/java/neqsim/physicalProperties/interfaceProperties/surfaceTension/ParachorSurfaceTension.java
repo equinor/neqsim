@@ -34,7 +34,9 @@ public class ParachorSurfaceTension extends SurfaceTension {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Calculates the pure component surfacetension using the Macleod/Sugden method
+   * </p>
    */
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
@@ -53,7 +55,9 @@ public class ParachorSurfaceTension extends SurfaceTension {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Calculates the surfacetension using the Macleod/Sugden method for mixtures Units: N/m
+   * </p>
    */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {

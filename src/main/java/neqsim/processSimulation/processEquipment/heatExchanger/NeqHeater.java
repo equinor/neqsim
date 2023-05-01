@@ -43,7 +43,7 @@ public class NeqHeater extends Heater {
 
   /**
    * Constructor for NeqHeater.
-   * 
+   *
    * @param name name of heater
    */
   public NeqHeater(String name) {
@@ -52,7 +52,7 @@ public class NeqHeater extends Heater {
 
   /**
    * Constructor for NeqHeater.
-   * 
+   *
    * @param name name of heater
    * @param inStream input stream
    */

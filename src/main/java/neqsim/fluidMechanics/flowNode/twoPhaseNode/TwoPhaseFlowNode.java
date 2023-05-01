@@ -60,7 +60,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
 
     // clonedSystem.molarMassTransferFlux = (double[])
-    // clonedSystem.molarMassTransferFlux.clone();;
+    // clonedSystem.molarMassTransferFlux.clone();
     // clonedSystem.molarMassTransfer = (double[])
     // clonedSystem.molarMassTransferFlux.clone();
     clonedSystem.fluidBoundary = fluidBoundary.clone();
@@ -150,8 +150,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       phaseFraction[1] = 1.0 - phaseFraction[0];
       // System.out.println("f " + f + " iterations " + iterations + " beta " +
       // phaseFraction[0]);
-    } // while(Math.abs((f-fOld)/f)>1e-8 && iterations<10000);
-    while (Math.abs(f) > 1e-2 && iterations < 100);
+    } while (Math.abs(f) > 1e-2 && iterations < 100);
+    // while(Math.abs((f-fOld)/f)>1e-8 && iterations<10000);
 
     if (iterations == 10000) {
       System.out.println("error in void init calc");

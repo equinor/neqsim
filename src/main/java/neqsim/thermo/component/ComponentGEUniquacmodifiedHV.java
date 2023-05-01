@@ -38,7 +38,6 @@ abstract class ComponentGEUniquacmodifiedHV extends ComponentGEUniquac {
     // PhaseGEInterface phaseny = (PhaseGEInterface) phase.getPhase();
     // PhaseGEInterface GEPhase = phaseny.getGEphase();
 
-    return 1; // super.getGamma(GEPhase, numberOfComponents, temperature, pressure,
-              // phasetype);
+    return 1; // super.getGamma(GEPhase, numberOfComponents, temperature, pressure, phasetype);
   }
 }

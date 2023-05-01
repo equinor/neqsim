@@ -33,13 +33,12 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-decane'");
 
     double parameterGuess[] = {188.385052774267, -0.84022345}; // , 2630.871733876947};
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='nC10'")) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 31) {
@@ -68,14 +67,14 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
+      dataSet.close();
     } catch (Exception ex) {
       logger.error("database error" + ex);
     }
 
-    dataSet = database.getResultSet(
-        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-heptane'");
-
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-heptane'");) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 60) {
@@ -104,14 +103,15 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
+      dataSet.close();
     } catch (Exception ex) {
       logger.error("database error" + ex);
     }
 
-    dataSet = database.getResultSet(
-        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-octane'");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-octane'")) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 50) {
@@ -140,14 +140,14 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
+      dataSet.close();
     } catch (Exception ex) {
       logger.info("database error" + ex);
     }
 
-    dataSet = database.getResultSet(
-        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-hexane'");
-
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-hexane'")) {
       int p = 0;
       logger.error("adding....");
       while (dataSet.next() && p < 30) {
@@ -176,14 +176,15 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
+      dataSet.close();
     } catch (Exception ex) {
       logger.error("database error" + ex);
     }
 
-    dataSet = database.getResultSet(
-        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-pentane'");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-pentane'");) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 30) {
@@ -216,10 +217,10 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       logger.error("database error" + ex);
     }
 
-    dataSet = database.getResultSet(
-        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='butane'");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='butane'");) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 30) {
@@ -248,14 +249,15 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         function.setInitialGuess(parameterGuess);
         sampleList.add(sample);
       }
+      dataSet.close();
     } catch (Exception ex) {
       logger.error("database error" + ex);
     }
 
-    dataSet = database.getResultSet(
-        "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='propane'");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='propane'");) {
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 30) {

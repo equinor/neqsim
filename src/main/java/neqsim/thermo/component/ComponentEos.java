@@ -100,11 +100,12 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
    * </p>
    *
    * @param number a int
-   * @param TC a double
-   * @param PC a double
-   * @param M a double
-   * @param a a double
-   * @param moles a double
+   * @param TC Critical temperature
+   * @param PC Critical pressure
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Number of moles
+   * 
    */
   public ComponentEos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -649,8 +650,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     // double scale2 = getAttractiveTerm().alpha(temperature) * 1e-5 * Math.pow(b * 1e-5, 2.0 /
     // 3.0) * (AA * TR + BB);
     // System.out.println("scale2 " + scale2);
-    return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB); /// Math.pow(ThermodynamicConstantsInterface.avagadroNumber,
-                                                                       /// 2.0 / 3.0);
+    return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB);
+    // Math.pow(ThermodynamicConstantsInterface.avagadroNumber, // 2.0 / 3.0);
   }
 
   /**
@@ -737,8 +738,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     return dFdNdN(compNumb2, phase, phase.getNumberOfComponents(), phase.getTemperature(),
         phase.getPressure())
         - dFdNdT(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure())
-            * 1.0 / phase.FTT(); // *
-    // phase.getComponent(compNumb2).getF;
+            * 1.0 / phase.FTT();
+    // * phase.getComponent(compNumb2).getF;
   }
 
   /**

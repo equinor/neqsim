@@ -27,6 +27,9 @@ public class TBPCharacterize extends PlusCharacterize {
     double[] TBP_Mnom = null;
     double[] TBP_M = null;
 
+    /**
+     * <p>Constructor for TBPCharacterize.</p>
+     */
     public TBPCharacterize() {}
 
     /**

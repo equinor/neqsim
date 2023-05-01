@@ -16,8 +16,8 @@ import neqsim.util.database.NeqSimDataBase;
 public class ComponentHydratePVTsim extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
 
-  double Ak[][] = new double[2][2]; // [structure][cavitytype]
-  double Bk[][] = new double[2][2]; // [structure][cavitytype]
+  double[][] Ak = new double[2][2]; // [structure][cavitytype]
+  double[][] Bk = new double[2][2]; // [structure][cavitytype]
   static Logger logger = LogManager.getLogger(ComponentHydratePVTsim.class);
 
   /**
@@ -34,11 +34,11 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
       int compnumber) {
     super(component_name, moles, molesInPhase, compnumber);
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
 
     if (!component_name.equals("default")) {
-      try {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         logger.info("reading hydrate parameters ..............");
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
@@ -70,7 +70,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
       } finally {
         try {
           dataSet.close();
-          database.getConnection().close();
         } catch (Exception ex2) {
           logger.error("error closing comp hydrate database....." + component_name);
           // logger.error(ex.getMessage());
@@ -101,8 +100,10 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
       double refWaterFugacityCoef = Math.log(refPhase.getComponent("water").fugcoef(refPhase));
 
-      double dhf = 6010.0, tmi = 273.15, dcp = 37.29;
+      double dhf = 6010.0;
 
+      double tmi = 273.15;
+      double dcp = 37.29;
       double LNFUG_ICEREF = refWaterFugacityCoef - (dhf / (R * tmi)) * (tmi / temp - 1.0)
           + (dcp / R) * ((tmi / temp) - 1.0 - Math.log(tmi / temp));
 
@@ -226,8 +227,9 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
    */
   public double calcDeltaChemPot(PhaseInterface phase, int numberOfComps, double temp, double pres,
       int hydrateStruct) {
-    double dGf = 0.0, dHf = 0.0;
+    double dGf = 0.0;
 
+    double dHf = 0.0;
     double Cp = 0;
 
     double deltaMolarVolume = 0.0;

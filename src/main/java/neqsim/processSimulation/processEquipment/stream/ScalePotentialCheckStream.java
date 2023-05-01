@@ -55,7 +55,7 @@ public class ScalePotentialCheckStream extends Stream {
 
   /**
    * Constructor for ScalePotentialCheckStream.
-   * 
+   *
    * @param name name of unit operation
    */
   public ScalePotentialCheckStream(String name) {
@@ -64,7 +64,7 @@ public class ScalePotentialCheckStream extends Stream {
 
   /**
    * Constructor for ScalePotentialCheckStream.
-   * 
+   *
    * @param name name of stream
    * @param stream input stream
    */

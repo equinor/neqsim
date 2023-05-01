@@ -66,11 +66,9 @@ public class PhaseGEUniquac extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGEUniquac(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentGEUniquac(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -88,7 +86,21 @@ public class PhaseGEUniquac extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+  public double getGibbsEnergy() {
+    return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExcessGibbsEnergy() {
+    // GE = getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure,
+    // phaseType);
+    return GE;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
@@ -98,19 +110,5 @@ public class PhaseGEUniquac extends PhaseGE {
     }
 
     return R * temperature * numberOfMolesInPhase * GE;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getGibbsEnergy() {
-    return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getExessGibbsEnergy() {
-    // GE = getExessGibbsEnergy(this, numberOfComponents, temperature, pressure,
-    // phaseType);
-    return GE;
   }
 }

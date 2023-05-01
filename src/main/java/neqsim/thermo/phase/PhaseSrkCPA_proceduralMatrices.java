@@ -596,11 +596,9 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(componentName, moles, molesInPhase, compNumber);
-    componentArray[compNumber] =
-        new ComponentSrkCPA(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentSrkCPA(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -1127,12 +1125,9 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     if (BonV >= 1.0) {
       BonV = 0.9999;
     }
+
+    double h;
     double BonVold;
-    double h = 0;
-    double dh = 0;
-    double dhh = 0;
-    double d1 = 0;
-    double d2 = 0;
     double Btemp = getB();
     if (Btemp < 0) {
       logger.info("b negative in volume calc");
@@ -1165,12 +1160,12 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
       BonVold = BonV;
       h = BonV - Btemp / numberOfMolesInPhase * dFdV()
           - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
-      dh = 1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
-      dhh = -2.0 * Btemp / (BonV2 * BonV) * (Btemp / numberOfMolesInPhase * dFdVdV())
+      double dh = 1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
+      double dhh = -2.0 * Btemp / (BonV2 * BonV) * (Btemp / numberOfMolesInPhase * dFdVdV())
           - (Btemp * Btemp) / (BonV2 * BonV2) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
 
-      d1 = -h / dh;
-      d2 = -dh / dhh;
+      double d1 = -h / dh;
+      double d2 = -dh / dhh;
       // System.out.println("h " + h + " iter " + iterations + " " + d1 + " d2 " + d2
       // + " d1 / d2 " + (d1 / d2));
       if (Math.abs(d1 / d2) <= 1.0) {

@@ -68,7 +68,7 @@ public class TPflash_benchmark {
     // testSystem.display();
     // SystemInterface testSystem2 =
     // testSystem.readObjectFromFile("c:/temp/test2.neqsim", "test2.neqsim");
-    /// testSystem2.init(3);
+    // testSystem2.init(3);
     // testSystem2.display();
     // testSystem2.init(0);
     // testSystem2.init(3);

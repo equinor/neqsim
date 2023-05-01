@@ -15,6 +15,7 @@ import neqsim.thermo.system.SystemInterface;
 public class WaxCharacterise implements java.io.Serializable, Cloneable {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(WaxCharacterise.class);
+
   SystemInterface thermoSystem = null;
   String name = "";
   protected WaxModelInterface model = new PedersenWaxModel();
@@ -171,7 +172,9 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
 
       for (int i = 0; i < numberOfCOmponents; i++) {
         if (hasWax && thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
-          double A = parameterWax[0], B = parameterWax[1], C = parameterWax[2];
+          double A = parameterWax[0];
+          double B = parameterWax[1];
+          double C = parameterWax[2];
           String compName = thermoSystem.getPhase(0).getComponent(i).getName().substring(3);
 
           double densityLocal = calcParaffinDensity(i);
@@ -199,8 +202,10 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
         } else if (!hasWax && (thermoSystem.getPhase(0).getComponent(i).isIsTBPfraction()
             || thermoSystem.getPhase(0).getComponent(i).isIsPlusFraction())) {
           // double A = 1.074, B = 6.584e-4, C = 0.1915;
-          double A = parameterWax[0], B = parameterWax[1], C = parameterWax[2];
+          double A = parameterWax[0];
 
+          double B = parameterWax[1];
+          double C = parameterWax[2];
           double densityLocal = calcParaffinDensity(i);
           double molesChange = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles()
               * (1.0 - (A + B * thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000.0)

@@ -17,7 +17,8 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
 
-  String comp1, comp2;
+  String comp1;
+  String comp2;
   /** Constant <code>Kcomplex=0.133736021815520500</code>. */
   public static double Kcomplex = 0.133736021815520500;
   /** Constant <code>HrefComplex=4598.717135</code>. */
@@ -88,7 +89,8 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     // system.setHydrateCheck(true);
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     int iter = 0;
-    double funkOld = 0.0, deltaT = 1.0;
+    double funkOld = 0.0;
+    double deltaT = 1.0;
     double[] Ksolid = new double[system.getPhase(0).getNumberOfComponents()];
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       Ksolid[i] = 1.0;
@@ -145,12 +147,15 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     double deltaT = 1.0;
 
     // logger.info("starting.... ");
-    int compNumber_1 = system.getPhase(0).getComponent(comp1).getComponentNumber(),
-        compNumber_2 = system.getPhase(0).getComponent(comp2).getComponentNumber();
+    int compNumber_1 = system.getPhase(0).getComponent(comp1).getComponentNumber();
 
     // MEGwater parameters
 
-    double temperature = 0.0, oldTemperature = 0.0, oldError = 0.0, error = 0.0;
+    int compNumber_2 = system.getPhase(0).getComponent(comp2).getComponentNumber();
+    double temperature = 0.0;
+    double oldTemperature = 0.0;
+    double oldError = 0.0;
+    double error = 0.0;
     boolean testFalse = true;
     int iteration = 0;
     do {

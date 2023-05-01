@@ -14,57 +14,57 @@ import org.netlib.util.intW;
  */
 public class GERG2008 {
   // Variables containing the common parameters in the GERG-2008 equations
-  static double RGERG;
-  static int NcGERG = 21;
-  static int MaxFlds = 21;
-  static int MaxMdl = 10;
-  static int MaxTrmM = 12;
-  static int MaxTrmP = 24;
-  static double epsilon = 1e-15;
-  static int[][] intcoik = new int[MaxFlds + 1][MaxTrmP + 1];
-  static int[][] coik = new int[MaxFlds + 1][MaxTrmP + 1];
-  static int[][] doik = new int[MaxFlds + 1][MaxTrmP + 1];
-  static int[][] dijk = new int[MaxMdl + 1][MaxTrmM + 1];
+   double RGERG;
+   int NcGERG = 21;
+   int MaxFlds = 21;
+   int MaxMdl = 10;
+   int MaxTrmM = 12;
+   int MaxTrmP = 24;
+   double epsilon = 1e-15;
+   int[][] intcoik = new int[MaxFlds + 1][MaxTrmP + 1];
+   int[][] coik = new int[MaxFlds + 1][MaxTrmP + 1];
+   int[][] doik = new int[MaxFlds + 1][MaxTrmP + 1];
+   int[][] dijk = new int[MaxMdl + 1][MaxTrmM + 1];
 
-  static double Drold;
-  static double Trold;
-  static double Told;
-  static double Trold2;
-  static double[] xold = new double[MaxFlds + 1];
-  static int[][] mNumb = new int[MaxFlds + 1][MaxFlds + 1];
-  static int[] kpol = new int[MaxFlds + 1];
-  static int[] kexp = new int[MaxFlds + 1];
-  static int[] kpolij = new int[MaxMdl + 1];
-  static int[] kexpij = new int[MaxMdl + 1];
+   double Drold;
+   double Trold;
+   double Told;
+   double Trold2;
+   double[] xold = new double[MaxFlds + 1];
+   int[][] mNumb = new int[MaxFlds + 1][MaxFlds + 1];
+   int[] kpol = new int[MaxFlds + 1];
+   int[] kexp = new int[MaxFlds + 1];
+   int[] kpolij = new int[MaxMdl + 1];
+   int[] kexpij = new int[MaxMdl + 1];
 
-  static double[] Dc = new double[MaxFlds + 1];
-  static double[] Tc = new double[MaxFlds + 1];
-  static double[] MMiGERG = new double[MaxFlds + 1];
-  static double[] Vc3 = new double[MaxFlds + 1];
-  static double[] Tc2 = new double[MaxFlds + 1];
+   double[] Dc = new double[MaxFlds + 1];
+   double[] Tc = new double[MaxFlds + 1];
+   double[] MMiGERG = new double[MaxFlds + 1];
+   double[] Vc3 = new double[MaxFlds + 1];
+   double[] Tc2 = new double[MaxFlds + 1];
 
-  static double[][] noik = new double[MaxFlds + 1][MaxTrmP + 1];
-  static double[][] toik = new double[MaxFlds + 1][MaxTrmP + 1];
+   double[][] noik = new double[MaxFlds + 1][MaxTrmP + 1];
+   double[][] toik = new double[MaxFlds + 1][MaxTrmP + 1];
 
-  static double[][] cijk = new double[MaxMdl + 1][MaxTrmM + 1];
+   double[][] cijk = new double[MaxMdl + 1][MaxTrmM + 1];
 
-  static double[][] eijk = new double[MaxMdl + 1][MaxTrmM + 1];
-  static double[][] gijk = new double[MaxMdl + 1][MaxTrmM + 1];
-  static double[][] nijk = new double[MaxMdl + 1][MaxTrmM + 1];
-  static double[][] tijk = new double[MaxMdl + 1][MaxTrmM + 1];
+   double[][] eijk = new double[MaxMdl + 1][MaxTrmM + 1];
+   double[][] gijk = new double[MaxMdl + 1][MaxTrmM + 1];
+   double[][] nijk = new double[MaxMdl + 1][MaxTrmM + 1];
+   double[][] tijk = new double[MaxMdl + 1][MaxTrmM + 1];
 
-  static double[][] btij = new double[MaxFlds + 1][MaxFlds + 1];
-  static double[][] bvij = new double[MaxFlds + 1][MaxFlds + 1];
-  static double[][] gtij = new double[MaxFlds + 1][MaxFlds + 1];
-  static double[][] gvij = new double[MaxFlds + 1][MaxFlds + 1];
+   double[][] btij = new double[MaxFlds + 1][MaxFlds + 1];
+   double[][] bvij = new double[MaxFlds + 1][MaxFlds + 1];
+   double[][] gtij = new double[MaxFlds + 1][MaxFlds + 1];
+   double[][] gvij = new double[MaxFlds + 1][MaxFlds + 1];
 
-  static double[][] fij = new double[MaxFlds + 1][MaxFlds + 1];
-  static double[][] th0i = new double[MaxFlds + 1][7 + 1];
-  static double[][] n0i = new double[MaxFlds + 1][7 + 1];
+   double[][] fij = new double[MaxFlds + 1][MaxFlds + 1];
+   double[][] th0i = new double[MaxFlds + 1][7 + 1];
+   double[][] n0i = new double[MaxFlds + 1][7 + 1];
 
-  static double[][] taup = new double[MaxFlds + 1][MaxTrmP + 1];
-  static double[][] taupijk = new double[MaxFlds + 1][MaxTrmM + 1];
-  static double dPdDsave;
+   double[][] taup = new double[MaxFlds + 1][MaxTrmP + 1];
+   double[][] taupijk = new double[MaxFlds + 1][MaxTrmM + 1];
+   double dPdDsave;
 
   /**
    * <p>
@@ -74,7 +74,7 @@ public class GERG2008 {
    * @param x an array of {@link double} objects
    * @param Mm a {@link org.netlib.util.doubleW} object
    */
-  public static void MolarMassGERG(double[] x, doubleW Mm) {
+  public  void MolarMassGERG(double[] x, doubleW Mm) {
     // Sub MolarMassGERG(x, Mm)
 
     // Calculate molar mass of the mixture with the compositions contained in the
@@ -107,7 +107,7 @@ public class GERG2008 {
    * @param P a {@link org.netlib.util.doubleW} object
    * @param Z a {@link org.netlib.util.doubleW} object
    */
-  public static void PressureGERG(double T, double D, double[] x, doubleW P, doubleW Z) {
+  public  void PressureGERG(double T, double D, double[] x, doubleW P, doubleW Z) {
     // Sub PressureGERG(T, D, x, P, Z)
 
     // Calculate pressure as a function of temperature and density. The derivative
@@ -156,7 +156,7 @@ public class GERG2008 {
    * @param ierr a {@link org.netlib.util.intW} object
    * @param herr a {@link org.netlib.util.StringW} object
    */
-  public static void DensityGERG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr,
+  public  void DensityGERG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr,
       StringW herr) {
     // Sub DensityGERG(iFlag, T, P, x, D, ierr, herr)
 
@@ -352,7 +352,7 @@ public class GERG2008 {
    * @param Kappa a {@link org.netlib.util.doubleW} object
    * @param A a {@link org.netlib.util.doubleW} object
    */
-  public static void PropertiesGERG(double T, double D, double[] x, doubleW P, doubleW Z,
+  public  void PropertiesGERG(double T, double D, double[] x, doubleW P, doubleW Z,
       doubleW dPdD, doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S,
       doubleW Cv, doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa, doubleW A) {
     // Sub PropertiesGERG(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv,
@@ -456,7 +456,7 @@ public class GERG2008 {
    * @param Dr ...
    */
   // The following routines are low-level routines that should not be called outside of this code.
-  static void ReducingParametersGERG(double[] x, doubleW Tr, doubleW Dr) {
+   void ReducingParametersGERG(double[] x, doubleW Tr, doubleW Dr) {
     // Private Sub ReducingParametersGERG(x, Tr, Dr)
 
     // Calculate reducing variables. Only need to call this if the composition has
@@ -521,7 +521,7 @@ public class GERG2008 {
    * @param x ...
    * @param a0 ...
    */
-  static void Alpha0GERG(double T, double D, double[] x, doubleW[] a0) {
+   void Alpha0GERG(double T, double D, double[] x, doubleW[] a0) {
     // Private Sub Alpha0GERG(T, D, x, a0)
 
     // Calculate the ideal gas Helmholtz energy and its derivatives with respect to
@@ -601,7 +601,7 @@ public class GERG2008 {
    * @param x ....
    * @param ar ...
    */
-  static void AlpharGERG(int itau, int idelta, double T, double D, double[] x, doubleW[][] ar) {
+   void AlpharGERG(int itau, int idelta, double T, double D, double[] x, doubleW[][] ar) {
     // Private Sub AlpharGERG(itau, idelta, T, D, x, ar)
 
     // Calculate dimensionless residual Helmholtz energy and its derivatives with
@@ -760,7 +760,7 @@ public class GERG2008 {
    * @param lntau ...
    * @param x ....
    */
-  static void tTermsGERG(double lntau, double[] x) {
+   void tTermsGERG(double lntau, double[] x) {
     // Private Sub tTermsGERG(lntau, x)
 
     // Calculate temperature dependent parts of the GERG-2008 equation of state
@@ -808,7 +808,7 @@ public class GERG2008 {
    * @param Tcx temperature in Kelvin
    * @param Dcx density
    */
-  static void PseudoCriticalPointGERG(double[] x, doubleW Tcx, doubleW Dcx) {
+   void PseudoCriticalPointGERG(double[] x, doubleW Tcx, doubleW Dcx) {
     // PseudoCriticalPointGERG(x, Tcx, Dcx)
 
     // Calculate a pseudo critical point as the mole fraction average of the
@@ -833,7 +833,7 @@ public class GERG2008 {
    * SetupGERG.
    * </p>
    */
-  public static void SetupGERG() {
+  public  void SetupGERG() {
     // Initialize all the constants and parameters in the GERG-2008 model.
     // Some values are modified for calculations that do not depend on T, D, and x in order to
     // speed up the program.
@@ -3233,7 +3233,7 @@ public class GERG2008 {
   @SuppressWarnings("unused")
   public static void main(String[] args) {
     GERG2008 test = new GERG2008();
-    GERG2008.SetupGERG();
+    test.SetupGERG();
 
     double T = 400;
     doubleW D = new doubleW(12.79828626082062);
@@ -3247,16 +3247,16 @@ public class GERG2008 {
     double[] x = {0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215,
         0.00088, 0.00024, 0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001};
 
-    GERG2008.MolarMassGERG(x, Mm);
+    test.MolarMassGERG(x, Mm);
 
-    System.out.println("mol mass " + Mm.val);
+   // System.out.println("mol mass " + Mm.val);
 
-    GERG2008.PressureGERG(T, D.val, x, P, Z);
+   test.PressureGERG(T, D.val, x, P, Z);
 
-    System.out.println("pressure " + P.val);
-    System.out.println("Z " + Z.val);
+   System.out.println("pressure " + P.val);
+   System.out.println("Z " + Z.val);
 
-    GERG2008.DensityGERG(iFlag, T, P.val, x, D, ierr, herr);
+   test.DensityGERG(iFlag, T, P.val, x, D, ierr, herr);
     System.out.println("density " + D.val);
 
     doubleW dPdD = new doubleW(0.0d);
@@ -3276,7 +3276,7 @@ public class GERG2008 {
     doubleW JT = new doubleW(0.0d);
     doubleW Kappa = new doubleW(0.0d);
     doubleW PP = new doubleW(0.0d);
-    GERG2008.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G,
+    test.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G,
         JT, Kappa, A);
 
     /*
@@ -3319,6 +3319,6 @@ public class GERG2008 {
     System.out
         .println("Joule-Thomson coefficient [K/kPa]:  7.155629581480913E-05 != %0.16g\n" + JT.val);
     System.out
-        .println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);;
+        .println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);
   }
 }

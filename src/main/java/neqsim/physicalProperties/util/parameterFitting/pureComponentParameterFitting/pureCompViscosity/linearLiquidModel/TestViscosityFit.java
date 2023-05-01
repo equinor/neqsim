@@ -35,10 +35,9 @@ public class TestViscosityFit {
 
     // inserting samples from database
     NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM purecomponentviscosity WHERE ComponentName='MEG' ORDER BY Temperature");
 
-    try {
+    try (ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM purecomponentviscosity WHERE ComponentName='MEG' ORDER BY Temperature")) {
       while (dataSet.next()) {
         ViscosityFunction function = new ViscosityFunction();
         // double guess[] = {-66.2, 11810, 0.1331, -0.0000983}; //mdea

@@ -26,10 +26,10 @@ public class OnePhasePipeFlowSolver
   protected Matrix sol2Matrix;
   protected Matrix sol3Matrix;
   protected Matrix[] sol4Matrix;
-  protected double a[];
-  protected double b[];
-  protected double c[];
-  protected double r[];
+  protected double[] a;
+  protected double[] b;
+  protected double[] c;
+  protected double[] r;
   protected double length;
   protected PipeFlowSystem pipe;
 

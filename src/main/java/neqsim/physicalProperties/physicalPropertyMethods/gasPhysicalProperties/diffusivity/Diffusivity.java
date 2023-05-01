@@ -18,7 +18,8 @@ public class Diffusivity extends
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Diffusivity.class);
 
-  double[][] binaryDiffusionCoefficients, binaryLennardJonesOmega;
+  double[][] binaryDiffusionCoefficients;
+  double[][] binaryLennardJonesOmega;
   double[] effectiveDiffusionCoefficient;
 
   /**
@@ -72,8 +73,14 @@ public class Diffusivity extends
   public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
     // method - estimation method
     // if(method==? then)
-    double A2 = 1.06036, B2 = 0.15610, C2 = 0.19300, D2 = 0.47635, E2 = 1.03587, F2 = 1.52996,
-        G2 = 1.76474, H2 = 3.89411;
+    double A2 = 1.06036;
+    double B2 = 0.15610;
+    double C2 = 0.19300;
+    double D2 = 0.47635;
+    double E2 = 1.03587;
+    double F2 = 1.52996;
+    double G2 = 1.76474;
+    double H2 = 3.89411;
     double tempVar2 = gasPhase.getPhase().getTemperature() / binaryEnergyParameter[i][j];
     binaryLennardJonesOmega[i][j] = A2 / Math.pow(tempVar2, B2) + C2 / Math.exp(D2 * tempVar2)
         + E2 / Math.exp(F2 * tempVar2) + G2 / Math.exp(H2 * tempVar2);

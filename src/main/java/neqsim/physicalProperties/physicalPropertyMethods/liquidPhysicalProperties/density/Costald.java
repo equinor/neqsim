@@ -25,7 +25,7 @@ public class Costald extends
 
   /**
    * <p>
-   * Constructor for Density.
+   * Constructor for Costald.
    * </p>
    */
   public Costald() {}
@@ -63,10 +63,9 @@ public class Costald extends
    */
   @Override
   public double calcDensity() {
-    // Densitites of compressed liquid mixture. Method book "The properties of Gases and Liquids"
-    // Bruce E. Poling
-    // 5.26
-    double tempVar = 0.0;
+    // Densities of compressed liquid mixture. Method book "The properties of Gases and Liquids"
+    // Bruce E. Poling 5.26
+    // double tempVar = 0.0;
     double ascFactMix = 0.0;
     double criticalVolumeMix1 = 0.0;
     double criticalVolumeMix2 = 0.0;
@@ -112,10 +111,12 @@ public class Costald extends
                 * liquidPhase.getPhase().getComponents()[i].getCriticalVolume())
             * liquidPhase.getPhase().getComponents()[i].getx();
 
-        tempVar += liquidPhase.getPhase().getComponents()[i].getx()
-            * (liquidPhase.getPhase().getComponents()[i].getVolumeCorrection()
-                + liquidPhase.getPhase().getComponents()[i].getVolumeCorrectionT()
-                    * (liquidPhase.getPhase().getTemperature() - 288.15));
+        /*
+         * tempVar += liquidPhase.getPhase().getComponents()[i].getx()
+         * (liquidPhase.getPhase().getComponents()[i].getVolumeCorrection() +
+         * liquidPhase.getPhase().getComponents()[i].getVolumeCorrectionT()
+         * (liquidPhase.getPhase().getTemperature() - 288.15));
+         */
       }
     }
     ascFactMix = Math.pow(ascFactMix, 2);

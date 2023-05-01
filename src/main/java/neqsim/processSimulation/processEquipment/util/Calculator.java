@@ -19,6 +19,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 public class Calculator extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Calculator.class);
+
   ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
   private ProcessEquipmentInterface outputVariable;
   String type = "sumTEG";
@@ -68,17 +69,22 @@ public class Calculator extends ProcessEquipmentBaseClass {
       }
     } else {
       for (int i = 0; i < inputVariable.size(); i++) {
-        sum += inputVariable.get(i).getFluid().getPhase(0).getComponent("TEG").getFlowRate("kg/hr");
+        sum += inputVariable.get(i).getFluid().getComponent("TEG").getFlowRate("kg/hr");
       }
     }
 
-    // System.out.println("make up MEG " + sum);
-    outputVariable.getFluid().setTotalFlowRate(sum, "kg/hr");
+    //System.out.println("make up TEG " + sum);
+    //((Stream) outputVariable).setFlowRate(sum, "kg/hr");
     try {
-      ((Stream) outputVariable).setFlowRate(sum, "kg/hr");
+      if (sum < 1e-10) {
+        sum = 1e-10;
+      }
+     ((Stream) outputVariable).setFlowRate(sum, "kg/hr");
+      outputVariable.run();
       outputVariable.setCalculationIdentifier(id);
     } catch (Exception ex) {
-      logger.error("error", ex.getMessage());
+      logger.info("flow rate error " + sum);
+      logger.error("error in calculator");//, ex.getMessage());
     }
     setCalculationIdentifier(id);
   }

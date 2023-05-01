@@ -44,7 +44,7 @@ public class ChemicalReaction extends NamedBaseClass
    * <p>
    * Constructor for ChemicalReaction.
    * </p>
-   * 
+   *
    * @deprecated use
    *             {@link #ChemicalReaction(String, String[], double[], double[], double, double, double)}
    *             instead
@@ -123,7 +123,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * reaction constant at reference temperature
+   * reaction constant at reference temperature.
    *
    * @return a double
    */
@@ -273,7 +273,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * Generaters initial estimates for the molenumbers
+   * Generaters initial estimates for the molenumbers.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
@@ -463,8 +463,8 @@ public class ChemicalReaction extends NamedBaseClass
   /**
    * Getter for property reactionHeat. Van't HOffs equation dh = d lnK/dT * R * T^2
    *
-   * @return Value of property reactionHeat.
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return Value of property reactionHeat.
    */
   public double getReactionHeat(PhaseInterface phase) {
     double diffKt =

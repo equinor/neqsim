@@ -169,6 +169,8 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
+   * <p>Getter for the field <code>saturationTemperature</code>.</p>
+   *
    * @return the saturationTemperature
    */
   public double getSaturationTemperature() {

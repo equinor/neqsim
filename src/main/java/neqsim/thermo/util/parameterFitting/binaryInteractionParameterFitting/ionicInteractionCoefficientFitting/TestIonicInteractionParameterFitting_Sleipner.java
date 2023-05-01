@@ -34,11 +34,12 @@ public class TestIonicInteractionParameterFitting_Sleipner {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM Sleipner");
+
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM Sleipneracid");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
+      ResultSet dataSet = database.getResultSet("SELECT * FROM Sleipner");
+
       int i = 0;
       while (dataSet.next()) {
         i++;
@@ -48,8 +49,8 @@ public class TestIonicInteractionParameterFitting_Sleipner {
         // double guess[]={0.0013916772,-3.951608e-4,-1.8265457361}; //AAD 10.31 %
         // double guess[]={0.0014020738,-3.053262}; //AAD 11.44%
         // double guess[]={0.0011258675,-9.282787e-4,-1.5524349158}; //AAD 10.74 %
-        double guess[] = {1.3053127e-3, -2.546896e-4, -0.975168}; // AAD 4.02 %
-        double bounds[][] = {{-1e-2, 1e-2}, {-1e-3, 0}, {-1, 1}};
+        double[] guess = {1.3053127e-3, -2.546896e-4, -0.975168}; // AAD 4.02 %
+        double[][] bounds = {{-1e-2, 1e-2}, {-1e-3, 0}, {-1, 1}};
 
         double ID = Double.parseDouble(dataSet.getString("ID"));
         double pressure = Double.parseDouble(dataSet.getString("Pressure"));
@@ -70,8 +71,8 @@ public class TestIonicInteractionParameterFitting_Sleipner {
         testSystem.setMixingRule(4);
         testSystem.init(0);
 
-        double sample1[] = {x1 / x4};
-        double standardDeviation1[] = {0.1, 0.01};
+        double[] sample1 = {x1 / x4};
+        double[] standardDeviation1 = {0.1, 0.01};
         double stddev = 0.01;
         SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
         function.setInitialGuess(guess);

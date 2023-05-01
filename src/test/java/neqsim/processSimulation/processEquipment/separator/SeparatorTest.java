@@ -41,11 +41,10 @@ class SeparatorTest extends neqsim.NeqSimTest {
     Separator sep = new Separator("inlet separator");
     sep.setInletStream(inletStream);
 
-    StreamInterface gasFromSep = new Stream("liquid from separator", sep.getLiquidOutStream());
-    StreamInterface liqFromSep = new Stream("liquid from separator", sep.getLiquidOutStream());
-
     processOps.add(inletStream);
     processOps.add(sep);
+    // StreamInterface gasFromSep = new Stream("liquid from separator", sep.getLiquidOutStream());
+    // StreamInterface liqFromSep = new Stream("liquid from separator", sep.getLiquidOutStream());
     // processOps.add(gasFromSep);
     // processOps.add(liqFromSep);
 

@@ -10,9 +10,12 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEosvolcor;
 
 /**
+ * <p>
+ * ComponentPRvolcor class.
+ * </p>
  *
  * @author Even Solbraa
- *
+ * @version $Id: $Id
  */
 public class ComponentPRvolcor extends ComponentPR {
 
@@ -21,27 +24,71 @@ public class ComponentPRvolcor extends ComponentPR {
   // private double calcc;
   public double[] Cij = new double[MAX_NUMBER_OF_COMPONENTS];
   public double Ci = 0;
+
+  /**
+   * <p>
+   * Constructor for ComponentPRvolcor.
+   * </p>
+   *
+   * @param number a int
+   * @param TC a double
+   * @param PC a double
+   * @param M a double
+   * @param a a double
+   * @param moles a double
+   */
   public ComponentPRvolcor(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
   }
 
   /// ** {@inheritDoc} */
   // @Override
+  /**
+   * <p>
+   * calcc.
+   * </p>
+   *
+   * @return a double
+   */
   public double calcc() {
     return (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R * criticalTemperature
         / criticalPressure;
   }
 
   // derivative of translation with regards to temperature
+  /**
+   * <p>
+   * calccT.
+   * </p>
+   *
+   * @return a double
+   */
   public double calccT() {
     return 0.;
   }
 
   // second derivative of translation with regards to temperature*temperature
+  /**
+   * <p>
+   * calccTT.
+   * </p>
+   *
+   * @return a double
+   */
   public double calccTT() {
     return 0.;
   }
 
+  /**
+   * <p>
+   * Constructor for ComponentPRvolcor.
+   * </p>
+   *
+   * @param component_name a {@link java.lang.String} object
+   * @param moles a double
+   * @param molesInPhase a double
+   * @param compnumber a int
+   */
   public ComponentPRvolcor(String component_name, double moles, double molesInPhase,
       int compnumber) {
     super(component_name, moles, molesInPhase, compnumber);
@@ -58,11 +105,17 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /** {@inheritDoc} */
-  // @Override
   public double getc() {
     return c;
   }
 
+  /**
+   * <p>
+   * getcT.
+   * </p>
+   *
+   * @return a double
+   */
   public double getcT() {
     return 0;
   }
@@ -71,13 +124,11 @@ public class ComponentPRvolcor extends ComponentPR {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) 
-      { 
-        super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, type);
-        Ci = ((PhasePrEosvolcor) phase).calcCi(componentNumber, phase, temp, pres, numberOfComponents);
+      int numberOfComponents, int type) {
+    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, type);
+    Ci = ((PhasePrEosvolcor) phase).calcCi(componentNumber, phase, temp, pres, numberOfComponents);
     if (type >= 2) {
-      ((PhasePrEosvolcor) phase).calcCiT(componentNumber, phase, temp, pres,
-          numberOfComponents);
+      ((PhasePrEosvolcor) phase).calcCiT(componentNumber, phase, temp, pres, numberOfComponents);
     }
 
     if (type >= 3) {
@@ -88,10 +139,25 @@ public class ComponentPRvolcor extends ComponentPR {
     }
   }
 
+  /**
+   * <p>
+   * getCi.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCi() {
     return Ci;
   }
 
+  /**
+   * <p>
+   * getCij.
+   * </p>
+   *
+   * @param j a int
+   * @return a double
+   */
   public double getCij(int j) {
     return Cij[j];
   }
@@ -100,10 +166,24 @@ public class ComponentPRvolcor extends ComponentPR {
   // modified
 
   // second derivative of C with regards to mole fraction and temperature
+  /**
+   * <p>
+   * getCiT.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCiT() {
     return 0;
   }
 
+  /**
+   * <p>
+   * getcTT.
+   * </p>
+   *
+   * @return a double
+   */
   public double getcTT() {
     return 0;
   }
@@ -113,11 +193,22 @@ public class ComponentPRvolcor extends ComponentPR {
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     return phase.Fn() + phase.FB() * getBi() + phase.FD() * getAi()
-        + ((PhasePrEosvolcor) phase).FC() * getCi();  
+        + ((PhasePrEosvolcor) phase).FC() * getCi();
   }
 
+  /**
+   * <p>
+   * getFC.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @return a double
+   */
   public double getFC(PhaseInterface phase, int numberOfComponents, double temperature,
-  double pressure) {
+      double pressure) {
     return ((PhasePrEosvolcor) phase).FC();
   }
 

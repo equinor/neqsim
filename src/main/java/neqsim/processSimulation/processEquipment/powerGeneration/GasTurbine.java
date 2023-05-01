@@ -45,10 +45,17 @@ public class GasTurbine extends TwoPortEquipment {
     this("GasTurbine");
   }
 
+  /**
+   * <p>
+   * Constructor for GasTurbine.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public GasTurbine(String name) {
     super(name);
     // needs to be changed to gas tubing mechanical design
-    SystemInterface airThermoSystem = neqsim.thermo.Fluid.create("combustion air");
+    SystemInterface airThermoSystem = new neqsim.thermo.Fluid().create("combustion air");
     airThermoSystem.createDatabase(true);
     // airThermoSystem.display();
     airStream = new Stream("airStream", airThermoSystem);
@@ -84,6 +91,14 @@ public class GasTurbine extends TwoPortEquipment {
     super(name, inletStream);
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @return a
+   *         {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
+   *         object
+   */
+  @Override
   public CompressorMechanicalDesign getMechanicalDesign() {
     return new CompressorMechanicalDesign(this);
   }
@@ -111,12 +126,11 @@ public class GasTurbine extends TwoPortEquipment {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>inletStream</code>.
    * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
    */
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;

@@ -67,7 +67,7 @@ public class TestUNIFAC_1 {
         / testSystem.getPhase(1).getMolarMass() * 100.0));
 
     logger.info(testSystem.getPhase(1).getActivityCoefficient(0));
-    logger.info("gibbs " + testSystem.getPhase(1).getExessGibbsEnergy());
+    logger.info("gibbs " + testSystem.getPhase(1).getExcessGibbsEnergy());
     for (int i = 0; i < 2000; i++) {
       try {
         // testOps.bubblePointPressureFlash(false);

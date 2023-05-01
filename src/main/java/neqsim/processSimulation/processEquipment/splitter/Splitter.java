@@ -21,11 +21,17 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Splitter.class);
 
-  SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
+  SystemInterface thermoSystem;
+  SystemInterface gasSystem;
+  SystemInterface waterSystem;
+  SystemInterface liquidSystem;
+  SystemInterface thermoSystemCloned;
   StreamInterface inletStream;
   StreamInterface[] splitStream;
   protected int splitNumber = 1;
   double[] splitFactor = new double[1];
+  double[] flowRates;
+  String flowUnit = "mole/sec";
 
   /**
    * <p>
@@ -52,7 +58,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /**
    * Constructor for Splitter.
-   * 
+   *
    * @param name name of splitter
    */
   public Splitter(String name) {
@@ -61,7 +67,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /**
    * Constructor for Splitter.
-   * 
+   *
    * @param name name of splitter
    * @param inStream input stream
    */
@@ -92,6 +98,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     splitNumber = i;
     splitFactor = new double[splitNumber];
     splitFactor[0] = 1.0;
+    setInletStream(inletStream);
   }
 
   /**
@@ -114,21 +121,72 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       splitFactor[i] = splitFact[i] / sum;
     }
     splitNumber = splitFact.length;
+    flowRates = null;
     setInletStream(inletStream);
+  }
+
+  /**
+   * <p>
+   * setFlowRates.
+   * </p>
+   *
+   * @param flowRates an array of {@link double} objects
+   * @param flowUnit a {@link java.lang.String} object
+   */
+  public void setFlowRates(double[] flowRates, String flowUnit) {
+    if (flowRates.length != splitNumber) {
+      setInletStream(inletStream);
+    }
+    this.flowRates = flowRates;
+    this.flowUnit = flowUnit;
+
+    splitNumber = flowRates.length;
+    splitFactor = new double[flowRates.length];
+    splitFactor[0] = 1.0;
+    setInletStream(inletStream);
+  }
+
+  /**
+   * <p>calcSplitFactors.</p>
+   */
+  public void calcSplitFactors() {
+    double sum = 0.0;
+    for (int i = 0; i < flowRates.length; i++) {
+      if (flowRates[i] > 0.0) {
+        sum += flowRates[i];
+      }
+    }
+
+    double missingFlowRate = 0.0;
+    for (int i = 0; i < flowRates.length; i++) {
+      if (flowRates[i] < -0.1) {
+        missingFlowRate = inletStream.getFlowRate(flowUnit) - sum;
+        sum += missingFlowRate;
+      }
+    }
+
+    splitFactor = new double[flowRates.length];
+    for (int i = 0; i < flowRates.length; i++) {
+      splitFactor[i] = flowRates[i] / sum;
+      if (flowRates[i] < -0.1) {
+        splitFactor[i] = missingFlowRate / sum;
+      }
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;
-    splitStream = new Stream[splitNumber];
-    try {
-      for (int i = 0; i < splitNumber; i++) {
-        // System.out.println("splitting...." + i);
-        splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
+    if (splitStream == null || splitStream.length != splitNumber) {
+      splitStream = new Stream[splitNumber];
+      try {
+        for (int i = 0; i < splitNumber; i++) {
+          splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
+        }
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
     }
   }
 
@@ -142,6 +200,11 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   @Override
   public void run(UUID id) {
     double totSplit = 0.0;
+
+    if (flowRates != null) {
+      calcSplitFactors();
+    }
+
     for (int i = 0; i < splitNumber; i++) {
       if (splitFactor[i] < 0) {
         logger.debug("split factor negative = " + splitFactor[i]);

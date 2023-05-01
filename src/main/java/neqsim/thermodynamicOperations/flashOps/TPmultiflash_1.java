@@ -27,7 +27,7 @@ public class TPmultiflash_1 extends TPflash {
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
   double[] dQdbeta;
-  double Qmatrix[][];
+  double[][] Qmatrix;
   double[] E;
   double Q = 0;
 

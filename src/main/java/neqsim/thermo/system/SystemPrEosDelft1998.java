@@ -9,10 +9,14 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemPrEosDelft1998 extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>Constructor for SystemPrEosDelft1998.</p>
+   */
   public SystemPrEosDelft1998() {
     super();
     modelName = "PR Delft1998 EOS";

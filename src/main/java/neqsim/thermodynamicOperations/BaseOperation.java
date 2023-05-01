@@ -19,7 +19,7 @@ import neqsim.thermo.system.SystemInterface;
 public abstract class BaseOperation implements OperationInterface {
   private static final long serialVersionUID = 1000;
 
-  SystemInterface systemThermo = null;;
+  SystemInterface systemThermo = null;
 
   /**
    * <p>

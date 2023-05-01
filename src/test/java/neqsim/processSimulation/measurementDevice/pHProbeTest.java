@@ -1,6 +1,8 @@
 package neqsim.processSimulation.measurementDevice;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -8,6 +10,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 class pHProbeTest {
+  static Logger logger = LogManager.getLogger(pHProbeTest.class);
 
   @BeforeAll
   static void setUpBeforeClass() throws Exception {}
@@ -28,16 +31,16 @@ class pHProbeTest {
     testFluid.addComponent("water", 141.053);
     testFluid.setMixingRule(10);
     testFluid.setMultiPhaseCheck(true);
-    
+
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
-    
+
     pHProbe phmeasurement = new pHProbe(stream_1);
     phmeasurement.run();
-    System.out.println("pH " + phmeasurement.getMeasuredValue());
-    assertEquals(4.079098133484792, phmeasurement.getMeasuredValue(),0.01);
+    logger.info("pH " + phmeasurement.getMeasuredValue());
+    assertEquals(4.079098133484792, phmeasurement.getMeasuredValue(), 0.01);
   }
-  
+
   @Test
   void testGetMeasuredValueWithAlkanility() {
     SystemInterface testFluid = new SystemSrkCPAstatoil(318.15, 50.0);
@@ -54,25 +57,24 @@ class pHProbeTest {
     testFluid.addComponent("water", 141.053);
     testFluid.setMixingRule(10);
     testFluid.setMultiPhaseCheck(true);
-    
+
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
-    
+
     pHProbe phmeasurement = new pHProbe(stream_1);
     phmeasurement.setAlkanility(50.0);
     phmeasurement.run();
-    System.out.println("pH " + phmeasurement.getMeasuredValue());
-    assertEquals(5.629055432357595, phmeasurement.getMeasuredValue(),0.01);
+    logger.info("pH " + phmeasurement.getMeasuredValue());
+    assertEquals(5.629055432357595, phmeasurement.getMeasuredValue(), 0.01);
   }
 
   @Test
   void testPHProbe() {
-    //fail("Not yet implemented");
+    // fail("Not yet implemented");
   }
 
   @Test
   void testPHProbeStreamInterface() {
-    //fail("Not yet implemented");
+    // fail("Not yet implemented");
   }
-
 }

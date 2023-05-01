@@ -37,15 +37,15 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
     NeqSimDataBase database = new NeqSimDataBase();
     ResultSet dataSet = database.getResultSet(
         "SELECT * FROM luciadata8 WHERE Component='methane' AND Temperature>410.15 AND Pressure<100000000 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure"); // AND
-                                                                                                                                                                         // Reference='Houghton1957'
-                                                                                                                                                                         // AND
-                                                                                                                                                                         // Reference<>'Nighswander1989'
-                                                                                                                                                                         // AND
-                                                                                                                                                                         // Temperature>278.15
-                                                                                                                                                                         // AND
-                                                                                                                                                                         // Temperature<383.15
-                                                                                                                                                                         // AND
-                                                                                                                                                                         // Pressure<60.01325");
+                                                                                                                                                                          // Reference='Houghton1957'
+                                                                                                                                                                          // AND
+                                                                                                                                                                          // Reference<>'Nighswander1989'
+                                                                                                                                                                          // AND
+                                                                                                                                                                          // Temperature>278.15
+                                                                                                                                                                          // AND
+                                                                                                                                                                          // Temperature<383.15
+                                                                                                                                                                          // AND
+                                                                                                                                                                          // Pressure<60.01325");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
     // Component='nitrogen' AND Temperature<390 AND L2<>NULL AND L2>0.0000000001
     // ORDER BY Temperature,Pressure");
@@ -81,8 +81,8 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
         // testSystem.createDatabase(true);
         testSystem.setMixingRule(7);
         testSystem.init(0);
-        double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
-        double standardDeviation1[] = {0.01};
+        double[] sample1 = {testSystem.getPressure(), testSystem.getTemperature()};
+        double[] standardDeviation1 = {0.01};
         double val = Double.parseDouble(dataSet.getString("L2"));
         double sdev = val / 100.0;
         SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -90,7 +90,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
         sample.setThermodynamicSystem(testSystem); // 34.7
         sample.setReference(Double.toString(testSystem.getTemperature()));
         // double parameterGuess[] = {0.05155112588}; //srk
-        double parameterGuess[] = {0.0459393339}; // cpa-srk- metan 23.658199 abs dev bias
+        double[] parameterGuess = {0.0459393339}; // cpa-srk- metan 23.658199 abs dev bias
                                                   // -6.267%
         // double parameterGuess[] = {0.1592294845}; //cpa-pr - metan 21.9
         // double parameterGuess[] = {-0.059201934}; //cpa-srk - nitrogen
@@ -152,8 +152,8 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
         testSystem.init(0);
         testSystem.setMixingRule(7);
 
-        double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
-        double standardDeviation1[] = {0.01};
+        double[] sample1 = {testSystem.getPressure(), testSystem.getTemperature()};
+        double[] standardDeviation1 = {0.01};
         double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
         double sdev = val / 100.0;
         SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -162,7 +162,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
         sample.setReference(Double.toString(testSystem.getTemperature()));
         // double parameterGuess[] = {0.0459393339}; //cpa-srk- metan 23.658199 abs dev
         // bias -6.267%
-        double parameterGuess[] = {0.0459393339}; // cpa-pr - metan
+        double[] parameterGuess = {0.0459393339}; // cpa-pr - metan
         // double parameterGuess[] = {-0.059201934}; //cpa-srk - nitrogen
         // double parameterGuess[] = {0.1};
         // double parameterGuess[] = {0.2413992410}; //cpa-pr - nitrogen
