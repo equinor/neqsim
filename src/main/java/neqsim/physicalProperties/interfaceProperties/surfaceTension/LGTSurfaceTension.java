@@ -182,8 +182,8 @@ public class LGTSurfaceTension extends SurfaceTension {
         break;
       }
       surdenstemp +=
-          Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber]; // *
-                                                                                                  // thermo.ThermodynamicConstantsInterface.avagadroNumber;
+          Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber];
+      // thermo.ThermodynamicConstantsInterface.avagadroNumber;
       // System.out.println("surdenstemp " + surdenstemp + " kappa " + kappa + "
       // mu_times_den[j] " + mu_times_den[j] + " z " + z_step[j]);
     }

@@ -206,8 +206,8 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0; // mol/dm^3
     double critMolDens = 10.15;
     double redMolDens = (molDens - critMolDens) / critMolDens;
-    molDens = referenceSystem.getLowestGibbsEnergyPhase().getDensity() * 1e-3; // density in
-                                                                               // gr/cm^3
+    // density in gr/cm^3
+    molDens = referenceSystem.getLowestGibbsEnergyPhase().getDensity() * 1e-3;
 
     double viscRefO = GVcoef[0] * Math.pow(temp, -1.0) + GVcoef[1] * Math.pow(temp, -2.0 / 3.0)
         + GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3] + GVcoef[4] * Math.pow(temp, 1.0 / 3.0)
