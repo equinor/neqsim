@@ -21,30 +21,30 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class GlycolPhysicalProperties extends LiquidPhysicalProperties {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for GlycolPhysicalProperties.
-     * </p>
-     */
-    public GlycolPhysicalProperties() {}
+  /**
+   * <p>
+   * Constructor for GlycolPhysicalProperties.
+   * </p>
+   */
+  public GlycolPhysicalProperties() {}
 
-    /**
-     * <p>
-     * Constructor for GlycolPhysicalProperties.
-     * </p>
-     *
-     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-     * @param binaryDiffusionCoefficientMethod a int
-     * @param multicomponentDiffusionMethod a int
-     */
-    public GlycolPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
-            int multicomponentDiffusionMethod) {
-        super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-        conductivityCalc = new Conductivity(this);
-        viscosityCalc = new Viscosity(this);
-        diffusivityCalc = new SiddiqiLucasMethod(this);
-        densityCalc = new Density(this);
-    }
+  /**
+   * <p>
+   * Constructor for GlycolPhysicalProperties.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param binaryDiffusionCoefficientMethod a int
+   * @param multicomponentDiffusionMethod a int
+   */
+  public GlycolPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
+      int multicomponentDiffusionMethod) {
+    super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
+    conductivityCalc = new Conductivity(this);
+    viscosityCalc = new Viscosity(this);
+    diffusivityCalc = new SiddiqiLucasMethod(this);
+    densityCalc = new Density(this);
+  }
 }

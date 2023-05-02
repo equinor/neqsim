@@ -11,21 +11,21 @@ import neqsim.thermodynamicOperations.OperationInterface;
  * @version $Id: $Id
  */
 public interface constantDutyFlashInterface extends OperationInterface {
-    /**
-     * <p>
-     * setBeta.
-     * </p>
-     *
-     * @param beta a double
-     */
-    public void setBeta(double beta);
+  /**
+   * <p>
+   * setBeta.
+   * </p>
+   *
+   * @param beta a double
+   */
+  public void setBeta(double beta);
 
-    /**
-     * <p>
-     * isSuperCritical.
-     * </p>
-     *
-     * @return a boolean
-     */
-    public boolean isSuperCritical();
+  /**
+   * <p>
+   * isSuperCritical.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isSuperCritical();
 }

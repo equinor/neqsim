@@ -182,15 +182,17 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
         * getInterphaseContactArea();
     double liquid_dT = -this.flowDirection[1] * heatFlux / getBulkSystem().getPhase(1).getCp();
     double gas_dT = this.flowDirection[0] * heatFlux / getBulkSystem().getPhase(0).getCp();
-    liquid_dT += 0.0; // getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1,
-                      // this)*(getBulkSystem().getPhase(1).getTemperature()-pipe.getOuterTemperature())
-                      // * getWallContactLength(1) *
-                      // getGeometry().getNodeLength()/getBulkSystem().getPhase(1).getCp();
-    liquid_dT += 0.0; // getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0,
-                      // this)*
-                      // (getBulkSystem().getPhase(0).getTemperature()-pipe.getOuterTemperature())*
-                      // getWallContactLength(0) *
-                      // getGeometry().getNodeLength()/getBulkSystem().getPhase(0).getCp();
+    liquid_dT += 0.0;
+    // getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1,
+    // this)*(getBulkSystem().getPhase(1).getTemperature()-pipe.getOuterTemperature())
+    // * getWallContactLength(1) *
+    // getGeometry().getNodeLength()/getBulkSystem().getPhase(1).getCp();
+    liquid_dT += 0.0;
+    // getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0,
+    // this)*
+    // (getBulkSystem().getPhase(0).getTemperature()-pipe.getOuterTemperature())*
+    // getWallContactLength(0) *
+    // getGeometry().getNodeLength()/getBulkSystem().getPhase(0).getCp();
     System.out.println("liq dT1 " + liquid_dT);
     liquid_dT += this.flowDirection[1]
         * getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat()

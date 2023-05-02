@@ -77,8 +77,9 @@ public class VHflash extends Flash {
         } else {
           // System.out.println("pres " + (system.getPressure()+0.1*dPdV*(newVol-Vspec)));
           system.setPressure(
-              system.getPressure() - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec)); // system.getdVdPtn()*(newVol-Vspec));
-                                                                                         // //dPdV*(newVol-Vspec));
+              system.getPressure() - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec));
+          // system.getdVdPtn()*(newVol-Vspec));
+          // //dPdV*(newVol-Vspec));
         }
         // pNew = system.getPressure();
         // dPdV = (pOld - pOldOld) / (newVol - oldVol);

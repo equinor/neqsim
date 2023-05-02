@@ -96,17 +96,17 @@ public class SystemProperties {
         names[++k] = currPhaseName + "Molecular Weight [g/mol]";
         values[k] = currPhase.getMolarMass() * 1000;
         names[++k] = currPhaseName + "Enthalpy [J/mol]";
-        values[k] = currPhase.getEnthalpy("J/mol"); // currPhase.getEnthalpy() /
-                                                    // currPhase.getNumberOfMolesInPhase();
+        values[k] = currPhase.getEnthalpy("J/mol");
+        // currPhase.getEnthalpy() / currPhase.getNumberOfMolesInPhase();
         names[++k] = currPhaseName + "Entropy [J/molK]";
-        values[k] = currPhase.getEntropy("J/molK"); // currPhase.getEntropy() /
-                                                    // currPhase.getNumberOfMolesInPhase();
+        values[k] = currPhase.getEntropy("J/molK");
+        // currPhase.getEntropy() / currPhase.getNumberOfMolesInPhase();
         names[++k] = currPhaseName + "Heat Capacity-Cp [J/molK]";
-        values[k] = currPhase.getCp("J/molK"); // currPhase.getCp() /
-                                               // currPhase.getNumberOfMolesInPhase();
+        values[k] = currPhase.getCp("J/molK");
+        // currPhase.getCp() / currPhase.getNumberOfMolesInPhase();
         names[++k] = currPhaseName + " Heat Capacity-Cv [J/molK]";
-        values[k] = currPhase.getCv("J/molK"); // currPhase.getCv() /
-                                               // currPhase.getNumberOfMolesInPhase();
+        values[k] = currPhase.getCv("J/molK");
+        // currPhase.getCv() / currPhase.getNumberOfMolesInPhase();
         names[++k] = currPhaseName + " Kappa (Cp/Cv)";
         values[k] = currPhase.getGamma(); // currPhase.getCp() / currPhase.getCv();
         names[++k] = currPhaseName + " JT Coefficient [K/Pa]";
