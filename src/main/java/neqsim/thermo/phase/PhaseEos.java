@@ -95,12 +95,12 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     }
 
     if (type != 0) {
-      setPhaseTypeName(phase == 0 ? "liquid" : "gas");
+      setPhaseTypeName(phase.getValue() == 0 ? "liquid" : "gas");
       try {
         if (calcMolarVolume) {
           molarVolume = molarVolume(pressure, temperature,
               getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase,
-              phase);
+              phase.getValue());
         }
       } catch (Exception ex) {
         logger.error("Failed to solve for molarVolume within the iteration limit.");
