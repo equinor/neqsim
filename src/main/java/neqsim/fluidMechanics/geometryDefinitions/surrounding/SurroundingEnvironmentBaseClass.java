@@ -9,37 +9,37 @@ package neqsim.fluidMechanics.geometryDefinitions.surrounding;
  * @version $Id: $Id
  */
 public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment {
-    /** {@inheritDoc} */
-    @Override
-    public double getTemperature() {
-        return temperature;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getTemperature() {
+    return temperature;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setTemperature(double temperature) {
-        this.temperature = temperature;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setTemperature(double temperature) {
+    this.temperature = temperature;
+  }
 
-    private double heatTransferCoefficient = 20.0;
-    private double temperature = 298.15;
+  private double heatTransferCoefficient = 20.0;
+  private double temperature = 298.15;
 
-    /**
-     * <p>
-     * Constructor for SurroundingEnvironmentBaseClass.
-     * </p>
-     */
-    public SurroundingEnvironmentBaseClass() {}
+  /**
+   * <p>
+   * Constructor for SurroundingEnvironmentBaseClass.
+   * </p>
+   */
+  public SurroundingEnvironmentBaseClass() {}
 
-    /** {@inheritDoc} */
-    @Override
-    public double getHeatTransferCoefficient() {
-        return heatTransferCoefficient;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getHeatTransferCoefficient() {
+    return heatTransferCoefficient;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setHeatTransferCoefficient(double heatTransferCoefficient) {
-        this.heatTransferCoefficient = heatTransferCoefficient;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setHeatTransferCoefficient(double heatTransferCoefficient) {
+    this.heatTransferCoefficient = heatTransferCoefficient;
+  }
 }

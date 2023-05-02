@@ -13,35 +13,35 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public abstract class OnePhaseFlowSystem extends FlowSystem {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    // public FluidMechanicsInterface[] flowNode;
-    public PipeData pipe;
+  // public FluidMechanicsInterface[] flowNode;
+  public PipeData pipe;
 
-    /**
-     * <p>
-     * Constructor for OnePhaseFlowSystem.
-     * </p>
-     */
-    public OnePhaseFlowSystem() {}
+  /**
+   * <p>
+   * Constructor for OnePhaseFlowSystem.
+   * </p>
+   */
+  public OnePhaseFlowSystem() {}
 
-    /**
-     * <p>
-     * Constructor for OnePhaseFlowSystem.
-     * </p>
-     *
-     * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     */
-    public OnePhaseFlowSystem(SystemInterface system) {}
+  /**
+   * <p>
+   * Constructor for OnePhaseFlowSystem.
+   * </p>
+   *
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public OnePhaseFlowSystem(SystemInterface system) {}
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        System.out.println("Hei der!");
-    }
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String[] args) {
+    System.out.println("Hei der!");
+  }
 }
