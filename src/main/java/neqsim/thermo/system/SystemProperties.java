@@ -184,7 +184,7 @@ public class SystemProperties {
   }
 
   /**
-   * Get property names and values as a map
+   * Get property names and values as a map.
    *
    * @return map of property name and values
    */
@@ -197,7 +197,7 @@ public class SystemProperties {
   }
 
   /**
-   * Getter for property values
+   * Getter for property values.
    *
    * @return Systemproperty values
    */
@@ -206,7 +206,7 @@ public class SystemProperties {
   }
 
   /**
-   * Get names of properties
+   * Get names of properties.
    *
    * @return Array of names of properties
    */
