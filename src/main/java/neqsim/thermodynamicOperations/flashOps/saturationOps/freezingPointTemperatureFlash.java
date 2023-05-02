@@ -144,7 +144,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
             // iterations));
           }
 
-          logger.info("phase type " + system.getPhase(0).getType().getDesc());
+          logger.info("phase type " + system.getPhase(0).getType());
           newTemp = system.getTemperature() - 0.9 * funk / deriv;
           logger.info("temperature " + system.getTemperature());
           oldTemperature = system.getTemperature();
