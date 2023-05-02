@@ -59,9 +59,10 @@ public class PhaseDefault extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    // todo: redundant?
+    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
   }
 
   /** {@inheritDoc} */

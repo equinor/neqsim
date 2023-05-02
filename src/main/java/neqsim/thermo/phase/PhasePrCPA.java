@@ -57,7 +57,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     boolean Xsolved = true;
     int totiter = 0;

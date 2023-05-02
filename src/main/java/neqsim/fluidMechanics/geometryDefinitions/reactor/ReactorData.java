@@ -115,6 +115,7 @@ public class ReactorData extends GeometryDefinition {
   /** {@inheritDoc} */
   @Override
   public void init() {
+    // todo: redundant?
     super.init();
   }
 

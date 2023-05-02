@@ -119,7 +119,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     boolean changedAssosiationStatus = false;
 
@@ -1453,7 +1453,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * @param phase a int
    * @param beta a double
    */
-  public void initOld2(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void initOld2(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     // type = 0 start init, type = 1 gi ny betingelser
     if (type == 0) {

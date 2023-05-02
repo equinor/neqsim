@@ -59,6 +59,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public void init() {
+    // todo: redundant?
     super.init();
   }
 

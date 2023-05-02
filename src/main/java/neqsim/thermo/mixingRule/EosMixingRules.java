@@ -1257,7 +1257,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         gePhase = new PhaseGEUnifac(orgPhase, HValpha, HVDij, mixRule, intparam);
       }
       gePhase.init(phase.getNumberOfMolesInPhase(), phase.getNumberOfComponents(), 0,
-          phase.getPhaseType(), phase.getBeta());
+          phase.getType(), phase.getBeta());
       gePhase.setProperties(phase);
     }
 
@@ -1283,7 +1283,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
       gePhase.setProperties(phase);
       // gePhase.init(phase.getNumberOfMolesInPhase() ,
-      // phase.getNumberOfComponents(),0,phase.getPhaseType(),phase.getBeta());
+      // phase.getNumberOfComponents(),0,phase.getBeta());
     }
 
     /**
@@ -1305,7 +1305,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
       } else {
         gePhase.init((phase.getNumberOfMolesInPhase() / phase.getBeta()),
-            phase.getNumberOfComponents(), phase.getInitType(), phase.getPhaseType(),
+            phase.getNumberOfComponents(), phase.getInitType(), phase.getType(),
             phase.getBeta());
       }
 
@@ -1615,7 +1615,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
       } else {
         gePhase.init(phase.getNumberOfMolesInPhase(), phase.getNumberOfComponents(), 3,
-            phase.getPhaseType(), phase.getBeta());
+            phase.getType(), phase.getBeta());
       }
 
       hwfc = -1.0 / (1.0

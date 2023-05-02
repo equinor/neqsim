@@ -141,6 +141,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
       int type) {
+    // todo: redundant?
     super.init(temperature, pressure, totalNumberOfMoles, beta, type);
   }
 

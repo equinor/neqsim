@@ -229,22 +229,57 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * <p>
    * init.
    * </p>
+   */
+  public void init();
+
+  /**
+   * <p>
+   * init. Uses existing phase type.
+   * </p>
+   *
+   * @param totalNumberOfMoles Total number of moles in all phases of Stream.
+   * @param numberOfComponents Number of components.
+   * @param type a int. Use 0 to init, and 1 to reset.
+   * @param beta Beta parameter.
+   */
+  public default void init(double totalNumberOfMoles, int numberOfComponents, int type,
+      double beta) {
+    init(totalNumberOfMoles, numberOfComponents, type, getType(), beta);
+  }
+
+  /**
+   * <p>
+   * init.
+   * </p>
    *
    * @param totalNumberOfMoles a double
    * @param numberOfComponents a int
    * @param type a int. Use 0 to init, and 1 to reset.
-   * @param phase a int
+   * @param pt Type of phase.
    * @param beta a double
    */
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta);
 
   /**
    * <p>
    * init.
    * </p>
+   *
+   * @param totalNumberOfMoles a double
+   * @param numberOfComponents a int
+   * @param type a int. Use 0 to init, and 1 to reset.
+   * @param phase Phase type index.
+   * @param beta a double
+   * @deprecated Replace function using PhaseType input.
    */
-  public void init();
+  @Deprecated
+  public default void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+      double beta) {
+    init(totalNumberOfMoles, numberOfComponents, type, PhaseType.byValue(phase), beta);
+  }
+
+
 
   /**
    * <p>

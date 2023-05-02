@@ -74,13 +74,15 @@ public class PhaseGEUniquac extends PhaseGE {
   /** {@inheritDoc} */
   @Override
   public void setMixingRule(int type) {
+    // todo: redundant?
     super.setMixingRule(type);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
+    // todo: redundant?
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
   }
 

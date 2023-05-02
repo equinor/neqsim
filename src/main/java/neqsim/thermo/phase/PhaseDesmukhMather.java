@@ -40,7 +40,7 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
     setMolarVolume(0.980e-3 * getMolarMass() * 1e5);

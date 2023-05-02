@@ -55,6 +55,7 @@ public class EquilibriumFluidBoundary
   /** {@inheritDoc} */
   @Override
   public void init() {
+    // todo: redundant?
     super.init();
   }
 

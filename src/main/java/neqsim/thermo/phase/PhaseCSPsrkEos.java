@@ -65,7 +65,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     double oldtemp = temperature;
     if (type == 0) {
