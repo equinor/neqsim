@@ -1305,7 +1305,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void addComponent(int index, double moles) {
     if (index >= getPhase(0).getNumberOfComponents()) {
-      logger.error("componentIndex higher than number of components in database");
+      logger.error("componentIndex higher than number of components in system");
       return;
     }
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
@@ -1320,7 +1320,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void addComponent(int index, double moles, int phaseNumber) {
     if (index >= getPhase(0).getNumberOfComponents()) {
-      logger.error("componentIndex higher than number of components in database");
+      logger.error("componentIndex higher than number of components in system");
       return;
     }
     double k = 1.0;
@@ -1333,6 +1333,8 @@ abstract class SystemThermo implements SystemInterface {
       }
       phaseArray[phaseIndex[i]].addMolesChemReac(index, moles * k, moles);
     }
+
+
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
   }
 

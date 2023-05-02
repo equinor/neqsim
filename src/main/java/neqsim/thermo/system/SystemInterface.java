@@ -1096,9 +1096,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param name Name of the component to be added. See NeqSim database for component in the
    *        database.
+   * @param value a double
    * @param unitName the unit of rate (sported units are kg/sec, mol/sec, Nlitre/min, kg/hr,
    *        Sm^3/hr, Sm^3/day, MSm^3/day ..
-   * @param value a double
    */
   public void addComponent(String name, double value, String unitName);
 
@@ -1107,7 +1107,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * addComponent.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name Name of the component to be added. See NeqSim database for component in the
+   *        database.
    * @param moles a double
    * @param TC a double
    * @param PC a double
