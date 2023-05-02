@@ -58,13 +58,6 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
 
   /** {@inheritDoc} */
   @Override
-  public void init() {
-    // todo: redundant?
-    super.init();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double calcReynoldsNumber() {
     reynoldsNumber[0] = getVelocity() * pipe.getDiameter()
         / getBulkSystem().getPhases()[0].getPhysicalProperties().getKinematicViscosity();

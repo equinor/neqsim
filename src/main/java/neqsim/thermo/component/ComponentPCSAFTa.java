@@ -101,14 +101,6 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    // todo: redundant?
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
     double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);

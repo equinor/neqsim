@@ -50,13 +50,6 @@ public class PipeData extends GeometryDefinition {
 
   /** {@inheritDoc} */
   @Override
-  public void init() {
-    // todo: redundant?
-    super.init();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public PipeData clone() {
     PipeData clonedPipe = null;
     try {

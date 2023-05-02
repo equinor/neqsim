@@ -141,14 +141,6 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    // todo: redundant?
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setAttractiveTerm(int i) {
     super.setAttractiveTerm(i);
     if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {

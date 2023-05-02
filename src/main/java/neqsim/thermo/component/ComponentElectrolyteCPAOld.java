@@ -117,14 +117,6 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    // todo: redundant?
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getVolumeCorrection() {
     if ((aCPA > 1.0e-10) && cpaon == 1) {
       return 0.0;

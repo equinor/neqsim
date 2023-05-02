@@ -67,14 +67,6 @@ public class ComponentTST extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    // todo: redundant?
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double calca() {
     return .427481 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
   }

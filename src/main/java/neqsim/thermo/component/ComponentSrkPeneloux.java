@@ -76,14 +76,6 @@ public class ComponentSrkPeneloux extends ComponentSrk {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    // todo: redundant?
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getVolumeCorrection() {
     if (ionicCharge != 0) {
       return 0.0;

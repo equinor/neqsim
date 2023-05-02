@@ -150,15 +150,6 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     acentricFactor = 0.3443;
     associationEnergy = 15059.15;
     associationVolume = 0.109;
-
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    // todo: redundant?
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
   }
 
   /** {@inheritDoc} */

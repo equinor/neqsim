@@ -45,13 +45,6 @@ public class StirredCell extends GeometryDefinition {
 
   /** {@inheritDoc} */
   @Override
-  public void init() {
-    // todo: redundant?
-    super.init();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public StirredCell clone() {
     StirredCell clonedPipe = null;
     try {

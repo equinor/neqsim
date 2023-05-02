@@ -54,13 +54,6 @@ public class EquilibriumFluidBoundary
 
   /** {@inheritDoc} */
   @Override
-  public void init() {
-    // todo: redundant?
-    super.init();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void solve() {
     getInterphaseOpertions().TPflash();
     getBulkSystemOpertions().TPflash();
