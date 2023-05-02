@@ -5,7 +5,7 @@ package neqsim.thermo.phase;
  */
 public enum PhaseType {
   LIQUID("liquid", 0), GAS("gas", 1), OIL("oil", 2), AQUEOUS("aqueous", 3), HYDRATE("hydrate",
-      4), WAX("wax", 5), SOLID("soild", 6), SOLIDCOMPLEX("solidComplex", 7);
+      4), WAX("wax", 5), SOLID("solid", 6), SOLIDCOMPLEX("solidComplex", 7);
 
   private final int value;
   private final String desc;
