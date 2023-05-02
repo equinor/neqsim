@@ -40,5 +40,6 @@ public class PhaseSolidComplex extends PhaseSolid {
       double beta) {
     // todo: redundant?
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    setType(PhaseType.SOLIDCOMPLEX);
   }
 }

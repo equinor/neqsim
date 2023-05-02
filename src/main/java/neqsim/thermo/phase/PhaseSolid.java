@@ -47,6 +47,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
       double beta) {
     // todo: redundant?
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    setType(PhaseType.SOLID);
   }
 
   /** {@inheritDoc} */

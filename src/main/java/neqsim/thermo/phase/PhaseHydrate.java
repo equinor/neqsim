@@ -107,6 +107,7 @@ public class PhaseHydrate extends Phase {
       double beta) {
     // todo: redundant?
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    setType(PhaseType.HYDRATE);
   }
 
   /** {@inheritDoc} */
