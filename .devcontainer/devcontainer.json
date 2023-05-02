@@ -44,7 +44,8 @@
 	"vscjava.vscode-java-pack",
 	"ms-vscode.test-adapter-converter",
 	"shengchen.vscode-checkstyle",
-	"mechatroner.rainbow-csv"
+	"mechatroner.rainbow-csv",
+	"redhat.vscode-xml"
 ]
 
 
