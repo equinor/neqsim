@@ -76,12 +76,12 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   void testNeqSimPython2() {
     String[] components =
         new String[] {"H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4", "iC5", "nC5", "C6"};
-    double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.990, 2.399, 0.355, 0.172, 0.088,
-        0.076, 0.036, 0.1656};
-
+    double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.90, 2.489, 0.355, 0.172, 0.088,
+        0.076, 0.036, 0.1657};
 
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
     thermoSystem.addComponents(components, fractions);
+    thermoSystem.setTotalNumberOfMoles(1);
     thermoSystem.init(0);
     ThermodynamicOperations thermoOps =
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
@@ -99,6 +99,15 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     List<List<Double>> onlineFractions =
         createDummyRequest(thermoSystem.getMolarComposition(), 1);
     CalculationResult res1 = thermoOps.propertyFlash(jP, jT, 1, null, onlineFractions);
+
+    for (String errorMessage : res.calculationError) {
+      Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
+    }
+
+    for (int i = 0; i < res.fluidProperties[0].length; i++) {
+      Assertions.assertEquals(res.fluidProperties[0][i], res1.fluidProperties[0][i],
+          "Property " + SystemProperties.getPropertyNames()[i]);
+    }
 
     Assertions.assertArrayEquals(res.fluidProperties[0], res1.fluidProperties[0]);
 
