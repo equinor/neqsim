@@ -11,7 +11,6 @@ public class PhaseTypeTest {
 
       Assertions.assertTrue(pt.getValue() >= 0);
       Assertions.assertTrue(pt.getDesc().length() > 0);
-
     }
   }
 }
