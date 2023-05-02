@@ -192,7 +192,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy() {
-    return getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, phaseType);
+    return getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, getPhaseType());
   }
 
   /** {@inheritDoc} */

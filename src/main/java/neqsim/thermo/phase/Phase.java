@@ -50,8 +50,8 @@ abstract class Phase implements PhaseInterface {
   double pressure = 0;
 
   protected PhaseInterface[] refPhase = null;
-  int phaseType = 0;
-  protected String phaseTypeName = "gas";
+
+  protected PhaseType pt = PhaseType.GAS;
 
   /**
    * <p>
@@ -190,7 +190,7 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void setProperties(PhaseInterface phase) {
-    this.phaseType = phase.getPhaseType();
+    this.setType(phase.getType());
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       this.getComponent(i).setProperties(phase.getComponent(i));
     }
@@ -399,7 +399,7 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void init() {
-    init(numberOfMolesInPhase / beta, numberOfComponents, initType, phaseType, beta);
+    init(numberOfMolesInPhase / beta, numberOfComponents, initType, getPhaseType(), beta);
   }
 
   /** {@inheritDoc} */
@@ -413,8 +413,8 @@ abstract class Phase implements PhaseInterface {
 
     this.beta = beta;
     numberOfMolesInPhase = beta * totalNumberOfMoles;
-    if (this.phaseType != phase) {
-      this.phaseType = phase;
+    if (this.pt != PhaseType.byValue(phase)) {
+      this.pt = PhaseType.byValue(phase);
       // setPhysicalProperties(physicalPropertyType);
     }
     this.setInitType(type);
@@ -1255,7 +1255,7 @@ abstract class Phase implements PhaseInterface {
         }
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
         refPhase[i].setMixingRule(this.getMixingRuleNumber());
-        refPhase[i].setPhaseType(this.getPhaseType());
+        refPhase[i].setType(this.getType());
         refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getPhaseType(), 1.0);
       } else {
         // System.out.println("ref " + name);
@@ -1513,12 +1513,6 @@ abstract class Phase implements PhaseInterface {
         Math.abs(getComponent(comp1).getIonicCharge()));
     return Math.pow(act1 * act2, 1.0 / (Math.abs(getComponent(comp1).getIonicCharge())
         + Math.abs(getComponent(comp2).getIonicCharge())));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final int getPhaseType() {
-    return phaseType;
   }
 
   /** {@inheritDoc} */
@@ -1929,18 +1923,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public java.lang.String getPhaseTypeName() {
-    return phaseTypeName;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setPhaseTypeName(java.lang.String phaseTypeName) {
-    this.phaseTypeName = phaseTypeName;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public boolean isMixingRuleDefined() {
     return mixingRuleDefined;
   }
@@ -1953,8 +1935,14 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final void setPhaseType(int phaseType) {
-    this.phaseType = phaseType;
+  public final PhaseType getType() {
+    return this.pt;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final void setType(PhaseType pt) {
+    this.pt = pt;
   }
 
   /** {@inheritDoc} */

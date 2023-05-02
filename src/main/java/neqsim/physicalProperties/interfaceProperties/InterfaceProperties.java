@@ -16,6 +16,7 @@ import neqsim.physicalProperties.interfaceProperties.surfaceTension.GTSurfaceTen
 import neqsim.physicalProperties.interfaceProperties.surfaceTension.LGTSurfaceTension;
 import neqsim.physicalProperties.interfaceProperties.surfaceTension.ParachorSurfaceTension;
 import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensionInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -132,18 +133,18 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   /** {@inheritDoc} */
   @Override
   public double getSurfaceTension(int numb1, int numb2) {
-    if (system.getPhase(numb1).getPhaseTypeName().equals("gas")
-        && system.getPhase(numb2).getPhaseTypeName().equals("oil")) {
+    if (system.getPhase(numb1).getType() == PhaseType.GAS
+        && system.getPhase(numb2).getType() == PhaseType.OIL) {
       return gasLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
-    } else if (system.getPhase(numb1).getPhaseTypeName().equals("gas")
-        && system.getPhase(numb2).getPhaseTypeName().equals("aqueous")) {
+    } else if (system.getPhase(numb1).getType() == PhaseType.GAS
+        && system.getPhase(numb2).getType() == PhaseType.AQUEOUS) {
       return gasAqueousSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     } else {
       return liquidLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     }
   }
 
-  // TODO add unit conversion implementation to interfacial tension
+  // TODO: add unit conversion implementation to interfacial tension
   /** {@inheritDoc} */
   @Override
   public double getSurfaceTension(int numb1, int numb2, String unit) {
@@ -155,7 +156,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   /** {@inheritDoc} */
   @Override
   public SurfaceTensionInterface getSurfaceTensionModel(int i) {
-    if (system.getPhase(i).getPhaseTypeName().equals("gas")) {
+    if (system.getPhase(i).getType() == PhaseType.GAS) {
       return gasLiquidSurfaceTensionCalc;
     } else {
       return gasLiquidSurfaceTensionCalc;

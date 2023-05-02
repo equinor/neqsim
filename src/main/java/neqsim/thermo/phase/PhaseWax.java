@@ -20,7 +20,7 @@ public class PhaseWax extends PhaseSolid {
    */
   public PhaseWax() {
     super();
-    phaseTypeName = "wax";
+    setType(PhaseType.WAX);
   }
 
   /** {@inheritDoc} */
@@ -41,7 +41,7 @@ public class PhaseWax extends PhaseSolid {
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-    phaseTypeName = "wax";
+    pt = PhaseType.WAX;
   }
 
   /** {@inheritDoc} */

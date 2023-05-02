@@ -28,7 +28,8 @@ public class PhaseHydrate extends Phase {
    * </p>
    */
   public PhaseHydrate() {
-    phaseTypeName = "hydrate";
+    super();
+    setType(PhaseType.HYDRATE);
   }
 
   /**

@@ -26,7 +26,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
    */
   public PhaseSolid() {
     super();
-    phaseTypeName = "solid";
+    setType(PhaseType.SOLID);
   }
 
   /** {@inheritDoc} */
@@ -46,7 +46,6 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-    phaseTypeName = "solid";
   }
 
   /** {@inheritDoc} */

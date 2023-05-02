@@ -36,7 +36,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
    */
   public PhaseGE() {
     super();
-    phaseTypeName = "liquid";
+    setType(PhaseType.LIQUID);
     componentArray = new ComponentGEInterface[MAX_NUMBER_OF_COMPONENTS];
     useVolumeCorrection = false;
   }
@@ -77,9 +77,9 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
 
     if (sumHydrocarbons > sumAqueous) {
-      phaseTypeName = "oil";
+      setType(PhaseType.OIL);
     } else {
-      phaseTypeName = "aqueous";
+      setType(PhaseType.AQUEOUS);
     }
   }
 
@@ -104,9 +104,9 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
 
     if (sumHydrocarbons > sumAqueous) {
-      phaseTypeName = "oil";
+      setType(PhaseType.OIL);
     } else {
-      phaseTypeName = "aqueous";
+      setType(PhaseType.AQUEOUS);
     }
 
     // calc liquid density

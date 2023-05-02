@@ -119,7 +119,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     nf.applyPattern("#.#####E0");
     String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
     // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
-    table[0][0] = ""; // getPhases()[0].getPhaseTypeName(); //"";
+    table[0][0] = ""; // getPhases()[0].getType(); //"";
 
     for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {
@@ -127,7 +127,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
       }
     }
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
-      table[0][i + 1] = thermoSystem.getPhase(i).getPhaseTypeName();
+      table[0][i + 1] = thermoSystem.getPhase(i).getType().toString();
     }
 
     StringBuffer buf = new StringBuffer();

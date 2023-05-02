@@ -33,6 +33,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSolid;
 import neqsim.thermo.phase.PhaseSolidComplex;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseWax;
 import neqsim.util.database.NeqSimDataBase;
 
@@ -390,7 +391,7 @@ abstract class SystemThermo implements SystemInterface {
 
     phaseArray[5].setTemperature(phaseArray[0].getTemperature());
     phaseArray[5].setPressure(phaseArray[0].getPressure());
-    phaseArray[5].setPhaseTypeName("wax");
+    phaseArray[5].setType(PhaseType.WAX);
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
         phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(),
@@ -421,7 +422,7 @@ abstract class SystemThermo implements SystemInterface {
       phaseArray[3] = new PhasePureComponentSolid();
       phaseArray[3].setTemperature(phaseArray[0].getTemperature());
       phaseArray[3].setPressure(phaseArray[0].getPressure());
-      phaseArray[3].setPhaseTypeName("solid");
+      phaseArray[3].setType(PhaseType.SOLID);
       for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
         if (getPhase(0).getComponent(i).isIsTBPfraction()) {
           phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
@@ -440,7 +441,7 @@ abstract class SystemThermo implements SystemInterface {
     phaseArray[4] = new PhaseHydrate(getModelName());
     phaseArray[4].setTemperature(phaseArray[0].getTemperature());
     phaseArray[4].setPressure(phaseArray[0].getPressure());
-    phaseArray[4].setPhaseTypeName("hydrate");
+    phaseArray[4].setType(PhaseType.HYDRATE);
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
         phaseArray[4].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
@@ -1704,7 +1705,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public boolean hasSolidPhase() {
     for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals("solid")) {
+      if (getPhase(i).getType() == PhaseType.SOLID) {
         return true;
       }
     }
@@ -1827,8 +1828,8 @@ abstract class SystemThermo implements SystemInterface {
 
     for (int i = 1; i < numberOfPhases; i++) {
       if (isPhase(i)) {
-        if (getPhase(i).getPhaseTypeName().equals("gas")) {
-          getPhase(i).setPhaseTypeName("oil");
+        if (getPhase(i).getType() == PhaseType.GAS) {
+          getPhase(i).setType(PhaseType.OIL);
         }
       }
     }
@@ -1883,8 +1884,8 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     for (PhaseInterface tmpPhase : phaseArray) {
-      if (tmpPhase != null && tmpPhase.getPhaseTypeName().equals("gas")) {
-        tmpPhase.setPhaseTypeName("oil");
+      if (tmpPhase != null && tmpPhase.getType() == PhaseType.GAS) {
+        tmpPhase.setType(PhaseType.OIL);
       }
     }
     this.isInitialized = true;
@@ -3280,7 +3281,7 @@ abstract class SystemThermo implements SystemInterface {
     }
     table[0][1] = "total";
     for (int i = 0; i < numberOfPhases; i++) {
-      table[0][i + 2] = getPhase(i).getPhaseTypeName();
+      table[0][i + 2] = getPhase(i).getType().toString();
     }
 
     StringBuffer buf = new StringBuffer();
@@ -4560,7 +4561,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public boolean hasPhaseType(String phaseTypeName) {
     for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
+      if (getPhase(i).getType().getDesc().equals(phaseTypeName)) {
         return true;
       }
     }
@@ -5005,7 +5006,7 @@ abstract class SystemThermo implements SystemInterface {
     double totFlow = 0;
 
     for (int kj = 0; kj < numberOfPhases; kj++) {
-      if (!getPhase(kj).getPhaseTypeName().equals("gas")) {
+      if (getPhase(kj).getType() != PhaseType.GAS) {
         totFlow += getPhase(kj).getVolume();
       }
     }

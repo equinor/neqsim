@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -452,7 +453,7 @@ public class TPflash extends Flash {
       operation.run();
     } else {
       // Checks if gas or oil is the most stable phase
-      if (system.getPhase(0).getPhaseType() == 1) {
+      if (system.getPhase(0).getType() == PhaseType.GAS) {
         gasgib = system.getPhase(0).getGibbsEnergy();
         system.setPhaseType(0, 0);
         system.init(1, 0);
