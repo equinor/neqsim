@@ -304,23 +304,25 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   public void update() {
     // System.out.println("reac heat " +
     // getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat());
-    double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0); // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
-                                                                      // getPrandtlNumber(0),
-                                                                      // this) *
-                                                                      // (getInterphaseSystem().getPhase(0).getTemperature()
-                                                                      // -
-                                                                      // getBulkSystem().getPhase(0).getTemperature())
-                                                                      // *
-                                                                      // getInterphaseContactArea();
+    double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0);
+    // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
+    // getPrandtlNumber(0),
+    // this) *
+    // (getInterphaseSystem().getPhase(0).getTemperature()
+    // -
+    // getBulkSystem().getPhase(0).getTemperature())
+    // *
+    // getInterphaseContactArea();
 
-    double heatFluxLiquid = getFluidBoundary().getInterphaseHeatFlux(1); // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(1,
-                                                                         // getPrandtlNumber(1),
-                                                                         // this) *
-                                                                         // (getInterphaseSystem().getPhase(1).getTemperature()
-                                                                         // -
-                                                                         // getBulkSystem().getPhase(1).getTemperature())
-                                                                         // *
-                                                                         // getInterphaseContactArea();
+    double heatFluxLiquid = getFluidBoundary().getInterphaseHeatFlux(1);
+    // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(1,
+    // getPrandtlNumber(1),
+    // this) *
+    // (getInterphaseSystem().getPhase(1).getTemperature()
+    // -
+    // getBulkSystem().getPhase(1).getTemperature())
+    // *
+    // getInterphaseContactArea();
     // System.out.println("heat flux local " + heatFluxLiquid);
     // double liquid_dT =
     // -this.flowDirection[1]*heatFlux/1000.0/getBulkSystem().getPhase(1).getCp();
