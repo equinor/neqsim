@@ -73,14 +73,6 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
-      double beta) {
-    // todo: redundant?
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setMixingRule(int type) {
     super.setMixingRule(type);
     this.intparam = mixSelect.getWSintparam();
