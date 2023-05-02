@@ -69,24 +69,24 @@ public interface InterphasePropertiesInterface extends Cloneable {
 
   /**
    * <p>
-   * Get Surface tension between two phases.
+   * getSurfaceTension.
    * </p>
    *
-   * @param i First phase number.
-   * @param j Second phase number.
-   * @return Surface tension in default unit.
+   * @param i a int
+   * @param j a int
+   * @return a double
    */
   public double getSurfaceTension(int i, int j);
 
   /**
    * <p>
-   * Get Surface tension between two phases in a specified unit.
+   * getSurfaceTension.
    * </p>
    *
-   * @param numb1 First phase number.
-   * @param numb2 Second phase number.
+   * @param numb1 a int
+   * @param numb2 a int
    * @param unit a {@link java.lang.String} object
-   * @return Surface tension in specified unit.
+   * @return a double
    */
   public double getSurfaceTension(int numb1, int numb2, String unit);
 
