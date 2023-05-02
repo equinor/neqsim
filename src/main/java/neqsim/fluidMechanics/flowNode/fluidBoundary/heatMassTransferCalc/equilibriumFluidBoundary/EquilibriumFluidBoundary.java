@@ -54,12 +54,6 @@ public class EquilibriumFluidBoundary
 
   /** {@inheritDoc} */
   @Override
-  public void init() {
-    super.init();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void solve() {
     getInterphaseOpertions().TPflash();
     getBulkSystemOpertions().TPflash();

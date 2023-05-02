@@ -59,13 +59,6 @@ public class PhaseDefault extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double molarVolume(double pressure, double temperature, double A, double B, int phase)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {

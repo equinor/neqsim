@@ -108,13 +108,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     double GE = 0.0;
