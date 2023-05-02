@@ -127,7 +127,8 @@ abstract class Diffusivity extends
     if (Double.isNaN(nonIdealCorrection)) {
       nonIdealCorrection = 1.0;
     }
-    return binaryDiffusionCoefficients[i][j] * nonIdealCorrection; // shuld be divided by non
-                                                                   // ideality factor
+
+    // shuld be divided by non ideality factor
+    return binaryDiffusionCoefficients[i][j] * nonIdealCorrection;
   }
 }

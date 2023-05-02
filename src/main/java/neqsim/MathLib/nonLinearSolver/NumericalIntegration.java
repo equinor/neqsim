@@ -15,10 +15,10 @@ package neqsim.MathLib.nonLinearSolver;
  * @version $Id: $Id
  */
 public class NumericalIntegration {
-    /**
-     * <p>
-     * Constructor for NumericalIntegration.
-     * </p>
-     */
-    public NumericalIntegration() {}
+  /**
+   * <p>
+   * Constructor for NumericalIntegration.
+   * </p>
+   */
+  public NumericalIntegration() {}
 }
