@@ -162,13 +162,6 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
       int numberOfComponents, int type) {
     Wi = ((PhaseModifiedFurstElectrolyteEos) phase).calcWi(componentNumber, phase, temp, pres,
