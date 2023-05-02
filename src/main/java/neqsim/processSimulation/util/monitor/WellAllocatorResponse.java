@@ -10,7 +10,7 @@ import neqsim.processSimulation.measurementDevice.WellAllocator;
  * @author asmund
  * @version $Id: $Id
  */
-public class WellAllocatorResponse {
+public class WellAllocatorResponse extends Response{
     public String name;
     public Double gasExportRate, oilExportRate, totalExportRate;
 

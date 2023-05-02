@@ -10,7 +10,7 @@ import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
  * @author asmund
  * @version $Id: $Id
  */
-public class HeaterResponse {
+public class HeaterResponse extends Response{
     public String name = "test";
 
     public Double feedTemperature;

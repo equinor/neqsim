@@ -8,7 +8,7 @@ import neqsim.processSimulation.processEquipment.compressor.Compressor;
  * @author asmund
  * @version $Id: $Id
  */
-public class CompressorResponse {
+public class CompressorResponse extends Response{
     public String name = "test";
 
     public Double suctionTemperature;

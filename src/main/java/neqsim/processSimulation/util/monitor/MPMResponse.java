@@ -10,7 +10,7 @@ import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
  * @author asmund
  * @version $Id: $Id
  */
-public class MPMResponse {
+public class MPMResponse extends Response{
     public String name;
     public Double massFLow, GOR, GOR_std, gasDensity, oilDensity, waterDensity;
 

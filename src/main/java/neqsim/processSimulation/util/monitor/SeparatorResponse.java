@@ -11,7 +11,7 @@ import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
  * @author asmund
  * @version $Id: $Id
  */
-public class SeparatorResponse {
+public class SeparatorResponse extends Response{
   public String name;
   public Double gasLoadFactor;
   public Double massflow;

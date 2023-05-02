@@ -8,7 +8,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author asmund
  * @version $Id: $Id
  */
-public class StreamResponse {
+public class StreamResponse extends Response{
     public String name;
     public Fluid fluid;
     public Double temperature;

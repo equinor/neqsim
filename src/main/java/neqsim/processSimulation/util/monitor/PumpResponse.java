@@ -10,7 +10,7 @@ import neqsim.processSimulation.processEquipment.pump.Pump;
  * @author asmund
  * @version $Id: $Id
  */
-public class PumpResponse {
+public class PumpResponse extends Response{
     public String name = "test";
 
     public Double suctionTemperature;
