@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.equinor</groupId>
 	<artifactId>neqsim</artifactId>
@@ -8,11 +10,11 @@
 	<version>${revision}${sha1}${changelist}</version>
 
 	<properties>
-		<revision>2.4.6</revision>
+		<revision>2.4.7</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1/>
-		<changelist/>
+		<sha1 />
+		<changelist />
 	</properties>
 
 	<repositories>
@@ -47,7 +49,7 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>5.9.1</version>
+			<version>5.9.3</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

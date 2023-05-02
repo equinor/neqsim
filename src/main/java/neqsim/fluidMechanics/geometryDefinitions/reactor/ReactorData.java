@@ -114,12 +114,6 @@ public class ReactorData extends GeometryDefinition {
 
   /** {@inheritDoc} */
   @Override
-  public void init() {
-    super.init();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public ReactorData clone() {
     ReactorData clonedPipe = null;
     try {
