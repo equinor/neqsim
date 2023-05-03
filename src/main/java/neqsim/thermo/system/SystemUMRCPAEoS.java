@@ -6,7 +6,6 @@ import neqsim.thermo.phase.PhaseUMRCPA;
  * This class defines a thermodynamic system using the UMR CPA equation of state.
  *
  * @author Even Solbraa
- * @version
  */
 public class SystemUMRCPAEoS extends SystemPrEos {
   private static final long serialVersionUID = 1L;
