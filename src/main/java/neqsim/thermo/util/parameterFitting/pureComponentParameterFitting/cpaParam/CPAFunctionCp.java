@@ -55,7 +55,7 @@ public class CPAFunctionCp extends CPAFunction {
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     system.init(3);
     // System.out.println("pres: " + system.getPressure());

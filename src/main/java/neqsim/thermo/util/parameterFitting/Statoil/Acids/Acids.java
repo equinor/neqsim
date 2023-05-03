@@ -166,7 +166,7 @@ public class Acids {
       try {
         testOps.bubblePointPressureFlash(false);
       } catch (Exception ex) {
-        logger.error(ex.toString());
+        logger.error(ex.getMessage(), ex);
       }
 
       nCO2 = testSystem.getPhase(1).getComponent(CO2Numb).getx();
@@ -195,7 +195,7 @@ public class Acids {
             + nCO2 + " " + nMDEA + " " + nHCO3 + " " + nMDEAp + " " + nCO3 + " " + nOH + " " + nHAc
             + " " + nAcn);
       } catch (FileNotFoundException ex) {
-        logger.error("Could not find file " + ex.getMessage());
+        logger.error("Could not find file ", ex);
       }
 
       try (PrintStream p = new PrintStream(new FileOutputStream(
@@ -203,7 +203,7 @@ public class Acids {
         p.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " " + aMDEAp
             + " " + aCO3 + " " + aOH + " " + aHAc + " " + aAcn);
       } catch (FileNotFoundException ex) {
-        logger.error("Could not find file" + ex.getMessage());
+        logger.error("Could not find file", ex);
       }
 
       if (loading < 0.1) {

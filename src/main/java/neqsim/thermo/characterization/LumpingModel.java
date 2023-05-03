@@ -198,7 +198,7 @@ public class LumpingModel implements java.io.Serializable {
         neqsim.util.exception.ThermoException ex =
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                 "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
         throw new RuntimeException(ex);
       }
       return fractionOfHeavyEnd[i];
@@ -313,7 +313,7 @@ public class LumpingModel implements java.io.Serializable {
         neqsim.util.exception.ThermoException ex =
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                 "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
         throw new RuntimeException(ex);
       }
       return fractionOfHeavyEnd[i];
@@ -417,7 +417,7 @@ public class LumpingModel implements java.io.Serializable {
         neqsim.util.exception.ThermoException ex =
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                 "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
         throw new RuntimeException(ex);
       }
       return fractionOfHeavyEnd[i];

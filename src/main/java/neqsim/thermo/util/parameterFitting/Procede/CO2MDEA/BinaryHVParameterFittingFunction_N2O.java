@@ -45,7 +45,7 @@ public class BinaryHVParameterFittingFunction_N2O extends LevenbergMarquardtFunc
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     return (system.getPressure() * system.getPhases()[0].getComponent(0).getx()
         * system.getPhase(0).getComponent(0).getFugacityCoefficient());

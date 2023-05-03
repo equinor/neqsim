@@ -66,7 +66,7 @@ public class TestSolidComplexFunction {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -113,7 +113,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity
       // logger.info("P rep " + Prepulsive);
       // logger.info("P atr " + Pattractive);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     double kaprmx = 0.0;
     double kapamx = 0.0;

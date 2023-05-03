@@ -819,7 +819,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
       try {
         // hessianInvers2 = input.invert();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         return false;
       }
 
@@ -941,7 +941,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     try {
       // molarVolume(pressure, temperature, A, B, phaseType);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     double BonVold = BonV;
     double Btemp = 0;

@@ -51,7 +51,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
      * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) {
-     * logger.error(ex.getMessage()); }
+     * logger.error(ex.getMessage(), ex); }
      */
     saturationVolume = system.getVolume();
     saturationPressure = system.getPressure();

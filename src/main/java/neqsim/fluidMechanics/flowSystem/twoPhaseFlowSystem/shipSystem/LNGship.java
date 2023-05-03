@@ -119,7 +119,7 @@ public class LNGship
         thermoOperations.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     getThermoSystem().init(0);
 
@@ -156,7 +156,7 @@ public class LNGship
         thermoOperations.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     logger.info("temperature start " + getThermoSystem().getTemperature());
     // todo: getTimeSeries().init(this);
@@ -223,7 +223,7 @@ public class LNGship
             thermoOperations.bubblePointTemperatureFlash();
           }
         } catch (Exception ex) {
-          logger.error(ex.getMessage());
+          logger.error(ex.getMessage(), ex);
         }
         double[] xgas = new double[getThermoSystem().getPhase(0).getNumberOfComponents()];
 
@@ -318,7 +318,7 @@ public class LNGship
       thermoOperations.bubblePointTemperatureFlash();
       calcIdentifier = id;
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

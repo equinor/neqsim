@@ -162,8 +162,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
       dataSet.close();
     } catch (Exception ex) {
-      String err = ex.toString();
-      logger.error(err);
+      logger.error(ex.getMessage(), ex);
     }
   }
 

@@ -86,7 +86,7 @@ public class GORfitter extends TwoPortEquipment {
     try {
       this.outStream = inletStream.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -160,7 +160,7 @@ public class GORfitter extends TwoPortEquipment {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       outStream.setThermoSystem(tempFluid);
       return;
@@ -173,7 +173,7 @@ public class GORfitter extends TwoPortEquipment {
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     if (!tempFluid.hasPhaseType("gas") || !tempFluid.hasPhaseType("oil")) {
       outStream = inStream.clone();
@@ -211,7 +211,7 @@ public class GORfitter extends TwoPortEquipment {
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     outStream.setThermoSystem(tempFluid);
     if (!tempFluid.hasPhaseType("gas")) {

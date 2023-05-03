@@ -133,7 +133,7 @@ abstract class Phase implements PhaseInterface {
         this.getComponent(i).setComponentNumber(i);
       }
     } catch (Exception ex) {
-      logger.error("not able to remove " + name);
+      logger.error("not able to remove " + name, ex);
     }
 
     // componentArray = (ComponentInterface[])temp.toArray();
@@ -1237,7 +1237,7 @@ abstract class Phase implements PhaseInterface {
       try {
         refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();
       } catch (Exception ex) {
-        logger.error("err " + ex.toString());
+        logger.error(ex.getMessage(), ex);
       }
       refPhase[i].setTemperature(temperature);
       refPhase[i].setPressure(pressure);
@@ -1766,9 +1766,7 @@ abstract class Phase implements PhaseInterface {
       logger.error("could not find component " + name + ", returning null");
       throw new Exception("component not in fluid... " + name);
     } catch (Exception ex) {
-      logger.debug(ex.getMessage());
-      logger.error("component not found... " + name);
-      logger.error("returning first component... " + componentArray[0].getName(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     return null;
   }

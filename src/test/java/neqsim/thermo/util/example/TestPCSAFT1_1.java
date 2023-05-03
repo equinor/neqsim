@@ -53,7 +53,7 @@ public class TestPCSAFT1_1 {
           logger.info(
               "pressure " + testSystem.getPressure() + " dew point " + testSystem.getTemperature());
         } catch (Exception ex) {
-          logger.error(ex.toString(), ex);
+          logger.error(ex.getMessage(), ex);
         }
       }
     }

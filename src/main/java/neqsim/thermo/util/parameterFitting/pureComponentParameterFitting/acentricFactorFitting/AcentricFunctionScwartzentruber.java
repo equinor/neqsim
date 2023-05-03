@@ -37,7 +37,7 @@ public class AcentricFunctionScwartzentruber extends LevenbergMarquardtFunction 
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     // System.out.println("pres: " + system.getPressure());
     return Math.log(system.getPressure());

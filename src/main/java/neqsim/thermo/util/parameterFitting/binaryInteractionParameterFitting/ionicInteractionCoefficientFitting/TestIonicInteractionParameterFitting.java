@@ -111,7 +111,7 @@ public class TestIonicInteractionParameterFitting {
     // }
     // }
     // catch(Exception ex){
-    // logger.error("database error" + ex);
+    // logger.error("database error", ex);
     // }
 
     double[] guess = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
@@ -190,7 +190,7 @@ public class TestIonicInteractionParameterFitting {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     dataSet = database.getResultSet(
@@ -268,7 +268,7 @@ public class TestIonicInteractionParameterFitting {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -70,7 +70,7 @@ public class density {
             loading + " " + testSystem.getPhase(1).getPhysicalProperties().getDensity() / 1000);
       } catch (FileNotFoundException ex) {
         logger.error("Could not find file");
-        logger.error("Could not write to Patrick.txt" + ex.getMessage());
+        logger.error("Could not write to Patrick.txt", ex);
       }
     }
   }
