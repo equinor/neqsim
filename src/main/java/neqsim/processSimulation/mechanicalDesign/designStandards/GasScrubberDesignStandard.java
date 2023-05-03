@@ -57,12 +57,12 @@ public class GasScrubberDesignStandard extends DesignStandard {
           }
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
 
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     } finally {
       try {
         if (dataSet != null) {
@@ -70,7 +70,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
         }
       } catch (Exception ex) {
         System.out.println("error closing database.....GasScrubberDesignStandard");
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
   }

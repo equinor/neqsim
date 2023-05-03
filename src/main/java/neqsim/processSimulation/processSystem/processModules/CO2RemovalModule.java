@@ -83,7 +83,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
       this.gasFromCO2Stripper = (Stream) this.streamToAbsorber.clone();
       this.gasFromCO2Stripper.setName("Gas stream from Stripper");
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

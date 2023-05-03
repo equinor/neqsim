@@ -31,7 +31,7 @@ public class InfluenceParamGTFunction extends LevenbergMarquardtFunction {
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     system.initPhysicalProperties();
     return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;

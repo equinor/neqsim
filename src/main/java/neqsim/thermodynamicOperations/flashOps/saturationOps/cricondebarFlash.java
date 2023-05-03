@@ -111,7 +111,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
     try {
       localOperation.dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     system.setNumberOfPhases(2);
     system.setBeta(0.5);
@@ -165,7 +165,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
           setJac();
           dx = Jac.solve(fvec);
         } catch (Exception ex) {
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex);
         }
         double damping = iterations * 1.0 / (10.0 + iterations);
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -212,7 +212,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         dewTemp = system.getTemperature();
         system.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
       }
 
       iterations = 0;

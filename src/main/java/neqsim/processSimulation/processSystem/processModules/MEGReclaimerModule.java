@@ -82,7 +82,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
       this.streamWithWaste = (Stream) this.streamToReclaimer.clone();
       this.streamWithWaste.setName("Reclaimer Waste Stream");
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

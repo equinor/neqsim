@@ -76,7 +76,7 @@ public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

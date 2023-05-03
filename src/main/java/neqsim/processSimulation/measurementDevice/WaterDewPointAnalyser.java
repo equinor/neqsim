@@ -78,7 +78,7 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
       try {
         thermoOps.waterDewPointTemperatureMultiphaseFlash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       return tempFluid.getTemperature(unit);
     } else {
@@ -90,7 +90,7 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
       try {
         thermoOps.waterDewPointTemperatureFlash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       return tempFluid2.getTemperature(unit);
     }

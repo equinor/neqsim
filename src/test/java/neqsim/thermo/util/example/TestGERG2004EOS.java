@@ -61,7 +61,7 @@ public class TestGERG2004EOS {
       // testOps.freezingPointTemperatureFlash();
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     // standards.gasQuality.Draft_GERG2004 temp2 = new

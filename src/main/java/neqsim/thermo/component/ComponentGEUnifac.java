@@ -81,7 +81,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
       }
 
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

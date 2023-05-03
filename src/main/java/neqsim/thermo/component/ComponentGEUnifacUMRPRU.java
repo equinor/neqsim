@@ -87,7 +87,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
       }
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
     for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {

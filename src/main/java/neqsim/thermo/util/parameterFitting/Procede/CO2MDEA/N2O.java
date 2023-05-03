@@ -57,7 +57,7 @@ public class N2O {
       try {
         testOps.bubblePointPressureFlash(false);
       } catch (Exception ex) {
-        logger.error(ex.toString());
+        logger.error(ex.getMessage(), ex);
       }
 
       double aCO2 = testSystem.getPhase(1).getActivityCoefficient(0, 1);
@@ -71,8 +71,8 @@ public class N2O {
             + testSystem.getPressure() * testSystem.getPhase(0).getComponent(0).getx() + " " + aCO2
             + " " + aMDEA + " " + awater);
       } catch (FileNotFoundException ex) {
-        logger.error("Could not find file" + ex.getMessage());
-        logger.error("Could not read from Patrick.txt" + ex.getMessage());
+        logger.error("Could not find file", ex);
+        logger.error("Could not read from Patrick.txt", ex);
       }
     }
     logger.info("Finished");

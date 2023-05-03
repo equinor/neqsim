@@ -925,7 +925,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
       try {
         CommonOps_DDRM.invert(hessianMatrix, hessianInvers);
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         return false;
       }
 
@@ -1043,7 +1043,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     try {
       // molarVolume(pressure, temperature, A, B, phaseType);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     double BonVold = BonV;
     double Btemp = 0;

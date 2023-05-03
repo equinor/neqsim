@@ -73,7 +73,7 @@ public class FreezingPoint {
       testOps2.bubblePointTemperatureFlash();
       testSystem2.display();
     } catch (Exception ex) {
-      logger.error(ex.toString(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     logger.info("wt% methanol " + 100 * testSystem.getPhase(1).getComponent("methanol").getx()
         * testSystem.getPhase(1).getComponent("methanol").getMolarMass()

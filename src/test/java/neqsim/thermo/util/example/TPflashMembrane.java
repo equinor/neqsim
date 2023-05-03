@@ -54,7 +54,7 @@ public class TPflashMembrane {
       // testOps.TPflash();
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

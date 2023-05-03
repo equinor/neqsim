@@ -76,7 +76,7 @@ public class TPflashTest {
       // testSystem.tuneModel("viscosity",1.5e-4,0);
       // testOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     testSystem.initPhysicalProperties();
@@ -86,7 +86,7 @@ public class TPflashTest {
       // testSystem.tuneModel("viscosity",1.5e-4,0);
       // testOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     testSystem.initPhysicalProperties();

@@ -60,7 +60,7 @@ public class ReadFluidData2 {
      * //testSystem.setPressure(100.0); //testOps.PSflash(-1.503016881785468e+02);
      * //testSystem.display(); //testSystem.setPressure(100.0);
      * testOps.PSflash(-1.266377583884310e+02); } catch (Exception ex) {
-     * logger.error(ex.toString()); }
+     * logger.error(ex.getMessage(), ex); }
      */
   }
 }

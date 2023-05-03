@@ -61,7 +61,7 @@ public class CPAFunctionDens extends CPAFunction {
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     system.initPhysicalProperties();
     // System.out.println("pres: " + system.getPressure());

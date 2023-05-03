@@ -662,7 +662,7 @@ public class DuanSun {
       // fluid1.init(0);
       fluid1.display();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     // fluid1.setMolarComposition(new double[] {0.5, 0.5, 0.0, 0.0});
     fluid1.init(1);
@@ -671,7 +671,7 @@ public class DuanSun {
       // fluid1.init(0);
       fluid1.display();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     String fluidname = "" + "";
     fluid1.saveObjectToFile(fluidname, fluidname);
