@@ -172,7 +172,7 @@ public class NeqSimBlobDatabase
       }
       getStatement().execute(sqlString);
     } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase ", ex.toString(), ex);
+      logger.error("error in NeqSimDataBase ", ex);
       logger.error("The database must be rgistered on the local DBMS to work.");
       throw new RuntimeException(ex);
     }
