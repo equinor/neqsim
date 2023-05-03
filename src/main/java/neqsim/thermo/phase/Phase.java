@@ -90,7 +90,8 @@ abstract class Phase implements PhaseInterface {
    * addcomponent. Increase number of components and add moles to phase.
    * </p>
    *
-   * @param moles a double
+   * @param name Name of component to add.
+   * @param moles Number of moles to add.
    */
   public void addComponent(String name, double moles) {
     if (name == null) {
