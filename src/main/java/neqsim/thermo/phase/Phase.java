@@ -50,8 +50,11 @@ abstract class Phase implements PhaseInterface {
   double pressure = 0;
 
   protected PhaseInterface[] refPhase = null;
-  int phaseType = 0;
+
+  protected int phaseType = 0;
   protected String phaseTypeName = "gas";
+  protected PhaseType pt = PhaseType.GAS;
+
 
   /**
    * <p>
@@ -1518,12 +1521,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final int getPhaseType() {
-    return phaseType;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getGibbsEnergy() {
     return getEnthalpy() - temperature * getEntropy();
   }
@@ -1928,18 +1925,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public java.lang.String getPhaseTypeName() {
-    return phaseTypeName;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setPhaseTypeName(java.lang.String phaseTypeName) {
-    this.phaseTypeName = phaseTypeName;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public boolean isMixingRuleDefined() {
     return mixingRuleDefined;
   }
@@ -1952,8 +1937,14 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final void setPhaseType(int phaseType) {
-    this.phaseType = phaseType;
+  public final PhaseType getType() {
+    return this.pt;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final void setType(PhaseType pt) {
+    this.pt = pt;
   }
 
   /** {@inheritDoc} */
