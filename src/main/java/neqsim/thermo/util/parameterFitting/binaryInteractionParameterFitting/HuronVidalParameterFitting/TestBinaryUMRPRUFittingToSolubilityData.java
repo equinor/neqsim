@@ -69,7 +69,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       }
       dataSet.close();
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     try (NeqSimDataBase database = new NeqSimDataBase();
@@ -105,9 +105,8 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       }
       dataSet.close();
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
@@ -142,7 +141,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       }
       dataSet.close();
     } catch (Exception ex) {
-      logger.info("database error" + ex);
+      logger.info("database error", ex);
     }
 
     try (NeqSimDataBase database = new NeqSimDataBase();
@@ -178,7 +177,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       }
       dataSet.close();
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
 
@@ -214,7 +213,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
 
@@ -251,7 +250,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       }
       dataSet.close();
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
 
@@ -287,7 +286,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -1027,7 +1027,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       try {
         hessianInvers = hessianMatrix.invert();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         return false;
       }
       if (solvedX) {
@@ -1151,7 +1151,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     try {
       // molarVolume(pressure, temperature, A, B, phaseType);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     double BonVold = BonV;
     double Btemp = 0;
@@ -1916,7 +1916,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       try {
         hessianInvers = hessianMatrix.invert();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         return false;
       }
 

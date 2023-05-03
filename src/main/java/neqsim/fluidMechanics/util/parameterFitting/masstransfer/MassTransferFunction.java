@@ -1,5 +1,8 @@
 package neqsim.fluidMechanics.util.parameterFitting.masstransfer;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * <p>
  * MassTransferFunction class.
@@ -10,6 +13,8 @@ package neqsim.fluidMechanics.util.parameterFitting.masstransfer;
  */
 public class MassTransferFunction extends
     neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction {
+  static Logger logger = LogManager.getLogger(MassTransferFunction.class);
+
   /**
    * <p>
    * Constructor for MassTransferFunction.
@@ -28,7 +33,7 @@ public class MassTransferFunction extends
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      System.out.println(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     return Math.log(system.getPressure());
   }

@@ -106,9 +106,7 @@ public class PhysicalPropertyMixingRule
             }
             Gij[k][l] = Gij[l][k];
           } catch (Exception ex) {
-            logger.error("err in phys prop.....");
-            String err = ex.toString();
-            logger.error(err);
+            logger.error("err in phys prop.....", ex);
           }
         }
       }

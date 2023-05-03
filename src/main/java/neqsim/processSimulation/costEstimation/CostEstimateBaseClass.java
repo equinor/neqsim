@@ -72,7 +72,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
               .getMechanicalDesign().getCostEstimate().getTotaltCost();
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
     return cost;

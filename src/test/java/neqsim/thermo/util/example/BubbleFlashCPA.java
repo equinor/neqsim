@@ -72,7 +72,7 @@ public class BubbleFlashCPA {
       // testOps.bubblePointPressureFlash(false);
       testOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     testSystem.saveFluid(37);

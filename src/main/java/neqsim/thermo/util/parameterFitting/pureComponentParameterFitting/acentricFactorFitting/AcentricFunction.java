@@ -33,7 +33,7 @@ public class AcentricFunction extends LevenbergMarquardtFunction {
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     return Math.log(system.getPressure());
   }

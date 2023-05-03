@@ -563,7 +563,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
             + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
       }
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex)e(), ex)e(), ex);
     }
 
     system.setTC(Math.exp(u.get(numberOfComponents, 0)));

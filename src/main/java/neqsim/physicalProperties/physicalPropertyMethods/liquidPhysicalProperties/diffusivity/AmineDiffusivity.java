@@ -63,7 +63,7 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
                       -2360.7 / liquidPhase.getPhase().getTemperature() - 24.727e-5 * molConsMDEA)
                   * 1e-4;
     } catch (Exception ex) {
-      logger.error("error eff diff calc " + ex.toString());
+      logger.error("error eff diff calc ", ex);
     }
   }
 

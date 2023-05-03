@@ -32,7 +32,7 @@ public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFuncti
       thermoOps.dewPointMach(system.getPhase(0).getComponent(1).getComponentName(),
           "dewPointTemperature", system.getTemperature());
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     system.initPhysicalProperties();
     return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;

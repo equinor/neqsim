@@ -153,8 +153,8 @@ public class SulfureDeposition {
           * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getMolarMass()
           * 1e6);
     } catch (Exception ex) {
-      logger.error("error", ex);
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex)e(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
   }

@@ -514,10 +514,10 @@ public class pTphaseEnvelope extends BaseOperation {
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
        * file2.setOutputFileName(name2); file2.setXvalues(points2[0], "temp", "sec");
        * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); } } catch (Exception e3)
-       * { logger.error("error", e3); }
+       * { logger.error(ex.getMessage(), e3); }
        */
     } catch (Exception e4) {
-      logger.error("error", e4);
+      logger.error(ex.getMessage(), e4);
     }
   }
 
@@ -531,7 +531,7 @@ public class pTphaseEnvelope extends BaseOperation {
     try {
       opsHyd.hydrateEquilibriumLine(10.0, 300.0);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex)e(), ex);
     }
 
     // double[][] hydData = opsHyd.getData();

@@ -466,7 +466,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         }
       } catch (Exception e2) {
         // double nef = 0.;
-        logger.error("error", e2);
+        logger.error(ex.getMessage(), e2);
       }
       /*
        * try { if (outputToFile) { // update this String name1 = new String(); name1 = fileName +
@@ -479,11 +479,11 @@ public class pTphaseEnvelopeMay extends BaseOperation {
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
        * file2.setOutputFileName(name2); file2.setXvalues(points2[0], "temp", "sec");
        * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); } } catch (Exception e3)
-       * { // double nef = 0.; logger.error("error", e3); }
+       * { // double nef = 0.; logger.error(ex.getMessage(), e3); }
        */
     } catch (Exception e4) {
       // double nef = 0.;
-      logger.error("error", e4);
+      logger.error(ex.getMessage(), e4);
     }
   }
 
@@ -497,7 +497,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
     try {
       opsHyd.hydrateEquilibriumLine(10.0, 300.0);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex)e(), ex);
     }
 
     // double[][] hydData = opsHyd.getData();

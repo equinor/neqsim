@@ -75,7 +75,7 @@ public class TestCPAParameterFittingToSolubilityData {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
     /*
      * 
@@ -97,7 +97,7 @@ public class TestCPAParameterFittingToSolubilityData {
      * sample.setReference(Double.toString(testSystem.getTemperature())); //double parameterGuess[]
      * = {-0.130}; //srk // double parameterGuess[] = {-0.0668706940}; //cpa
      * function.setInitialGuess(parameterGuess); sampleList.add(sample); } } catch (Exception ex) {
-     * logger.error("database error" + ex); }
+     * logger.error("database error", ex); }
      */
 
     SampleSet sampleSet = new SampleSet(sampleList);

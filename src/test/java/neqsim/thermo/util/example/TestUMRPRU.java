@@ -82,7 +82,7 @@ public class TestUMRPRU {
 
       // testOps.displayResult();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     // testSystem.saveObject(880);
     // testSystem.saveFluid(30, "Norne");

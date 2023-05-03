@@ -133,7 +133,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex)e(), ex);
     }
 
     // thermoOps.ge
@@ -157,7 +157,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
         bubP[i] = thermoSystem.getPressure();
         bubPLOG[i] = bubP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex)e(), ex);
         bubP[i] = 0;
       }
     }
@@ -182,7 +182,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
         dewP[i] = thermoSystem.getPressure();
         dewPLOG[i] = dewP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex)e(), ex);
         dewP[i] = 0;
       }
     }
@@ -207,7 +207,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
         bubT[i] = thermoSystem.getTemperature();
         bubTLOG[i] = bubT[i] - 273.15;
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex)e(), ex);
         bubT[i] = 0.0;
       }
     }
@@ -284,7 +284,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
         try {
           thermoOps.TPflash();
         } catch (Exception ex) {
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex)e(), ex);
         }
         thermoSystem.init(3);
         thermoSystem.initPhysicalProperties();

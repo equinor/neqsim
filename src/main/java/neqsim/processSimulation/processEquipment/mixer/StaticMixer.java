@@ -127,7 +127,7 @@ public class StaticMixer extends Mixer {
       }
       // System.out.println("enthalp ok " + enthalpy);
     } catch (Exception e) {
-      logger.error("error", e);
+      logger.error(ex.getMessage(), e);
     }
     // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
     mixedStream.getThermoSystem().init(3);

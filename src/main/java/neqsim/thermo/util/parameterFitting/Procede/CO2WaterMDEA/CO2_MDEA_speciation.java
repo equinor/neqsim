@@ -141,7 +141,7 @@ public class CO2_MDEA_speciation {
     try {
       testOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     logger.info("Pressure " + testSystem.getPressure());
 
@@ -169,7 +169,7 @@ public class CO2_MDEA_speciation {
       // "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
     } catch (FileNotFoundException ex) {
       logger.error("Could not find file");
-      logger.error("Could not read from Patrick.txt" + ex.getMessage());
+      logger.error("Could not read from Patrick.txt", ex);
     }
     try (PrintStream p =
         new PrintStream(new FileOutputStream("C:/java/NeqSimSource/activity.txt", true))) {
@@ -177,7 +177,7 @@ public class CO2_MDEA_speciation {
           + aCO3 + " " + aOH);
     } catch (FileNotFoundException ex) {
       logger.error("Could not find file");
-      logger.error("Could not read from Patrick.txt" + ex.getMessage());
+      logger.error("Could not read from Patrick.txt", ex);
     }
 
     if (loading < 0.1) {

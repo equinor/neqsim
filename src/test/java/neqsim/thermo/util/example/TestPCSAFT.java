@@ -64,8 +64,7 @@ public class TestPCSAFT {
       // testOps.PHflash(oldEnthalpy-10000, 0);
       testOps.PSflash(entropy);
     } catch (Exception ex) {
-      logger.error(ex.toString());
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
     // System.out.println("enthalpy " + (testSystem.getEnthalpy() - oldEnthalpy));
