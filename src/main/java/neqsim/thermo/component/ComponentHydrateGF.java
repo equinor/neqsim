@@ -67,7 +67,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
           dataSet.close();
         } catch (Exception ex) {
           logger.error("error closing database.....", ex);
-          // logger.error(ex.getMessage(), ex);
         }
       }
     }

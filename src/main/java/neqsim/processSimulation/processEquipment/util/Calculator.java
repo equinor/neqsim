@@ -84,7 +84,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
       outputVariable.setCalculationIdentifier(id);
     } catch (Exception ex) {
       logger.info("flow rate error " + sum);
-      logger.error("error in calculator", ex);// , ex);
+      logger.error("error in calculator", ex);
     }
     setCalculationIdentifier(id);
   }

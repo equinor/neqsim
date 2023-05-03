@@ -6,8 +6,6 @@
 
 package neqsim.fluidMechanics.geometryDefinitions;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PackingInterface;
 import neqsim.fluidMechanics.geometryDefinitions.internalGeometry.wall.Wall;
 import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironment;
@@ -24,7 +22,6 @@ import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironm
 public abstract class GeometryDefinition
     implements GeometryDefinitionInterface, neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(GeometryDefinition.class);
 
   /** {@inheritDoc} */
   @Override
