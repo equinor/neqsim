@@ -1,7 +1,5 @@
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.AnnularFlow;
@@ -23,8 +21,6 @@ public class KrishnaStandartFilmModel extends
     neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.NonEquilibriumFluidBoundary
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(KrishnaStandartFilmModel.class);
-
 
   Matrix phiMatrix;
   Matrix redPhiMatrix;
@@ -87,7 +83,6 @@ public class KrishnaStandartFilmModel extends
     try {
       clonedSystem = (KrishnaStandartFilmModel) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
       ex.printStackTrace();
     }
 
