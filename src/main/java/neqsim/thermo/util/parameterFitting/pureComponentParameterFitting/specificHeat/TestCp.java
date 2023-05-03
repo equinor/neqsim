@@ -20,58 +20,57 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * @version $Id: $Id
  */
 public class TestCp {
-    static Logger logger = LogManager.getLogger(TestCp.class);
+  static Logger logger = LogManager.getLogger(TestCp.class);
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String[] args) {
+    LevenbergMarquardt optim = new LevenbergMarquardt();
+    ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-        // inserting samples from database
-        NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
+    // inserting samples from database
+    NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
 
-        // ResultSet dataSet = database.getResultSet( "SELECT * FROM
-        // BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY
-        // FreezingTemperature");
-        ResultSet dataSet = database.getResultSet(
-                "SELECT * FROM PureComponentCpHeatCapacity WHERE ComponentName='seawater'");
-        int i = 0;
+    // ResultSet dataSet = database.getResultSet( "SELECT * FROM
+    // BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY
+    // FreezingTemperature");
+    int i = 0;
 
-        try {
-            while (dataSet.next() && i < 4) {
-                i++;
-                SpecificHeatCpFunction function = new SpecificHeatCpFunction();
-                double guess[] = {36.54003, -0.034802404, 0.0001168117, -1.3003096E-07}; // MEG
-                function.setInitialGuess(guess);
+    try (ResultSet dataSet = database
+        .getResultSet("SELECT * FROM PureComponentCpHeatCapacity WHERE ComponentName='seawater'")) {
+      while (dataSet.next() && i < 4) {
+        i++;
+        SpecificHeatCpFunction function = new SpecificHeatCpFunction();
+        double guess[] = {36.54003, -0.034802404, 0.0001168117, -1.3003096E-07}; // MEG
+        function.setInitialGuess(guess);
 
-                SystemInterface testSystem = new SystemSrkEos(280, 1.101);
-                testSystem.addComponent(dataSet.getString("ComponentName"), 1.0);
-                testSystem.setMixingRule(2);
-                testSystem.init(0);
-                testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
-                testSystem.setPressure(5.0);
-                double sample1[] = {testSystem.getPhase(0).getComponent(0).getz()};
-                double standardDeviation1[] = {0.1, 0.1, 0.1};
-                double val = Double.parseDouble(dataSet.getString("HeatCapacityCp"));
+        SystemInterface testSystem = new SystemSrkEos(280, 1.101);
+        testSystem.addComponent(dataSet.getString("ComponentName"), 1.0);
+        testSystem.setMixingRule(2);
+        testSystem.init(0);
+        testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
+        testSystem.setPressure(5.0);
+        double sample1[] = {testSystem.getPhase(0).getComponent(0).getz()};
+        double standardDeviation1[] = {0.1, 0.1, 0.1};
+        double val = Double.parseDouble(dataSet.getString("HeatCapacityCp"));
 
-                SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
-                sample.setFunction(function);
-                sample.setReference(dataSet.getString("Reference"));
-                sample.setThermodynamicSystem(testSystem);
-                sampleList.add(sample);
-            }
-        } catch (Exception e) {
-            logger.error("database error" + e);
-        }
-        SampleSet sampleSet = new SampleSet(sampleList);
-        optim.setSampleSet(sampleSet);
-
-        optim.solve();
+        SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
+        sample.setFunction(function);
+        sample.setReference(dataSet.getString("Reference"));
+        sample.setThermodynamicSystem(testSystem);
+        sampleList.add(sample);
+      }
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
+    SampleSet sampleSet = new SampleSet(sampleList);
+    optim.setSampleSet(sampleSet);
+
+    optim.solve();
+  }
 }

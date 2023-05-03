@@ -1,24 +1,45 @@
 package neqsim.processSimulation;
 
+import java.util.UUID;
 import neqsim.util.NamedBaseClass;
 
+/**
+ * Base class for process simulation objects.
+ *
+ * @author ASMF
+ * @version $Id: $Id
+ */
 public abstract class SimulationBaseClass extends NamedBaseClass implements SimulationInterface {
   private static final long serialVersionUID = 1L;
-  protected boolean calculateSteadyState = true;
 
+  /**
+   * Unique identifier of which solve/run call was last called successfully.
+   */
+  protected UUID calcIdentifier;
+  protected boolean calculateSteadyState = true;
+  protected double time = 0;
+
+  /**
+   * <p>Constructor for SimulationBaseClass.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public SimulationBaseClass(String name) {
     super(name);
   }
 
   /** {@inheritDoc} */
-  @Override
-  public void runTransient(double dt) {
-    if (getCalculateSteadyState()) {
-      run();
-      return;
-    }
+  public UUID getCalculationIdentifier() {
+    return calcIdentifier;
+  }
 
-    throw new UnsupportedOperationException("RunTransient using difference equations is not supported yet.");
+  /** {@inheritDoc} */
+  public void setCalculationIdentifier(UUID value) {
+    if (this.calcIdentifier == null || this.calcIdentifier != value) {
+      this.calcIdentifier = value;
+    } else {
+      this.calcIdentifier = value;
+    }
   }
 
   /** {@inheritDoc} */
@@ -31,5 +52,24 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
   @Override
   public void setCalculateSteadyState(boolean steady) {
     this.calculateSteadyState = steady;
+  }
+
+  /** {@inheritDoc} */
+  public double getTime() {
+    return this.time;
+  }
+
+  /** {@inheritDoc} */
+  public void setTime(double value) {
+    this.time = value;
+  }
+
+  /** {@inheritDoc} */
+  public void increaseTime(double dt) {
+    if (dt < 0) {
+      throw new UnsupportedOperationException(
+          "Input dt is negative - not allowed to go backwards in time.");
+    }
+    this.time = this.time + dt;
   }
 }

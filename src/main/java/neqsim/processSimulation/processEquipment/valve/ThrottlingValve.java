@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.valve;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -17,10 +18,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   private static final long serialVersionUID = 1000;
 
   protected String name = new String();
-  private boolean valveCvSet = false, isoThermal = false;
+  private boolean valveCvSet = false;
+
+  private boolean isoThermal = false;
+
   SystemInterface thermoSystem;
   double pressure = 0.0;
-  private double Cv = 1.0;
+  private double Cv;
   private double maxMolarFlow = 1000.0;
   private double minMolarFlow = 0.0;
   private double percentValveOpening = 100.0;
@@ -53,8 +57,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /**
    * * Constructor for ThrottlingValve.
-   * 
-   * @param name
+   *
+   * @param name name of valve
    */
   public ThrottlingValve(String name) {
     super(name);
@@ -154,7 +158,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     // System.out.println("valve running..");
     // outStream.setSpecification(inletStream.getSpecification());
     thermoSystem = getInletStream().getThermoSystem().clone();
@@ -162,8 +166,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     thermoSystem.init(3);
     double enthalpy = thermoSystem.getEnthalpy();
     if ((thermoSystem.getPressure(pressureUnit) - pressure) < 0) {
-      if (isAcceptNegativeDP())
+      if (isAcceptNegativeDP()) {
         thermoSystem.setPressure(pressure, pressureUnit);
+      }
     } else {
       thermoSystem.setPressure(pressure, pressureUnit);
     }
@@ -173,7 +178,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     // System.out.println("enthalpy inn.." + enthalpy);
     // thermoOps.PHflash(enthalpy, 0);
-    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6) {
+    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
+        || thermoSystem.getNumberOfMoles() < 1e-12) {
       thermoOps.TPflash();
     } else {
       thermoOps.PHflash(enthalpy, 0);
@@ -189,7 +195,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
           * Math.sqrt(
               (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
                   / thermoSystem.getDensity()));
+      valveCvSet = true;
     }
+
+    percentValveOpening = inStream.getThermoSystem().getTotalNumberOfMoles() / (getCv()) * 100.0
+        / Math.sqrt(
+            (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
+                / thermoSystem.getDensity());
+
     molarFlow = getCv() * getPercentValveOpening() / 100.0
         * Math.sqrt(
             (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
@@ -197,19 +210,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     if (Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6) {
       molarFlow = inStream.getThermoSystem().getTotalNumberOfMoles();
     }
-    // System.out.println("molar flow " + molarFlow);
 
     inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
     inStream.getThermoSystem().init(3);
-    // inletStream.run();
+    // inletStream.run(id);
 
     outStream.setThermoSystem(thermoSystem.clone());
     outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
     outStream.getThermoSystem().init(3);
-    // outStream.run();
+    // outStream.run(id);
     // Cv =
     // inletStream.getThermoSystem().getTotalNumberOfMoles()/Math.sqrt(inletStream.getPressure()-outStream.getPressure());
     // molarFlow = inletStream.getThermoSystem().getTotalNumberOfMoles();
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
@@ -226,13 +240,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt) {
+  public void runTransient(double dt, UUID id) {
     if (getCalculateSteadyState()) {
-      run();
+      run(id);
+      increaseTime(dt);
       return;
     }
 
-    runController(dt);
+    runController(dt, id);
 
     thermoSystem = inStream.getThermoSystem().clone();
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -263,11 +278,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
     inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
     inStream.getThermoSystem().init(1);
-    inStream.run();
+    inStream.run(id);
 
     outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
     outStream.getThermoSystem().init(1);
-    outStream.run();
+    outStream.run(id);
 
     // System.out.println("delta p valve " +
     // (inletStream.getThermoSystem().getPressure() -
@@ -275,6 +290,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     // System.out.println("total molar flow out " + molarFlow);
     // System.out.println("Total volume flow " +
     // outStream.getThermoSystem().getVolume());
+    setCalculationIdentifier(id);
   }
 
   /**
@@ -283,10 +299,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * </p>
    *
    * @param dt a double
+   * @param id Calculation identifier
    */
-  public void runController(double dt) {
+  public void runController(double dt, UUID id) {
     if (hasController) {
-      getController().runTransient(this.percentValveOpening, dt);
+      getController().runTransient(this.percentValveOpening, dt, id);
       this.percentValveOpening = getController().getResponse();
       if (this.percentValveOpening > 100) {
         this.percentValveOpening = 100;
@@ -296,6 +313,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       }
       // System.out.println("valve opening " + this.percentValveOpening + " %");
     }
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
@@ -306,8 +324,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /** {@inheritDoc} */
   @Override
-  public void setCv(double Cv) {
-    this.Cv = Cv;
+  public void setCv(double cv) {
+    this.Cv = cv;
     valveCvSet = true;
   }
 

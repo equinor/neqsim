@@ -9,10 +9,10 @@ package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
  * @version $Id: $Id
  */
 public class DataObject implements DataObjectInterface {
-    /**
-     * <p>
-     * Constructor for DataObject.
-     * </p>
-     */
-    public DataObject() {}
+  /**
+   * <p>
+   * Constructor for DataObject.
+   * </p>
+   */
+  public DataObject() {}
 }

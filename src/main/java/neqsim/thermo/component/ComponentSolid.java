@@ -3,6 +3,7 @@
  *
  * Created on 18. august 2001, 12:45
  */
+
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
@@ -19,8 +20,11 @@ public class ComponentSolid extends ComponentSrk {
   private static final long serialVersionUID = 1000;
 
   double dpdt = 1.0;
-  double SolidFug = 0.0, PvapSolid = 0.0, PvapSoliddT = 0.0;
-  double solvol = 0.0, soldens = 0.0;
+  double SolidFug = 0.0;
+  double PvapSolid = 0.0;
+  double PvapSoliddT = 0.0;
+  double solvol = 0.0;
+  double soldens = 0.0;
   boolean CCequation = true;
   boolean AntoineSolidequation = true;
   PhaseInterface refPhase = null;
@@ -43,7 +47,9 @@ public class ComponentSolid extends ComponentSrk {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Uses Claperyons equation to calculate the solid fugacity
+   * </p>
    */
   @Override
   public double fugcoef(PhaseInterface phase1) {
@@ -87,7 +93,8 @@ public class ComponentSolid extends ComponentSrk {
 
     // System.out.println("deltaCp Sol-liq " + deltaCpSL);
     // Calculates solid-liquid volume change
-    double liqMolVol = 0.0, solMolVol = 0.0;
+    double liqMolVol = 0.0;
+    double solMolVol = 0.0;
     double temp = getPureComponentLiquidDensity(getTriplePointTemperature());
     if (temp > 1e-20) {
       liqMolVol = 1.0 / temp * getMolarMass();
@@ -221,23 +228,24 @@ public class ComponentSolid extends ComponentSrk {
    */
   public void setSolidRefFluidPhase(PhaseInterface phase) {
     try {
-      if ((!isTBPfraction && !isPlusFraction) || neqsim.util.database.NeqSimDataBase.createTemporaryTables()) {
+      if ((!isTBPfraction && !isPlusFraction)
+          || neqsim.util.database.NeqSimDataBase.createTemporaryTables()) {
         refPhase = phase.getClass().getDeclaredConstructor().newInstance();
         refPhase.setTemperature(273.0);
         refPhase.setPressure(1.0);
         try {
-           refPhase.addcomponent(componentName, 10.0, 10.0, 0);
-        } catch (Exception e) {
-          logger.error("error occured in setSolidRefFluidPhase ", e);
-          refPhase.addcomponent("methane", 10.0, 10.0, 0);
+          refPhase.addComponent(componentName, 10.0, 10.0, 0);
+        } catch (Exception ex) {
+          logger.error("error occured in setSolidRefFluidPhase ", ex);
+          refPhase.addComponent("methane", 10.0, 10.0, 0);
           refPhase.getComponent("methane").setComponentName(componentName);
         }
         refPhase.getComponent(componentName)
             .setAttractiveTerm(phase.getComponent(componentName).getAttractiveTermNumber());
         refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
       }
-    } catch (Exception e) {
-      logger.error("error occured", e);
+    } catch (Exception ex) {
+      logger.error("error occured", ex);
     }
   }
 

@@ -23,70 +23,67 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class TestBinaryHVParameterFittingToEquilibriumData_CH4 {
-    static Logger logger =
-            LogManager.getLogger(TestBinaryHVParameterFittingToEquilibriumData_CH4.class);
+  static Logger logger =
+      LogManager.getLogger(TestBinaryHVParameterFittingToEquilibriumData_CH4.class);
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String[] args) {
+    LevenbergMarquardt optim = new LevenbergMarquardt();
+    ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-        // inserting samples from database
-        NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet("SELECT * FROM CH4MDEA");
-        double guess[] = {500, -500, 1e-10, 1e-10, 0.3};
-        try {
-            while (dataSet.next()) {
-                BinaryHVParameterFittingFunction_CH4 function =
-                        new BinaryHVParameterFittingFunction_CH4();
+    // inserting samples from database
+    double guess[] = {500, -500, 1e-10, 1e-10, 0.3};
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM CH4MDEA")) {
+      while (dataSet.next()) {
+        BinaryHVParameterFittingFunction_CH4 function = new BinaryHVParameterFittingFunction_CH4();
 
-                function.setInitialGuess(guess);
+        function.setInitialGuess(guess);
 
-                int ID = dataSet.getInt("ID");
-                double temperature = Double.parseDouble(dataSet.getString("Temperature"));
-                double pressure = Double.parseDouble(dataSet.getString("Pressure"));
-                double x1 = Double.parseDouble(dataSet.getString("x1"));
-                double x2 = Double.parseDouble(dataSet.getString("x2"));
-                double x3 = Double.parseDouble(dataSet.getString("x3"));
+        int ID = dataSet.getInt("ID");
+        double temperature = Double.parseDouble(dataSet.getString("Temperature"));
+        double pressure = Double.parseDouble(dataSet.getString("Pressure"));
+        double x1 = Double.parseDouble(dataSet.getString("x1"));
+        double x2 = Double.parseDouble(dataSet.getString("x2"));
+        double x3 = Double.parseDouble(dataSet.getString("x3"));
 
-                SystemInterface testSystem =
-                        new SystemSrkSchwartzentruberEos(temperature, pressure);
+        SystemInterface testSystem = new SystemSrkSchwartzentruberEos(temperature, pressure);
 
-                testSystem.addComponent("methane", x1);
-                testSystem.addComponent("water", x2);
-                testSystem.addComponent("MDEA", x3);
+        testSystem.addComponent("methane", x1);
+        testSystem.addComponent("water", x2);
+        testSystem.addComponent("MDEA", x3);
 
-                testSystem.createDatabase(true);
-                testSystem.setMixingRule(4);
-                testSystem.init(0);
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(4);
+        testSystem.init(0);
 
-                double sample1[] = {temperature};
-                double standardDeviation1[] = {temperature / 100.0};
+        double sample1[] = {temperature};
+        double standardDeviation1[] = {temperature / 100.0};
 
-                SampleValue sample =
-                        new SampleValue(pressure, pressure / 100.0, sample1, standardDeviation1);
+        SampleValue sample =
+            new SampleValue(pressure, pressure / 100.0, sample1, standardDeviation1);
 
-                sample.setFunction(function);
-                sample.setThermodynamicSystem(testSystem);
-                sample.setReference(Double.toString(ID));
-                sampleList.add(sample);
-            }
-        } catch (Exception e) {
-            logger.error("database error" + e);
-        }
-
-        SampleSet sampleSet = new SampleSet(sampleList);
-        optim.setSampleSet(sampleSet);
-
-        // do simulations
-        // optim.solve();
-        optim.displayCurveFit();
-        // optim.displayResult();
+        sample.setFunction(function);
+        sample.setThermodynamicSystem(testSystem);
+        sample.setReference(Double.toString(ID));
+        sampleList.add(sample);
+      }
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
+
+    SampleSet sampleSet = new SampleSet(sampleList);
+    optim.setSampleSet(sampleSet);
+
+    // do simulations
+    // optim.solve();
+    optim.displayCurveFit();
+    // optim.displayResult();
+  }
 }

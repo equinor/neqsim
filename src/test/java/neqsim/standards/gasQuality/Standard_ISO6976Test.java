@@ -1,6 +1,3 @@
-/**
- * 
- */
 package neqsim.standards.gasQuality;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,6 +46,32 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
   }
 
   /**
+   * Test method for {@link neqsim.standards.gasQuality.Standard_ISO6976#calculate()} if wrong
+   * reference state is gven. Valid reference states should be 0, 15 and 20 C and 15F (15.55C). If
+   * wrong reference state is given, the program should use standard conditions (15C).
+   */
+  @Test
+  void testCalculateWithWrongReferenceState() {
+    double volumeReferenceState = 0;
+    double energyReferenceState = 15.55;
+    Standard_ISO6976 standard =
+        new Standard_ISO6976(testSystem, volumeReferenceState, energyReferenceState, "volume");
+    standard.setReferenceState("real");
+    standard.setReferenceType("volume");
+    standard.calculate();
+    double GCV = standard.getValue("GCV");
+    standard.getValue("WI");
+    assertEquals(39614.56783352743, GCV, 0.01);
+    energyReferenceState = 15.15; // example of wrong reference condition
+    volumeReferenceState = 1.15; // example of wrong volume reference condition
+    standard.setEnergyRefT(energyReferenceState);
+    standard.setVolRefT(volumeReferenceState);
+    standard.calculate();
+    GCV = standard.getValue("GCV");
+    assertEquals(37499.35392575905, GCV, 0.01);
+  }
+
+  /**
    * Test method for {@link neqsim.standards.gasQuality.Standard_ISO6976#calculate()}.
    */
   @Test
@@ -67,7 +90,7 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
     standard.setReferenceType("volume");
     standard.calculate();
     double GCV = standard.getValue("GCV");
-    double WI = standard.getValue("WI");
+    standard.getValue("WI");
     assertEquals(42377.76099372482, GCV, 0.01);
   }
 
@@ -135,13 +158,12 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
     // standard.display("test");
     /*
      * StandardInterface standardUK = new UKspecifications_ICF_SI(testSystem);
-     * standardUK.calculate(); System.out.println("ICF " +
+     * standardUK.calculate(); logger.info("ICF " +
      * standardUK.getValue("IncompleteCombustionFactor", ""));
      * 
-     * System.out.println("HID " + testSystem.getPhase(0).getComponent("methane").getHID(273.15 -
-     * 150.0)); System.out.println("Hres " +
-     * testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 - 150.0));
+     * logger.info("HID " + testSystem.getPhase(0).getComponent("methane").getHID(273.15 - 150.0));
+     * logger.info("Hres " + testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 -
+     * 150.0));
      */
   }
-
 }

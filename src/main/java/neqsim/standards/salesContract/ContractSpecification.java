@@ -3,6 +3,7 @@
  *
  * Created on 15. juni 2004, 22:59
  */
+
 package neqsim.standards.salesContract;
 
 import neqsim.standards.StandardInterface;
@@ -29,6 +30,9 @@ public class ContractSpecification extends NamedBaseClass {
   private String unit = "", comments = "";
 
   @Deprecated
+  /**
+   * <p>Constructor for ContractSpecification.</p>
+   */
   public ContractSpecification() {
     super("ContractSpecification");
   }

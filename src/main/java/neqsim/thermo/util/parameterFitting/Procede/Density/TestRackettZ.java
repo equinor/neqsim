@@ -20,63 +20,60 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class TestRackettZ {
-    static Logger logger = LogManager.getLogger(TestRackettZ.class);
+  static Logger logger = LogManager.getLogger(TestRackettZ.class);
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String[] args) {
+    LevenbergMarquardt optim = new LevenbergMarquardt();
+    ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-        // inserting samples from database
-        NeqSimDataBase database = new NeqSimDataBase();
+    // inserting samples from database
+    try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database
-                .getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName = 'Water'");
+            .getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName = 'Water'")) {
+      logger.info("adding....");
+      while (dataSet.next()) {
+        RackettZ function = new RackettZ();
+        // double guess[] = {0.2603556815}; //MDEA
+        double guess[] = {0.2356623744}; // Water
+        function.setInitialGuess(guess);
 
-        try {
-            logger.info("adding....");
-            while (dataSet.next()) {
-                RackettZ function = new RackettZ();
-                // double guess[] = {0.2603556815}; //MDEA
-                double guess[] = {0.2356623744}; // Water
-                function.setInitialGuess(guess);
+        double T = Double.parseDouble(dataSet.getString("Temperature"));
+        double P = Double.parseDouble(dataSet.getString("Pressure"));
+        double density = Double.parseDouble(dataSet.getString("Density"));
 
-                double T = Double.parseDouble(dataSet.getString("Temperature"));
-                double P = Double.parseDouble(dataSet.getString("Pressure"));
-                double density = Double.parseDouble(dataSet.getString("Density"));
+        SystemInterface testSystem = new SystemSrkSchwartzentruberEos(T, P);
+        testSystem.addComponent("water", 1.0);
 
-                SystemInterface testSystem = new SystemSrkSchwartzentruberEos(T, P);
-                testSystem.addComponent("water", 1.0);
+        testSystem.createDatabase(true);
+        testSystem.useVolumeCorrection(true);
+        testSystem.setMixingRule(4);
+        testSystem.init(0);
+        testSystem.init(1);
 
-                testSystem.createDatabase(true);
-                testSystem.useVolumeCorrection(true);
-                testSystem.setMixingRule(4);
-                testSystem.init(0);
-                testSystem.init(1);
+        double sample1[] = {T};
+        double standardDeviation1[] = {T / 100};
 
-                double sample1[] = {T};
-                double standardDeviation1[] = {T / 100};
-
-                SampleValue sample =
-                        new SampleValue(density, density / 100.0, sample1, standardDeviation1);
-                sample.setFunction(function);
-                sample.setThermodynamicSystem(testSystem);
-                sampleList.add(sample);
-            }
-        } catch (Exception e) {
-            logger.error("database error" + e);
-        }
-
-        SampleSet sampleSet = new SampleSet(sampleList);
-        optim.setSampleSet(sampleSet);
-
-        // do simulations
-        optim.solve();
-        optim.displayCurveFit();
+        SampleValue sample = new SampleValue(density, density / 100.0, sample1, standardDeviation1);
+        sample.setFunction(function);
+        sample.setThermodynamicSystem(testSystem);
+        sampleList.add(sample);
+      }
+    } catch (Exception ex) {
+      logger.error("database error" + ex);
     }
+
+    SampleSet sampleSet = new SampleSet(sampleList);
+    optim.setSampleSet(sampleSet);
+
+    // do simulations
+    optim.solve();
+    optim.displayCurveFit();
+  }
 }

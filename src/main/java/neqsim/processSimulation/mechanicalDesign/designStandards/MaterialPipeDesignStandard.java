@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -11,170 +13,152 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  * @version $Id: $Id
  */
 public class MaterialPipeDesignStandard extends DesignStandard {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(MaterialPipeDesignStandard.class);
 
-    /**
-     * <p>
-     * Constructor for MaterialPipeDesignStandard.
-     * </p>
-     */
-    public MaterialPipeDesignStandard() {}
+  /**
+   * <p>
+   * Constructor for MaterialPipeDesignStandard.
+   * </p>
+   */
+  public MaterialPipeDesignStandard() {}
 
-    /**
-     * <p>
-     * Constructor for MaterialPipeDesignStandard.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
-     *        object
-     */
-    public MaterialPipeDesignStandard(String name, MechanicalDesign equipmentInn) {
-        super(name, equipmentInn);
-        readMaterialDesignStandard("Carbon Steel Pipe", "A25");
+  /**
+   * <p>
+   * Constructor for MaterialPipeDesignStandard.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+   */
+  public MaterialPipeDesignStandard(String name, MechanicalDesign equipmentInn) {
+    super(name, equipmentInn);
+    readMaterialDesignStandard("Carbon Steel Pipe", "A25");
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>designFactor</code>.
+   * </p>
+   *
+   * @return the designFactor
+   */
+  public double getDesignFactor() {
+    return designFactor;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>designFactor</code>.
+   * </p>
+   *
+   * @param designFactor the designFactor to set
+   */
+  public void setDesignFactor(double designFactor) {
+    this.designFactor = designFactor;
+  }
+
+  /**
+   * <p>
+   * getEfactor.
+   * </p>
+   *
+   * @return the Efactor
+   */
+  public double getEfactor() {
+    return Efactor;
+  }
+
+  /**
+   * <p>
+   * setEfactor.
+   * </p>
+   *
+   * @param Efactor the Efactor to set
+   */
+  public void setEfactor(double Efactor) {
+    this.Efactor = Efactor;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>temperatureDeratingFactor</code>.
+   * </p>
+   *
+   * @return the temperatureDeratingFactor
+   */
+  public double getTemperatureDeratingFactor() {
+    return temperatureDeratingFactor;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>temperatureDeratingFactor</code>.
+   * </p>
+   *
+   * @param temperatureDeratingFactor the temperatureDeratingFactor to set
+   */
+  public void setTemperatureDeratingFactor(double temperatureDeratingFactor) {
+    this.temperatureDeratingFactor = temperatureDeratingFactor;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>minimumYeildStrength</code>.
+   * </p>
+   *
+   * @return the minimumYeildStrength
+   */
+  public double getMinimumYeildStrength() {
+    return minimumYeildStrength;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>minimumYeildStrength</code>.
+   * </p>
+   *
+   * @param minimumYeildStrength the minimumYeildStrength to set
+   */
+  public void setMinimumYeildStrength(double minimumYeildStrength) {
+    this.minimumYeildStrength = minimumYeildStrength;
+  }
+
+  String grade = "";
+  String specName = "";
+  String specificationNumber = "";
+  private double minimumYeildStrength = 35000 * 0.00689475729;
+  private double designFactor = 0.8;
+  private double Efactor = 1.0;
+  private double temperatureDeratingFactor = 1.0;
+
+  /**
+   * <p>
+   * readMaterialDesignStandard.
+   * </p>
+   *
+   * @param specNo a {@link java.lang.String} object
+   * @param grade a {@link java.lang.String} object
+   */
+  public void readMaterialDesignStandard(String specNo, String grade) {
+    this.grade = grade;
+    specificationNumber = specNo;
+
+    neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+        new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+    try (java.sql.ResultSet dataSet =
+        database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
+            + specificationNumber + "' AND grade='" + grade + "'"))) {
+      while (dataSet.next()) {
+        minimumYeildStrength =
+            (Double.parseDouble(dataSet.getString("minimumYeildStrength"))) * 0.00689475729;
+        // design factor table has to be developed
+        // Efactor table has to be implemented
+        // temperatureDeratingFactor has to be implemented
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
-
-    /**
-     * <p>
-     * Getter for the field <code>designFactor</code>.
-     * </p>
-     *
-     * @return the designFactor
-     */
-    public double getDesignFactor() {
-        return designFactor;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>designFactor</code>.
-     * </p>
-     *
-     * @param designFactor the designFactor to set
-     */
-    public void setDesignFactor(double designFactor) {
-        this.designFactor = designFactor;
-    }
-
-    /**
-     * <p>
-     * getEfactor.
-     * </p>
-     *
-     * @return the Efactor
-     */
-    public double getEfactor() {
-        return Efactor;
-    }
-
-    /**
-     * <p>
-     * setEfactor.
-     * </p>
-     *
-     * @param Efactor the Efactor to set
-     */
-    public void setEfactor(double Efactor) {
-        this.Efactor = Efactor;
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>temperatureDeratingFactor</code>.
-     * </p>
-     *
-     * @return the temperatureDeratingFactor
-     */
-    public double getTemperatureDeratingFactor() {
-        return temperatureDeratingFactor;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>temperatureDeratingFactor</code>.
-     * </p>
-     *
-     * @param temperatureDeratingFactor the temperatureDeratingFactor to set
-     */
-    public void setTemperatureDeratingFactor(double temperatureDeratingFactor) {
-        this.temperatureDeratingFactor = temperatureDeratingFactor;
-    }
-
-    /**
-     * <p>
-     * Getter for the field <code>minimumYeildStrength</code>.
-     * </p>
-     *
-     * @return the minimumYeildStrength
-     */
-    public double getMinimumYeildStrength() {
-        return minimumYeildStrength;
-    }
-
-    /**
-     * <p>
-     * Setter for the field <code>minimumYeildStrength</code>.
-     * </p>
-     *
-     * @param minimumYeildStrength the minimumYeildStrength to set
-     */
-    public void setMinimumYeildStrength(double minimumYeildStrength) {
-        this.minimumYeildStrength = minimumYeildStrength;
-    }
-
-    String grade = "";
-    String specName = "";
-    String specificationNumber = "";
-    private double minimumYeildStrength = 35000 * 0.00689475729;
-    private double designFactor = 0.8;
-    private double Efactor = 1.0;
-    private double temperatureDeratingFactor = 1.0;
-
-    /**
-     * <p>
-     * readMaterialDesignStandard.
-     * </p>
-     *
-     * @param specNo a {@link java.lang.String} object
-     * @param grade a {@link java.lang.String} object
-     */
-    public void readMaterialDesignStandard(String specNo, String grade) {
-        this.grade = grade;
-        specificationNumber = specNo;
-
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
-                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
-        java.sql.ResultSet dataSet = null;
-        try {
-            try {
-                dataSet = database.getResultSet(
-                        ("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
-                                + specificationNumber + "' AND grade='" + grade + "'"));
-                while (dataSet.next()) {
-                    minimumYeildStrength =
-                            (Double.parseDouble(dataSet.getString("minimumYeildStrength")))
-                                    * 0.00689475729;
-
-                    // design factor table has to be developed
-                    // Efactor table has to be implemented
-                    // temperatureDeratingFactor has to be implemented
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (dataSet != null) {
-                    dataSet.close();
-                }
-            } catch (Exception e) {
-                System.out.println("error closing database.....GasScrubberDesignStandard");
-                e.printStackTrace();
-            }
-        }
-    }
+    // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
+  }
 }

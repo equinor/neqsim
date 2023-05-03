@@ -1,5 +1,8 @@
 package neqsim.processSimulation.processEquipment.splitter;
 
+import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -16,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class ComponentSplitter extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentSplitter.class);
 
   SystemInterface thermoSystem;
   StreamInterface inletStream;
@@ -34,8 +38,8 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /**
    * Constructor for Splitter.
-   * 
-   * @param name
+   *
+   * @param name name of splitter
    */
   public ComponentSplitter(String name) {
     super(name);
@@ -49,17 +53,31 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
-   * @param i a int
    */
   public ComponentSplitter(String name, StreamInterface inletStream) {
     this(name);
     this.setInletStream(inletStream);
   }
 
+  /**
+   * <p>
+   * setSplitFactors.
+   * </p>
+   *
+   * @param factors an array of {@link double} objects
+   */
   public void setSplitFactors(double[] factors) {
     splitFactor = factors;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>inletStream</code>.
+   * </p>
+   *
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   */
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;
     splitStream = new Stream[2];
@@ -67,18 +85,26 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
       for (int i = 0; i < splitStream.length; i++) {
         splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>splitStream</code>.
+   * </p>
+   *
+   * @param i a int
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
   public StreamInterface getSplitStream(int i) {
     return splitStream[i];
   }
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     for (int i = 0; i < 2; i++) {
       thermoSystem = inletStream.getThermoSystem().clone();
       thermoSystem.setEmptyFluid();
@@ -101,10 +127,10 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
           new ThermodynamicOperations(splitStream[i].getThermoSystem());
       thermoOps.TPflash();
     }
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-  }
+  public void displayResult() {}
 }

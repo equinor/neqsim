@@ -3,6 +3,7 @@
  *
  * Created on 1. mai 2001, 12:47
  */
+
 package neqsim.util.exception;
 
 /**
@@ -14,25 +15,25 @@ package neqsim.util.exception;
  * @version $Id: $Id
  */
 public class ThermoException extends java.lang.Exception {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * Constructs an <code>ThermoException</code> with the specified detail message.
-     *
-     * @param msg the detail message.
-     */
-    public ThermoException(String msg) {
-        super(msg);
-    }
+  /**
+   * Constructs an <code>ThermoException</code> with the specified detail message.
+   *
+   * @param msg the detail message.
+   */
+  public ThermoException(String msg) {
+    super(msg);
+  }
 
-    /**
-     * Constructs an <code>ThermoException</code> with the specified detail message.
-     * 
-     * @param className Class that exception is raised from
-     * @param methodName Method that exception is raised from
-     * @param msg specific error message
-     */
-    public ThermoException(String className, String methodName, String msg) {
-        super(className + ":" + methodName + " - " + msg);
-    }
+  /**
+   * Constructs an <code>ThermoException</code> with the specified detail message.
+   *
+   * @param className Class that exception is raised from
+   * @param methodName Method that exception is raised from
+   * @param msg specific error message
+   */
+  public ThermoException(String className, String methodName, String msg) {
+    super(className + ":" + methodName + " - " + msg);
+  }
 }

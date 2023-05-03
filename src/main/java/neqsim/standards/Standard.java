@@ -3,6 +3,7 @@
  *
  * Created on 13. juni 2004, 23:56
  */
+
 package neqsim.standards;
 
 import java.awt.BorderLayout;
@@ -38,9 +39,9 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
 
   /**
    * Constructor for Standard.
-   * 
-   * @param name
-   * 
+   *
+   * @param name name of standard
+   * @param description description
    */
   public Standard(String name, String description) {
     super(name);
@@ -49,9 +50,10 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
 
   /**
    * Constructor for Standard.
-   * 
-   * @param name
-   * @param thermoSyst
+   *
+   * @param name name of standard
+   * @param thermoSyst input fluid
+   * @param description description of standard
    */
   public Standard(String name, String description, SystemInterface thermoSyst) {
     this(name, description);
@@ -117,7 +119,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     nf.applyPattern("#.#####E0");
     String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
     // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
-    table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
+    table[0][0] = ""; // getPhases()[0].getPhaseTypeName(); //"";
 
     for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {

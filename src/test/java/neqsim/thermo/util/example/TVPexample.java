@@ -7,45 +7,49 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TVPexample class.</p>
+ * <p>
+ * TVPexample class.
+ * </p>
  *
  * @author MLLU
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TVPexample {
-    static Logger logger = LogManager.getLogger(TVPexample.class);
+  static Logger logger = LogManager.getLogger(TVPexample.class);
 
-    /**
-     * <p>main.</p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        SystemInterface testSystem = new SystemSrkEos(275.15 + 37.7778, 1.0);
-        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        testSystem.addComponent("methane", 0.1);
-        testSystem.addComponent("ethane", 0.2);
-        testSystem.addComponent("propane", 0.3);
-        testSystem.addComponent("i-butane", 0.3);
-        testSystem.addComponent("n-butane", 0.1);
-        testSystem.addComponent("i-pentane", 0.1);
-        testSystem.addComponent("n-pentane", 100.0);
-        testSystem.addComponent("n-hexane", 100.0);
-        testSystem.addComponent("n-heptane", 100.0);
-        testSystem.addComponent("n-octane", 100.0);
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String[] args) {
+    SystemInterface testSystem = new SystemSrkEos(275.15 + 37.7778, 1.0);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.addComponent("methane", 0.1);
+    testSystem.addComponent("ethane", 0.2);
+    testSystem.addComponent("propane", 0.3);
+    testSystem.addComponent("i-butane", 0.3);
+    testSystem.addComponent("n-butane", 0.1);
+    testSystem.addComponent("i-pentane", 0.1);
+    testSystem.addComponent("n-pentane", 100.0);
+    testSystem.addComponent("n-hexane", 100.0);
+    testSystem.addComponent("n-heptane", 100.0);
+    testSystem.addComponent("n-octane", 100.0);
 
-        testSystem.createDatabase(true);
-        // testSystem.setMixingRule(10);
+    testSystem.createDatabase(true);
+    // testSystem.setMixingRule(10);
 
-        testOps.TPflash();
-        testSystem.display();
+    testOps.TPflash();
+    testSystem.display();
 
-        try {
-            testOps.bubblePointPressureFlash(false);
-        } catch (Exception e) {
-            logger.error("Exception thrown in bubble point flash");
-        }
-        testSystem.display();
+    try {
+      testOps.bubblePointPressureFlash(false);
+    } catch (Exception ex) {
+      logger.error("Exception thrown in bubble point flash");
     }
+    testSystem.display();
+  }
 }

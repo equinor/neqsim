@@ -20,9 +20,9 @@ public class TPmultiflashWAX extends TPflash {
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
-  double dQdbeta[];
-  double Qmatrix[][];
-  double E[];
+  double[] dQdbeta;
+  double[][] Qmatrix;
+  double[] E;
   double Q = 0;
   boolean doStabilityAnalysis = true;
 
@@ -165,7 +165,7 @@ public class TPmultiflashWAX extends TPflash {
    * @param updateFugacities a boolean
    */
   public void solveBeta(boolean updateFugacities) {
-    double oldBeta[] = new double[system.getNumberOfPhases()];
+    double[] oldBeta = new double[system.getNumberOfPhases()];
     // double newBeta[] = new double[system.getNumberOfPhases()];
 
     Matrix ans = new Matrix(system.getNumberOfPhases() - 1, 1);
@@ -184,7 +184,7 @@ public class TPmultiflashWAX extends TPflash {
       Matrix dQdBM = new Matrix(Qmatrix);
       try {
         ans = dQdBM.solve(dQM.transpose());
-      } catch (Exception e) {
+      } catch (Exception ex) {
       }
       betaMatrix.minusEquals(ans.times(iter / (iter + 2.0)));
       // ans.print(10,2);
@@ -241,8 +241,7 @@ public class TPmultiflashWAX extends TPflash {
       // (clonedSystem.get(i)).init(0); commented out sept 2005, Even
       // S.
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-        numb = i == j ? 1.0 : 1.0e-12; // set to 0 by Even Solbraa 23.01.2013 - changed back
-                                       // to 1.0e-12 27.04.13
+        numb = i == j ? 1.0 : 1.0e-12;
         if (system.getPhase(0).getComponent(j).getz() < 1e-100) {
           numb = 0;
         }
@@ -292,8 +291,10 @@ public class TPmultiflashWAX extends TPflash {
       }
     }
 
-    int hydrocarbonTestCompNumb = 0, lightTestCompNumb = 0;
-    double Mmax = 0, Mmin = 1e10;
+    int hydrocarbonTestCompNumb = 0;
+    int lightTestCompNumb = 0;
+    double Mmax = 0;
+    double Mmin = 1e10;
     for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()) {
         if ((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) > Mmax) {
@@ -447,7 +448,7 @@ public class TPmultiflashWAX extends TPflash {
     if (system.isChemicalSystem()) {
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         chemdev = 0.0;
-        double xchem[] = new double[system.getPhase(phase).getNumberOfComponents()];
+        double[] xchem = new double[system.getPhase(phase).getNumberOfComponents()];
 
         for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
           xchem[i] = system.getPhase(phase).getComponents()[i].getx();

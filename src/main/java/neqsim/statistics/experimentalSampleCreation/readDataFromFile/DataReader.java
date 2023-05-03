@@ -3,6 +3,7 @@
  *
  * Created on 1. februar 2001, 11:38
  */
+
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
 
 import java.io.RandomAccessFile;
@@ -63,8 +64,8 @@ public class DataReader implements DataReaderInterface {
         filepointer = file.getFilePointer();
         tokenizer.nextToken();
       } while (filepointer < length);
-    } catch (Exception e) {
-      String err = e.toString();
+    } catch (Exception ex) {
+      String err = ex.toString();
       System.out.println(err);
     }
   }
@@ -74,7 +75,7 @@ public class DataReader implements DataReaderInterface {
    * Getter for the field <code>sampleObjectList</code>.
    * </p>
    *
-   * @return a {@link java.util.ArrayList} of {@link DataObject}
+   * @return a {@link java.util.ArrayList} of {@link neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataObject}
    */
   public ArrayList<DataObject> getSampleObjectList() {
     return sampleObjectList;

@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface ProcessEquipmentInterface extends SimulationInterface, java.io.Serializable {
+public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
@@ -26,7 +26,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
 
   /**
    * <p>
-   * getMechanicalDesign.
+   * Get a <code>mechanicalDesign</code> for the equipment.
    * </p>
    *
    * @return a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
@@ -88,6 +88,17 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
 
   /**
    * <p>
+   * getFluid.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public default SystemInterface getFluid() {
+    return getThermoSystem();
+  }
+
+  /**
+   * <p>
    * getThermoSystem.
    * </p>
    *
@@ -107,21 +118,22 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
 
   /**
    * <p>
-   * getFluid.
-   * </p>
-   *
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  public SystemInterface getFluid();
-
-  /**
-   * <p>
    * getPressure.
    * </p>
    *
    * @return a double
    */
   public double getPressure();
+
+  /**
+   * <p>
+   * getPressure.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getPressure(String unit);
 
   /**
    * <p>
@@ -152,7 +164,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
   public String getConditionAnalysisMessage();
 
   /**
-   * method to return entropy production of the unit operation
+   * method to return entropy production of the unit operation.
    *
    * @param unit Supported units are J/K and kJ/K
    * @return entropy in specified unit
@@ -160,7 +172,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
   public double getEntropyProduction(String unit);
 
   /**
-   * Get exergy change production of the unit operation
+   * Get exergy change production of the unit operation.
    *
    * @param unit Supported units are J and kJ
    * @param surroundingTemperature The surrounding temperature in Kelvin

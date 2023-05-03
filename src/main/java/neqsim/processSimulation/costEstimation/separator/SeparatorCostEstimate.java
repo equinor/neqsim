@@ -12,29 +12,29 @@ import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDe
  * @version $Id: $Id
  */
 public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for SeparatorCostEstimate.
-     * </p>
-     *
-     * @param mechanicalEquipment a
-     *        {@link neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign}
-     *        object
-     */
-    public SeparatorCostEstimate(SeparatorMechanicalDesign mechanicalEquipment) {
-        super(mechanicalEquipment);
-    }
+  /**
+   * <p>
+   * Constructor for SeparatorCostEstimate.
+   * </p>
+   *
+   * @param mechanicalEquipment a
+   *        {@link neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign}
+   *        object
+   */
+  public SeparatorCostEstimate(SeparatorMechanicalDesign mechanicalEquipment) {
+    super(mechanicalEquipment);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getTotaltCost() {
-        SeparatorMechanicalDesign sepMecDesign = (SeparatorMechanicalDesign) mechanicalEquipment;
+  /** {@inheritDoc} */
+  @Override
+  public double getTotaltCost() {
+    SeparatorMechanicalDesign sepMecDesign = (SeparatorMechanicalDesign) mechanicalEquipment;
 
-        sepMecDesign.getWeightTotal();
-        sepMecDesign.getVolumeTotal();
+    sepMecDesign.getWeightTotal();
+    sepMecDesign.getVolumeTotal();
 
-        return this.mechanicalEquipment.getWeightTotal();
-    }
+    return this.mechanicalEquipment.getWeightTotal();
+  }
 }

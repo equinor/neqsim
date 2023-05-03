@@ -1,5 +1,8 @@
 package neqsim.processSimulation.processEquipment.util;
 
+import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -18,15 +21,22 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class GORfitter extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(GORfitter.class);
 
-  double pressure = 1.01325, temperature = 15.0;
+  double pressure = 1.01325;
+  double temperature = 15.0;
   private String referenceConditions = "standard"; // "actual";
   private boolean fitAsGVF = false;
 
-  private double GOR = 120.0, GVF;
-  String unitT = "C", unitP = "bara";
+  private double GOR = 120.0;
+  private double GVF;
+  String unitT = "C";
+  String unitP = "bara";
 
   @Deprecated
+  /**
+   * <p>Constructor for GORfitter.</p>
+   */
   public GORfitter() {
     super("GOR fitter");
   }
@@ -55,24 +65,28 @@ public class GORfitter extends TwoPortEquipment {
     super(name, stream);
   }
 
+  /**
+   * <p>getGFV.</p>
+   *
+   * @return a double
+   */
   public double getGFV() {
     return GVF;
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>inletStream</code>.
    * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
    */
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
       this.outStream = inletStream.clone();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
   }
 
@@ -126,20 +140,27 @@ public class GORfitter extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     SystemInterface tempFluid = inStream.getThermoSystem().clone();
     double flow = tempFluid.getFlowRate("kg/sec");
+
+    if (GOR < 1e-15) {
+      outStream.setThermoSystem(tempFluid);
+      return;
+    }
+
     if (flow < 1e-6) {
       outStream.setThermoSystem(tempFluid);
       return;
     }
+
     if (GOR == 0 && tempFluid.hasPhaseType("gas")) {
       tempFluid.removePhase(0);
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
       try {
         thermoOps.TPflash();
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
       outStream.setThermoSystem(tempFluid);
       return;
@@ -151,8 +172,8 @@ public class GORfitter extends TwoPortEquipment {
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
     try {
       thermoOps.TPflash();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     if (!tempFluid.hasPhaseType("gas") || !tempFluid.hasPhaseType("oil")) {
       outStream = inStream.clone();
@@ -189,16 +210,23 @@ public class GORfitter extends TwoPortEquipment {
     tempFluid.setTotalFlowRate(flow, "kg/sec");
     try {
       thermoOps.TPflash();
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
     }
     outStream.setThermoSystem(tempFluid);
-    GVF = tempFluid.getPhase("gas").getCorrectedVolume()
-        / (tempFluid.getPhase("oil").getCorrectedVolume()
-            + tempFluid.getPhase("gas").getCorrectedVolume());
-    return;
-  }
+    if (!tempFluid.hasPhaseType("gas")) {
+      GVF = 0.0;
+    } else if (tempFluid.hasPhaseType("gas") && tempFluid.hasPhaseType("oil")) {
+      GVF = tempFluid.getPhase("gas").getCorrectedVolume()
+          / (tempFluid.getPhase("oil").getCorrectedVolume()
+              + tempFluid.getPhase("gas").getCorrectedVolume());
+    } else {
+      GVF = Double.NaN;
+    }
 
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
 
   /**
    * <p>
@@ -283,12 +311,21 @@ public class GORfitter extends TwoPortEquipment {
     this.GOR = gOR;
   }
 
+  /**
+   * <p>
+   * setGVF.
+   * </p>
+   *
+   * @param gvf a double
+   */
   public void setGVF(double gvf) {
     fitAsGVF = true;
     this.GOR = gvf;
   }
 
   /**
+   * <p>Getter for the field <code>referenceConditions</code>.</p>
+   *
    * @return the referenceConditions
    */
   public String getReferenceConditions() {
@@ -296,6 +333,8 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
+   * <p>Setter for the field <code>referenceConditions</code>.</p>
+   *
    * @param referenceConditions the referenceConditions to set
    */
   public void setReferenceConditions(String referenceConditions) {
@@ -303,6 +342,8 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
+   * <p>isFitAsGVF.</p>
+   *
    * @return the fitAsGVF
    */
   public boolean isFitAsGVF() {
@@ -310,6 +351,8 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
+   * <p>Setter for the field <code>fitAsGVF</code>.</p>
+   *
    * @param fitAsGVF the fitAsGVF to set
    */
   public void setFitAsGVF(boolean fitAsGVF) {

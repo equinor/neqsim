@@ -3,6 +3,7 @@
  *
  * Created on 6. juni 2006, 15:12
  */
+
 package neqsim.processSimulation.processEquipment;
 
 import java.util.Arrays;
@@ -47,8 +48,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     super(name);
   }
 
-
-
   /** {@inheritDoc} */
   @Override
   public SystemInterface getThermoSystem() {
@@ -57,18 +56,12 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public SystemInterface getFluid() {
-    return getThermoSystem();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void displayResult() {}
 
   /**
    * Create deep copy.
-   * 
-   * @return
+   *
+   * @return a deep copy of the unit operation/process equipment
    */
   public ProcessEquipmentInterface copy() {
     byte[] bytes = SerializationUtils.serialize(this);
@@ -98,7 +91,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   @Override
   public void setController(ControllerDeviceInterface controller) {
     this.controller = controller;
-    hasController = true;
+    hasController = controller != null;
   }
 
   /**
@@ -175,17 +168,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /**
    * <p>
-   * isSetEnergyStream.
-   * </p>
-   *
-   * @return a boolean
-   */
-  public boolean isSetEnergyStream() {
-    return isSetEnergyStream;
-  }
-
-  /**
-   * <p>
    * Setter for the field <code>energyStream</code>.
    * </p>
    *
@@ -195,15 +177,34 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     this.isSetEnergyStream = isSetEnergyStream;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getPressure() {
-    return 1.0;
+  /**
+   * <p>
+   * isSetEnergyStream.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isSetEnergyStream() {
+    return isSetEnergyStream;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setPressure(double pressure) {}
+  public double getPressure() {
+    return getFluid().getPressure();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPressure(String unit) {
+    return getFluid().getPressure(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPressure(double pressure) {
+    getFluid().setPressure(pressure);
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -260,12 +261,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
     return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
         && Objects.equals(controller, other.controller)

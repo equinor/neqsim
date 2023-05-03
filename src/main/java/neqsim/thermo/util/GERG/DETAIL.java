@@ -43,51 +43,51 @@ public class DETAIL {
     // x(1)=0.94, x(3)=0.05, x(20)=0.01
 
     // Variables containing the common parameters in the DETAIL equations
-    static double RDetail;
-    static int NcDetail = 21, MaxFlds = 21, NTerms = 58;
-    static double epsilon = 1e-15;
-    static int[] fn = new int[NTerms + 1];
-    static int[] gn = new int[NTerms + 1];
-    static int[] qn = new int[NTerms + 1];
-    static double[] an = new double[NTerms + 1];
-    static double[] un = new double[NTerms + 1];
-    static int[] bn = new int[NTerms + 1];
-    static int[] kn = new int[NTerms + 1];
+     double RDetail;
+     int NcDetail = 21, MaxFlds = 21, NTerms = 58;
+     double epsilon = 1e-15;
+     int[] fn = new int[NTerms + 1];
+     int[] gn = new int[NTerms + 1];
+     int[] qn = new int[NTerms + 1];
+     double[] an = new double[NTerms + 1];
+     double[] un = new double[NTerms + 1];
+     int[] bn = new int[NTerms + 1];
+     int[] kn = new int[NTerms + 1];
 
-    static double[][][] Bsnij2 = new double[MaxFlds + 1][MaxFlds + 1][18 + 1];
-    static double[] Bs = new double[18 + 1];
-    static double[] Csn = new double[NTerms + 1];
+     double[][][] Bsnij2 = new double[MaxFlds + 1][MaxFlds + 1][18 + 1];
+     double[] Bs = new double[18 + 1];
+     double[] Csn = new double[NTerms + 1];
 
-    static double[] Fi = new double[MaxFlds + 1];
-    static double[] Gi = new double[MaxFlds + 1];
-    static double[] Qi = new double[MaxFlds + 1];
+     double[] Fi = new double[MaxFlds + 1];
+     double[] Gi = new double[MaxFlds + 1];
+     double[] Qi = new double[MaxFlds + 1];
 
-    static double[] Ki25 = new double[MaxFlds + 1];
-    static double[] Ei25 = new double[MaxFlds + 1];
+     double[] Ki25 = new double[MaxFlds + 1];
+     double[] Ei25 = new double[MaxFlds + 1];
 
-    static double[][] Kij5 = new double[MaxFlds + 1][MaxFlds + 1];
-    static double[][] Uij5 = new double[MaxFlds + 1][MaxFlds + 1];
-    static double[][] Gij5 = new double[MaxFlds + 1][MaxFlds + 1];
+     double[][] Kij5 = new double[MaxFlds + 1][MaxFlds + 1];
+     double[][] Uij5 = new double[MaxFlds + 1][MaxFlds + 1];
+     double[][] Gij5 = new double[MaxFlds + 1][MaxFlds + 1];
 
-    static double[] Tun = new double[NTerms + 1];
-    static double Told;
-    static double[][] n0i = new double[MaxFlds + 1][7 + 1];
-    static double[][] th0i = new double[MaxFlds + 1][7 + 1];
+     double[] Tun = new double[NTerms + 1];
+     double Told;
+     double[][] n0i = new double[MaxFlds + 1][7 + 1];
+     double[][] th0i = new double[MaxFlds + 1][7 + 1];
 
-    static double[] MMiDetail = new double[MaxFlds + 1];
-    static double[] xold = new double[MaxFlds + 1];
-    static double K3;
-    static double dPdDsave;
+     double[] MMiDetail = new double[MaxFlds + 1];
+     double[] xold = new double[MaxFlds + 1];
+     double K3;
+     double dPdDsave;
 
-    /**
-     * <p>
-     * sq.
-     * </p>
-     *
-     * @param x a double
-     * @return a double
-     */
-    static public double sq(double x) {
+     /**
+      * <p>
+      * sq.
+      * </p>
+      *
+      * @param x a double
+      * @return a double
+      */
+     public double sq(double x) {
         return x * x;
     }
 
@@ -99,7 +99,7 @@ public class DETAIL {
      * @param x an array of {@link double} objects
      * @param Mm a {@link org.netlib.util.doubleW} object
      */
-    public static void MolarMassDetail(double[] x, doubleW Mm) {
+    public  void MolarMassDetail(double[] x, doubleW Mm) {
         // Calculate molar mass of the mixture with the compositions contained in the
         // x() input array
 
@@ -130,7 +130,7 @@ public class DETAIL {
      * @param P a {@link org.netlib.util.doubleW} object
      * @param Z a {@link org.netlib.util.doubleW} object
      */
-    public static void PressureDetail(double T, double D, double[] x, doubleW P, doubleW Z) {
+    public  void PressureDetail(double T, double D, double[] x, doubleW P, doubleW Z) {
         // Sub Pressure(T, D, x, P, Z)
 
         // Calculate pressure as a function of temperature and density. The derivative
@@ -180,7 +180,7 @@ public class DETAIL {
      * @param ierr a {@link org.netlib.util.intW} object
      * @param herr a {@link org.netlib.util.StringW} object
      */
-    public static void DensityDetail(double T, double P, double[] x, doubleW D, intW ierr,
+    public  void DensityDetail(double T, double P, double[] x, doubleW D, intW ierr,
             StringW herr) {
         // Sub DensityDetail(T, P, x, D, ierr, herr)
 
@@ -280,7 +280,7 @@ public class DETAIL {
      * @param JT a {@link org.netlib.util.doubleW} object
      * @param Kappa a {@link org.netlib.util.doubleW} object
      */
-    public static void PropertiesDetail(double T, double D, double[] x, doubleW P, doubleW Z,
+    public  void PropertiesDetail(double T, double D, double[] x, doubleW P, doubleW Z,
             doubleW dPdD, doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H,
             doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa) {
         // Sub Properties(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W,
@@ -379,7 +379,7 @@ public class DETAIL {
      * @param x Composition (mole fraction)
      */
     // The following routines are low-level routines that should not be called outside of this code.
-    static void xTermsDetail(double[] x) {
+     void xTermsDetail(double[] x) {
         double G, Q, F, U, Q2, xij, xi2;
         int icheck;
 
@@ -460,12 +460,12 @@ public class DETAIL {
     }
 
     /**
-     * @param T
-     * @param D
-     * @param x
-     * @param a0
+     * @param T ...
+     * @param D ...
+     * @param x ...
+     * @param a0 ...
      */
-    static void Alpha0Detail(double T, double D, double[] x, doubleW[] a0) {
+     void Alpha0Detail(double T, double D, double[] x, doubleW[] a0) {
         // Private Sub Alpha0Detail(T, D, x, a0)
 
         // Calculate the ideal gas Helmholtz energy and its derivatives with respect to
@@ -534,13 +534,13 @@ public class DETAIL {
     }
 
     /**
-     * @param itau
-     * @param idel
-     * @param T
-     * @param D
-     * @param ar
+     * @param itau ....
+     * @param idel ...
+     * @param T ...
+     * @param D ...
+     * @param ar ...
      */
-    static void AlpharDetail(int itau, int idel, double T, double D, doubleW[][] ar) {
+     void AlpharDetail(int itau, int idel, double T, double D, doubleW[][] ar) {
         // Private Sub AlpharDetail(itau, idel, T, D, ar)
 
         // Calculate the derivatives of the residual Helmholtz energy (ar) with respect
@@ -661,13 +661,13 @@ public class DETAIL {
         }
     }
 
-    /// The following routine must be called once before any other routine.
+    // The following routine must be called once before any other routine.
     /**
      * <p>
      * SetupDetail.
      * </p>
      */
-    public static void SetupDetail() {
+    public  void SetupDetail() {
         // Initialize all the constants and parameters in the DETAIL model.
         // Some values are modified for calculations that do not depend on T, D, and x
         // in order to speed up the program.
@@ -1516,7 +1516,7 @@ public class DETAIL {
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         DETAIL test = new DETAIL();
-        DETAIL.SetupDetail();
+        test.SetupDetail();
 
         double T = 400;
         doubleW D = new doubleW(0.0);
@@ -1531,13 +1531,13 @@ public class DETAIL {
                 0.00088, 0.00024, 0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007,
                 0.001};
 
-        DETAIL.MolarMassDetail(x, Mm);
+                test.MolarMassDetail(x, Mm);
 
         System.out.println("mol mass " + Mm.val);
 
-        DETAIL.DensityDetail(T, P.val, x, D, ierr, herr);
+        test.DensityDetail(T, P.val, x, D, ierr, herr);
         System.out.println("density " + D.val);
-        DETAIL.PressureDetail(T, D.val, x, P, Z);
+        test.PressureDetail(T, D.val, x, P, Z);
         System.out.println("pressure " + P.val);
         System.out.println("Z " + Z.val);
 
@@ -1548,7 +1548,7 @@ public class DETAIL {
                 G = new doubleW(0.0d), JT = new doubleW(0.0d), Kappa = new doubleW(0.0d),
                 PP = new doubleW(0.0d);
 
-        DETAIL.PropertiesDetail(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W,
+                test.PropertiesDetail(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W,
                 G, JT, Kappa);
 
         System.out.println("JT " + JT.val);

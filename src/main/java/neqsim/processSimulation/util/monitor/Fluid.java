@@ -39,7 +39,7 @@ public class Fluid extends NamedBaseClass {
    * <p>
    * Constructor for Fluid. Sets name of inputFluid as name.
    * </p>
-   * 
+   *
    * @param inputFluid a {@link neqsim.thermo.system.SystemInterface} object
    */
   public Fluid(SystemInterface inputFluid) {
@@ -48,8 +48,8 @@ public class Fluid extends NamedBaseClass {
 
   /**
    * Constructor for Fluid.
-   * 
-   * @param name
+   *
+   * @param name name of fluid
    */
   public Fluid(String name) {
     super(name);
@@ -59,9 +59,9 @@ public class Fluid extends NamedBaseClass {
 
   /**
    * Constructor for Fluid.
-   * 
-   * @param name
-   * @param inputFluid
+   *
+   * @param name name of fluid
+   * @param inputFluid input fluid
    */
   public Fluid(String name, SystemInterface inputFluid) {
     this(name);
