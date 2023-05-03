@@ -1945,6 +1945,8 @@ abstract class Phase implements PhaseInterface {
   @Override
   public final void setType(PhaseType pt) {
     this.pt = pt;
+    this.phaseType = pt.getValue();
+    this.phaseTypeName = pt.getDesc();
   }
 
   /** {@inheritDoc} */

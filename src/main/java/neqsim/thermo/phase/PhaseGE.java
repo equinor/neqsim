@@ -23,11 +23,11 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  */
 public class PhaseGE extends Phase implements PhaseGEInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseGE.class);
 
   EosMixingRules mixSelect = new EosMixingRules();
   EosMixingRulesInterface mixRuleEos;
 
-  static Logger logger = LogManager.getLogger(PhaseGE.class);
 
   /**
    * <p>
@@ -36,7 +36,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
    */
   public PhaseGE() {
     super();
-    phaseTypeName = "liquid";
+    setType(PhaseType.LIQUID);
     componentArray = new ComponentGEInterface[MAX_NUMBER_OF_COMPONENTS];
     useVolumeCorrection = false;
   }
