@@ -1949,6 +1949,18 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+  public final int getPhaseType() {
+    return phaseType;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getPhaseTypeName() {
+    return phaseTypeName;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setMolarVolume(double molarVolume) {
     this.molarVolume = molarVolume;
   }
