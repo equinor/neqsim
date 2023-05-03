@@ -31,7 +31,7 @@ public enum PhaseType {
 
   /**
    * Getter for property value.
-   * 
+   *
    * @return Numeric index of phase type
    */
   public int getValue() {
