@@ -229,22 +229,57 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * <p>
    * init.
    * </p>
+   */
+  public void init();
+
+  /**
+   * <p>
+   * init. Uses existing phase type.
+   * </p>
+   *
+   * @param totalNumberOfMoles Total number of moles in all phases of Stream.
+   * @param numberOfComponents Number of components.
+   * @param type a int. Use 0 to init, and 1 to reset.
+   * @param beta Beta parameter.
+   */
+  public default void init(double totalNumberOfMoles, int numberOfComponents, int type,
+      double beta) {
+    init(totalNumberOfMoles, numberOfComponents, type, getType(), beta);
+  }
+
+  /**
+   * <p>
+   * init.
+   * </p>
    *
    * @param totalNumberOfMoles a double
    * @param numberOfComponents a int
    * @param type a int. Use 0 to init, and 1 to reset.
-   * @param phase a int
+   * @param pt Type of phase.
    * @param beta a double
    */
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta);
 
   /**
    * <p>
    * init.
    * </p>
+   *
+   * @param totalNumberOfMoles a double
+   * @param numberOfComponents a int
+   * @param type a int. Use 0 to init, and 1 to reset.
+   * @param phase Phase type index.
+   * @param beta a double
+   * @deprecated Replace function using PhaseType input.
    */
-  public void init();
+  @Deprecated
+  public default void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+      double beta) {
+    init(totalNumberOfMoles, numberOfComponents, type, PhaseType.byValue(phase), beta);
+  }
+
+
 
   /**
    * <p>
@@ -419,8 +454,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param molesInPhase a double
    * @param compNumber a int
    */
-  public void removeComponent(String name, double moles, double molesInPhase,
-      int compNumber);
+  public void removeComponent(String name, double moles, double molesInPhase, int compNumber);
 
   /**
    * <p>
@@ -557,15 +591,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   public double getSresTP();
-
-  /**
-   * <p>
-   * Setter for property phaseType.
-   * </p>
-   *
-   * @param phaseType a int
-   */
-  public void setPhaseType(int phaseType);
 
   /**
    * <p>
@@ -1254,15 +1279,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * getPhaseType.
-   * </p>
-   *
-   * @return a int
-   */
-  public int getPhaseType();
-
-  /**
-   * <p>
    * calcMolarVolume.
    * </p>
    *
@@ -1865,13 +1881,55 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
       String[][] mixRule, double[][] intparam);
 
   /**
+   * Getter for property pt.
+   *
+   * @return PhaseType enum object.
+   */
+  public PhaseType getType();
+
+  /**
+   * Setter for property pt.
+   */
+  public void setType(PhaseType pt);
+
+  /**
+   * <p>
+   * Getter for property phasetype as int.
+   * </p>
+   *
+   * @return a int
+   * @deprecated Replace with {@link getType}
+   */
+  @Deprecated
+  public default int getPhaseType() {
+    return getType().getValue();
+  }
+
+  /**
+   * <p>
+   * Setter for property phaseType.
+   * </p>
+   *
+   * @param phaseType Phasetype as int.
+   * @deprecated Replace with {@link setType}
+   */
+  @Deprecated
+  public default void setPhaseType(int phaseType) {
+    setType(PhaseType.byValue(phaseType));
+  }
+
+  /**
    * <p>
    * Getter for property phaseTypeName.
    * </p>
    *
    * @return a {@link java.lang.String} object
+   * @deprecated Replace with {@link getType}
    */
-  public java.lang.String getPhaseTypeName();
+  @Deprecated
+  public default java.lang.String getPhaseTypeName() {
+    return getType().getDesc();
+  }
 
   /**
    * <p>
@@ -1879,8 +1937,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    *
    * @param phaseTypeName a {@link java.lang.String} object
+   * @deprecated Replace with {@link setType}
    */
-  public void setPhaseTypeName(java.lang.String phaseTypeName);
+  @Deprecated
+  public default void setPhaseTypeName(java.lang.String phaseTypeName) {
+    setType(PhaseType.byDesc(phaseTypeName));
+  }
 
   /**
    * <p>
