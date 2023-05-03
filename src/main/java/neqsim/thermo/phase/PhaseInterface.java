@@ -269,14 +269,15 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param totalNumberOfMoles a double
    * @param numberOfComponents a int
    * @param type a int. Use 0 to init, and 1 to reset.
-   * @param phase Phase type index.
+   * @param ptNumber Phase type index.
    * @param beta a double
    * @deprecated Replace function using PhaseType input.
    */
   @Deprecated
-  public default void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public default void init(double totalNumberOfMoles, int numberOfComponents, int type,
+      int ptNumber,
       double beta) {
-    init(totalNumberOfMoles, numberOfComponents, type, PhaseType.byValue(phase), beta);
+    init(totalNumberOfMoles, numberOfComponents, type, PhaseType.byValue(ptNumber), beta);
   }
 
 
@@ -1910,7 +1911,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Setter for property phaseType.
    * </p>
    *
-   * @param phaseType Phasetype as int.
+   * @param PhaseType pttype as int.
    * @deprecated Replace with {@link setType}
    */
   @Deprecated

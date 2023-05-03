@@ -119,7 +119,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
     boolean changedAssosiationStatus = false;
 
@@ -230,11 +230,11 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       calcDelta();
     }
 
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
 
     if (type > 0 && isConstantPhaseVolume()) {
       solveX();
-      super.init(totalNumberOfMoles, numberOfComponents, 1, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, 1, pt, beta);
       gcpa = calc_g();
       gcpav = calc_lngV();
       gcpavv = calc_lngVV();
@@ -247,7 +247,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
     if (type > 1) {
       initCPAMatrix(type);
-      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     }
   }
 

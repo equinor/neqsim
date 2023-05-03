@@ -52,17 +52,17 @@ public class PhaseBWRSEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
     double oldMolDens = 0;
     if (type == 0) {
-      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-      super.init(totalNumberOfMoles, numberOfComponents, 3, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, 3, pt, beta);
       return;
     }
     do {
       oldMolDens = getMolarDensity();
-      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     } while (Math.abs((getMolarDensity() - oldMolDens) / oldMolDens) > 1e-10);
     getF();
     // calcPVT();
