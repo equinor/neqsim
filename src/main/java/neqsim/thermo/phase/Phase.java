@@ -194,7 +194,7 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void setProperties(PhaseInterface phase) {
-    this.phaseType = phase.getPhaseType();
+    setType(phase.getType());
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       this.getComponent(i).setProperties(phase.getComponent(i));
     }
@@ -1259,8 +1259,8 @@ abstract class Phase implements PhaseInterface {
         }
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
         refPhase[i].setMixingRule(this.getMixingRuleNumber());
-        refPhase[i].setPhaseType(this.getPhaseType());
-        refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getPhaseType(), 1.0);
+        refPhase[i].setType(this.getType());
+        refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getType(), 1.0);
       } else {
         // System.out.println("ref " + name);
         if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {

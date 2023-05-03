@@ -391,7 +391,7 @@ abstract class SystemThermo implements SystemInterface {
 
     phaseArray[5].setTemperature(phaseArray[0].getTemperature());
     phaseArray[5].setPressure(phaseArray[0].getPressure());
-    phaseArray[5].setPhaseTypeName("wax");
+    phaseArray[5].setType(PhaseType.WAX);
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
         phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(),
@@ -422,7 +422,7 @@ abstract class SystemThermo implements SystemInterface {
       phaseArray[3] = new PhasePureComponentSolid();
       phaseArray[3].setTemperature(phaseArray[0].getTemperature());
       phaseArray[3].setPressure(phaseArray[0].getPressure());
-      phaseArray[3].setPhaseTypeName("solid");
+      phaseArray[3].setType(PhaseType.SOLID);
       for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
         if (getPhase(0).getComponent(i).isIsTBPfraction()) {
           phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
@@ -441,7 +441,7 @@ abstract class SystemThermo implements SystemInterface {
     phaseArray[4] = new PhaseHydrate(getModelName());
     phaseArray[4].setTemperature(phaseArray[0].getTemperature());
     phaseArray[4].setPressure(phaseArray[0].getPressure());
-    phaseArray[4].setPhaseTypeName("hydrate");
+    phaseArray[4].setType(PhaseType.HYDRATE);
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
         phaseArray[4].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
@@ -1829,7 +1829,7 @@ abstract class SystemThermo implements SystemInterface {
     for (int i = 1; i < numberOfPhases; i++) {
       if (isPhase(i)) {
         if (getPhase(i).getType() == PhaseType.GAS) {
-          getPhase(i).setPhaseTypeName("oil");
+          getPhase(i).setType(PhaseType.OIL);
         }
       }
     }
@@ -1885,7 +1885,7 @@ abstract class SystemThermo implements SystemInterface {
 
     for (PhaseInterface tmpPhase : phaseArray) {
       if (tmpPhase != null && tmpPhase.getType() == PhaseType.GAS) {
-        tmpPhase.setPhaseTypeName("oil");
+        tmpPhase.setType(PhaseType.OIL);
       }
     }
     this.isInitialized = true;

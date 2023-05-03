@@ -77,7 +77,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
 
     if (sumHydrocarbons > sumAqueous) {
-      phaseTypeName = "oil";
+      setType(PhaseType.OIL);
     } else {
       phaseTypeName = "aqueous";
     }
@@ -104,7 +104,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
 
     if (sumHydrocarbons > sumAqueous) {
-      phaseTypeName = "oil";
+      setType(PhaseType.OIL);
     } else {
       phaseTypeName = "aqueous";
     }
@@ -183,22 +183,24 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
+  @Deprecated
+  public double getExcessGibbsEnergy() {
+    logger.error("this getExcessGibbsEnergy should never be used.......");
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  @Deprecated
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
-    logger.error("this getExxess should never be used.......");
+    logger.error("this getExcessGibbsEnergy should never be used.......");
     return 0;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getGibbsEnergy() {
-    return 0;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getExcessGibbsEnergy() {
-    logger.error("this getExxess should never be used.......");
     return 0;
   }
 
