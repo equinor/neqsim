@@ -49,7 +49,7 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
       try {
         ops.waterDewPointTemperatureMultiphaseFlash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex)e(), ex)e(), ex)e(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       hydratePoints[0][i] = system.getTemperature();
       hydratePoints[1][i] = system.getPressure();

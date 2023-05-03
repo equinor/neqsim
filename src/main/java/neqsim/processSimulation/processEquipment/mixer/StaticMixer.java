@@ -126,8 +126,8 @@ public class StaticMixer extends Mixer {
         testOps.PHflash(enthalpy, 0);
       }
       // System.out.println("enthalp ok " + enthalpy);
-    } catch (Exception e) {
-      logger.error(ex.getMessage(), e);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
     // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
     mixedStream.getThermoSystem().init(3);

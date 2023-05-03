@@ -329,7 +329,7 @@ public class pTphaseEnvelope1 extends BaseOperation {
        * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); }
        */
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex)e(), ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 

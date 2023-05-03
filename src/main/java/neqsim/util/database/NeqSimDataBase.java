@@ -140,7 +140,7 @@ public class NeqSimDataBase
           ctx.close();
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex)e(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
   }

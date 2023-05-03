@@ -110,7 +110,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex)e(), ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -143,7 +143,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         try {
           thermoOps.TPflash();
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex)e(), ex);
+          logger.error(ex.getMessage(), ex);
         }
         thermoSystem.init(3);
         thermoSystem.initPhysicalProperties();

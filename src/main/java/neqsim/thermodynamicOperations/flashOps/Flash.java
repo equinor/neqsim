@@ -357,7 +357,7 @@ abstract class Flash extends BaseOperation {
       try {
         system.calcBeta();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex)e(), ex);
+        logger.error(ex.getMessage(), ex);
       }
       system.calc_x_y();
       system.init(1);

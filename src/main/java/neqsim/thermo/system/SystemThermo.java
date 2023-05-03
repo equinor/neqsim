@@ -859,7 +859,7 @@ abstract class SystemThermo implements SystemInterface {
       // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();
       // sammenligne med API-standard for tetthet - og sette Penloux dt
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex)e(), ex)e(), ex);
+      logger.error(ex.getMessage(), ex);
     }
 
     double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density); // 0.2918-0.0928*

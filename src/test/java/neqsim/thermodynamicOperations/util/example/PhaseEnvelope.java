@@ -199,8 +199,8 @@ public class PhaseEnvelope {
       // testOps.calcCricoT( cricondenTherm, cricondenThermX , cricondenThermY) ;
       logger.info("Cricondentherm Direct " + testOps.get("cricondentherm")[0] + " "
           + testOps.get("cricondentherm")[1]);
-    } catch (Exception e333) {
-      logger.error(ex.getMessage(), e333);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

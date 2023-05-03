@@ -63,7 +63,7 @@ public class TestMEGFlash {
     try {
       testOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex)e(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
 

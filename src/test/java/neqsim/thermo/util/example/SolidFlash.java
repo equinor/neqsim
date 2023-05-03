@@ -73,7 +73,7 @@ public class SolidFlash {
       // testSystem.display();
       // testOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex)e(), ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

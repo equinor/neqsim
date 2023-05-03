@@ -115,7 +115,7 @@ public class NeqSimTechnicalDesignDatabase
           ctx.close();
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex)e(), ex)e(), ex)e(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
   }

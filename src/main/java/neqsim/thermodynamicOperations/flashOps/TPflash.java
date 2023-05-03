@@ -133,7 +133,7 @@ public class TPflash extends Flash {
         system.setBeta(oldBeta);
       }
       logger.info("temperature " + system.getTemperature() + " pressure " + system.getPressure());
-      logger.error(ex.getMessage(), ex)e(), ex);
+      logger.error(ex.getMessage(), ex);
     }
 
     system.calc_x_y();
@@ -177,7 +177,7 @@ public class TPflash extends Flash {
       system.calc_x_y();
       system.init(1);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex)e(), ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -244,7 +244,7 @@ public class TPflash extends Flash {
     try {
       system.calcBeta();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex)e(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     system.calc_x_y();
     system.init(1);

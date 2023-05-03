@@ -516,8 +516,8 @@ public class pTphaseEnvelope extends BaseOperation {
        * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); } } catch (Exception e3)
        * { logger.error(ex.getMessage(), e3); }
        */
-    } catch (Exception e4) {
-      logger.error(ex.getMessage(), e4);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -531,7 +531,7 @@ public class pTphaseEnvelope extends BaseOperation {
     try {
       opsHyd.hydrateEquilibriumLine(10.0, 300.0);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex)e(), ex);
+      logger.error(ex.getMessage(), ex);
     }
 
     // double[][] hydData = opsHyd.getData();
