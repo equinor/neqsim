@@ -1289,10 +1289,10 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     /**
      * init.
      *
-     * @param phase phase
-     * @param temperature temper
-     * @param pressure pressure
-     * @param numbcomp Number of components
+     * @param phase Phase to initialize for.
+     * @param temperature Temperature to initialize at.
+     * @param pressure Pressure to initialize at.
+     * @param numbcomp Number of components.
      */
     public void init(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -1306,8 +1306,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
       } else {
         gePhase.init((phase.getNumberOfMolesInPhase() / phase.getBeta()),
-            phase.getNumberOfComponents(), phase.getInitType(), phase.getType(),
-            phase.getBeta());
+            phase.getNumberOfComponents(), phase.getInitType(), phase.getType(), phase.getBeta());
       }
 
       hwfc = -1.0 / (1.0
