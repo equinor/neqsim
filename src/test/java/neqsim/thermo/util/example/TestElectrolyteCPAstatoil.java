@@ -58,7 +58,7 @@ public class TestElectrolyteCPAstatoil {
       testSystem.display();
       // testOps.checkScalePotential(1);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     logger.info("pH" + testSystem.getPhase(1).getpH());
     // System.out.println("Mean ionic activity coefficient Na+Cl- " +

@@ -75,7 +75,7 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     try {
       thermoOps.hydrateFormationTemperature();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return tempFluid.getTemperature(unit);
   }

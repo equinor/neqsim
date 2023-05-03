@@ -54,8 +54,7 @@ public class Packing extends NamedBaseClass implements PackingInterface {
       voidFractionPacking = Double.parseDouble(dataSet.getString("voidFraction"));
       System.out.println("packing ok");
     } catch (Exception ex) {
-      String err = ex.toString();
-      System.out.println(err);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -80,8 +79,7 @@ public class Packing extends NamedBaseClass implements PackingInterface {
       voidFractionPacking = Double.parseDouble(dataSet.getString("voidFraction"));
       System.out.println("packing ok");
     } catch (Exception ex) {
-      String err = ex.toString();
-      System.out.println(err);
+      logger.error(ex.getMessage(), ex);
     }
   }
 

@@ -115,7 +115,7 @@ public class TPMultiFlash {
       // newSyst.display();
       // testOps.bubblePointPressureFlash();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     // System.out.println("Henrys Constant " +
     // 1.0/testSystem.getPhase(1).getComponent("CO2").getx()*testSystem.getPressure());

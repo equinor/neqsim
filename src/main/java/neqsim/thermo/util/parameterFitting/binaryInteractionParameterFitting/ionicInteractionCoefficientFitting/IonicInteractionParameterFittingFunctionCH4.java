@@ -33,7 +33,7 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
       // logger.info("pres " +
       // system.getPressure()*system.getPhases()[0].getComponent(0).getx());
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     return system.getPressure();
   }

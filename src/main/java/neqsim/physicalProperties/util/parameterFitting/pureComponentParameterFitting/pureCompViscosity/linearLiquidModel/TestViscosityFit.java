@@ -64,7 +64,7 @@ public class TestViscosityFit {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     // double sample1[] = { 0.1 };

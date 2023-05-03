@@ -49,7 +49,7 @@ public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction
             try {
                 thermoOps.bubblePointPressureFlash(true);
               } catch (Exception ex) {
-                logger.error("error", ex);
+                logger.error(ex.getMessage(), ex);
                 return system.getPressure() * system.getPhase(0).getComponents()[0].getx();
             }
             return system.getPressure() * system.getPhase(0).getComponents()[0].getx();

@@ -96,7 +96,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       subGroup = Integer.parseInt(dataSet.getString("Secondary"));
       groupName = dataSet.getString("Name");
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

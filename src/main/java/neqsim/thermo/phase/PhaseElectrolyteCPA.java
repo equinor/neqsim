@@ -721,7 +721,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       try {
         hessianInvers = hessianMatrix.invert();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         return false;
       }
 
@@ -840,7 +840,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     try {
       // molarVolume(pressure, temperature, A, B, phaseType);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     double BonVold = BonV;
     double Btemp = 0;

@@ -88,7 +88,7 @@ public class TestIonicInteractionParameterFittingCH4 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
     // dataSet = database.getResultSet( "SELECT * FROM Co2Ch4MDEA WHERE loading<1.9
     // AND temperature<453.15 AND pressure<210 AND wt<70");
@@ -140,7 +140,7 @@ public class TestIonicInteractionParameterFittingCH4 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
     SampleSet sampleSet = new SampleSet(sampleList);
     optim.setSampleSet(sampleSet);

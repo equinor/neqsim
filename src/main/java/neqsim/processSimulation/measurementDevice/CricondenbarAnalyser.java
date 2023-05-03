@@ -69,7 +69,7 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
       thermoOps.calcPTphaseEnvelope(false, 1.);
       thermoOps.waitAndCheckForFinishedCalculation(15000);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return thermoOps.get("cricondenbar")[1];
   }
@@ -95,7 +95,7 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
     try {
       thermoOps.run();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return thermoOps.getSaturationPressure();
   }

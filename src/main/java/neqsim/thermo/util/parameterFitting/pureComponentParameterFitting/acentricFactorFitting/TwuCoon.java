@@ -36,7 +36,7 @@ public class TwuCoon extends LevenbergMarquardtFunction {
     try {
       thermoOps.dewPointPressureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     // System.out.println("pres: " + system.getPressure());
     return Math.log(system.getPressure());

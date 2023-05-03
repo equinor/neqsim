@@ -70,8 +70,7 @@ public class ChemicalReactionFactory {
 
       // System.out.println("reaction added ok...");
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
-      System.out.println("could not add reacton: " + ex.toString());
+      logger.error("Could not add reaction", ex);
     }
 
     String[] nameArray = new String[names.size()];
