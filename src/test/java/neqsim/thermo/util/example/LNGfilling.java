@@ -57,7 +57,7 @@ public class LNGfilling {
       testOps.hydrateFormationTemperature(2);
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     // System.out.println("JT " + testSystem.getPhase(0).getJouleThomsonCoefficient());
     // System.out.println("wt%MEG " +

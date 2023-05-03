@@ -171,8 +171,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         Hinf60F[i] = Double.parseDouble(dataSet.getString("Hinfmolar60F"));
       }
     } catch (Exception ex) {
-      String err = ex.toString();
-      System.out.println(err);
+      logger.error(ex.getMessage(), ex);
     }
     // logger.info("ok adding components in " + getName());
   }

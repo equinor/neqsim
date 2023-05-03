@@ -265,7 +265,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       // System.out.println("moles out" +
       // liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     thermoSystem = thermoSystem2;
     setCalculationIdentifier(id);

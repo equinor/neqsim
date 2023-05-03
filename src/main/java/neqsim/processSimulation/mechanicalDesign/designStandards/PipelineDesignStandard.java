@@ -48,7 +48,7 @@ public class PipelineDesignStandard extends DesignStandard {
         }
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

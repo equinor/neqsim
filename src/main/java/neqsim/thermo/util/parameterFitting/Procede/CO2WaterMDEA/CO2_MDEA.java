@@ -122,7 +122,7 @@ public class CO2_MDEA {
         try {
           testOps.bubblePointPressureFlash(false);
         } catch (Exception ex) {
-          logger.error(ex.toString());
+          logger.error(ex.getMessage(), ex);
         }
 
         bias = (pressure
@@ -140,11 +140,11 @@ public class CO2_MDEA {
           p.println(ID + " " + pressure + " "
               + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx());
         } catch (FileNotFoundException ex) {
-          logger.error("Could not find file" + ex.getMessage());
+          logger.error("Could not find file", ex);
         }
       }
     } catch (Exception ex) {
-      logger.error("database error " + ex);
+      logger.error("database error ", ex);
     }
 
     logger.info("Finished");

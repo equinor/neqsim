@@ -52,7 +52,7 @@ public class FreezeMEGwater {
       testOps.freezingPointTemperatureFlash();
       // testOps.calcSolidComlexTemperature("TEG", "water");
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
     // System.out.println("temperature " + (testSystem.getTemperature() - 273.15));

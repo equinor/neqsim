@@ -110,7 +110,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
           + (nitrogenCalc + ans2.getEntry(1, 0)) / thermoSystem.getTotalNumberOfMoles() * 100.0);
       return nitrogenCalc + ans2.getEntry(1, 0);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return 1.0;
   }

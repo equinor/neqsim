@@ -107,6 +107,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
             dataSet.next();
             dataSet.getClob("MainGroup");
           } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             dataSet.close();
             dataSet = database.getResultSet(("SELECT * FROM unifacinterparam WHERE MainGroup="
                 + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
@@ -123,8 +124,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
           }
           dataSet.close();
         } catch (Exception ex) {
-          logger.error("error", ex);
-          logger.error(ex.toString());
+          logger.error(ex.getMessage(), ex);
         }
       }
     }

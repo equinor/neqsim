@@ -113,7 +113,7 @@ public class TestIonicInteractionParameterFittingCH4 {
         sampleList.add(sample3);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

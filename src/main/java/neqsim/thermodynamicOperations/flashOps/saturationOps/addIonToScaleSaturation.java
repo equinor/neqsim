@@ -158,7 +158,7 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
         }
       }
     } catch (Exception ex) {
-      logger.info("failed " + ex.toString());
+      logger.info("failed ", ex);
     }
 
     if (system.getPhase(phaseNumber).hasComponent("MEG")) {

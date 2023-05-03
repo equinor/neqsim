@@ -219,7 +219,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.toString(), ex);
+        logger.error(ex.getMessage(), ex);
       } finally {
         try {
           if (dataSet != null) {
@@ -263,7 +263,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.toString(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");
@@ -299,7 +299,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.toString(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");

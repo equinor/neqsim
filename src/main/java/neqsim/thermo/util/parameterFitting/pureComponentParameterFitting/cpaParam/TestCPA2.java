@@ -96,7 +96,7 @@ public class TestCPA2 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     // dataSet = database.getResultSet( "SELECT * FROM PureComponentDensity WHERE
@@ -139,7 +139,7 @@ public class TestCPA2 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     // dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures
@@ -174,7 +174,7 @@ public class TestCPA2 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

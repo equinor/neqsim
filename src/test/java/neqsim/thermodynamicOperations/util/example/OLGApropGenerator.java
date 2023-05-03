@@ -66,7 +66,7 @@ public class OLGApropGenerator {
       testOps.displayResult();
     } catch (Exception ex) {
       testSystem.display();
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

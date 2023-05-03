@@ -177,7 +177,7 @@ public class VHflashQfunc extends Flash {
       testOps.VHflash(volume, energy);
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

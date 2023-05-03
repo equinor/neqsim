@@ -136,7 +136,7 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getStackTrace());
+        logger.error(ex.getMessage(), ex);
         return Double.NaN;
       }
       // tempFluid.display();

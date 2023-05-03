@@ -61,7 +61,7 @@ public class shtokman_MEG {
       // stream_2.getThermoSystem().setTemperature(250.0);
       // ops.dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     System.out.println("temp " + stream_2.getThermoSystem().getTemperature());
     operations.displayResult();

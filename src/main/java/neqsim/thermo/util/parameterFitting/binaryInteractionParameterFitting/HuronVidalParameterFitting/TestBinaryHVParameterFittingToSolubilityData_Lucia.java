@@ -139,7 +139,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
         logger.info("liq points " + p);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
                                                                                                                                                             // Reference='Houghton1957'
                                                                                                                                                             // AND
@@ -235,7 +235,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);
