@@ -154,7 +154,6 @@ public class SulfureDeposition {
           * 1e6);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
-      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
   }
