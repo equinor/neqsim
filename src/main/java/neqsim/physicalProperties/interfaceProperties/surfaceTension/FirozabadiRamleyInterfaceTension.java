@@ -52,8 +52,9 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
 
   /**
    * {@inheritDoc}
-   *
+   * <p>
    * Calculates the surfacetension using the Firozabadi Ramley (1988) method for mixtures Units: N/m
+   * </p>
    */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
@@ -66,8 +67,9 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
     double Tr = system.getPhase(interface1).getTemperature()
         / system.getPhase(interface1).getPseudoCriticalTemperature();
     // System.out.println("deltaDens " + deltaDens + " Tr " + Tr + " phasetyaae " +
-    // system.getPhase(interface1).getPhaseTypeName());
-    double a1 = 0.0, b1 = 0.0;
+    // system.getPhase(interface1).getType());
+    double a1 = 0.0;
+    double b1 = 0.0;
     if (deltaDens / 1000.0 < 0.2) {
       a1 = 2.2062;
       b1 = -0.94716;
