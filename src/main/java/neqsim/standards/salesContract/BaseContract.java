@@ -87,8 +87,7 @@ public class BaseContract implements ContractInterface {
         System.out.println("specification added..." + numb);
       }
     } catch (Exception ex) {
-      System.out.println("error in comp");
-      logger.error(ex.getMessage());
+      logger.error("error in comp", ex);
     } finally {
       specificationsNumber = numb;
     }
@@ -172,7 +171,7 @@ public class BaseContract implements ContractInterface {
         try {
           spesifications[i].getStandard().calculate();
         } catch (Exception ex) {
-          logger.error(ex.getMessage());
+          logger.error(ex.getMessage(), ex);
         }
         spesifications[i].getStandard().setSalesContract(this);
         System.out.println("Type: " + spesifications[i].getDescription() + " Standard "

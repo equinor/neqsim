@@ -147,7 +147,7 @@ public class CO2_MDEA_methane {
           try {
             testOps.bubblePointPressureFlash(false);
           } catch (Exception ex) {
-            logger.error(ex.toString());
+            logger.error(ex.getMessage(), ex);
           }
           Pold = testSystem.getPressure();
           // System.out.println("Pold "+Pold);
@@ -159,7 +159,7 @@ public class CO2_MDEA_methane {
           try {
             testOps.bubblePointPressureFlash(false);
           } catch (Exception ex) {
-            logger.error(ex.toString());
+            logger.error(ex.getMessage(), ex);
           }
 
           Pnew = testSystem.getPressure();
@@ -214,12 +214,12 @@ public class CO2_MDEA_methane {
           // p.println(ID+" "+pressure+" "+" "+testSystem.getPressure()+"
           // "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
         } catch (FileNotFoundException ex) {
-          logger.error("Could not find file" + ex.getMessage());
-          logger.error("Could not read from Patrick.txt" + ex.getMessage());
+          logger.error("Could not find file", ex);
+          logger.error("Could not read from Patrick.txt", ex);
         }
       }
     } catch (Exception ex) {
-      logger.error("database error " + ex);
+      logger.error("database error ", ex);
     }
     logger.info("Finished");
   }

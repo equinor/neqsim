@@ -39,7 +39,7 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
       // logger.info("pres " +
       // system.getPressure()*system.getPhases()[0].getComponent(0).getx());
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     return system.getPressure() * system.getPhases()[0].getComponent(0).getx();
   }

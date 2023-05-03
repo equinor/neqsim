@@ -44,7 +44,7 @@ public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarqu
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     return system.getPressure();

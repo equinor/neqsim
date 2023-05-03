@@ -58,7 +58,7 @@ public class TestCondensate {
     try {
       testOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
   }

@@ -51,7 +51,7 @@ public class ReadFluidData {
       testOps.calcPTphaseEnvelope(true);
       testOps.displayResult();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

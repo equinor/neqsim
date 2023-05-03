@@ -96,7 +96,7 @@ public class TestInfluenceParamGTFunction {
         sample.setReference(testSystem.getPhase(0).getComponent(0).getComponentName());
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     /*

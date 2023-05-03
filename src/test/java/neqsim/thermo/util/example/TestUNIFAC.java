@@ -56,7 +56,7 @@ public class TestUNIFAC {
       testOps.dewPointPressureFlash();
       // testOps.bubblePointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
     logger.info(testSystem.getPhase(1).getActivityCoefficient(0));

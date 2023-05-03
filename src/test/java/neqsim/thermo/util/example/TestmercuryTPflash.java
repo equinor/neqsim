@@ -46,7 +46,7 @@ public class TestmercuryTPflash {
       // testOps.freezingPointTemperatureFlash("mercury");
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     // ((PhaseEosInterface)testSystem.getPhase(0)).displayInteractionCoefficients("");
     System.out.println("vapour pressure "

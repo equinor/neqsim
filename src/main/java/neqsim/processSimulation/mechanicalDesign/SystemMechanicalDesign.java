@@ -73,7 +73,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
           numberOfModules++;
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
   }

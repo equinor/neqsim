@@ -84,7 +84,7 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     try (NeqSimDataBase database = new NeqSimDataBase();
@@ -120,7 +120,7 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

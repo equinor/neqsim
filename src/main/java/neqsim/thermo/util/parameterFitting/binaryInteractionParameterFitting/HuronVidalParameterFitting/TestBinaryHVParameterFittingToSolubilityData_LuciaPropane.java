@@ -92,7 +92,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     dataSet = database.getResultSet(
@@ -149,7 +149,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
     /*
      * dataSet = database.getResultSet(
@@ -176,7 +176,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane {
      * sample.setFunction(function); sample.setThermodynamicSystem(testSystem);
      * sample.setReference(Double.toString(testSystem.getTemperature())); double parameterGuess[]
      * ={3517,-1584, -0.1, -0.44, 0.07}; //propane function.setInitialGuess(parameterGuess);
-     * sampleList.add(sample); } } catch(Exception ex){ logger.error("database error" + ex); }
+     * sampleList.add(sample); } } catch(Exception ex){ logger.error("database error", ex); }
      */
     SampleSet sampleSet = new SampleSet(sampleList);
     optim.setSampleSet(sampleSet);

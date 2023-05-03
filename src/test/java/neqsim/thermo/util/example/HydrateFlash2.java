@@ -119,7 +119,7 @@ public class HydrateFlash2 {
      * //testOps.freezingPointTemperatureFlash(); //testOps.bubblePointPressureFlash(false);
      * //testOps.hydrateFormationPressure(); //testOps2.hydrateFormationTemperature(2); //
      * testOps.TPflash(); // testSystem.display(); } catch(Exception ex){
-     * logger.error(ex.getMessage()); System.out.println(ex.toString()); } /*
+     * logger.error(ex.getMessage(), ex); System.out.println(ex.toString()); } /*
      * //testSystem2.display(); int phase = 0; double x1 =
      * testSystem2.getPhase(0).getMolarVolume()*testSystem2.getBeta(0); double x2 =
      * testSystem2.getPhase(1).getMolarVolume()*testSystem2.getBeta(1);
