@@ -1287,11 +1287,12 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     }
 
     /**
+     * init.
      *
-     * @param phase
-     * @param temperature
-     * @param pressure
-     * @param numbcomp
+     * @param phase phase
+     * @param temperature temper
+     * @param pressure pressure
+     * @param numbcomp Number of components
      */
     public void init(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();

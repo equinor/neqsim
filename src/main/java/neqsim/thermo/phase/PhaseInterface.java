@@ -1889,6 +1889,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * Setter for property pt.
+   *
+   * @param pt PhaseType enum object to set.
    */
   public void setType(PhaseType pt);
 
