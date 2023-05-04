@@ -60,10 +60,10 @@ public class CO2_MDEA_methane {
     double dP;
     double Pold;
     double Pnew;
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM PatrickCO2");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+    ResultSet dataSet = database.getResultSet("SELECT * FROM PatrickCO2");
+    ) {
       while (dataSet.next()) {
         i += 1;
         logger.info("Adding.... " + i);
