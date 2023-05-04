@@ -120,7 +120,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   @Override
   public void calcAdsorption() {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      getAdsorptionCalc()[i].calcAdorption(i);
+      getAdsorptionCalc()[i].calcAdsorption(i);
     }
   }
 
