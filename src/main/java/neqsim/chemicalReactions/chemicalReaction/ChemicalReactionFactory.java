@@ -9,6 +9,7 @@ package neqsim.chemicalReactions.chemicalReaction;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  * <p>
@@ -57,8 +58,7 @@ public class ChemicalReactionFactory {
       rateFactor = Double.parseDouble(dataSet.getString("r"));
 
       activationEnergy = Double.parseDouble(dataSet.getString("ACTENERGY"));
-      try (
-          neqsim.util.database.NeqSimDataBase database2 = new neqsim.util.database.NeqSimDataBase();
+      try (NeqSimDataBase database2 = new neqsim.util.database.NeqSimDataBase();
           java.sql.ResultSet dataSet2 = database2
               .getResultSet("SELECT * FROM stoccoefdata where reacname='" + reacname + "'")) {
         dataSet2.next();
