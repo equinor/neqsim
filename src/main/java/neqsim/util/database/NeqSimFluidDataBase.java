@@ -22,7 +22,6 @@ public class NeqSimFluidDataBase
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(NeqSimFluidDataBase.class);
 
-
   static boolean started = false;
   protected Connection databaseConnection;
   /** Constant <code>useOnlineBase=false</code>. */

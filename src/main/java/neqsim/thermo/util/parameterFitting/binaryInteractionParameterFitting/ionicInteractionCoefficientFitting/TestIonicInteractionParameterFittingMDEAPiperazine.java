@@ -35,16 +35,16 @@ public class TestIonicInteractionParameterFittingMDEAPiperazine {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
 
-    double guess[] = {0.0007757516}; // , -0.00013534324}; //, -0.000210224}; //, -0.0002324934,
-                                    // 0.0005};
-    ResultSet dataSet = database.getResultSet("SELECT * FROM CO2waterPZ"); // WHERE
-                                                                          // Temperature<393.15
-                                                                          // AND
-                                                                          // PressureCO2<4");
 
-    try {
+
+    try (NeqSimDataBase database = new NeqSimDataBase();) {
+      double guess[] = {0.0007757516}; // , -0.00013534324}; //, -0.000210224}; //, -0.0002324934,
+      // 0.0005};
+      ResultSet dataSet = database.getResultSet("SELECT * FROM CO2waterPZ"); // WHERE
+      // Temperature<393.15
+      // AND
+      // PressureCO2<4");
       int i = 0;
       while (dataSet.next() && i < 25) {
         i++;

@@ -140,7 +140,6 @@ public class TestCPA_ice {
       logger.error("database error", ex);
     }
 
-
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
             "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");) {
