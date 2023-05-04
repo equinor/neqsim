@@ -20,6 +20,19 @@ public interface AdsorptionInterface extends neqsim.thermo.ThermodynamicConstant
 
   /**
    * <p>
+   * calcAdsorption.
+   * </p>
+   *
+   * @param phase a int
+   * @deprecated Replaced by {@link calcAdsorption}
+   */
+  @Deprecated
+  public default void calcAdorption(int phase) {
+    calcAdsorption(phase);
+  }
+
+  /**
+   * <p>
    * getSurfaceExcess.
    * </p>
    *
