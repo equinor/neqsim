@@ -33,7 +33,6 @@ public class TestClassicAcentricPlusDens {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
 
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // PureComponentVapourPressures WHERE ComponentName='methane' AND
@@ -44,10 +43,11 @@ public class TestClassicAcentricPlusDens {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // PureComponentVapourPressures WHERE ComponentName='water' AND VapourPressure>0
     // ORDER BY Temperature ASC");
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='nitrogen' AND VapourPressure>0 ORDER BY Temperature ASC");
     double guess[] = {0.04};
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();) {
+      ResultSet dataSet = database.getResultSet(
+        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='nitrogen' AND VapourPressure>0 ORDER BY Temperature ASC");
+
       logger.info("adding....");
       while (!dataSet.next()) {
         ClassicAcentricFunction function = new ClassicAcentricFunction();
@@ -83,9 +83,10 @@ public class TestClassicAcentricPlusDens {
     // WHERE ComponentName='CO2' AND VapourPressure>5");
     // dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures
     // WHERE ComponentName='water' AND VapourPressure>0 ORDER BY Temperature ASC");
-    dataSet = database.getResultSet(
-        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='nitrogen' AND VapourPressure>0 ORDER BY Temperature ASC");
-    try {
+
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='nitrogen' AND VapourPressure>0 ORDER BY Temperature ASC");) {
       logger.info("adding....");
       while (!dataSet.next()) {
         ClassicAcentricDens function = new ClassicAcentricDens(1);
@@ -120,9 +121,10 @@ public class TestClassicAcentricPlusDens {
     // WHERE ComponentName='CO2' AND VapourPressure>5");
     // dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures
     // WHERE ComponentName='water' AND VapourPressure>0 ORDER BY Temperature ASC");
-    dataSet = database.getResultSet(
-        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='nitrogen' AND VapourPressure>0 ORDER BY Temperature ASC");
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='nitrogen' AND VapourPressure>0 ORDER BY Temperature ASC");
+    ) {
       logger.info("adding....");
       while (dataSet.next()) {
         ClassicAcentricDens function = new ClassicAcentricDens(0);

@@ -105,6 +105,7 @@ public class PhaseHydrate extends Phase {
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+    setType(PhaseType.HYDRATE);
   }
 
   /** {@inheritDoc} */

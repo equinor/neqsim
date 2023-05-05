@@ -33,7 +33,6 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-
     double parameterGuess[] = {188.385052774267, -0.84022345}; // , 2630.871733876947};
 
     try (NeqSimDataBase database = new NeqSimDataBase();
@@ -180,7 +179,6 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       logger.error("database error", ex);
     }
 
-
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
             "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-pentane'");) {
@@ -215,7 +213,6 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
     } catch (Exception ex) {
       logger.error("database error", ex);
     }
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
@@ -252,7 +249,6 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
     } catch (Exception ex) {
       logger.error("database error", ex);
     }
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(

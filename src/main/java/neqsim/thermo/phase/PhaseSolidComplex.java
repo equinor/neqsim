@@ -18,6 +18,7 @@ public class PhaseSolidComplex extends PhaseSolid {
    */
   public PhaseSolidComplex() {
     super();
+    setType(PhaseType.SOLIDCOMPLEX);
   }
 
   /** {@inheritDoc} */
