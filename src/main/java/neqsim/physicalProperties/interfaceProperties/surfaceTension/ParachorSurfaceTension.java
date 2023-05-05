@@ -56,7 +56,7 @@ public class ParachorSurfaceTension extends SurfaceTension {
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the surfacetension using the Macleod/Sugden method for mixtures Units: N/m
+   * Using the Macleod/Sugden method for mixtures Units: N/m
    * </p>
    */
   @Override

@@ -34,15 +34,16 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
   /**
    * {@inheritDoc}
    *
-   * Calculates the pure component surfacetension using the Macleod/Sugden method
+   * <p>
+   * using the Macleod/Sugden method
+   * </p>
    */
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
-    return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber]
-        .getParachorParameter()
-        * 1.0e-6
-        * (system.getPhases()[1].getPhysicalProperties().getDensity()
-            / system.getPhases()[1].getMolarMass()
+    return 1.0e-3 * Math
+        .pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
+            * (system.getPhases()[1].getPhysicalProperties().getDensity()
+                / system.getPhases()[1].getMolarMass()
                 * system.getPhases()[1].getComponents()[componentNumber].getx()
                 - system.getPhases()[0].getPhysicalProperties().getDensity()
                     / system.getPhases()[0].getMolarMass()
@@ -54,7 +55,7 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the surfacetension using the Firozabadi Ramley (1988) method for mixtures Units: N/m
+   * Using the Firozabadi Ramley (1988) method for mixtures Units: N/m
    * </p>
    */
   @Override

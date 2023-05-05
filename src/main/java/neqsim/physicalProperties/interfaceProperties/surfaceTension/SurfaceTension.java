@@ -42,11 +42,11 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
 
   /**
    * <p>
-   * calcPureComponentSurfaceTension.
+   * Calculates the pure component surfacetension.
    * </p>
    *
-   * @param componentNumber a int
-   * @return a double
+   * @param componentNumber Number of component in phase's componentarray.
+   * @return pure component surface tension.
    */
   public double calcPureComponentSurfaceTension(int componentNumber) {
     return 0.0;
@@ -54,7 +54,7 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
 
   /** {@inheritDoc} */
   @Override
-  public double calcSurfaceTension(int int1, int int2) {
+  public double calcSurfaceTension(int interface1, int interface2) {
     return 0.0;
   }
 
