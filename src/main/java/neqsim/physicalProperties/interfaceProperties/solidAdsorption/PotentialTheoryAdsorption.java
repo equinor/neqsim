@@ -64,7 +64,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void calcAdorption(int phase) {
+  public void calcAdsorption(int phase) {
     SystemInterface tempSystem = system.clone();
     tempSystem.init(3);
     double[] bulkFug = new double[system.getPhase(phase).getNumberOfComponents()];
@@ -141,6 +141,13 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getSurfaceExcess(int component) {
+    // todo: remove not in use
+    return 1.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getSurfaceExcess(String componentName) {
     int componentNumber = system.getPhase(0).getComponent(componentName).getComponentNumber();
     return surfaceExcess[componentNumber];
@@ -177,11 +184,5 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         // logger.error(ex.getMessage(), ex);
       }
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getSurfaceExess(int component) {
-    return 1.0;
   }
 }

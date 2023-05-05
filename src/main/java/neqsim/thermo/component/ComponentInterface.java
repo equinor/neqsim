@@ -208,9 +208,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param component_name a {@link java.lang.String} object
-   * @param moles          a double
-   * @param molesInPhase   a double
-   * @param compnumber     a int
+   * @param moles a double
+   * @param molesInPhase a double
+   * @param compnumber a int
    */
   public void createComponent(String component_name, double moles, double molesInPhase,
       int compnumber);
@@ -294,7 +294,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param factNum a int
-   * @param val     a double
+   * @param val a double
    */
   public void setSurfTensInfluenceParam(int factNum, double val);
 
@@ -331,7 +331,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getChemicalPotentialdN.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -381,7 +381,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getChemicalPotentialdNTV.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -486,7 +486,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param k     a int
+   * @param k a int
    * @return a double
    */
   public double logfugcoefdNi(PhaseInterface phase, int k);
@@ -531,12 +531,25 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getTripplePointDensity.
+   * getTriplePointDensity.
    * </p>
    *
    * @return a double
    */
-  public double getTripplePointDensity();
+  public double getTriplePointDensity();
+
+  /**
+   * <p>
+   * getTripplePointDensity.
+   * </p>
+   *
+   * @return a double
+   * @deprecated Replaced by {@link getTriplePointDensity}
+   */
+  @Deprecated
+  public default double getTripplePointDensity() {
+    return getTriplePointDensity();
+  }
 
   /**
    * <p>
@@ -670,7 +683,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * addMolesChemReac.
    * </p>
    *
-   * @param dn    Number of moles to add to phase
+   * @param dn Number of moles to add to phase
    * @param totdn Number of moles to add total
    */
   public void addMolesChemReac(double dn, double totdn);
@@ -750,13 +763,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Finit.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param temperature a double
+   * @param pressure a double
    * @param totalNumberOfMoles a double
-   * @param beta               a double
+   * @param beta a double
    * @param numberOfComponents a int
-   * @param type               a int
+   * @param type a int
    */
   public void Finit(PhaseInterface phase, double temperature, double pressure,
       double totalNumberOfMoles, double beta, int numberOfComponents, int type);
@@ -867,7 +880,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param number a double
-   * @param i      a int
+   * @param i a int
    */
   public void setLiquidConductivityParameter(double number, int i);
 
@@ -1149,7 +1162,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param temperature a double
-   * @param pressure    a double
+   * @param pressure a double
    * @return a double
    */
   public double getEntropy(double temperature, double pressure);
@@ -1236,9 +1249,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getAttractiveTerm.
    * </p>
    *
-   * @return a
-   *         {@link neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface}
-   *         object
+   * @return a {@link neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface} object
    */
   public AttractiveTermInterface getAttractiveTerm();
 
@@ -1287,7 +1298,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param temperature a double
-   * @param pressure    a double
+   * @param pressure a double
    * @return a double
    */
   public double getGibbsEnergy(double temperature, double pressure);
@@ -1408,7 +1419,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param number a double
-   * @param i      a int
+   * @param i a int
    */
   public void setLiquidViscosityParameter(double number, int i);
 
@@ -1435,7 +1446,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setSchwartzentruberParams.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param param a double
    */
   public void setSchwartzentruberParams(int i, double param);
@@ -1454,7 +1465,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setTwuCoonParams.
    * </p>
    *
-   * @param i     a int
+   * @param i a int
    * @param param a double
    */
   public void setTwuCoonParams(int i, double param);
@@ -1523,10 +1534,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * fugcoefDiffPresNumeric.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
@@ -1537,10 +1548,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * fugcoefDiffTempNumeric.
    * </p>
    *
-   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature        a double
-   * @param pressure           a double
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
   public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
@@ -1569,7 +1580,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setdfugdn.
    * </p>
    *
-   * @param i   a int
+   * @param i a int
    * @param val a double
    */
   public void setdfugdn(int i, double val);
@@ -1579,7 +1590,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setdfugdx.
    * </p>
    *
-   * @param i   a int
+   * @param i a int
    * @param val a double
    */
   public void setdfugdx(int i, double val);
@@ -1644,7 +1655,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setMatiascopemanParams.
    * </p>
    *
-   * @param index               a int
+   * @param index a int
    * @param matiascopemanParams a double
    */
   public void setMatiascopemanParams(int index, double matiascopemanParams);
