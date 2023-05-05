@@ -2269,9 +2269,9 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public PhaseInterface getPhaseOfType(String phaseName) {
+  public PhaseInterface getPhaseOfType(String phaseTypeName) {
     for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals(phaseName)) {
+      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
         return getPhase(i);
       }
     }
@@ -3272,7 +3272,7 @@ abstract class SystemThermo implements SystemInterface {
     // 30][7];
     // String[] names = {"", "Feed", "Phase 1", "Phase 2", "Phase 3", "Phase 4",
     // "Unit"};
-    table[0][0] = ""; // getPhases()[0].getPhaseTypeName(); //"";
+    table[0][0] = ""; // getPhases()[0].getType(); //"";
 
     for (int i = 0; i < getPhases()[0].getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 7; j++) {

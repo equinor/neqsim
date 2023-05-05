@@ -74,7 +74,7 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
           new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
     }
     pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
-    // utforer bergninger
+    // utforer beregninger
     pipe.createSystem();
     pipe.setEquilibriumMassTransfer(false);
     pipe.setEquilibriumHeatTransfer(false);

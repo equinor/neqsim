@@ -134,7 +134,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                 / system.getPhase(i).getComponents()[k].getFugacityCoefficient();
           }
           logger.info("funk " + funk);
-          if (iterations > 1) { // && oldPhaseType == system.getPhase(0).getPhaseType()) {
+          if (iterations > 1) { // && oldPhaseType == system.getPhase(0).getType()) {
             deriv = (funk - funkOld) / (system.getTemperature() - oldTemperature);
           } else {
             deriv = funk * 100.0;

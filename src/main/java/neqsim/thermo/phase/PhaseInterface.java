@@ -269,17 +269,15 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param totalNumberOfMoles a double
    * @param numberOfComponents a int
    * @param type a int. Use 0 to init, and 1 to reset.
-   * @param phase Phase type index.
+   * @param ptNumber Phase type index.
    * @param beta a double
-   * @deprecated Replace function using PhaseType input.
+   * @deprecated Replace with init-function using PhaseType input.
    */
   @Deprecated
-  public default void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) {
-    init(totalNumberOfMoles, numberOfComponents, type, PhaseType.byValue(phase), beta);
+  public default void init(double totalNumberOfMoles, int numberOfComponents, int type,
+      int ptNumber, double beta) {
+    init(totalNumberOfMoles, numberOfComponents, type, PhaseType.byValue(ptNumber), beta);
   }
-
-
 
   /**
    * <p>
@@ -603,7 +601,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * setProperties.
+   * setProperties. Transfer properties from another phase object.
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -1890,7 +1888,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * Setter for property pt.
    *
-   * @param pt PhaseType enum object to set.
+   * <<<<<<< HEAD
+   * 
+   * @param pt PhaseType enum object to set. =======
+   * @param pt PhaseType to set. >>>>>>> master
    */
   public void setType(PhaseType pt);
 
@@ -1912,7 +1913,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Setter for property phaseType.
    * </p>
    *
-   * @param phaseType Phasetype as int.
+   * <<<<<<< HEAD
+   * 
+   * @param phaseType Phasetype as int. =======
+   * @param phaseType PhaseType as int. >>>>>>> master
    * @deprecated Replace with {@link setType}
    */
   @Deprecated

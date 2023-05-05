@@ -34,15 +34,16 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
   /**
    * {@inheritDoc}
    *
-   * Calculates the pure component surfacetension using the Macleod/Sugden method
+   * <p>
+   * using the Macleod/Sugden method
+   * </p>
    */
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
-    return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber]
-        .getParachorParameter()
-        * 1.0e-6
-        * (system.getPhases()[1].getPhysicalProperties().getDensity()
-            / system.getPhases()[1].getMolarMass()
+    return 1.0e-3 * Math
+        .pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
+            * (system.getPhases()[1].getPhysicalProperties().getDensity()
+                / system.getPhases()[1].getMolarMass()
                 * system.getPhases()[1].getComponents()[componentNumber].getx()
                 - system.getPhases()[0].getPhysicalProperties().getDensity()
                     / system.getPhases()[0].getMolarMass()
@@ -53,7 +54,9 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
   /**
    * {@inheritDoc}
    *
-   * Calculates the surfacetension using the Firozabadi Ramley (1988) method for mixtures Units: N/m
+   * <p>
+   * Using the Firozabadi Ramley (1988) method for mixtures Units: N/m
+   * </p>
    */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
@@ -65,9 +68,10 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
         - system.getPhase(interface1).getPhysicalProperties().getDensity());
     double Tr = system.getPhase(interface1).getTemperature()
         / system.getPhase(interface1).getPseudoCriticalTemperature();
-    // System.out.println("deltaDens " + deltaDens + " Tr " + Tr + " phasetyaae " +
-    // system.getPhase(interface1).getPhaseTypeName());
-    double a1 = 0.0, b1 = 0.0;
+    // System.out.println("deltaDens " + deltaDens + " Tr " + Tr + " phasetype " +
+    // system.getPhase(interface1).getType());
+    double a1 = 0.0;
+    double b1 = 0.0;
     if (deltaDens / 1000.0 < 0.2) {
       a1 = 2.2062;
       b1 = -0.94716;

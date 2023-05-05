@@ -612,7 +612,7 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getTripplePointDensity() {
+  public final double getTriplePointDensity() {
     return triplePointDensity;
   }
 

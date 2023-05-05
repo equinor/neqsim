@@ -23,11 +23,11 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  */
 public class PhaseGE extends Phase implements PhaseGEInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseGE.class);
 
   EosMixingRules mixSelect = new EosMixingRules();
   EosMixingRulesInterface mixRuleEos;
 
-  static Logger logger = LogManager.getLogger(PhaseGE.class);
 
   /**
    * <p>
@@ -183,22 +183,22 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getExcessGibbsEnergy() {
+    logger.error("this getExcessGibbsEnergy should never be used.......");
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
-    logger.error("this getExxess should never be used.......");
+    logger.error("this getExcessGibbsEnergy should never be used.......");
     return 0;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getGibbsEnergy() {
-    return 0;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getExcessGibbsEnergy() {
-    logger.error("this getExxess should never be used.......");
     return 0;
   }
 

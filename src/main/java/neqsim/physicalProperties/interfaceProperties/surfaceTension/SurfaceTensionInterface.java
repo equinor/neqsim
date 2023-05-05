@@ -17,12 +17,12 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 public interface SurfaceTensionInterface {
   /**
    * <p>
-   * calcSurfaceTension.
+   * calcSurfaceTension. Calculates the surfacetension.
    * </p>
    *
-   * @param int1 a int
-   * @param int2 a int
-   * @return a double
+   * @param interface1 Phase index 1
+   * @param interface2 Phase index 2
+   * @return Surface tension in N/m
    */
-  public double calcSurfaceTension(int int1, int int2);
+  public double calcSurfaceTension(int interface1, int interface2);
 }
