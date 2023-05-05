@@ -31,7 +31,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   double designAdsorptionTemperature = 298.0;
   double designRegenerationTemperature = 440.0;
   double designAdsorptionPressure = 60.0;
-  int numberOfAdorptionBeds = 3;
+  int numberOfAdsorptionBeds = 3;
   double adsorberInternalDiameter = 1.0;
   double adsorbentFillingHeight = 3.0;
 
@@ -103,8 +103,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   public void initializeStreams() {
     isInitializedStreams = true;
     try {
-      adsorber = new SimpleAdsorber[numberOfAdorptionBeds];
-      for (int i = 0; i < numberOfAdorptionBeds; i++) {
+      adsorber = new SimpleAdsorber[numberOfAdsorptionBeds];
+      for (int i = 0; i < numberOfAdsorptionBeds; i++) {
         adsorber[i] = new SimpleAdsorber("SimpleAdsorber_" + i + 1, gasStreamToAdsorber);
       }
       this.gasStreamFromAdsorber = (Stream) this.gasStreamToAdsorber.clone();
@@ -159,7 +159,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
 
     double gasVelocity = 67.0 / Math.sqrt(gasDensity);
 
-    double qa = designFlow / (numberOfAdorptionBeds - 1.0) / 1440.0
+    double qa = designFlow / (numberOfAdsorptionBeds - 1.0) / 1440.0
         * (1.01325 / designAdsorptionPressure) * (designAdsorptionTemperature / 288.15)
         * tempStream.getThermoSystem().getPhase(0).getZ();
     adsorberInternalDiameter = Math.sqrt(4.0 * qa / Math.PI / gasVelocity);
@@ -185,7 +185,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   /** {@inheritDoc} */
   @Override
   public void setDesign() {
-    for (int i = 0; i < numberOfAdorptionBeds; i++) {
+    for (int i = 0; i < numberOfAdsorptionBeds; i++) {
       adsorber[i].getMechanicalDesign().setInnerDiameter(adsorberInternalDiameter);
       adsorber[i].getMechanicalDesign().setTantanLength(adsorbentFillingHeight * 1.5);
     }
