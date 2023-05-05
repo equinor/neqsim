@@ -191,14 +191,14 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getGibbsEnergy() {
+  public double getExcessGibbsEnergy() {
+    logger.error("this getExxess should never be used.......");
     return 0;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy() {
-    logger.error("this getExxess should never be used.......");
+  public double getGibbsEnergy() {
     return 0;
   }
 
