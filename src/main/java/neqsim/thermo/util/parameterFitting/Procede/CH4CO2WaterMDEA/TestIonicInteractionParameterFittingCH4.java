@@ -35,8 +35,6 @@ public class TestIonicInteractionParameterFittingCH4 {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM CO2CH4MDEA");
 
     double ID;
 
@@ -55,7 +53,8 @@ public class TestIonicInteractionParameterFittingCH4 {
     // double guess[] = {0.0004929757}; //Case II
     double[] guess = {0.0004929757, 1e-10}; // Case II and CO2-CH4 parameter also regressed
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM CO2CH4MDEA");) {
       int i = 0;
       logger.info("adding....");
       while (dataSet.next()) {

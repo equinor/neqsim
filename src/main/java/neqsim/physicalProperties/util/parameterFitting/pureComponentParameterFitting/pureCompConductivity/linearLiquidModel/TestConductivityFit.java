@@ -34,13 +34,12 @@ public class TestConductivityFit {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database
-        .getResultSet("SELECT * FROM purecomponentconductivitydata WHERE ComponentName='TEG'");
     // ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM purecomponentconductivitydata WHERE ComponentName='TEG'");) {
       logger.info("adding....");
       while (dataSet.next()) {
         ConductivityFunction function = new ConductivityFunction();
