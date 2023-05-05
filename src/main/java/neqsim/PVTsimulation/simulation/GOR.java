@@ -1,5 +1,6 @@
 package neqsim.PVTsimulation.simulation;
 
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -68,7 +69,7 @@ public class GOR extends BasePVTsimulation {
         m3oil[i] = getThermoSystem().getVolume();
       }
       if (getThermoSystem().getNumberOfPhases() > 1
-          && getThermoSystem().getPhase(0).getPhaseTypeName().equals("gas")) {
+          && getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
         getThermoSystem().getPhase(0).setPressure(1.01325);
         getThermoSystem().getPhase(0).setTemperature(288.15);
         getThermoSystem().init(1);

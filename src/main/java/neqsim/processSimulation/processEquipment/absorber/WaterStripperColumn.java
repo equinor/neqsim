@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -319,14 +320,14 @@ public class WaterStripperColumn extends SimpleAbsorber {
       testOps.PHflash(enthalpy, 0);
 
       if (mixedStream.getThermoSystem().getNumberOfPhases() == 1) {
-        if (mixedStream.getThermoSystem().getPhase(0).getPhaseTypeName().equals("aqueous")) {
+        if (mixedStream.getThermoSystem().getPhase(0).getType() == PhaseType.AQUEOUS) {
           SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
           gasOutStream.setEmptyThermoSystem(tempSystem);
           gasOutStream.run(id);
           solventOutStream.setThermoSystem(tempSystem);
           solventOutStream.run(id);
         }
-        if (mixedStream.getThermoSystem().getPhase(0).getPhaseTypeName().equals("gas")) {
+        if (mixedStream.getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
           SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
           solventOutStream.setEmptyThermoSystem(tempSystem);
           solventOutStream.run(id);
