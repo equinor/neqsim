@@ -18,6 +18,7 @@ public class PhaseSolidComplex extends PhaseSolid {
    */
   public PhaseSolidComplex() {
     super();
+    setType(PhaseType.SOLIDCOMPLEX);
   }
 
   /** {@inheritDoc} */
@@ -38,6 +39,6 @@ public class PhaseSolidComplex extends PhaseSolid {
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-    phaseTypeName = "solidComplex";
+    setType(PhaseType.SOLIDCOMPLEX);
   }
 }

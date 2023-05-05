@@ -253,7 +253,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
     FSR2 = dFSR2dN(phase, numberOfComponents, temperature, pressure);
     FLR = dFLRdN(phase, numberOfComponents, temperature, pressure);
     FBorn = dFBorndN(phase, numberOfComponents, temperature, pressure);
-    // System.out.println("phase " + phase.getPhaseType());
+    // System.out.println("phase " + phase.getType());
     // System.out.println("name " + componentName);
     // System.out.println("Fsup: " + super.dFdN(phase,
     // numberOfComponents,temperature, pressure));

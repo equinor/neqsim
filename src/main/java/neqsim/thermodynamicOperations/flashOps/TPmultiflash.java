@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.ThermodynamicModelSettings;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -104,11 +105,11 @@ public class TPmultiflash extends TPflash {
               / Erow[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient());
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            && !system.getPhase(k).getPhaseTypeName().equals("aqueous")) {
+            && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
           system.getPhase(k).getComponents()[i].setx(1e-50);
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            && system.getPhase(k).getPhaseTypeName().equals("aqueous")) {
+            && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
           system.getPhase(k).getComponents()[i]
               .setx(system.getPhase(k).getComponents()[i].getNumberOfmoles()
                   / system.getPhase(k).getNumberOfMolesInPhase());

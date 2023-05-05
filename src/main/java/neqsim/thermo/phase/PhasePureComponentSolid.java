@@ -44,6 +44,6 @@ public class PhasePureComponentSolid extends PhaseSolid {
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-    phaseTypeName = "solid";
+    setType(PhaseType.SOLID);
   }
 }
