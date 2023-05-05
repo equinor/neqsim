@@ -66,7 +66,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
     try {
       this.thermoOps.waterDewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     dewPointTemperature = this.thermoSystem.getTemperature() - 273.15;
   }

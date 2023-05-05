@@ -66,14 +66,14 @@ public class H2S_Water {
         try {
           testOps.bubblePointPressureFlash(false);
         } catch (Exception ex) {
-          logger.error(ex.toString());
+          logger.error(ex.getMessage(), ex);
         }
 
         aad = (pressure - testSystem.getPressure()) / pressure * 100;
         logger.info(ID + " " + pressure + " " + testSystem.getPressure() + " " + aad);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     logger.info("Finished");

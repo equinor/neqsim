@@ -64,7 +64,7 @@ public class TestFitToAntoineVapPres {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.info("database error" + ex);
+      logger.info("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

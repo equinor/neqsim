@@ -44,7 +44,7 @@ public class TPflashMethanolWaterPropane {
       // testOps.bubblePointPressureFlash(false);
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     // testSystem.saveFluid(3019);
   }

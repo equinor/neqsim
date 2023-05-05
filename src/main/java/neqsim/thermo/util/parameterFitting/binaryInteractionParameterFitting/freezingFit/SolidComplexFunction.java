@@ -29,7 +29,7 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
     try {
       thermoOps.calcSolidComlexTemperature("TEG", "water");
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
     return system.getTemperature(); // for lucia data

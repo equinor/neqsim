@@ -175,7 +175,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         try {
           ans = fmatrixJama.solveTranspose(bmatrixJama.transpose());
         } catch (Exception ex) {
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex);
         }
       }
 
@@ -253,7 +253,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
                 new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();
             ans2 = solver1.solve(bRealMatrix);
           } catch (Exception ex) {
-            logger.error("error", ex);
+            logger.error(ex.getMessage(), ex);
           }
         }
 

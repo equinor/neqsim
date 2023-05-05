@@ -67,7 +67,7 @@ public class Water_MDEA {
         try {
           testOps.bubblePointPressureFlash(false);
         } catch (Exception ex) {
-          logger.error(ex.toString());
+          logger.error(ex.getMessage(), ex);
         }
 
         double hm = testSystem.getPhase(1).getEnthalpy();
@@ -81,7 +81,7 @@ public class Water_MDEA {
         }
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
     logger.info("Finished");
   }

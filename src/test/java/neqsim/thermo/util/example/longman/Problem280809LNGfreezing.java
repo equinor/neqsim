@@ -51,7 +51,7 @@ public class Problem280809LNGfreezing {
       // testOps.freezingPointTemperatureFlash();
       // testSystem.display();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

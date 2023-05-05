@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DecimalFormat;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -15,6 +17,8 @@ import java.text.DecimalFormat;
  * @version $Id: $Id
  */
 public class dataHandeling {
+  static Logger logger = LogManager.getLogger(dataHandeling.class);
+
   /**
    * <p>
    * Constructor for dataHandeling.
@@ -134,8 +138,7 @@ public class dataHandeling {
         }
       }
     } catch (Exception ex) {
-      String err = ex.toString();
-      System.out.println(err);
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

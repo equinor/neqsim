@@ -68,7 +68,7 @@ public class VLSolidTPFLash {
       // testOps.freezingPointTemperatureFlash();
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.init(3);
     // testSystem.display();

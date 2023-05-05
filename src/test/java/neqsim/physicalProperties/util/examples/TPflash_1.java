@@ -58,7 +58,7 @@ public class TPflash_1 {
       testOps.TPflash();
       // testOps.bubblePointPressureFlash(true);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
 

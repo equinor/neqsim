@@ -57,7 +57,7 @@ public class TestCSPsrk {
       // testOps.TPflash();
       testOps.bubblePointPressureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
     logger.info(testSystem.getTemperature() - 273.15);

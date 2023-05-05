@@ -17,14 +17,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class HeatExchangerTest extends neqsim.NeqSimTest{
+public class HeatExchangerTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem;
-  static Stream gasStream;
+  Stream gasStream;
 
   @BeforeEach
-  static void setUp() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 60.0), 20.00);
+  void setUp() {
+    testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 60.0), 20.00);
     testSystem.addComponent("methane", 120.00);
     testSystem.addComponent("ethane", 120.0);
     testSystem.addComponent("n-heptane", 3.0);
@@ -35,9 +34,9 @@ public class HeatExchangerTest extends neqsim.NeqSimTest{
   }
 
   @Test
-  public static void test_Run1(String args[]) {
+  void testRun1() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
-    Stream stream_Cold = new Stream("Stream1", testSystem.clone());
+    Stream stream_Cold = new Stream("Stream2", testSystem.clone());
 
     HeatExchanger heatEx = new HeatExchanger("heatEx");
     heatEx.setFeedStream(0, stream_Hot);
@@ -70,7 +69,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest{
   }
 
   @Test
-  public static void test_Run2(String args[]) {
+  void testRun2() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
 
     neqsim.thermo.system.SystemInterface testSystem2 =

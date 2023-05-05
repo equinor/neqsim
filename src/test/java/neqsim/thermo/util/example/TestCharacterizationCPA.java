@@ -120,7 +120,7 @@ public class TestCharacterizationCPA {
       // testOps.bubblePointPressureFlash(false);
       // testOps.dewPointPressureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     // testSystem.saveObject(96);
