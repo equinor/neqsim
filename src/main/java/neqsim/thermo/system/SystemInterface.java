@@ -225,7 +225,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getMoleFractionsSum.
+   * Get sum of mole fractions for all components. NB! Init must be called first.
    * </p>
    *
    * @return a double
@@ -1024,7 +1024,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getMaxNumberOfPhases.
+   * Getter for property <code>maxNumberOfPhases</code>.
    * </p>
    *
    * @return a int
@@ -1033,7 +1033,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * setMaxNumberOfPhases.
+   * Setter for property <code>maxNumberOfPhases</code>.
    * </p>
    *
    * @param maxNumberOfPhases a int
@@ -1640,20 +1640,20 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * setBeta.
+   * setBeta. NB! Set beta = b for first phase and 1-b for second phase.
    * </p>
    *
-   * @param b a double
+   * @param b Beta value to set.
    */
   public void setBeta(double b);
 
   /**
    * <p>
-   * setBeta.
+   * setBeta for a given phase.
    * </p>
    *
-   * @param phase a int
-   * @param b a double
+   * @param phase Index of phase to set beta for.
+   * @param b Beta value to set.
    */
   public void setBeta(int phase, double b);
 
@@ -1903,15 +1903,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * setNumberOfPhases.
-   * </p>
-   *
-   * @param number a int
-   */
-  public void setNumberOfPhases(int number);
-
-  /**
-   * <p>
    * getTC.
    * </p>
    *
@@ -1957,12 +1948,21 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getNumberOfPhases.
+   * Getter for property <code>numberOfPhases</code>.
    * </p>
    *
    * @return a int
    */
   public int getNumberOfPhases();
+
+  /**
+   * <p>
+   * Setter for property <code>numberOfPhases</code>.
+   * </p>
+   *
+   * @param number a int
+   */
+  public void setNumberOfPhases(int number);
 
   /**
    * <p>

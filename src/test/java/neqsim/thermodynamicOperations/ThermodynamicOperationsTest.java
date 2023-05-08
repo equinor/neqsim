@@ -38,6 +38,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     ops.system.initPhysicalProperties();
     Double[] PTfluidProperties = ops.system.getProperties().getValues();
 
+    // Test that the operations are stable, i.e., do the same flash on the same system with the same
+    // components and at the same conditions and assert that the result is the same.
     ops.system.init(0);
     ops.flash(FlashType.TP, T, P, unitT, unitP);
     ops.system.init(2);
@@ -61,12 +63,15 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     List<Double> jP = Arrays.asList(new Double[] {10.0});
     List<Double> jT = Arrays.asList(new Double[] {280.0});
     CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
+
+    // Verify some basic properties
     Assertions.assertEquals(1.0, res.fluidProperties[0][0], "Number of phases mismatch");
-    Assertions.assertEquals(thermoSystem.getPressure("Pa"), res.fluidProperties[0][1], 1e-8,
+    Assertions.assertEquals(thermoSystem.getPressure("Pa"), res.fluidProperties[0][1],
         "Pressure mismatch");
-    Assertions.assertEquals(thermoSystem.getTemperature("K"), res.fluidProperties[0][2], 1e-5,
+    Assertions.assertEquals(thermoSystem.getTemperature("K"), res.fluidProperties[0][2],
         "Temperature mismatch");
 
+    // Test that
     CalculationResult res2 = thermoOps.propertyFlash(jP, jT, 0, null, null);
     Assertions.assertEquals(res2.calculationError[0],
         "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input FlashMode must be 1, 2 or 3");
@@ -101,6 +106,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     String[] propNames = SystemProperties.getPropertyNames();
     Assertions.assertEquals(res.fluidProperties[0].length, propNames.length);
 
+    // Redo propertyFlash with
     List<List<Double>> onlineFractions =
         createDummyRequest(thermoSystem.getMolarComposition(), 1);
     CalculationResult res1 = thermoOps.propertyFlash(jP, jT, 1, null, onlineFractions);
@@ -110,7 +116,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     }
 
     for (int i = 0; i < res.fluidProperties[0].length; i++) {
-      Assertions.assertEquals(res.fluidProperties[0][i], res1.fluidProperties[0][i],
+      Assertions.assertEquals(res1.fluidProperties[0][i], res.fluidProperties[0][i],
           "Property " + SystemProperties.getPropertyNames()[i]);
     }
 
@@ -279,8 +285,17 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
       int flashMode = (int) inputData.get("FlashMode");
       CalculationResult s =
           ops.propertyFlash(sp1, sp2, flashMode, compNames, null);
+      for (String errorMessage : s.calculationError) {
+        Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
+      }
 
-      Assertions.assertEquals(test.getOutput(), s);
+      CalculationResult expected = test.getOutput();
+
+      for (int i = 0; i < s.fluidProperties[0].length; i++) {
+        Assertions.assertEquals(expected.fluidProperties[0][i], s.fluidProperties[0][i],
+            "Property " + SystemProperties.getPropertyNames()[i]);
+      }
+      Assertions.assertEquals(expected, s);
     }
   }
 

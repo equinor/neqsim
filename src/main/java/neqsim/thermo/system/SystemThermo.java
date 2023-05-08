@@ -1113,6 +1113,7 @@ abstract class SystemThermo implements SystemInterface {
         getPhase(i).getComponent(componentName).setCpC(inComponent.getCpC());
         getPhase(i).getComponent(componentName).setCpD(inComponent.getCpD());
       }
+      this.isInitialized = false;
     } else {
       addComponent(inComponent.getComponentName(), inComponent.getNumberOfmoles());
     }
@@ -1175,6 +1176,7 @@ abstract class SystemThermo implements SystemInterface {
         }
       }
     }
+    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1229,6 +1231,7 @@ abstract class SystemThermo implements SystemInterface {
       componentNames.remove("default");
       componentNames.add(componentName);
     }
+    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1315,6 +1318,7 @@ abstract class SystemThermo implements SystemInterface {
         tmpPhase.addMolesChemReac(index, moles, moles);
       }
     }
+    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1335,8 +1339,8 @@ abstract class SystemThermo implements SystemInterface {
       phaseArray[phaseIndex[i]].addMolesChemReac(index, moles * k, moles);
     }
 
-
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1355,6 +1359,7 @@ abstract class SystemThermo implements SystemInterface {
     componentNames.remove(name);
     // System.out.println("removing " + componentNames.toString());
     numberOfComponents--;
+    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1366,6 +1371,7 @@ abstract class SystemThermo implements SystemInterface {
       }
     }
     totalNumberOfMoles = 0.0;
+    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1744,12 +1750,13 @@ abstract class SystemThermo implements SystemInterface {
    */
   public void initAnalytic(int type) {
     if (type == 0) {
-      setNumberOfPhases(getMaxNumberOfPhases());
+      // todo: should reset all phases?
       for (int i = 0; i < numberOfPhases; i++) {
         phaseType[i] = 0;
         beta[i] = 1.0;
         phaseIndex[i] = i;
       }
+      setNumberOfPhases(getMaxNumberOfPhases());
       phaseType[0] = 1;
       for (int i = 0; i < numberOfPhases; i++) {
         if (isPhase(i)) {
@@ -1757,8 +1764,9 @@ abstract class SystemThermo implements SystemInterface {
               phaseType[phaseIndex[i]], beta[phaseIndex[i]]);
         }
       }
+      // Resets multiphase stuff
       numberOfPhases = 2;
-    } else if (type == 1) {
+    } else if (type > 1) {
       for (int i = 0; i < numberOfPhases; i++) {
         if (isPhase(i)) {
           getPhase(i).init(getTotalNumberOfMoles(), numberOfComponents, 1, phaseType[phaseIndex[i]],

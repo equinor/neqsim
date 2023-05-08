@@ -207,7 +207,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * createComponent.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
+   * @param component_name Name of component
    * @param moles a double
    * @param molesInPhase a double
    * @param compnumber a int
@@ -776,7 +776,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * The mole fraction of a component in the actual phase. NB! init must be called first.
+   * Getter for property x, i.e., the mole fraction of a component in a specific phase. For the mole
+   * fraction for a specific phase see {@link getz} NB! init(0) must be called first from system.
    * </p>
    *
    * @return a double
@@ -785,7 +786,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * The mole fraction of a component in the total fluid. NB! init must be called first.
+   * Getter for property z, i.e., the mole fraction of a component in the fluid. For the mole
+   * fraction for a specific phase see {@link getx} NB! init(0) must be called first from system.
    * </p>
    *
    * @return a double
@@ -794,7 +796,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * The distribution coefficient y/x between gas and lidquid for a component. NB! init must be
+   * The distribution coefficient y/x between gas and liquid for a component. NB! init must be
    * called first.
    * </p>
    *
@@ -807,16 +809,16 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Returns the critical temperature of the component.
    * </p>
    *
-   * @return a double
+   * @return The critical temperature of the component.
    */
   public double getTC();
 
   /**
    * <p>
-   * getNormalBoilingPoint.
+   * Getter for property NormalBoilingPoint.
    * </p>
    *
-   * @return a double
+   * @return The normal boiling point of the component.
    */
   public double getNormalBoilingPoint();
 
@@ -2203,10 +2205,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setCpE(double CpE);
 
   /**
-   * getComponentNameFromAlias.
+   * getComponentNameFromAlias. Used to look up normal component name aliases.
    *
    * @param name a {@link java.lang.String} Component name or alias of component name.
-   * @return a {@link java.lang.String} Component name
+   * @return a {@link java.lang.String} Component name as used in database.
    */
   public static String getComponentNameFromAlias(String name) {
     LinkedHashMap<String, String> c = getComponentNameMap();

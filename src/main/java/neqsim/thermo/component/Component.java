@@ -62,9 +62,9 @@ abstract class Component implements ComponentInterface {
   protected double criticalTemperature;
   protected double molarMass;
   protected double acentricFactor;
-  /** numberOfMoles = totalNumberOfMoles * z. */
+  /** Number of moles in System. numberOfMoles = totalNumberOfMoles * z. */
   protected double numberOfMoles = 0.0;
-  /** totalNumberOfMoles * x * beta. */
+  /** Number of moles in Phase. totalNumberOfMoles * x * beta. */
   protected double numberOfMolesInPhase = 0.0;
   protected double normalLiquidDensity = 0;
   protected double reducedPressure;
@@ -103,7 +103,9 @@ abstract class Component implements ComponentInterface {
   protected double stokesCationicDiameter = 0;
   protected double paulingAnionicDiameter = 0;
   protected double K;
+  /** Mole fraction of component in System. */
   protected double z;
+  /** Mole fraction of component in Phase. */
   protected double x = 0;
   private int orginalNumberOfAssociationSites = 0;
   protected double dfugdt = 0.1;
