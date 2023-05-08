@@ -327,17 +327,6 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   @Override
   public void calcFluxes() {}
 
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    System.out.println("Hei der!");
-  }
-
   /** {@inheritDoc} */
   @Override
   public double getTotalMolarMassTransferRate(int component) {
