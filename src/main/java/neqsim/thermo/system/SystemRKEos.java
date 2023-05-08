@@ -13,7 +13,9 @@ public class SystemRKEos extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemRKEos.</p>
+   * <p>
+   * Constructor for SystemRKEos.
+   * </p>
    */
   public SystemRKEos() {
     super();

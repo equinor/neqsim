@@ -14,7 +14,9 @@ public class SystemKentEisenberg extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemKentEisenberg.</p>
+   * <p>
+   * Constructor for SystemKentEisenberg.
+   * </p>
    */
   public SystemKentEisenberg() {
     super();

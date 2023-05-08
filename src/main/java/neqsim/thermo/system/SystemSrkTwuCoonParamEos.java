@@ -10,7 +10,9 @@ public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemSrkTwuCoonParamEos.</p>
+   * <p>
+   * Constructor for SystemSrkTwuCoonParamEos.
+   * </p>
    */
   public SystemSrkTwuCoonParamEos() {
     super();

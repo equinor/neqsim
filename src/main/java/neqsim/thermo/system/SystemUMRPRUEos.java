@@ -10,7 +10,9 @@ public class SystemUMRPRUEos extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemUMRPRUEos.</p>
+   * <p>
+   * Constructor for SystemUMRPRUEos.
+   * </p>
    */
   public SystemUMRPRUEos() {
     super();

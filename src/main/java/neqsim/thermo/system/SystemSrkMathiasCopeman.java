@@ -10,7 +10,9 @@ public class SystemSrkMathiasCopeman extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemSrkMathiasCopeman.</p>
+   * <p>
+   * Constructor for SystemSrkMathiasCopeman.
+   * </p>
    */
   public SystemSrkMathiasCopeman() {
     super();

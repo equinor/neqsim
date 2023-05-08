@@ -10,7 +10,9 @@ public class SystemPsrkEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemPsrkEos.</p>
+   * <p>
+   * Constructor for SystemPsrkEos.
+   * </p>
    */
   public SystemPsrkEos() {
     super();

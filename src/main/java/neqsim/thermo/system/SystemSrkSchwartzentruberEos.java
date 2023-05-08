@@ -10,7 +10,9 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemSrkSchwartzentruberEos.</p>
+   * <p>
+   * Constructor for SystemSrkSchwartzentruberEos.
+   * </p>
    */
   public SystemSrkSchwartzentruberEos() {
     super();
