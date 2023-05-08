@@ -2729,7 +2729,7 @@ abstract class SystemThermo implements SystemInterface {
       density +=
           getPhase(i).getVolume() / getVolume() * getPhase(i).getPhysicalProperties().getDensity();
     }
-    double refDensity = density; // density in kg/m3
+    double refDensity = this.getDensity(); // density; // density in kg/m3
     double conversionFactor = 1.0;
     switch (unit) {
       case "kg/m3":

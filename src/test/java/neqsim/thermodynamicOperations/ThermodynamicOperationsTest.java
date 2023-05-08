@@ -117,7 +117,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < res.fluidProperties[0].length; i++) {
       Assertions.assertEquals(res1.fluidProperties[0][i], res.fluidProperties[0][i],
-          "Property " + SystemProperties.getPropertyNames()[i]);
+          "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
     }
 
     Assertions.assertArrayEquals(res.fluidProperties[0], res1.fluidProperties[0]);

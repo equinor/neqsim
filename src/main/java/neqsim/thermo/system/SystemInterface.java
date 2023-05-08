@@ -225,7 +225,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * Get sum of mole fractions for all components. NB! Init must be called first.
+   * Get sum of mole fractions for all components. NB! init(0) must be called first.
    * </p>
    *
    * @return a double

@@ -1994,6 +1994,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         this.system.setTotalNumberOfMoles(1);
       }
     } else {
+      // Have to init here to get correct MoleFractionsSum()
       this.system.init(0);
 
       // Annoying that MoleFractionsSum is not normalized.
