@@ -31,8 +31,8 @@ public class SystemNRTL extends SystemEos {
    * Constructor for SystemNRTL.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemNRTL(double T, double P) {
     super(T, P);
@@ -53,16 +53,16 @@ public class SystemNRTL extends SystemEos {
    * Constructor for SystemNRTL.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemNRTL(double T, double P, boolean solidCheck) {
+  public SystemNRTL(double T, double P, boolean checkForSolids) {
     this(T, P);
     attractiveTermNumber = 0;
     setNumberOfPhases(4);
     modelName = "NRTL-GE-model";
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);

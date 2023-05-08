@@ -49,6 +49,7 @@ abstract class Component implements ComponentInterface {
   protected double qPure = 0;
   protected double voli = 1.0;
   protected int calcActivity = 1;
+  /** Check for solid phase and do solid phase calculations if there are. */
   protected boolean solidCheck = false;
   protected double dqPuredT = 0;
   protected double dqPuredTdT = 0;
@@ -1781,8 +1782,8 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setSolidCheck(boolean solidCheck) {
-    this.solidCheck = solidCheck;
+  public void setSolidCheck(boolean checkForSolids) {
+    this.solidCheck = checkForSolids;
   }
 
   /** {@inheritDoc} */

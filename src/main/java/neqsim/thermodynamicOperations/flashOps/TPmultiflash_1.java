@@ -55,10 +55,10 @@ public class TPmultiflash_1 extends TPflash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param check a boolean
+   * @param checkForSolids a boolean
    */
-  public TPmultiflash_1(SystemInterface system, boolean check) {
-    super(system, check);
+  public TPmultiflash_1(SystemInterface system, boolean checkForSolids) {
+    super(system, checkForSolids);
   }
 
   /**

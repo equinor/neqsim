@@ -66,10 +66,10 @@ public class TPmultiflash extends TPflash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param check a boolean
+   * @param checkForSolids a boolean
    */
-  public TPmultiflash(SystemInterface system, boolean check) {
-    super(system, check);
+  public TPmultiflash(SystemInterface system, boolean checkForSolids) {
+    super(system, checkForSolids);
     Erow = new double[system.getPhase(0).getNumberOfComponents()];
     multTerm = new double[system.getPhase(0).getNumberOfComponents()];
     multTerm2 = new double[system.getPhase(0).getNumberOfComponents()];
