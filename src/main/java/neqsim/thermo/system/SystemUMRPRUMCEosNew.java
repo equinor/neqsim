@@ -28,10 +28,12 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
   }
 
   /**
-   * <p>Constructor for SystemUMRPRUMCEosNew.</p>
+   * <p>
+   * Constructor for SystemUMRPRUMCEosNew.
+   * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemUMRPRUMCEosNew(double T, double P) {
     super(T, P);

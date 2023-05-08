@@ -23,8 +23,8 @@ public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
    * Constructor for SystemSrkTwuCoonParamEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkTwuCoonParamEos(double T, double P) {
     super(T, P);
@@ -37,12 +37,12 @@ public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
    * Constructor for SystemSrkTwuCoonParamEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemSrkTwuCoonParamEos(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemSrkTwuCoonParamEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     modelName = "TwuCoonRKparam-EOS";
     attractiveTermNumber = 12;
   }

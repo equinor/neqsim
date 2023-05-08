@@ -36,8 +36,8 @@ public class SystemTSTEos extends SystemEos {
    * Constructor for SystemTSTEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemTSTEos(double T, double P) {
     super(T, P);
@@ -55,16 +55,16 @@ public class SystemTSTEos extends SystemEos {
    * Constructor for SystemTSTEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemTSTEos(double T, double P, boolean solidCheck) {
+  public SystemTSTEos(double T, double P, boolean checkForSolids) {
     this(T, P);
     attractiveTermNumber = 14;
     setNumberOfPhases(5);
     modelName = "TST-EOS";
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseTSTEos();

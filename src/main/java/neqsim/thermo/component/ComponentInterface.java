@@ -1824,7 +1824,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * doSolidCheck.
+   * Getter for field <code>solidCheck</code>.
    * </p>
    *
    * @return a boolean
@@ -1833,12 +1833,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * setSolidCheck.
+   * Setter for field <code>solidCheck</code>.
    * </p>
    *
-   * @param solidCheck a boolean
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
-  public void setSolidCheck(boolean solidCheck);
+  public void setSolidCheck(boolean checkForSolids);
 
   /**
    * <p>

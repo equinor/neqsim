@@ -14,7 +14,9 @@ public class SystemPrEos1978 extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemPrEos1978.</p>
+   * <p>
+   * Constructor for SystemPrEos1978.
+   * </p>
    */
   public SystemPrEos1978() {
     super();
@@ -33,8 +35,8 @@ public class SystemPrEos1978 extends SystemEos {
    * Constructor for SystemPrEos1978.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPrEos1978(double T, double P) {
     super(T, P);
@@ -53,16 +55,16 @@ public class SystemPrEos1978 extends SystemEos {
    * Constructor for SystemPrEos1978.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemPrEos1978(double T, double P, boolean solidCheck) {
+  public SystemPrEos1978(double T, double P, boolean checkForSolids) {
     this(T, P);
     attractiveTermNumber = 13;
     setNumberOfPhases(5);
     modelName = "PR1978-EOS";
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrEos();
