@@ -665,15 +665,15 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @param type a {@link java.lang.String} object
    */
   public void addSeparatorSection(String name, String type) {
-    if (type.equals("vane")) {
+    if (type.equalsIgnoreCase("vane")) {
       separatorSection.add(new SeparatorSection(name, type, this));
-    } else if (type.equals("meshpad")) {
+    } else if (type.equalsIgnoreCase("meshpad")) {
       separatorSection.add(new MeshSection(name, type, this));
-    } else if (type.equals("manway")) {
+    } else if (type.equalsIgnoreCase("manway")) {
       separatorSection.add(new ManwaySection(name, type, this));
-    } else if (type.equals("valve")) {
+    } else if (type.equalsIgnoreCase("valve")) {
       separatorSection.add(new ValveSection(name, type, this));
-    } else if (type.equals("nozzle")) {
+    } else if (type.equalsIgnoreCase("nozzle")) {
       separatorSection.add(new NozzleSection(name, type, this));
     } else {
       separatorSection.add(new SeparatorSection(name, type, this));

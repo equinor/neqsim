@@ -383,7 +383,7 @@ abstract class SystemThermo implements SystemInterface {
       setMultiPhaseCheck(true);
     }
     addHydratePhase();
-    if (type.equals("wax")) {
+    if (type.equalsIgnoreCase("wax")) {
       phaseArray[5] = new PhaseWax();
     } else {
       phaseArray[5] = new PhaseSolidComplex();
@@ -4184,15 +4184,15 @@ abstract class SystemThermo implements SystemInterface {
       while (dataSet.next()) {
         String componentType = dataSet.getString("ComponentType");
 
-        if (componentType.equals("normal")) {
+        if (componentType.equalsIgnoreCase("normal")) {
           addComponent(dataSet.getString("ComponentName"),
               Double.parseDouble(dataSet.getString("Rate")));
-        } else if (componentType.equals("TBP")) {
+        } else if (componentType.equalsIgnoreCase("TBP")) {
           addTBPfraction(dataSet.getString("ComponentName"),
               Double.parseDouble(dataSet.getString("Rate")),
               Double.parseDouble(dataSet.getString("MolarMass")) / 1000.0,
               Double.parseDouble(dataSet.getString("Density")));
-        } else if (componentType.equals("Plus")) {
+        } else if (componentType.equalsIgnoreCase("plus")) {
           addPlusFraction(dataSet.getString("ComponentName"),
               Double.parseDouble(dataSet.getString("Rate")),
               Double.parseDouble(dataSet.getString("MolarMass")) / 1000.0,
