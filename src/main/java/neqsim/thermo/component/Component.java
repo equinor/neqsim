@@ -82,6 +82,7 @@ abstract class Component implements ComponentInterface {
   protected double criticalTemperature;
   protected double molarMass;
   protected double acentricFactor;
+
   protected double normalLiquidDensity = 0;
   protected double reducedPressure;
   protected double reducedTemperature;
@@ -118,6 +119,7 @@ abstract class Component implements ComponentInterface {
   protected double lennardJonesEnergyParameter = 0;
   protected double stokesCationicDiameter = 0;
   protected double paulingAnionicDiameter = 0;
+
   private int orginalNumberOfAssociationSites = 0;
   protected double dfugdt = 0.1;
   protected double dfugdp = 0.1;
