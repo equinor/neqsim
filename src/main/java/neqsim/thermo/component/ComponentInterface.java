@@ -23,6 +23,19 @@ import neqsim.thermo.phase.PhaseInterface;
 public interface ComponentInterface extends ThermodynamicConstantsInterface, Cloneable {
   /**
    * <p>
+   * Helper function to create component. Typically called from constructors.
+   * </p>
+   *
+   * @param component_name Name of component
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compnumber Index number of component in phase object component array.
+   */
+  public void createComponent(String component_name, double moles, double molesInPhase,
+      int compnumber);
+
+  /**
+   * <p>
    * isInert.
    * </p>
    *
@@ -186,10 +199,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * insertComponentIntoDatabase.
+   * Insert this component into NeqSim component database.
    * </p>
    *
-   * @param databaseName a {@link java.lang.String} object
+   * @param databaseName Name of database. Not in use, overwritten as comptemp.
    */
   public void insertComponentIntoDatabase(String databaseName);
 
@@ -201,19 +214,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @return a int
    */
   public int getOrginalNumberOfAssociationSites();
-
-  /**
-   * <p>
-   * createComponent.
-   * </p>
-   *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
-   */
-  public void createComponent(String component_name, double moles, double molesInPhase,
-      int compnumber);
 
   /**
    * <p>
@@ -241,15 +241,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @return a boolean
    */
   public boolean isHydrocarbon();
-
-  /**
-   * <p>
-   * setComponentName.
-   * </p>
-   *
-   * @param componentName a {@link java.lang.String} object
-   */
-  public void setComponentName(String componentName);
 
   /**
    * <p>
@@ -749,11 +740,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Initialize component.
    * </p>
    *
-   * @param temperature a double
-   * @param pressure a double
-   * @param totalNumberOfMoles a double
-   * @param beta a double
-   * @param type a int
+   * @param temperature Temperature in unit ?. Used to calculate <code>K</code>.
+   * @param pressure Pressure in unit ?. Used to calculate <code>K</code>.
+   * @param totalNumberOfMoles Total number of moles of component.
+   * @param beta Beta value, i.e.,
+   * @param type Init type. Calculate <code>K</code>, <code>z</code>, <code>x</code> if type == 0.
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
       int type);
@@ -776,7 +767,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * The mole fraction of a component in the actual phase. NB! init must be called first.
+   * Getter for property x, i.e., the mole fraction of a component in a specific phase. For the mole
+   * fraction for a specific phase see {@link getz} NB! init(0) must be called first from system.
    * </p>
    *
    * @return a double
@@ -785,7 +777,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * The mole fraction of a component in the total fluid. NB! init must be called first.
+   * Getter for property z, i.e., the mole fraction of a component in the fluid. For the mole
+   * fraction for a specific phase see {@link getx} NB! init(0) must be called first from system.
    * </p>
    *
    * @return a double
@@ -794,7 +787,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * The distribution coefficient y/x between gas and lidquid for a component. NB! init must be
+   * The distribution coefficient y/x between gas and liquid for a component. NB! init must be
    * called first.
    * </p>
    *
@@ -807,16 +800,16 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Returns the critical temperature of the component.
    * </p>
    *
-   * @return a double
+   * @return The critical temperature of the component.
    */
   public double getTC();
 
   /**
    * <p>
-   * getNormalBoilingPoint.
+   * Getter for property NormalBoilingPoint.
    * </p>
    *
-   * @return a double
+   * @return The normal boiling point of the component.
    */
   public double getNormalBoilingPoint();
 
@@ -837,15 +830,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @return a double
    */
   public double getPC();
-
-  /**
-   * <p>
-   * setComponentNumber.
-   * </p>
-   *
-   * @param numb a int
-   */
-  public void setComponentNumber(int numb);
 
   /**
    * <p>
@@ -905,7 +889,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getComponentName.
+   * Getter for property <code>componentName</code>.
    * </p>
    *
    * @return a {@link java.lang.String} object
@@ -914,12 +898,30 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getComponentNumber.
+   * Setter for property <code>componentName</code>.
    * </p>
    *
-   * @return a int
+   * @param componentName a {@link java.lang.String} object
+   */
+  public void setComponentName(String componentName);
+
+  /**
+   * <p>
+   * Getter for property <code>componentNumber</code>.
+   * </p>
+   *
+   * @return Index number of component in phase object component array.
    */
   public int getComponentNumber();
+
+  /**
+   * <p>
+   * Setter for property <code>componentNumber</code>.
+   * </p>
+   *
+   * @param numb Index number of component in phase object component array.
+   */
+  public void setComponentNumber(int numb);
 
   /**
    * <p>
@@ -2203,10 +2205,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setCpE(double CpE);
 
   /**
-   * getComponentNameFromAlias.
+   * getComponentNameFromAlias. Used to look up normal component name aliases.
    *
-   * @param name a {@link java.lang.String} Component name or alias of component name.
-   * @return a {@link java.lang.String} Component name
+   * @param name Component name or alias of component name.
+   * @return Component name as used in database.
    */
   public static String getComponentNameFromAlias(String name) {
     LinkedHashMap<String, String> c = getComponentNameMap();
