@@ -34,9 +34,10 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   protected SystemInterface system;
   String flowPattern = "stratified";
   double[] times;
-  boolean equilibriumHeatTransfer = true, equilibriumMassTransfer = false;
-  // default variables
-  int numberOfLegs = 1, numberOfNodesInLeg = 30;
+  boolean equilibriumHeatTransfer = true;
+  boolean equilibriumMassTransfer = false;
+  int numberOfLegs = 1;
+  int numberOfNodesInLeg = 30;
   double[] legHeights = {0, 0}; // ,0,0,0};
   double[] legPositions = {0.0, 1.0}; // 10.0,20.0,30.0,40.0};
   double[] pipeDiameters = {0.1507588, 0.1507588}; // , 1.207588, 1.207588, 1.207588};
@@ -138,7 +139,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   public void setLegPositions(double[] positions) {
     if (positions.length != this.numberOfLegs + 1) {
       System.out.println("Wrong number of legpositions specified.");
-      System.out.println("Number of heights must be number of legs + 1 ");
+      System.out.println("Number of legpositions must be number of legs + 1 ");
       return;
     }
     legPositions = new double[positions.length];
@@ -166,8 +167,8 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    */
   public void setPipeOuterHeatTransferCoefficients(double[] heatCoefs) {
     if (heatCoefs.length != this.numberOfLegs + 1) {
-      System.out.println("Wrong number of diameters specified.");
-      System.out.println("Number of diameters must be number of legs + 1 ");
+      System.out.println("Wrong number of heatCoefs specified.");
+      System.out.println("Number of heatCoefs must be number of legs + 1 ");
       return;
     }
     outerHeatTransferCoeffs = new double[heatCoefs.length];
@@ -183,8 +184,8 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    */
   public void setPipeWallHeatTransferCoefficients(double[] heatCoefs) {
     if (heatCoefs.length != this.numberOfLegs + 1) {
-      System.out.println("Wrong number of diameters specified.");
-      System.out.println("Number of diameters must be number of legs + 1 ");
+      System.out.println("Wrong number of heatCoefs specified.");
+      System.out.println("Number of heatCoefs must be number of legs + 1 ");
       return;
     }
     wallHeatTransferCoeffs = new double[heatCoefs.length];
@@ -195,8 +196,8 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   @Override
   public void setPipeWallRoughness(double[] rough) {
     if (rough.length != this.numberOfLegs + 1) {
-      System.out.println("Wrong number of roghuness points specified.");
-      System.out.println("Number of heights must be number of legs + 1 ");
+      System.out.println("Wrong number of roughness points specified.");
+      System.out.println("Number of roughness must be number of legs + 1 ");
       return;
     }
     pipeWallRoughness = new double[rough.length];
@@ -208,7 +209,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   public void setOuterTemperatures(double[] outerTemp) {
     if (outerTemp.length != this.numberOfLegs + 1) {
       System.out.println("Wrong number of outer temperature points specified.");
-      System.out.println("Number of heights must be number of legs + 1 ");
+      System.out.println("Number of outer temperature must be number of legs + 1 ");
       return;
     }
     outerTemperature = new double[outerTemp.length];
