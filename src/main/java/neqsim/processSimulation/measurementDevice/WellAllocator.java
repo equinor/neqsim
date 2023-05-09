@@ -98,11 +98,9 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
 
     if (measurement.equals("gas export rate")) {
       return gasExportFlow;
-    }
-    if (measurement.equals("oil export rate")) {
+    } else if (measurement.equals("oil export rate")) {
       return oilExportFlow;
-    }
-    if (measurement.equals("total export rate")) {
+    } else if (measurement.equals("total export rate")) {
       return wellStream.getFluid().getFlowRate("kg/hr");
     }
     return 0.0;
