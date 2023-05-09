@@ -1614,12 +1614,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getBeta() {
-    return this.beta;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getdPdrho() {
     return 0;
   }
@@ -1922,8 +1916,20 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final void setBeta(double beta) {
-    this.beta = beta;
+  public final double getBeta() {
+    return this.beta;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final void setBeta(double b) {
+    if (b < 0) {
+      b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+    }
+    if (b > 1) {
+      b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+    }
+    this.beta = b;
   }
 
   /** {@inheritDoc} */

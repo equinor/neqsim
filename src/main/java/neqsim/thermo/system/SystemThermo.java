@@ -3249,7 +3249,6 @@ abstract class SystemThermo implements SystemInterface {
   public String[][] createTable(String name) {
     // System.out.println("number of comps : " + numberOfComponents + " number of
     // phases " + numberOfPhases);
-    String[][] table = new String[getPhases()[0].getNumberOfComponents() + 30][7];
 
     if (isInitialized) {
       initProperties();
@@ -3272,6 +3271,7 @@ abstract class SystemThermo implements SystemInterface {
     // 30][7];
     // String[] names = {"", "Feed", "Phase 1", "Phase 2", "Phase 3", "Phase 4",
     // "Unit"};
+    String[][] table = new String[getPhases()[0].getNumberOfComponents() + 30][7];
     table[0][0] = ""; // getPhases()[0].getType(); //"";
 
     for (int i = 0; i < getPhases()[0].getNumberOfComponents() + 30; i++) {
@@ -3587,7 +3587,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setSolidPhaseCheck(boolean solidPhaseCheck) {
     // init(0);
-    int oldphase = numberOfPhases;
+    final int oldphase = numberOfPhases;
     if (!this.solidPhaseCheck) {
       addSolidPhase();
     }
@@ -3607,7 +3607,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setSolidPhaseCheck(String solidComponent) {
     init(0);
-    int oldphase = numberOfPhases;
+    final int oldphase = numberOfPhases;
     if (!solidPhaseCheck) {
       addSolidPhase();
     }

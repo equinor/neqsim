@@ -145,7 +145,7 @@ abstract class Component implements ComponentInterface {
   private double triplePointTemperature = 1000.0;
   double meltingPointTemperature = 110.0;
   private double idealGasEnthalpyOfFormation = 0.0;
-  double idealGasGibsEnergyOfFormation = 0.0;
+  double idealGasGibbsEnergyOfFormation = 0.0;
 
   double idealGasAbsoluteEntropy = 0.0;
 
@@ -363,7 +363,7 @@ abstract class Component implements ComponentInterface {
 
         setIdealGasEnthalpyOfFormation(
             Double.parseDouble(dataSet.getString("EnthalpyOfFormation")));
-        idealGasGibsEnergyOfFormation = gibbsEnergyOfFormation;
+        idealGasGibbsEnergyOfFormation = gibbsEnergyOfFormation;
         idealGasAbsoluteEntropy = Double.parseDouble(dataSet.getString("AbsoluteEntropy"));
 
         for (int i = 0; i < 5; i++) {
@@ -656,8 +656,8 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getIdealGasGibsEnergyOfFormation() {
-    return idealGasGibsEnergyOfFormation;
+  public final double getIdealGasGibbsEnergyOfFormation() {
+    return idealGasGibbsEnergyOfFormation;
   }
 
   /** {@inheritDoc} */
