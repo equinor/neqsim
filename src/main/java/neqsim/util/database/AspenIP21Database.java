@@ -131,25 +131,4 @@ public class AspenIP21Database
   public Statement getStatement() {
     return statement;
   }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    AspenIP21Database database = new AspenIP21Database();
-    try (ResultSet dataSet = database.getResultSet("Karsto", "....'")) {
-      while (dataSet.next()) {
-        System.out.println("dataset " + dataSet.getString(4));
-        System.out.println("dataset value " + dataSet.getDouble("..."));
-      }
-    } catch (Exception ex) {
-      logger.error("failed ", ex);
-    }
-
-    System.out.println("ok");
-  }
 }

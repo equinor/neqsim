@@ -359,30 +359,6 @@ public class NeqSimDataBase
 
   /**
    * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    // NeqSimDataBase.initH2DatabaseFromCSVfiles();
-    // NeqSimDataBase.initDatabaseFromCSVfiles();
-    NeqSimDataBase.updateTable("COMP", "/workspaces/neqsim/src/main/resources/data/COMP.csv");
-
-    try (NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
-      dataSet.next();
-      System.out.println("dataset " + dataSet.getString("molarmass"));
-      logger.info("dataset " + dataSet.getString("molarmass"));
-      dataSet.close();
-    } catch (Exception ex) {
-      logger.error("failed ", ex);
-      throw new RuntimeException(ex);
-    }
-  }
-
-  /**
-   * <p>
    * getComponentNames.
    * </p>
    *
