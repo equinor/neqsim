@@ -20,23 +20,24 @@ public class NeqSimDataBaseTest extends NeqSimTest {
         "classpath:/data/COMP.csv");
   }
 
-  @Disabled
   @Test
-  void testMain() {
-    boolean failed = true;
-    // NeqSimDataBase.initH2DatabaseFromCSVfiles();
-    // NeqSimDataBase.initDatabaseFromCSVfiles();
-    NeqSimDataBase.updateTable("COMP", "/workspaces/neqsim/src/main/resources/data/COMP.csv");
-
-    try (NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
-      dataSet.next();
-      System.out.println("dataset " + dataSet.getString("molarmass"));
-      dataSet.close();
-      failed = false;
-    } catch (Exception ex) {
-      System.out.println("failed ");
+    void testMain() {
+      boolean failed = true;
+      NeqSimDataBase.initH2DatabaseFromCSVfiles();
+      boolean testHasMethane = NeqSimDataBase.hasComponent("methane");
+      NeqSimDataBase.updateTable("COMP", "/workspaces/neqsim/src/main/resources/data/COMP.csv");
+      double molmass = 0.0;
+      try (NeqSimDataBase database = new NeqSimDataBase();
+          ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
+        dataSet.next();
+        molmass = Double.valueOf(dataSet.getString("molarmass"));
+        dataSet.close();
+        failed = false;
+      } catch (Exception ex) {
+        System.out.println("DB test failed ");
+      }
+      Assertions.assertTrue(testHasMethane, "Methane component found in database");
+      assertEquals(16.04, molmass, 0.1);
+      Assertions.assertFalse(failed, "Failed getting data from NeqsimDataBase");
     }
-    Assertions.assertFalse(failed, "Failed getting data from NeqsimDataBase");
-  }
 }
