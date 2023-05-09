@@ -598,7 +598,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    *
    * @param b Beta value to set.
    */
-  public void setBeta(double beta);
+  public void setBeta(double b);
 
   /**
    * <p>
