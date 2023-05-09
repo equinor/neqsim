@@ -37,7 +37,7 @@ public class NeqSimDataBaseTest extends NeqSimTest {
         System.out.println("DB test failed ");
       }
       Assertions.assertTrue(testHasMethane, "Methane component found in database");
-      assertEquals(16.04, molmass, 0.1);
+      Assertions.assertEquals(16.04, molmass, 0.1);
       Assertions.assertFalse(failed, "Failed getting data from NeqsimDataBase");
     }
 }
