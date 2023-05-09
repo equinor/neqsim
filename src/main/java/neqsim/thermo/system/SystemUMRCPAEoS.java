@@ -11,7 +11,9 @@ public class SystemUMRCPAEoS extends SystemPrEos {
   private static final long serialVersionUID = 1L;
 
   /**
-   * <p>Constructor for SystemUMRCPAEoS.</p>
+   * <p>
+   * Constructor for SystemUMRCPAEoS.
+   * </p>
    */
   public SystemUMRCPAEoS() {
     super();
@@ -27,10 +29,12 @@ public class SystemUMRCPAEoS extends SystemPrEos {
   }
 
   /**
-   * <p>Constructor for SystemUMRCPAEoS.</p>
+   * <p>
+   * Constructor for SystemUMRCPAEoS.
+   * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemUMRCPAEoS(double T, double P) {
     super(T, P);

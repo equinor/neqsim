@@ -13,7 +13,9 @@ public class SystemRKEos extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemRKEos.</p>
+   * <p>
+   * Constructor for SystemRKEos.
+   * </p>
    */
   public SystemRKEos() {
     super();
@@ -31,8 +33,8 @@ public class SystemRKEos extends SystemEos {
    * Constructor for SystemRKEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemRKEos(double T, double P) {
     super(T, P);
@@ -50,16 +52,16 @@ public class SystemRKEos extends SystemEos {
    * Constructor for SystemRKEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemRKEos(double T, double P, boolean solidCheck) {
+  public SystemRKEos(double T, double P, boolean checkForSolids) {
     this(T, P);
     attractiveTermNumber = 5;
     setNumberOfPhases(4);
     modelName = "RK-EOS";
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseRK();

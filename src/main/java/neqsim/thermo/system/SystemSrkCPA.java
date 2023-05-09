@@ -14,7 +14,9 @@ public class SystemSrkCPA extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemSrkCPA.</p>
+   * <p>
+   * Constructor for SystemSrkCPA.
+   * </p>
    */
   public SystemSrkCPA() {
     super();
@@ -31,8 +33,8 @@ public class SystemSrkCPA extends SystemSrkEos {
    * Constructor for SystemSrkCPA.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkCPA(double T, double P) {
     super(T, P);
@@ -51,12 +53,12 @@ public class SystemSrkCPA extends SystemSrkEos {
    * Constructor for SystemSrkCPA.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
-  public SystemSrkCPA(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemSrkCPA(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseSrkCPA();
       phaseArray[i].setTemperature(T);

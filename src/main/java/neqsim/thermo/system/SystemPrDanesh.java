@@ -34,8 +34,8 @@ public class SystemPrDanesh extends SystemPrEos {
    * Constructor for SystemPrDanesh.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPrDanesh(double T, double P) {
     super(T, P);
@@ -53,16 +53,16 @@ public class SystemPrDanesh extends SystemPrEos {
    * Constructor for SystemPrDanesh.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemPrDanesh(double T, double P, boolean solidCheck) {
+  public SystemPrDanesh(double T, double P, boolean checkForSolids) {
     this(T, P);
     modelName = "PR-Danesh-EOS";
     attractiveTermNumber = 9;
     setNumberOfPhases(5);
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrEos();
