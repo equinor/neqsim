@@ -23,12 +23,12 @@ public class NeqSimDataBaseTest extends NeqSimTest {
   @Test
     void testMain() {
       boolean failed = true;
-      NeqSimDataBase.initH2DatabaseFromCSVfiles();
-      boolean testHasMethane = NeqSimDataBase.hasComponent("methane");
-      NeqSimDataBase.updateTable("COMP", "/workspaces/neqsim/src/main/resources/data/COMP.csv");
+      //NeqSimDataBase.initH2DatabaseFromCSVfiles();
       double molmass = 0.0;
       try (NeqSimDataBase database = new NeqSimDataBase();
-          ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
+        boolean testHasMethane = NeqSimDataBase.hasComponent("methane");   
+        NeqSimDataBase.updateTable("COMP", "/workspaces/neqsim/src/main/resources/data/COMP.csv");
+        ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
         dataSet.next();
         molmass = Double.valueOf(dataSet.getString("molarmass"));
         dataSet.close();
