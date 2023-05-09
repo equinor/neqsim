@@ -34,7 +34,6 @@ public class TestAcentricSchwartzentruber {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // PureComponentVapourPressures WHERE ComponentName='water' ORDER BY
     // Reference,Temperature");
@@ -49,12 +48,13 @@ public class TestAcentricSchwartzentruber {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // PureComponentVapourPressures WHERE ComponentName='nitrogen' AND
     // VapourPressure<20");
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='mercury' AND VapourPressure<40 ORDER BY Reference,Temperature");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // PureComponentVapourPressures WHERE ComponentName='TEG' AND VapourPressure<0.5
     // ORDER BY Reference,Temperature");
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
+      ResultSet dataSet = database.getResultSet(
+          "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='mercury' AND VapourPressure<40 ORDER BY Reference,Temperature");
+
       while (dataSet.next()) {
         // AcentricFunctionScwartzentruber function = new
         // AcentricFunctionScwartzentruber();
@@ -88,7 +88,7 @@ public class TestAcentricSchwartzentruber {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

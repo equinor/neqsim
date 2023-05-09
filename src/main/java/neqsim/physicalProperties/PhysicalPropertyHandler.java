@@ -101,20 +101,19 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    * @return a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
    *         object
    */
-  public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperty(
-      PhaseInterface phase) {
-    switch (phase.getPhaseTypeName()) {
-      case "gas":
+  public PhysicalPropertiesInterface getPhysicalProperty(PhaseInterface phase) {
+    switch (phase.getType()) {
+      case GAS:
         return gasPhysicalProperties;
-      case "oil":
+      case OIL:
         return oilPhysicalProperties;
-      case "aqueous":
+      case AQUEOUS:
         return aqueousPhysicalProperties;
-      case "solid":
+      case SOLID:
         return solidPhysicalProperties;
-      case "wax":
+      case WAX:
         return solidPhysicalProperties;
-      case "hydrate":
+      case HYDRATE:
         return solidPhysicalProperties;
       default:
         return gasPhysicalProperties;
@@ -129,8 +128,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     try {
       clonedHandler = (PhysicalPropertyHandler) super.clone();
     } catch (Exception ex) {
-      // ex.printStackTrace();
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     try {
       if (gasPhysicalProperties != null) {
@@ -149,7 +147,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         clonedHandler.mixingRule = mixingRule.clone();
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage(), ex);
     }
     return clonedHandler;
   }

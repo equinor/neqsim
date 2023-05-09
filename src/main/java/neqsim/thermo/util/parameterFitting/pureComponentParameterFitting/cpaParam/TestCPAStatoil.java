@@ -34,15 +34,13 @@ public class TestCPAStatoil {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
     LevenbergMarquardt optim = new LevenbergMarquardt();
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
-    try (ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MEG' AND Temperature<500.0") // AND
-                                                                                                      // VapourPressure>0.00000000001
-                                                                                                      // AND
-                                                                                                      // Reference='Stull1947'");
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MEG' AND Temperature<500.0")
+    // AND VapourPressure>0.00000000001 AND Reference='Stull1947'");
     ) {
       while (dataSet.next()) {
         CPAFunctionStatoil function = new CPAFunctionStatoil();
@@ -77,7 +75,7 @@ public class TestCPAStatoil {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

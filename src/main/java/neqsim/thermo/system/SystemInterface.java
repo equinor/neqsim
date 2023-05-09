@@ -46,6 +46,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
+   * setComponentNameTag.
+   * </p>
+   *
+   * @param nameTag a {@link java.lang.String} object
+   */
+  public void setComponentNameTag(String nameTag);
+
+  /**
+   * <p>
    * setComponentNameTagOnNormalComponents.
    * </p>
    *
@@ -81,25 +90,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       String fromPhaseName, String toPhaseName);
 
   /**
-   * <p>
-   * renameComponent.
-   * </p>
-   *
-   * @param oldName a {@link java.lang.String} object
-   * @param newName a {@link java.lang.String} object
-   */
-  public void renameComponent(String oldName, String newName);
-
-  /**
-   * <p>
-   * setComponentNameTag.
-   * </p>
-   *
-   * @param nameTag a {@link java.lang.String} object
-   */
-  public void setComponentNameTag(String nameTag);
-
-  /**
    * Add named components to a System. Does nothing if components already exist in System.
    *
    * @param names Names of the components to be added. See NeqSim database for available components
@@ -124,6 +114,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       addComponent(names[i], moles[i]);
     }
   }
+
+  /**
+   * <p>
+   * renameComponent.
+   * </p>
+   *
+   * @param oldName a {@link java.lang.String} object
+   * @param newName a {@link java.lang.String} object
+   */
+  public void renameComponent(String oldName, String newName);
 
   /**
    * <p>
@@ -182,6 +182,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMolarCompositionOfPlusFluid(double[] molefractions);
 
   /**
+   * method to return exergy defined as (h1-T0*s1) in a unit Joule.
+   *
+   * @param temperatureOfSurroundings in Kelvin
+   * @return a double
+   */
+  public double getExergy(double temperatureOfSurroundings);
+
+  /**
    * method to return exergy in a specified unit.
    *
    * @param temperatureOfSurroundings in Kelvin
@@ -189,14 +197,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return exergy in specified unit
    */
   public double getExergy(double temperatureOfSurroundings, String exergyUnit);
-
-  /**
-   * method to return exergy defined as (h1-T0*s1) in a unit Joule.
-   *
-   * @param temperatureOfSurroundings in Kelvin
-   * @return a double
-   */
-  public double getExergy(double temperatureOfSurroundings);
 
   /**
    * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis
@@ -225,7 +225,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getMoleFractionsSum.
+   * Get sum of mole fractions for all components. NB! init(0) must be called first.
    * </p>
    *
    * @return a double
@@ -233,7 +233,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMoleFractionsSum();
 
   /**
-   * method to get the speed of sound of a system. THe sound speed is implemented based on a molar
+   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
    * average over the phases
    *
    * @param unit Supported units are m/s, km/h
@@ -242,7 +242,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getSoundSpeed(String unit);
 
   /**
-   * method to get the speed of sound of a system. THe sound speed is implemented based on a molar
+   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
    * average over the phases
    *
    * @return speed of sound in m/s
@@ -471,7 +471,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
-   * Set the flow rate of all components to zero.
+   * Set the flow rate (moles) of all components to zero.
    */
   public void setEmptyFluid();
 
@@ -1024,7 +1024,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getMaxNumberOfPhases.
+   * Getter for property <code>maxNumberOfPhases</code>.
    * </p>
    *
    * @return a int
@@ -1033,7 +1033,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * setMaxNumberOfPhases.
+   * Setter for property <code>maxNumberOfPhases</code>.
    * </p>
    *
    * @param maxNumberOfPhases a int
@@ -1096,9 +1096,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param name Name of the component to be added. See NeqSim database for component in the
    *        database.
+   * @param value a double
    * @param unitName the unit of rate (sported units are kg/sec, mol/sec, Nlitre/min, kg/hr,
    *        Sm^3/hr, Sm^3/day, MSm^3/day ..
-   * @param value a double
    */
   public void addComponent(String name, double value, String unitName);
 
@@ -1107,7 +1107,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * addComponent.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name Name of the component to be added. See NeqSim database for component in the
+   *        database.
    * @param moles a double
    * @param TC a double
    * @param PC a double
@@ -1639,20 +1640,20 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * setBeta.
+   * setBeta. NB! Set beta = b for first phase and 1-b for second phase.
    * </p>
    *
-   * @param b a double
+   * @param b Beta value to set.
    */
   public void setBeta(double b);
 
   /**
    * <p>
-   * setBeta.
+   * setBeta for a given phase.
    * </p>
    *
-   * @param phase a int
-   * @param b a double
+   * @param phase Index of phase to set beta for.
+   * @param b Beta value to set.
    */
   public void setBeta(int phase, double b);
 
@@ -1813,10 +1814,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * <p>
    * initBeta.
    * </p>
-   *
-   * @return a double
    */
-  public double initBeta();
+  public void initBeta();
 
   /**
    * <p>
@@ -1904,15 +1903,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * setNumberOfPhases.
-   * </p>
-   *
-   * @param number a int
-   */
-  public void setNumberOfPhases(int number);
-
-  /**
-   * <p>
    * getTC.
    * </p>
    *
@@ -1958,12 +1948,21 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getNumberOfPhases.
+   * Getter for property <code>numberOfPhases</code>.
    * </p>
    *
    * @return a int
    */
   public int getNumberOfPhases();
+
+  /**
+   * <p>
+   * Setter for property <code>numberOfPhases</code>.
+   * </p>
+   *
+   * @param number a int
+   */
+  public void setNumberOfPhases(int number);
 
   /**
    * <p>

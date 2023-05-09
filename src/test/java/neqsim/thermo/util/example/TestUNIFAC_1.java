@@ -107,7 +107,7 @@ public class TestUNIFAC_1 {
         // "+ percentBackWater);
         // testOps.bubblePointTemperatureFlash();
       } catch (Exception ex) {
-        logger.error(ex.toString(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     testSystem.display();

@@ -45,24 +45,21 @@ public class GasScrubberDesignStandard extends DesignStandard {
           String specName = dataSet.getString("SPECIFICATION");
           if (specName.equals("GasLoadFactor")) {
             gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          }
-          if (specName.equals("FlowDesignFactor")) {
+          } else if (specName.equals("FlowDesignFactor")) {
             designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          }
-          if (specName.equals("LengthGasInetToHHLL")) {
+          } else if (specName.equals("LengthGasInetToHHLL")) {
             designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
-          }
-          if (specName.equals("LengthMeshPadToDemistingCyclone")) {
+          } else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
             designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
           }
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
 
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     } finally {
       try {
         if (dataSet != null) {
@@ -70,7 +67,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
         }
       } catch (Exception ex) {
         System.out.println("error closing database.....GasScrubberDesignStandard");
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
   }

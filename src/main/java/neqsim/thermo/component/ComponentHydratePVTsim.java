@@ -34,11 +34,11 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
       int compnumber) {
     super(component_name, moles, molesInPhase, compnumber);
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
 
     if (!component_name.equals("default")) {
-      try {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         logger.info("reading hydrate parameters ..............");
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
@@ -70,10 +70,8 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
       } finally {
         try {
           dataSet.close();
-          database.getConnection().close();
         } catch (Exception ex2) {
           logger.error("error closing comp hydrate database....." + component_name);
-          // logger.error(ex.getMessage());
         }
       }
     }

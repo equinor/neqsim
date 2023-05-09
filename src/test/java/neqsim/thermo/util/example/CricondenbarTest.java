@@ -47,7 +47,7 @@ public class CricondenbarTest {
       testOps.calcCricondenBar();
       // 8 testOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
   }

@@ -94,8 +94,8 @@ public class Diffusivity extends
   @Override
   public double getFickBinaryDiffusionCoefficient(int i, int j) {
     double nonIdealCorrection = 1.0;
-    return binaryDiffusionCoefficients[i][j] * nonIdealCorrection; // shuld be divided by non
-                                                                   // ideality factor
+    // shuld be divided by non ideality factor
+    return binaryDiffusionCoefficients[i][j] * nonIdealCorrection;
   }
 
   /** {@inheritDoc} */

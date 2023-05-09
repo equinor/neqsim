@@ -33,7 +33,7 @@ public class FurstElectrolyteConstants implements java.io.Serializable {
   // public static double[] furstParams = {8.717E-8, 8.309E-6, 2.435E-5,
   // 2.024E-4, -5.757E-8, -5.693E-5};
   // public static double[] furstParams = {9.8647e-8, 6.9638e-6, 7.713e-5,
-  // -2.501e-5, -5.813E-8, -4.447E-5};; //{9.8647e-8, 6.9638e-6, 7.713E-5,
+  // -2.501e-5, -5.813E-8, -4.447E-5}; //{9.8647e-8, 6.9638e-6, 7.713E-5,
   // -2.501E-5, -5.813E-8, -4.447E-5};
   // public static double[] furstParams = {9.463E-8, 6.694E-6, -1.021E-5,
   // 4.137E-4, -5.172E-8, -5.832E-5};
@@ -101,7 +101,7 @@ public class FurstElectrolyteConstants implements java.io.Serializable {
    * @param type a {@link java.lang.String} object
    */
   public static void setFurstParams(String type) {
-    if (type.equals("electrolyteCPA")) {
+    if (type.equalsIgnoreCase("electrolyteCPA")) {
       furstParams = furstParamsCPA;
     }
   }

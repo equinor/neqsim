@@ -15,14 +15,14 @@ package neqsim.statistics.experimentalEquipmentData;
  * @version $Id: $Id
  */
 public class ExperimentalEquipmentData {
-    protected double diameter = 0, length = 0;
-    protected double volume = 0;
-    protected double diameterUncertaty = 0, lengthUncertanty = 0;
+  protected double diameter = 0, length = 0;
+  protected double volume = 0;
+  protected double diameterUncertaty = 0, lengthUncertanty = 0;
 
-    /**
-     * <p>
-     * Constructor for ExperimentalEquipmentData.
-     * </p>
-     */
-    public ExperimentalEquipmentData() {}
+  /**
+   * <p>
+   * Constructor for ExperimentalEquipmentData.
+   * </p>
+   */
+  public ExperimentalEquipmentData() {}
 }

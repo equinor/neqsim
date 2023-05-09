@@ -53,10 +53,10 @@ public class CO2_MDEA {
     double x2;
     double x3;
     double bias;
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEA WHERE ID>196 AND ID<231");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet =
+            database.getResultSet("SELECT * FROM CO2WaterMDEA WHERE ID>196 AND ID<231")) {
       while (dataSet.next()) {
         i += 1;
         logger.info("Adding.... " + i);
@@ -122,7 +122,7 @@ public class CO2_MDEA {
         try {
           testOps.bubblePointPressureFlash(false);
         } catch (Exception ex) {
-          logger.error(ex.toString());
+          logger.error(ex.getMessage(), ex);
         }
 
         bias = (pressure
@@ -140,11 +140,11 @@ public class CO2_MDEA {
           p.println(ID + " " + pressure + " "
               + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx());
         } catch (FileNotFoundException ex) {
-          logger.error("Could not find file" + ex.getMessage());
+          logger.error("Could not find file", ex);
         }
       }
     } catch (Exception ex) {
-      logger.error("database error " + ex);
+      logger.error("database error ", ex);
     }
 
     logger.info("Finished");

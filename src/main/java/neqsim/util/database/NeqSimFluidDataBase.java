@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -18,6 +20,7 @@ import java.sql.Statement;
 public class NeqSimFluidDataBase
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NeqSimFluidDataBase.class);
 
   static boolean started = false;
   protected Connection databaseConnection;
@@ -44,8 +47,8 @@ public class NeqSimFluidDataBase
       databaseConnection = this.openConnection("FluidDatabase");
       statement = databaseConnection.createStatement();
     } catch (Exception ex) {
-      System.out.println("error in FluidDatabase " + ex.toString());
-      System.out.println("The database must be rgistered on the local DBMS to work.");
+      logger.error("error in FluidDatabase ", ex);
+      logger.error("The database must be rgistered on the local DBMS to work.");
     }
   }
 
@@ -101,8 +104,8 @@ public class NeqSimFluidDataBase
       ResultSet result = statement.executeQuery(sqlString);
       return result;
     } catch (Exception ex) {
-      System.out.println("error in FluidDatabase " + ex.toString());
-      System.out.println("The database must be rgistered on the local DBMS to work.");
+      logger.error("error in FluidDatabase ", ex);
+      logger.error("The database must be rgistered on the local DBMS to work.");
     }
     return null;
   }
@@ -134,8 +137,8 @@ public class NeqSimFluidDataBase
       }
       statement.execute(sqlString);
     } catch (Exception ex) {
-      System.out.println("error in FluidDatabase " + ex.toString());
-      System.out.println("The database must be rgistered on the local DBMS to work.");
+      logger.error("error in FluidDatabase ", ex);
+      logger.error("The database must be rgistered on the local DBMS to work.");
     }
   }
 
@@ -153,7 +156,7 @@ public class NeqSimFluidDataBase
       dataSet.next();
       System.out.println("dataset " + dataSet.getString("molarmass"));
     } catch (Exception ex) {
-      System.out.println("failed " + ex.toString());
+      logger.error("failed ", ex);
     }
     System.out.println("ok");
   }

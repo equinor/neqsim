@@ -30,11 +30,9 @@ public class PhaseDuanSun extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGeDuanSun(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentGeDuanSun(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -59,6 +57,14 @@ public class PhaseDuanSun extends PhaseGE {
     for (int i = 0; i < Dij.length; i++) {
       System.arraycopy(Dij[i], 0, this.Dij[i], 0, Dij[0].length);
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExcessGibbsEnergy() {
+    // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
+    // pressure, phaseType);
+    return GE;
   }
 
   /** {@inheritDoc} */
@@ -104,13 +110,5 @@ public class PhaseDuanSun extends PhaseGE {
   @Override
   public double getGibbsEnergy() {
     return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getExcessGibbsEnergy() {
-    // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
-    // pressure, phaseType);
-    return GE;
   }
 }

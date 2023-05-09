@@ -47,22 +47,14 @@ public class PhaseDefault extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(moles);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, moles);
     try {
       componentArray[compNumber] = defComponent.getClass().getDeclaredConstructor().newInstance();
     } catch (Exception ex) {
-      logger.error("err " + ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
-    componentArray[compNumber].createComponent(componentName, moles, molesInPhase, compNumber);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    componentArray[compNumber].createComponent(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */

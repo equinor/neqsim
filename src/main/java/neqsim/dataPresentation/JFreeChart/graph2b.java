@@ -193,7 +193,7 @@ public class graph2b extends javax.swing.JFrame {
       System.out.println("figure png created in " + neqsim.util.util.FileSystemSettings.tempDir
           + "NeqSimTempFig.png");
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -210,7 +210,7 @@ public class graph2b extends javax.swing.JFrame {
       System.out.println("start creating png figure...");
       buf = chart.createBufferedImage(640, 400, null);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return buf;
   }

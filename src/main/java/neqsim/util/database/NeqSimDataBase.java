@@ -19,7 +19,8 @@ import org.apache.logging.log4j.Logger;
  * @author Even Solbraa
  * @version Dec 2018
  */
-public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimDataBase
+    implements neqsim.util.util.FileSystemSettings, java.io.Serializable, AutoCloseable {
   /**
    * <p>
    * createTemporaryTables.
@@ -81,7 +82,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       databaseConnection = this.openConnection();
       statement = databaseConnection.createStatement();
     } catch (Exception ex) {
-      logger.error("SQLException " + ex.getMessage());
+      logger.error("SQLException ", ex);
       throw new RuntimeException(ex);
     }
   }
@@ -131,7 +132,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         return DriverManager.getConnection(getConnectionString());
       }
     } catch (Exception ex) {
-      logger.error("error loading NeqSimDataBase... " + ex.toString());
+      logger.error("error loading NeqSimDataBase... ", ex);
       throw new RuntimeException(ex);
     } finally {
       try {
@@ -139,7 +140,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
           ctx.close();
         }
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
   }
@@ -168,7 +169,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       ResultSet result = getStatement().executeQuery(sqlString);
       return result;
     } catch (Exception ex) {
-      logger.error("error loading NeqSimbataBase " + ex.toString());
+      logger.error("error loading NeqSimbataBase ", ex);
       throw new RuntimeException(ex);
     }
   }
@@ -188,7 +189,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       }
       getStatement().execute(sqlString);
     } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase " + ex.toString(), ex);
+      logger.error("error in NeqSimDataBase ", ex);
       logger.error("The database must be rgistered on the local DBMS to work.");
       throw new RuntimeException(ex);
     }
@@ -209,9 +210,19 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       }
       getStatement().executeQuery(sqlString);
     } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase " + ex.toString(), ex);
+      logger.error("error in NeqSimDataBase ", ex);
       logger.error("The database must be rgistered on the local DBMS to work.");
       throw new RuntimeException(ex);
+    }
+  }
+
+  @Override
+  public void close() throws Exception {
+    if (databaseConnection != null) {
+      databaseConnection.close();
+    }
+    if (statement != null) {
+      statement.close();
     }
   }
 
@@ -275,7 +286,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
-      logger.error("error loading database driver.. " + ex.toString());
+      logger.error("error loading database driver.. ", ex);
       throw new RuntimeException(ex);
     }
   }
@@ -356,20 +367,18 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   public static void main(String[] args) {
     // NeqSimDataBase.initH2DatabaseFromCSVfiles();
     // NeqSimDataBase.initDatabaseFromCSVfiles();
-    NeqSimDataBase database = new NeqSimDataBase();
     NeqSimDataBase.updateTable("COMP", "/workspaces/neqsim/src/main/resources/data/COMP.csv");
 
-    try (ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'")) {
       dataSet.next();
       System.out.println("dataset " + dataSet.getString("molarmass"));
       logger.info("dataset " + dataSet.getString("molarmass"));
       dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
-      logger.error("failed " + ex.toString());
+      logger.error("failed ", ex);
       throw new RuntimeException(ex);
     }
-
   }
 
   /**
@@ -380,8 +389,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @return an array of {@link java.lang.String} objects
    */
   public static String[] getComponentNames() {
-    NeqSimDataBase database = new NeqSimDataBase();
-    try (ResultSet dataSet = database.getResultSet("SELECT name FROM comp ORDER BY ID")) {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT name FROM comp ORDER BY ID")) {
       List<String> names = new ArrayList<>();
       while (dataSet.next()) {
         names.add(dataSet.getString("name"));
@@ -401,10 +410,9 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @return a boolean
    */
   public static boolean hasComponent(String compName) {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    java.sql.ResultSet dataSet = null;
-    try {
-      dataSet = database.getResultSet("select count(*) from comp WHERE NAME='" + compName + "'");
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet("select count(*) from comp WHERE NAME='" + compName + "'")) {
       dataSet.next();
       int size = dataSet.getInt(1);
       if (size == 0) {
@@ -414,39 +422,16 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       }
     } catch (Exception ex) {
       throw new RuntimeException(ex);
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
-      }
     }
   }
 
   public static void updateTable(String tableName, String path) {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + path + "')";
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       database.execute("DROP TABLE " + tableName);
       database.execute(sqlString);
     } catch (Exception e) {
       e.printStackTrace();
-    } finally {
-      try {
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-      } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
-      }
     }
   }
 
@@ -455,7 +440,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
     neqsim.util.database.NeqSimDataBase.createTemporaryTables = false;
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+
     // Connection con = database.getConnection();
     // Statement stmn = con.createStatement();
     // stmn.execute(defaultDatabaseRootRoot)
@@ -501,7 +486,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     String UNIFACInterParamC_UMRMC =
         "CREATE TABLE UNIFACInterParamC_UMRMC AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamC_UMRMC.csv')";
 
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       database.execute(createCOMP);
       database.execute(createINTER);
       database.execute(createElement);
@@ -527,17 +512,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       database.execute("CREATE TABLE intertemp AS SELECT * FROM inter");
     } catch (Exception e) {
       e.printStackTrace();
-    } finally {
-      try {
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
-      }
     }
   }
 }

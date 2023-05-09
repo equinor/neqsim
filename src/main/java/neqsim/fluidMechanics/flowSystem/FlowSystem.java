@@ -83,7 +83,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public FlowSystem(SystemInterface system) {
-    System.out.println("Hei der");
+    this.setInletThermoSystem(system);
   }
 
   /** {@inheritDoc} */
@@ -326,17 +326,6 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   /** {@inheritDoc} */
   @Override
   public void calcFluxes() {}
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    System.out.println("Hei der!");
-  }
 
   /** {@inheritDoc} */
   @Override

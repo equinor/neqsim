@@ -45,8 +45,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
   @Override
   public void run() {
     double ksp = 0.0;
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt");
+
     resultTable = new String[10][3];
     double stoc1 = 1e-20;
     double stoc2 = 1e-20;
@@ -67,7 +66,8 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
 
     double numberOfMolesMEG = 0.0;
 
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt")) {
       if (system.getPhase(phaseNumber).hasComponent("MEG")) {
         numberOfMolesMEG =
             system.getPhase(phaseNumber).getComponent("MEG").getNumberOfMolesInPhase();
@@ -181,7 +181,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
         }
       }
     } catch (Exception ex) {
-      logger.error("failed " + ex.toString());
+      logger.error("failed ", ex);
 
       if (system.getPhase(phaseNumber).hasComponent("MEG")) {
         system.addComponent("MEG", numberOfMolesMEG * 0.9999, phaseNumber);

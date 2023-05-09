@@ -86,7 +86,7 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
 
         logger.info("error " + error);
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
       }
     } while ((Math.abs(error) > 1e-3 && iter < 100) || iter < 3);
   }

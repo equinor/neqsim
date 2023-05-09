@@ -33,11 +33,9 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentDesmukhMather(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
+    componentArray[compNumber] = new ComponentDesmukhMather(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -58,12 +56,11 @@ public class PhaseDesmukhMather extends PhaseGE {
     super.setMixingRule(type);
     this.aij = new double[numberOfComponents][numberOfComponents];
     this.bij = new double[numberOfComponents][numberOfComponents];
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    for (int k = 0; k < getNumberOfComponents(); k++) {
-      String component_name = getComponents()[k].getComponentName();
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+      for (int k = 0; k < getNumberOfComponents(); k++) {
+        String component_name = getComponents()[k].getComponentName();
 
-      for (int l = k; l < getNumberOfComponents(); l++) {
-        try {
+        for (int l = k; l < getNumberOfComponents(); l++) {
           if (k == l) {
             if (getComponents()[l].getComponentName().equals("MDEA")
                 && getComponents()[k].getComponentName().equals("MDEA")) {
@@ -71,32 +68,31 @@ public class PhaseDesmukhMather extends PhaseGE {
               this.aij[l][k] = this.aij[k][l];
             }
           } else {
-            // int templ = l, tempk = k;
-            // database = new util.database.NeqSimDataBase();
-            java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='"
-                + component_name + "' AND comp2='" + getComponents()[l].getComponentName()
-                + "') OR (comp1='" + getComponents()[l].getComponentName() + "' AND comp2='"
-                + component_name + "')");
-            dataSet.next();
+            try (java.sql.ResultSet dataSet =
+                database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
+                    + "' AND comp2='" + getComponents()[l].getComponentName() + "') OR (comp1='"
+                    + getComponents()[l].getComponentName() + "' AND comp2='" + component_name
+                    + "')");) {
+              dataSet.next();
 
-            if (dataSet.getString("comp1").trim().equals(getComponents()[l].getComponentName())) {
-              // templ = k;
-              // tempk = l;
+              // if
+              // (dataSet.getString("comp1").trim().equals(getComponents()[l].getComponentName())) {
+                // templ = k;
+                // tempk = l;
+              // }
+              this.aij[k][l] = Double.parseDouble(dataSet.getString("aijDesMath"));
+              this.bij[k][l] = Double.parseDouble(dataSet.getString("bijDesMath"));
+              this.aij[l][k] = this.aij[k][l];
+              this.bij[l][k] = this.bij[k][l];
+            } catch (Exception ex) {
+              logger.info("comp names " + component_name);
+              logger.error(ex.getMessage(), ex);
             }
-            this.aij[k][l] = Double.parseDouble(dataSet.getString("aijDesMath"));
-            this.bij[k][l] = Double.parseDouble(dataSet.getString("bijDesMath"));
-            this.aij[l][k] = this.aij[k][l];
-            this.bij[l][k] = this.bij[k][l];
-
-            // System.out.println("aij " + this.aij[l][k]);
-            dataSet.close();
-            // database.getConnection().close();
           }
-        } catch (Exception ex) {
-          logger.info("comp names " + component_name);
-          logger.error(ex.toString());
         }
       }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -167,19 +163,6 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
-    GE = 0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponents()[i].getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
-    }
-    // System.out.println("ge " + GE);
-    return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getGibbsEnergy() {
     return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
   }
@@ -190,6 +173,19 @@ public class PhaseDesmukhMather extends PhaseGE {
     // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
     // pressure, phaseType);
     return GE;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure, int phasetype) {
+    GE = 0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      GE += phase.getComponents()[i].getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
+          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
+    }
+    // System.out.println("ge " + GE);
+    return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
   }
 
   /** {@inheritDoc} */

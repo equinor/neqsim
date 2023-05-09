@@ -34,7 +34,6 @@ public class TestCPA2 {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // PureComponentVapourPressures WHERE ComponentName='water'");
     // double guess[] = {23939.4738048507, 1.5971863018, 0.63623134978,
@@ -64,10 +63,10 @@ public class TestCPA2 {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // PureComponentVapourPressures WHERE ComponentName='MEG' AND Temperature>273.15
     // AND Temperature<690.0 ORDER BY Temperature");
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");) {
       while (dataSet.next()) {
         CPAFunction function = new CPAFunction();
         SystemInterface testSystem =
@@ -97,7 +96,7 @@ public class TestCPA2 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     // dataSet = database.getResultSet( "SELECT * FROM PureComponentDensity WHERE
@@ -108,9 +107,10 @@ public class TestCPA2 {
     // dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures
     // WHERE ComponentName='MEG' AND Temperature>273.15 AND Temperature<690.0 ORDER
     // BY Temperature");
-    dataSet = database.getResultSet(
-        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
-    try {
+
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2")) {
       while (dataSet.next()) {
         CPAFunctionDens function = new CPAFunctionDens(1);
         SystemInterface testSystem =
@@ -139,16 +139,16 @@ public class TestCPA2 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     // dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures
     // WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15
     // ORDER BY Temperature");
-    dataSet = database.getResultSet(
-        "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");) {
       while (dataSet.next()) {
         CPAFunctionDens function = new CPAFunctionDens(0);
         SystemInterface testSystem = new SystemSrkCPA(280, 5.001);
@@ -174,7 +174,7 @@ public class TestCPA2 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

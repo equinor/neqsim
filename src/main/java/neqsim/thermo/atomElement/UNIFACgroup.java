@@ -76,8 +76,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * @param temp a int
    */
   public UNIFACgroup(int groupNumber, int temp) {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
         dataSet = database
@@ -96,15 +95,8 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       mainGroup = Integer.parseInt(dataSet.getString("Main"));
       subGroup = Integer.parseInt(dataSet.getString("Secondary"));
       groupName = dataSet.getString("Name");
-      dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
-      try {
-        database.getConnection().close();
-      } catch (Exception ex2) {
-        logger.error(ex2);
-      }
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

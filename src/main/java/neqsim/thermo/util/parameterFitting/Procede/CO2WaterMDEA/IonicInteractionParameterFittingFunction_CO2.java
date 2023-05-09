@@ -44,7 +44,7 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     if (type == 0) {
       return (system.getPressure() * system.getPhases()[0].getComponent(0).getx()

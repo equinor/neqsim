@@ -43,7 +43,7 @@ public class Problem280809LNGphaseEnvelope {
       testOps.calcPTphaseEnvelope(true); // 0.05, 0.000005);
       testOps.displayResult();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
     // System.out.println("tempeerature " + (testSystem.getTemperature() - 273.15));

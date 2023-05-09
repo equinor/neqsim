@@ -23,11 +23,11 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  */
 public class PhaseGE extends Phase implements PhaseGEInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseGE.class);
 
   EosMixingRules mixSelect = new EosMixingRules();
   EosMixingRulesInterface mixRuleEos;
 
-  static Logger logger = LogManager.getLogger(PhaseGE.class);
 
   /**
    * <p>
@@ -36,7 +36,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
    */
   public PhaseGE() {
     super();
-    phaseTypeName = "liquid";
+    setType(PhaseType.LIQUID);
     componentArray = new ComponentGEInterface[MAX_NUMBER_OF_COMPONENTS];
     useVolumeCorrection = false;
   }
@@ -77,7 +77,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
 
     if (sumHydrocarbons > sumAqueous) {
-      phaseTypeName = "oil";
+      setType(PhaseType.OIL);
     } else {
       phaseTypeName = "aqueous";
     }
@@ -104,7 +104,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
 
     if (sumHydrocarbons > sumAqueous) {
-      phaseTypeName = "oil";
+      setType(PhaseType.OIL);
     } else {
       phaseTypeName = "aqueous";
     }
@@ -158,9 +158,9 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
+    // todo: compNumber not in use
   }
 
   /**
@@ -183,22 +183,22 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getExcessGibbsEnergy() {
+    logger.error("this getExcessGibbsEnergy should never be used.......");
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
-    logger.error("this getExxess should never be used.......");
+    logger.error("this getExcessGibbsEnergy should never be used.......");
     return 0;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getGibbsEnergy() {
-    return 0;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getExcessGibbsEnergy() {
-    logger.error("this getExxess should never be used.......");
     return 0;
   }
 
