@@ -685,8 +685,21 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @return a double
+   * @deprecated Replaced by {@link getIdealGasGibbsEnergyOfFormation}
    */
-  public double getIdealGasGibsEnergyOfFormation();
+  @Deprecated
+  public default double getIdealGasGibsEnergyOfFormation() {
+    return getIdealGasGibbsEnergyOfFormation();
+  }
+
+  /**
+   * <p>
+   * getIdealGasGibsEnergyOfFormation.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getIdealGasGibbsEnergyOfFormation();
 
   /**
    * <p>

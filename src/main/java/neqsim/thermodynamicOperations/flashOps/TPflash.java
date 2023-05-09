@@ -189,7 +189,7 @@ public class TPflash extends Flash {
       return;
     }
 
-    findLowesGibsPhaseIsChecked = false;
+    findLowestGibbsPhaseIsChecked = false;
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
 

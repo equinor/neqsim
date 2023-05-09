@@ -1614,12 +1614,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getBeta() {
-    return this.beta;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getdPdrho() {
     return 0;
   }
@@ -1918,6 +1912,12 @@ abstract class Phase implements PhaseInterface {
       }
     }
     return TPBfrac;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final double getBeta() {
+    return this.beta;
   }
 
   /** {@inheritDoc} */
