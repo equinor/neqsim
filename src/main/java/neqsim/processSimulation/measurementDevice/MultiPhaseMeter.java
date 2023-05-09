@@ -206,6 +206,7 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
       return tempFluid.getPhase("gas").getCorrectedVolume()
           / tempFluid.getPhase("oil").getCorrectedVolume();
     } else {
+      logger.warn("Measurement type " + measurement + " is not found");
       return 0.0;
     }
   }
