@@ -35,7 +35,6 @@ abstract class Phase implements PhaseInterface {
 
   protected boolean useVolumeCorrection = true;
   public neqsim.physicalProperties.PhysicalPropertyHandler physicalPropertyHandler = null;
-  public double numberOfMolesInPhase = 0;
   protected double molarVolume = 1.0;
   protected double phaseVolume = 1.0;
 
@@ -43,7 +42,15 @@ abstract class Phase implements PhaseInterface {
   protected double diElectricConstant = 0;
   double Z = 1;
   public String thermoPropertyModelName = null;
+
+  /**
+   * Mole fraction of this phase in system.
+   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>
+   */
   double beta = 1.0;
+  /** Number of moles in phase. <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code> */
+  public double numberOfMolesInPhase = 0;
+
   private int initType = 0;
   int mixingRuleNumber = 0;
   double temperature = 0;

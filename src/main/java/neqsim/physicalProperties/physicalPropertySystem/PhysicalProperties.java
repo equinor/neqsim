@@ -286,11 +286,11 @@ public abstract class PhysicalProperties
   /** {@inheritDoc} */
   @Override
   public void init(PhaseInterface phase, String type) {
-    if (type.equals("density")) {
+    if (type.equalsIgnoreCase("density")) {
       density = densityCalc.calcDensity();
-    } else if (type.equals("viscosity")) {
+    } else if (type.equalsIgnoreCase("viscosity")) {
       viscosity = viscosityCalc.calcViscosity();
-    } else if (type.equals("conductivity")) {
+    } else if (type.equalsIgnoreCase("conductivity")) {
       conductivity = conductivityCalc.calcConductivity();
     } else {
       init(phase);
