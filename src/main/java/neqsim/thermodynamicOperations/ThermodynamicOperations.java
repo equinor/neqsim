@@ -169,10 +169,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * TPflash.
    * </p>
    *
-   * @param checkSolids a boolean
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
-  public void TPflash(boolean checkSolids) {
-    operation = new neqsim.thermodynamicOperations.flashOps.TPflash(system, checkSolids);
+  public void TPflash(boolean checkForSolids) {
+    operation = new neqsim.thermodynamicOperations.flashOps.TPflash(system, checkForSolids);
     getOperation().run();
   }
 

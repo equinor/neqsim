@@ -31,8 +31,8 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
    * Constructor for SystemFurstElectrolyteEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemFurstElectrolyteEos(double T, double P) {
     super(T, P);
