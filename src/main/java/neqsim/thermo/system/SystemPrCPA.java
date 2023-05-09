@@ -14,7 +14,9 @@ public class SystemPrCPA extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemPrCPA.</p>
+   * <p>
+   * Constructor for SystemPrCPA.
+   * </p>
    */
   public SystemPrCPA() {
     super();

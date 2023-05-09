@@ -459,23 +459,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  @SuppressWarnings("unused")
-  public static void main(String[] args) {
-    ChemicalReactionList test = new ChemicalReactionList();
-    // test.readReactions();
-    // String[] test2 = {"water","MDEA"};
-    // test.removeJunkReactions(test2);
-    // String[] comp = test.getAllComponents();
-    // System.out.println("components: " + comp.length);
-  }
-
-  /**
    * Getter for property chemicalReactionList.
    *
    * @return Value of property chemicalReactionList.

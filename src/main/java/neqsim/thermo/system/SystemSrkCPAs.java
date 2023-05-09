@@ -14,7 +14,9 @@ public class SystemSrkCPAs extends SystemSrkCPA {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemSrkCPAs.</p>
+   * <p>
+   * Constructor for SystemSrkCPAs.
+   * </p>
    */
   public SystemSrkCPAs() {
     super();

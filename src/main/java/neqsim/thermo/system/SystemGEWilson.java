@@ -14,7 +14,9 @@ public class SystemGEWilson extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemGEWilson.</p>
+   * <p>
+   * Constructor for SystemGEWilson.
+   * </p>
    */
   public SystemGEWilson() {
     super();
