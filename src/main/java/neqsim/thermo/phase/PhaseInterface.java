@@ -592,16 +592,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * Setter for property <code>beta</code>. Beta is the mole fraction of a phase of all the moles of
-   * a system.
-   * </p>
-   *
-   * @param b Beta value to set.
-   */
-  public void setBeta(double b);
-
-  /**
-   * <p>
    * setProperties. Transfer properties from another phase object.
    * </p>
    *
@@ -629,12 +619,23 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * getBeta.
+   * Getter for property <code>beta</code>. Beta is the mole fraction of a phase of all the moles of
+   * a system.
    * </p>
    *
-   * @return a double
+   * @return Beta value
    */
   public double getBeta();
+
+  /**
+   * <p>
+   * Setter for property <code>beta</code>. Beta is the mole fraction of a phase of all the moles of
+   * a system.
+   * </p>
+   *
+   * @param b Beta value to set.
+   */
+  public void setBeta(double b);
 
   /**
    * <p>
