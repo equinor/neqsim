@@ -141,23 +141,4 @@ public class NeqSimFluidDataBase
       logger.error("The database must be rgistered on the local DBMS to work.");
     }
   }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    NeqSimFluidDataBase database = new NeqSimFluidDataBase();
-    try (ResultSet dataSet =
-        database.getResultSet("FluidDatabase", "SELECT * FROM comp where name='water'")) {
-      dataSet.next();
-      System.out.println("dataset " + dataSet.getString("molarmass"));
-    } catch (Exception ex) {
-      logger.error("failed ", ex);
-    }
-    System.out.println("ok");
-  }
 }
