@@ -1,5 +1,8 @@
 package neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties;
 
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity.CorrespondingStatesDiffusivity;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod;
 import neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -33,23 +36,14 @@ public class DefaultPhysicalProperties extends PhysicalProperties {
   public DefaultPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-    conductivityCalc =
-        new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
-            this);
+    conductivityCalc = new PFCTConductivityMethodMod86(this);
 
     // viscosityCalc = new
     // physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethod(this);
-    // viscosityCalc = new
-    // physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodMod86(this);
-    // viscosityCalc = new
-    // physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.LBCViscosityMethod(this);
-    viscosityCalc =
-        new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod(
-            this);
-    diffusivityCalc =
-        new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity.CorrespondingStatesDiffusivity(
-            this);
-
+    // viscosityCalc = new PFCTViscosityMethodMod86(this);
+    // viscosityCalc = new LBCViscosityMethod(this);
+    viscosityCalc = new FrictionTheoryViscosityMethod(this);
+    diffusivityCalc = new CorrespondingStatesDiffusivity(this);
     densityCalc =
         new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density.Density(
             this);

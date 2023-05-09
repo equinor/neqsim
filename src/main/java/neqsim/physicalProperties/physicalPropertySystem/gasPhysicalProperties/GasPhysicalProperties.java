@@ -8,6 +8,7 @@ package neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -42,23 +43,18 @@ public class GasPhysicalProperties
   public GasPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-    // conductivityCalc = new
-    // neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity.ChungConductivityMethod(this);
+    // conductivityCalc = new ChungConductivityMethod(this);
     conductivityCalc =
         new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
             this);
-    // viscosityCalc = new
-    // physicalProperties.physicalPropertyMethods.gasPhysicalProperties.viscosity.ChungViscosityMethod(this);
-    // viscosityCalc = new
-    // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod(this);
+    // viscosityCalc = new ChungViscosityMethod(this);
+    // viscosityCalc = new FrictionTheoryViscosityMethod(this);
     // viscosityCalc = new
     // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodMod86(this);
-    viscosityCalc =
-        new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil(
-            this);
+    viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
 
     // viscosityCalc = new
-    // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.LBCViscosityMethod(this);
+    // LBCViscosityMethod(this);
     diffusivityCalc =
         new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.Diffusivity(
             this);
