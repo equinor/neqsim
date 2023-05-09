@@ -1160,22 +1160,43 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getBeta.
+   * Getter for property <code>beta</code>.
+   * 
+   * Get value for heaviest phase.
    * </p>
    *
-   * @return a double
+   * @return Beta value
    */
   public double getBeta();
 
   /**
    * <p>
-   * getBeta.
+   * Getter for property <code>beta</code>.
    * </p>
    *
-   * @param phase a int
-   * @return a double
+   * @param phase Index of phase to get beta for.
+   * @return Beta value
    */
   public double getBeta(int phase);
+
+  /**
+   * <p>
+   * setBeta. NB! Set beta = b for first phase and 1-b for second phase, not for multiphase systems.
+   * </p>
+   *
+   * @param b Beta value to set.
+   */
+  public void setBeta(double b);
+
+  /**
+   * <p>
+   * setBeta for a given phase.
+   * </p>
+   *
+   * @param phase Index of phase to set beta for.
+   * @param b Beta value to set.
+   */
+  public void setBeta(int phase, double b);
 
   /**
    * <p>
@@ -1637,25 +1658,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param i a int
    */
   public void setAttractiveTerm(int i);
-
-  /**
-   * <p>
-   * setBeta. NB! Set beta = b for first phase and 1-b for second phase.
-   * </p>
-   *
-   * @param b Beta value to set.
-   */
-  public void setBeta(double b);
-
-  /**
-   * <p>
-   * setBeta for a given phase.
-   * </p>
-   *
-   * @param phase Index of phase to set beta for.
-   * @param b Beta value to set.
-   */
-  public void setBeta(int phase, double b);
 
   /**
    * <p>

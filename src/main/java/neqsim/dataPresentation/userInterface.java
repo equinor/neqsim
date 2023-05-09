@@ -14,13 +14,13 @@ package neqsim.dataPresentation;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class userInterface implements java.io.Serializable {
+public class UserInterface implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
 
   /**
    * <p>
-   * Constructor for userInterface.
+   * Constructor for UserInterface.
    * </p>
    */
-  public userInterface() {}
+  public UserInterface() {}
 }
