@@ -33,8 +33,8 @@ public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
    * Constructor for SystemElectrolyteCPA.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemElectrolyteCPA(double T, double P) {
     super(T, P);

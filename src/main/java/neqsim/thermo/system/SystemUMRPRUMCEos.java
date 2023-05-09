@@ -10,7 +10,9 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemUMRPRUMCEos.</p>
+   * <p>
+   * Constructor for SystemUMRPRUMCEos.
+   * </p>
    */
   public SystemUMRPRUMCEos() {
     super();
@@ -24,8 +26,8 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
    * Constructor for SystemUMRPRUMCEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemUMRPRUMCEos(double T, double P) {
     super(T, P);
@@ -45,12 +47,12 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
    * Constructor for SystemUMRPRUMCEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemUMRPRUMCEos(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemUMRPRUMCEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     setBmixType(1);
     attractiveTermNumber = 13;
     modelName = "UMR-PRU-MC-EoS";

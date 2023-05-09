@@ -33,15 +33,4 @@ public abstract class OnePhaseFlowSystem extends FlowSystem {
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public OnePhaseFlowSystem(SystemInterface system) {}
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    System.out.println("Hei der!");
-  }
 }

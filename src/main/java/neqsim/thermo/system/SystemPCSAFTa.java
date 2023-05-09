@@ -35,8 +35,8 @@ public class SystemPCSAFTa extends SystemSrkEos {
    * Constructor for SystemPCSAFTa.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPCSAFTa(double T, double P) {
     super(T, P);
@@ -55,16 +55,16 @@ public class SystemPCSAFTa extends SystemSrkEos {
    * Constructor for SystemPCSAFTa.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemPCSAFTa(double T, double P, boolean solidCheck) {
+  public SystemPCSAFTa(double T, double P, boolean checkForSolids) {
     this(T, P);
     modelName = "PCSAFTa-EOS";
     attractiveTermNumber = 0;
     setNumberOfPhases(5);
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePCSAFTa();
       phaseArray[i].setTemperature(T);
