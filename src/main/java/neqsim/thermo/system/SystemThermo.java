@@ -145,8 +145,8 @@ abstract class SystemThermo implements SystemInterface {
    * Constructor for SystemThermo.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemThermo(double T, double P) {
     this();

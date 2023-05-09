@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.pipeline;
 
 import java.util.UUID;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -36,7 +35,10 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   double insideDiameter = 0.1;
   double velocity = 1.0;
   double pipeWallRoughness = 1e-5;
+
+  /** Elevation at pipe inlet in meters. */
   private double inletElevation = 0;
+  /** Elevation at pipe outlet in meters. */
   private double outletElevation = 0;
   double dH = 0.0;
   String flowPattern = "unknown";
@@ -449,49 +451,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    */
   public void setOutletElevation(double outletElevation) {
     this.outletElevation = outletElevation;
-  }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param name an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] name) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 200.00);
-    testSystem.addComponent("methane", 75, "MSm^3/day");
-    testSystem.addComponent("n-heptane", 0.0000001, "MSm^3/day");
-    testSystem.createDatabase(true);
-    testSystem.setMixingRule(2);
-    testSystem.init(0);
-
-    Stream stream_1 = new Stream("Stream1", testSystem);
-
-    AdiabaticTwoPhasePipe pipe = new AdiabaticTwoPhasePipe(stream_1);
-    pipe.setLength(400.0 * 1e3);
-    pipe.setDiameter(1.017112);
-    pipe.setPipeWallRoughness(5e-6);
-
-    AdiabaticTwoPhasePipe pipe2 = new AdiabaticTwoPhasePipe(pipe.getOutletStream());
-    pipe2.setLength(100.0);
-    pipe2.setDiameter(0.3017112);
-    pipe2.setPipeWallRoughness(5e-6);
-    // pipe.setOutPressure(112.0);
-
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
-    operations.add(stream_1);
-    operations.add(pipe);
-    operations.add(pipe2);
-    operations.run();
-    // pipe.displayResult();
-    System.out.println("flow " + pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"));
-    System.out.println("out pressure " + pipe.getOutletStream().getPressure("bara"));
-    System.out.println("velocity " + pipe.getSuperficialVelocity());
-    System.out.println("out pressure " + pipe2.getOutletStream().getPressure("bara"));
-    System.out.println("velocity " + pipe2.getSuperficialVelocity());
   }
 
   /**
