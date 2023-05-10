@@ -85,8 +85,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   void testNeqSimPython2() {
     String[] components =
         new String[] {"H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4", "iC5", "nC5", "C6"};
-    double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.90, 2.489, 0.355, 0.172, 0.088,
-        0.076, 0.036, 0.1657};
+    double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.990, 2.399, 0.355, 0.172, 0.088,
+        0.076, 0.036, 0.1656};
 
     double[] fractions2 = new double[] {0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172, 0.088,
         0.076, 0.036, 0.1656};
@@ -146,7 +146,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     // Assert all properties are the same with online fraction and without
     for (int i = 0; i < res.fluidProperties[0].length; i++) {
-      Assertions.assertEquals(res.fluidProperties[0][i], res2.fluidProperties[0][i], 1e-11,
+      Assertions.assertEquals(res.fluidProperties[0][i], res2.fluidProperties[0][i],
           "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
     }
 
