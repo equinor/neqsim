@@ -93,7 +93,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
     thermoSystem.addComponents(components, fractions);
-    // thermoSystem.setTotalNumberOfMoles(1);
     thermoSystem.init(0);
     ThermodynamicOperations thermoOps =
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
@@ -307,11 +306,11 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
           if (Double.isNaN(expected.fluidProperties[nSamp][nProp])) {
             Assertions.assertEquals(expected.fluidProperties[nSamp][nProp],
                 s.fluidProperties[nSamp][nProp],
-                "Test " + nSamp + 1 + " Property " + SystemProperties.getPropertyNames()[nProp]);
+                "Test " + (nSamp + 1) + " Property " + SystemProperties.getPropertyNames()[nProp]);
           } else {
             Assertions.assertEquals(expected.fluidProperties[nSamp][nProp],
                 s.fluidProperties[nSamp][nProp], 1e-5,
-                "Test " + nSamp + 1 + " Property " + SystemProperties.getPropertyNames()[nProp]);
+                "Test " + (nSamp + 1) + " Property " + SystemProperties.getPropertyNames()[nProp]);
           }
         }
       }
