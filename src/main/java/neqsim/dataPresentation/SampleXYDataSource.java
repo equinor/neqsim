@@ -19,12 +19,11 @@ package neqsim.dataPresentation;
 
 /**
  * A dummy data source for an XY plot.
- * <P>
+ *
+ * <p>
  * Note that the aim of this class is to create a self-contained data source for demo purposes - it
  * is NOT intended to show how you should go about writing your own data sources.
- *
- * @author asmund
- * @version $Id: $Id
+ * </p>
  */
 public class SampleXYDataSource {
   double[][] points;

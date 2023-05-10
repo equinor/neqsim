@@ -4,22 +4,13 @@ import neqsim.thermodynamicOperations.OperationInterface;
 
 /**
  * <p>
- * constantDutyFlashInterface interface.
+ * ConstantDutyFlashInterface interface.
  * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface constantDutyFlashInterface extends OperationInterface {
-  /**
-   * <p>
-   * setBeta.
-   * </p>
-   *
-   * @param beta a double
-   */
-  public void setBeta(double beta);
-
+public interface ConstantDutyFlashInterface extends OperationInterface {
   /**
    * <p>
    * isSuperCritical.

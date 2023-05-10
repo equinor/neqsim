@@ -35,6 +35,7 @@ import neqsim.thermo.phase.PhaseSolid;
 import neqsim.thermo.phase.PhaseSolidComplex;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseWax;
+import neqsim.thermo.phase.StateOfMatter;
 import neqsim.util.database.NeqSimDataBase;
 
 /*
@@ -2838,10 +2839,9 @@ abstract class SystemThermo implements SystemInterface {
     // System.out.println("new phase type: cha " + newPhaseType);
     int newPhaseType = 1;
     if (allowPhaseShift) {
-      if (phaseTypeName.equals("gas") || phaseTypeName.equals("vapour")) {
+      if (phaseTypeName.equals("gas")) {
         newPhaseType = 1;
-      } else if (phaseTypeName.equals("liquid") || phaseTypeName.equals("oil")
-          || phaseTypeName.equals("aqueous")) {
+      } else if (StateOfMatter.isLiquid(PhaseType.byDesc(phaseTypeName))) {
         newPhaseType = 0;
       } else {
         newPhaseType = 0;
@@ -3249,7 +3249,6 @@ abstract class SystemThermo implements SystemInterface {
   public String[][] createTable(String name) {
     // System.out.println("number of comps : " + numberOfComponents + " number of
     // phases " + numberOfPhases);
-    String[][] table = new String[getPhases()[0].getNumberOfComponents() + 30][7];
 
     if (isInitialized) {
       initProperties();
@@ -3272,6 +3271,7 @@ abstract class SystemThermo implements SystemInterface {
     // 30][7];
     // String[] names = {"", "Feed", "Phase 1", "Phase 2", "Phase 3", "Phase 4",
     // "Unit"};
+    String[][] table = new String[getPhases()[0].getNumberOfComponents() + 30][7];
     table[0][0] = ""; // getPhases()[0].getType(); //"";
 
     for (int i = 0; i < getPhases()[0].getNumberOfComponents() + 30; i++) {
@@ -3587,7 +3587,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setSolidPhaseCheck(boolean solidPhaseCheck) {
     // init(0);
-    int oldphase = numberOfPhases;
+    final int oldphase = numberOfPhases;
     if (!this.solidPhaseCheck) {
       addSolidPhase();
     }
@@ -3607,7 +3607,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setSolidPhaseCheck(String solidComponent) {
     init(0);
-    int oldphase = numberOfPhases;
+    final int oldphase = numberOfPhases;
     if (!solidPhaseCheck) {
       addSolidPhase();
     }

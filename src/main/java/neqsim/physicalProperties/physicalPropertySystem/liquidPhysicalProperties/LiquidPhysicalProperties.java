@@ -8,6 +8,8 @@ package neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalPropertie
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density.Density;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.SiddiqiLucasMethod;
 import neqsim.thermo.phase.PhaseInterface;
@@ -45,20 +47,12 @@ public class LiquidPhysicalProperties
       int multicomponentDiffusionMethod) {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
     // conductivityCalc = new Conductivity(this);
-    conductivityCalc =
-        new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
-            this);
+    conductivityCalc = new PFCTConductivityMethodMod86(this);
     // viscosityCalc = new Viscosity(this);
-    // viscosityCalc = new
-    // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod(this);
-    // viscosityCalc = new
-    // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodMod86(this);
-    // viscosityCalc = new
-    // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.LBCViscosityMethod(this);
-    viscosityCalc =
-        new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil(
-            this);
-
+    // viscosityCalc = new FrictionTheoryViscosityMethod(this);
+    // viscosityCalc = new PFCTViscosityMethodMod86(this);
+    // viscosityCalc = new LBCViscosityMethod(this);
+    viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
     diffusivityCalc = new SiddiqiLucasMethod(this);
     densityCalc = new Density(this);
   }
