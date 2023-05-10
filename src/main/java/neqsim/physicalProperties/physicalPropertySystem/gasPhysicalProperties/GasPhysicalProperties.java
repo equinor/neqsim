@@ -51,8 +51,7 @@ public class GasPhysicalProperties
     // viscosityCalc = new PFCTViscosityMethodMod86(this);
     viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
 
-    // viscosityCalc = new
-    // LBCViscosityMethod(this);
+    // viscosityCalc = new LBCViscosityMethod(this);
     diffusivityCalc =
         new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.Diffusivity(
             this);

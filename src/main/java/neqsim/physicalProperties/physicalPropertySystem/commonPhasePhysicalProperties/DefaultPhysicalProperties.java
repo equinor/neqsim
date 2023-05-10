@@ -38,8 +38,7 @@ public class DefaultPhysicalProperties extends PhysicalProperties {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
     conductivityCalc = new PFCTConductivityMethodMod86(this);
 
-    // viscosityCalc = new
-    // physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethod(this);
+    // viscosityCalc = new PFCTViscosityMethod(this);
     // viscosityCalc = new PFCTViscosityMethodMod86(this);
     // viscosityCalc = new LBCViscosityMethod(this);
     viscosityCalc = new FrictionTheoryViscosityMethod(this);
