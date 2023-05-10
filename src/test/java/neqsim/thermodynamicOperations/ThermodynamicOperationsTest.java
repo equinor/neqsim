@@ -94,7 +94,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
     thermoSystem.addComponents(components, fractions);
-    thermoSystem.setTotalNumberOfMoles(1);
+    // thermoSystem.setTotalNumberOfMoles(1);
     thermoSystem.init(0);
     ThermodynamicOperations thermoOps =
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
@@ -123,7 +123,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     // Assert all properties are the same with online fraction and without
     for (int i = 0; i < res.fluidProperties[0].length; i++) {
-      Assertions.assertEquals(res.fluidProperties[0][i], res.fluidProperties[0][i],
+      Assertions.assertEquals(res.fluidProperties[0][i], res1.fluidProperties[0][i],
           "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
     }
 
