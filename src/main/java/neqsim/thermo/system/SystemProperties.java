@@ -13,7 +13,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class SystemProperties {
   private Double[] values;
   private String[] names;
-  /** Constant <code>nCols=(16 * 4) + 6</code> */
+  /** Constant <code>nCols=(16 * 4) + 6</code>. */
   public static final int nCols = (16 * 4) + 6;
 
   /**
@@ -36,7 +36,7 @@ public class SystemProperties {
     values[k] = fluid.getTemperature("K");
 
     names[++k] = "Mix Mole Percent";
-    values[k] = fluid.getNumberOfMoles() * 100;
+    values[k] = 100.0;
     names[++k] = "Mix Weight Percent";
     values[k] = 100.0;
     names[++k] = "Mix Molar Volume [m3/mol]";
@@ -184,7 +184,7 @@ public class SystemProperties {
   }
 
   /**
-   * Get property names and values as a map
+   * Get property names and values as a map.
    *
    * @return map of property name and values
    */
@@ -197,7 +197,7 @@ public class SystemProperties {
   }
 
   /**
-   * Getter for property values
+   * Getter for property values.
    *
    * @return Systemproperty values
    */
@@ -206,7 +206,7 @@ public class SystemProperties {
   }
 
   /**
-   * Get names of properties
+   * Get names of properties.
    *
    * @return Array of names of properties
    */
