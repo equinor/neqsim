@@ -2823,12 +2823,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getNumberOfMoles() {
-    return getTotalNumberOfMoles();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setPhaseType(int phaseToChange, int newPhaseType) {
     // System.out.println("new phase type: cha " + newPhaseType);
     if (allowPhaseShift) {

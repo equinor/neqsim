@@ -2022,15 +2022,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * Getter for property <code>numberOfMoles</code>.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getNumberOfMoles();
-
-  /**
-   * <p>
    * clone.
    * </p>
    *
@@ -2341,18 +2332,31 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void addGasToLiquid(double fraction);
 
   /**
-   * method to get the total molar flow rate of a fluid.
+   * Getter for property <code>totalNumberOfMoles</code>.
    *
-   * @return molar flow in unit mol/sec
+   * @return Total molar flow rate of fluid in unit mol/sec
    */
   public double getTotalNumberOfMoles();
 
   /**
    * <p>
-   * setTotalNumberOfMoles.
+   * Getter for property <code>numberOfMoles</code>.
    * </p>
    *
-   * @param totalNumberOfMoles a double
+   * @return a double
+   * @deprecated Replaced by {@link getTotalNumberOfMoles}
+   */
+  @Deprecated
+  public default double getNumberOfMoles() {
+    return getTotalNumberOfMoles();
+  }
+
+  /**
+   * <p>
+   * Setter for property <code>totalNumberOfMoles</code>.
+   * </p>
+   *
+   * @param totalNumberOfMoles Total molar flow rate of fluid in unit mol/sec
    */
   public void setTotalNumberOfMoles(double totalNumberOfMoles);
 
