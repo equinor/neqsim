@@ -53,7 +53,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Add a unit operation to the process module.
+   * Add an unit operation to the process module.
    *
    * @param processSystem the process system that contains the unit operations to be added.
    */
@@ -197,13 +197,12 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
- * Returns the unit with the given name from the list of added unit operations and list of added modules.
- *
- * @param name the name of the unit to retrieve
- * 
- * @return the unit with the given name, or {@code null} if no such unit is found
- */
-
+   * Returns the unit with the given name from the list of added unit operations and list of added
+   * modules.
+   *
+   * @param name the name of the unit to retrieve
+   * @return the unit with the given name, or {@code null} if no such unit is found
+   */
   public Object getUnit(String name) {
     for (ProcessSystem processSystem : addedUnitOperations) {
       Object unit = processSystem.getUnit(name);
@@ -221,7 +220,6 @@ public class ProcessModule extends SimulationBaseClass {
     return null; // no unit found with the given name
   }
 
-
   /**
    * <p>
    * Create deep copy.
@@ -234,7 +232,4 @@ public class ProcessModule extends SimulationBaseClass {
     ProcessModule copyModule = (ProcessModule) SerializationUtils.deserialize(bytes);
     return copyModule;
   }
-
-
-
 }
