@@ -2007,15 +2007,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
               + String.valueOf(sum[0]) + ")";
         }
       }
-
-      double range = 1e-8;
-      if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
-          || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
-        for (int t = 0; t < Spec1.size(); t++) {
-          calculationError[t] = "Sum of fractions must be approximately to 1 or 100, currently ("
-              + String.valueOf(sum[0]) + ")";
-        }
-      }
     }
 
     for (int t = 0; t < Spec1.size(); t++) {
