@@ -113,7 +113,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     // Assert all properties are the same with online fraction and without
     for (int i = 0; i < res.fluidProperties[0].length; i++) {
-      Assertions.assertEquals(res.fluidProperties[0][i], res.fluidProperties[0][i],
+      Assertions.assertEquals(res.fluidProperties[0][i], res1.fluidProperties[0][i],
           "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
     }
 
@@ -141,6 +141,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
           "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
     }
 
+    // Verify stability
     Assertions.assertArrayEquals(res2.fluidProperties[0], res2.fluidProperties[1]);
   }
 
