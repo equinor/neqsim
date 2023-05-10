@@ -490,27 +490,13 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addMolesChemReac(double dn) {
-    numberOfMoles += dn;
-    numberOfMolesInPhase += dn;
-    if (numberOfMoles < 0) {
-      numberOfMoles = 0;
-    }
-    if (numberOfMolesInPhase < 0) {
-      numberOfMolesInPhase = 0;
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void addMolesChemReac(double dn, double totdn) {
     numberOfMoles += totdn;
-
+    numberOfMolesInPhase += dn;
     if (numberOfMoles < 0) {
       numberOfMoles = 0;
     }
 
-    numberOfMolesInPhase += dn;
     if (numberOfMolesInPhase < 0) {
       numberOfMolesInPhase = 0;
     }

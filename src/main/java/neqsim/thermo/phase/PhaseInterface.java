@@ -765,13 +765,27 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
+   * addMoles.
+   * </p>
+   *
+   * @param component Component number
+   * @param dn a double
+   */
+  public default void addMoles(int component, double dn) {
+    addMolesChemReac(component, dn, 0);
+  }
+
+  /**
+   * <p>
    * addMolesChemReac.
    * </p>
    *
-   * @param component a int
+   * @param component Component number
    * @param dn a double
    */
-  public void addMolesChemReac(int component, double dn);
+  public default void addMolesChemReac(int component, double dn) {
+    addMolesChemReac(component, dn, dn);
+  }
 
   /**
    * <p>
@@ -1041,16 +1055,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   double getg();
-
-  /**
-   * <p>
-   * addMoles.
-   * </p>
-   *
-   * @param component a int
-   * @param dn a double
-   */
-  public void addMoles(int component, double dn);
 
   /**
    * method to return enthalpy of a phase in unit Joule.
