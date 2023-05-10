@@ -324,24 +324,26 @@ public class TPflash extends Flash {
     }
 
     if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
-      if (system.checkStability() && stabilityCheck() && system.doMultiPhaseCheck()) {
-        // logger.info("one phase flash is stable - checking multiphase flash....");
-        TPmultiflash operation = new TPmultiflash(system, true);
-        operation.run();
-      }
-      if (solidCheck) {
-        this.solidPhaseFlash();
-      }
-      if (system.isMultiphaseWaxCheck()) {
-        TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
-        operation.run();
-      }
+      if (system.checkStability() && stabilityCheck()) {
+        if (system.doMultiPhaseCheck()) {
+          // logger.info("one phase flash is stable - checking multiphase flash....");
+          TPmultiflash operation = new TPmultiflash(system, true);
+          operation.run();
+        }
+        if (solidCheck) {
+          this.solidPhaseFlash();
+        }
+        if (system.isMultiphaseWaxCheck()) {
+          TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
+          operation.run();
+        }
 
-      system.orderByDensity();
-      system.init(1);
-      // commented out by Even Solbraa 6/2-2012k
-      // system.init(3);
-      return;
+        system.orderByDensity();
+        system.init(1);
+        // commented out by Even Solbraa 6/2-2012k
+        // system.init(3);
+        return;
+      }
     }
 
     setNewK();
