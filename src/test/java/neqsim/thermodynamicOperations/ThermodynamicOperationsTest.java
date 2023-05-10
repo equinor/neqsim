@@ -150,6 +150,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
           "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
     }
 
+    // Verify stability
     Assertions.assertArrayEquals(res2.fluidProperties[0], res2.fluidProperties[1]);
   }
 
