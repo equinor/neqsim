@@ -771,9 +771,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param component Component number
    * @param dn a double
    */
-  public default void addMoles(int component, double dn) {
-    addMolesChemReac(component, dn, 0);
-  }
+  public void addMoles(int component, double dn);
 
   /**
    * <p>
