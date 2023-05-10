@@ -15,6 +15,9 @@ import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProp
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodMod86;
 import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity.ChungConductivityMethod;
+import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.WilkeLeeDiffusivity;
+import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.AmineDiffusivity;
+import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.SiddiqiLucasMethod;
 import neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -192,17 +195,11 @@ public abstract class PhysicalProperties
     if ("CSP".equals(model)) {
       diffusivityCalc = new CorrespondingStatesDiffusivity(this);
     } else if ("Wilke Lee".equals(model)) {
-      diffusivityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.WilkeLeeDiffusivity(
-              this);
+      diffusivityCalc = new WilkeLeeDiffusivity(this);
     } else if ("Siddiqi Lucas".equals(model)) {
-      diffusivityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.SiddiqiLucasMethod(
-              this);
+      diffusivityCalc = new SiddiqiLucasMethod(this);
     } else if ("Alkanol amine".equals(model)) {
-      diffusivityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.AmineDiffusivity(
-              this);
+      diffusivityCalc = new AmineDiffusivity(this);
     }
   }
 

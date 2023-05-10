@@ -46,8 +46,7 @@ public class NaturalGasPhysicalProperties extends GasPhysicalProperties {
     diffusivityCalc =
         new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.Diffusivity(
             this);
-    // diffusivityCalc = new
-    // physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.WilkeLeeDiffusivity(this);
+    // diffusivityCalc = new WilkeLeeDiffusivity(this);
 
     densityCalc =
         new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density.Density(
