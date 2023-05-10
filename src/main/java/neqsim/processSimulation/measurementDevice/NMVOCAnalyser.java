@@ -10,48 +10,48 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public class NMVOCAnalyser extends MeasurementDeviceBaseClass {
+public class NMVOCAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
-  protected StreamInterface stream = null;
 
   /**
    * <p>
-   * Constructor for MolarMassAnalyser.
+   * Constructor for NMVOCAnalyser.
    * </p>
+   *
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  public NMVOCAnalyser() {
-    name = "NM VOC Analyser";
+  public NMVOCAnalyser(StreamInterface stream) {
+    this("NM VOC Analyser", stream);
   }
 
   /**
    * <p>
-   * Constructor for MolarMassAnalyser.
+   * Constructor for NMVOCAnalyser.
    * </p>
    *
-   * @param stream a
-   *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *               object
+   * @param name Name of NMVOCAnalyser
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  public NMVOCAnalyser(StreamInterface stream) {
-    this();
-    this.stream = stream;
+  public NMVOCAnalyser(String name, StreamInterface stream) {
+    super(name, "", stream);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue() {
-    return getnmVOCFlowRate();
+  public double getMeasuredValue(String unit) {
+    return getnmVOCFlowRate(unit);
   }
 
   /**
-   * Calculates the mass flow rate of non-methane volatile organic compounds
-   * (nmVOCs)
-   * 
-   * 
-   * @return the flow rate of nmVOCs in the flow unit set setUnit method (e.g.
-   *         "kg/hr", "tonnes/year")
+   * <p>
+   * Calculates the mass flow rate of non-methane volatile organic compounds (nmVOCs).
+   * </p>
+   *
+   * @param unit Unit to get measurement in
+   * @return the flow rate of nmVOCs in the flow unit set setUnit method (e.g. "kg/hr",
+   *         "tonnes/year")
    */
-  public double getnmVOCFlowRate() {
+  public double getnmVOCFlowRate(String unit) {
     // Define list of components to include in mass flow calculation
     java.util.List<String> nmVOCcomponents = java.util.Arrays.asList("ethane", "propane", "i-butane", "n-butane",
         "i-pentane",

@@ -10,21 +10,11 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ASMF
  * @version $Id: $Id
  */
-public class WellAllocator extends MeasurementDeviceBaseClass {
+public class WellAllocator extends StreamMeasurementDeviceBaseClass {
 
   private static final long serialVersionUID = 1L;
-  protected StreamInterface wellStream = null;
   protected StreamInterface exportGasStream = null;
   protected StreamInterface exportOilStream = null;
-
-  /**
-   * <p>
-   * Constructor for WellAllocator.
-   * </p>
-   */
-  public WellAllocator() {
-    name = "Well Allocator";
-  }
 
   /**
    * <p>
@@ -34,8 +24,7 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public WellAllocator(StreamInterface stream) {
-    name = "Well Allocator";
-    this.wellStream = stream;
+    this("Well Allocator", stream);
   }
 
   /**
@@ -43,12 +32,11 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
    * Constructor for WellAllocator.
    * </p>
    *
-   * @param streamname a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  public WellAllocator(String streamname, StreamInterface stream) {
-    this(stream);
-    name = streamname;
+  public WellAllocator(String name, StreamInterface stream) {
+    super(name, "kg/hr", stream);
   }
 
   /**
@@ -75,14 +63,21 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue() {
-    return wellStream.getThermoSystem().getFlowRate("kg/hr");
+  public double getMeasuredValue(String unit) {
+    return stream.getThermoSystem().getFlowRate(unit);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getMeasuredValue(String measurement) {
-    int numberOfComps = wellStream.getThermoSystem().getNumberOfComponents();
+  /**
+   * Get specific measurement type. Supports "gas export rate", "oil export rate" and "total export
+   * rate".
+   *
+   * @param measurement Measurement value to get
+   * @param unit Unit to get value in
+   * @return Measured value
+   */
+
+  public double getMeasuredValue(String measurement, String unit) {
+    int numberOfComps = stream.getThermoSystem().getNumberOfComponents();
     double[] splitFactors = new double[numberOfComps];
     double gasExportFlow = 0.0;
     double oilExportFlow = 0.0;
@@ -91,9 +86,9 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
           / (exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
               + exportOilStream.getFluid().getComponent(i).getFlowRate("kg/hr"));
       gasExportFlow +=
-          wellStream.getFluid().getComponent(i).getTotalFlowRate("kg/hr") * splitFactors[i];
+          stream.getFluid().getComponent(i).getTotalFlowRate("kg/hr") * splitFactors[i];
       oilExportFlow +=
-          wellStream.getFluid().getComponent(i).getTotalFlowRate("kg/hr") * (1.0 - splitFactors[i]);
+          stream.getFluid().getComponent(i).getTotalFlowRate("kg/hr") * (1.0 - splitFactors[i]);
     }
 
     if (measurement.equals("gas export rate")) {
@@ -101,7 +96,7 @@ public class WellAllocator extends MeasurementDeviceBaseClass {
     } else if (measurement.equals("oil export rate")) {
       return oilExportFlow;
     } else if (measurement.equals("total export rate")) {
-      return wellStream.getFluid().getFlowRate("kg/hr");
+      return stream.getFluid().getFlowRate("kg/hr");
     }
     return 0.0;
   }

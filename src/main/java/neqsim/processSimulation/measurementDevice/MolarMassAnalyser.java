@@ -10,19 +10,8 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public class MolarMassAnalyser extends MeasurementDeviceBaseClass {
+public class MolarMassAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
-  protected StreamInterface stream = null;
-
-  /**
-   * <p>
-   * Constructor for MolarMassAnalyser.
-   * </p>
-   */
-  public MolarMassAnalyser() {
-    name = "molar mass analyser";
-    unit = "gr/mol";
-  }
 
   /**
    * <p>
@@ -32,19 +21,34 @@ public class MolarMassAnalyser extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public MolarMassAnalyser(StreamInterface stream) {
-    this();
-    this.stream = stream;
+    this("molar mass analyser", stream);
+  }
+
+  /**
+   * <p>
+   * Constructor for MolarMassAnalyser.
+   * </p>
+   *
+   * @param name Name of MolarMassAnalyser
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public MolarMassAnalyser(String name, StreamInterface stream) {
+    super(name, "gr/mol", stream);
   }
 
   /** {@inheritDoc} */
   @Override
   public void displayResult() {
-    System.out.println("measured temperature " + stream.getThermoSystem().getMolarMass() * 1000.0);
+    System.out.println("measured Molar mass " + getMeasuredValue());
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue() {
+  public double getMeasuredValue(String unit) {
+    if (!unit.equalsIgnoreCase("gr/mol")) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "getMeasuredValue", "unit", "currently only supports \"gr/mol\""));
+    }
     return stream.getThermoSystem().getMolarMass() * 1000.0;
   }
 }

@@ -16,11 +16,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author asmund
  * @version $Id: $Id
  */
-public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
+public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(MultiPhaseMeter.class);
-
-  protected StreamInterface stream = null;
 
   double pressure = 10.0;
   double temperature = 298.15;
@@ -31,22 +29,11 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
    * <p>
    * Constructor for MultiPhaseMeter.
    * </p>
-   */
-  public MultiPhaseMeter() {
-    name = "Multi Phase Meter";
-  }
-
-  /**
-   * <p>
-   * Constructor for MultiPhaseMeter.
-   * </p>
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public MultiPhaseMeter(StreamInterface stream) {
-    this();
-    name = "Multi Phase Meter";
-    this.stream = stream;
+    this("Multi Phase Meter", stream);
   }
 
   /**
@@ -58,9 +45,7 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public MultiPhaseMeter(String name, StreamInterface stream) {
-    this();
-    this.name = name;
-    this.stream = stream;
+    super(name, "kg/hr", stream);
   }
 
   /**
@@ -117,11 +102,17 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
     return stream.getThermoSystem().getFlowRate("kg/hr");
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getMeasuredValue(String measurement) {
+  /**
+   * Get specific measurement type. Supports "mass rate", "GOR", "gasDensity", "oilDensity",
+   * "waterDensity" and "GOR_std".
+   *
+   * @param measurement Measurement value to get.
+   * @param unit Unit to get value in
+   * @return Measured value
+   */
+  public double getMeasuredValue(String measurement, String unit) {
     if (measurement.equals("mass rate")) {
-      return stream.getThermoSystem().getFlowRate("kg/hr");
+      return stream.getThermoSystem().getFlowRate(unit);
     }
 
     if (stream.getThermoSystem().getFlowRate("kg/hr") < 1e-10) {

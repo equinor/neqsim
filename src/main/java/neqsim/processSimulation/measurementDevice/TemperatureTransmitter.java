@@ -16,19 +16,8 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
+public class TemperatureTransmitter extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
-  protected StreamInterface stream = null;
-
-  /**
-   * <p>
-   * Constructor for TemperatureTransmitter.
-   * </p>
-   */
-  public TemperatureTransmitter() {
-    name = "Temperature Transmitter";
-    unit = "K";
-  }
 
   /**
    * <p>
@@ -38,8 +27,19 @@ public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public TemperatureTransmitter(StreamInterface stream) {
-    this();
-    this.stream = stream;
+    this("Temperature Transmitter", stream);
+  }
+
+  /**
+   * <p>
+   * Constructor for TemperatureTransmitter.
+   * </p>
+   *
+   * @param name Name of TemperatureTransmitter
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public TemperatureTransmitter(String name, StreamInterface stream) {
+    super(name, "K", stream);
   }
 
   /** {@inheritDoc} */
@@ -50,7 +50,7 @@ public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue() {
-    return stream.getThermoSystem().getTemperature();
+  public double getMeasuredValue(String unit) {
+    return stream.getThermoSystem().getTemperature(unit);
   }
 }

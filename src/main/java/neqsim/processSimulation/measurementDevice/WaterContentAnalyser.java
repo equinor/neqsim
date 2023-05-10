@@ -10,16 +10,8 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
+public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
-  protected StreamInterface stream = null;
-
-  /**
-   * <p>
-   * Constructor for WaterContentAnalyser.
-   * </p>
-   */
-  public WaterContentAnalyser() {}
 
   /**
    * <p>
@@ -29,9 +21,19 @@ public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public WaterContentAnalyser(StreamInterface stream) {
-    this.stream = stream;
-    name = "water analyser";
-    unit = "kg/day";
+    this("water analyser", stream);
+  }
+
+  /**
+   * <p>
+   * Constructor for WaterContentAnalyser.
+   * </p>
+   *
+   * @param name Name of WaterContentAnalyser
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public WaterContentAnalyser(String name, StreamInterface stream) {
+    super(name, "kg/day", stream);
   }
 
   /** {@inheritDoc} */
@@ -50,7 +52,7 @@ public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue() {
+  public double getMeasuredValue(String unit) {
     return stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
         * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600 * 24;
   }
