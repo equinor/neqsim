@@ -325,11 +325,9 @@ public class TPflash extends Flash {
 
     if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
       if (system.checkStability() && stabilityCheck() && system.doMultiPhaseCheck()) {
-        // logger.info("one phase flash is stable - checking multiphase flash....
-        // ");
+        // logger.info("one phase flash is stable - checking multiphase flash....");
         TPmultiflash operation = new TPmultiflash(system, true);
         operation.run();
-
       }
       if (solidCheck) {
         this.solidPhaseFlash();
