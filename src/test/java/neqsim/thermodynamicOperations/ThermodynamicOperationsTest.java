@@ -71,7 +71,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(thermoSystem.getTemperature("K"), res.fluidProperties[0][2],
         "Temperature mismatch");
 
-    // Test that
     CalculationResult res2 = thermoOps.propertyFlash(jP, jT, 0, null, null);
     Assertions.assertEquals(res2.calculationError[0],
         "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input FlashMode must be 1, 2 or 3");
