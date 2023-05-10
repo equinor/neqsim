@@ -1890,10 +1890,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * Setter for property pt.
    *
-   * <<<<<<< HEAD
-   * 
-   * @param pt PhaseType enum object to set. =======
-   * @param pt PhaseType to set. >>>>>>> master
+   * @param pt PhaseType to set.
    */
   public void setType(PhaseType pt);
 
@@ -1915,10 +1912,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Setter for property phaseType.
    * </p>
    *
-   * <<<<<<< HEAD
-   * 
-   * @param phaseType Phasetype as int. =======
-   * @param phaseType PhaseType as int. >>>>>>> master
+   * @param phaseType Phasetype as int.
    * @deprecated Replace with {@link setType}
    */
   @Deprecated
