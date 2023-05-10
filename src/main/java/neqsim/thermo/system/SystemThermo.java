@@ -1114,7 +1114,6 @@ abstract class SystemThermo implements SystemInterface {
         getPhase(i).getComponent(componentName).setCpC(inComponent.getCpC());
         getPhase(i).getComponent(componentName).setCpD(inComponent.getCpD());
       }
-      this.isInitialized = false;
     } else {
       addComponent(inComponent.getComponentName(), inComponent.getNumberOfmoles());
     }
@@ -1177,7 +1176,6 @@ abstract class SystemThermo implements SystemInterface {
         }
       }
     }
-    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1232,7 +1230,6 @@ abstract class SystemThermo implements SystemInterface {
       componentNames.remove("default");
       componentNames.add(componentName);
     }
-    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1319,7 +1316,6 @@ abstract class SystemThermo implements SystemInterface {
         tmpPhase.addMolesChemReac(index, moles, moles);
       }
     }
-    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1341,7 +1337,6 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
-    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1360,7 +1355,6 @@ abstract class SystemThermo implements SystemInterface {
     componentNames.remove(name);
     // System.out.println("removing " + componentNames.toString());
     numberOfComponents--;
-    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1372,7 +1366,6 @@ abstract class SystemThermo implements SystemInterface {
       }
     }
     totalNumberOfMoles = 0.0;
-    this.isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -1758,7 +1751,6 @@ abstract class SystemThermo implements SystemInterface {
         beta[i] = 1.0;
         phaseIndex[i] = i;
       }
-      setNumberOfPhases(getMaxNumberOfPhases());
       phaseType[0] = 1;
       for (int i = 0; i < numberOfPhases; i++) {
         if (isPhase(i)) {
@@ -2731,7 +2723,7 @@ abstract class SystemThermo implements SystemInterface {
       density +=
           getPhase(i).getVolume() / getVolume() * getPhase(i).getPhysicalProperties().getDensity();
     }
-    double refDensity = this.getDensity(); // density; // density in kg/m3
+    double refDensity = density; // density in kg/m3
     double conversionFactor = 1.0;
     switch (unit) {
       case "kg/m3":
