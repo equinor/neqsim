@@ -300,9 +300,8 @@ public class pTphaseEnvelope extends BaseOperation {
             nonLinSolver.npCrit = np;
             system.invertPhaseTypes();
             nonLinSolver.etterCP = true;
-            // the critical point is found from interpolation plynimials based on K=1 of
-            // the
-            // most or least volatile component
+            // the critical point is found from interpolation polynomials based on K=1 of
+            // the most or least volatile component
             nonLinSolver.calcCrit();
           }
         }

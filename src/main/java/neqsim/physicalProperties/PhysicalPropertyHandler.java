@@ -105,17 +105,16 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     switch (phase.getType()) {
       case GAS:
         return gasPhysicalProperties;
+      case LIQUID:
+        // todo: check if it should be AQUEOUS?
       case OIL:
         return oilPhysicalProperties;
       case AQUEOUS:
         return aqueousPhysicalProperties;
-      case SOLID:
-        return solidPhysicalProperties;
-      case SOLIDCOMPLEX:
-        return solidPhysicalProperties;
       case WAX:
-        return solidPhysicalProperties;
       case HYDRATE:
+      case SOLID:
+      case SOLIDCOMPLEX:
         return solidPhysicalProperties;
       default:
         return gasPhysicalProperties;

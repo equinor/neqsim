@@ -23,7 +23,8 @@ public enum StateOfMatter {
       case SOLID:
       case SOLIDCOMPLEX:
       case WAX:
-        return StateOfMatter.LIQUID;
+      case HYDRATE:
+        return StateOfMatter.SOLID;
       default:
         new RuntimeException(new neqsim.util.exception.InvalidInputException(StateOfMatter.class,
             "fromPhaseType", "pt", "Conversion not configured for"));
