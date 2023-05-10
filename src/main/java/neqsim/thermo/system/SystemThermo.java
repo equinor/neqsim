@@ -1307,7 +1307,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void addComponent(int index, double moles) {
     if (index >= getPhase(0).getNumberOfComponents()) {
-      logger.error("componentIndex higher than number of components in database");
+      logger.error("componentIndex higher than number of components in system");
       return;
     }
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
@@ -1322,7 +1322,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void addComponent(int index, double moles, int phaseNumber) {
     if (index >= getPhase(0).getNumberOfComponents()) {
-      logger.error("componentIndex higher than number of components in database");
+      logger.error("componentIndex higher than number of components in system");
       return;
     }
     double k = 1.0;
@@ -1335,6 +1335,7 @@ abstract class SystemThermo implements SystemInterface {
       }
       phaseArray[phaseIndex[i]].addMolesChemReac(index, moles * k, moles);
     }
+
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
   }
 
@@ -1743,6 +1744,7 @@ abstract class SystemThermo implements SystemInterface {
    */
   public void initAnalytic(int type) {
     if (type == 0) {
+      // todo: should actually clear all entries in arrays?
       setNumberOfPhases(getMaxNumberOfPhases());
       for (int i = 0; i < numberOfPhases; i++) {
         phaseType[i] = 0;
@@ -1756,7 +1758,8 @@ abstract class SystemThermo implements SystemInterface {
               phaseType[phaseIndex[i]], beta[phaseIndex[i]]);
         }
       }
-      numberOfPhases = 2;
+      // todo: reduce maxnumberofphases as well? Some sort of multiphase reset here.
+      setNumberOfPhases(2);
     } else if (type == 1) {
       for (int i = 0; i < numberOfPhases; i++) {
         if (isPhase(i)) {
@@ -2410,7 +2413,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setNumberOfPhases(int number) {
     this.numberOfPhases = number;
-    if (getMaxNumberOfPhases() < numberOfPhases) {
+    if (numberOfPhases > getMaxNumberOfPhases()) {
       setMaxNumberOfPhases(number);
     }
   }
@@ -2816,12 +2819,6 @@ abstract class SystemThermo implements SystemInterface {
         throw new RuntimeException();
       }
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getNumberOfMoles() {
-    return getTotalNumberOfMoles();
   }
 
   /** {@inheritDoc} */
@@ -4370,20 +4367,6 @@ abstract class SystemThermo implements SystemInterface {
   public int getMixingRule() {
     return mixingRule;
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public ComponentInterface getComponent(String name) {
-    return getPhase(0).getComponent(name);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public ComponentInterface getComponent(int number) {
-    return getPhase(0).getComponent(number);
-  }
-
-
 
   /** {@inheritDoc} */
   @Override
