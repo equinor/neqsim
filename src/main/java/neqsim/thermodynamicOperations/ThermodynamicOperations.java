@@ -1974,7 +1974,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     Double[] sum = new Double[Spec1.size()];
 
-
     // Verify that sum of fractions equals 1/100, i.e., assume percentages
     Boolean hasOnlineFractions = onlineFractions != null;
     if (hasOnlineFractions) {
@@ -1990,7 +1989,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
               + String.valueOf(sum[t]) + ")";
         }
       }
-      if (this.system.getNumberOfMoles() == 0) {
+
+      if (this.system.getTotalNumberOfMoles() == 0) {
         this.system.setTotalNumberOfMoles(1);
       }
     } else {
@@ -2042,7 +2042,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                 onlineFractions.get(componentNumber).get(t).doubleValue());
           }
 
-          if (this.system.getNumberOfMoles() < 1e-5) {
+          if (this.system.getTotalNumberOfMoles() < 1e-5) {
             this.system.setTotalNumberOfMoles(1);
           }
         }
@@ -2072,6 +2072,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         logger.error(ex.getMessage(), ex);
       }
     }
+
     return new CalculationResult(fluidProperties, calculationError);
   }
 
