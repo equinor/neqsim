@@ -29,6 +29,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     ops.system.initPhysicalProperties();
     Double[] PTfluidProperties = ops.system.getProperties().getValues();
 
+    // Test that the operations are stable, i.e., do the same flash on the same system with the same
+    // components and at the same conditions and assert that the result is the same.
     ops.system.init(0);
     ops.flash(FlashType.TP, T, P, unitT, unitP);
     ops.system.init(2);
@@ -52,15 +54,22 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     List<Double> jP = Arrays.asList(new Double[] {10.0});
     List<Double> jT = Arrays.asList(new Double[] {280.0});
     CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
+
+    // Verify some basic properties
     Assertions.assertEquals(1.0, res.fluidProperties[0][0], "Number of phases mismatch");
-    Assertions.assertEquals(thermoSystem.getPressure("Pa"), res.fluidProperties[0][1], 1e-5,
+    Assertions.assertEquals(thermoSystem.getPressure("Pa"), res.fluidProperties[0][1],
         "Pressure mismatch");
-    Assertions.assertEquals(thermoSystem.getTemperature("K"), res.fluidProperties[0][2], 1e-5,
+    Assertions.assertEquals(thermoSystem.getTemperature("K"), res.fluidProperties[0][2],
         "Temperature mismatch");
 
     CalculationResult res2 = thermoOps.propertyFlash(jP, jT, 0, null, null);
     Assertions.assertEquals(res2.calculationError[0],
         "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input FlashMode must be 1, 2 or 3");
+
+    Assertions.assertEquals(res2, res2);
+    Assertions.assertFalse(res2 == null);
+    Assertions.assertEquals(res2.hashCode(), res2.hashCode());
+    Assertions.assertFalse(res2 == res);
   }
 
   @Test
@@ -78,26 +87,61 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     thermoSystem.init(0);
     ThermodynamicOperations thermoOps =
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
-    List<Double> jP = Arrays.asList(new Double[] {60.0 + 1.013});
-    List<Double> jT = Arrays.asList(new Double[] {373.15});
-    CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
 
-    int numFrac = 2;
+    double temp = 373.15;
+    double press = 60.0 + 1.013;
+
+    List<Double> jP = Arrays.asList(new Double[] {press});
+    List<Double> jT = Arrays.asList(new Double[] {temp});
+    CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
+    // Assert no calculation failed
+    for (String errorMessage : res.calculationError) {
+      Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
+    }
+
+    String[] propNames = SystemProperties.getPropertyNames();
+    Assertions.assertEquals(res.fluidProperties[0].length, propNames.length);
+
+    // Redo propertyFlash with online fractions, but still only one data point
     List<List<Double>> onlineFractions =
+        createDummyRequest(thermoSystem.getMolarComposition(), 1);
+    CalculationResult res1 = thermoOps.propertyFlash(jP, jT, 1, null, onlineFractions);
+    // Assert no calculation failed
+    for (String errorMessage : res1.calculationError) {
+      Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
+    }
+
+    // Assert all properties are the same with online fraction and without
+    for (int i = 0; i < res.fluidProperties[0].length; i++) {
+      Assertions.assertEquals(res.fluidProperties[0][i], res.fluidProperties[0][i],
+          "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
+    }
+
+    Assertions.assertArrayEquals(res.fluidProperties[0], res1.fluidProperties[0]);
+
+    int numFrac = 3;
+    List<List<Double>> onlineFractions2 =
         createDummyRequest(thermoSystem.getMolarComposition(), numFrac);
 
-    List<Double> jP2 = Arrays.asList(new Double[] {60.0 + 1.013, 60.0 + 1.013});
-    List<Double> jT2 = Arrays.asList(new Double[] {373.15, 373.15});
+    List<Double> jP2 = Arrays.asList(new Double[] {press, press});
+    List<Double> jT2 = Arrays.asList(new Double[] {temp, temp});
     SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(273.15, 0.0);
     thermoSystem2.addComponents(components, fractions2);
     ThermodynamicOperations thermoOps2 =
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem2);
-    CalculationResult res2 = thermoOps2.propertyFlash(jP2, jT2, 1, null, onlineFractions);
+    CalculationResult res2 = thermoOps2.propertyFlash(jP2, jT2, 1, null, onlineFractions2);
+    // Assert no calculation failed
+    for (String errorMessage : res.calculationError) {
+      Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
+    }
 
-    Assertions.assertArrayEquals(res.fluidProperties[0], res2.fluidProperties[0]);
+    // Assert all properties are the same with online fraction and without
+    for (int i = 0; i < res.fluidProperties[0].length; i++) {
+      Assertions.assertEquals(res.fluidProperties[0][i], res2.fluidProperties[0][i],
+          "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
+    }
 
-    String[] propNames = SystemProperties.getPropertyNames();
-    Assertions.assertEquals(res.fluidProperties[0].length, propNames.length);
+    Assertions.assertArrayEquals(res2.fluidProperties[0], res2.fluidProperties[1]);
   }
 
   @Test
