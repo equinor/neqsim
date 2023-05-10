@@ -8,6 +8,17 @@ package neqsim.physicalProperties.physicalPropertySystem;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity.CorrespondingStatesDiffusivity;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.LBCViscosityMethod;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodMod86;
+import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity.ChungConductivityMethod;
+import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.WilkeLeeDiffusivity;
+import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.AmineDiffusivity;
+import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.SiddiqiLucasMethod;
+import neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -143,21 +154,15 @@ public abstract class PhysicalProperties
   @Override
   public void setConductivityModel(String model) {
     if ("PFCT".equals(model)) {
-      conductivityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
-              this);
+      conductivityCalc = new PFCTConductivityMethodMod86(this);
     } else if ("polynom".equals(model)) {
       conductivityCalc =
           new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.conductivity.Conductivity(
               this);
     } else if ("Chung".equals(model)) {
-      conductivityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity.ChungConductivityMethod(
-              this);
+      conductivityCalc = new ChungConductivityMethod(this);
     } else {
-      conductivityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
-              this);
+      conductivityCalc = new PFCTConductivityMethodMod86(this);
     }
   }
 
@@ -169,21 +174,13 @@ public abstract class PhysicalProperties
           new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.viscosity.Viscosity(
               this);
     } else if ("friction theory".equals(model)) {
-      viscosityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod(
-              this);
+      viscosityCalc = new FrictionTheoryViscosityMethod(this);
     } else if ("LBC".equals(model)) {
-      viscosityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.LBCViscosityMethod(
-              this);
+      viscosityCalc = new LBCViscosityMethod(this);
     } else if ("PFCT".equals(model)) {
-      viscosityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodMod86(
-              this);
+      viscosityCalc = new PFCTViscosityMethodMod86(this);
     } else if ("PFCT-Heavy-Oil".equals(model)) {
-      viscosityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil(
-              this);
+      viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
     }
   }
 
@@ -196,27 +193,19 @@ public abstract class PhysicalProperties
    */
   public void setDiffusionCoefficientModel(String model) {
     if ("CSP".equals(model)) {
-      diffusivityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity.CorrespondingStatesDiffusivity(
-              this);
+      diffusivityCalc = new CorrespondingStatesDiffusivity(this);
     } else if ("Wilke Lee".equals(model)) {
-      diffusivityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.WilkeLeeDiffusivity(
-              this);
+      diffusivityCalc = new WilkeLeeDiffusivity(this);
     } else if ("Siddiqi Lucas".equals(model)) {
-      diffusivityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.SiddiqiLucasMethod(
-              this);
+      diffusivityCalc = new SiddiqiLucasMethod(this);
     } else if ("Alkanol amine".equals(model)) {
-      diffusivityCalc =
-          new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.AmineDiffusivity(
-              this);
+      diffusivityCalc = new AmineDiffusivity(this);
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface getConductivityModel() {
+  public ConductivityInterface getConductivityModel() {
     return conductivityCalc;
   }
 
