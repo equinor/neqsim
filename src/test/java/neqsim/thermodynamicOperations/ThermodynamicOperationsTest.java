@@ -1,10 +1,20 @@
 package neqsim.thermodynamicOperations;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
@@ -103,8 +113,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(res.fluidProperties[0].length, propNames.length);
 
     // Redo propertyFlash with online fractions, but still only one data point
-    List<List<Double>> onlineFractions =
-        createDummyRequest(thermoSystem.getMolarComposition(), 1);
+    List<List<Double>> onlineFractions = createDummyRequest(thermoSystem.getMolarComposition(), 1);
     CalculationResult res1 = thermoOps.propertyFlash(jP, jT, 1, null, onlineFractions);
     // Assert no calculation failed
     for (String errorMessage : res1.calculationError) {
@@ -254,6 +263,66 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(len, s.fluidProperties.length);
   }
 
+  @Disabled
+  @Test
+  @SuppressWarnings("unchecked")
+  void testpropertyFlashRegressions() throws IOException {
+    // todo: make these tests work
+    // make output log of differences per failing test and see check if it is related to change in
+    // component input data
+    Collection<TestData> testData = getTestData();
+
+    for (TestData test : testData) {
+      HashMap<String, Object> inputData = test.getInput();
+
+      SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 22.0);
+
+      ArrayList<String> compNames = (ArrayList<String>) inputData.get("components");
+      ArrayList<Double> fractions = (ArrayList<Double>) inputData.get("fractions");
+
+      if (compNames == null) {
+        System.out.println("Skips test " + test.toString());
+        /*
+         * for (int k = 0; k < fractions.size(); k++) { fluid.addComponent(k, fractions.get(k)); }
+         */
+        continue;
+      } else {
+        for (int k = 0; k < compNames.size(); k++) {
+          fluid.addComponent(compNames.get(k), fractions.get(k));
+        }
+      }
+
+      fluid.init(0);
+
+      ArrayList<Double> sp1 = (ArrayList<Double>) inputData.get("Sp1");
+      ArrayList<Double> sp2 = (ArrayList<Double>) inputData.get("Sp2");
+
+      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+      int flashMode = (int) inputData.get("FlashMode");
+      CalculationResult s = ops.propertyFlash(sp1, sp2, flashMode, compNames, null);
+      for (String errorMessage : s.calculationError) {
+        Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
+      }
+
+      CalculationResult expected = test.getOutput();
+
+      for (int nSamp = 0; nSamp < s.fluidProperties.length; nSamp++) {
+        for (int nProp = 0; nProp < s.fluidProperties[nSamp].length; nProp++) {
+          if (Double.isNaN(expected.fluidProperties[nSamp][nProp])) {
+            Assertions.assertEquals(expected.fluidProperties[nSamp][nProp],
+                s.fluidProperties[nSamp][nProp],
+                "Test " + (nSamp + 1) + " Property " + SystemProperties.getPropertyNames()[nProp]);
+          } else {
+            Assertions.assertEquals(expected.fluidProperties[nSamp][nProp],
+                s.fluidProperties[nSamp][nProp], 1e-5,
+                "Test " + (nSamp + 1) + " Property " + SystemProperties.getPropertyNames()[nProp]);
+          }
+        }
+      }
+      // Assertions.assertEquals(expected, s);
+    }
+  }
+
   private List<List<Double>> createDummyRequest(double[] fractions, int len) {
     List<List<Double>> onlineFractions = new ArrayList<List<Double>>();
 
@@ -266,5 +335,112 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     }
 
     return onlineFractions;
+  }
+
+  private Collection<TestData> getTestData() throws IOException {
+    ClassLoader classLoader = getClass().getClassLoader();
+    File folder =
+        new File(classLoader.getResource("neqsim/thermodynamicOperations/testcases").getFile());
+
+    HashMap<String, TestData> testData = new HashMap<>();
+
+    File[] directoryListing = folder.listFiles();
+    for (File child : directoryListing) {
+      String[] n = child.getName().split("_");
+
+      if (testData.get(n[0]) == null) {
+        testData.put(n[0], new TestData(n[0]));
+      }
+
+      if ("I.json".equals(n[1])) {
+        testData.get(n[0]).setInputFile(child.getAbsolutePath());
+      } else if ("O.json".equals(n[1])) {
+        testData.get(n[0]).setOutputFile(child.getAbsolutePath());
+      }
+    }
+
+    return testData.values();
+  }
+
+  private class TestData {
+
+    private final String name;
+    private String inputFile;
+    private String outputFile;
+    private HashMap<String, Object> input;
+
+    public TestData(String name) {
+      this.name = name;
+    }
+
+    public void setInputFile(String inputFile) throws IOException {
+      this.setInput(inputFile);
+      this.inputFile = inputFile;
+    }
+
+    public String getOutputFile() {
+      return outputFile;
+    }
+
+    public void setOutputFile(String outputFile) {
+      this.outputFile = outputFile;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setInput(String inputFile) throws IOException {
+      String fileContents = new String(Files.readAllBytes(Paths.get(inputFile)));
+      Gson gson = new Gson();
+      Type type = new TypeToken<HashMap<String, Object>>() {}.getType();
+
+      input = gson.fromJson(fileContents, type);
+
+      input.replace("fn", Math.toIntExact(Math.round((double) input.get("fn"))));
+      input.replace("FlashMode", Math.toIntExact(Math.round((double) input.get("FlashMode"))));
+
+      ArrayList<Double> sp_in_pa = (ArrayList<Double>) input.get("Sp1");
+      ArrayList<Double> sp1 = new ArrayList<Double>();
+
+      for (int k = 0; k < sp_in_pa.size(); k++) {
+        sp1.add(sp_in_pa.get(k) / 1e5);
+      }
+      input.replace("Sp1", sp1);
+    }
+
+    private HashMap<String, Object> getInput() {
+      return input;
+    }
+
+    @SuppressWarnings("unchecked")
+    public CalculationResult getOutput() throws IOException {
+      String fileContents = new String(Files.readAllBytes(Paths.get(this.getOutputFile())));
+      Gson gson = new Gson();
+      Type type = new TypeToken<HashMap<String, Object>>() {}.getType();
+
+      HashMap<String, Object> outputData = gson.fromJson(fileContents, type);
+      ArrayList<ArrayList<Double>> calcresult =
+          (ArrayList<ArrayList<Double>>) outputData.get("calcresult");
+
+      Double[][] calcResult = new Double[calcresult.size()][];
+      for (int kSample = 0; kSample < calcresult.size(); kSample++) {
+        calcResult[kSample] = new Double[calcresult.get(kSample).size()];
+        for (int kProp = 0; kProp < calcresult.get(kSample).size(); kProp++) {
+          try {
+            calcResult[kSample][kProp] = calcresult.get(kSample).get(kProp);
+
+          } catch (Exception e) {
+            calcResult[kSample][kProp] = Double.NaN;
+          }
+        }
+      }
+
+      ArrayList<String> calcerrors = (ArrayList<String>) outputData.get("calcerrors");
+
+      return new CalculationResult(calcResult, calcerrors.toArray(new String[0]));
+    }
+
+    @Override
+    public String toString() {
+      return "TestData{" + "name=" + name + ", input=" + inputFile + ", output=" + outputFile + '}';
+    }
   }
 }
