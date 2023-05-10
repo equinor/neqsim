@@ -89,6 +89,9 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.90, 2.489, 0.355, 0.172, 0.088,
         0.076, 0.036, 0.1657};
 
+    double[] fractions2 = new double[] {0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172, 0.088,
+        0.076, 0.036, 0.1656};
+
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
     thermoSystem.addComponents(components, fractions);
     thermoSystem.setTotalNumberOfMoles(1);
@@ -133,6 +136,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     List<Double> jP2 = Arrays.asList(new Double[] {press, press});
     List<Double> jT2 = Arrays.asList(new Double[] {temp, temp});
     SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(273.15, 0.0);
+    thermoSystem2.addComponents(components, fractions2);
     ThermodynamicOperations thermoOps2 =
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem2);
     CalculationResult res2 = thermoOps2.propertyFlash(jP2, jT2, 1, null, onlineFractions2);
