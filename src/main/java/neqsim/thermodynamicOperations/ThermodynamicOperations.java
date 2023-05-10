@@ -1993,11 +1993,20 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         this.system.setTotalNumberOfMoles(1);
       }
     } else {
-      // Have to init here to get correct MoleFractionsSum()
-      this.system.init(0);
+      /*
+       * // New attempt:
+       * 
+       * // Have to init here to get correct MoleFractionsSum() this.system.init(0);
+       * 
+       * // Annoying that MoleFractionsSum is not normalized. sum[0] =
+       * this.system.getMoleFractionsSum();
+       */
 
-      // Annoying that MoleFractionsSum is not normalized.
-      sum[0] = this.system.getMoleFractionsSum();
+      double[] fraction = this.system.getMolarComposition();
+      sum[0] = 0.0;
+      for (int comp = 0; comp < fraction.length; comp++) {
+        sum[0] = sum[0] + fraction[comp];
+      }
 
       double range = 1e-8;
       if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
@@ -2032,26 +2041,28 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
 
         if (hasOnlineFractions) {
-          this.system.setEmptyFluid();
-
-          // Components in system with no corresponding value in onlineFractions will be zero.
-          for (int componentNumber = 0; componentNumber < onlineFractions
-              .size(); componentNumber++) {
-            this.system.addComponent(componentNumber,
-                onlineFractions.get(componentNumber).get(t).doubleValue());
-          }
-
-          if (this.system.getTotalNumberOfMoles() < 1e-5) {
-            this.system.setTotalNumberOfMoles(1);
-          }
           /*
-           * // Remaining fractions will be set to 0.0 double[] fraction = new
-           * double[this.system.getNumberOfComponents()]; for (int comp = 0; comp <
-           * onlineFractions.size(); comp++) { fraction[comp] =
-           * onlineFractions.get(comp).get(t).doubleValue(); }
+           * // New attempt:
            * 
-           * this.system.setMolarComposition(fraction); this.system.init(0);
+           * this.system.setEmptyFluid();
+           * 
+           * // Components in system with no corresponding value in onlineFractions will be zero.
+           * for (int componentNumber = 0; componentNumber < onlineFractions .size();
+           * componentNumber++) { this.system.addComponent(componentNumber,
+           * onlineFractions.get(componentNumber).get(t).doubleValue()); }
+           * 
+           * if (this.system.getTotalNumberOfMoles() < 1e-5) { this.system.setTotalNumberOfMoles(1);
+           * }
            */
+
+          // Remaining fractions will be set to 0.0
+          double[] fraction = new double[this.system.getNumberOfComponents()];
+          for (int comp = 0; comp < onlineFractions.size(); comp++) {
+            fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
+          }
+
+          this.system.setMolarComposition(fraction);
+          this.system.init(0);
         }
 
         this.system.setPressure(Sp1);

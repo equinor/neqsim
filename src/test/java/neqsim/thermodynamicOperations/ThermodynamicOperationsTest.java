@@ -146,7 +146,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     // Assert all properties are the same with online fraction and without
     for (int i = 0; i < res.fluidProperties[0].length; i++) {
-      Assertions.assertEquals(res.fluidProperties[0][i], res2.fluidProperties[0][i],
+      Assertions.assertEquals(res.fluidProperties[0][i], res2.fluidProperties[0][i], 1e-11,
           "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
     }
 
@@ -302,14 +302,17 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
       CalculationResult expected = test.getOutput();
 
-      for (int i = 0; i < s.fluidProperties[0].length; i++) {
-        if (Double.isNaN(expected.fluidProperties[0][i])) {
-          Assertions.assertEquals(expected.fluidProperties[0][i], s.fluidProperties[0][i],
-              "Property " + SystemProperties.getPropertyNames()[i]);
-        } else {
-          Assertions.assertEquals(expected.fluidProperties[0][i], s.fluidProperties[0][i],
-              Math.abs(expected.fluidProperties[0][i] * 0.015),
-              "Property " + SystemProperties.getPropertyNames()[i]);
+      for (int nSamp = 0; nSamp < s.fluidProperties.length; nSamp++) {
+        for (int nProp = 0; nProp < s.fluidProperties[nSamp].length; nProp++) {
+          if (Double.isNaN(expected.fluidProperties[nSamp][nProp])) {
+            Assertions.assertEquals(expected.fluidProperties[nSamp][nProp],
+                s.fluidProperties[nSamp][nProp],
+                "Test " + nSamp + 1 + " Property " + SystemProperties.getPropertyNames()[nProp]);
+          } else {
+            Assertions.assertEquals(expected.fluidProperties[nSamp][nProp],
+                s.fluidProperties[nSamp][nProp], 1e-5,
+                "Test " + nSamp + 1 + " Property " + SystemProperties.getPropertyNames()[nProp]);
+          }
         }
       }
       // Assertions.assertEquals(expected, s);
