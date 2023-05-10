@@ -2007,6 +2007,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
               + String.valueOf(sum[0]) + ")";
         }
       }
+
+      double range = 1e-8;
+      if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
+          || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
+        for (int t = 0; t < Spec1.size(); t++) {
+          calculationError[t] = "Sum of fractions must be approximately to 1 or 100, currently ("
+              + String.valueOf(sum[0]) + ")";
+        }
+      }
     }
 
     for (int t = 0; t < Spec1.size(); t++) {
@@ -2044,6 +2053,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
           if (this.system.getTotalNumberOfMoles() < 1e-5) {
             this.system.setTotalNumberOfMoles(1);
           }
+          /*
+           * // Remaining fractions will be set to 0.0 double[] fraction = new
+           * double[this.system.getNumberOfComponents()]; for (int comp = 0; comp <
+           * onlineFractions.size(); comp++) { fraction[comp] =
+           * onlineFractions.get(comp).get(t).doubleValue(); }
+           * 
+           * this.system.setMolarComposition(fraction); this.system.init(0);
+           */
         }
 
         this.system.setPressure(Sp1);

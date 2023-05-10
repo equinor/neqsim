@@ -102,21 +102,25 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     List<Double> jP = Arrays.asList(new Double[] {press});
     List<Double> jT = Arrays.asList(new Double[] {temp});
     CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
-
-    String[] propNames = SystemProperties.getPropertyNames();
-    Assertions.assertEquals(res.fluidProperties[0].length, propNames.length);
-
-    // Redo propertyFlash with
-    List<List<Double>> onlineFractions =
-        createDummyRequest(thermoSystem.getMolarComposition(), 1);
-    CalculationResult res1 = thermoOps.propertyFlash(jP, jT, 1, null, onlineFractions);
-
+    // Assert no calculation failed
     for (String errorMessage : res.calculationError) {
       Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
     }
 
+    String[] propNames = SystemProperties.getPropertyNames();
+    Assertions.assertEquals(res.fluidProperties[0].length, propNames.length);
+
+    // Redo propertyFlash with online fractions, but still only one data point
+    List<List<Double>> onlineFractions = createDummyRequest(thermoSystem.getMolarComposition(), 1);
+    CalculationResult res1 = thermoOps.propertyFlash(jP, jT, 1, null, onlineFractions);
+    // Assert no calculation failed
+    for (String errorMessage : res1.calculationError) {
+      Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
+    }
+
+    // Assert all properties are the same with online fraction and without
     for (int i = 0; i < res.fluidProperties[0].length; i++) {
-      Assertions.assertEquals(res1.fluidProperties[0][i], res.fluidProperties[0][i],
+      Assertions.assertEquals(res.fluidProperties[0][i], res.fluidProperties[0][i],
           "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
     }
 
@@ -129,17 +133,21 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     List<Double> jP2 = Arrays.asList(new Double[] {press, press});
     List<Double> jT2 = Arrays.asList(new Double[] {temp, temp});
     SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(273.15, 0.0);
-    double[] fractions2 = new double[] {0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172, 0.088,
-        0.076, 0.036, 0.1656};
-    thermoSystem2.setEmptyFluid();
-    thermoSystem2.addComponents(components, fractions2);
     ThermodynamicOperations thermoOps2 =
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem2);
     CalculationResult res2 = thermoOps2.propertyFlash(jP2, jT2, 1, null, onlineFractions2);
-    Assertions.assertArrayEquals(res2.fluidProperties[0], res2.fluidProperties[1]);
+    // Assert no calculation failed
+    for (String errorMessage : res.calculationError) {
+      Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
+    }
 
-    // todo: add approximate check
-    Assertions.assertArrayEquals(res.fluidProperties[0], res2.fluidProperties[0]);
+    // Assert all properties are the same with online fraction and without
+    for (int i = 0; i < res.fluidProperties[0].length; i++) {
+      Assertions.assertEquals(res.fluidProperties[0][i], res2.fluidProperties[0][i],
+          "Property " + i + " : " + SystemProperties.getPropertyNames()[i]);
+    }
+
+    Assertions.assertArrayEquals(res2.fluidProperties[0], res2.fluidProperties[1]);
   }
 
   @Test
@@ -283,8 +291,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
       int flashMode = (int) inputData.get("FlashMode");
-      CalculationResult s =
-          ops.propertyFlash(sp1, sp2, flashMode, compNames, null);
+      CalculationResult s = ops.propertyFlash(sp1, sp2, flashMode, compNames, null);
       for (String errorMessage : s.calculationError) {
         Assertions.assertNull(errorMessage, "Calculation returned: " + errorMessage);
       }
