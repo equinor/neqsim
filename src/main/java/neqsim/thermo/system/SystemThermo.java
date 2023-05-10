@@ -1751,7 +1751,8 @@ abstract class SystemThermo implements SystemInterface {
    */
   public void initAnalytic(int type) {
     if (type == 0) {
-      // todo: should reset all phases?
+      // todo: should actually clear all entries in arrays?
+      setNumberOfPhases(getMaxNumberOfPhases());
       for (int i = 0; i < numberOfPhases; i++) {
         phaseType[i] = 0;
         beta[i] = 1.0;
@@ -1765,9 +1766,9 @@ abstract class SystemThermo implements SystemInterface {
               phaseType[phaseIndex[i]], beta[phaseIndex[i]]);
         }
       }
-      // Resets multiphase stuff
-      numberOfPhases = 2;
-    } else if (type > 1) {
+      // todo: reduce maxnumberofphases as well? Some sort of multiphase reset here.
+      setNumberOfPhases(2);
+    } else if (type == 1) {
       for (int i = 0; i < numberOfPhases; i++) {
         if (isPhase(i)) {
           getPhase(i).init(getTotalNumberOfMoles(), numberOfComponents, 1, phaseType[phaseIndex[i]],
@@ -2420,7 +2421,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setNumberOfPhases(int number) {
     this.numberOfPhases = number;
-    if (getMaxNumberOfPhases() < numberOfPhases) {
+    if (numberOfPhases > getMaxNumberOfPhases()) {
       setMaxNumberOfPhases(number);
     }
   }
@@ -2826,12 +2827,6 @@ abstract class SystemThermo implements SystemInterface {
         throw new RuntimeException();
       }
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getNumberOfMoles() {
-    return getTotalNumberOfMoles();
   }
 
   /** {@inheritDoc} */
@@ -4380,20 +4375,6 @@ abstract class SystemThermo implements SystemInterface {
   public int getMixingRule() {
     return mixingRule;
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public ComponentInterface getComponent(String name) {
-    return getPhase(0).getComponent(name);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public ComponentInterface getComponent(int number) {
-    return getPhase(0).getComponent(number);
-  }
-
-
 
   /** {@inheritDoc} */
   @Override
