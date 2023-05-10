@@ -668,20 +668,20 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * getComponent.
+   * Get Component by name.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name Name of component
    * @return a {@link neqsim.thermo.component.ComponentInterface} object
    */
   public ComponentInterface getComponent(String name);
 
   /**
    * <p>
-   * getComponent.
+   * Get Component by index.
    * </p>
    *
-   * @param i a int
+   * @param i Component index
    * @return a {@link neqsim.thermo.component.ComponentInterface} object
    */
   public ComponentInterface getComponent(int i);

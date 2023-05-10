@@ -1025,24 +1025,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * Getter for property <code>maxNumberOfPhases</code>.
-   * </p>
-   *
-   * @return a int
-   */
-  public int getMaxNumberOfPhases();
-
-  /**
-   * <p>
-   * Setter for property <code>maxNumberOfPhases</code>.
-   * </p>
-   *
-   * @param maxNumberOfPhases a int
-   */
-  public void setMaxNumberOfPhases(int maxNumberOfPhases);
-
-  /**
-   * <p>
    * getMixingRuleName.
    * </p>
    *
@@ -1966,7 +1948,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Getter for property <code>numberOfPhases</code>.
    * </p>
    *
-   * @return Number of phases in use
+   * @return Number of phases used
    */
   public int getNumberOfPhases();
 
@@ -1975,9 +1957,27 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Setter for property <code>numberOfPhases</code>.
    * </p>
    *
-   * @param number Value of number of phases to use to set.
+   * @param number Number of phases to use.
    */
   public void setNumberOfPhases(int number);
+
+  /**
+   * <p>
+   * Getter for property <code>maxNumberOfPhases</code>.
+   * </p>
+   *
+   * @return Gets the maximum allowed number of phases to use.
+   */
+  public int getMaxNumberOfPhases();
+
+  /**
+   * <p>
+   * Setter for property <code>maxNumberOfPhases</code>.
+   * </p>
+   *
+   * @param maxNumberOfPhases The maximum allowed number of phases to use.
+   */
+  public void setMaxNumberOfPhases(int maxNumberOfPhases);
 
   /**
    * <p>
@@ -1999,32 +1999,37 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getComponent.
+   * Getter for property <code>componentNames</code>.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @return a {@link neqsim.thermo.component.ComponentInterface} object
+   * @return Component names in system.
    */
-  public ComponentInterface getComponent(String name);
+  public String[] getComponentNames();
+
 
   /**
    * <p>
-   * getComponent.
+   * Get component by name.
    * </p>
    *
-   * @param number a int
+   * @param name Name of component
    * @return a {@link neqsim.thermo.component.ComponentInterface} object
    */
-  public ComponentInterface getComponent(int number);
+  public default ComponentInterface getComponent(String name) {
+    return getPhase(0).getComponent(name);
+  }
 
   /**
    * <p>
-   * getNumberOfMoles.
+   * Get component by index.
    * </p>
    *
-   * @return a double
+   * @param i Component index
+   * @return a {@link neqsim.thermo.component.ComponentInterface} object
    */
-  public double getNumberOfMoles();
+  public default ComponentInterface getComponent(int i) {
+    return getPhase(0).getComponent(i);
+  }
 
   /**
    * <p>
@@ -2034,15 +2039,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
   public SystemInterface clone();
-
-  /**
-   * <p>
-   * getComponentNames.
-   * </p>
-   *
-   * @return Component names in system.
-   */
-  public String[] getComponentNames();
 
   /**
    * <p>
@@ -2347,18 +2343,31 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void addGasToLiquid(double fraction);
 
   /**
-   * method to get the total molar flow rate of a fluid.
+   * Getter for property <code>totalNumberOfMoles</code>.
    *
-   * @return molar flow in unit mol/sec
+   * @return Total molar flow rate of fluid in unit mol/sec
    */
   public double getTotalNumberOfMoles();
 
   /**
    * <p>
-   * setTotalNumberOfMoles.
+   * Getter for property <code>numberOfMoles</code>.
    * </p>
    *
-   * @param totalNumberOfMoles a double
+   * @return a double
+   * @deprecated Replaced by {@link getTotalNumberOfMoles}
+   */
+  @Deprecated
+  public default double getNumberOfMoles() {
+    return getTotalNumberOfMoles();
+  }
+
+  /**
+   * <p>
+   * Setter for property <code>totalNumberOfMoles</code>.
+   * </p>
+   *
+   * @param totalNumberOfMoles Total molar flow rate of fluid in unit mol/sec
    */
   public void setTotalNumberOfMoles(double totalNumberOfMoles);
 
