@@ -1968,7 +1968,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       flashType = null;
     }
 
-
     Double[][] fluidProperties = new Double[Spec1.size()][SystemProperties.nCols];
     String[] calculationError = new String[Spec1.size()];
 
