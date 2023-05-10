@@ -35,6 +35,7 @@ import neqsim.thermo.phase.PhaseSolid;
 import neqsim.thermo.phase.PhaseSolidComplex;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseWax;
+import neqsim.thermo.phase.StateOfMatter;
 import neqsim.util.database.NeqSimDataBase;
 
 /*
@@ -2848,10 +2849,9 @@ abstract class SystemThermo implements SystemInterface {
     // System.out.println("new phase type: cha " + newPhaseType);
     int newPhaseType = 1;
     if (allowPhaseShift) {
-      if (phaseTypeName.equals("gas") || phaseTypeName.equals("vapour")) {
+      if (phaseTypeName.equals("gas")) {
         newPhaseType = 1;
-      } else if (phaseTypeName.equals("liquid") || phaseTypeName.equals("oil")
-          || phaseTypeName.equals("aqueous")) {
+      } else if (StateOfMatter.isLiquid(PhaseType.byDesc(phaseTypeName))) {
         newPhaseType = 0;
       } else {
         newPhaseType = 0;
