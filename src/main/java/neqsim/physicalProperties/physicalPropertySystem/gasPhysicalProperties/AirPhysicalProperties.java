@@ -6,6 +6,8 @@
 
 package neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties;
 
+import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity.ChungConductivityMethod;
+import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.viscosity.ChungViscosityMethod;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -38,17 +40,12 @@ public class AirPhysicalProperties extends GasPhysicalProperties {
   public AirPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-    conductivityCalc =
-        new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity.ChungConductivityMethod(
-            this);
-    viscosityCalc =
-        new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.viscosity.ChungViscosityMethod(
-            this);
+    conductivityCalc = new ChungConductivityMethod(this);
+    viscosityCalc = new ChungViscosityMethod(this);
     diffusivityCalc =
         new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.Diffusivity(
             this);
-    // diffusivityCalc = new
-    // physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.WilkeLeeDiffusivity(this);
+    // diffusivityCalc = new WilkeLeeDiffusivity(this);
 
     densityCalc =
         new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density.Density(
