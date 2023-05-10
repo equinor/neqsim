@@ -1973,15 +1973,24 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     Double[] sum = new Double[Spec1.size()];
 
-    if (onlineFractions != null) {
+    // Verify that sum of fractions equals 1/100, i.e., assume percentages
+    Boolean hasOnlineFractions = onlineFractions != null;
+    if (hasOnlineFractions) {
+      double range = 5;
+
       for (int t = 0; t < sum.length; t++) {
         sum[t] = 0.0;
         for (int comp = 0; comp < onlineFractions.size(); comp++) {
           sum[t] = sum[t] + onlineFractions.get(comp).get(t).doubleValue();
         }
+        if (!((sum[t] >= 1 - range / 100 && sum[t] <= 1 + range / 100)
+            || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
+          calculationError[t] = "Sum of fractions must be approximately 1 or 100, currently ("
+              + String.valueOf(sum[t]) + ")";
+        }
       }
 
-      if (this.system.getNumberOfMoles() == 0) {
+      if (this.system.getTotalNumberOfMoles() == 0) {
         this.system.setTotalNumberOfMoles(1);
       }
     } else {
@@ -1989,6 +1998,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       sum[0] = 0.0;
       for (int comp = 0; comp < fraction.length; comp++) {
         sum[0] = sum[0] + fraction[comp];
+      }
+
+      double range = 1e-8;
+      if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
+          || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
+        for (int t = 0; t < Spec1.size(); t++) {
+          calculationError[t] = "Sum of fractions must be approximately to 1 or 100, currently ("
+              + String.valueOf(sum[0]) + ")";
+        }
       }
     }
 
@@ -2008,35 +2026,21 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
           continue;
         }
 
-        if (onlineFractions != null) {
-          double range = 5;
-          if (!((sum[t] >= 1 - range / 100 && sum[t] <= 1 + range / 100)
-              || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
-            calculationError[t] = "Sum of fractions must be approximately 1 or 100, currently ("
-                + String.valueOf(sum[t]) + ")";
-            logger.info("Online fraction does not sum to approximately 1 or 100 for datapoint {}",
-                t);
-            continue;
-          } else {
-            // Remaining fractions will be set to 0.0
-            double[] fraction = new double[this.system.getNumberOfComponents()];
+        // Skip if sum is not similar to 100%
+        if (calculationError[t] != null) {
+          logger.info("{}", calculationError[t]);
+          continue;
+        }
 
-            for (int comp = 0; comp < onlineFractions.size(); comp++) {
-              fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
-            }
+        if (hasOnlineFractions) {
+          // Remaining fractions will be set to 0.0
+          double[] fraction = new double[this.system.getNumberOfComponents()];
+          for (int comp = 0; comp < onlineFractions.size(); comp++) {
+            fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
+          }
 
-            this.system.setMolarComposition(fraction);
-            this.system.init(0);
-          }
-        } else {
-          double range = 1e-8;
-          if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
-              || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
-            calculationError[t] = "Sum of fractions must be equal to 1 or 100, currently ("
-                + String.valueOf(sum[t]) + ")";
-            logger.info("Sum of fractions must be equal to 1 or 100 for datapoint {}", t);
-            continue;
-          }
+          this.system.setMolarComposition(fraction);
+          this.system.init(0);
         }
 
         this.system.setPressure(Sp1);
