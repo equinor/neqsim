@@ -296,6 +296,32 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
 
   /**
    * <p>
+   * calcY0TEG.
+   * </p>
+   *
+   * @return a double
+   */
+  public double calcY0TEG() {
+    // double fugacityWaterLiquid =
+    // mixedStream.getThermoSystem().getPhase(1).getFugacity("water");
+    // double xrel =
+    // mixedStream.getFluid().getPhase(0).getComponent("water").getx()/solventInStream.getFluid().getPhase(0).getComponent("water").getx();
+    // double y0 =
+    // xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugacityCoefficient()*mixedStream.getFluid().getPressure());
+    // double oldTemp = mixedStream.getTemperature();
+    // mixedStream.setTemperature(solventInStream.getTemperature(),"K");
+    // mixedStream.getFluid().init(1);
+    double fugCoefRef =
+        mixedStream.getThermoSystem().getPhase(1).getComponent("TEG").getFugacityCoefficient();
+    double y0TEG = solventInStream.getFluid().getPhase(0).getComponent("TEG").getx() * fugCoefRef
+        / (mixedStream.getThermoSystem().getPhase(0).getComponent("TEG").getFugacityCoefficient());
+    // mixedStream.setTemperature(oldTemp, "K");
+    // mixedStream.getFluid().init(2);
+    return y0TEG;
+  }
+
+  /**
+   * <p>
    * calcNumberOfTheoreticalStages.
    * </p>
    *
@@ -325,7 +351,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   @Override
   public void run(UUID id) {
     try {
-      double y1 = 0.0;
       // double yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
       mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
       mixedStream.getThermoSystem().setNumberOfPhases(2);
@@ -350,6 +375,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       double absorptionEffiency = calcEa();
 
       double y0 = calcY0();
+      double y0TEG = calcY0TEG();
+
+      double y1 = 0.0;
       if (isSetWaterInDryGas) {
         y1 = waterInDryGas;
         setNumberOfTheoreticalStages(2.0);
@@ -362,6 +390,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       double yMean = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx();
       double molesWaterToMove =
           (yMean - y1) * mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+      double yMeanTEG = mixedStream.getThermoSystem().getPhase(0).getComponent("TEG").getx();
+      double molesTEGToMove =
+          (y0TEG - yMeanTEG) * mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+
       // System.out.println("Lean TEG to absorber "
       // +solventInStream.getFlowRate("kg/hr"));
 
@@ -374,13 +406,13 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       newMixedStream.setName("test");
       newMixedStream.getThermoSystem().addComponent("water", -molesWaterToMove, 0);
       newMixedStream.getThermoSystem().addComponent("water", molesWaterToMove, 1);
+      newMixedStream.getThermoSystem().addComponent("TEG", molesTEGToMove, 0);
+      newMixedStream.getThermoSystem().addComponent("TEG", -molesTEGToMove, 1);
       newMixedStream.getThermoSystem().initBeta();
       newMixedStream.getThermoSystem().init_x_y();
       newMixedStream.getThermoSystem().init(2);
       mixedStream = newMixedStream;
       mixedStream.setCalculationIdentifier(id);
-
-      // stream.getThermoSystem().display();
 
       SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
       SystemInterface gasTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[0]);

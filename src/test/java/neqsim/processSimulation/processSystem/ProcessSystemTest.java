@@ -547,7 +547,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.add(makeupTEG);
     operations.add(makeupMixer);
     operations.add(resycleLeanTEG);
-    // operations.run();
+    operations.run();
+    dehydratedGas.getFluid().display();
+    dehydratedGas.getFluid().display();
   }
 
   @Test
