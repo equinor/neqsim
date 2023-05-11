@@ -19,7 +19,6 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
 
   boolean setTemperature = false;
-  String name = new String();
   StreamInterface[] outStream = new Stream[2];
   StreamInterface[] inStream = new Stream[2];
   SystemInterface system;
