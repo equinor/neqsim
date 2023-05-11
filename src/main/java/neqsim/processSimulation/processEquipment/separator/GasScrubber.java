@@ -28,18 +28,14 @@ public class GasScrubber extends Separator {
   SystemInterface thermoSystem;
 
   SystemInterface gasSystem;
-
   SystemInterface waterSystem;
-
   SystemInterface liquidSystem;
-
   SystemInterface thermoSystemCloned;
 
   ArrayList<SeparatorSection> scrubberSection = null;
   StreamInterface inletStream;
   StreamInterface gasOutStream;
   StreamInterface liquidOutStream;
-  String name = new String();
 
   /**
    * <p>

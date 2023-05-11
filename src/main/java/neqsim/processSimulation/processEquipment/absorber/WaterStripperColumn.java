@@ -38,7 +38,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
   protected StreamInterface solventInStream;
   private StreamInterface gasOutStream;
   private StreamInterface solventOutStream;
-  protected String name = "mixer";
   protected StreamInterface outStream;
   private double waterDewPointTemperature = 263.15;
   private double dewPressure = 70.0;
