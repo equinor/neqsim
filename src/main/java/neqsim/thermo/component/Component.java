@@ -6,8 +6,6 @@
 
 package neqsim.thermo.component;
 
-import java.sql.Connection;
-import java.sql.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -964,14 +962,9 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-<<<<<<< HEAD
-    fugacityCoefficient = 1.0; // this.fugcoef(phase, phase.getNumberOfComponents(),
-                               // phase.getTemperature(), phase.getPressure());
-=======
     fugacityCoefficient = 1.0;
     // this.fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
     // phase.getPressure());
->>>>>>> master
     logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
