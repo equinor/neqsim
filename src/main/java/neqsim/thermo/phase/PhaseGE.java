@@ -79,7 +79,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     if (sumHydrocarbons > sumAqueous) {
       setType(PhaseType.OIL);
     } else {
-      pt = PhaseType.byName("aqueous");
+      setType(PhaseType.AQUEOUS);
     }
   }
 
@@ -106,11 +106,10 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     if (sumHydrocarbons > sumAqueous) {
       setType(PhaseType.OIL);
     } else {
-      pt = PhaseType.byName("aqueous");
+      setType(PhaseType.AQUEOUS);
     }
 
     // calc liquid density
-
     if (initType > 1) {
       // Calc Cp /Cv
       // Calc enthalpy/entropys
