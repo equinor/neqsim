@@ -108,13 +108,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     double GE = 0.0;
@@ -226,7 +219,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.toString(), ex);
+        logger.error(ex.getMessage(), ex);
       } finally {
         try {
           if (dataSet != null) {
@@ -270,7 +263,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.toString(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");
@@ -306,7 +299,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.toString(), ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");

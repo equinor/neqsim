@@ -35,7 +35,6 @@ abstract class Phase implements PhaseInterface {
 
   protected boolean useVolumeCorrection = true;
   public neqsim.physicalProperties.PhysicalPropertyHandler physicalPropertyHandler = null;
-  public double numberOfMolesInPhase = 0;
   protected double molarVolume = 1.0;
   protected double phaseVolume = 1.0;
 
@@ -43,15 +42,26 @@ abstract class Phase implements PhaseInterface {
   protected double diElectricConstant = 0;
   double Z = 1;
   public String thermoPropertyModelName = null;
+
+  /**
+   * Mole fraction of this phase in system.
+   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>
+   */
   double beta = 1.0;
+  /** Number of moles in phase. <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code> */
+  public double numberOfMolesInPhase = 0;
+
   private int initType = 0;
   int mixingRuleNumber = 0;
   double temperature = 0;
   double pressure = 0;
 
   protected PhaseInterface[] refPhase = null;
-  int phaseType = 0;
+
+  protected int phaseType = 0;
   protected String phaseTypeName = "gas";
+  protected PhaseType pt = PhaseType.GAS;
+
 
   /**
    * <p>
@@ -90,7 +100,8 @@ abstract class Phase implements PhaseInterface {
    * addcomponent. Increase number of components and add moles to phase.
    * </p>
    *
-   * @param moles a double
+   * @param name Name of component to add.
+   * @param moles Number of moles of component to add to phase.
    */
   public void addComponent(String name, double moles) {
     if (name == null) {
@@ -133,7 +144,7 @@ abstract class Phase implements PhaseInterface {
         this.getComponent(i).setComponentNumber(i);
       }
     } catch (Exception ex) {
-      logger.error("not able to remove " + name);
+      logger.error("not able to remove " + name, ex);
     }
 
     // componentArray = (ComponentInterface[])temp.toArray();
@@ -190,7 +201,7 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void setProperties(PhaseInterface phase) {
-    this.phaseType = phase.getPhaseType();
+    setType(phase.getType());
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       this.getComponent(i).setProperties(phase.getComponent(i));
     }
@@ -1237,7 +1248,7 @@ abstract class Phase implements PhaseInterface {
       try {
         refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();
       } catch (Exception ex) {
-        logger.error("err " + ex.toString());
+        logger.error(ex.getMessage(), ex);
       }
       refPhase[i].setTemperature(temperature);
       refPhase[i].setPressure(pressure);
@@ -1255,8 +1266,8 @@ abstract class Phase implements PhaseInterface {
         }
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
         refPhase[i].setMixingRule(this.getMixingRuleNumber());
-        refPhase[i].setPhaseType(this.getPhaseType());
-        refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getPhaseType(), 1.0);
+        refPhase[i].setType(this.getType());
+        refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getType(), 1.0);
       } else {
         // System.out.println("ref " + name);
         if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
@@ -1517,12 +1528,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final int getPhaseType() {
-    return phaseType;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getGibbsEnergy() {
     return getEnthalpy() - temperature * getEntropy();
   }
@@ -1605,12 +1610,6 @@ abstract class Phase implements PhaseInterface {
   @Override
   public final double getPhaseFraction() {
     return getBeta();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final double getBeta() {
-    return this.beta;
   }
 
   /** {@inheritDoc} */
@@ -1772,9 +1771,7 @@ abstract class Phase implements PhaseInterface {
       logger.error("could not find component " + name + ", returning null");
       throw new Exception("component not in fluid... " + name);
     } catch (Exception ex) {
-      logger.debug(ex.getMessage());
-      logger.error("component not found... " + name);
-      logger.error("returning first component... " + componentArray[0].getName(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     return null;
   }
@@ -1919,25 +1916,25 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final void setBeta(double beta) {
-    this.beta = beta;
+  public final double getBeta() {
+    return this.beta;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final void setBeta(double b) {
+    if (b < 0) {
+      b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+    }
+    if (b > 1) {
+      b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+    }
+    this.beta = b;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setMixingRuleGEModel(String name) {}
-
-  /** {@inheritDoc} */
-  @Override
-  public java.lang.String getPhaseTypeName() {
-    return phaseTypeName;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setPhaseTypeName(java.lang.String phaseTypeName) {
-    this.phaseTypeName = phaseTypeName;
-  }
 
   /** {@inheritDoc} */
   @Override
@@ -1953,8 +1950,28 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final void setPhaseType(int phaseType) {
-    this.phaseType = phaseType;
+  public final PhaseType getType() {
+    return this.pt;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final void setType(PhaseType pt) {
+    this.pt = pt;
+    this.phaseType = pt.getValue();
+    this.phaseTypeName = pt.getDesc();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final int getPhaseType() {
+    return phaseType;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getPhaseTypeName() {
+    return phaseTypeName;
   }
 
   /** {@inheritDoc} */

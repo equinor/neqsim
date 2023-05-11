@@ -49,7 +49,7 @@ public class TestSRKWS {
       // testOps.bubblePointTemperatureFlash();
       // testOps.calcPTphaseEnvelope(0.0005, 0.0001); testOps.displayResult();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
     logger.info(testSystem.getTemperature() - 273.15);

@@ -17,12 +17,12 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class ThrottlingValve extends TwoPortEquipment implements ValveInterface {
   private static final long serialVersionUID = 1000;
 
-  protected String name = new String();
+  SystemInterface thermoSystem;
+
   private boolean valveCvSet = false;
 
   private boolean isoThermal = false;
 
-  SystemInterface thermoSystem;
   double pressure = 0.0;
   private double Cv;
   private double maxMolarFlow = 1000.0;

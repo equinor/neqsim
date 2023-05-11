@@ -181,7 +181,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
         }
       }
     } catch (Exception ex) {
-      logger.error("failed " + ex.toString());
+      logger.error("failed ", ex);
 
       if (system.getPhase(phaseNumber).hasComponent("MEG")) {
         system.addComponent("MEG", numberOfMolesMEG * 0.9999, phaseNumber);

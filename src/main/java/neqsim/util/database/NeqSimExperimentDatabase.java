@@ -72,7 +72,7 @@ public class NeqSimExperimentDatabase
       databaseConnection = this.openConnection();
       statement = databaseConnection.createStatement();
     } catch (Exception ex) {
-      logger.error("SQLException " + ex.getMessage());
+      logger.error("SQLException ", ex);
       throw new RuntimeException(ex);
     }
   }
@@ -107,7 +107,7 @@ public class NeqSimExperimentDatabase
         return DriverManager.getConnection(getConnectionString(), username, password);
       }
     } catch (Exception ex) {
-      logger.error("error loading NeqSimDataBase... " + ex.toString());
+      logger.error("error loading NeqSimDataBase... ", ex);
       throw new RuntimeException(ex);
     } finally {
       try {
@@ -115,7 +115,7 @@ public class NeqSimExperimentDatabase
           ctx.close();
         }
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
   }
@@ -144,7 +144,7 @@ public class NeqSimExperimentDatabase
       ResultSet result = getStatement().executeQuery(sqlString);
       return result;
     } catch (Exception ex) {
-      logger.error("error loading NeqSimbataBase " + ex.toString());
+      logger.error("error loading NeqSimbataBase ", ex);
       throw new RuntimeException(ex);
     }
   }
@@ -164,7 +164,7 @@ public class NeqSimExperimentDatabase
       }
       getStatement().execute(sqlString);
     } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase " + ex.toString(), ex);
+      logger.error("error in NeqSimDataBase ", ex);
       logger.error("The database must be rgistered on the local DBMS to work.");
       throw new RuntimeException(ex);
     }
@@ -231,7 +231,7 @@ public class NeqSimExperimentDatabase
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
-      logger.error("error loading database driver.. " + ex.toString());
+      logger.error("error loading database driver.. ", ex);
       throw new RuntimeException(ex);
     }
   }

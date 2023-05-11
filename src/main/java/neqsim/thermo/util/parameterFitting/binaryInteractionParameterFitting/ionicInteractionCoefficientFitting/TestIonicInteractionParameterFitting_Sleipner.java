@@ -34,9 +34,7 @@ public class TestIonicInteractionParameterFitting_Sleipner {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM Sleipneracid");
-
     try (NeqSimDataBase database = new NeqSimDataBase()) {
       ResultSet dataSet = database.getResultSet("SELECT * FROM Sleipner");
 
@@ -83,7 +81,7 @@ public class TestIonicInteractionParameterFitting_Sleipner {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

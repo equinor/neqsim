@@ -66,7 +66,7 @@ public class LNGfreezingTestSolid1 {
       // testOps.freezingPointTemperatureFlash();
       // testOps.TPflash();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

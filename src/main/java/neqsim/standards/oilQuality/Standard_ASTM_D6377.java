@@ -41,7 +41,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     try {
       this.thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
 
     // double TVP = this.thermoSystem.getPressure();
@@ -51,7 +51,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     try {
       this.thermoOps.TVflash(liquidVolume * 4.0);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
 
     RVP = (0.752 * (100.0 * this.thermoSystem.getPressure()) + 6.07) / 100.0;

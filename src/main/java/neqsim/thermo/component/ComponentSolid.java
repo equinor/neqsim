@@ -57,7 +57,7 @@ public class ComponentSolid extends ComponentSrk {
     // phase.getPressure());
     // return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
     // phase.getPressure());
-    if (!solidCheck) {
+    if (!doSolidCheck()) {
       // return 1.0e20;
     }
     if (componentName.equals("methane")) {

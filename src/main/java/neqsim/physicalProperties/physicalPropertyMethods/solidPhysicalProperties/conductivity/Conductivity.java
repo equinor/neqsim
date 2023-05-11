@@ -8,6 +8,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalPropertie
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -65,7 +66,7 @@ public class Conductivity extends
   @Override
   public double calcConductivity() {
     // using default value of parafin wax
-    if (solidPhase.getPhase().getPhaseTypeName().equals("wax")) {
+    if (solidPhase.getPhase().getType() == PhaseType.WAX) {
       conductivity = 0.25;
     } else {
       conductivity = 2.18;

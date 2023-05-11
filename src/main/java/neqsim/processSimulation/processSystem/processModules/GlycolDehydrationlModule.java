@@ -172,7 +172,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
           leanGlycolMolarFlowRate * leanGlycolMolarFraction);
       this.leanTEGStreamToAbsorber.getThermoSystem().setTotalFlowRate(maxglycolFlowRate, "kg/hr");
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

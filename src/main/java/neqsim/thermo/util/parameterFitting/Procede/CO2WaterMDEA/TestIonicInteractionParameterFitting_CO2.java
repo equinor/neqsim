@@ -136,9 +136,8 @@ public class TestIonicInteractionParameterFitting_CO2 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEA WHERE ID>230")) {
@@ -204,9 +203,8 @@ public class TestIonicInteractionParameterFitting_CO2 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet("SELECT * FROM CO2WaterMDEAtest")) {
@@ -251,7 +249,7 @@ public class TestIonicInteractionParameterFitting_CO2 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

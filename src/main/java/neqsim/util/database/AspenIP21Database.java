@@ -36,15 +36,15 @@ public class AspenIP21Database
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
       }
     } catch (Exception ex) {
-      System.out.println("error in Online Karsto " + ex.toString());
-      System.out.println("The database must be registered on the local DBMS to work.");
+      logger.error("error in Online Karsto ", ex);
+      logger.error("The database must be registered on the local DBMS to work.");
     }
 
     try {
       databaseConnection = this.openConnection("Karsto");
       setStatement(databaseConnection.createStatement());
     } catch (Exception ex) {
-      System.out.println("SQLException " + ex.getMessage());
+      logger.error("SQLException ", ex);
     }
   }
 
@@ -63,16 +63,16 @@ public class AspenIP21Database
     try {
       return DriverManager.getConnection(".....");
     } catch (Exception ex) {
-      System.out.println("SQLException " + ex.getMessage());
-      System.out.println("error in Kaarsto DB " + ex.toString());
-      System.out.println("The Kaarsto database must be registered on the local DBMS to work.");
+      logger.error("SQLException ", ex);
+      logger.error("error in Kaarsto DB ", ex);
+      logger.error("The Kaarsto database must be registered on the local DBMS to work.");
     } finally {
       try {
         if (ctx != null) {
           ctx.close();
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
     return null;
@@ -115,8 +115,8 @@ public class AspenIP21Database
       ResultSet result = getStatement().executeQuery(sqlString);
       return result;
     } catch (Exception ex) {
-      System.out.println("error in DB " + ex.toString());
-      System.out.println("The database must be rgistered on the local DBMS to work.");
+      logger.error("error in DB ", ex);
+      logger.error("The database must be rgistered on the local DBMS to work.");
     }
     return null;
   }
@@ -130,26 +130,5 @@ public class AspenIP21Database
    */
   public Statement getStatement() {
     return statement;
-  }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    AspenIP21Database database = new AspenIP21Database();
-    try (ResultSet dataSet = database.getResultSet("Karsto", "....'")) {
-      while (dataSet.next()) {
-        System.out.println("dataset " + dataSet.getString(4));
-        System.out.println("dataset value " + dataSet.getDouble("..."));
-      }
-    } catch (Exception ex) {
-      System.out.println("failed " + ex.toString());
-    }
-
-    System.out.println("ok");
   }
 }

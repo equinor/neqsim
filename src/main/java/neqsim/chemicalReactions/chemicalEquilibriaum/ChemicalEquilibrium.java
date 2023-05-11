@@ -231,7 +231,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     try {
       x_solve = A_solve.solve(b_solve);
     } catch (Exception ex) {
-      // logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
       // System.out.println("\nError x " +
       // system.getPhase(phasenumb).getComponent(0).getx());
       // System.out.println("Error T " + system.getTemperature());
@@ -320,7 +320,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         // System.out.println("Error " + error);
       } while (((errOld > maxError && Math.abs(error) > maxError) && p < 350) || p < 2);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
       return false;
     }
     // System.out.println("iter " + p);

@@ -519,7 +519,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
     // }
     // Xi = 1.0/(1.0+1.0/phase.getTotalVolume()*temp);
     // } catch(Exception ex){
-    // logger.error(ex.getMessage());
+    // logger.error(ex.getMessage(), ex);
     // }
     // return Xi;
     // }
@@ -637,7 +637,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
             // System.out.println("ass scheme " + assosSchemeType[l][k]);
             // System.out.println("cpaEpsCross[k][l] " + cpaEpsCross[k][l]);
           } catch (Exception ex) {
-            logger.error("error", ex);
+            logger.error(ex.getMessage(), ex);
           }
         }
       }

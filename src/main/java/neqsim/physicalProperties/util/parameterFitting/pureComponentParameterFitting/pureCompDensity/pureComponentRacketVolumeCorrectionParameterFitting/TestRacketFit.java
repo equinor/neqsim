@@ -34,11 +34,11 @@ public class TestRacketFit {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
-    try (ResultSet dataSet =
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet =
         database.getResultSet("SELECT * FROM purecomponentdensity WHERE ComponentName='MEG'")) {
       logger.info("adding....");
       while (dataSet.next()) {
@@ -61,7 +61,7 @@ public class TestRacketFit {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

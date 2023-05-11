@@ -61,7 +61,7 @@ public class Element implements ThermodynamicConstantsInterface {
         nameArray[i] = names.get(i);
       }
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

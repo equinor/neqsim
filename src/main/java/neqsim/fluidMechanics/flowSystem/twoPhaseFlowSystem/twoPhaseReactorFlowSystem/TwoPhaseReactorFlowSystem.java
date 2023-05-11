@@ -154,7 +154,7 @@ public class TwoPhaseReactorFlowSystem
           new neqsim.fluidMechanics.geometryDefinitions.reactor.ReactorData(pipeDiameter[i], 1);
     }
     pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
-    // utforer bergninger
+    // utforer beregninger
     pipe.createSystem();
     pipe.init();
 

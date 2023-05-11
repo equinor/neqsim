@@ -10,7 +10,9 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for SystemSrkSchwartzentruberEos.</p>
+   * <p>
+   * Constructor for SystemSrkSchwartzentruberEos.
+   * </p>
    */
   public SystemSrkSchwartzentruberEos() {
     super();
@@ -23,8 +25,8 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
    * Constructor for SystemSrkSchwartzentruberEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkSchwartzentruberEos(double T, double P) {
     super(T, P);
@@ -37,12 +39,12 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
    * Constructor for SystemSrkSchwartzentruberEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemSrkSchwartzentruberEos(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemSrkSchwartzentruberEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     modelName = "ScRK-EOS";
     attractiveTermNumber = 2;
   }

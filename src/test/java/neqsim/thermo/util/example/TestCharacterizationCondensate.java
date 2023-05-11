@@ -87,7 +87,7 @@ public class TestCharacterizationCondensate {
       // testOps.hydrateFormationTemperature();
       // testOps.dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
 
@@ -99,7 +99,7 @@ public class TestCharacterizationCondensate {
       // testOps.hydrateFormationTemperature();
       // testOps.dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
     // System.out.println("number of lumped components " +

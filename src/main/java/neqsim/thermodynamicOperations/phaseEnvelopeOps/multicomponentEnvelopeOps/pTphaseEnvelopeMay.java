@@ -268,9 +268,8 @@ public class pTphaseEnvelopeMay extends BaseOperation {
             nonLinSolver.npCrit = np;
             system.invertPhaseTypes();
             nonLinSolver.etterCP = true;
-            // the critical point is found from interpolation plynimials based on K=1 of
-            // the
-            // most or least volatile component
+            // the critical point is found from interpolation polynomials based on K=1 of
+            // the most or least volatile component
             nonLinSolver.calcCrit();
           }
         }
@@ -464,9 +463,9 @@ public class pTphaseEnvelopeMay extends BaseOperation {
           points2[2][0] = system.getTC();
           points2[3][0] = system.getPC();
         }
-      } catch (Exception e2) {
+      } catch (Exception ex) {
         // double nef = 0.;
-        logger.error("error", e2);
+        logger.error(ex.getMessage(), ex);
       }
       /*
        * try { if (outputToFile) { // update this String name1 = new String(); name1 = fileName +
@@ -479,11 +478,11 @@ public class pTphaseEnvelopeMay extends BaseOperation {
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
        * file2.setOutputFileName(name2); file2.setXvalues(points2[0], "temp", "sec");
        * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); } } catch (Exception e3)
-       * { // double nef = 0.; logger.error("error", e3); }
+       * { // double nef = 0.; logger.error(ex.getMessage(), e3); }
        */
-    } catch (Exception e4) {
+    } catch (Exception ex) {
       // double nef = 0.;
-      logger.error("error", e4);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -497,7 +496,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
     try {
       opsHyd.hydrateEquilibriumLine(10.0, 300.0);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
 
     // double[][] hydData = opsHyd.getData();
