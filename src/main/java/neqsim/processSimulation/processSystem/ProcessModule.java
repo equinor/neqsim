@@ -3,6 +3,7 @@ package neqsim.processSimulation.processSystem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.SimulationBaseClass;
@@ -52,7 +53,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Add a unit operation to the process module.
+   * Add an unit operation to the process module.
    *
    * @param processSystem the process system that contains the unit operations to be added.
    */
@@ -193,5 +194,42 @@ public class ProcessModule extends SimulationBaseClass {
     Thread processThread = new Thread(this);
     processThread.start();
     return processThread;
+  }
+
+  /**
+   * Returns the unit with the given name from the list of added unit operations and list of added
+   * modules.
+   *
+   * @param name the name of the unit to retrieve
+   * @return the unit with the given name, or {@code null} if no such unit is found
+   */
+  public Object getUnit(String name) {
+    for (ProcessSystem processSystem : addedUnitOperations) {
+      Object unit = processSystem.getUnit(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+
+    for (ProcessModule processModule : addedModules) {
+      Object unit = processModule.getUnit(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+    return null; // no unit found with the given name
+  }
+
+  /**
+   * <p>
+   * Create deep copy.
+   * </p>
+   *
+   * @return a {@link neqsim.processSimulation.processSystem.ProcessModule} object
+   */
+  public ProcessModule copy() {
+    byte[] bytes = SerializationUtils.serialize(this);
+    ProcessModule copyModule = (ProcessModule) SerializationUtils.deserialize(bytes);
+    return copyModule;
   }
 }
