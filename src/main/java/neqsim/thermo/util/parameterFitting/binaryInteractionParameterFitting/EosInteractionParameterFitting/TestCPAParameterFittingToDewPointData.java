@@ -41,9 +41,8 @@ public class TestCPAParameterFittingToDewPointData {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM waterdewpointpaper WHERE gascomponent='nitrogen' AND reference='Gil'")) {
       int p = 0;
       logger.info("adding....");
@@ -83,7 +82,7 @@ public class TestCPAParameterFittingToDewPointData {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

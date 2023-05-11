@@ -50,7 +50,7 @@ public class TestClassicAcentric {
       while (dataSet.next()) {
         ClassicAcentricFunction function = new ClassicAcentricFunction();
         double guess[] = {0.3311};
-        double bound[][] = {{0, 1.0},};
+        double[][] bound = {{0, 1.0},};
         function.setInitialGuess(guess);
 
         SystemInterface testSystem = new SystemSrkEos(280, 0.001);
@@ -70,7 +70,7 @@ public class TestClassicAcentric {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

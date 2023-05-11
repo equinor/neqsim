@@ -102,6 +102,21 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
 
   /** {@inheritDoc} */
   @Override
+  public void createComponent(String component_name, double moles, double molesInPhase,
+      int compnumber) {
+    super.createComponent(component_name, moles, molesInPhase, compnumber);
+    // criticalTemperature = 305.4;
+    // criticalPressure = 135.62;
+    // acentricFactor = 0.1609;
+    criticalTemperature = 647;
+    criticalPressure = 220.64;
+    acentricFactor = 0.3443;
+    associationEnergy = 15059.15;
+    associationVolume = 0.109;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public ComponentUMRCPA clone() {
     ComponentUMRCPA clonedComponent = null;
     try {
@@ -135,29 +150,6 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       setRacketZ(getRacketZCPA());
       return super.getVolumeCorrection();
     }
-  }
-
-  @Override
-  public void createComponent(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super.createComponent(component_name, moles, molesInPhase, compnumber);
-    // criticalTemperature = 305.4;
-    // criticalPressure = 135.62;
-    // acentricFactor = 0.1609;
-    criticalTemperature = 647;
-    criticalPressure = 220.64;
-    acentricFactor = 0.3443;
-    associationEnergy = 15059.15;
-    associationVolume = 0.109;
-
-  }
-
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
   }
 
   /** {@inheritDoc} */
@@ -652,7 +644,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       double AAW2 = -1.3646E-16;
 
       return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AAW1 + AAW2 * TR + 0.5113e-16 * TR * TR);
-    } else if (componentName.equals("water2")) { /// THis is the old method from
+    } else if (componentName.equals("water2")) { // THis is the old method from
       double TR = 1.0 - temperature / getTC();
       AA = -2.2367E-16;
       BB = 2.83732E-16;

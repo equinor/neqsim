@@ -168,7 +168,7 @@ public class OLGApropertyTableGeneratorWaterStudents
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -189,7 +189,7 @@ public class OLGApropertyTableGeneratorWaterStudents
         thermoOps.bubblePointPressureFlash(false);
         bubP[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         bubP[i] = 0;
         return bubP;
       }
@@ -215,7 +215,7 @@ public class OLGApropertyTableGeneratorWaterStudents
         thermoOps.dewPointPressureFlashHC();
         dewP[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         dewP[i] = 0;
         return dewP;
       }
@@ -241,7 +241,7 @@ public class OLGApropertyTableGeneratorWaterStudents
         thermoOps.bubblePointTemperatureFlash();
         bubT[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         bubT[i] = 0.0;
       }
     }
@@ -349,7 +349,7 @@ public class OLGApropertyTableGeneratorWaterStudents
               + thermoSystem.getPressure());
 
           thermoSystem.display();
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex);
         }
 
         /*
@@ -389,9 +389,9 @@ public class OLGApropertyTableGeneratorWaterStudents
                     + thermoSystem.getPhase("oil").getBeta()
                         * thermoSystem.getPhase("oil").getMolarMass());
           } else {
-            props[k][i][j] = 1.0; // thermoSystem.getPhase(phaseNumb).getBeta() *
-                                  // thermoSystem.getPhase(phaseNumb).getMolarMass() /
-                                  // thermoSystem.getMolarMass();
+            props[k][i][j] = 1.0;
+            // thermoSystem.getPhase(phaseNumb).getBeta() *
+            // thermoSystem.getPhase(phaseNumb).getMolarMass() / thermoSystem.getMolarMass();
           }
           names[k] = "GAS MASS FRACTION";
           units[k] = "-";
@@ -532,9 +532,9 @@ public class OLGApropertyTableGeneratorWaterStudents
           units[k] = "KG/M3-K";
           k++;
 
-          props[k][i][j] = 0.0; // thermoSystem.getPhase(phaseNumb).getBeta() *
-                                // thermoSystem.getPhase(phaseNumb).getMolarMass() /
-                                // thermoSystem.getMolarMass();
+          props[k][i][j] = 0.0;
+          // thermoSystem.getPhase(phaseNumb).getBeta() *
+          // thermoSystem.getPhase(phaseNumb).getMolarMass() / thermoSystem.getMolarMass();
           names[k] = "GAS MASS FRACTION";
           units[k] = "-";
           k++;
@@ -782,8 +782,8 @@ public class OLGApropertyTableGeneratorWaterStudents
           units[k] = "W/M-K";
           k++;
         } // setOilProperties();
-          // set gas properties
 
+        // set gas properties
         if (thermoSystem.hasPhaseType("aqueous") && acceptedFlash) {
           int phaseNumb = thermoSystem.getPhaseNumberOfPhase("aqueous");
           if (thermoSystem.hasPhaseType("gas")) {
@@ -937,7 +937,7 @@ public class OLGApropertyTableGeneratorWaterStudents
           if (thermoSystem.getPhase(0).hasComponent("water")) {
             props[k][i][j] = thermoSystem.getPhase(0).getComponent("water").getz()
                 * thermoSystem.getPhase(0).getComponent("water").getMolarMass()
-                / thermoSystem.getPhase(0).getMolarMass();;
+                / thermoSystem.getPhase(0).getMolarMass();
           } else {
             props[k][i][j] = 0.0;
           }
@@ -1405,7 +1405,7 @@ public class OLGApropertyTableGeneratorWaterStudents
         }
       }
     } catch (IOException ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

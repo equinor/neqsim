@@ -33,9 +33,8 @@ public class TestParachorFit {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-    NeqSimDataBase database = new NeqSimDataBase();
-
-    try (ResultSet dataSet = database
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database
         .getResultSet("SELECT * FROM purecomponentsurfacetension WHERE ComponentName='MEG'")) {
       while (dataSet.next()) {
         ParachorFunction function = new ParachorFunction();
@@ -63,7 +62,7 @@ public class TestParachorFit {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

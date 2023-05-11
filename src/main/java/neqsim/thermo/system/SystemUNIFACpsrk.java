@@ -8,10 +8,16 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * This class defines a thermodynamic system using the UNIFAC for liquid and PSRK EoS for gas.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemUNIFACpsrk extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemUNIFACpsrk.
+   * </p>
+   */
   public SystemUNIFACpsrk() {
     super();
     modelName = "UNIFAC-GE-model";
@@ -27,8 +33,8 @@ public class SystemUNIFACpsrk extends SystemEos {
    * Constructor for SystemUNIFACpsrk.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemUNIFACpsrk(double T, double P) {
     super(T, P);
@@ -49,16 +55,16 @@ public class SystemUNIFACpsrk extends SystemEos {
    * Constructor for SystemUNIFACpsrk.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemUNIFACpsrk(double T, double P, boolean solidCheck) {
+  public SystemUNIFACpsrk(double T, double P, boolean checkForSolids) {
     this(T, P);
     attractiveTermNumber = 0;
     setNumberOfPhases(4);
     modelName = "UNIFAC-GE-model";
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);

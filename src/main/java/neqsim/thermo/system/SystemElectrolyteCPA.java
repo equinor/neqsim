@@ -7,6 +7,7 @@ import neqsim.thermo.util.constants.FurstElectrolyteConstants;
  * This class defines a thermodynamic system using the Electrolyte CPA EoS of Equinor.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
   private static final long serialVersionUID = 1000;
@@ -32,8 +33,8 @@ public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
    * Constructor for SystemElectrolyteCPA.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemElectrolyteCPA(double T, double P) {
     super(T, P);

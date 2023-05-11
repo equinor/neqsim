@@ -180,7 +180,7 @@ public class PhaseEnvelope {
 
       chart.createBufferedImage(640, 400, null);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
       // testOps.displayResult();
     }
 
@@ -199,8 +199,8 @@ public class PhaseEnvelope {
       // testOps.calcCricoT( cricondenTherm, cricondenThermX , cricondenThermY) ;
       logger.info("Cricondentherm Direct " + testOps.get("cricondentherm")[0] + " "
           + testOps.get("cricondentherm")[1]);
-    } catch (Exception e333) {
-      logger.error("error", e333);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

@@ -14,24 +14,63 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class Standard_ISO6976_2016 extends Standard_ISO6976 {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Standard_ISO6976_2016.class);
 
   // metering conditions
 
   double R = 8.3144621;
 
-  double Zmix0 = 1.0, Zmix15 = 1.0, Zmix20 = 1.0, Zmix60F = 1.0;
-  double Zair0 = 0.999419, Zair15 = 0.999595, Zair60F = 999601, Zair20 = 0.999645;
+  double Zmix0 = 1.0;
+  double Zmix15 = 1.0;
+  double Zmix20 = 1.0;
+  double Zmix60F = 1.0;
 
-  double[] Z0, Z15, Z20, Z60F;
-  double[] bsqrt0, bsqrt15, bsqrt20, bsqrt60F;
-  double[] Hsup0, Hsup15, Hsup20, Hsup25, Hsup60F;
-  double[] Hinf0, Hinf15, Hinf20, Hinf25, Hinf60F;
-  double HsupIdeal0 = 0.0, HsupIdeal15 = 0.0, HsupIdeal20 = 0.0, HsupIdeal25 = 0.0,
-      HsupIdeal60F = 0.0;
-  double HinfIdeal0 = 0.0, HinfIdeal15 = 0.0, HinfIdeal20 = 0.0, HinfIdeal25 = 0.0,
-      HinfIdeal60F = 0.0;
-  static Logger logger = LogManager.getLogger(Standard_ISO6976_2016.class);
+  double Zair0 = 0.999419;
+  double Zair15 = 0.999595;
+  double Zair60F = 999601;
+  double Zair20 = 0.999645;
 
+  double[] Z0;
+  double[] Z15;
+  double[] Z20;
+  double[] Z60F;
+
+  double[] bsqrt0;
+  double[] bsqrt15;
+  double[] bsqrt20;
+  double[] bsqrt60F;
+
+  double[] Hsup0;
+  double[] Hsup15;
+  double[] Hsup20;
+  double[] Hsup25;
+  double[] Hsup60F;
+
+  double[] Hinf0;
+  double[] Hinf15;
+  double[] Hinf20;
+  double[] Hinf25;
+  double[] Hinf60F;
+
+  double HsupIdeal0 = 0.0;
+  double HsupIdeal15 = 0.0;
+  double HsupIdeal20 = 0.0;
+  double HsupIdeal25 = 0.0;
+  double HsupIdeal60F = 0.0;
+
+  double HinfIdeal0 = 0.0;
+  double HinfIdeal15 = 0.0;
+  double HinfIdeal20 = 0.0;
+  double HinfIdeal25 = 0.0;
+  double HinfIdeal60F = 0.0;
+
+  /**
+   * <p>
+   * Constructor for Standard_ISO6976_2016.
+   * </p>
+   *
+   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public Standard_ISO6976_2016(SystemInterface thermoSystem) {
     super("Standard_ISO6976_2016",
         "Calculation of calorific values, density, relative density and Wobbe index from composition based on ISO6976 version 2016",
@@ -60,10 +99,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     Hinf20 = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
     Hinf25 = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
     Hinf60F = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
-    try {
-      neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
-
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         try {
           dataSet =
@@ -124,10 +161,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
       }
 
       dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
-      String err = ex.toString();
-      logger.error(err);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -339,8 +374,4 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
       return energyUnit;
     }
   }
-
-  /**
-   * @return the energyRefT
-   */
 }

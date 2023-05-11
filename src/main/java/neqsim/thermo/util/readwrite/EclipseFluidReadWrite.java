@@ -19,13 +19,28 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class EclipseFluidReadWrite {
   static Logger logger = LogManager.getLogger(EclipseFluidReadWrite.class);
+
+  /** Constant <code>pseudoName=""</code> */
   public static String pseudoName = "";
 
+  /**
+   * <p>setComposition.</p>
+   *
+   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
+   * @param inputFile a {@link java.lang.String} object
+   * @param pseudoNameIn a {@link java.lang.String} object
+   */
   public static void setComposition(SystemInterface fluid, String inputFile, String pseudoNameIn) {
     pseudoName = pseudoNameIn;
     setComposition(fluid, inputFile);
   }
 
+  /**
+   * <p>setComposition.</p>
+   *
+   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
+   * @param inputFile a {@link java.lang.String} object
+   */
   public static void setComposition(SystemInterface fluid, String inputFile) {
     fluid.setEmptyFluid();
     try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
@@ -87,10 +102,17 @@ public class EclipseFluidReadWrite {
         }
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
+  /**
+   * <p>read.</p>
+   *
+   * @param inputFile a {@link java.lang.String} object
+   * @param pseudoNameIn a {@link java.lang.String} object
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public static SystemInterface read(String inputFile, String pseudoNameIn) {
     pseudoName = pseudoNameIn;
     return read(inputFile);
@@ -316,8 +338,8 @@ public class EclipseFluidReadWrite {
         } else {
           // fluid.changeComponentName(name, names.get(counter));
         }
-
       }
+
       // System.out.println(st);
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);
@@ -335,9 +357,8 @@ public class EclipseFluidReadWrite {
 
       // fluid.display();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return fluid;
   }
-
 }

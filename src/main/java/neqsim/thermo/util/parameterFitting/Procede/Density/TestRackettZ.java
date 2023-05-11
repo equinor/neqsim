@@ -34,11 +34,9 @@ public class TestRackettZ {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet =
-        database.getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName = 'Water'");
-
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database
+            .getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName = 'Water'")) {
       logger.info("adding....");
       while (dataSet.next()) {
         RackettZ function = new RackettZ();
@@ -68,7 +66,7 @@ public class TestRackettZ {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -48,5 +48,4 @@ class PHFlashGERG2008Test {
     double gergEnthalpy3 = gergProps[7] * testSystem.getPhase(0).getNumberOfMolesInPhase();
     assertEquals(gergEnthalpy3, gergEnthalpy2 + 100.0, Math.abs(gergEnthalpy2) / 1000.0);
   }
-
 }

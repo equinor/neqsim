@@ -34,8 +34,6 @@ public class TestMathiasCopemanToDewPoint {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = null;
 
     // // PVTsim14 values for MC-parameters
     // double guess[] ={0.547, -0.399, 0.575, // methane
@@ -67,17 +65,55 @@ public class TestMathiasCopemanToDewPoint {
         1.1084438340, 1.1800358360, -1.4810259893, 1.4887592454};
     String nameList[] = {"methane", "ethane", "propane", "n-butane", "i-butane", "n-pentane",
         "c-hexane", "benzene", "n-heptane"};
+    try (NeqSimDataBase database = new NeqSimDataBase();) {
+      ResultSet dataSet = null;
 
-    for (int compNumb = 0; compNumb < nameList.length; compNumb++) {
+      for (int compNumb = 0; compNumb < nameList.length; compNumb++) {
+        dataSet =
+            database.getResultSet("SELECT * FROM PureComponentVapourPressures WHERE ComponentName='"
+                + nameList[compNumb] + "' AND VapourPressure>0 ORDER BY Temperature ASC");
+
+        try {
+          long numberOfPoint = 3;
+          logger.error("point " + numberOfPoint);
+          int i = 0;
+          while (dataSet.next()) {
+            i++;
+            if (i % numberOfPoint == 0) {
+              MathiasCopemanToDewPoint function = new MathiasCopemanToDewPoint();
+              function.setInitialGuess(guess);
+
+              SystemInterface testSystem =
+                  new SystemSrkMathiasCopeman(Double.parseDouble(dataSet.getString("Temperature")),
+                      Double.parseDouble(dataSet.getString("VapourPressure")));
+              testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
+              // testSystem.createDatabase(true);
+              double sample1[] = {testSystem.getPressure()};
+              double standardDeviation1[] = {0.1, 0.1, 0.1};
+              double val = testSystem.getTemperature();
+              double stdErr = 1.0;
+              SampleValue sample = new SampleValue(val, stdErr, sample1, standardDeviation1);
+              sample.setFunction(function);
+              sample.setReference(dataSet.getString("Reference"));
+              sample.setThermodynamicSystem(testSystem);
+              sampleList.add(sample);
+            }
+          }
+        } catch (Exception ex) {
+          logger.error("database error", ex);
+        }
+      }
+
       dataSet =
-          database.getResultSet("SELECT * FROM PureComponentVapourPressures WHERE ComponentName='"
-              + nameList[compNumb] + "' AND VapourPressure>0 ORDER BY Temperature ASC");
+          database.getResultSet("SELECT * FROM dewPointDataSynthHCStatoil WHERE Pressure<80.0"); // "0
+                                                                                                 // AND
+                                                                                                 // reference='Morch2004gas1'");
 
       try {
-        long numberOfPoint = 3;
-        logger.error("point " + numberOfPoint);
+        long numberOfPoint = 1;
+        logger.info("point " + numberOfPoint);
         int i = 0;
-        while (dataSet.next()) {
+        while (dataSet.next() && i < 100) {
           i++;
           if (i % numberOfPoint == 0) {
             MathiasCopemanToDewPoint function = new MathiasCopemanToDewPoint();
@@ -85,8 +121,29 @@ public class TestMathiasCopemanToDewPoint {
 
             SystemInterface testSystem =
                 new SystemSrkMathiasCopeman(Double.parseDouble(dataSet.getString("Temperature")),
-                    Double.parseDouble(dataSet.getString("VapourPressure")));
-            testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
+                    Double.parseDouble(dataSet.getString("Pressure")));
+            testSystem.addComponent(dataSet.getString("comp1"),
+                Double.parseDouble(dataSet.getString("x1")));
+            testSystem.addComponent(dataSet.getString("comp2"),
+                Double.parseDouble(dataSet.getString("x2")));
+            testSystem.addComponent(dataSet.getString("comp3"),
+                Double.parseDouble(dataSet.getString("x3")));
+            testSystem.addComponent(dataSet.getString("comp4"),
+                Double.parseDouble(dataSet.getString("x4")));
+            testSystem.addComponent(dataSet.getString("comp5"),
+                Double.parseDouble(dataSet.getString("x5")));
+            testSystem.addComponent(dataSet.getString("comp6"),
+                Double.parseDouble(dataSet.getString("x6")));
+            testSystem.addComponent(dataSet.getString("comp7"),
+                Double.parseDouble(dataSet.getString("x7")));
+            testSystem.addComponent(dataSet.getString("comp8"),
+                Double.parseDouble(dataSet.getString("x8")));
+            testSystem.addComponent(dataSet.getString("comp9"),
+                Double.parseDouble(dataSet.getString("x9")));
+            // testSystem.addComponent(dataSet.getString("comp9"),
+            // Double.parseDouble(dataSet.getString("x9")));
+            // testSystem.addComponent(dataSet.getString("comp10"),
+            // Double.parseDouble(dataSet.getString("x10")));
             // testSystem.createDatabase(true);
             double sample1[] = {testSystem.getPressure()};
             double standardDeviation1[] = {0.1, 0.1, 0.1};
@@ -94,69 +151,15 @@ public class TestMathiasCopemanToDewPoint {
             double stdErr = 1.0;
             SampleValue sample = new SampleValue(val, stdErr, sample1, standardDeviation1);
             sample.setFunction(function);
-            sample.setReference(dataSet.getString("Reference"));
+            sample.setReference(dataSet.getString("reference"));
             sample.setThermodynamicSystem(testSystem);
             sampleList.add(sample);
           }
         }
       } catch (Exception ex) {
-        logger.error("database error" + ex);
-      }
-    }
-
-    dataSet = database.getResultSet("SELECT * FROM dewPointDataSynthHCStatoil WHERE Pressure<80.0"); // "0
-                                                                                                    // AND
-                                                                                                    // reference='Morch2004gas1'");
-
-    try {
-      long numberOfPoint = 1;
-      logger.info("point " + numberOfPoint);
-      int i = 0;
-      while (dataSet.next() && i < 100) {
-        i++;
-        if (i % numberOfPoint == 0) {
-          MathiasCopemanToDewPoint function = new MathiasCopemanToDewPoint();
-          function.setInitialGuess(guess);
-
-          SystemInterface testSystem =
-              new SystemSrkMathiasCopeman(Double.parseDouble(dataSet.getString("Temperature")),
-                  Double.parseDouble(dataSet.getString("Pressure")));
-          testSystem.addComponent(dataSet.getString("comp1"),
-              Double.parseDouble(dataSet.getString("x1")));
-          testSystem.addComponent(dataSet.getString("comp2"),
-              Double.parseDouble(dataSet.getString("x2")));
-          testSystem.addComponent(dataSet.getString("comp3"),
-              Double.parseDouble(dataSet.getString("x3")));
-          testSystem.addComponent(dataSet.getString("comp4"),
-              Double.parseDouble(dataSet.getString("x4")));
-          testSystem.addComponent(dataSet.getString("comp5"),
-              Double.parseDouble(dataSet.getString("x5")));
-          testSystem.addComponent(dataSet.getString("comp6"),
-              Double.parseDouble(dataSet.getString("x6")));
-          testSystem.addComponent(dataSet.getString("comp7"),
-              Double.parseDouble(dataSet.getString("x7")));
-          testSystem.addComponent(dataSet.getString("comp8"),
-              Double.parseDouble(dataSet.getString("x8")));
-          testSystem.addComponent(dataSet.getString("comp9"),
-              Double.parseDouble(dataSet.getString("x9")));
-          // testSystem.addComponent(dataSet.getString("comp9"),
-          // Double.parseDouble(dataSet.getString("x9")));
-          // testSystem.addComponent(dataSet.getString("comp10"),
-          // Double.parseDouble(dataSet.getString("x10")));
-          // testSystem.createDatabase(true);
-          double sample1[] = {testSystem.getPressure()};
-          double standardDeviation1[] = {0.1, 0.1, 0.1};
-          double val = testSystem.getTemperature();
-          double stdErr = 1.0;
-          SampleValue sample = new SampleValue(val, stdErr, sample1, standardDeviation1);
-          sample.setFunction(function);
-          sample.setReference(dataSet.getString("reference"));
-          sample.setThermodynamicSystem(testSystem);
-          sampleList.add(sample);
-        }
+        logger.error("database error", ex);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

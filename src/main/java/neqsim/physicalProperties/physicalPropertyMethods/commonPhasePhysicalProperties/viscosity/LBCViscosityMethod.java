@@ -41,13 +41,11 @@ public class LBCViscosityMethod extends Viscosity {
   /** {@inheritDoc} */
   @Override
   public double calcViscosity() {
-    double viscosity = 0.0;
     double lowPresVisc = 0.0;
     double temp = 0.0;
     double temp2 = 0.0;
     double temp3 = 0.0;
     double temp4 = 0.0;
-    double eps = 0;
     double critDens = 0.0;
     double par1 = 0.0;
     double par2 = 0.0;
@@ -76,13 +74,14 @@ public class LBCViscosityMethod extends Viscosity {
     lowPresVisc = temp3 / temp4;
     // logger.info("LP visc " + lowPresVisc);
     critDens = 1.0 / par4; // mol/cm3
-    eps = Math.pow(par1, 1.0 / 6.0) * Math.pow(par2, -1.0 / 2.0) * Math.pow(par3, -2.0 / 3.0);
+    double eps =
+        Math.pow(par1, 1.0 / 6.0) * Math.pow(par2, -1.0 / 2.0) * Math.pow(par3, -2.0 / 3.0);
     double reducedDensity = phase.getPhase().getPhysicalProperties().getDensity()
         / phase.getPhase().getMolarMass() / critDens / 1000000.0;
     // System.out.println("reduced density " + reducedDensity);
     double numb = a[0] + a[1] * reducedDensity + a[2] * Math.pow(reducedDensity, 2.0)
         + a[3] * Math.pow(reducedDensity, 3.0) + a[4] * Math.pow(reducedDensity, 4.0);
-    viscosity = (-Math.pow(10.0, -4.0) + Math.pow(numb, 4.0)) / eps + lowPresVisc;
+    double viscosity = (-Math.pow(10.0, -4.0) + Math.pow(numb, 4.0)) / eps + lowPresVisc;
     viscosity /= 1.0e3;
     // System.out.println("visc " + viscosity);
     return viscosity;

@@ -34,7 +34,6 @@ public class TestIonicInteractionParameterFitting {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM CO2KurCor WHERE
     // Reference<>'Bahiri1984' AND Temperature<373.15 ORDER BY
     // wtMDEA,Temperature,Reference,loading");
@@ -64,7 +63,7 @@ public class TestIonicInteractionParameterFitting {
     // 0.311975E-4}; //,0.0001439}; //, 0.00000001439}; //, -0.0000745697}; //, 263.73,
     // 466.41,0.1,0.1}; //, 1.0,1.0}; //;{-2.9222e-6, -7.991E-6, 3.924E-6}; //,1.0,1.0}; //,
     // -7.223e-4};
-    // //double bounds[][] =
+    // //double[][] bounds =
     // {{-0.0055,0.0055}};
     // //,{-0.0055,0.0055},{-10.001,10.001},{-1.0015,1.0015},{-320.0015,320.0015},{-320.901,320.900195},{-1.0,1000},{-0.800001,0.8},{-80000.01,20000.8},{-0.01,10.6},{-0.01,0.0015},{-0.01,0.0015}};
     // //double guess[] = {0.0000231069, 0.0001092540, 0.00001046762}; //, -0.0001190554}; //,
@@ -111,14 +110,15 @@ public class TestIonicInteractionParameterFitting {
     // }
     // }
     // catch(Exception ex){
-    // logger.error("database error" + ex);
+    // logger.error("database error", ex);
     // }
-
     double[] guess = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND PressureCO2<'20' AND Reference<>'GPA'");
 
-    try {
+
+    try (NeqSimDataBase database = new NeqSimDataBase();) {
+      ResultSet dataSet = database.getResultSet(
+          "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND PressureCO2<'20' AND Reference<>'GPA'");
+
       int i = 0;
       while (dataSet.next() && i < 25) {
         int ID = Integer.parseInt(dataSet.getString("ID"));
@@ -144,7 +144,7 @@ public class TestIonicInteractionParameterFitting {
         // 0.311975E-4}; //,0.0001439}; //, 0.00000001439}; //, -0.0000745697}; //, 263.73,
         // 466.41,0.1,0.1}; //, 1.0,1.0}; //;{-2.9222e-6, -7.991E-6,
         // 3.924E-6}; //,1.0,1.0}; //, -7.223e-4};
-        // double bounds[][] =
+        // double[][] bounds =
         // {{-0.0055,0.0055}};
         // //,{-0.0055,0.0055},{-10.001,10.001},{-1.0015,1.0015},{-320.0015,320.0015},{-320.901,320.900195},{-1.0,1000},{-0.800001,0.8},{-80000.01,20000.8},{-0.01,10.6},{-0.01,0.0015},{-0.01,0.0015}};
         // double guess[] = {0.0000231069, 0.0001092540, 0.00001046762}; //,
@@ -190,13 +190,14 @@ public class TestIonicInteractionParameterFitting {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
-    dataSet = database.getResultSet(
-        "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND Pressure<'20' AND Reference<>'GPA'");
 
-    try {
+
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND Pressure<'20' AND Reference<>'GPA'");) {
       int i = 0;
       while (dataSet.next() && i < 2) {
         int ID = Integer.parseInt(dataSet.getString("ID"));
@@ -222,7 +223,7 @@ public class TestIonicInteractionParameterFitting {
         // 0.311975E-4}; //,0.0001439}; //, 0.00000001439}; //, -0.0000745697}; //, 263.73,
         // 466.41,0.1,0.1}; //, 1.0,1.0}; //;{-2.9222e-6, -7.991E-6,
         // 3.924E-6}; //,1.0,1.0}; //, -7.223e-4};
-        // double bounds[][] =
+        // double[][] bounds =
         // {{-0.0055,0.0055}};
         // //,{-0.0055,0.0055},{-10.001,10.001},{-1.0015,1.0015},{-320.0015,320.0015},{-320.901,320.900195},{-1.0,1000},{-0.800001,0.8},{-80000.01,20000.8},{-0.01,10.6},{-0.01,0.0015},{-0.01,0.0015}};
         // double guess[] = {0.0000231069, 0.0001092540, 0.00001046762}; //,
@@ -268,7 +269,7 @@ public class TestIonicInteractionParameterFitting {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

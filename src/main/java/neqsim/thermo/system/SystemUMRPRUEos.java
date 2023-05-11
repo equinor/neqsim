@@ -4,10 +4,16 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the UMR-PRU equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemUMRPRUEos extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemUMRPRUEos.
+   * </p>
+   */
   public SystemUMRPRUEos() {
     super();
     setBmixType(1);
@@ -20,8 +26,8 @@ public class SystemUMRPRUEos extends SystemPrEos {
    * Constructor for SystemUMRPRUEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemUMRPRUEos(double T, double P) {
     super(T, P);
@@ -41,12 +47,12 @@ public class SystemUMRPRUEos extends SystemPrEos {
    * Constructor for SystemUMRPRUEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemUMRPRUEos(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemUMRPRUEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     setBmixType(1);
     attractiveTermNumber = 1;
     modelName = "UMR-PRU-EoS";

@@ -22,7 +22,9 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(RateUnit.class);
 
-  double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
+  double molarmass = 0.0;
+  double stddens = 0.0;
+  double boilp = 0.0;
 
   /**
    * <p>
@@ -106,6 +108,10 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
       factor = 1.0e6 * mol_Sm3 / (3600.0 * 24.0);
     } else if (name.equals("MSm^3/hr") || name.equals("MSm3/hr")) {
       factor = 1.0e6 * mol_Sm3 / (3600.0);
+    } else if (name.equals("idSm3/hr")) {
+      factor = 1.0 / molarmass / 3600.0 * stddens;
+    } else if (name.equals("idSm3/day")) {
+      factor = 1.0 / molarmass / (3600.0 * 24.0) * stddens;
     } else {
       logger.error("unit not supported " + name);
     }

@@ -1,26 +1,20 @@
-/*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:05
- */
-
 package neqsim.thermo.system;
-/**
- * This class defines a thermodynamic system using the UMR CPA equation of state
- * 
- * @author Even Solbraa
- * @version
- */
 
 import neqsim.thermo.phase.PhaseUMRCPA;
 
 /**
- * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
+ * This class defines a thermodynamic system using the UMR CPA equation of state.
+ *
+ * @author Even Solbraa
  */
 public class SystemUMRCPAEoS extends SystemPrEos {
-
   private static final long serialVersionUID = 1L;
 
+  /**
+   * <p>
+   * Constructor for SystemUMRCPAEoS.
+   * </p>
+   */
   public SystemUMRCPAEoS() {
     super();
     modelName = "UMR-CPA";
@@ -34,6 +28,14 @@ public class SystemUMRCPAEoS extends SystemPrEos {
     }
   }
 
+  /**
+   * <p>
+   * Constructor for SystemUMRCPAEoS.
+   * </p>
+   *
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   */
   public SystemUMRCPAEoS(double T, double P) {
     super(T, P);
     modelName = "UMR-CPA";
@@ -46,5 +48,4 @@ public class SystemUMRCPAEoS extends SystemPrEos {
       phaseArray[i].useVolumeCorrection(false);
     }
   }
-
 }

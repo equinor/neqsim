@@ -522,11 +522,9 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(componentName, moles, molesInPhase, compNumber);
-    componentArray[compNumber] =
-        new ComponentUMRCPA(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentUMRCPA(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -824,6 +822,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
+   * calcdFdNtemp.
+   *
    * @return double[]
    */
   double[] calcdFdNtemp() {
@@ -1027,7 +1027,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       try {
         hessianInvers = hessianMatrix.invert();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         return false;
       }
       if (solvedX) {
@@ -1151,7 +1151,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     try {
       // molarVolume(pressure, temperature, A, B, phaseType);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     double BonVold = BonV;
     double Btemp = 0;
@@ -1454,14 +1454,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * @param beta a double
    */
   public void initOld2(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) { // type
-                     // = 0
-                     // start
-                     // init
-                     // type
-                     // =1 gi
-                     // nye
-                     // betingelser
+      double beta) {
+    // type = 0 start init, type = 1 gi ny betingelser
     if (type == 0) {
       setTotalNumberOfAccociationSites(0);
       selfAccociationScheme = new int[numberOfComponents][0][0];
@@ -1922,7 +1916,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       try {
         hessianInvers = hessianMatrix.invert();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         return false;
       }
 

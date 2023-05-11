@@ -34,9 +34,6 @@ public class TestIonicInteractionParameterFittingCo2nacl {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM co2wation WHERE comp3='K+' AND temperature>340 AND pressure<190");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND
     // Reference='Lemoine2000'
@@ -48,7 +45,9 @@ public class TestIonicInteractionParameterFittingCo2nacl {
     // double guess[] = {-0.00000650867}; //k+ 40
     double guess[] = {0.0000267226}; // k+ 80
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM co2wation WHERE comp3='K+' AND temperature>340 AND pressure<190");) {
       int i = 0;
       while (dataSet.next() && i < 403) {
         i++;
@@ -79,7 +78,7 @@ public class TestIonicInteractionParameterFittingCo2nacl {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

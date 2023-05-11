@@ -54,7 +54,7 @@ public class TVflash {
       testSystem.display();
       // testOps.PVrefluxFlash(0.05, 1);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

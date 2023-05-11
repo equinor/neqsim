@@ -8,6 +8,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the CSP SRK equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemCSPsrkEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
@@ -33,8 +34,8 @@ public class SystemCSPsrkEos extends SystemSrkEos {
    * Constructor for SystemCSPsrkEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemCSPsrkEos(double T, double P) {
     super(T, P);
@@ -52,16 +53,16 @@ public class SystemCSPsrkEos extends SystemSrkEos {
    * Constructor for SystemCSPsrkEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemCSPsrkEos(double T, double P, boolean solidCheck) {
+  public SystemCSPsrkEos(double T, double P, boolean checkForSolids) {
     this(T, P);
     modelName = "CSPsrk-EOS";
     attractiveTermNumber = 0;
     setNumberOfPhases(5);
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseCSPsrkEos();

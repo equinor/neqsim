@@ -48,7 +48,7 @@ public class BubbleFlash {
       // testOps.constantPhaseFractionPressureFlash(1.0);
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     // System.out.println("wt% MEG " +

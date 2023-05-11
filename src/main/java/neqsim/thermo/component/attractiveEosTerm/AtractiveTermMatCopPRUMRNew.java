@@ -3,9 +3,12 @@ package neqsim.thermo.component.attractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>
+ * AtractiveTermMatCopPRUMRNew class.
+ * </p>
  *
  * @author esol
- *
+ * @version $Id: $Id
  */
 public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
 
@@ -13,6 +16,13 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
   double orgpar = 0.0;
   boolean useStandardAlphaForSupercritical = false;
 
+  /**
+   * <p>
+   * Constructor for AtractiveTermMatCopPRUMRNew.
+   * </p>
+   *
+   * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+   */
   public AtractiveTermMatCopPRUMRNew(ComponentEosInterface component) {
     super(component);
     m = (0.384401 + 1.52276 * component.getAcentricFactor()
@@ -21,6 +31,14 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
         - 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
   }
 
+  /**
+   * <p>
+   * Constructor for AtractiveTermMatCopPRUMRNew.
+   * </p>
+   *
+   * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+   * @param params an array of {@link double} objects
+   */
   public AtractiveTermMatCopPRUMRNew(ComponentEosInterface component, double[] params) {
     this(component);
     parameters = new double[params.length];
@@ -38,13 +56,13 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
       parameters[3] = -0.057788;
       parameters[4] = 0.017702;
     }
-    //if (component.getName().equals("water")) {
-      //parameters[0] = 0.91256735118818810000000000;
-     // parameters[1] = -0.2872243639795234400000000;
-      //parameters[2] = 0.239526763058374250000000000;
-      //parameters[3] = 0.0;
-      //parameters[4] = 0.0;
-    //}
+    // if (component.getName().equals("water")) {
+    // parameters[0] = 0.91256735118818810000000000;
+    // parameters[1] = -0.2872243639795234400000000;
+    // parameters[2] = 0.239526763058374250000000000;
+    // parameters[3] = 0.0;
+    // parameters[4] = 0.0;
+    // }
 
     if (component.getName().equals("water")) {
       parameters[0] = 0.9130000000000;
@@ -71,6 +89,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public AtractiveTermMatCopPRUMRNew clone() {
     AtractiveTermMatCopPRUMRNew atractiveTerm = null;
@@ -83,6 +102,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     return atractiveTerm;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double alpha(double temperature) {
     if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0
@@ -98,6 +118,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public double aT(double temperature) {
     if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0
@@ -108,6 +129,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public double diffalphaT(double temperature) {
     if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0
@@ -128,9 +150,9 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
             - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / tcrizatr
             - 2.0 * parameters[3] * Math.pow(1.0 - Math.sqrt(Tr), 3.0) / tcrizatr
             - 5.0 / 2.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / tcrizatr);
-
   }
 
+  /** {@inheritDoc} */
   @Override
   public double diffdiffalphaT(double temperature) {
     if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0
@@ -164,6 +186,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
                 + 5.0 / 4.0 * parameters[4] * Math.pow(1.0 - Math.sqrt(Tr), 4.0) / Tc2Trpower32);
   }
 
+  /** {@inheritDoc} */
   @Override
   public double diffaT(double temperature) {
     if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0
@@ -174,6 +197,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public double diffdiffaT(double temperature) {
     if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0

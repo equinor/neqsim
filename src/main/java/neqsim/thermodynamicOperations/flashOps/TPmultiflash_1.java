@@ -27,7 +27,7 @@ public class TPmultiflash_1 extends TPflash {
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
   double[] dQdbeta;
-  double Qmatrix[][];
+  double[][] Qmatrix;
   double[] E;
   double Q = 0;
 
@@ -55,10 +55,10 @@ public class TPmultiflash_1 extends TPflash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param check a boolean
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
-  public TPmultiflash_1(SystemInterface system, boolean check) {
-    super(system, check);
+  public TPmultiflash_1(SystemInterface system, boolean checkForSolids) {
+    super(system, checkForSolids);
   }
 
   /**

@@ -199,7 +199,7 @@ public class ComponentGeNRTL extends ComponentGE {
     // tot2 = -2*A/B/B + F2T;
     // dlngammadt = (lngammaold-lngamma)/0.002;
 
-    // phaseny.getExessGibbsEnergy(numberOfComponents, temperature, pressure,
+    // phaseny.getExcessGibbsEnergy(numberOfComponents, temperature, pressure,
     // phasetype)
     gamma = Math.exp(lngamma);
     // System.out.println("gamma " +gamma);
@@ -243,11 +243,8 @@ public class ComponentGeNRTL extends ComponentGE {
               * Gmatrix[this.getComponentNumber()][f] / (sum * sum);
         }
         dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
-            - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp; // E/(C*C)*dCdn[p]*(tau2-D/C)
-                                                                                                     // +
-                                                                                                     // E/C*(-dDdn[p]/C
-                                                                                                     // +
-                                                                                                     // D/(C*C)*dCdn[p]);
+            - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
+        // E/(C*C)*dCdn[p]*(tau2-D/C) + E/C*(-dDdn[p]/C + D/(C*C)*dCdn[p]);
         dlngammadn[p] /= (nt);
       }
       // System.out.println("Dlngamdn: " + dlngammadn[p] + " x: " +

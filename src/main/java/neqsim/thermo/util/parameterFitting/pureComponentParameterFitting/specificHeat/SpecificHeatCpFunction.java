@@ -31,7 +31,7 @@ public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     system.init(3);

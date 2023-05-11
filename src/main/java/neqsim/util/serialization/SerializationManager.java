@@ -20,6 +20,9 @@ import java.io.ObjectOutputStream;
  * @version $Id: $Id
  */
 public class SerializationManager {
+  /**
+   * <p>Constructor for SerializationManager.</p>
+   */
   public SerializationManager() {}
 
   /**

@@ -17,17 +17,17 @@ public class ComponentHydrate extends Component {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(ComponentHydrate.class);
 
-  // double emptyHydrateVapourPressureConstant[][] = {{17.6025820786,
+  // double[][] emptyHydrateVapourPressureConstant = {{17.6025820786,
   // -6056.0650578668},{17.332, -6017.6}}; //fitted
-  double emptyHydrateVapourPressureConstant[][] = {{17.44, -6003.9}, {17.332, -6017.6}}; // Sloan
-                                                                                         // (1990)
-  // double emptyHydrateVapourPressureConstant[][] = {{ 17.5061457754,
+  // Sloan (1990)
+  double[][] emptyHydrateVapourPressureConstant = {{17.44, -6003.9}, {17.332, -6017.6}};
+  // double[][] emptyHydrateVapourPressureConstant = {{ 17.5061457754,
   // -6030.6886435166},{17.332, -6017.6}}; //fitted (1990)
   int hydrateStructure = 0;
-  double coordNumb[][] = new double[2][2]; // [structure][cavitytype]
-  double cavRadius[][] = new double[2][2]; // [structure][cavitytype]
-  double cavNumb[][] = new double[2][2]; // [structure][cavitytype]
-  double cavprwat[][] = new double[2][2]; // [structure][cavitytype]
+  double[][] coordNumb = new double[2][2]; // [structure][cavitytype]
+  double[][] cavRadius = new double[2][2]; // [structure][cavitytype]
+  double[][] cavNumb = new double[2][2]; // [structure][cavitytype]
+  double[][] cavprwat = new double[2][2]; // [structure][cavitytype]
   // double[] dGfHydrate = {-236539.2, -235614.0};
   // double[] dHfHydrate = {-292714.5, -292016.0};
   double[] dGfHydrate = {-235557, -235614};
@@ -73,9 +73,8 @@ public class ComponentHydrate extends Component {
     reffug[0] = 10.0;
     reffug[1] = 1.0;
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       if (!component_name.equals("default")) {
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
@@ -106,12 +105,6 @@ public class ComponentHydrate extends Component {
       try {
         if (dataSet != null) {
           dataSet.close();
-        }
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
         }
       } catch (Exception ex) {
         logger.error("error closing database.....", ex);
@@ -202,7 +195,9 @@ public class ComponentHydrate extends Component {
         // "+ val);
 
         // fugacityCoefficient =
-        // Math.exp(val)*getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)*Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)))*1e5)/pres;
+        // Math.exp(val) *
+        // getEmptyHydrateStructureVapourPressure(hydrateStructure,temp) *
+        // Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)))*1e5)/pres;
         // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
         // logFugacityCoefficient = Math.log(fugacityCoefficient);
         // logFugacityCoefficient += val*boltzmannConstant/R;
@@ -662,7 +657,7 @@ public class ComponentHydrate extends Component {
       refPhase = phase.getClass().getDeclaredConstructor().newInstance();
       refPhase.setTemperature(273.0);
       refPhase.setPressure(1.0);
-      refPhase.addcomponent("water", 10.0, 10.0, 0);
+      refPhase.addComponent("water", 10.0, 10.0, 0);
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
     } catch (Exception ex) {
       logger.error("error occured", ex);

@@ -1,12 +1,16 @@
 package neqsim.processSimulation;
 
+import java.io.Serializable;
 import java.util.UUID;
 import neqsim.util.NamedInterface;
 
 /**
  * Interface for simulation objects.
+ *
+ * @author ASMF
+ * @version $Id: $Id
  */
-public interface SimulationInterface extends NamedInterface, Runnable {
+public interface SimulationInterface extends NamedInterface, Runnable, Serializable {
   /**
    * Getter for property calcIdentifier.
    *
@@ -57,11 +61,12 @@ public interface SimulationInterface extends NamedInterface, Runnable {
   public void increaseTime(double dt);
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
-   * run
-   * </p>
    * In this method all thermodynamic and unit operations will be calculated in a steady state
    * calculation. Sets calc identifier UUID.
+   * </p>
    */
   @Override
   public default void run() {

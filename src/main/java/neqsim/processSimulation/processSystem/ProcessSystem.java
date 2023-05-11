@@ -401,7 +401,7 @@ public class ProcessSystem extends SimulationBaseClass {
             ((ProcessEquipmentInterface) unitOperations.get(i)).run();
           } catch (Exception ex) {
             // String error = ex.getMessage();
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
           }
         }
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
@@ -410,7 +410,7 @@ public class ProcessSystem extends SimulationBaseClass {
             ((ProcessEquipmentInterface) unitOperations.get(i)).run();
           } catch (Exception ex) {
             // String error = ex.getMessage();
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
           }
         }
       }
@@ -467,12 +467,11 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * runTransient.
    * </p>
-   *
-   * @param dt Delta time [s]
-   * @param id Calculation identifier
    */
   @Override
   public void runTransient(double dt, UUID id) {
@@ -495,6 +494,7 @@ public class ProcessSystem extends SimulationBaseClass {
     setCalculationIdentifier(id);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean solved() {
     return true;
@@ -561,7 +561,7 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       thisThread.join();
     } catch (Exception ex) {
-      System.out.println("Thread did not finish");
+      logger.error("Thread did not finish", ex);
     }
     for (int i = 0; i < unitOperations.size(); i++) {
       unitOperations.get(i).displayResult();
@@ -584,7 +584,7 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       thisThread.join();
     } catch (Exception ex) {
-      System.out.println("Thread did not finish");
+      logger.error("Thread did not finish", ex);
     }
     for (int i = 0; i < measurementDevices.size(); i++) {
       System.out.println("Measurements Device Name: " + measurementDevices.get(i).getName());
@@ -609,8 +609,7 @@ public class ProcessSystem extends SimulationBaseClass {
       out.writeObject(this);
       logger.info("process file saved to:  " + filePath);
     } catch (Exception ex) {
-      logger.error(ex.toString());
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -629,7 +628,7 @@ public class ProcessSystem extends SimulationBaseClass {
       // logger.info("process file open ok: " + filePath);
     } catch (Exception ex) {
       // logger.error(ex.toString());
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return null;
   }
@@ -702,11 +701,11 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>name</code>.
    * </p>
-   *
-   * @param name the name to set
    */
   public void setName(String name) {
     this.name = name;

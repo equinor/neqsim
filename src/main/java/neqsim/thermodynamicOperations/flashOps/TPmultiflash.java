@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.ThermodynamicModelSettings;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -28,8 +29,8 @@ public class TPmultiflash extends TPflash {
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
-  double dQdbeta[][];
-  double Qmatrix[][];
+  double[][] dQdbeta;
+  double[][] Qmatrix;
   double[] Erow;
   double Q = 0;
   boolean doStabilityAnalysis = true;
@@ -65,10 +66,10 @@ public class TPmultiflash extends TPflash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param check a boolean
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
-  public TPmultiflash(SystemInterface system, boolean check) {
-    super(system, check);
+  public TPmultiflash(SystemInterface system, boolean checkForSolids) {
+    super(system, checkForSolids);
     Erow = new double[system.getPhase(0).getNumberOfComponents()];
     multTerm = new double[system.getPhase(0).getNumberOfComponents()];
     multTerm2 = new double[system.getPhase(0).getNumberOfComponents()];
@@ -104,11 +105,11 @@ public class TPmultiflash extends TPflash {
               / Erow[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient());
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            && !system.getPhase(k).getPhaseTypeName().equals("aqueous")) {
+            && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
           system.getPhase(k).getComponents()[i].setx(1e-50);
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            && system.getPhase(k).getPhaseTypeName().equals("aqueous")) {
+            && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
           system.getPhase(k).getComponents()[i]
               .setx(system.getPhase(k).getComponents()[i].getNumberOfmoles()
                   / system.getPhase(k).getNumberOfMolesInPhase());
@@ -356,8 +357,7 @@ public class TPmultiflash extends TPflash {
 
       double nomb = 0.0;
       for (int cc = 0; cc < system.getPhase(0).getNumberOfComponents(); cc++) {
-        nomb = cc == j ? 1.0 : 1.0e-12; // set to 0 by Even Solbraa 23.01.2013 - chaged back
-                                        // to 1.0e-12 27.04.13
+        nomb = cc == j ? 1.0 : 1.0e-12;
         if (system.getPhase(0).getComponent(cc).getz() < 1e-100) {
           nomb = 0.0;
         }
@@ -444,8 +444,9 @@ public class TPmultiflash extends TPflash {
           alpha = new double[clonedSystem.get(0).getPhases()[0].getNumberOfComponents()];
           df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
               system.getPhases()[0].getNumberOfComponents());
-          identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents()); // ,
-                                                                                                     // system.getPhases()[0].getNumberOfComponents());
+          identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
+          // ,
+          // system.getPhases()[0].getNumberOfComponents());
           // secondOrderStabilityAnalysis = true;
           // }
 
@@ -464,11 +465,11 @@ public class TPmultiflash extends TPflash {
               double kronDelt = (i == k) ? 1.0 : 0.0;
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
                 df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
-                    * clonedSystem.get(0).getPhases()[1].getComponents()[i].getdfugdn(k)); // *
-                                                                                           // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                    * clonedSystem.get(0).getPhases()[1].getComponents()[i].getdfugdn(k));
+                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               } else {
-                df.set(i, k, 0); // *
-                                 // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                df.set(i, k, 0);
+                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               }
             }
           }
@@ -607,8 +608,7 @@ public class TPmultiflash extends TPflash {
       // (clonedSystem.get(i)).init(0); commented out sept 2005, Even
       // S.
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-        numb = i == j ? 1.0 : 1.0e-12; // set to 0 by Even Solbraa 23.01.2013 - chaged back
-                                       // to 1.0e-12 27.04.13
+        numb = i == j ? 1.0 : 1.0e-12;
         if (system.getPhase(0).getComponent(j).getz() < 1e-100) {
           numb = 0;
         }
@@ -772,8 +772,8 @@ public class TPmultiflash extends TPflash {
           alpha = new double[(clonedSystem.get(j)).getPhases()[0].getNumberOfComponents()];
           df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
               system.getPhases()[0].getNumberOfComponents());
-          identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents()); // ,
-                                                                                                     // system.getPhases()[0].getNumberOfComponents());
+          identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
+          // , system.getPhases()[0].getNumberOfComponents());
           // secondOrderStabilityAnalysis = true;
           // }
 
@@ -791,11 +791,13 @@ public class TPmultiflash extends TPflash {
               double kronDelt = (i == k) ? 1.0 : 0.0;
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
                 df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
-                    * (clonedSystem.get(j)).getPhases()[1].getComponents()[i].getdfugdn(k)); // *
-                                                                                             // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                    * (clonedSystem.get(j)).getPhases()[1].getComponents()[i].getdfugdn(k));
+                // *
+                // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               } else {
-                df.set(i, k, 0); // *
-                                 // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                df.set(i, k, 0);
+                // *
+                // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               }
             }
           }

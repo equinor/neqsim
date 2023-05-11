@@ -1,9 +1,3 @@
-/*
- * SolidComponent.java
- *
- * Created on 18. august 2001, 12:45
- */
-
 package neqsim.thermo.component;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -38,7 +32,9 @@ public class ComponentWaxWilson extends ComponentSolid {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Uses Claperyons equation to calculate the solid fugacity
+   * </p>
    */
   @Override
   public double fugcoef(PhaseInterface phase1) {
@@ -85,8 +81,7 @@ public class ComponentWaxWilson extends ComponentSolid {
     SolidFug = getx() * liquidPhaseFugacity
         * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
             * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
-            + deltaCpSL
-                / (R * phase1.getTemperature())
+            + deltaCpSL / (R * phase1.getTemperature())
                 * (getTriplePointTemperature() - phase1.getTemperature())
             - deltaCpSL / R * Math.log(getTriplePointTemperature() / phase1.getTemperature())
             - deltaSolVol * (1.0 - phase1.getPressure()) / (R * phase1.getTemperature()));
@@ -135,11 +130,12 @@ public class ComponentWaxWilson extends ComponentSolid {
    * @return a double
    */
   public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {
-    double param1 = 0.0; // ((ComponentWaxWilson)
-                         // phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
-    double param2 = 0.0; // ((ComponentWaxWilson)
-                         // phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
-    // this need to be corrected accordint to how to select energy of shortest
+    double param1 = 0.0;
+    // ((ComponentWaxWilson) phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
+    double param2 = 0.0;
+    // ((ComponentWaxWilson) phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
+
+    // this need to be corrected according to how to select energy of shortest
     // carbon molecule .....
     if ((phase1.getComponent(comp1).getMolarMass() - 1.0e-10) > phase1.getComponent(comp2)
         .getMolarMass()) {
@@ -189,10 +185,10 @@ public class ComponentWaxWilson extends ComponentSolid {
     // calculating transition enthalpy
     double deltaHtot = (3.7791 * carbonnumber - 12.654) * 1000;
 
-    /// should not be a cooma - cirrected Tosin 08.05.2013
+    // should not be a cooma - cirrected Tosin 08.05.2013
 
     // double Ttrans = 420.42 - 134784.0 * Math.exp(-4.344 * Math.pow(carbonnumber + 6.592,
-    /// 0.14627));
+    // 0.14627));
     double Tf = 374.5 + 0.2617 * getMolarMass() - 20.172 / getMolarMass();
     double deltaHf = (0.1426 * getMolarMass() * Tf) * 4.1868;
     double deltaHtrans = (deltaHtot - deltaHf);

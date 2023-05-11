@@ -21,6 +21,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashTR.class);
+
   public boolean noFreezeFlash = true;
   public int Niterations = 0;
   public String[] FCompNames = new String[10];
@@ -28,7 +30,6 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
   public int compnr;
   public String name = "Frz";
   public boolean CCequation = true;
-  static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashTR.class);
 
   /**
    * <p>
@@ -80,13 +81,24 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
     int iterations = 0;
     // int maxNumberOfIterations = 15000;
     // double yold = 0, ytotal = 1;
-    double deriv = 0, funk = 0, funkOld = 0;
+    double deriv = 0;
+    double funk = 0;
+    double funkOld = 0;
     // double Testfunk = 0.00000000;
-    double maxTemperature = 0, minTemperature = 1e6, oldTemperature = 0.0, newTemp = 0.0;
-    double SolidFug = 0.0, temp = 0.0, pres = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0,
-        dfugdt = 0.0;
-    double solvol = 0.0, soldens = 0.0, trpTemp = 0.0;
+    double maxTemperature = 0;
+    double minTemperature = 1e6;
+    double oldTemperature = 0.0;
+    double newTemp = 0.0;
+    double SolidFug = 0.0;
+    double temp = 0.0;
+    double pres = 0.0;
+    double Pvapsolid = 0.0;
+    double SolVapFugCoeff = 0.0;
+    double dfugdt = 0.0;
+    double solvol = 0.0;
 
+    double soldens = 0.0;
+    double trpTemp = 0.0;
     // for(int k=0;k<system.getPhases()[0].getNumberOfComponents();k++){
     for (int k = 0; k < 1; k++) {
       // if(system.getPhase(0).getComponent(k).fugcoef(system.getPhase(0))<9e4){//&&
@@ -191,17 +203,13 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
               system.getPhases()[0].getComponents()[k].getTriplePointTemperature() + 0.4);
         } else if (newTemp < 1) {
           system.setTemperature(oldTemperature + 2);
-        }
-        // else if(newTemp=="NaN")system.setTemperature(oldTemperature*0.9374);
-        else {
+          // } else if(newTemp=="NaN") { system.setTemperature(oldTemperature*0.9374);
+        } else {
           system.setTemperature(newTemp);
         }
         logger.info("funk " + funk);
         logger.info("temperature " + system.getTemperature());
-      }
-      // while(false);
-      while ((Math.abs(funk) >= 0.001 && iterations < 100));
-      // while((Math.abs(funk)>=0.000001 && iterations<100));
+      } while ((Math.abs(funk) >= 0.001 && iterations < 100));
       FCompTemp[k] = system.getTemperature();
       logger.info("iterations " + iterations);
       Niterations = iterations;

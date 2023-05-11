@@ -8,6 +8,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the BWRS equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemBWRSEos extends SystemEos {
   private static final long serialVersionUID = 1000;
@@ -35,8 +36,8 @@ public class SystemBWRSEos extends SystemEos {
    * Constructor for SystemBWRSEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemBWRSEos(double T, double P) {
     super(T, P);
@@ -54,16 +55,16 @@ public class SystemBWRSEos extends SystemEos {
    * Constructor for SystemBWRSEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemBWRSEos(double T, double P, boolean solidCheck) {
+  public SystemBWRSEos(double T, double P, boolean checkForSolids) {
     this(T, P);
     modelName = "BWRS-EOS";
     attractiveTermNumber = 0;
     setNumberOfPhases(5);
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseBWRSEos();

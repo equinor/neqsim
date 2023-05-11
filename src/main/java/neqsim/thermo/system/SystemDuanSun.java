@@ -9,6 +9,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * This class defines a thermodynamic system using the Duan Sun method used for CO2.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemDuanSun extends SystemEos {
   private static final long serialVersionUID = 1000;
@@ -36,8 +37,8 @@ public class SystemDuanSun extends SystemEos {
    * Constructor for SystemDuanSun.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemDuanSun(double T, double P) {
     super(T, P);
@@ -58,16 +59,16 @@ public class SystemDuanSun extends SystemEos {
    * Constructor for SystemDuanSun.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemDuanSun(double T, double P, boolean solidCheck) {
+  public SystemDuanSun(double T, double P, boolean checkForSolids) {
     this(T, P);
     attractiveTermNumber = 0;
     setNumberOfPhases(4);
     modelName = "Duan-Sun-model";
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);
@@ -120,7 +121,7 @@ public class SystemDuanSun extends SystemEos {
       ThermodynamicOperations testOps = new ThermodynamicOperations(fluid1);
       testOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     fluid1.display();
   }

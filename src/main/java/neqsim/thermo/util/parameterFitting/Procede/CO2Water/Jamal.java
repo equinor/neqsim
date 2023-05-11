@@ -52,7 +52,7 @@ public class Jamal {
       try {
         testOps.bubblePointPressureFlash(false);
       } catch (Exception ex) {
-        logger.error(ex.toString());
+        logger.error(ex.getMessage(), ex);
       }
 
       // System.out.println(testSystem.getPressure()*testSystem.getPhase(0).getComponent(0).getx());
@@ -63,7 +63,7 @@ public class Jamal {
             + testSystem.getPressure() * testSystem.getPhase(0).getComponent(0).getx() / x);
       } catch (FileNotFoundException ex) {
         logger.error("Could not find file");
-        logger.error("Could not read from Patrick.txt" + ex.getMessage());
+        logger.error("Could not read from Patrick.txt", ex);
       }
 
       logger.info("Finished");

@@ -22,8 +22,8 @@ public class ComponentHydrateKluda extends Component {
   int hydrateStructure = 0;
   double[][][] coordNumb = new double[3][2][2]; // [structure][cavitytype]
   double[][][] cavRadius = new double[3][2][2]; // [structure][cavitytype]
-  double cavNumb[][] = new double[2][2]; // [structure][cavitytype]
-  double cavprwat[][] = new double[2][2]; // [structure][cavitytype]
+  double[][] cavNumb = new double[2][2]; // [structure][cavitytype]
+  double[][] cavprwat = new double[2][2]; // [structure][cavitytype]
   double[] reffug = new double[20];
   static Logger logger = LogManager.getLogger(ComponentHydrateKluda.class);
 
@@ -246,9 +246,8 @@ public class ComponentHydrateKluda extends Component {
    */
   public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
     double cki = 4.0 * pi / (boltzmannConstant * phase.getTemperature())
-        * (potIntegral(0, stucture, cavityType, phase)); // +0*potIntegral(1,stucture,
-                                                         // cavityType,phase)+0*potIntegral(2,stucture,
-                                                         // cavityType,phase));
+        * (potIntegral(0, stucture, cavityType, phase));
+    // +0*potIntegral(1,stucture, cavityType,phase)+0*potIntegral(2,stucture, cavityType,phase));
     // System.out.println("cki " + cki);
     return cki;
   }
@@ -330,21 +329,25 @@ public class ComponentHydrateKluda extends Component {
     // intnumb++;
     // pot += 2.0*coordNumb[intnumb][struccture][cavityType]*lenjonsenergy*(
     // (Math.pow(diam,12.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],11.0)*
-    // radius)*(delt(intnumb,10.0,radius,struccture,cavityType,phase)+corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,11.0,radius,struccture,cavityType,phase)))
+    // radius)*(delt(intnumb,10.0,radius,struccture,cavityType,phase) +
+    // corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,11.0,radius,struccture,cavityType,phase)))
     // -
     // (Math.pow(diam,6.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],5.0)*
     // radius)*(delt(intnumb,
-    // 4.0,radius,struccture,cavityType,phase)+corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,5.0,radius,struccture,cavityType,phase)))
+    // 4.0,radius,struccture,cavityType,phase) +
+    // corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,5.0,radius,struccture,cavityType,phase)))
     // );
 
     // intnumb++;
     // pot += 2.0*coordNumb[intnumb][struccture][cavityType]*lenjonsenergy*(
     // (Math.pow(diam,12.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],11.0)*
-    // radius)*(delt(intnumb,10.0,radius,struccture,cavityType,phase)+corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,11.0,radius,struccture,cavityType,phase)))
+    // radius)*(delt(intnumb,10.0,radius,struccture,cavityType,phase) +
+    // corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,11.0,radius,struccture,cavityType,phase)))
     // -
     // (Math.pow(diam,6.0)/(Math.pow(cavRadius[intnumb][struccture][cavityType],5.0)*
     // radius)*(delt(intnumb,
-    // 4.0,radius,struccture,cavityType,phase)+corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,5.0,radius,struccture,cavityType,phase)))
+    // 4.0,radius,struccture,cavityType,phase) +
+    // corerad/cavRadius[intnumb][struccture][cavityType]*delt(intnumb,5.0,radius,struccture,cavityType,phase)))
     // );
 
     // System.out.println("lenjones " +this.getLennardJonesMolecularDiameter() );

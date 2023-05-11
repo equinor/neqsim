@@ -35,6 +35,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   double[] plusCoefs = {0.0007774204804, -0.02390179};
   SystemInterface system = null;
 
+  /**
+   * <p>Constructor for PlusCharacterize.</p>
+   */
   public PlusCharacterize() {}
 
   /**
@@ -84,7 +87,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
           }
         }
       } catch (Exception ex) {
-        ex.toString();
+        logger.error(ex.getMessage(), ex);
       }
     }
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
@@ -118,7 +121,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
           }
         }
       } catch (Exception ex) {
-        ex.toString();
+        logger.error(ex.getMessage(), ex);
       }
     }
     logger.info("first plus fraction number " + firstPlusFractionNumber);
@@ -336,7 +339,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
    *
    * @param startPlus New value of property firstPlusFractionNumber.
    * @deprecated use {@link #setFirstPlusFractionNumber(int firstPlusFractionNumber)} instead.
-   * 
    */
   @Deprecated
   public void setStartPlus(int startPlus) {
@@ -449,7 +451,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         system.removeComponent(list.get(i));
         logger.info("removing " + list.get(i));
       } catch (Exception ex) {
-        logger.error("not able to remove " + list.get(i));
+        logger.error("not able to remove " + list.get(i), ex);
         // return;
       }
     }

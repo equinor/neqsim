@@ -126,17 +126,17 @@ public class CompressorChartTest {
     // operations.displayResult();
 
     /*
-     * System.out.println("power " + comp1.getPower()); System.out.println("is surge " +
+     * logger.info("power " + comp1.getPower()); logger.info("is surge " +
      * comp1.getAntiSurge().isSurge()); System.out .println("fraction in anti surge line " +
-     * comp1.getAntiSurge().getCurrentSurgeFraction());
-     * System.out.println("Polytropic head from curve:" + comp1.getPolytropicHead());
-     * System.out.println("Polytropic eff from curve:" + comp1.getPolytropicEfficiency() * 100.0);
-     * System.out.println("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
+     * comp1.getAntiSurge().getCurrentSurgeFraction()); logger.info("Polytropic head from curve:" +
+     * comp1.getPolytropicHead()); logger.info("Polytropic eff from curve:" +
+     * comp1.getPolytropicEfficiency() * 100.0); logger.info("flow " +
+     * stream_1.getThermoSystem().getFlowRate("m3/hr"));
      * 
-     * System.out.println("speed " + comp1.getCompressorChart().getSpeed(
+     * logger.info("speed " + comp1.getCompressorChart().getSpeed(
      * stream_1.getThermoSystem().getFlowRate("m3/hr") + 10.0, comp1.getPolytropicHead()));
-     * System.out.println("pressure out " + comp1.getOutletPressure());
-     * System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
+     * logger.info("pressure out " + comp1.getOutletPressure()); logger.info("temperature out " +
+     * (comp1.getOutTemperature() - 273.15) + " C");
      */
 
     double temperatureOut = 273.15 + 84;
@@ -149,10 +149,9 @@ public class CompressorChartTest {
 
     assertTrue(calcSpeed > 0);
     /*
-     * System.out.println("polytopic head " + polytropicHead);
-     * System.out.println("polytopic efficiency " + comp1.getPolytropicEfficiency());
-     * System.out.println("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
-     * System.out.println("calculated speed " + calcSpeed); System.out.println("power " +
+     * logger.info("polytopic head " + polytropicHead); logger.info("polytopic efficiency " +
+     * comp1.getPolytropicEfficiency()); logger.info("temperature out " + (comp1.getOutTemperature()
+     * - 273.15) + " C"); logger.info("calculated speed " + calcSpeed); logger.info("power " +
      * comp1.getPower());
      */
 

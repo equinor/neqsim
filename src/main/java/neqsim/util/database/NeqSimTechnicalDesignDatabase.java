@@ -41,11 +41,15 @@ public class NeqSimTechnicalDesignDatabase
   }
 
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NeqSimTechnicalDesignDatabase.class);
+
   /** Constant <code>dataBasePath=""</code>. */
   public static String dataBasePath = "";
 
-  public static String username = "", password = "";
-  static Logger logger = LogManager.getLogger(NeqSimTechnicalDesignDatabase.class);
+  /** Constant <code>username=""</code> */
+  public static String username = "";
+  /** Constant <code>password=""</code> */
+  public static String password = "";
   private static boolean createTemporaryTables = false;
 
   private static String dataBaseType = "MSAccessUCanAccess";
@@ -68,7 +72,7 @@ public class NeqSimTechnicalDesignDatabase
       databaseConnection = this.openConnection();
       statement = databaseConnection.createStatement();
     } catch (Exception ex) {
-      logger.error("SQLException " + ex.getMessage());
+      logger.error("SQLException ", ex);
       throw new RuntimeException(ex);
     }
   }
@@ -103,7 +107,7 @@ public class NeqSimTechnicalDesignDatabase
         return DriverManager.getConnection(getConnectionString(), username, password);
       }
     } catch (Exception ex) {
-      logger.error("error loading NeqSimDataBase... " + ex.toString());
+      logger.error("error loading NeqSimDataBase... ", ex);
       throw new RuntimeException(ex);
     } finally {
       try {
@@ -111,7 +115,7 @@ public class NeqSimTechnicalDesignDatabase
           ctx.close();
         }
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
       }
     }
   }
@@ -140,7 +144,7 @@ public class NeqSimTechnicalDesignDatabase
       ResultSet result = getStatement().executeQuery(sqlString);
       return result;
     } catch (Exception ex) {
-      logger.error("error loading NeqSimbataBase " + ex.toString());
+      logger.error("error loading NeqSimbataBase ", ex);
       throw new RuntimeException(ex);
     }
   }
@@ -160,7 +164,7 @@ public class NeqSimTechnicalDesignDatabase
       }
       getStatement().execute(sqlString);
     } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase " + ex.toString(), ex);
+      logger.error("error in NeqSimDataBase ", ex);
       logger.error("The database must be rgistered on the local DBMS to work.");
       throw new RuntimeException(ex);
     }
@@ -227,7 +231,7 @@ public class NeqSimTechnicalDesignDatabase
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
-      logger.error("error loading database driver.. " + ex.toString());
+      logger.error("error loading database driver.. ", ex);
       throw new RuntimeException(ex);
     }
   }

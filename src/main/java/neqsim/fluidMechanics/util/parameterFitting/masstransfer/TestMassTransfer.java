@@ -2,6 +2,8 @@ package neqsim.fluidMechanics.util.parameterFitting.masstransfer;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -18,6 +20,8 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class TestMassTransfer {
+  static Logger logger = LogManager.getLogger(TestMassTransfer.class);
+
   /**
    * <p>
    * main.
@@ -30,15 +34,14 @@ public class TestMassTransfer {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM purecomponentvapourpressures WHERE ComponentName='water' AND VapourPressure<100")) {
       System.out.println("adding....");
       while (dataSet.next()) {
         MassTransferFunction function = new MassTransferFunction();
         double[] guess = {0.3311};
-        double bound[][] = {{0, 1.0},};
+        double[][] bound = {{0, 1.0},};
         function.setInitialGuess(guess);
         SystemInterface testSystem = new SystemSrkEos(280, 0.001);
         testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
@@ -56,7 +59,7 @@ public class TestMassTransfer {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      System.out.println("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

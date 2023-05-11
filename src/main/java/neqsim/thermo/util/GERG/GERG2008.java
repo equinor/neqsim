@@ -3319,6 +3319,6 @@ public class GERG2008 {
     System.out
         .println("Joule-Thomson coefficient [K/kPa]:  7.155629581480913E-05 != %0.16g\n" + JT.val);
     System.out
-        .println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);;
+        .println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);
   }
 }

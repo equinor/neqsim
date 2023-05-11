@@ -115,7 +115,7 @@ public class ReactiveTPflash2 {
       } // end for-loop
       out.flush();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     // for(int i=0;i<23;i++){

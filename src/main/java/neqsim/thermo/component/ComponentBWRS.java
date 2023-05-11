@@ -48,8 +48,7 @@ public class ComponentBWRS extends ComponentSrk {
   public ComponentBWRS(String component_name, double moles, double molesInPhase, int compnumber) {
     super(component_name, moles, molesInPhase, compnumber);
 
-    try {
-      neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
         dataSet = database
@@ -70,10 +69,8 @@ public class ComponentBWRS extends ComponentSrk {
       rhoc = Double.parseDouble(dataSet.getString("rhoc"));
       gammaBWRS = 1.0 / (rhoc * rhoc);
       // logger.info("gamma " + gammaBWRS);
-      dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -124,11 +121,16 @@ public class ComponentBWRS extends ComponentSrk {
     BP[7] = aBWRS[16] / temperature + aBWRS[17] / Math.pow(temperature, 2.0);
     BP[8] = aBWRS[18] / Math.pow(temperature, 2.0);
 
-    BE[0] = (aBWRS[19] / Math.pow(temperature, 2.0) + aBWRS[20] / Math.pow(temperature, 3.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-    BE[1] = (aBWRS[21] / Math.pow(temperature, 2.0) + aBWRS[22] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-    BE[2] = (aBWRS[23] / Math.pow(temperature, 2.0) + aBWRS[24] / Math.pow(temperature, 3.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-    BE[3] = (aBWRS[25] / Math.pow(temperature, 2.0) + aBWRS[26] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-    BE[4] = (aBWRS[27] / Math.pow(temperature, 2.0) + aBWRS[28] / Math.pow(temperature, 3.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BE[0] = (aBWRS[19] / Math.pow(temperature, 2.0) + aBWRS[20] / Math.pow(temperature, 3.0));
+    // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BE[1] = (aBWRS[21] / Math.pow(temperature, 2.0) + aBWRS[22] / Math.pow(temperature, 4.0));
+    // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BE[2] = (aBWRS[23] / Math.pow(temperature, 2.0) + aBWRS[24] / Math.pow(temperature, 3.0));
+    // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BE[3] = (aBWRS[25] / Math.pow(temperature, 2.0) + aBWRS[26] / Math.pow(temperature, 4.0));
+    // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+    BE[4] = (aBWRS[27] / Math.pow(temperature, 2.0) + aBWRS[28] / Math.pow(temperature, 3.0));
+    // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
     BE[5] = (aBWRS[29] / Math.pow(temperature, 2.0) + aBWRS[30] / Math.pow(temperature, 3.0)
         + aBWRS[31] / Math.pow(temperature, 4.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
 

@@ -89,7 +89,6 @@ public class PHflash extends Flash {
     boolean correctFactor = true;
     double maxTemperature = 1e10;
     double minTemperature = 0.0;
-    
     do {
       if (Math.abs(error) > Math.abs(erorOld) && factor > 0.1 && correctFactor) {
         factor *= 0.5;

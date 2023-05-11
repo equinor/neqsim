@@ -18,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(WaterDewPointAnalyser.class);
+
   protected StreamInterface stream = null;
   private double referencePressure = 70.0;
   private String method = "Bukacek";
@@ -47,7 +48,8 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
   public void displayResult() {
     try {
       // System.out.println("total water production [kg/dag]" +
-      // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
+      // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles() *
+      // stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
       // System.out.println("water in phase 1 (ppm) " +
       // stream.getThermoSystem().getPhase(0).getComponent("water").getx()*1e6);
     } finally {
@@ -76,7 +78,7 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
       try {
         thermoOps.waterDewPointTemperatureMultiphaseFlash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       return tempFluid.getTemperature(unit);
     } else {
@@ -88,7 +90,7 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
       try {
         thermoOps.waterDewPointTemperatureFlash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       return tempFluid2.getTemperature(unit);
     }

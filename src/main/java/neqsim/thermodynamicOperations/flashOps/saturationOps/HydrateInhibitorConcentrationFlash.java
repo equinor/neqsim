@@ -74,10 +74,8 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
           system.addComponent(inhibitor, error * 0.01);
         } else {
           double newC = -error / derrordC;
-          double correction = newC * 0.5; // (newC -
-                                          // system.getPhase(0).getComponent(inhibitor).getNumberOfmoles())
-                                          // *
-                                          // 0.5;
+          double correction = newC * 0.5;
+          // (newC - system.getPhase(0).getComponent(inhibitor).getNumberOfmoles()) * 0.5;
 
           system.addComponent(inhibitor, correction);
         }
@@ -88,7 +86,7 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
 
         logger.info("error " + error);
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
       }
     } while ((Math.abs(error) > 1e-3 && iter < 100) || iter < 3);
   }

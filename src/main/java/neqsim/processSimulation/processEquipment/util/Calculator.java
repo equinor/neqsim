@@ -19,6 +19,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 public class Calculator extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Calculator.class);
+
   ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
   private ProcessEquipmentInterface outputVariable;
   String type = "sumTEG";
@@ -83,7 +84,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
       outputVariable.setCalculationIdentifier(id);
     } catch (Exception ex) {
       logger.info("flow rate error " + sum);
-      logger.error("error in calculator");//, ex.getMessage());
+      logger.error("error in calculator", ex);
     }
     setCalculationIdentifier(id);
   }

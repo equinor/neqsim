@@ -82,27 +82,20 @@ public class Fittings implements Serializable {
     public Fitting(String name) {
       this.fittingName = name;
 
-      neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-      java.sql.ResultSet dataSet = null;
-      try {
-        dataSet = database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"));
+      try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+          java.sql.ResultSet dataSet =
+              database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"))) {
         dataSet.next();
         LtoD = (Double.parseDouble(dataSet.getString("LtoD")));
         System.out.printf("LtoD " + LtoD);
       } catch (Exception ex) {
-        System.out.println("error in comp");
-        logger.error(ex.getMessage());
-      } finally {
-        try {
-          dataSet.close();
-        } catch (Exception ex) {
-          System.out.println("error closing database.....");
-          logger.error(ex.getMessage());
-        }
+        logger.error("error in comp", ex);
       }
     }
 
     /**
+     * Getter for parameter fittingName.
+     *
      * @return the fittingName
      */
     public String getFittingName() {
@@ -110,6 +103,8 @@ public class Fittings implements Serializable {
     }
 
     /**
+     * Setter for parameter fittingName.
+     *
      * @param fittingName the fittingName to set
      */
     public void setFittingName(String fittingName) {
@@ -117,6 +112,8 @@ public class Fittings implements Serializable {
     }
 
     /**
+     * Getter for parameter LtoD.
+     *
      * @return the LtoD
      */
     public double getLtoD() {
@@ -124,6 +121,8 @@ public class Fittings implements Serializable {
     }
 
     /**
+     * Setter for parameter LtoD.
+     *
      * @param LtoD the LtoD to set
      */
     public void setLtoD(double LtoD) {

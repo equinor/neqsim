@@ -17,6 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(CricondenbarAnalyser.class);
+
   protected StreamInterface stream = null;
 
   /**
@@ -68,7 +69,7 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
       thermoOps.calcPTphaseEnvelope(false, 1.);
       thermoOps.waitAndCheckForFinishedCalculation(15000);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return thermoOps.get("cricondenbar")[1];
   }
@@ -94,7 +95,7 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
     try {
       thermoOps.run();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return thermoOps.getSaturationPressure();
   }

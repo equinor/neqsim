@@ -38,7 +38,7 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
       // logger.info("pres " +
       // system.getPressure()*system.getPhases()[0].getComponent(0).getx());
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     // logger.info("pressure "+system.getPressure());

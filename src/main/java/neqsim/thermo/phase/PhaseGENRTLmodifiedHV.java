@@ -85,11 +85,10 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase);
     componentArray[compNumber] =
-        new ComponentGENRTLmodifiedHV(componentName, moles, molesInPhase, compNumber);
+        new ComponentGENRTLmodifiedHV(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -125,7 +124,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {

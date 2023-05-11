@@ -12,29 +12,29 @@ import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanical
  * @version $Id: $Id
  */
 public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for CompressorCostEstimate.
-     * </p>
-     *
-     * @param mechanicalEquipment a
-     *        {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
-     *        object
-     */
-    public CompressorCostEstimate(CompressorMechanicalDesign mechanicalEquipment) {
-        super(mechanicalEquipment);
-    }
+  /**
+   * <p>
+   * Constructor for CompressorCostEstimate.
+   * </p>
+   *
+   * @param mechanicalEquipment a
+   *        {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
+   *        object
+   */
+  public CompressorCostEstimate(CompressorMechanicalDesign mechanicalEquipment) {
+    super(mechanicalEquipment);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getTotaltCost() {
-        CompressorMechanicalDesign sepMecDesign = (CompressorMechanicalDesign) mechanicalEquipment;
+  /** {@inheritDoc} */
+  @Override
+  public double getTotaltCost() {
+    CompressorMechanicalDesign sepMecDesign = (CompressorMechanicalDesign) mechanicalEquipment;
 
-        sepMecDesign.getWeightTotal();
-        sepMecDesign.getVolumeTotal();
+    sepMecDesign.getWeightTotal();
+    sepMecDesign.getVolumeTotal();
 
-        return this.mechanicalEquipment.getWeightTotal();
-    }
+    return this.mechanicalEquipment.getWeightTotal();
+  }
 }

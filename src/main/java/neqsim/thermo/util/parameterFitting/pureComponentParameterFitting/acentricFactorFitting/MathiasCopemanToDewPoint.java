@@ -36,7 +36,7 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
     try {
       thermoOps.dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     // System.out.println("pres: " + system.getPressure());
     return system.getTemperature();
