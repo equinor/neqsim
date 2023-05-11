@@ -19,17 +19,13 @@ public class TwoPhaseSeparator extends Separator {
   SystemInterface thermoSystem;
 
   SystemInterface gasSystem;
-
   SystemInterface waterSystem;
-
   SystemInterface liquidSystem;
-
   SystemInterface thermoSystemCloned;
 
   StreamInterface inletStream;
   StreamInterface gasOutStream;
   StreamInterface liquidOutStream;
-  String name = new String();
 
   /**
    * <p>
