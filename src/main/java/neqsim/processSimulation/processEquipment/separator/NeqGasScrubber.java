@@ -20,15 +20,17 @@ public class NeqGasScrubber extends Separator {
   private static final long serialVersionUID = 1000;
 
   SystemInterface thermoSystem;
+
   SystemInterface gasSystem;
   SystemInterface waterSystem;
   SystemInterface liquidSystem;
   SystemInterface thermoSystemCloned;
-  ArrayList<SeparatorSection> scrubberSection = null;
+
   StreamInterface inletStream;
   StreamInterface gasOutStream;
   StreamInterface liquidOutStream;
-  String name = new String();
+
+  ArrayList<SeparatorSection> scrubberSection = null;
 
   /**
    * <p>
