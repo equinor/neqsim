@@ -47,7 +47,6 @@ public class pTphaseEnvelopeNew extends BaseOperation {
   double[][] pointsH2 = new double[4][];
   double[] pointsV = new double[10000];
 
-  ;
   double[][] pointsV2 = new double[4][];
   double[] pointsS = new double[10000];
   double[][] pointsS2 = new double[4][];
@@ -267,7 +266,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
        * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); }
        */
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 

@@ -571,7 +571,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     feedGasTrainB.setMultiPhaseCheck(false);
     feedGasTrainB.init(0);
 
-
     Stream satGasTrainB = new Stream("Saturated gas train B", feedGasTrainB);
     satGasTrainB.setFlowRate(309292.3538, "kg/hr");
     satGasTrainB.setTemperature(20, "C");
@@ -736,7 +735,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     heatEx.setFeedStream(1, makeupMixer.getOutletStream());
     heatEx2.setFeedStream(1, heatEx.getOutStream(1));
 
-
     Pump hotLeanTEGPump = new Pump("lean TEG LP pump", heatEx2.getOutStream(1));
     hotLeanTEGPump.setOutletPressure(44.44);
     hotLeanTEGPump.setIsentropicEfficiency(1);
@@ -753,7 +751,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     resycleLeanTEG.setOutletStream(TEGFeed);
     resycleLeanTEG.setPriority(200);
     resycleLeanTEG.setDownstreamProperty("flow rate");
-
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -784,7 +781,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.add(saturatedStrippingGas);
     operations.add(strippingGasTPsetter);
 
-
     operations.add(gasToReboiler);
     operations.add(column);
 
@@ -795,7 +791,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     operations.add(stripper);
     operations.add(recycleGasFromStripper);
-
 
     operations.add(makeupTEG);
     operations.add(makeupCalculator);
@@ -847,7 +842,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     double[] splitSmorbukk = {1.0 - 1e-10, 1e-10};
     SmorbukkSplit.setSplitFactors(splitSmorbukk);
 
-
     Stream dryFeedGasMidgard = new Stream("dry feed gas Midgard201", feedGas.clone());
     dryFeedGasMidgard.setFlowRate(10, "MSm3/day");
     dryFeedGasMidgard.setTemperature(5, "C");
@@ -864,16 +858,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
             waterSaturatedFeedGasMidgard);
     hydrateTAnalyserMidgard.setName("hydrate temperature analyser Midgard");
 
-
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
     double[] splitMidgard = {1e-10, 1 - 1e-10};
     MidgardSplit.setSplitFactors(splitMidgard);
 
-
     StaticMixer TrainB = new StaticMixer("mixer TrainB");
     TrainB.addStream(SmorbukkSplit.getSplitStream(1));
     TrainB.addStream(MidgardSplit.getSplitStream(1));
-
 
     Heater feedTPsetterToAbsorber = new Heater("TP of gas to absorber", TrainB.getOutletStream());
     feedTPsetterToAbsorber.setOutPressure(40.0, "bara");
@@ -1007,7 +998,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     Stream liquidToTrreatment = new Stream("water to treatment", sepregenGas.getLiquidOutStream());
 
-
     WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
     stripper.addSolventInStream(column.getLiquidOutStream());
     stripper.addGasInStream(strippingGas);
@@ -1026,7 +1016,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     heatEx.setFeedStream(1, stripper.getLiquidOutStream());
 
     heatEx2.setFeedStream(1, heatEx.getOutStream(1));
-
 
     Pump hotLeanTEGPump = new Pump("lean TEG LP pump", heatEx2.getOutStream(1));
     hotLeanTEGPump.setOutletPressure(40.0);
@@ -1061,7 +1050,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     resycleLeanTEG.setPriority(200);
     resycleLeanTEG.setDownstreamProperty("flow rate");
 
-
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(dryFeedGasSmorbukk);
@@ -1078,8 +1066,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.add(MidgardSplit);
 
     operations.add(TrainB);
-
-
 
     operations.add(feedTPsetterToAbsorber);
     operations.add(feedToAbsorber);
@@ -1116,8 +1102,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     operations.add(stripper);
     operations.add(recycleGasFromStripper);
-
-
 
     operations.add(hotLeanTEGPump);
     operations.add(makeupTEG);

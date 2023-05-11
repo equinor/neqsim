@@ -8,10 +8,16 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * This class defines a thermodynamic system using the Wilson GE model.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemGEWilson extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemGEWilson.
+   * </p>
+   */
   public SystemGEWilson() {
     super();
     modelName = "UNIFAC-GE-model";
@@ -27,8 +33,8 @@ public class SystemGEWilson extends SystemEos {
    * Constructor for SystemGEWilson.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemGEWilson(double T, double P) {
     super(T, P);
@@ -49,16 +55,16 @@ public class SystemGEWilson extends SystemEos {
    * Constructor for SystemGEWilson.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemGEWilson(double T, double P, boolean solidCheck) {
+  public SystemGEWilson(double T, double P, boolean checkForSolids) {
     this(T, P);
     attractiveTermNumber = 0;
     setNumberOfPhases(4);
     modelName = "UNIFAC-GE-model";
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);

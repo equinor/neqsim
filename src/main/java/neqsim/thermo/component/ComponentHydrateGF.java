@@ -15,8 +15,8 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentHydrateGF extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
 
-  double Ak[][] = new double[2][2]; // [structure][cavitytype]
-  double Bk[][] = new double[2][2]; // [structure][cavitytype]
+  double[][] Ak = new double[2][2]; // [structure][cavitytype]
+  double[][] Bk = new double[2][2]; // [structure][cavitytype]
   static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
   /**
@@ -33,10 +33,10 @@ public class ComponentHydrateGF extends ComponentHydrate {
       int compnumber) {
     super(component_name, moles, molesInPhase, compnumber);
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
     if (!component_name.equals("default")) {
-      try {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         // System.out.println("reading GF hydrate parameters ..............");
         try {
           dataSet =
@@ -65,10 +65,8 @@ public class ComponentHydrateGF extends ComponentHydrate {
       } finally {
         try {
           dataSet.close();
-          database.getConnection().close();
         } catch (Exception ex) {
           logger.error("error closing database.....", ex);
-          // logger.error(ex.getMessage());
         }
       }
     }

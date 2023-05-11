@@ -19,10 +19,19 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(MultiPhaseMeter.class);
-  protected StreamInterface stream = null;
-  double pressure = 10.0, temperature = 298.15;
-  String unitT, unitP;
 
+  protected StreamInterface stream = null;
+
+  double pressure = 10.0;
+  double temperature = 298.15;
+  String unitT;
+  String unitP;
+
+  /**
+   * <p>
+   * Constructor for MultiPhaseMeter.
+   * </p>
+   */
   public MultiPhaseMeter() {
     name = "Multi Phase Meter";
   }
@@ -127,7 +136,7 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getStackTrace());
+        logger.error(ex.getMessage(), ex);
         return Double.NaN;
       }
       // tempFluid.display();
@@ -196,8 +205,10 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
       tempFluid.initPhysicalProperties("density");
       return tempFluid.getPhase("gas").getCorrectedVolume()
           / tempFluid.getPhase("oil").getCorrectedVolume();
-    } else
+    } else {
+      logger.warn("Measurement type " + measurement + " is not found");
       return 0.0;
+    }
   }
 
   /**

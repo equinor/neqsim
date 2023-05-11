@@ -35,11 +35,10 @@ public class TestIonicInteractionParameterFitting_Sleipnernoacid {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-    NeqSimDataBase database = new NeqSimDataBase();
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM CO2KurCor WHERE
     // Reference = 'Rho1997' AND Temperature = 323.15 ");
-    ResultSet dataSet = database.getResultSet("SELECT * FROM Sleipner");
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM Sleipner")) {
       int i = 0;
       while (dataSet.next()) {
         i++;
@@ -83,7 +82,7 @@ public class TestIonicInteractionParameterFitting_Sleipnernoacid {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -351,7 +351,7 @@ public class OnshoreProcess1 {
       pipeLine1.setLegPositions(new double[] {0, 150000.0});
       pipeLine1.setOuterTemperatures(new double[] {0.0, 0.0});
 
-      //// IronIonSaturationStream ironSatStream = new
+      // IronIonSaturationStream ironSatStream = new
       // IronIonSaturationStream(pipeLine1.getOutStream());
 
       // // Land plant
@@ -416,7 +416,7 @@ public class OnshoreProcess1 {
       // MEGheater3.getOutStream());
       // valve4.setOutletPressure(1.05);
 
-      //// //ScalePotentialCheckStream stream_6 = new
+      // //ScalePotentialCheckStream stream_6 = new
       // ScalePotentialCheckStream(valve4.getOutStream());
 
       // Stream stream_7 = new Stream(valve4.getOutStream());
@@ -458,7 +458,7 @@ public class OnshoreProcess1 {
 
       operations.add(mixer1);
       operations.add(pipeLine1);
-      ////// operations.add(ironSatStream);
+      // operations.add(ironSatStream);
       operations.add(slugCatcher);
       operations.add(condensateheater1);
       // operations.add(gasHeater);
@@ -472,12 +472,12 @@ public class OnshoreProcess1 {
       // operations.add(valve3);
       // operations.add(separator3);
 
-      //// operations.add(streamToCO2removal);
+      // operations.add(streamToCO2removal);
 
       // operations.add(MEGheater3);
       // operations.add(valve4);
 
-      //// operations.add(stream_6);
+      // operations.add(stream_6);
       // operations.add(stream_7);
       // operations.add(separator4);
       // operations.add(stream_8);
@@ -566,7 +566,7 @@ public class OnshoreProcess1 {
               * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getMolarMass() * 3600.0
           + " kg gas/hr");
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

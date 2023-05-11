@@ -60,7 +60,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /**
    * Create deep copy.
-   * 
+   *
    * @return a deep copy of the unit operation/process equipment
    */
   public ProcessEquipmentInterface copy() {
@@ -200,12 +200,11 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     return getFluid().getPressure(unit);
   }
 
-
-   /** {@inheritDoc} */
-   @Override
-   public void setPressure(double pressure) {
-     getFluid().setPressure(pressure);
-   }
+  /** {@inheritDoc} */
+  @Override
+  public void setPressure(double pressure) {
+    getFluid().setPressure(pressure);
+  }
 
   /** {@inheritDoc} */
   @Override

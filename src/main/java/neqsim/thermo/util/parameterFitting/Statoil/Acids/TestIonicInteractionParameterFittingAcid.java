@@ -35,7 +35,6 @@ public class TestIonicInteractionParameterFittingAcid {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     int error = 1;
     double ID;
 
@@ -47,7 +46,8 @@ public class TestIonicInteractionParameterFittingAcid {
     double pressure;
     double[] guess = {0.0000708122};
 
-    try (ResultSet dataSet = database.getResultSet("SELECT * FROM Sleipner")) {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM Sleipner")) {
       int i = 0;
       logger.info("adding....");
       while (dataSet.next()) {
@@ -93,7 +93,7 @@ public class TestIonicInteractionParameterFittingAcid {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

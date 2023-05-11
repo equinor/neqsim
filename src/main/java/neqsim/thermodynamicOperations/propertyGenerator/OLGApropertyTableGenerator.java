@@ -24,10 +24,30 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double[] pressures, temperatureLOG, temperatures, pressureLOG = null;
-  double[][] ROG = null, DROGDP, DROHLDP, DROGDT, DROHLDT;
-  double[][] ROL, CPG, CPHL, HG, HHL, TCG, TCHL, VISG, VISHL, SIGGHL, SEG, SEHL, RS;
-  double TC, PC;
+  double[] pressures;
+  double[] temperatureLOG;
+  double[] temperatures;
+  double[] pressureLOG = null;
+  double[][] ROG = null;
+  double[][] DROGDP;
+  double[][] DROHLDP;
+  double[][] DROGDT;
+  double[][] DROHLDT;
+  double[][] ROL;
+  double[][] CPG;
+  double[][] CPHL;
+  double[][] HG;
+  double[][] HHL;
+  double[][] TCG;
+  double[][] TCHL;
+  double[][] VISG;
+  double[][] VISHL;
+  double[][] SIGGHL;
+  double[][] SEG;
+  double[][] SEHL;
+  double[][] RS;
+  double TC;
+  double PC;
 
   /**
    * <p>
@@ -90,7 +110,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -123,7 +143,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         try {
           thermoOps.TPflash();
         } catch (Exception ex) {
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex);
         }
         thermoSystem.init(3);
         thermoSystem.initPhysicalProperties();

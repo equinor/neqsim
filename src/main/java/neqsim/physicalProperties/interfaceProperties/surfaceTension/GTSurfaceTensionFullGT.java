@@ -94,9 +94,8 @@ public class GTSurfaceTensionFullGT {
     for (i = 0; i < ncomp; i++) {
       nv[i] = this.rho_ph1[i] * Pa;
     }
-    this.sys.setTotalFlowRate(1.0, "mol/sec"); // added by Even S 18/02/2020 (can not set molar
-                                               // composition if total
-                                               // flow is zero
+    this.sys.setTotalFlowRate(1.0, "mol/sec");
+    // added by Even S 18/02/2020 (can not set molar composition if total flow is zero
     this.sys.setMolarComposition(nv);
     this.sys.init_x_y();
     this.sys.setBeta(1.0);
@@ -112,7 +111,7 @@ public class GTSurfaceTensionFullGT {
     int i;
     int j;
     int k;
-    double cij[][] = new double[ncomp][ncomp];
+    double[][] cij = new double[ncomp][ncomp];
     double[] delta_mu = new double[this.ncomp];
     double[][] dmu_drho = new double[this.ncomp][this.ncomp];
     double sigma = 0.0;
@@ -123,8 +122,8 @@ public class GTSurfaceTensionFullGT {
     int N1;
     int N2;
     int Ngrid = (1 << Nlevel) + 1; // 2^(Nlevel) + 1
-    double rhomat[][] = new double[Ngrid][this.ncomp];
-    double rhotmp[][];
+    double[][] rhomat = new double[Ngrid][this.ncomp];
+    double[][] rhotmp;
     double[] xgrid;
 
     int Nrefinements = 7;
@@ -146,7 +145,7 @@ public class GTSurfaceTensionFullGT {
     double Lnew; // Half-width of domain
     double[] xgridNew; // Grid
     double alpha; // Interpolation weight
-    double drhodz[][]; // Density gradient
+    double[][] drhodz; // Density gradient
     int Nhalf; // Half the number of intervals
     int Nideal; // Ideal number of grid points, current spacing
     int NgridNew; // Doubled mesh
@@ -176,8 +175,8 @@ public class GTSurfaceTensionFullGT {
       this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
     }
 
-    /// @todo Change to \f$c_{ij} = (1-\beta_{ij})\sqrt{c_ic_j}\f$ when a
-    /// NeqSIM function for evaluating \f$\beta_{ij}\f$ becomes available.
+    // @todo Change to \f$c_{ij} = (1-\beta_{ij})\sqrt{c_ic_j}\f$ when a
+    // NeqSIM function for evaluating \f$\beta_{ij}\f$ becomes available.
     for (i = 0; i < ncomp; i++) {
       for (j = i; j < ncomp; j++) {
         cij[i][j] = 1.e18 * Math.sqrt(this.ci[i] * this.ci[j]); // Use nm as unit for length
@@ -289,10 +288,10 @@ public class GTSurfaceTensionFullGT {
     int Ngrid = rhomat.length;
     double H = 2.0 * L / (Ngrid - 1); // Grid spacing
     double[][][] Jac = new double[Ngrid][ncomp][ncomp];
-    double dmu[][] = new double[Ngrid][ncomp];
-    double rres[][] = new double[Ngrid][ncomp];
-    double rrho_prev[][] = new double[Ngrid][ncomp];
-    double drhodz[][] = new double[Ngrid - 1][ncomp];
+    double[][] dmu = new double[Ngrid][ncomp];
+    double[][] rres = new double[Ngrid][ncomp];
+    double[][] rrho_prev = new double[Ngrid][ncomp];
+    double[][] drhodz = new double[Ngrid - 1][ncomp];
     double maxrelchange;
     double urel_Newton;
     double sigma = 0.0;
@@ -437,8 +436,8 @@ public class GTSurfaceTensionFullGT {
    * @param rhomat an array of {@link double} objects
    * @param ncomp a int
    */
-  public static void directsolve(double rres[][], double[][][] JJ, double C[][], double H,
-      int Ngrid, double rhomat[][], int ncomp) {
+  public static void directsolve(double[][] rres, double[][][] JJ, double[][] C, double H,
+      int Ngrid, double[][] rhomat, int ncomp) {
     int i;
     int j;
     int k;
@@ -452,7 +451,6 @@ public class GTSurfaceTensionFullGT {
 
     BandMatrix Jac = new BandMatrix(Neq, kl, ku);
     DenseMatrix bb = new DenseMatrix(Neq, 1);
-    DenseMatrix drho = new DenseMatrix(Neq, 1);
 
     // Construct right hand side
     iglob = 0; // Global index
@@ -505,6 +503,7 @@ public class GTSurfaceTensionFullGT {
       }
     }
 
+    DenseMatrix drho = new DenseMatrix(Neq, 1);
     Jac.solve(bb, drho);
 
     iglob = 0;
@@ -532,8 +531,8 @@ public class GTSurfaceTensionFullGT {
    * @param ncomp a int
    * @return sigma The surface tension [N/m]
    */
-  public static double sigmaCalc(double h, double rrho[][], double C[][], boolean highOrder,
-      double drhodz[][], int ncomp) {
+  public static double sigmaCalc(double h, double[][] rrho, double[][] C, boolean highOrder,
+      double[][] drhodz, int ncomp) {
     int i;
     int j;
     int k;
@@ -576,7 +575,7 @@ public class GTSurfaceTensionFullGT {
    * @param drhodz an array of {@link double} objects
    * @return Interface width (length scale) [nm]
    */
-  public double calc_std_integral(double[] z, double C[][], double drhodz[][]) {
+  public double calc_std_integral(double[] z, double[][] C, double[][] drhodz) {
     double h1 = z[1] - z[0];
     double mean;
     int Ngrid = drhodz.length + 1;

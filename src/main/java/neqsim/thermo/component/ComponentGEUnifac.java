@@ -23,6 +23,7 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentGEUnifac extends ComponentGEUniquac {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentGEUnifac.class);
 
   ArrayList<UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();
   UNIFACgroup[] unifacGroupsArray = new UNIFACgroup[0];
@@ -31,7 +32,6 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   double Q = 0.0;
   double R = 0.0;
   int numberOfUnifacSubGroups = 133;
-  static Logger logger = LogManager.getLogger(ComponentGEUnifac.class);
 
   /**
    * <p>
@@ -57,8 +57,8 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
       logger.info("adding unifac pseudo.." + intNumb);
       return;
     }
-    try {
-      neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
         dataSet =
@@ -80,10 +80,8 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         }
       }
 
-      dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

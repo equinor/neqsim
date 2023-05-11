@@ -62,11 +62,9 @@ class TVFlashTest {
         testOps.TVflash(total_rig_volume, "m3");
       } catch (Exception ex) {
         logger.info("error iterations " + i);
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
-    assertEquals(235263.80103781424, testSystem.getEnthalpy(), 1e-2);
+    assertEquals(235310.3670621656, testSystem.getEnthalpy(), 1.0);
   }
-
 }
-

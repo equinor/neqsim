@@ -50,7 +50,7 @@ public class MEGwaterComplexFlash {
       testOps.calcSolidComlexTemperature("TEG", "water");
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     logger.info("temperature " + (testSystem.getTemperature() - 273.15));
     logger.info("activity water " + testSystem.getPhase(1).getActivityCoefficient(2));

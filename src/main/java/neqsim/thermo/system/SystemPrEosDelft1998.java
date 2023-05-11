@@ -9,10 +9,16 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemPrEosDelft1998 extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemPrEosDelft1998.
+   * </p>
+   */
   public SystemPrEosDelft1998() {
     super();
     modelName = "PR Delft1998 EOS";
@@ -24,8 +30,8 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
    * Constructor for SystemPrEosDelft1998.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPrEosDelft1998(double T, double P) {
     super(T, P);
@@ -38,11 +44,11 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
    * Constructor for SystemPrEosDelft1998.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemPrEosDelft1998(double T, double P, boolean solidCheck) {
+  public SystemPrEosDelft1998(double T, double P, boolean checkForSolids) {
     this(T, P);
     attractiveTermNumber = 7;
     modelName = "PR Delft1998 EOS";

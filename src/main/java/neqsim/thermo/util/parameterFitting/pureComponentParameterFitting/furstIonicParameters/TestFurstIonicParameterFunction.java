@@ -34,7 +34,6 @@ public class TestFurstIonicParameterFunction {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // double[] guess = {0.0000001880, 0.0000014139, 0.0000284666, 0.0000389043,
     // -0.0000000451, 0.0000088136};
     // double[] guess = {0.0000250998, 0.0000198635, -0.0000000311, -0.0000006630};
@@ -49,7 +48,8 @@ public class TestFurstIonicParameterFunction {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
     // ion1='Na+' AND ion2='Cl-'");
     int numb = 0;
-    try (ResultSet dataSet = database
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database
         .getResultSet("SELECT * FROM ionicData WHERE ion1<>'H3Oplus2' ORDER BY ion1,ion2,x2")) {
       logger.info("adding....");
       while (dataSet.next() && numb < 22265) {
@@ -93,8 +93,9 @@ public class TestFurstIonicParameterFunction {
       logger.error("database error: ", ex);
     }
 
-    try (ResultSet dataSet =
-        database.getResultSet("SELECT * FROM ionicData WHERE ion1='Na+' AND ion2='Cl-'")) {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet =
+            database.getResultSet("SELECT * FROM ionicData WHERE ion1='Na+' AND ion2='Cl-'")) {
       // dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
       // ion1<>'H3Oplus2' AND IonicActivity>=0.01");
       // dataSet = database.getResultSet( "SELECT * FROM ionicData WHERE
@@ -136,7 +137,8 @@ public class TestFurstIonicParameterFunction {
       logger.error("database error: ", ex);
     }
 
-    try (ResultSet dataSet =
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet =
         database.getResultSet("SELECT * FROM saltdens WHERE ion1='Na+' AND ion2='Cl-'")) {
       logger.info("fitting to ionic density");
       while (!dataSet.next()) {

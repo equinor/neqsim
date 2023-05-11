@@ -38,7 +38,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /**
    * Constructor for Splitter.
-   * 
+   *
    * @param name name of splitter
    */
   public ComponentSplitter(String name) {
@@ -53,17 +53,31 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
-   *
    */
   public ComponentSplitter(String name, StreamInterface inletStream) {
     this(name);
     this.setInletStream(inletStream);
   }
 
+  /**
+   * <p>
+   * setSplitFactors.
+   * </p>
+   *
+   * @param factors an array of {@link double} objects
+   */
   public void setSplitFactors(double[] factors) {
     splitFactor = factors;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>inletStream</code>.
+   * </p>
+   *
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   */
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;
     splitStream = new Stream[2];
@@ -72,10 +86,18 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
         splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>splitStream</code>.
+   * </p>
+   *
+   * @param i a int
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
   public StreamInterface getSplitStream(int i) {
     return splitStream[i];
   }
@@ -110,6 +132,5 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-  }
+  public void displayResult() {}
 }

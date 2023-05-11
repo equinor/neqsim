@@ -154,13 +154,6 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
       int numberOfComponents, int type) {
     Wi = ((PhaseModifiedFurstElectrolyteEosMod2004) phase).calcWi(componentNumber, phase, temp,
@@ -254,7 +247,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
     FSR2 = dFSR2dN(phase, numberOfComponents, temperature, pressure);
     FLR = dFLRdN(phase, numberOfComponents, temperature, pressure);
     FBorn = dFBorndN(phase, numberOfComponents, temperature, pressure);
-    // System.out.println("phase " + phase.getPhaseType());
+    // System.out.println("phase " + phase.getType());
     // System.out.println("name " + componentName);
     // System.out.println("Fsup: " + super.dFdN(phase,
     // numberOfComponents,temperature, pressure));

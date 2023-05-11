@@ -34,7 +34,6 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase(); // AND reference<>'Lindboe2002'
     // AND
                                                                                                                                           // Reference='Houghton1957'
                                                                                                                                           // AND
@@ -51,7 +50,8 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
     double parameterGuess[] = {1924, 4938}; // , -1.11, 1.24};
     // double parameterGuess[] = {0.0471326591};
 
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase(); // AND reference<>'Lindboe2002'
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM hcglycollldata WHERE comp1='n-heptane' AND comp2='MEG' AND reference='Lindboe2002' ORDER BY Temperature,Pressure")) {
       int p = 0;
       logger.info("adding....");
@@ -84,11 +84,11 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
-
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM HCGlycolLLdata WHERE comp1='n-heptane' AND comp2='MEG' AND reference='Lindboe2002' ORDER BY Temperature,Pressure")) {
       int p = 0;
       logger.info("adding....");
@@ -120,7 +120,7 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

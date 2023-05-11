@@ -22,6 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class LNGship
     extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(LNGship.class);
 
   double[] temperature = null;
   double dailyBoilOffRatio = 0.005;
@@ -67,7 +68,6 @@ public class LNGship
   private String[][] resultTable = null;
   private boolean backCalculate = false;
   double endVolume = 0.0;
-  static Logger logger = LogManager.getLogger(LNGship.class);
 
   /**
    * <p>
@@ -119,7 +119,7 @@ public class LNGship
         thermoOperations.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     getThermoSystem().init(0);
 
@@ -156,7 +156,7 @@ public class LNGship
         thermoOperations.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     logger.info("temperature start " + getThermoSystem().getTemperature());
     // todo: getTimeSeries().init(this);
@@ -223,7 +223,7 @@ public class LNGship
             thermoOperations.bubblePointTemperatureFlash();
           }
         } catch (Exception ex) {
-          logger.error(ex.getMessage());
+          logger.error(ex.getMessage(), ex);
         }
         double[] xgas = new double[getThermoSystem().getPhase(0).getNumberOfComponents()];
 
@@ -305,8 +305,8 @@ public class LNGship
       double derrordn = (oldVolume - oldoldVolume) / (oldmolarBoilOffRate - oldoldmolarBoilOffRate);
       boilOffCorrection = (volume[numberOffTimeSteps - 1] - endVolume) / derrordn;
       if (iterations > 1) {
-        molarBoilOffRate += boilOffCorrection; // (volume[numberOffTimeSteps - 1] -
-                                               // endVolume) / derrordn;
+        molarBoilOffRate += boilOffCorrection;
+        // (volume[numberOffTimeSteps - 1] - endVolume) / derrordn;
       } else {
         molarBoilOffRate = molarBoilOffRate * volume[numberOffTimeSteps - 1] / endVolume;
       }
@@ -318,7 +318,7 @@ public class LNGship
       thermoOperations.bubblePointTemperatureFlash();
       calcIdentifier = id;
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

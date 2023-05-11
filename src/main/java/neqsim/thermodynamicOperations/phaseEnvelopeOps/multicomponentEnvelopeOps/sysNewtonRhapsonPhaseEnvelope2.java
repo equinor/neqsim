@@ -119,7 +119,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         speceqmin = system.getPhase(0).getComponents()[i].getComponentNumber();
       }
     }
-    avscp = 0.3; // (system.getPhase(0).getComponents()[speceq].getTC()-system.getPhase(0).getComponents()[speceqmin].getTC())/300.0;
+    avscp = 0.3;
+    // (system.getPhase(0).getComponents()[speceq].getTC() -
+    // system.getPhase(0).getComponents()[speceqmin].getTC()) / 300.0;
     logger.info("avscp: " + avscp);
     dTmax = 10.0; // avscp*10;
     dPmax = 10.0; // avscp*10;
@@ -508,5 +510,6 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
      * test.setx(constants); while (test.nonsol()>1.0e-8) { constants=test.getx();
      * logger.info(constants[0]+" "+constants[1]); } test.nonsol(); constants=test.getf();
      * logger.info(constants[0]+" "+constants[1]); System.exit(0);
-     */ }
+     */
+  }
 }

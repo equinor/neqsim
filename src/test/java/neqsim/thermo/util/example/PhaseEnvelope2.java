@@ -40,7 +40,7 @@ public class PhaseEnvelope2 {
       testOps.calcPTphaseEnvelope();
       testOps.displayResult();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

@@ -6,6 +6,8 @@
 
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.util.NamedBaseClass;
 
 /**
@@ -18,7 +20,10 @@ import neqsim.util.NamedBaseClass;
  */
 public class Packing extends NamedBaseClass implements PackingInterface {
   private static final long serialVersionUID = 1L;
-  double voidFractionPacking = 0.951, size = 0, surfaceAreaPrVolume = 112.6;
+  static Logger logger = LogManager.getLogger(Packing.class);
+  double voidFractionPacking = 0.951;
+  double size = 0;
+  double surfaceAreaPrVolume = 112.6;
 
   /**
    * <p>
@@ -39,9 +44,8 @@ public class Packing extends NamedBaseClass implements PackingInterface {
    */
   public Packing(String name) {
     super(name);
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       System.out.println("init packing");
-      neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
       java.sql.ResultSet dataSet =
           database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
       dataSet.next();
@@ -49,11 +53,8 @@ public class Packing extends NamedBaseClass implements PackingInterface {
       surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));
       voidFractionPacking = Double.parseDouble(dataSet.getString("voidFraction"));
       System.out.println("packing ok");
-    }
-
-    catch (Exception ex) {
-      String err = ex.toString();
-      System.out.println(err);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -68,9 +69,8 @@ public class Packing extends NamedBaseClass implements PackingInterface {
    */
   public Packing(String name, String material, int size) {
     super(name);
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       System.out.println("init packing");
-      neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
       java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='"
           + name + "' AND size=" + size + " AND material='" + material + "'"));
       dataSet.next();
@@ -78,11 +78,8 @@ public class Packing extends NamedBaseClass implements PackingInterface {
       surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));
       voidFractionPacking = Double.parseDouble(dataSet.getString("voidFraction"));
       System.out.println("packing ok");
-    }
-
-    catch (Exception ex) {
-      String err = ex.toString();
-      System.out.println(err);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 

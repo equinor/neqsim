@@ -8,10 +8,16 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the PR-CPA equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemPrCPA extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemPrCPA.
+   * </p>
+   */
   public SystemPrCPA() {
     super();
     modelName = "CPA-PR-EOS";
@@ -26,8 +32,8 @@ public class SystemPrCPA extends SystemPrEos {
    * Constructor for SystemPrCPA.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPrCPA(double T, double P) {
     super(T, P);
@@ -45,12 +51,12 @@ public class SystemPrCPA extends SystemPrEos {
    * Constructor for SystemPrCPA.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemPrCPA(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemPrCPA(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     modelName = "CPA-PR-EOS";
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrCPA();

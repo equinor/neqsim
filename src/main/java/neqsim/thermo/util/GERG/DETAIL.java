@@ -79,14 +79,14 @@ public class DETAIL {
      double K3;
      double dPdDsave;
 
-    /**
-     * <p>
-     * sq.
-     * </p>
-     *
-     * @param x a double
-     * @return a double
-     */
+     /**
+      * <p>
+      * sq.
+      * </p>
+      *
+      * @param x a double
+      * @return a double
+      */
      public double sq(double x) {
         return x * x;
     }
@@ -661,7 +661,7 @@ public class DETAIL {
         }
     }
 
-    /// The following routine must be called once before any other routine.
+    // The following routine must be called once before any other routine.
     /**
      * <p>
      * SetupDetail.

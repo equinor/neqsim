@@ -60,9 +60,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     double actH;
     double[] K = new double[4];
     boolean useReaction = false;
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+      java.sql.ResultSet dataSet = null;
       if (system.getModelName().equals("Kent Eisenberg-model")) {
         // System.out.println("selecting Kent-Eisenberg reaction set");
         dataSet = database.getResultSet("SELECT * FROM reactiondatakenteisenberg");
@@ -89,12 +88,11 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
           r = Double.parseDouble(dataSet.getString("r"));
           actH = Double.parseDouble(dataSet.getString("ACTENERGY"));
 
-          java.sql.ResultSet dataSet2 = null;
-          try {
-            neqsim.util.database.NeqSimDataBase database2 =
-                new neqsim.util.database.NeqSimDataBase();
-            dataSet2 = database2
-                .getResultSet("SELECT * FROM stoccoefdata where REACNAME='" + reacname + "'");
+          try (
+              neqsim.util.database.NeqSimDataBase database2 =
+                  new neqsim.util.database.NeqSimDataBase();
+              java.sql.ResultSet dataSet2 = database2
+                  .getResultSet("SELECT * FROM stoccoefdata where REACNAME='" + reacname + "'")) {
             dataSet2.next();
             do {
               // System.out.println("name of cop "
@@ -103,14 +101,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
               stocCoef.add((dataSet2.getString("stoccoef")).trim());
             } while (dataSet2.next());
           } catch (Exception ex) {
-            logger.error(ex.getMessage());
-          } finally {
-            try {
-              dataSet2.close();
-            } catch (Exception ex) {
-              logger.error(ex.getMessage());
-            }
+            logger.error(ex.getMessage(), ex);
           }
+
           nameArray = new String[names.size()];
           coefArray = new double[nameArray.length];
           for (int i = 0; i < nameArray.length; i++) {
@@ -125,18 +118,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         }
       } while (dataSet.next());
     } catch (Exception ex) {
-      System.out.println("could not add reacton: " + ex.toString());
-    } finally {
-      try {
-        dataSet.close();
-      } catch (Exception ex) {
-        logger.error(ex.getMessage());
-      }
-    }
-    try {
-      database.getConnection().close();
-    } catch (Exception ex) {
-      System.out.println("err closing database");
+      logger.error("could not add reacton: ", ex);
     }
   }
 
@@ -279,7 +261,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         reactionNumber++;
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
 
     /*
@@ -474,23 +456,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     // System.out.println("reac matrix ");
     // reacMat.print(10,10);
     return reacMat;
-  }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  @SuppressWarnings("unused")
-  public static void main(String[] args) {
-    ChemicalReactionList test = new ChemicalReactionList();
-    // test.readReactions();
-    // String[] test2 = {"water","MDEA"};
-    // test.removeJunkReactions(test2);
-    // String[] comp = test.getAllComponents();
-    // System.out.println("components: " + comp.length);
   }
 
   /**

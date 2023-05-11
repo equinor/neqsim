@@ -91,9 +91,15 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
   @Override
   public void run() {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
-    int iterations = 0, maxNumberOfIterations = 100;
-    double deriv = 0, funk = 0, funkOld = 0;
-    double maxTemperature = -500, minTemperature = 1e6, oldTemperature = 0.0, newTemp = 0.0;
+    int iterations = 0;
+    int maxNumberOfIterations = 100;
+    double deriv = 0;
+    double funk = 0;
+    double funkOld = 0;
+    double maxTemperature = -500;
+    double minTemperature = 1e6;
+    double oldTemperature = 0.0;
+    double newTemp = 0.0;
     double SolidFugCoeff = 0.0;
     int numbComponents = system.getPhases()[0].getNumberOfComponents();
     String[] FCompNames = new String[numbComponents];
@@ -128,7 +134,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                 / system.getPhase(i).getComponents()[k].getFugacityCoefficient();
           }
           logger.info("funk " + funk);
-          if (iterations > 1) {// && oldPhaseType == system.getPhase(0).getPhaseType()) {
+          if (iterations > 1) { // && oldPhaseType == system.getPhase(0).getType()) {
             deriv = (funk - funkOld) / (system.getTemperature() - oldTemperature);
           } else {
             deriv = funk * 100.0;
@@ -138,7 +144,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
             // iterations));
           }
 
-          logger.info("phase type " + system.getPhase(0).getPhaseType());
+          logger.info("phase type " + system.getPhase(0).getType());
           newTemp = system.getTemperature() - 0.9 * funk / deriv;
           logger.info("temperature " + system.getTemperature());
           oldTemperature = system.getTemperature();

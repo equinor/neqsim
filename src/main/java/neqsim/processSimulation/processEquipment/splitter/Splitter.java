@@ -33,8 +33,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   double[] flowRates;
   String flowUnit = "mole/sec";
 
-
-
   /**
    * <p>
    * Constructor for Splitter.
@@ -123,6 +121,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       splitFactor[i] = splitFact[i] / sum;
     }
     splitNumber = splitFact.length;
+    flowRates = null;
     setInletStream(inletStream);
   }
 
@@ -131,7 +130,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * setFlowRates.
    * </p>
    *
-   * @param setFlowRates an array of {@link double} objects
+   * @param flowRates an array of {@link double} objects
+   * @param flowUnit a {@link java.lang.String} object
    */
   public void setFlowRates(double[] flowRates, String flowUnit) {
     if (flowRates.length != splitNumber) {
@@ -139,42 +139,39 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     }
     this.flowRates = flowRates;
     this.flowUnit = flowUnit;
+
+    splitNumber = flowRates.length;
+    splitFactor = new double[flowRates.length];
+    splitFactor[0] = 1.0;
+    setInletStream(inletStream);
+  }
+
+  /**
+   * <p>calcSplitFactors.</p>
+   */
+  public void calcSplitFactors() {
     double sum = 0.0;
     for (int i = 0; i < flowRates.length; i++) {
-      if (flowRates[i] > -0.1) {
+      if (flowRates[i] > 0.0) {
         sum += flowRates[i];
       }
     }
 
+    double missingFlowRate = 0.0;
     for (int i = 0; i < flowRates.length; i++) {
       if (flowRates[i] < -0.1) {
-        flowRates[i] = inletStream.getFlowRate(flowUnit) - sum;
+        missingFlowRate = inletStream.getFlowRate(flowUnit) - sum;
+        sum += missingFlowRate;
       }
     }
+
     splitFactor = new double[flowRates.length];
     for (int i = 0; i < flowRates.length; i++) {
       splitFactor[i] = flowRates[i] / sum;
-    }
-    splitNumber = splitFactor.length;
-    setInletStream(inletStream);
-  }
-
-  public void calcSplitFactors() {
-    double sum = 0.0;
-    for (int i = 0; i < splitNumber; i++) {
-      if (flowRates[i] > -0.1) {
-        splitFactor[i] = flowRates[i] / inletStream.getFlowRate(flowUnit);
-        sum += splitFactor[i];
-      }
-    }
-
-    for (int i = 0; i < splitNumber; i++) {
       if (flowRates[i] < -0.1) {
-        splitFactor[i] = 1 - sum;
+        splitFactor[i] = missingFlowRate / sum;
       }
     }
-
-
   }
 
   /** {@inheritDoc} */
@@ -185,11 +182,10 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       splitStream = new Stream[splitNumber];
       try {
         for (int i = 0; i < splitNumber; i++) {
-          // System.out.println("splitting...." + i);
           splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
   }

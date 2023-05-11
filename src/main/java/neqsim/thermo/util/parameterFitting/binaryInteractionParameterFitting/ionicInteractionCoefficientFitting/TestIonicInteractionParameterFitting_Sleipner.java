@@ -34,11 +34,10 @@ public class TestIonicInteractionParameterFitting_Sleipner {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM Sleipner");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM Sleipneracid");
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
+      ResultSet dataSet = database.getResultSet("SELECT * FROM Sleipner");
 
-    try {
       int i = 0;
       while (dataSet.next()) {
         i++;
@@ -49,7 +48,7 @@ public class TestIonicInteractionParameterFitting_Sleipner {
         // double guess[]={0.0014020738,-3.053262}; //AAD 11.44%
         // double guess[]={0.0011258675,-9.282787e-4,-1.5524349158}; //AAD 10.74 %
         double[] guess = {1.3053127e-3, -2.546896e-4, -0.975168}; // AAD 4.02 %
-        double bounds[][] = {{-1e-2, 1e-2}, {-1e-3, 0}, {-1, 1}};
+        double[][] bounds = {{-1e-2, 1e-2}, {-1e-3, 0}, {-1, 1}};
 
         double ID = Double.parseDouble(dataSet.getString("ID"));
         double pressure = Double.parseDouble(dataSet.getString("Pressure"));
@@ -82,7 +81,7 @@ public class TestIonicInteractionParameterFitting_Sleipner {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -44,10 +44,10 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
           }
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     } finally {
       try {
         if (dataSet != null) {
@@ -55,7 +55,7 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
         }
       } catch (Exception ex) {
         System.out.println("error closing database.....GasScrubberDesignStandard");
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
   }

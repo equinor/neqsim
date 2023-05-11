@@ -62,7 +62,7 @@ public class ThreePhaseSeparator extends Separator {
 
   /**
    * Constructor for ThreePhaseSeparator.
-   * 
+   *
    * @param name name of separator
    */
   public ThreePhaseSeparator(String name) {
@@ -188,8 +188,8 @@ public class ThreePhaseSeparator extends Separator {
       gasOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }
 
-    //// liquidSystem = thermoSystem.phaseToSystem(1);
-    //// liquidOutStream.setThermoSystem(liquidSystem);
+    // quidSystem = thermoSystem.phaseToSystem(1);
+    // liquidOutStream.setThermoSystem(liquidSystem);
     if (thermoSystem.hasPhaseType("oil")) {
       // thermoSystem.display();
       liquidOutStream.setThermoSystemFromPhase(thermoSystem, "oil");
@@ -199,8 +199,8 @@ public class ThreePhaseSeparator extends Separator {
       liquidOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }
 
-    //// waterSystem = thermoSystem.phaseToSystem(2);
-    //// waterOutStream.setThermoSystem(waterSystem);
+    // waterSystem = thermoSystem.phaseToSystem(2);
+    // waterOutStream.setThermoSystem(waterSystem);
     if (thermoSystem.hasPhaseType("aqueous")) {
       waterOutStream.setThermoSystemFromPhase(thermoSystem, "aqueous");
       waterOutStream.run(id);

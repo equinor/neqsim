@@ -42,7 +42,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
 
   protected Matrix parameterCorrelationMatrix;
 
-  protected double xVal[][];
+  protected double[][] xVal;
   protected double[] expVal;
   protected double[] absDev;
 
@@ -716,19 +716,19 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
       // displayGraph();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     try {
       displayResult();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     try {
       displayValues();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -740,25 +740,25 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
       // displayGraph();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     try {
       displayResult();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     try {
       displayValues();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     try {
       displayResultWithDeviation();
     } catch (Exception ex) {
       System.out.println("could not calc deviation");
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

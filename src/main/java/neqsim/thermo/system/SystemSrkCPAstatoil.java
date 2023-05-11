@@ -8,6 +8,7 @@ import neqsim.thermo.phase.PhaseSrkCPAs;
  * This class defines a thermodynamic system using the CPA-EOS of Equinor equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemSrkCPAstatoil extends SystemSrkCPAs {
   private static final long serialVersionUID = 1000;
@@ -44,11 +45,10 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
-   * @param solidCheck a boolean variable specifying if solid phase check and calculation should be
-   *        done
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemSrkCPAstatoil(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemSrkCPAstatoil(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     modelName = "CPAs-SRK-EOS-statoil";
     attractiveTermNumber = 15;
     for (int i = 0; i < numberOfPhases; i++) {

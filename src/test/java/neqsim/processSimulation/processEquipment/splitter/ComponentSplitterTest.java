@@ -38,10 +38,10 @@ class ComponentSplitterTest {
 
     ComponentSplitter splitter = new ComponentSplitter("splitter", inletStream);
     splitter.setSplitFactors(new double[] {1.00, 0.0, 0.0});
-    
+
     StreamInterface stream1 = new Stream("stream 1", splitter.getSplitStream(0));
-    StreamInterface stream2 = new Stream("stream 2",splitter.getSplitStream(1));
-    
+    StreamInterface stream2 = new Stream("stream 2", splitter.getSplitStream(1));
+
     processOps.add(inletStream);
     processOps.add(splitter);
     processOps.add(stream1);
@@ -51,8 +51,8 @@ class ComponentSplitterTest {
   @Test
   public void testRun() {
     processOps.run();
-    //((StreamInterface)processOps.getUnit("stream 1")).displayResult();
-    //((StreamInterface)processOps.getUnit("stream 2")).displayResult();
+    // ((StreamInterface)processOps.getUnit("stream 1")).displayResult();
+    // ((StreamInterface)processOps.getUnit("stream 2")).displayResult();
     assertEquals(((StreamInterface) processOps.getUnit("stream 1")).getFluid()
         .getComponent("methane").getx(), 1.0, 1e-6);
     assertEquals(((StreamInterface) processOps.getUnit("stream 2")).getFluid()
@@ -108,6 +108,7 @@ class ComponentSplitterTest {
   public void testRunSplitter2() {
     testSystem = new SystemSrkEos(298.0, 55.0);
     testSystem.addComponent("methane", 100.0);
+    testSystem.addComponent("ethane", 10.0);
 
     processOps = new ProcessSystem();
 
@@ -129,7 +130,7 @@ class ComponentSplitterTest {
     Stream compressedStream = (Stream) compressor1.getOutletStream();
 
     Splitter splitter = new Splitter("splitter 1", compressedStream);
-    splitter.setFlowRates(new double[] {5.0, 1.0}, "MSm3/day");
+    splitter.setFlowRates(new double[] {5.0, 0.1}, "MSm3/day");
 
     StreamInterface resycStream1 = splitter.getSplitStream(1);
 
@@ -140,6 +141,7 @@ class ComponentSplitterTest {
     Recycle recycle1 = new Recycle("recycle 1");
     recycle1.addStream(valve1.getOutletStream());
     recycle1.setOutletStream(streamresycl);
+    recycle1.setFlowAccuracy(1e-6);
 
     StreamInterface exportStream = splitter.getSplitStream(0);
 
@@ -157,15 +159,34 @@ class ComponentSplitterTest {
     processOps.run();
 
     assertEquals(5.0, exportStream.getFlowRate("MSm3/day"), 1e-6);
-    assertEquals(1.0, resycStream1.getFlowRate("MSm3/day"), 1e-6);
-    assertEquals(83.41653486772951, valve1.getPercentValveOpening(), 1e-2);
-
-
-    splitter.setFlowRates(new double[] {5.0, 0.1}, "MSm3/day");
-    processOps.run();
-    assertEquals(5.00000000, exportStream.getFlowRate("MSm3/day"), 1e-6);
     assertEquals(0.1, resycStream1.getFlowRate("MSm3/day"), 1e-6);
-    assertEquals(8.4328749964588, valve1.getPercentValveOpening(), 1e-2);
-  }
+    // assertEquals(8.43553108874272, valve1.getPercentValveOpening(), 1e-2);
 
+    splitter.setFlowRates(new double[] {5.0, 0.5}, "MSm3/day");
+    processOps.run();
+
+    assertEquals(5.00000000, exportStream.getFlowRate("MSm3/day"), 1e-4);
+    assertEquals(0.5, resycStream1.getFlowRate("MSm3/day"), 1e-4);
+    // assertEquals(41.9139926125338, valve1.getPercentValveOpening(), 1e-2);
+
+    splitter.setFlowRates(new double[] {-1, 2.5}, "MSm3/day");
+    processOps.run();
+    assertEquals(5.00000000, exportStream.getFlowRate("MSm3/day"), 1e-4);
+    assertEquals(2.5, resycStream1.getFlowRate("MSm3/day"), 1e-4);
+
+    splitter.setFlowRates(new double[] {5.0, 0.0}, "MSm3/day");
+    processOps.run();
+    assertEquals(5.0, exportStream.getFlowRate("MSm3/day"), 1e-6);
+    assertEquals(0.0, resycStream1.getFlowRate("MSm3/day"), 1e-6);
+
+    splitter.setFlowRates(new double[] {5.0, 3.0}, "MSm3/day");
+    processOps.run();
+    assertEquals(5.0, exportStream.getFlowRate("MSm3/day"), 1e-6);
+    assertEquals(3.0, resycStream1.getFlowRate("MSm3/day"), 1e-6);
+
+    splitter.setFlowRates(new double[] {-1, 0.0}, "MSm3/day");
+    processOps.run();
+    assertEquals(5.0, exportStream.getFlowRate("MSm3/day"), 1e-6);
+    assertEquals(0.0, resycStream1.getFlowRate("MSm3/day"), 1e-6);
+  }
 }

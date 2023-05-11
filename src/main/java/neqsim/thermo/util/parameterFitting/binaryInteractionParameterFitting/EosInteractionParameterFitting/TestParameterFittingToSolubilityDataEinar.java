@@ -34,9 +34,9 @@ public class TestParameterFittingToSolubilityDataEinar {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
 
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM binarysolubilitydataeinar WHERE ComponentSolute='methane' AND ComponentSolvent='Water'");
     ) {
       int p = 0;
@@ -68,7 +68,7 @@ public class TestParameterFittingToSolubilityDataEinar {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

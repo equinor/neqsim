@@ -30,7 +30,7 @@ public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMa
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     return system.getPhase(1).getComponent(0).getx() / (1.0
         - system.getPhase(1).getComponent(2).getx() - system.getPhase(1).getComponent(3).getx());

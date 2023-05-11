@@ -335,7 +335,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // System.out.println("feed total number of water " +
       // mixedStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
       double enthalpy = calcMixStreamEnthalpy();
-      //// System.out.println("temp guess " + guessTemperature());
+      // System.out.println("temp guess " + guessTemperature());
       mixedStream.getThermoSystem().setTemperature(guessTemperature());
       ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
       testOps.TPflash();
@@ -419,7 +419,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // System.out.println("diameter " + d);
       setCalculationIdentifier(id);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     // System.out.println("rich TEG from absorber " +
     // getSolventOutStream().getFlowRate("kg/hr"));
@@ -600,6 +600,13 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     isSetWaterInDryGas = true;
   }
 
+  /**
+   * <p>
+   * isSetWaterInDryGas.
+   * </p>
+   *
+   * @param isSetwaterInDryGas a boolean
+   */
   public void isSetWaterInDryGas(boolean isSetwaterInDryGas) {
     this.isSetWaterInDryGas = isSetwaterInDryGas;
   }

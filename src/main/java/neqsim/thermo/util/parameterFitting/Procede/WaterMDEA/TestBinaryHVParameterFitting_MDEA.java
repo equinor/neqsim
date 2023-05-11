@@ -46,7 +46,6 @@ public class TestBinaryHVParameterFitting_MDEA {
     double act1;
     double act2;
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
 
     // double guess[] = {1201, -1461, -7.24, 5.89, 0.21}; //Even Solbraa
     // double guess[] = {733.1497651631, -1100.3362377120, -6.0060055689,
@@ -54,7 +53,7 @@ public class TestBinaryHVParameterFitting_MDEA {
     double[] guess =
         {-5596.6518968945, 3995.5032952165, 10.9677849623, -8.0407258862, 0.2703018372};
 
-    ResultSet dataSet = database.getResultSet("SELECT * FROM WaterMDEA WHERE ID<62");
+    // ResultSet dataSet = database.getResultSet("SELECT * FROM WaterMDEA WHERE ID<62");
     /*
      * try{ int i=0; logger.info("adding...."); while(dataSet.next()){
      * BinaryHVParameterFittingFunction_MDEA function = new BinaryHVParameterFittingFunction_MDEA();
@@ -81,7 +80,7 @@ public class TestBinaryHVParameterFitting_MDEA {
      * 
      * sample.setFunction(function); sample.setReference(Double.toString(ID));
      * sample.setThermodynamicSystem(testSystem); sampleList.add(sample); } } catch(Exception ex){
-     * logger.info("database error" + ex); }
+     * logger.info("database error", ex); }
      * 
      * 
      * dataSet = database.getResultSet( "SELECT * FROM WaterMDEA WHERE ID>61 AND ID<87");
@@ -112,7 +111,7 @@ public class TestBinaryHVParameterFitting_MDEA {
      * 
      * sample.setFunction(function); sample.setReference(Double.toString(ID));
      * sample.setThermodynamicSystem(testSystem); sampleList.add(sample); } } catch(Exception ex){
-     * logger.info("database error" + ex); }
+     * logger.info("database error", ex); }
      */
 
     /*
@@ -143,11 +142,12 @@ public class TestBinaryHVParameterFitting_MDEA {
      * 
      * sample.setFunction(function); sample.setReference(Double.toString(ID));
      * sample.setThermodynamicSystem(testSystem); sampleList.add(sample); } } catch(Exception ex){
-     * logger.info("database error" + ex); }
+     * logger.info("database error", ex); }
      */
+    ResultSet dataSet = null;
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
+      dataSet = database.getResultSet("SELECT * FROM WaterMDEAactivity WHERE ID<20");
 
-    dataSet = database.getResultSet("SELECT * FROM WaterMDEAactivity WHERE ID<20");
-    try {
       int i = 0;
       logger.info("adding....");
       while (dataSet.next()) {
@@ -181,11 +181,12 @@ public class TestBinaryHVParameterFitting_MDEA {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.info("database error" + ex);
+      logger.info("database error", ex);
     }
 
-    dataSet = database.getResultSet("SELECT * FROM WaterMDEAactivity WHERE ID>19");
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
+      dataSet = database.getResultSet("SELECT * FROM WaterMDEAactivity WHERE ID>19");
+
       int i = 0;
       logger.info("adding....");
       while (dataSet.next()) {
@@ -219,7 +220,7 @@ public class TestBinaryHVParameterFitting_MDEA {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

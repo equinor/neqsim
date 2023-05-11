@@ -119,10 +119,13 @@ public class StirredCellSystem
     testSystem.setMixingRule(2);
     // benytter klassiske blandingsregler
 
-    pipe.setInletThermoSystem(testSystem); // setter termodyanmikken for rorsystemet
-    pipe.setNumberOfLegs(1); // deler inn roret i et gitt antall legger
-    pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr.
-                                    // leg
+    // setter termodyanmikken for rorsystemet
+    pipe.setInletThermoSystem(testSystem);
+    // deler inn roret i et gitt antall legger
+    pipe.setNumberOfLegs(1);
+    // setter antall nodepunkter (beregningspunkter/grid) pr. // leg
+    pipe.setNumberOfNodesInLeg(10);
+
     double[] height = {0, 0};
     double[] length = {0.0, 10.0};
     double[] outerTemperature = {278.0, 278.0};
@@ -135,18 +138,16 @@ public class StirredCellSystem
     pipe.setLegOuterHeatTransferCoefficients(outerHeatTransferCoef);
     pipe.setLegWallHeatTransferCoefficients(wallHeatTransferCoef);
 
+    // Deffinerer geometrien for roret
     neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGemometry =
-        new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[6]; // Deffinerer
-                                                                        // geometrien
-                                                                        // for
-                                                                        // roret
+        new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[6];
     double[] pipeDiameter = {0.02588, 0.02588};
     for (int i = 0; i < pipeDiameter.length; i++) {
       pipeGemometry[i] =
           new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
     }
     pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
-    // utforer bergninger
+    // utforer beregninger
     pipe.createSystem();
     pipe.init();
 

@@ -6,12 +6,18 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  * This class defines a thermodynamic system using the Kent Eisenberg model.
- * 
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemKentEisenberg extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemKentEisenberg.
+   * </p>
+   */
   public SystemKentEisenberg() {
     super();
     modelName = "Kent Eisenberg-model";
@@ -27,8 +33,8 @@ public class SystemKentEisenberg extends SystemEos {
    * Constructor for SystemKentEisenberg.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemKentEisenberg(double T, double P) {
     super(T, P);
@@ -49,16 +55,16 @@ public class SystemKentEisenberg extends SystemEos {
    * Constructor for SystemKentEisenberg.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemKentEisenberg(double T, double P, boolean solidCheck) {
+  public SystemKentEisenberg(double T, double P, boolean checkForSolids) {
     this(T, P);
     attractiveTermNumber = 0;
     setNumberOfPhases(4);
     modelName = "Kent Eisenberg-model";
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);

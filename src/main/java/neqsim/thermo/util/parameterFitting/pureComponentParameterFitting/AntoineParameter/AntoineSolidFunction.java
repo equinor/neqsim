@@ -31,7 +31,7 @@ public class AntoineSolidFunction extends LevenbergMarquardtFunction {
     try {
       thermoOps.freezingPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     return system.getTemperature();
   }

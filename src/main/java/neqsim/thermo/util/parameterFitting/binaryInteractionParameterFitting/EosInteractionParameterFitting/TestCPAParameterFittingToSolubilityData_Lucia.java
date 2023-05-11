@@ -34,18 +34,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM luciadata8 WHERE Component='methane' AND Temperature>410.15 AND Pressure<100000000 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure"); // AND
-                                                                                                                                                                          // Reference='Houghton1957'
-                                                                                                                                                                          // AND
-                                                                                                                                                                          // Reference<>'Nighswander1989'
-                                                                                                                                                                          // AND
-                                                                                                                                                                          // Temperature>278.15
-                                                                                                                                                                          // AND
-                                                                                                                                                                          // Temperature<383.15
-                                                                                                                                                                          // AND
-                                                                                                                                                                          // Pressure<60.01325");
+
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
     // Component='nitrogen' AND Temperature<390 AND L2<>NULL AND L2>0.0000000001
     // ORDER BY Temperature,Pressure");
@@ -62,7 +51,12 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
     // binarySolubilityData WHERE ComponentSolute='methane' AND
     // ComponentSolvent='water'");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM luciadata8 WHERE Component='methane' AND Temperature>410.15 AND Pressure<100000000 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure");
+    // AND // Reference='Houghton1957' AND Reference<>'Nighswander1989' AND //
+    // Temperature>278.15 // AND // Temperature<383.15 // AND // Pressure<60.01325");
+    ) {
       int p = 0;
       logger.info("adding....");
       while (!dataSet.next() && p < 50) {
@@ -114,8 +108,6 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
     // AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure"); // AND
     // Reference='Houghton1957' AND Reference<>'Nighswander1989' AND
     // Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
-    dataSet = database.getResultSet(
-        "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature>273.15 AND Pressure<153000000 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
     // dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE
     // Component='nitrogen' AND Temperature<390 AND Y<>NULL AND Y>0.000000001 ORDER
     // BY Temperature,Pressure");
@@ -131,7 +123,10 @@ public class TestCPAParameterFittingToSolubilityData_Lucia {
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // binarySolubilityData WHERE ComponentSolute='methane' AND
     // ComponentSolvent='water'");
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();) {
+      ResultSet dataSet = database.getResultSet(
+          "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature>273.15 AND Pressure<153000000 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
+
       int p = 0;
       logger.info("adding....");
       while (dataSet.next() && p < 150) {

@@ -4,10 +4,16 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the SRK Two Coon equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemSrkTwuCoonEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemSrkTwuCoonEos.
+   * </p>
+   */
   public SystemSrkTwuCoonEos() {
     super();
     modelName = "TwuCoonRK-EOS";
@@ -19,8 +25,8 @@ public class SystemSrkTwuCoonEos extends SystemSrkEos {
    * Constructor for SystemSrkTwuCoonEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkTwuCoonEos(double T, double P) {
     super(T, P);
@@ -33,12 +39,12 @@ public class SystemSrkTwuCoonEos extends SystemSrkEos {
    * Constructor for SystemSrkTwuCoonEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemSrkTwuCoonEos(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemSrkTwuCoonEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     modelName = "TwuCoonRK-EOS";
     attractiveTermNumber = 11;
   }

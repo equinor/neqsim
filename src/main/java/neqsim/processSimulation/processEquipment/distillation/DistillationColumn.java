@@ -422,17 +422,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           + " liquidout " + trays.get(i).getLiquidOutStream().getFlowRate("kg/hr") + " pressure "
           + trays.get(i).getGasOutStream().getPressure() + " temperature "
           + trays.get(i).getGasOutStream().getTemperature("C"));
-/* 
-      System.out.println(
-          "tray " + i + " number of input streams " + numberOfInputStreams + " water in gasout "
-              + trays.get(i).getGasOutStream().getFluid().getPhase(0).getComponent("water")
-                  .getNumberOfmoles()
-              + " water in liquidout "
-              + trays.get(i).getLiquidOutStream().getFluid().getPhase(0).getComponent("water")
-                  .getNumberOfmoles()
-              + " pressure " + trays.get(i).getGasOutStream().getPressure() + " temperature "
-              + trays.get(i).getGasOutStream().getTemperature("C"));
-              */
+      /*
+       * System.out.println( "tray " + i + " number of input streams " + numberOfInputStreams +
+       * " water in gasout " +
+       * trays.get(i).getGasOutStream().getFluid().getPhase(0).getComponent("water")
+       * .getNumberOfmoles() + " water in liquidout " +
+       * trays.get(i).getLiquidOutStream().getFluid().getPhase(0).getComponent("water")
+       * .getNumberOfmoles() + " pressure " + trays.get(i).getGasOutStream().getPressure() +
+       * " temperature " + trays.get(i).getGasOutStream().getTemperature("C"));
+       */
     }
 
     double massError = 0.0;

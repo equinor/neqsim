@@ -41,12 +41,12 @@ public class TestEosInteractionParameterFitting {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
-    try (ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM binaryequilibriumdata WHERE Component1='methane' AND Component2='ethane'");) {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM binaryequilibriumdata WHERE Component1='methane' AND Component2='ethane'")) {
       logger.info("adding....");
       while (dataSet.next()) {
         EosInteractionParameterFittingFunction function =
@@ -69,7 +69,7 @@ public class TestEosInteractionParameterFitting {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

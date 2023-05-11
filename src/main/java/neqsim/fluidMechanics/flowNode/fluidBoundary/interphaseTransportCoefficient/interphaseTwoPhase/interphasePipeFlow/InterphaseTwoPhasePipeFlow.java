@@ -12,16 +12,21 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
  * @version $Id: $Id
  */
 public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
-    public InterphaseTwoPhasePipeFlow() {}
+  /**
+   * <p>
+   * Constructor for InterphaseTwoPhasePipeFlow.
+   * </p>
+   */
+  public InterphaseTwoPhasePipeFlow() {}
 
-    /**
-     * <p>
-     * Constructor for InterphaseTwoPhasePipeFlow.
-     * </p>
-     *
-     * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
-     */
-    public InterphaseTwoPhasePipeFlow(FlowNodeInterface node) {
-        // flowNode = node;
-    }
+  /**
+   * <p>
+   * Constructor for InterphaseTwoPhasePipeFlow.
+   * </p>
+   *
+   * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
+   */
+  public InterphaseTwoPhasePipeFlow(FlowNodeInterface node) {
+    // flowNode = node;
+  }
 }

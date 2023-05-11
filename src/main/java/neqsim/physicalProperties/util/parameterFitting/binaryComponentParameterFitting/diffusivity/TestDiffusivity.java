@@ -34,9 +34,8 @@ public class TestDiffusivity {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM binaryliquiddiffusioncoefficientdata WHERE ComponentSolute='CO2' AND ComponentSolvent='water'")) {
       logger.info("adding....");
       while (dataSet.next()) {
@@ -62,7 +61,7 @@ public class TestDiffusivity {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     // double sample1[] = {0.1};

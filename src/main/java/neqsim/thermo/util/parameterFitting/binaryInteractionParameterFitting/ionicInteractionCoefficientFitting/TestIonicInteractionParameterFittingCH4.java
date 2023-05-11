@@ -34,13 +34,6 @@ public class TestIonicInteractionParameterFittingCH4 {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM Co2Ch4MDEA WHERE loading<1.9"); // AND
-                                                                                            // temperature=313.15
-                                                                                            // AND
-                                                                                            // pressure<210
-                                                                                            // AND
-                                                                                            // wt=30");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND
     // Reference='Lemoine2000'
@@ -49,7 +42,14 @@ public class TestIonicInteractionParameterFittingCH4 {
 
     // double guess[] = {-0.0000309356,-0.1469925592,-0.0272808384};
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM Co2Ch4MDEA WHERE loading<1.9"); // AND
+                                                                                                 // temperature=313.15
+                                                                                                 // AND
+                                                                                                 // pressure<210
+                                                                                                 // AND
+                                                                                                 // wt=30");
+    ) {
       int i = 0;
       while (dataSet.next() && i < 100) {
         i++;
@@ -88,20 +88,22 @@ public class TestIonicInteractionParameterFittingCH4 {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
     // dataSet = database.getResultSet( "SELECT * FROM Co2Ch4MDEA WHERE loading<1.9
     // AND temperature<453.15 AND pressure<210 AND wt<70");
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM
     // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND
     // Reference='Lemoine2000'
-    dataSet = database.getResultSet("SELECT * FROM Co2Ch4MDEA WHERE loading<1.9"); // AND
-                                                                                  // temperature=313.15
-                                                                                  // AND
-                                                                                  // pressure<210
-                                                                                  // AND
-                                                                                  // wt=50");
-    try {
+
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM Co2Ch4MDEA WHERE loading<1.9")) // AND
+    // temperature=313.15
+    // AND
+    // pressure<210
+    // AND
+    // wt=50");)
+    {
       int i = 0;
       while (!dataSet.next() && i < 100) {
         i++;
@@ -139,19 +141,21 @@ public class TestIonicInteractionParameterFittingCH4 {
         sample.setThermodynamicSystem(testSystem);
         sampleList.add(sample);
       }
-    } catch (Exception ex) {
-      logger.error("database error" + ex);
+    } catch (
+
+    Exception ex) {
+      logger.error("database error", ex);
     }
     SampleSet sampleSet = new SampleSet(sampleList);
     optim.setSampleSet(sampleSet);
 
-    // do simulations
+  // do simulations
 
-    optim.solve();
-    // optim.runMonteCarloSimulation();
-    // optim.displayCurveFit();
-    // optim.displayGraph();
-    optim.displayCurveFit();
-    optim.writeToTextFile("c:/testFit.txt");
-  }
+  optim.solve();
+  // optim.runMonteCarloSimulation();
+  // optim.displayCurveFit();
+  // optim.displayGraph();
+  optim.displayCurveFit();
+  optim.writeToTextFile("c:/testFit.txt");
+}
 }

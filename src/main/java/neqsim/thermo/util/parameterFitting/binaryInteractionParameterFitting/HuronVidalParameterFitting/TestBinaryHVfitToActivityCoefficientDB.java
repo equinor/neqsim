@@ -34,9 +34,8 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
-
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM activitycoefficienttable WHERE Component1='MDEA' AND Component2='water' AND Temperature>293.15  AND x1<=1.0 ORDER BY Temperature,x1")) {
       while (dataSet.next()) {
         BinaryHVparameterFitToActivityCoefficientFunction function =
@@ -72,11 +71,11 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
-
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MDEA' ORDER BY FreezingTemperature")) {
       while (!dataSet.next()) {
         FreezeSolidFunction function = new FreezeSolidFunction();
@@ -108,7 +107,7 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

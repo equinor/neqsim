@@ -19,9 +19,9 @@ public class SolidFlash extends TPflash {
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
-  double dQdbeta[];
-  double Qmatrix[][];
-  double E[];
+  double[] dQdbeta;
+  double[][] Qmatrix;
+  double[] E;
   double Q = 0;
   int solidComponent = 0;
   boolean hasRemovedPhase = false;
@@ -62,10 +62,10 @@ public class SolidFlash extends TPflash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param check a boolean
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
-  public SolidFlash(SystemInterface system, boolean check) {
-    super(system, check);
+  public SolidFlash(SystemInterface system, boolean checkForSolids) {
+    super(system, checkForSolids);
   }
 
   /**
@@ -140,7 +140,8 @@ public class SolidFlash extends TPflash {
       // if(
     }
     // E[solidComponent] +=
-    // system.getBeta(system.getNumberOfPhases()-1)/system.getPhase(3).getComponent(solidComponent).getFugacityCoefficient();
+    // system.getBeta(system.getNumberOfPhases()-1) /
+    // system.getPhase(3).getComponent(solidComponent).getFugacityCoefficient();
     E[solidComponent] = system.getPhase(0).getComponent(solidComponent).getz()
         / system.getPhases()[3].getComponents()[solidComponent].getFugacityCoefficient();
     // logger.info("Ei " +E[solidComponent]);
@@ -209,7 +210,7 @@ public class SolidFlash extends TPflash {
    * @param ideal a boolean
    */
   public void solveBeta(boolean ideal) {
-    double oldBeta[] = new double[system.getNumberOfPhases() - 1];
+    double[] oldBeta = new double[system.getNumberOfPhases() - 1];
     // double newBeta[] = new double[system.getNumberOfPhases() - 1];
     int iter = 0;
     Matrix ans = new Matrix(system.getNumberOfPhases() - 1, 1);
@@ -294,7 +295,8 @@ public class SolidFlash extends TPflash {
    * </p>
    */
   public void checkGibbs() {
-    double gibbs1 = 0, gibbs2 = 0;
+    double gibbs1 = 0;
+    double gibbs2 = 0;
     for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
       system.setPhaseType(i, 0);
       system.init(1);

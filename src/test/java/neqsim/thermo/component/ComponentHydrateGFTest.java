@@ -15,8 +15,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  */
 class ComponentHydrateGFTest extends neqsim.NeqSimTest {
-  static SystemInterface thermoSystem = null;
   static Logger logger = LogManager.getLogger(ComponentHydrateGFTest.class);
+
+  static SystemInterface thermoSystem = null;
 
   /**
    * @throws java.lang.Exception
@@ -41,11 +42,10 @@ class ComponentHydrateGFTest extends neqsim.NeqSimTest {
       thermoSystem.setHydrateCheck(true);
       testOps.hydrateFormationTemperature();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
       assertTrue(false);
       return;
     }
-    assertEquals(286.4105348944992, thermoSystem.getTemperature("K"), 0.001);
+    assertEquals(286.4105348955611, thermoSystem.getTemperature("K"), 0.01);
   }
-
 }

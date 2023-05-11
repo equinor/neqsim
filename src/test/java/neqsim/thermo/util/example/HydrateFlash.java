@@ -133,7 +133,7 @@ public class HydrateFlash {
       // testOps.hydrateFormationTemperature(1);
       // testOps.waterPrecipitationTemperature();
     } catch (Exception ex) {
-      logger.error(ex.toString(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
     // System.out.println("temperature " + (testSystem.getTemperature() - 273.15));

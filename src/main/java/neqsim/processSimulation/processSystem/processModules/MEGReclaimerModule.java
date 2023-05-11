@@ -38,6 +38,11 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
   double reclaimerPressure = 0.17;
 
+  /**
+   * <p>Constructor for MEGReclaimerModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public MEGReclaimerModule(String name) {
     super(name);
   }
@@ -77,7 +82,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
       this.streamWithWaste = (Stream) this.streamToReclaimer.clone();
       this.streamWithWaste.setName("Reclaimer Waste Stream");
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

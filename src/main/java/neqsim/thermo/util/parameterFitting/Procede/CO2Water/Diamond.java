@@ -42,10 +42,9 @@ public class Diamond {
     double x;
     double pressure;
     double ID;
-    NeqSimDataBase database = new NeqSimDataBase();
-    ResultSet dataSet = database.getResultSet("SELECT * FROM Diamond");
 
-    try {
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet("SELECT * FROM Diamond")) {
       while (dataSet.next()) {
         ID = Double.parseDouble(dataSet.getString("ID"));
         temperature = Double.parseDouble(dataSet.getString("Temperature"));
@@ -66,7 +65,7 @@ public class Diamond {
         try {
           testOps.bubblePointPressureFlash(false);
         } catch (Exception ex) {
-          logger.error(ex.toString());
+          logger.error(ex.getMessage(), ex);
         }
 
         // System.out.println(testSystem.getPressure()*testSystem.getPhase(0).getComponent(0).getx());
@@ -75,11 +74,11 @@ public class Diamond {
           p.println(ID + " " + x + " " + pressure + " " + testSystem.getPressure());
         } catch (FileNotFoundException ex) {
           logger.error("Could not find file");
-          logger.error("Could not read from Patrick.txt" + ex.getMessage());
+          logger.error("Could not read from Patrick.txt", ex);
         }
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
     logger.info("Finished");
   }

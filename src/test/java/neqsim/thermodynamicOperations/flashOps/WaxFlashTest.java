@@ -63,12 +63,11 @@ class WaxFlashTest {
       testOps.calcWAT();
       testOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     double waxVolumeFrac = 0;
     if (testSystem.hasPhaseType("wax")) {
       waxVolumeFrac = testSystem.getWtFraction(testSystem.getPhaseIndexOfPhase("wax"));
     }
   }
-
 }

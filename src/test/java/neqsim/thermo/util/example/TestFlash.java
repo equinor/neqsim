@@ -111,8 +111,8 @@ public class TestFlash {
       fluid.addComponent("n-heptane", 0.01);
       fluid.addComponent("n-octane", 0.01);
       fluid.addComponent("n-nonane", 0.01);
-      fluid.addComponent("n-decane", 0.01);
-      fluid.addComponent("C11", 1);
+      fluid.addComponent("nC10", 0.01);
+      fluid.addComponent("nC11", 1);
       fluid.createDatabase(true);
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);
