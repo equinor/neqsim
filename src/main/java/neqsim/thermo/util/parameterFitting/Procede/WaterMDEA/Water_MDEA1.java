@@ -53,7 +53,7 @@ public class Water_MDEA1 {
       try {
         testOps.bubblePointPressureFlash(false);
       } catch (Exception ex) {
-        logger.error(ex.toString());
+        logger.error(ex.getMessage(), ex);
       }
 
       // double aMDEA = testSystem.getPhase(1).getActivityCoefficient(1);
@@ -79,7 +79,7 @@ public class Water_MDEA1 {
                 + " " + testSystem.getPhase(0).getComponent(1).getFugacityCoefficient());
         // p.println(x+" "+aMDEA+" "+awater);
       } catch (FileNotFoundException ex) {
-        logger.error("Could not find file" + ex.getMessage());
+        logger.error("Could not find file", ex);
       }
     }
     logger.info("Finished");

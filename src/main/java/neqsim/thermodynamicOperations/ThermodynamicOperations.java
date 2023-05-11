@@ -29,6 +29,7 @@ import neqsim.thermodynamicOperations.flashOps.VHflashQfunc;
 import neqsim.thermodynamicOperations.flashOps.VUflashQfunc;
 import neqsim.thermodynamicOperations.flashOps.calcIonicComposition;
 import neqsim.thermodynamicOperations.flashOps.dTPflash;
+import neqsim.thermodynamicOperations.flashOps.saturationOps.ConstantDutyFlashInterface;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.HCdewPointPressureFlash;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.HydrateEquilibriumLine;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.HydrateFormationPressureFlash;
@@ -44,7 +45,6 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.bubblePointPressure
 import neqsim.thermodynamicOperations.flashOps.saturationOps.bubblePointTemperatureNoDer;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.calcSaltSatauration;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.checkScalePotential;
-import neqsim.thermodynamicOperations.flashOps.saturationOps.constantDutyFlashInterface;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.constantDutyPressureFlash;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.constantDutyTemperatureFlash;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.cricondebarFlash;
@@ -169,10 +169,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * TPflash.
    * </p>
    *
-   * @param checkSolids a boolean
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
-  public void TPflash(boolean checkSolids) {
-    operation = new neqsim.thermodynamicOperations.flashOps.TPflash(system, checkSolids);
+  public void TPflash(boolean checkForSolids) {
+    operation = new neqsim.thermodynamicOperations.flashOps.TPflash(system, checkForSolids);
     getOperation().run();
   }
 
@@ -705,7 +705,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void bubblePointTemperatureFlash() throws Exception {
-    constantDutyFlashInterface operation = new bubblePointTemperatureNoDer(system);
+    ConstantDutyFlashInterface operation = new bubblePointTemperatureNoDer(system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
@@ -929,7 +929,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       getThermoOperationThread().join(maxTime);
       getThermoOperationThread().interrupt();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     boolean didFinish = !getThermoOperationThread().isInterrupted();
     // getThermoOperationThread().stop();
@@ -945,7 +945,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       getThermoOperationThread().join();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -1007,8 +1007,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
        * opsTemp = new ThermodynamicOperations(systemTemp);
        * systemTemp.setTemperature(temperature[i]); systemTemp.setPressure(pressure[i]);
        * systemTemp.init(0); systemTemp.display(); try { opsTemp.hydrateFormationTemperature(); }
-       * catch (Exception ex) { logger.error("error",e); } systemTemp.display(); hydTemps[i] =
-       * systemTemp.getTemperature();
+       * catch (Exception ex) { logger.error(ex.getMessage(),e); } systemTemp.display(); hydTemps[i]
+       * = systemTemp.getTemperature();
        *
        */
       opsTemp = new ThermodynamicOperations(systemTemp);
@@ -1026,7 +1026,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       opsTemp.hydrateFormationTemperature();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     systemTemp.display();
     return hydTemps;
@@ -1047,7 +1047,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       opsTemp.hydrateFormationTemperature();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     systemTemp.display();
     system.setTemperature(systemTemp.getTemperature());
@@ -1280,7 +1280,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void bubblePointPressureFlash() throws Exception {
     system.init(0);
-    constantDutyFlashInterface operation = new constantDutyPressureFlash(system);
+    ConstantDutyFlashInterface operation = new constantDutyPressureFlash(system);
     system.setBeta(1, 1.0 - 1e-10);
     system.setBeta(0, 1e-10);
     operation.run();
@@ -1299,7 +1299,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void bubblePointPressureFlash(boolean derivatives) throws Exception {
-    constantDutyFlashInterface operation = null;
+    ConstantDutyFlashInterface operation = null;
     if (derivatives == true) {
       operation = new bubblePointPressureFlashDer(system);
     } else {
@@ -1328,7 +1328,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (fraction > 1.0 - 1e-10) {
       fraction = 1.0 - 1.0e-10;
     }
-    constantDutyFlashInterface operation = new constantDutyPressureFlash(system);
+    ConstantDutyFlashInterface operation = new constantDutyPressureFlash(system);
     system.setBeta(1, 1.0 - fraction);
     system.setBeta(0, fraction);
     operation.run();
@@ -1355,7 +1355,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (fraction > 1.0 - 1e-10) {
       fraction = 1.0 - 1.0e-10;
     }
-    constantDutyFlashInterface operation = new constantDutyTemperatureFlash(system);
+    ConstantDutyFlashInterface operation = new constantDutyTemperatureFlash(system);
     system.setBeta(1, fraction);
     system.setBeta(0, fraction);
     operation.run();
@@ -1430,7 +1430,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void dewPointTemperatureFlash() throws Exception {
-    constantDutyFlashInterface operation =
+    ConstantDutyFlashInterface operation =
         new neqsim.thermodynamicOperations.flashOps.saturationOps.dewPointTemperatureFlash(system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
@@ -1448,7 +1448,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void dewPointTemperatureFlash(boolean derivatives) throws Exception {
-    constantDutyFlashInterface operation =
+    ConstantDutyFlashInterface operation =
         new neqsim.thermodynamicOperations.flashOps.saturationOps.dewPointTemperatureFlash(system);
     if (derivatives) {
       operation = new dewPointTemperatureFlashDer(system);
@@ -1470,7 +1470,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void dewPointPressureFlashHC() throws Exception {
     // try{
     system.init(0);
-    constantDutyFlashInterface operation = new HCdewPointPressureFlash(system);
+    ConstantDutyFlashInterface operation = new HCdewPointPressureFlash(system);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
@@ -1489,7 +1489,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void dewPointPressureFlash() throws Exception {
     // try{
     system.init(0);
-    constantDutyFlashInterface operation = new dewPointPressureFlash(system);
+    ConstantDutyFlashInterface operation = new dewPointPressureFlash(system);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
@@ -1750,7 +1750,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     system.setTemperature(system.getTemperature() - dT);
     TPflash();
@@ -1758,7 +1758,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     return condensationRate / dT;
   }
@@ -1772,7 +1772,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       getThermoOperationThread().join();
     } catch (Exception ex) {
-      logger.error("Thread did not finish");
+      logger.error("Thread did not finish", ex);
     }
     getOperation().displayResult();
   }
@@ -1973,22 +1973,48 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     Double[] sum = new Double[Spec1.size()];
 
-    if (onlineFractions != null) {
+    // Verify that sum of fractions equals 1/100, i.e., assume percentages
+    Boolean hasOnlineFractions = onlineFractions != null;
+    if (hasOnlineFractions) {
+      double range = 5;
       for (int t = 0; t < sum.length; t++) {
         sum[t] = 0.0;
         for (int comp = 0; comp < onlineFractions.size(); comp++) {
           sum[t] = sum[t] + onlineFractions.get(comp).get(t).doubleValue();
         }
+        if (!((sum[t] >= 1 - range / 100 && sum[t] <= 1 + range / 100)
+            || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
+          calculationError[t] = "Sum of fractions must be approximately 1 or 100, currently ("
+              + String.valueOf(sum[t]) + ")";
+        }
       }
 
-      if (this.system.getNumberOfMoles() == 0) {
+      if (this.system.getTotalNumberOfMoles() == 0) {
         this.system.setTotalNumberOfMoles(1);
       }
     } else {
+      /*
+       * // New attempt:
+       * 
+       * // Have to init here to get correct MoleFractionsSum() this.system.init(0);
+       * 
+       * // Annoying that MoleFractionsSum is not normalized. sum[0] =
+       * this.system.getMoleFractionsSum();
+       */
+
       double[] fraction = this.system.getMolarComposition();
       sum[0] = 0.0;
       for (int comp = 0; comp < fraction.length; comp++) {
         sum[0] = sum[0] + fraction[comp];
+      }
+
+      double range = 1e-8;
+      if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
+          || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
+        for (int t = 0; t < Spec1.size(); t++) {
+          calculationError[t] = "Sum of fractions must be approximately to 1 or 100, currently ("
+              + String.valueOf(sum[0]) + ")";
+        }
       }
     }
 
@@ -2008,35 +2034,35 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
           continue;
         }
 
-        if (onlineFractions != null) {
-          double range = 5;
-          if (!((sum[t] >= 1 - range / 100 && sum[t] <= 1 + range / 100)
-              || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
-            calculationError[t] = "Sum of fractions must be approximately 1 or 100, currently ("
-                + String.valueOf(sum[t]) + ")";
-            logger.info("Online fraction does not sum to approximately 1 or 100 for datapoint {}",
-                t);
-            continue;
-          } else {
-            // Remaining fractions will be set to 0.0
-            double[] fraction = new double[this.system.getNumberOfComponents()];
+        // Skip if sum is not similar to 100%
+        if (calculationError[t] != null) {
+          logger.info("{}", calculationError[t]);
+          continue;
+        }
 
-            for (int comp = 0; comp < onlineFractions.size(); comp++) {
-              fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
-            }
+        if (hasOnlineFractions) {
+          /*
+           * // New attempt:
+           * 
+           * this.system.setEmptyFluid();
+           * 
+           * // Components in system with no corresponding value in onlineFractions will be zero.
+           * for (int componentNumber = 0; componentNumber < onlineFractions .size();
+           * componentNumber++) { this.system.addComponent(componentNumber,
+           * onlineFractions.get(componentNumber).get(t).doubleValue()); }
+           * 
+           * if (this.system.getTotalNumberOfMoles() < 1e-5) { this.system.setTotalNumberOfMoles(1);
+           * }
+           */
 
-            this.system.setMolarComposition(fraction);
-            this.system.init(0);
+          // Remaining fractions will be set to 0.0
+          double[] fraction = new double[this.system.getNumberOfComponents()];
+          for (int comp = 0; comp < onlineFractions.size(); comp++) {
+            fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
           }
-        } else {
-          double range = 1e-8;
-          if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
-              || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
-            calculationError[t] = "Sum of fractions must be equal to 1 or 100, currently ("
-                + String.valueOf(sum[t]) + ")";
-            logger.info("Sum of fractions must be equal to 1 or 100 for datapoint {}", t);
-            continue;
-          }
+
+          this.system.setMolarComposition(fraction);
+          this.system.init(0);
         }
 
         this.system.setPressure(Sp1);
@@ -2061,7 +2087,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         fluidProperties[t] = this.system.getProperties().getValues();
       } catch (Exception ex) {
         calculationError[t] = ex.getMessage();
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
 

@@ -13,6 +13,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 
 /**
+ * Abstract base class for all flash classes.
+ *
  * @author Even Solbraa
  */
 abstract class Flash extends BaseOperation {
@@ -44,9 +46,10 @@ abstract class Flash extends BaseOperation {
   double[] tm;
   int lowestGibbsEnergyPhase = 0;
   sysNewtonRhapsonTPflash secondOrderSolver;
+  /** Set true to check for solid phase and do solid phase calculations. */
   protected boolean solidCheck = false;
   protected boolean stabilityCheck = false;
-  boolean findLowesGibsPhaseIsChecked = false;
+  protected boolean findLowestGibbsPhaseIsChecked = false;
 
   /**
    * <p>
@@ -63,7 +66,7 @@ abstract class Flash extends BaseOperation {
    * @return a int
    */
   public int findLowestGibbsEnergyPhase() {
-    if (!findLowesGibsPhaseIsChecked) {
+    if (!findLowestGibbsPhaseIsChecked) {
       minimumGibbsEnergySystem = system.clone();
       minimumGibbsEnergySystem.init(0);
       minimumGibbsEnergySystem.init(1);
@@ -74,7 +77,7 @@ abstract class Flash extends BaseOperation {
       } else {
         lowestGibbsEnergyPhase = 1;
       }
-      findLowesGibsPhaseIsChecked = true;
+      findLowestGibbsPhaseIsChecked = true;
     }
     return lowestGibbsEnergyPhase;
   }
@@ -94,7 +97,7 @@ abstract class Flash extends BaseOperation {
     double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] oldoldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
     double[][] Wi = new double[2][system.getPhases()[0].getNumberOfComponents()];
-    double[] sumw = new double[2];
+
     boolean secondOrderStabilityAnalysis = false;
     double[] oldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] oldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -115,9 +118,10 @@ abstract class Flash extends BaseOperation {
 
     SystemInterface clonedSystem = minimumGibbsEnergySystem;
     clonedSystem.setTotalNumberOfMoles(1.0);
+
+    double[] sumw = new double[2];
     sumw[1] = 0.0;
     sumw[0] = 0.0;
-
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
       sumw[1] += clonedSystem.getPhase(0).getComponent(i).getz()
           / clonedSystem.getPhase(0).getComponent(i).getK();
@@ -357,7 +361,7 @@ abstract class Flash extends BaseOperation {
       try {
         system.calcBeta();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
       }
       system.calc_x_y();
       system.init(1);

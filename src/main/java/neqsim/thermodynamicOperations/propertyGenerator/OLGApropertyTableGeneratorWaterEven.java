@@ -123,7 +123,7 @@ public class OLGApropertyTableGeneratorWaterEven
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -145,7 +145,7 @@ public class OLGApropertyTableGeneratorWaterEven
         bubP[i] = thermoSystem.getPressure();
         bubPLOG[i] = bubP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         bubP[i] = 0;
       }
     }
@@ -170,7 +170,7 @@ public class OLGApropertyTableGeneratorWaterEven
         dewP[i] = thermoSystem.getPressure();
         dewPLOG[i] = dewP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         dewP[i] = 0;
       }
     }
@@ -193,7 +193,7 @@ public class OLGApropertyTableGeneratorWaterEven
         // thermoOps.bubblePointTemperatureFlash();
         bubT[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         bubT[i] = 0.0;
       }
     }
@@ -283,7 +283,7 @@ public class OLGApropertyTableGeneratorWaterEven
               + thermoSystem.getPressure());
 
           thermoSystem.display();
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex);
         }
 
         /*
@@ -418,7 +418,7 @@ public class OLGApropertyTableGeneratorWaterEven
          * for (int jj = 0; jj < 9; jj++) { Matrix xg = XMatrixgas.getMatrix(jj, jj, 0, 3);
          * 
          * try { xcoef[jj] = aMatrix.solve(xg.transpose()); } catch (Exception ex) {
-         * logger.error("error",e); } // logger.info("xcoef " + j); // xcoef.print(10, 10);
+         * logger.error(ex.getMessage(),e); } // logger.info("xcoef " + j); // xcoef.print(10, 10);
          * //logger.info("dss: " +ds * dxds.get(speceq, 0)); // specVal = xcoef.get(0, 0) + sny *
          * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))); //
          * logger.info("vall" + vall); } }

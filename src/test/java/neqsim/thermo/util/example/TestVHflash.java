@@ -88,7 +88,7 @@ public class TestVHflash {
       testSystem3.display();
       // logger.info("total number of moles " + testSystem3.getTotalNumberOfMoles() );
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     // logger.info("JT " + testSystem.getPhase(0).getJouleThomsonCoefficient());
     // logger.info("wt%MEG " +

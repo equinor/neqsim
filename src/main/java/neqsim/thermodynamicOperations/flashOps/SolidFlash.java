@@ -62,10 +62,10 @@ public class SolidFlash extends TPflash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param check a boolean
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
-  public SolidFlash(SystemInterface system, boolean check) {
-    super(system, check);
+  public SolidFlash(SystemInterface system, boolean checkForSolids) {
+    super(system, checkForSolids);
   }
 
   /**

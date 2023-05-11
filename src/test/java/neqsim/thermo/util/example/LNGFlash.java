@@ -58,14 +58,14 @@ public class LNGFlash {
       // testOps.freezingPointTemperatureFlash();
       // testOps.calcWAT();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     /*
      * testSystem.reset(); testSystem.addComponent("methane", 1.0);
      * testSystem.addComponent("n-hexane", 0.000000009); testOps = new
      * ThermodynamicOperations(testSystem); try { testOps.TPflash(); // testSystem.display(); //
      * testOps.freezingPointTemperatureFlash(); // testOps.calcWAT(); testSystem.display(); } catch
-     * (Exception ex) { logger.error("error",e); } }
+     * (Exception ex) { logger.error(ex.getMessage(),e); } }
      * 
      * 
      */

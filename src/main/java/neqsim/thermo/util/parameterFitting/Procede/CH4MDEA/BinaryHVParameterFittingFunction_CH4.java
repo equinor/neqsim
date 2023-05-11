@@ -45,7 +45,7 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     return system.getPressure();
   }

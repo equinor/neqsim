@@ -52,11 +52,11 @@ public class TPflash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param solCheck a boolean
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
-  public TPflash(SystemInterface system, boolean solCheck) {
+  public TPflash(SystemInterface system, boolean checkForSolids) {
     this(system);
-    solidCheck = solCheck;
+    solidCheck = checkForSolids;
   }
 
   /**
@@ -90,7 +90,7 @@ public class TPflash extends Flash {
     try {
       system.calcBeta();
     } catch (Exception ex) {
-      logger.error("error in beta calc" + ex.toString());
+      logger.error("error in beta calc", ex);
       system.setBeta(oldBeta);
     }
     if (system.getBeta() > 1.0 - betaTolerance) {
@@ -133,7 +133,7 @@ public class TPflash extends Flash {
         system.setBeta(oldBeta);
       }
       logger.info("temperature " + system.getTemperature() + " pressure " + system.getPressure());
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
 
     system.calc_x_y();
@@ -177,7 +177,7 @@ public class TPflash extends Flash {
       system.calc_x_y();
       system.init(1);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -189,7 +189,7 @@ public class TPflash extends Flash {
       return;
     }
 
-    findLowesGibsPhaseIsChecked = false;
+    findLowestGibbsPhaseIsChecked = false;
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
 
@@ -244,7 +244,7 @@ public class TPflash extends Flash {
     try {
       system.calcBeta();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     system.calc_x_y();
     system.init(1);
@@ -324,29 +324,25 @@ public class TPflash extends Flash {
     }
 
     if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
-      if (system.checkStability()) {
-        if (stabilityCheck()) {
-          if (system.doMultiPhaseCheck()) {
-            // logger.info("one phase flash is stable - checking multiphase flash....
-            // ");
-            TPmultiflash operation = new TPmultiflash(system, true);
-            operation.run();
-            // commented out by Even Solbraa 6/2-2012k
-            // system.orderByDensity();
-            // system.init(3);
-          }
-          if (solidCheck) {
-            this.solidPhaseFlash();
-          }
-          if (system.isMultiphaseWaxCheck()) {
-            TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
-            operation.run();
-          }
-
-          system.orderByDensity();
-          system.init(1);
-          return;
+      if (system.checkStability() && stabilityCheck()) {
+        if (system.doMultiPhaseCheck()) {
+          // logger.info("one phase flash is stable - checking multiphase flash....");
+          TPmultiflash operation = new TPmultiflash(system, true);
+          operation.run();
         }
+        if (solidCheck) {
+          this.solidPhaseFlash();
+        }
+        if (system.isMultiphaseWaxCheck()) {
+          TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
+          operation.run();
+        }
+
+        system.orderByDensity();
+        system.init(1);
+        // commented out by Even Solbraa 6/2-2012k
+        // system.init(3);
+        return;
       }
     }
 

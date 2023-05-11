@@ -319,7 +319,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       try {
         enthalpy = calcMixStreamEnthalpy();
       } catch (Exception ex) {
-        // String error = ex.getMessage();
+        logger.error(ex.getMessage(), ex);
         return;
       }
       // logger.info("temp guess " + guessTemperature());

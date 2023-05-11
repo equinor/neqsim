@@ -52,15 +52,14 @@ public class SystemSrkEos extends SystemEos {
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
-   * @param solidCheck a boolean variable specifying if solid phase check and calculation should be
-   *        done
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemSrkEos(double T, double P, boolean solidCheck) {
+  public SystemSrkEos(double T, double P, boolean checkForSolids) {
     this(T, P);
     modelName = "SRK-EOS";
     attractiveTermNumber = 0;
     setNumberOfPhases(5);
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseSrkEos();
       phaseArray[i].setTemperature(T);

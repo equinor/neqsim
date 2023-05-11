@@ -63,7 +63,9 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   /**
    * {@inheritDoc}
    *
-   * Calculates the surfacetension using the Gradient Theory for mixtures Units: N/m
+   * <p>
+   * Using the Gradient Theory for mixtures Units: N/m
+   * </p>
    */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
@@ -175,7 +177,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         try {
           ans = fmatrixJama.solveTranspose(bmatrixJama.transpose());
         } catch (Exception ex) {
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex);
         }
       }
 
@@ -253,7 +255,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
                 new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();
             ans2 = solver1.solve(bRealMatrix);
           } catch (Exception ex) {
-            logger.error("error", ex);
+            logger.error(ex.getMessage(), ex);
           }
         }
 

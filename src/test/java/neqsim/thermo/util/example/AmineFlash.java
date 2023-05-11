@@ -47,7 +47,7 @@ public class AmineFlash {
     try {
       testOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error("err " + ex.toString());
+      logger.error("err ", ex);
     }
     double molprMDEA = (molMDEA / (1.0 + 0.30 * molMDEA));
     logger.info("mol % MDEA " + molprMDEA);

@@ -18,64 +18,64 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
-    /**
-     * <p>
-     * Constructor for FluidBoundarySystemNonReactive.
-     * </p>
-     */
-    public FluidBoundarySystemNonReactive() {}
+  /**
+   * <p>
+   * Constructor for FluidBoundarySystemNonReactive.
+   * </p>
+   */
+  public FluidBoundarySystemNonReactive() {}
 
-    /**
-     * <p>
-     * Constructor for FluidBoundarySystemNonReactive.
-     * </p>
-     *
-     * @param boundary a
-     *        {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface}
-     *        object
-     */
-    public FluidBoundarySystemNonReactive(FluidBoundaryInterface boundary) {
-        super(boundary);
+  /**
+   * <p>
+   * Constructor for FluidBoundarySystemNonReactive.
+   * </p>
+   *
+   * @param boundary a
+   *        {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface}
+   *        object
+   */
+  public FluidBoundarySystemNonReactive(FluidBoundaryInterface boundary) {
+    super(boundary);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void createSystem() {
+    nodes = new FluidBoundaryNodeNonReactive[numberOfNodes];
+    super.createSystem();
+
+    for (int i = 0; i < numberOfNodes; i++) {
+      nodes[i] = new FluidBoundaryNodeNonReactive(boundary.getInterphaseSystem());
     }
+    System.out.println("system created...");
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void createSystem() {
-        nodes = new FluidBoundaryNodeNonReactive[numberOfNodes];
-        super.createSystem();
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String[] args) {
+    SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
+    PipeData pipe1 = new PipeData(10.0, 0.025);
 
-        for (int i = 0; i < numberOfNodes; i++) {
-            nodes[i] = new FluidBoundaryNodeNonReactive(boundary.getInterphaseSystem());
-        }
-        System.out.println("system created...");
-    }
+    testSystem.addComponent("methane", 0.061152181, 0);
+    testSystem.addComponent("water", 0.1862204876, 1);
+    testSystem.chemicalReactionInit();
+    testSystem.setMixingRule(2);
+    testSystem.init_x_y();
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
-        PipeData pipe1 = new PipeData(10.0, 0.025);
+    FlowNodeInterface test = new StratifiedFlowNode(testSystem, pipe1);
+    test.setInterphaseModelType(10);
 
-        testSystem.addComponent("methane", 0.061152181, 0);
-        testSystem.addComponent("water", 0.1862204876, 1);
-        testSystem.chemicalReactionInit();
-        testSystem.setMixingRule(2);
-        testSystem.init_x_y();
-
-        FlowNodeInterface test = new StratifiedFlowNode(testSystem, pipe1);
-        test.setInterphaseModelType(10);
-
-        test.initFlowCalc();
-        test.calcFluxes();
-        test.getFluidBoundary().setEnhancementType(0);
-        // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().createSystem();
-        // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().solve();
-        // System.out.println("enhancement " +
-        // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().getEnhancementFactor(0));
-    }
+    test.initFlowCalc();
+    test.calcFluxes();
+    test.getFluidBoundary().setEnhancementType(0);
+    // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().createSystem();
+    // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().solve();
+    // System.out.println("enhancement " +
+    // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().getEnhancementFactor(0));
+  }
 }

@@ -99,7 +99,7 @@ public class ChemicalReactionOperations
         initCalc =
             new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, 1);
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       setComponents();
       Amatrix = initCalc.getA();
@@ -129,7 +129,7 @@ public class ChemicalReactionOperations
     try {
       clonedSystem = (ChemicalReactionOperations) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage(), ex);
     }
     return clonedSystem;
   }
@@ -437,7 +437,7 @@ public class ChemicalReactionOperations
         firsttime = false;
         return true;
       } catch (Exception ex) {
-        System.out.println("error in chem eq");
+        logger.error("error in chem eq", ex);
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phase);
         return solver.solve();
       }
@@ -447,7 +447,7 @@ public class ChemicalReactionOperations
       try {
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phase);
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       return solver.solve();
     }

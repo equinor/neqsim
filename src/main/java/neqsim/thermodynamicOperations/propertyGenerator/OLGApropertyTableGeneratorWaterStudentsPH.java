@@ -166,7 +166,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -187,7 +187,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
         thermoOps.bubblePointPressureFlash(false);
         bubP[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         bubP[i] = 0;
         return bubP;
       }
@@ -213,7 +213,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
         thermoOps.dewPointPressureFlashHC();
         dewP[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         dewP[i] = 0;
         return dewP;
       }
@@ -239,7 +239,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
         thermoOps.bubblePointTemperatureFlash();
         bubT[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         bubT[i] = 0.0;
       }
     }
@@ -349,7 +349,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
               + thermoSystem.getPressure());
 
           thermoSystem.display();
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex);
         }
 
         /*

@@ -48,7 +48,7 @@ public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction {
         thermoOps.freezingPointTemperatureFlash();
       }
     } catch (Exception ex) {
-      logger.error("err dew pont");
+      logger.error("err dew pont", ex);
     }
     return system.getTemperature();
   }

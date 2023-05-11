@@ -67,7 +67,7 @@ public class SwellingTest extends BasePVTsimulation {
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     double orginalOilVolume = getThermoSystem().getVolume();
     double oilMoles = getThermoSystem().getTotalNumberOfMoles();
@@ -90,7 +90,7 @@ public class SwellingTest extends BasePVTsimulation {
       try {
         thermoOps.bubblePointPressureFlash(false);
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       pressures[i] = getThermoSystem().getPressure();
       getRelativeOilVolume()[i] = getThermoSystem().getVolume() / orginalOilVolume;

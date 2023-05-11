@@ -56,7 +56,7 @@ public class ParachorSurfaceTension extends SurfaceTension {
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the surfacetension using the Macleod/Sugden method for mixtures Units: N/m
+   * Using the Macleod/Sugden method for mixtures Units: N/m
    * </p>
    */
   @Override
@@ -82,7 +82,7 @@ public class ParachorSurfaceTension extends SurfaceTension {
                     * system.getPhase(interface1).getComponent(i).getx());
       }
     } catch (Exception ex) {
-      // logger.error(ex.getMessage());
+      // logger.error(ex.getMessage(), ex);
       temp = 0.0;
     }
     return Math.pow(temp, 4.0) / 1000.0;
