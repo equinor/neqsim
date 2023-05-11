@@ -82,7 +82,7 @@ public class TestSurfaceTenison {
       // testSystem.getTemperature());
       // testOps.dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     // testSystem.getPhase(1).getComponent(1).getChemicalPotentialdNTV(0,

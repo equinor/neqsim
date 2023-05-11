@@ -31,7 +31,7 @@ public class AntoineSolidFunctionS8 extends LevenbergMarquardtFunction {
     try {
       system.getPhase(0).getComponent(0).getSolidVaporPressure(dependentValues[0]);
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     return system.getPhase(0).getComponent(0).getSolidVaporPressure(dependentValues[0]);
   }

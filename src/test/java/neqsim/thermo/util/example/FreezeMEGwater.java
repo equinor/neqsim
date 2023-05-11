@@ -2,7 +2,6 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.dataPresentation.dataHandeling;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -26,13 +25,11 @@ public class FreezeMEGwater {
    *
    * @param args an array of {@link java.lang.String} objects
    */
-  @SuppressWarnings("unused")
   public static void main(String args[]) {
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 10.0, 1.0);
     // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15-23.0, 1.0);
     // testSystem.setMultiPhaseCheck(true);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    dataHandeling output = new dataHandeling();
     testSystem.addComponent("methane", 1.1);
     // testSystem.addComponent("ethane", 15.0);
     testSystem.addComponent("MEG", 0.9);
@@ -52,7 +49,7 @@ public class FreezeMEGwater {
       testOps.freezingPointTemperatureFlash();
       // testOps.calcSolidComlexTemperature("TEG", "water");
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
     // System.out.println("temperature " + (testSystem.getTemperature() - 273.15));

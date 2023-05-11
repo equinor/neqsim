@@ -99,6 +99,14 @@ public class PhaseGENRTL extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  public double getExcessGibbsEnergy() {
+    // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
+    // pressure, phaseType);
+    return GE;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     GE = 0;
@@ -115,13 +123,5 @@ public class PhaseGENRTL extends PhaseGE {
   @Override
   public double getGibbsEnergy() {
     return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getExcessGibbsEnergy() {
-    // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
-    // pressure, phaseType);
-    return GE;
   }
 }

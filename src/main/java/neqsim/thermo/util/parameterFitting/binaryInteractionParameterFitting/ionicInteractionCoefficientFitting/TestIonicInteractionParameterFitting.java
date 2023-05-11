@@ -34,7 +34,6 @@ public class TestIonicInteractionParameterFitting {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-    NeqSimDataBase database = new NeqSimDataBase();
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM CO2KurCor WHERE
     // Reference<>'Bahiri1984' AND Temperature<373.15 ORDER BY
     // wtMDEA,Temperature,Reference,loading");
@@ -111,14 +110,15 @@ public class TestIonicInteractionParameterFitting {
     // }
     // }
     // catch(Exception ex){
-    // logger.error("database error" + ex);
+    // logger.error("database error", ex);
     // }
-
     double[] guess = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
-    ResultSet dataSet = database.getResultSet(
-        "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND PressureCO2<'20' AND Reference<>'GPA'");
 
-    try {
+
+    try (NeqSimDataBase database = new NeqSimDataBase();) {
+      ResultSet dataSet = database.getResultSet(
+          "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND PressureCO2<'20' AND Reference<>'GPA'");
+
       int i = 0;
       while (dataSet.next() && i < 25) {
         int ID = Integer.parseInt(dataSet.getString("ID"));
@@ -190,13 +190,14 @@ public class TestIonicInteractionParameterFitting {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
-    dataSet = database.getResultSet(
-        "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND Pressure<'20' AND Reference<>'GPA'");
 
-    try {
+
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND Pressure<'20' AND Reference<>'GPA'");) {
       int i = 0;
       while (dataSet.next() && i < 2) {
         int ID = Integer.parseInt(dataSet.getString("ID"));
@@ -268,7 +269,7 @@ public class TestIonicInteractionParameterFitting {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -103,7 +103,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
 
         logger.info("error " + error);
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
       }
     } while ((Math.abs(error) > 1e-5 && iter < 100) || iter < 3);
     // system.display();

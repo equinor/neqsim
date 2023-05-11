@@ -33,7 +33,6 @@ public class TestInfluenceParamGTFunction {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-    NeqSimDataBase database = new NeqSimDataBase();
     // ComponentName<>'nC10'
     // AND
     // ComponentName<>'nC11'
@@ -53,7 +52,8 @@ public class TestInfluenceParamGTFunction {
     // double guess[] = {-5.2897559010400935E-17, 7.103588505598196E-17}; //,
     // 1.1161368619, 0.8363538313}; // PR param
 
-    try (ResultSet dataSet = database.getResultSet(
+    try (NeqSimDataBase database = new NeqSimDataBase();
+        ResultSet dataSet = database.getResultSet(
         "SELECT * FROM purecomponentsurfacetension2 WHERE ComponentName IN ('n-pentane','ethane','methane', 'propane','CO2', 'c-hexane','M-cy-C5', 'n-pentane','n-hexane', 'n-nonane','nC10')") // AND
     ) {
       while (dataSet.next() && includePureCompData) {
@@ -96,7 +96,7 @@ public class TestInfluenceParamGTFunction {
         sample.setReference(testSystem.getPhase(0).getComponent(0).getComponentName());
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     /*

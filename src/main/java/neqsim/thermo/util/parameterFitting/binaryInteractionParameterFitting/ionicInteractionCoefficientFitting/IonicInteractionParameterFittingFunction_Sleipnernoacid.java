@@ -33,7 +33,7 @@ public class IonicInteractionParameterFittingFunction_Sleipnernoacid
       thermoOps.bubblePointPressureFlash(false);
       // System.out.println("pressure: " + system.getPressure());
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     return system.getPressure();

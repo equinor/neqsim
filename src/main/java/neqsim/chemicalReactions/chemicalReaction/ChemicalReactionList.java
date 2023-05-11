@@ -101,7 +101,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
               stocCoef.add((dataSet2.getString("stoccoef")).trim());
             } while (dataSet2.next());
           } catch (Exception ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
           }
 
           nameArray = new String[names.size()];
@@ -118,7 +118,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         }
       } while (dataSet.next());
     } catch (Exception ex) {
-      System.out.println("could not add reacton: " + ex.toString());
+      logger.error("could not add reacton: ", ex);
     }
   }
 
@@ -261,7 +261,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         reactionNumber++;
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
 
     /*
@@ -456,23 +456,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     // System.out.println("reac matrix ");
     // reacMat.print(10,10);
     return reacMat;
-  }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  @SuppressWarnings("unused")
-  public static void main(String[] args) {
-    ChemicalReactionList test = new ChemicalReactionList();
-    // test.readReactions();
-    // String[] test2 = {"water","MDEA"};
-    // test.removeJunkReactions(test2);
-    // String[] comp = test.getAllComponents();
-    // System.out.println("components: " + comp.length);
   }
 
   /**

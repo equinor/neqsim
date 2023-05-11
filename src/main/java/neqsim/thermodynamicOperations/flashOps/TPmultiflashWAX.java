@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -50,10 +51,10 @@ public class TPmultiflashWAX extends TPflash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param check a boolean
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
-  public TPmultiflashWAX(SystemInterface system, boolean check) {
-    super(system, check);
+  public TPmultiflashWAX(SystemInterface system, boolean checkForSolids) {
+    super(system, checkForSolids);
   }
 
   /**
@@ -76,11 +77,11 @@ public class TPmultiflashWAX extends TPflash {
               / E[i] / system.getPhase(k).getComponents()[i].getFugacityCoefficient());
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            && !system.getPhase(k).getPhaseTypeName().equals("aqueous")) {
+            && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
           system.getPhase(k).getComponents()[i].setx(1e-50);
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            && system.getPhase(k).getPhaseTypeName().equals("aqueous")) {
+            && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
           system.getPhase(k).getComponents()[i]
               .setx(system.getPhase(k).getComponents()[i].getNumberOfmoles()
                   / system.getPhase(k).getNumberOfMolesInPhase());

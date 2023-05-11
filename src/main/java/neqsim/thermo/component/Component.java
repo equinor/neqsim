@@ -16,12 +16,32 @@ import neqsim.util.database.NeqSimDataBase;
 
 abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Component.class);
 
   double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
-  /** Index number of component in database. */
+  /** Index number of Component in database. */
   protected int index;
-  /** Index number of component in Phase object component array. */
+  /** Index number of Component in Phase object component array. */
   protected int componentNumber;
+  /** Name of component. */
+  protected String componentName = "default";
+  /**
+   * Type of component. Can be "normal", "TBP", "plus", "ion", what about "HC", "inert" and
+   * "Component?"
+   */
+  private String componentType = "Component";
+
+  /** Mole fraction of Component in System. */
+  protected double z;
+  /** Mole fraction of Component in Phase. */
+  protected double x = 0;
+  /**
+   * Number of moles of Component in System. <code>numberOfMoles = totalNumberOfMoles * z</code>.
+   */
+  protected double numberOfMoles = 0.0;
+  /** Number of moles of Component in Phase. <code>totalNumberOfMoles * x * beta</code>. */
+  protected double numberOfMolesInPhase = 0.0;
+  protected double K;
 
   protected int attractiveTermNumber = 0;
   protected int numberOfAssociationSites = 0;
@@ -32,23 +52,24 @@ abstract class Component implements ComponentInterface {
   protected double bCPA = 0.0;
   protected double mCPA = 0.0;
   protected double srkacentricFactor = 0.0;
-  protected String componentName = "default";
   protected String referenceStateType = "solvent";
   protected String associationScheme = "0";
   protected String antoineLiqVapPresType = null;
   private String formulae = "";
   private String CASnumber = "";
   protected Element elements = null;
+
   protected boolean isTBPfraction = false;
   protected boolean isPlusFraction = false;
   protected boolean isNormalComponent = true;
   protected boolean isIon = false;
+
   private boolean isHydrateFormer = false;
   private boolean waxFormer = false;
-  private String componentType = "Component";
   protected double qPure = 0;
   protected double voli = 1.0;
   protected int calcActivity = 1;
+  /** Check for solid phase and do solid phase calculations. */
   protected boolean solidCheck = false;
   protected double dqPuredT = 0;
   protected double dqPuredTdT = 0;
@@ -61,10 +82,7 @@ abstract class Component implements ComponentInterface {
   protected double criticalTemperature;
   protected double molarMass;
   protected double acentricFactor;
-  /** numberOfMoles = totalNumberOfMoles * z. */
-  protected double numberOfMoles = 0.0;
-  /** totalNumberOfMoles * x * beta. */
-  protected double numberOfMolesInPhase = 0.0;
+
   protected double normalLiquidDensity = 0;
   protected double reducedPressure;
   protected double reducedTemperature;
@@ -101,9 +119,7 @@ abstract class Component implements ComponentInterface {
   protected double lennardJonesEnergyParameter = 0;
   protected double stokesCationicDiameter = 0;
   protected double paulingAnionicDiameter = 0;
-  protected double K;
-  protected double z;
-  protected double x = 0;
+
   private int orginalNumberOfAssociationSites = 0;
   protected double dfugdt = 0.1;
   protected double dfugdp = 0.1;
@@ -129,7 +145,7 @@ abstract class Component implements ComponentInterface {
   private double triplePointTemperature = 1000.0;
   double meltingPointTemperature = 110.0;
   private double idealGasEnthalpyOfFormation = 0.0;
-  double idealGasGibsEnergyOfFormation = 0.0;
+  double idealGasGibbsEnergyOfFormation = 0.0;
 
   double idealGasAbsoluteEntropy = 0.0;
 
@@ -142,19 +158,18 @@ abstract class Component implements ComponentInterface {
   protected double epsikSAFT = 0;
   private double associationVolumeSAFT;
   private double associationEnergySAFT = 0;
-  static Logger logger = LogManager.getLogger(Component.class);
 
   /**
    * <p>
    * Constructor for Component.
    * </p>
    *
-   * @param number a int
+   * @param number a int. Not used.
    * @param TC Critical temperature
    * @param PC Critical pressure
    * @param M Molar mass
    * @param a Acentric factor
-   * @param moles Number of moles
+   * @param moles Total number of moles of component.
    */
   public Component(int number, double TC, double PC, double M, double a, double moles) {
     criticalPressure = PC;
@@ -169,44 +184,13 @@ abstract class Component implements ComponentInterface {
    * Constructor for Component.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param component_name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compnumber Index number of component in phase object component array.
    */
   public Component(String component_name, double moles, double molesInPhase, int compnumber) {
     createComponent(component_name, moles, molesInPhase, compnumber);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void insertComponentIntoDatabase(String databaseName) {
-    databaseName = "comptemp";
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      int isW = 0;
-      if (isWaxFormer()) {
-        isW = 1;
-      }
-      index = 1000 + componentNumber;
-      if (NeqSimDataBase.createTemporaryTables()) {
-        database.execute("insert into comptemp VALUES (" + (1000 + componentNumber) + ", '"
-            + componentName + "', '00-00-0','" + getComponentType() + "', "
-            + index + ", 'HC', " + (molarMass * 1000.0) + ", "
-            + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", "
-            + getAcentricFactor() + "," + (getNormalBoilingPoint() - 273.15)
-            + ", 39.948, 74.9, 'Classic', 0, " + getCpA() + ", " + getCpB() + ", " + getCpC() + ", "
-            + getCpD() + ", " + getCpE()
-            + ", 'log', 5.2012, 1936.281, -20.143, -1.23303, 1000, 1.8, 0.076, 0.0, 0.0, 2.52, 809.1, 0, 3, -24.71, 4210, 0.0453, -3.38e-005, -229000, -19.2905, 29814.5, -0.019678, 0.000132, -3.11e-007, 0, 'solvent', 0, 0, 0, 0, 0.0789, -1.16, 0, -0.384, 0.00525, -6.37e-006, 207, "
-            + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature() + ", "
-            + getMeltingPointTemperature()
-            + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
-            + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
-            + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
-      }
-      CASnumber = "00-00-0";
-    } catch (Exception ex) {
-      logger.error("error in inserting to database", ex);
-    }
   }
 
   /** {@inheritDoc} */
@@ -379,7 +363,7 @@ abstract class Component implements ComponentInterface {
 
         setIdealGasEnthalpyOfFormation(
             Double.parseDouble(dataSet.getString("EnthalpyOfFormation")));
-        idealGasGibsEnergyOfFormation = gibbsEnergyOfFormation;
+        idealGasGibbsEnergyOfFormation = gibbsEnergyOfFormation;
         idealGasAbsoluteEntropy = Double.parseDouble(dataSet.getString("AbsoluteEntropy"));
 
         for (int i = 0; i < 5; i++) {
@@ -459,6 +443,36 @@ abstract class Component implements ComponentInterface {
     srkacentricFactor = acentricFactor;
     stokesCationicDiameter = lennardJonesMolecularDiameter;
     paulingAnionicDiameter = lennardJonesMolecularDiameter;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void insertComponentIntoDatabase(String databaseName) {
+    databaseName = "comptemp";
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+      int isW = 0;
+      if (isWaxFormer()) {
+        isW = 1;
+      }
+      index = 1000 + componentNumber;
+      if (NeqSimDataBase.createTemporaryTables()) {
+        database.execute("insert into " + databaseName + " VALUES (" + (1000 + componentNumber)
+            + ", '" + componentName + "', '00-00-0','" + getComponentType() + "', " + index
+            + ", 'HC', " + (molarMass * 1000.0) + ", " + normalLiquidDensity + ", "
+            + (getTC() - 273.15) + ", " + getPC() + ", " + getAcentricFactor() + ","
+            + (getNormalBoilingPoint() - 273.15) + ", 39.948, 74.9, 'Classic', 0, " + getCpA()
+            + ", " + getCpB() + ", " + getCpC() + ", " + getCpD() + ", " + getCpE()
+            + ", 'log', 5.2012, 1936.281, -20.143, -1.23303, 1000, 1.8, 0.076, 0.0, 0.0, 2.52, 809.1, 0, 3, -24.71, 4210, 0.0453, -3.38e-005, -229000, -19.2905, 29814.5, -0.019678, 0.000132, -3.11e-007, 0, 'solvent', 0, 0, 0, 0, 0.0789, -1.16, 0, -0.384, 0.00525, -6.37e-006, 207, "
+            + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature() + ", "
+            + getMeltingPointTemperature()
+            + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
+            + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
+            + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
+      }
+      CASnumber = "00-00-0";
+    } catch (Exception ex) {
+      logger.error("error in inserting to database", ex);
+    }
   }
 
   /** {@inheritDoc} */
@@ -612,7 +626,7 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getTripplePointDensity() {
+  public final double getTriplePointDensity() {
     return triplePointDensity;
   }
 
@@ -642,8 +656,8 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getIdealGasGibsEnergyOfFormation() {
-    return idealGasGibsEnergyOfFormation;
+  public final double getIdealGasGibbsEnergyOfFormation() {
+    return idealGasGibbsEnergyOfFormation;
   }
 
   /** {@inheritDoc} */
@@ -1691,7 +1705,7 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isHydrocarbon() {
-    return isIsTBPfraction() || isPlusFraction || componentType.equals("HC");
+    return isIsTBPfraction() || isPlusFraction || componentType.equalsIgnoreCase("HC");
   }
 
   /** {@inheritDoc} */
@@ -1735,7 +1749,7 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isInert() {
-    return componentType.equals("inert");
+    return componentType.equalsIgnoreCase("inert");
   }
 
   /** {@inheritDoc} */
@@ -1748,7 +1762,7 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isIsIon() {
-    if (componentType.equals("ion")) {
+    if (componentType.equalsIgnoreCase("ion")) {
       setIsIon(true);
     }
     return isIon;
@@ -1781,8 +1795,8 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setSolidCheck(boolean solidCheck) {
-    this.solidCheck = solidCheck;
+  public void setSolidCheck(boolean checkForSolids) {
+    this.solidCheck = checkForSolids;
   }
 
   /** {@inheritDoc} */
@@ -2039,7 +2053,7 @@ abstract class Component implements ComponentInterface {
   @Override
   public void setComponentType(String componentType) {
     this.componentType = componentType;
-    if (componentType.equals("TBP")) {
+    if (componentType.equalsIgnoreCase("TBP")) {
       setIsTBPfraction(true);
     }
   }

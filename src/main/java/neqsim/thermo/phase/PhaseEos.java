@@ -140,10 +140,11 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       }
 
       if (getVolume() / getB() > 1.75) {
-        phaseTypeName = "gas";
+        setType(PhaseType.GAS);
       } else if (sumHydrocarbons > sumAqueous) {
-        phaseTypeName = "oil";
+        setType(PhaseType.OIL);
       } else {
+        // setType(PhaseType.AQUEOUS); // todo: this breaks tests
         phaseTypeName = "aqueous";
       }
 

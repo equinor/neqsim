@@ -101,7 +101,7 @@ public class FurstElectrolyteConstants implements java.io.Serializable {
    * @param type a {@link java.lang.String} object
    */
   public static void setFurstParams(String type) {
-    if (type.equals("electrolyteCPA")) {
+    if (type.equalsIgnoreCase("electrolyteCPA")) {
       furstParams = furstParamsCPA;
     }
   }

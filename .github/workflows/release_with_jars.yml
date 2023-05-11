@@ -93,7 +93,6 @@ jobs:
                     
   create_release:
     name: Create release v${{ needs.get_versions.outputs.version_8 }}
-    if: false
     runs-on: ubuntu-latest
     needs: [get_versions, compile_java_8, compile_java_11]
     
@@ -115,29 +114,28 @@ jobs:
           artifacts: "*.jar"
           artifactContentType: application/java-archive
           
-      # Needs to delete the old jars manually
+      # # Needs to delete the old jars manually 
+      # - run: mkdir lib && cp *.jar lib/ 
+      # - run: cd lib && mkdir libj8 && mv *Java8.jar libj8/ && cd ..
       
-      - run: mkdir lib && cp *.jar lib/ 
-      - run: cd lib && mkdir libj8 && mv *Java8.jar libj8/ && cd ..
+      # - name: Create release branch in neqsimpython repo
+      #   uses: GuillaumeFalourd/create-other-repo-branch-action@v1.5
+      #   with:
+      #     repository_owner: Equinor
+      #     repository_name: neqsimpython
+      #     new_branch_name: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
+      #     ssh_deploy_key: ${{ secrets.SSH_DEPLOY_KEY }}
       
-      - name: Create release branch in neqsimpython repo
-        uses: GuillaumeFalourd/create-other-repo-branch-action@v1.5
-        with:
-          repository_owner: Equinor
-          repository_name: neqsimpython
-          new_branch_name: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
-          ssh_deploy_key: ${{ secrets.SSH_DEPLOY_KEY }}
-      
-      - name: Push directory to another repository
-        uses: cpina/github-action-push-to-another-repository@v1.5.1
-        env:
-          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
-        with:
-          source-directory: 'lib'
-          destination-github-username: 'equinor'
-          destination-repository-name: 'neqsimpython'
-          user-email: asmf@equinor.com
-          target-branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
-          target-directory: neqsim/lib
-          commit_message:  'chore: updated jar-files'
+      # - name: Push directory to another repository
+      #   uses: cpina/github-action-push-to-another-repository@v1.5.1
+      #   env:
+      #     SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+      #   with:
+      #     source-directory: 'lib'
+      #     destination-github-username: 'equinor'
+      #     destination-repository-name: 'neqsimpython'
+      #     user-email: asmf@equinor.com
+      #     target-branch: NeqSim-jars-updated-${{ needs.get_versions.outputs.version_8 }}
+      #     target-directory: neqsim/lib
+      #     commit_message:  'chore: updated jar-files'
         

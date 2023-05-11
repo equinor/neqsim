@@ -72,13 +72,6 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, int phasetype) {
     double GE = 0.0;
@@ -110,6 +103,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
             dataSet.getClob("MainGroup");
           } catch (Exception ex) {
             dataSet.close();
+            logger.error(ex.getMessage(), ex);
             dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb WHERE MainGroup="
                 + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
             dataSet.next();
@@ -120,7 +114,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
           dataSet.close();
         } catch (Exception ex) {
-          logger.error(ex.toString(), ex);
+          logger.error(ex.getMessage(), ex);
         }
       }
     }
@@ -147,6 +141,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
             dataSet.next();
             dataSet.getClob("MainGroup");
           } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             dataSet.close();
             dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc WHERE MainGroup="
                 + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
@@ -158,7 +153,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
           dataSet.close();
         } catch (Exception ex) {
-          logger.error(ex.toString(), ex);
+          logger.error(ex.getMessage(), ex);
         }
       }
     }

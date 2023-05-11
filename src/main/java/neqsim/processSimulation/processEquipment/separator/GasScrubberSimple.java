@@ -32,7 +32,6 @@ public class GasScrubberSimple extends Separator {
   StreamInterface inletStream;
   StreamInterface gasOutStream;
   StreamInterface liquidOutStream;
-  String name = new String();
 
   /**
    * <p>

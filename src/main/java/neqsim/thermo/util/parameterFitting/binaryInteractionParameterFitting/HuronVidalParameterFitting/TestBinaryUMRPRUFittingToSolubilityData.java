@@ -33,7 +33,6 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-
     double parameterGuess[] = {188.385052774267, -0.84022345}; // , 2630.871733876947};
 
     try (NeqSimDataBase database = new NeqSimDataBase();
@@ -69,7 +68,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       }
       dataSet.close();
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     try (NeqSimDataBase database = new NeqSimDataBase();
@@ -105,9 +104,8 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       }
       dataSet.close();
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
@@ -142,7 +140,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       }
       dataSet.close();
     } catch (Exception ex) {
-      logger.info("database error" + ex);
+      logger.info("database error", ex);
     }
 
     try (NeqSimDataBase database = new NeqSimDataBase();
@@ -178,9 +176,8 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       }
       dataSet.close();
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
@@ -214,9 +211,8 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
@@ -251,9 +247,8 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
       }
       dataSet.close();
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
@@ -287,7 +282,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

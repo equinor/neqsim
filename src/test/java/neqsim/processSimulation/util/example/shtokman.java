@@ -68,7 +68,7 @@ public class shtokman {
      * stream_2.getThermoSystem().init(0); ops.hydrateFormationTemperature(2);
      * stream_2.getThermoSystem().display(); // stream_2.getThermoSystem().display(); //
      * stream_2.getThermoSystem().setTemperature(250.0); // ops.dewPointTemperatureFlash(); } catch
-     * (Exception ex) { logger.error(ex.getMessage()); } double wtMEG =
+     * (Exception ex) { logger.error(ex.getMessage(), ex); } double wtMEG =
      * stream_2.getThermoSystem().getPhase(1).getComponent("MEG").getx()*stream_2.
      * getThermoSystem().getPhase(1).getComponent("MEG").getMolarMass(); double wtwater =
      * stream_2.getThermoSystem().getPhase(1).getComponent("water").getx()*stream_2.

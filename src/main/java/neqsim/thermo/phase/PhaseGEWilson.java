@@ -64,13 +64,6 @@ public class PhaseGEWilson extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getGibbsEnergy() {
     return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
   }

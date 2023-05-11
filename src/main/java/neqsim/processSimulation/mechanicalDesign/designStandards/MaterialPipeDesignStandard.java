@@ -157,7 +157,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
         // temperatureDeratingFactor has to be implemented
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
   }
