@@ -87,13 +87,8 @@ public class TestCPAParameterFittingToSolubilityGlycolHC {
       logger.error("database error", ex);
     }
 
-<<<<<<< HEAD
-
-    try (ResultSet dataSet = database.getResultSet(
-=======
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(
->>>>>>> master
         "SELECT * FROM HCGlycolLLdata WHERE comp1='n-heptane' AND comp2='MEG' AND reference='Lindboe2002' ORDER BY Temperature,Pressure")) {
       int p = 0;
       logger.info("adding....");

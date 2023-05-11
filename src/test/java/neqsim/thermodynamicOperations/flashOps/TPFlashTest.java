@@ -3,8 +3,6 @@ package neqsim.thermodynamicOperations.flashOps;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.phase.PhaseInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
