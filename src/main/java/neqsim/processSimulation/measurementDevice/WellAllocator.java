@@ -86,9 +86,9 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
           / (exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
               + exportOilStream.getFluid().getComponent(i).getFlowRate("kg/hr"));
       gasExportFlow +=
-          stream.getFluid().getComponent(i).getTotalFlowRate("kg/hr") * splitFactors[i];
+          stream.getFluid().getComponent(i).getTotalFlowRate(unit) * splitFactors[i];
       oilExportFlow +=
-          stream.getFluid().getComponent(i).getTotalFlowRate("kg/hr") * (1.0 - splitFactors[i]);
+          stream.getFluid().getComponent(i).getTotalFlowRate(unit) * (1.0 - splitFactors[i]);
     }
 
     if (measurement.equals("gas export rate")) {
@@ -96,7 +96,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
     } else if (measurement.equals("oil export rate")) {
       return oilExportFlow;
     } else if (measurement.equals("total export rate")) {
-      return stream.getFluid().getFlowRate("kg/hr");
+      return stream.getFluid().getFlowRate(unit);
     }
     return 0.0;
   }
