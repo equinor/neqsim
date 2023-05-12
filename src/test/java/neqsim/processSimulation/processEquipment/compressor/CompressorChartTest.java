@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -156,5 +157,24 @@ public class CompressorChartTest {
      */
 
     // comp1.getCompressorChart().plot();
+  }
+
+  @Test
+  void testSetHeadUnit() {
+    CompressorChart cc = new CompressorChart();
+    String origUnit = cc.getHeadUnit();
+    Assertions.assertEquals("meter", origUnit);
+    String newUnit = "kJ/kg";
+    cc.setHeadUnit(newUnit);
+    Assertions.assertEquals(newUnit, cc.getHeadUnit());
+    cc.setHeadUnit(origUnit);
+    Assertions.assertEquals(origUnit, cc.getHeadUnit());
+
+    RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
+      cc.setHeadUnit("doesNotExist");
+    });
+    Assertions.assertEquals(
+        "neqsim.util.exception.InvalidInputException: CompressorChart:setHeadUnit - Input headUnit does not support value doesNotExist",
+        thrown.getMessage());
   }
 }
