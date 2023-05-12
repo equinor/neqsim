@@ -318,6 +318,12 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public void setHeadUnit(String headUnit) {
+    if (headUnit.equals("meter") || headUnit.equals("kJ/kg")) {
+      this.headUnit = headUnit;
+    } else {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "setHeadUnit", "headUnit", "does not support value " + headUnit));
+    }
     this.headUnit = headUnit;
   }
 
