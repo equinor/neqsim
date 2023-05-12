@@ -15,20 +15,12 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id: $Id
  */
-public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
+public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(WaterDewPointAnalyser.class);
 
-  protected StreamInterface stream = null;
   private double referencePressure = 70.0;
   private String method = "Bukacek";
-
-  /**
-   * <p>
-   * Constructor for WaterDewPointAnalyser.
-   * </p>
-   */
-  public WaterDewPointAnalyser() {}
 
   /**
    * <p>
@@ -38,8 +30,20 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public WaterDewPointAnalyser(StreamInterface stream) {
-    this.stream = stream;
-    unit = "K";
+    this("WaterDewPointAnalyser", stream);
+
+  }
+
+  /**
+   * <p>
+   * Constructor for WaterDewPointAnalyser.
+   * </p>
+   *
+   * @param name Name of WaterDewPointAnalyser
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public WaterDewPointAnalyser(String name, StreamInterface stream) {
+    super(name, "K", stream);
     setConditionAnalysisMaxDeviation(1.0);
   }
 
@@ -54,12 +58,6 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
       // stream.getThermoSystem().getPhase(0).getComponent("water").getx()*1e6);
     } finally {
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getMeasuredValue() {
-    return getMeasuredValue(unit);
   }
 
   /** {@inheritDoc} */

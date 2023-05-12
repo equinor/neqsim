@@ -18,23 +18,16 @@ public class MPMResponse {
      * <p>
      * Constructor for MPMResponse.
      * </p>
-     */
-    public MPMResponse() {}
-
-    /**
-     * <p>
-     * Constructor for MPMResponse.
-     * </p>
      *
      * @param inputMPM a {@link neqsim.processSimulation.measurementDevice.MultiPhaseMeter} object
      */
     public MPMResponse(MultiPhaseMeter inputMPM) {
         name = inputMPM.getName();
         massFLow = inputMPM.getMeasuredValue();
-        GOR = inputMPM.getMeasuredValue("GOR");
-        GOR_std = inputMPM.getMeasuredValue("GOR_std");
-        gasDensity = inputMPM.getMeasuredValue("gasDensity");
-        oilDensity = inputMPM.getMeasuredValue("oilDensity");
-        waterDensity = inputMPM.getMeasuredValue("waterDensity");
+        GOR = inputMPM.getMeasuredValue("GOR", "");
+        GOR_std = inputMPM.getMeasuredValue("GOR_std", "");
+        gasDensity = inputMPM.getMeasuredValue("gasDensity", "");
+        oilDensity = inputMPM.getMeasuredValue("oilDensity", "");
+        waterDensity = inputMPM.getMeasuredValue("waterDensity", "");
     }
 }

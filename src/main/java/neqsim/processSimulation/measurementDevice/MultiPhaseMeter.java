@@ -2,10 +2,8 @@ package neqsim.processSimulation.measurementDevice;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -16,11 +14,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author asmund
  * @version $Id: $Id
  */
-public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
+public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(MultiPhaseMeter.class);
-
-  protected StreamInterface stream = null;
 
   double pressure = 10.0;
   double temperature = 298.15;
@@ -31,22 +27,11 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
    * <p>
    * Constructor for MultiPhaseMeter.
    * </p>
-   */
-  public MultiPhaseMeter() {
-    name = "Multi Phase Meter";
-  }
-
-  /**
-   * <p>
-   * Constructor for MultiPhaseMeter.
-   * </p>
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public MultiPhaseMeter(StreamInterface stream) {
-    this();
-    name = "Multi Phase Meter";
-    this.stream = stream;
+    this("Multi Phase Meter", stream);
   }
 
   /**
@@ -58,9 +43,7 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public MultiPhaseMeter(String name, StreamInterface stream) {
-    this();
-    this.name = name;
-    this.stream = stream;
+    super(name, "kg/hr", stream);
   }
 
   /**
@@ -113,15 +96,21 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue() {
-    return stream.getThermoSystem().getFlowRate("kg/hr");
+  public double getMeasuredValue(String unit) {
+    return stream.getThermoSystem().getFlowRate(unit);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getMeasuredValue(String measurement) {
+  /**
+   * Get specific measurement type. Supports "mass rate", "GOR", "gasDensity", "oilDensity",
+   * "waterDensity" and "GOR_std".
+   *
+   * @param measurement Measurement value to get.
+   * @param unit Unit to get value in
+   * @return Measured value
+   */
+  public double getMeasuredValue(String measurement, String unit) {
     if (measurement.equals("mass rate")) {
-      return stream.getThermoSystem().getFlowRate("kg/hr");
+      return stream.getThermoSystem().getFlowRate(unit);
     }
 
     if (stream.getThermoSystem().getFlowRate("kg/hr") < 1e-10) {
@@ -209,46 +198,5 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
       logger.warn("Measurement type " + measurement + " is not found");
       return 0.0;
     }
-  }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    SystemInterface testFluid = new SystemSrkEos(338.15, 50.0);
-    testFluid.addComponent("nitrogen", 1.205);
-    testFluid.addComponent("CO2", 1.340);
-    testFluid.addComponent("methane", 87.974);
-    testFluid.addComponent("ethane", 5.258);
-    testFluid.addComponent("propane", 3.283);
-    testFluid.addComponent("i-butane", 0.082);
-    testFluid.addComponent("n-butane", 0.487);
-    testFluid.addComponent("i-pentane", 0.056);
-    testFluid.addComponent("n-pentane", 1.053);
-    testFluid.addComponent("nC10", 4.053);
-    testFluid.setMixingRule(2);
-    testFluid.setMultiPhaseCheck(true);
-
-    testFluid.setTemperature(24.0, "C");
-    testFluid.setPressure(48.0, "bara");
-    testFluid.setTotalFlowRate(4.5, "MSm3/day");
-
-    Stream stream_1 = new Stream("Stream1", testFluid);
-
-    MultiPhaseMeter multiPhaseMeter = new MultiPhaseMeter("test", stream_1);
-    multiPhaseMeter.setTemperature(90.0, "C");
-    multiPhaseMeter.setPressure(60.0, "bara");
-
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
-    operations.add(stream_1);
-    operations.add(multiPhaseMeter);
-    operations.run();
-    System.out.println("GOR " + multiPhaseMeter.getMeasuredValue("GOR"));
-    System.out.println("GOR_std " + multiPhaseMeter.getMeasuredValue("GOR_std"));
   }
 }

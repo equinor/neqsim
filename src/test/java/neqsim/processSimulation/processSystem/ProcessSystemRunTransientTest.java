@@ -148,7 +148,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator1);
     separatorLevelTransmitter.setName("separatorLevelTransmitter1");
-    separatorLevelTransmitter.setUnit("meter");
     separatorLevelTransmitter.setMaximumValue(1.0);
     separatorLevelTransmitter.setMinimumValue(0.0);
 
