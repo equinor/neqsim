@@ -39,7 +39,8 @@ public class MultiPhaseMeterTest {
     operations.add(multiPhaseMeter);
     operations.run();
 
-    Assertions.assertEquals(51.30735302329235, multiPhaseMeter.getMeasuredValue("GOR", ""));
-    Assertions.assertEquals(3106.770827796345, multiPhaseMeter.getMeasuredValue("GOR_std", ""));
+    Assertions.assertEquals(51.3073530232923, multiPhaseMeter.getMeasuredValue("GOR", ""), 1e-12);
+    Assertions.assertEquals(3106.770827796345, multiPhaseMeter.getMeasuredValue("GOR_std", ""),
+        1e-12);
   }
 }

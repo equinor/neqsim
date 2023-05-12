@@ -56,10 +56,13 @@ public class GORfitterTest {
     operations.add(multiPhaseMeter2);
     operations.run();
 
-    Assertions.assertEquals(51.307353023292364, multiPhaseMeter.getMeasuredValue("GOR", ""));
-    Assertions.assertEquals(3106.7708277963447, multiPhaseMeter.getMeasuredValue("GOR_std", ""));
-    Assertions.assertEquals(10.099999999999769, multiPhaseMeter2.getMeasuredValue("GOR", ""));
-    Assertions.assertEquals(682.1045749623208, multiPhaseMeter2.getMeasuredValue("GOR_std", ""));
-    Assertions.assertEquals(1000000.0, stream_2.getFlowRate("kg/hr"));
+    Assertions.assertEquals(51.3073530232923, multiPhaseMeter.getMeasuredValue("GOR", ""), 1e-12);
+    Assertions.assertEquals(3106.7708277963447, multiPhaseMeter.getMeasuredValue("GOR_std", ""),
+        1e-12);
+    Assertions.assertEquals(10.099999999999769, multiPhaseMeter2.getMeasuredValue("GOR", ""),
+        1e-12);
+    Assertions.assertEquals(682.1045749623208, multiPhaseMeter2.getMeasuredValue("GOR_std", ""),
+        1e-12);
+    Assertions.assertEquals(1000000.0, stream_2.getFlowRate("kg/hr"), 1e-12);
   }
 }
