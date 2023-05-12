@@ -14,19 +14,11 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id: $Id
  */
-public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBaseClass {
+public class HydrateEquilibriumTemperatureAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(HydrateEquilibriumTemperatureAnalyser.class);
 
-  protected StreamInterface stream = null;
   private double referencePressure = 0;
-
-  /**
-   * <p>
-   * Constructor for HydrateEquilibriumTemperatureAnalyser.
-   * </p>
-   */
-  public HydrateEquilibriumTemperatureAnalyser() {}
 
   /**
    * <p>
@@ -36,8 +28,19 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public HydrateEquilibriumTemperatureAnalyser(StreamInterface stream) {
-    this.stream = stream;
-    unit = "K";
+    this("HydrateEquilibriumTemperatureAnalyser", stream);
+  }
+
+  /**
+   * <p>
+   * Constructor for HydrateEquilibriumTemperatureAnalyser.
+   * </p>
+   *
+   * @param name Name of HydrateEquilibriumTemperatureAnalyser
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public HydrateEquilibriumTemperatureAnalyser(String name, StreamInterface stream) {
+    super("HydrateEquilibriumTemperatureAnalyser", "K", stream);
     setConditionAnalysisMaxDeviation(1.0);
   }
 
@@ -52,12 +55,6 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
       // stream.getThermoSystem().getPhase(0).getComponent("water").getx()*1e6);
     } finally {
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getMeasuredValue() {
-    return getMeasuredValue(unit);
   }
 
   /** {@inheritDoc} */

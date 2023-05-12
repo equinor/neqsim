@@ -10,17 +10,10 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
+public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
-  protected StreamInterface stream = null;
-  private int measuredPhaseNumber = 0;
 
-  /**
-   * <p>
-   * Constructor for VolumeFlowTransmitter.
-   * </p>
-   */
-  public VolumeFlowTransmitter() {}
+  private int measuredPhaseNumber = 0;
 
   /**
    * <p>
@@ -30,9 +23,19 @@ public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public VolumeFlowTransmitter(StreamInterface stream) {
-    this.stream = stream;
-    name = "volume flow rate";
-    unit = "m^3/hr";
+    this("volume flow rate", stream);
+  }
+
+  /**
+   * <p>
+   * Constructor for VolumeFlowTransmitter.
+   * </p>
+   *
+   * @param name Name of VolumeFlowTransmitter
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public VolumeFlowTransmitter(String name, StreamInterface stream) {
+    super(name, "m^3/hr", stream);
   }
 
   /** {@inheritDoc} */
@@ -43,7 +46,7 @@ public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue() {
+  public double getMeasuredValue(String unit) {
     stream.getThermoSystem().initPhysicalProperties();
     if (unit.equals("kg/hr")) {
       return stream.getFlowRate(unit);

@@ -42,19 +42,28 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   SystemInterface liquidSystem;
   SystemInterface thermoSystemCloned;
   SystemInterface thermoSystem2;
+
+  /** Orientation of separator. "horizontal" or "vertical" */
   private String orientation = "horizontal";
   StreamInterface gasOutStream;
   StreamInterface liquidOutStream;
+
   private double pressureDrop = 0.0;
-  private double internalDiameter = 1.0;
   public int numberOfInputStreams = 0;
   Mixer inletStreamMixer = new Mixer("Separator Inlet Stream Mixer");
   private double efficiency = 1.0;
   private double liquidCarryoverFraction = 0.0;
   private double gasCarryunderFraction = 0.0;
+
+  /** Length of separator volume. */
   private double separatorLength = 5.0;
+  /** Inner diameter/height of separator volume. */
+  private double internalDiameter = 1.0;
+
   double liquidVolume = 1.0;
   double gasVolume = 18.0;
+
+  /** LiquidLevel as volume fraction of liquidvolume/(liquid + gas volume). */
   private double liquidLevel = liquidVolume / (liquidVolume + gasVolume);
   private double designLiquidLevelFraction = 0.8;
   ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();

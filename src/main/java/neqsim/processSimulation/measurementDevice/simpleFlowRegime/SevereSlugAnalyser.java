@@ -105,24 +105,15 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
   // This constructor is used for the "default" values
   SevereSlugAnalyser() {
-    this.setSuperficialGasVelocity(usl);
-    this.setSuperficialGasVelocity(usg);
-    this.setOutletPressure(outletPressure);
-    this.setTemperature(temperature);
-    this.setSimulationTime(simulationTime);
-    this.setNumberOfTimeSteps(numberOfTimeSteps);
-
+    super("SevereSlugAnalyser", "m3/sec");
   }
 
   // This constructor is used for the user input of superficial liquid and gas velocities,
   // and the rest will be the default values
   SevereSlugAnalyser(double usl, double usg) {
+    this();
     this.setSuperficialLiquidVelocity(usl);
     this.setSuperficialGasVelocity(usg);
-    this.setOutletPressure(outletPressure);
-    this.setTemperature(temperature);
-    this.setSimulationTime(simulationTime);
-    this.setNumberOfTimeSteps(numberOfTimeSteps);
   }
 
   // This constructor is used for the user input of superficial liquid and gas velocities,
@@ -131,6 +122,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   // and the rest will be the default values
   SevereSlugAnalyser(double usl, double usg, double outletPressure, double temperature,
       double simulationTime, int numberOfTimeSteps) {
+    this();
     this.setSuperficialLiquidVelocity(usl);
     this.setSuperficialGasVelocity(usg);
     this.setOutletPressure(outletPressure);
@@ -141,18 +133,18 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
   SevereSlugAnalyser(SystemInterface fluid, Pipe pipe, double outletPressure, double temperature,
       double simulationTime, int numberOfTimeSteps) {
+    this();
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
     fluid.initProperties();
+
     if (fluid.getNumberOfPhases() == 2) {
       usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea();
     } else {
       usl = fluid.getPhase(1).getFlowRate("m3/sec") / pipe.getArea()
           + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
     }
-    this.setSuperficialLiquidVelocity(usl);
     usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
-    this.setSuperficialGasVelocity(usg);
     this.setOutletPressure(outletPressure);
     this.setTemperature(temperature);
     this.setSimulationTime(simulationTime);
@@ -162,6 +154,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength, double rightLength,
       double angle, double outletPressure, double temperature, double simulationTime,
       int numberOfTimeSteps) {
+    this();
     pipe = new Pipe(internalDiameter, leftLength, rightLength, angle);
     streamS = stream;
     SystemInterface fluid = stream.getThermoSystem();
@@ -195,8 +188,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
   SevereSlugAnalyser(double outletPressure, double temperature, double simulationTime,
       int numberOfTimeSteps) {
-    this.setSuperficialLiquidVelocity(usl);
-    this.setSuperficialGasVelocity(usg);
+    this();
     this.setOutletPressure(outletPressure);
     this.setTemperature(temperature);
     this.setSimulationTime(simulationTime);
@@ -486,7 +478,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    *        object
    */
   public void runSevereSlug(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
-
     resPres = new double[severeSlug.getNumberOfTimeSteps()];
     resTime = new double[severeSlug.getNumberOfTimeSteps()];
     resLiqHoldUpRiser = new double[severeSlug.getNumberOfTimeSteps()];
@@ -645,7 +636,12 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * @return a double
    */
   @Override
-  public double getMeasuredValue() {
+  public double getMeasuredValue(String unit) {
+    if (!unit.equalsIgnoreCase("m3/sec")) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "getMeasuredValue", "unit", "currently only supports \"m3/sec\""));
+    }
+
     SystemInterface fluid = streamS.getThermoSystem();
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
