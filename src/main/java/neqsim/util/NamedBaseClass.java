@@ -13,7 +13,7 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
   /**
    * Constructor for NamedBaseClass
    *
-   * @param name the name of the class
+   * @param name the name of the object
    */
   public NamedBaseClass(String name) {
     this.name = name;

@@ -10,19 +10,8 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public class PressureTransmitter extends MeasurementDeviceBaseClass {
+public class PressureTransmitter extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
-  protected StreamInterface stream = null;
-
-  /**
-   * <p>
-   * Constructor for PressureTransmitter.
-   * </p>
-   */
-  public PressureTransmitter() {
-    name = "Pressure Transmitter";
-    unit = "bar";
-  }
 
   /**
    * <p>
@@ -32,8 +21,19 @@ public class PressureTransmitter extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public PressureTransmitter(StreamInterface stream) {
-    this();
-    this.stream = stream;
+    this("Pressure Transmitter", stream);
+  }
+
+  /**
+   * <p>
+   * Constructor for PressureTransmitter.
+   * </p>
+   *
+   * @param name Name of PressureTransmitter
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public PressureTransmitter(String name, StreamInterface stream) {
+    super(name, "bar", stream);
   }
 
   /** {@inheritDoc} */
@@ -44,7 +44,7 @@ public class PressureTransmitter extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue() {
-    return stream.getThermoSystem().getPressure();
+  public double getMeasuredValue(String unit) {
+    return stream.getThermoSystem().getPressure(unit);
   }
 }

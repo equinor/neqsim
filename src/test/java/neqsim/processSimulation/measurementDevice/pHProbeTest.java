@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -45,23 +44,11 @@ class pHProbeTest {
   }
 
   @Test
-  void testGetMeasuredValueWithAlkanility() {
+  void testGetMeasuredValueWithAlkalinity() {
     pHProbe phmeasurement = new pHProbe(stream_1);
-    phmeasurement.setAlkanility(50.0);
+    phmeasurement.setAlkalinity(50.0);
     phmeasurement.run();
     logger.info("pH " + phmeasurement.getMeasuredValue());
     assertEquals(5.629055432357595, phmeasurement.getMeasuredValue(), 0.01);
-  }
-
-  @Disabled
-  @Test
-  void testPHProbe() {
-    // fail("Not yet implemented");
-  }
-
-  @Disabled
-  @Test
-  void testPHProbeStreamInterface() {
-    // fail("Not yet implemented");
   }
 }

@@ -15,6 +15,32 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
     implements MeasurementDeviceInterface {
   private static final long serialVersionUID = 1000;
 
+  protected String unit;
+
+  private double maximumValue = 1.0;
+  private double minimumValue = 0.0;
+
+  private boolean logging = false;
+  private OnlineSignal onlineSignal = null;
+  private boolean isOnlineSignal = false;
+  private double onlineMeasurementValue = 0.0;
+  private String onlineMeasurementValueUnit = "";
+
+  private boolean conditionAnalysis = true;
+  private String conditionAnalysisMessage = "";
+  private double conditionAnalysisMaxDeviation = 0.0;
+
+  /**
+   * Constructor for MeasurementDeviceBaseClass.
+   *
+   * @param name Name of the object
+   * @param unit Engineering unit of the measurement
+   */
+  public MeasurementDeviceBaseClass(String name, String unit) {
+    super(name);
+    setUnit(unit);
+  }
+
   /** {@inheritDoc} */
   @Override
   public OnlineSignal getOnlineSignal() {
@@ -52,41 +78,10 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
     onlineSignal = new OnlineSignal(plantName, transmitterame);
   }
 
-  protected String unit = "-";
-  private double maximumValue = 1.0;
-  private double minimumValue = 0.0;
-  private boolean logging = false;
-  private OnlineSignal onlineSignal = null;
-  private boolean isOnlineSignal = false;
-  private double onlineMeasurementValue = 0.0;
-  private String onlineMeasurementValueUnit = "";
-  private boolean conditionAnalysis = true;
-  private String conditionAnalysisMessage = "";
-  private double conditionAnalysisMaxDeviation = 0.0;
-
-  /**
-   * <p>
-   * Constructor for MeasurementDeviceBaseClass.
-   * </p>
-   */
-  public MeasurementDeviceBaseClass() {
-    super("default");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void displayResult() {}
-
   /** {@inheritDoc} */
   @Override
   public String getUnit() {
     return unit;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getMeasuredValue() {
-    return 0.0;
   }
 
   /** {@inheritDoc} */
@@ -139,14 +134,14 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public double getOnlineValue() {
-    return getOnlineSignal().getValue();
+  public double getMeasuredValue(String unit) {
+    return 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue(String unit) {
-    return 0.0;
+  public void displayResult() {
+    System.out.println("measured value: " + getMeasuredValue());
   }
 
   /**

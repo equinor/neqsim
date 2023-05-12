@@ -24,9 +24,11 @@ public interface MeasurementDeviceInterface extends NamedInterface, java.io.Seri
    * getMeasuredValue.
    * </p>
    *
-   * @return a double
+   * @return Get measured value in unit GetUnit()
    */
-  public double getMeasuredValue();
+  public default double getMeasuredValue() {
+    return getMeasuredValue(getUnit());
+  }
 
   /**
    * <p>
@@ -135,7 +137,9 @@ public interface MeasurementDeviceInterface extends NamedInterface, java.io.Seri
    *
    * @return a double
    */
-  public double getOnlineValue();
+  public default double getOnlineValue() {
+    return getOnlineSignal().getValue();
+  }
 
   /**
    * <p>
