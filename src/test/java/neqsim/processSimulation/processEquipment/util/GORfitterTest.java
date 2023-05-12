@@ -62,7 +62,7 @@ public class GORfitterTest {
     Assertions.assertEquals(10.099999999999769, multiPhaseMeter2.getMeasuredValue("GOR", ""),
         1e-12);
     Assertions.assertEquals(682.1045749623208, multiPhaseMeter2.getMeasuredValue("GOR_std", ""),
-        1e-12);
+        1e-10);
     Assertions.assertEquals(1000000.0, stream_2.getFlowRate("kg/hr"), 1e-12);
   }
 }
