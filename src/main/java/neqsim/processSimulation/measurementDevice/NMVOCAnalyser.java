@@ -33,7 +33,7 @@ public class NMVOCAnalyser extends StreamMeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public NMVOCAnalyser(String name, StreamInterface stream) {
-    super(name, "", stream);
+    super(name, "kg/hr", stream);
   }
 
   /** {@inheritDoc} */

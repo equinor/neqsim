@@ -10,7 +10,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 public class nmVOCTest extends neqsim.NeqSimTest {
 
-  static ProcessSystem process1 = new ProcessSystem();
+  static ProcessSystem process1;
+  static NMVOCAnalyser vocanalyser1;
 
   /**
    * @throws java.lang.Exception
@@ -28,19 +29,28 @@ public class nmVOCTest extends neqsim.NeqSimTest {
     thermoSystem.addComponent("n-pentane", 1.0);
 
     Stream stream1 = new Stream("stream 1", thermoSystem);
-    NMVOCAnalyser vocanalyser1 = new NMVOCAnalyser(stream1);
-    vocanalyser1.setName("vocanalyser 1");
+    vocanalyser1 = new NMVOCAnalyser("vocanalyser 1", stream1);
     vocanalyser1.setUnit("tonnes/year");
 
+    process1 = new ProcessSystem();
     process1.add(stream1);
     process1.add(vocanalyser1);
+  }
 
-    process1.run();
-
+  @Test
+  public void testSetUnit() {
+    String origUnit = vocanalyser1.getUnit();
+    String newUnit = "kg/hr";
+    Assertions.assertNotEquals(origUnit, newUnit);
+    vocanalyser1.setUnit(newUnit);
+    Assertions.assertEquals(newUnit, vocanalyser1.getUnit());
+    vocanalyser1.setUnit(origUnit);
+    Assertions.assertEquals(origUnit, vocanalyser1.getUnit());
   }
 
   @Test
   public void testGetFlowRate() {
+    process1.run();
     Assertions.assertEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water")
             .getFlowRate("kg/min"),
@@ -113,8 +123,10 @@ public class nmVOCTest extends neqsim.NeqSimTest {
 
   @Test
   public void nmVOCFlowRateTest() {
-    Assertions.assertEquals(
-        ((NMVOCAnalyser) process1.getMeasurementDevice("vocanalyser 1")).getMeasuredValue(),
-        10555.540704);
+    process1.run();
+    Assertions.assertEquals(vocanalyser1.getMeasuredValue(), 10555.540704);
+    Assertions.assertEquals(vocanalyser1.getMeasuredValue("tonnes/year"), 10555.540704);
+    Assertions.assertEquals(vocanalyser1.getMeasuredValue("kg/hr"),
+        10555.540704 * 1000 / (365 * 24));
   }
 }
