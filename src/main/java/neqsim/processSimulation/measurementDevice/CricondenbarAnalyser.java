@@ -14,18 +14,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id: $Id
  */
-public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
+public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(CricondenbarAnalyser.class);
-
-  protected StreamInterface stream = null;
-
-  /**
-   * <p>
-   * Constructor for CricondenbarAnalyser.
-   * </p>
-   */
-  public CricondenbarAnalyser() {}
 
   /**
    * <p>
@@ -35,10 +26,22 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public CricondenbarAnalyser(StreamInterface stream) {
-    this.stream = stream;
-    unit = "K";
+    this("CricondenbarAnalyser", stream);
+  }
+
+  /**
+   * <p>
+   * Constructor for CricondenbarAnalyser.
+   * </p>
+   *
+   * @param name Name of CricondenbarAnalyser
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public CricondenbarAnalyser(String name, StreamInterface stream) {
+    super(name, "K", stream);
     setConditionAnalysisMaxDeviation(1.0);
   }
+
 
   /** {@inheritDoc} */
   @Override
@@ -50,12 +53,6 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
      * System.out.println("water in phase 1 (ppm) " + //
      * stream.getThermoSystem().getPhase(0).getComponent("water").getx()*1e6); } finally { }
      */
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getMeasuredValue() {
-    return getMeasuredValue(unit);
   }
 
   /** {@inheritDoc} */

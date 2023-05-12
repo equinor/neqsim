@@ -71,9 +71,8 @@ public class TestTransientFlow {
     valve_3.setPercentValveOpening(50);
     // valve_3.setCv(10.0);
 
-    LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator_1);
-    separatorLevelTransmitter.setName("separatorLEvelTransmitter1");
-    separatorLevelTransmitter.setUnit("meter");
+    LevelTransmitter separatorLevelTransmitter =
+        new LevelTransmitter("separatorLevelTransmitter1", separator_1);
     separatorLevelTransmitter.setMaximumValue(1.0);
     separatorLevelTransmitter.setMinimumValue(0.0);
 

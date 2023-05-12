@@ -1,7 +1,9 @@
 package neqsim.processSimulation.processEquipment.separator;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.processSimulation.measurementDevice.LevelTransmitter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
@@ -17,6 +19,7 @@ class SeparatorTest extends neqsim.NeqSimTest {
   double temperature_inlet = 35.0;
   double gasFlowRate = 5.0;
   ProcessSystem processOps = null;
+  Separator sep = null;
 
   /**
    * @throws java.lang.Exception
@@ -31,30 +34,27 @@ class SeparatorTest extends neqsim.NeqSimTest {
     testSystem.setMixingRule(10);
     testSystem.setMultiPhaseCheck(true);
 
-    processOps = new ProcessSystem();
-
     StreamInterface inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
 
-    Separator sep = new Separator("inlet separator");
+    sep = new Separator("inlet separator");
     sep.setInletStream(inletStream);
 
+    processOps = new ProcessSystem();
     processOps.add(inletStream);
     processOps.add(sep);
-    // StreamInterface gasFromSep = new Stream("liquid from separator", sep.getLiquidOutStream());
-    // StreamInterface liqFromSep = new Stream("liquid from separator", sep.getLiquidOutStream());
-    // processOps.add(gasFromSep);
-    // processOps.add(liqFromSep);
-
-    // processOps.run();
   }
 
   @Test
   public void testFlow() {
+    LevelTransmitter lt = new LevelTransmitter("levelTransmitter", sep);
+    Assertions.assertEquals(0.05263157894736842, lt.getMeasuredValue(), 1e-12);
     ((StreamInterface) processOps.getUnit("inlet stream")).setFlowRate(0.01, "MSm3/day");
     processOps.run();
+    Assertions.assertEquals(0.052631578947368494, lt.getMeasuredValue(), 1e-12);
+    Assertions.assertEquals(lt.getMeasuredValue() * 100, lt.getMeasuredPercentValue(), 1e-12);
   }
 
   @Test
