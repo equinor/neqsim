@@ -2273,12 +2273,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public boolean hasSolidPhase() {
-    return hasPhaseType(PhaseType.SOLID);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public final PhaseInterface getGasPhase() {
     for (int phase = 0; phase < numberOfPhases; phase++) {
       if (phaseArray[phaseIndex[phase]].getPhaseType() == 1) {
@@ -4555,17 +4549,6 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setTotalNumberOfMoles(double totalNumberOfMoles) {
     this.totalNumberOfMoles = totalNumberOfMoles;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean hasPhaseType(String phaseTypeName) {
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /** {@inheritDoc} */
