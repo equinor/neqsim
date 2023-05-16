@@ -222,44 +222,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public SystemThermo clone() {
-    SystemThermo clonedSystem = null;
-    try {
-      clonedSystem = (SystemThermo) super.clone();
-      // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
-      // chemicalReactionOperations.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
-    }
-
-    clonedSystem.beta = beta.clone();
-    clonedSystem.attractiveTermNumber = attractiveTermNumber;
-    clonedSystem.phaseType = phaseType.clone();
-    clonedSystem.phaseIndex = phaseIndex.clone();
-
-    clonedSystem.componentNames = new ArrayList<String>(componentNames);
-    if (interfaceProp != null) {
-      // clonedSystem.interfaceProp = (InterphasePropertiesInterface)
-      // interfaceProp.clone();
-    }
-    clonedSystem.characterization = characterization.clone();
-    if (clonedSystem.waxCharacterisation != null) {
-      clonedSystem.waxCharacterisation = waxCharacterisation.clone();
-    }
-
-    System.arraycopy(this.beta, 0, clonedSystem.beta, 0, beta.length);
-    System.arraycopy(this.phaseType, 0, clonedSystem.phaseType, 0, phaseType.length);
-    System.arraycopy(this.phaseIndex, 0, clonedSystem.phaseIndex, 0, phaseIndex.length);
-
-    clonedSystem.phaseArray = phaseArray.clone();
-    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      clonedSystem.phaseArray[i] = phaseArray[i].clone();
-    }
-    return clonedSystem;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public SystemInterface addFluid(SystemInterface addSystem) {
     boolean addedNewComponent = false;
     int index = -1;
@@ -547,6 +509,44 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public SystemThermo clone() {
+    SystemThermo clonedSystem = null;
+    try {
+      clonedSystem = (SystemThermo) super.clone();
+      // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
+      // chemicalReactionOperations.clone();
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
+    }
+
+    clonedSystem.beta = beta.clone();
+    clonedSystem.attractiveTermNumber = attractiveTermNumber;
+    clonedSystem.phaseType = phaseType.clone();
+    clonedSystem.phaseIndex = phaseIndex.clone();
+
+    clonedSystem.componentNames = new ArrayList<String>(componentNames);
+    if (interfaceProp != null) {
+      // clonedSystem.interfaceProp = (InterphasePropertiesInterface)
+      // interfaceProp.clone();
+    }
+    clonedSystem.characterization = characterization.clone();
+    if (clonedSystem.waxCharacterisation != null) {
+      clonedSystem.waxCharacterisation = waxCharacterisation.clone();
+    }
+
+    System.arraycopy(this.beta, 0, clonedSystem.beta, 0, beta.length);
+    System.arraycopy(this.phaseType, 0, clonedSystem.phaseType, 0, phaseType.length);
+    System.arraycopy(this.phaseIndex, 0, clonedSystem.phaseIndex, 0, phaseIndex.length);
+
+    clonedSystem.phaseArray = phaseArray.clone();
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      clonedSystem.phaseArray[i] = phaseArray[i].clone();
+    }
+    return clonedSystem;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public SystemInterface getEmptySystemClone() {
     int phaseNumber = 0;
 
@@ -572,6 +572,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface phaseToSystem(PhaseInterface newPhase) {
+    // todo: other phaseToSystem functions returns clones.
     for (int i = 0; i < newPhase.getNumberOfComponents(); i++) {
       newPhase.getComponents()[i]
           .setNumberOfmoles(newPhase.getComponents()[i].getNumberOfMolesInPhase());
