@@ -1779,17 +1779,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public boolean hasSolidPhase() {
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getType() == PhaseType.SOLID) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void init(int type) {
     if (this.numericDerivatives) {
       initNumeric(type);
@@ -2267,6 +2256,27 @@ abstract class SystemThermo implements SystemInterface {
     return chemicalReactionOperations;
   }
 
+  /**
+   * Verify if system has a phase of a specific type.
+   * 
+   * @param pt PhaseType to look for.
+   * @return True if system contains a phase of requested type.
+   */
+  public boolean hasPhaseType(PhaseType pt) {
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (getPhase(i).getType() == pt) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasSolidPhase() {
+    return hasPhaseType(PhaseType.SOLID);
+  }
+
   /** {@inheritDoc} */
   @Override
   public final PhaseInterface getGasPhase() {
@@ -2294,6 +2304,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isPhase(int i) {
+    // todo: what if i > numberofphases?
     if (i > phaseArray.length) {
       return false;
     }
