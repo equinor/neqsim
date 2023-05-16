@@ -38,4 +38,32 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     testSystem.setPressure(110000.0, "Pa");
     assertEquals(1.1, testSystem.getPressure());
   }
+
+  /**
+   * <p>
+   * testAddFluids
+   * </p>
+   */
+  @Test
+  @DisplayName("test addFluids with pseudo component")
+  public void testAddFluids() {
+
+    neqsim.thermo.system.SystemPrEos fluid1 = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
+    fluid1.addComponent("methane", 1.0);
+    fluid1.addTBPfraction("C7", 1.0, 0.09, 0.81);
+    fluid1.setMixingRule("classic");
+
+    neqsim.thermo.system.SystemPrEos fluid2 = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
+    fluid2.addComponent("methane", 1.0);
+    fluid2.addTBPfraction("C7", 1.0, 0.09, 0.81);
+    fluid2.setMixingRule("classic");
+
+    fluid1.addFluid(fluid2);
+
+    assertEquals(2.0, fluid1.getComponent(0).getNumberOfmoles());
+    assertEquals(2.0, fluid1.getComponent(0).getNumberOfmoles());
+
+    assertEquals(2.0, fluid1.getComponent("methane").getNumberOfmoles());
+    assertEquals(2.0, fluid1.getComponent("C7_PC").getNumberOfmoles());
+  }
 }
