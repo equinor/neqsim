@@ -1359,6 +1359,65 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public String[] getComponentNames() {
+    ArrayList<String> components = new ArrayList<String>();
+
+    for (int j = 0; j < numberOfComponents; j++) {
+      components.add(phaseArray[0].getComponents()[j].getName());
+    }
+    String[] componentList = new String[components.size()];
+    for (int j = 0; j < numberOfComponents; j++) {
+      componentList[j] = components.get(j);
+    }
+    return componentList;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setComponentNames(String[] componentNames) {
+    for (int i = 0; i < componentNames.length; i++) {
+      this.componentNames.set(i, componentNames[i]);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void renameComponent(String oldName, String newName) {
+    componentNames.set(getPhase(0).getComponent(oldName).getComponentNumber(), newName);
+    for (int i = 0; i < maxNumberOfPhases; i++) {
+      getPhase(i).getComponent(oldName).setComponentName(newName);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getComponentNameTag() {
+    return componentNameTag;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setComponentNameTag(String nameTag) {
+    componentNameTag = nameTag;
+    for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
+      renameComponent(componentNames.get(i), componentNames.get(i) + nameTag);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setComponentNameTagOnNormalComponents(String nameTag) {
+    componentNameTag = nameTag;
+    for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
+      if (!getPhase(0).getComponent(i).isIsTBPfraction()
+          && !getPhase(0).getComponent(i).isIsPlusFraction()) {
+        renameComponent(componentNames.get(i), componentNames.get(i) + nameTag);
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setEmptyFluid() {
     for (PhaseInterface tmpPhase : phaseArray) {
       if (tmpPhase != null) {
@@ -2392,21 +2451,6 @@ abstract class SystemThermo implements SystemInterface {
       var = 1;
     }
     this.setMixingRule(var);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public String[] getComponentNames() {
-    ArrayList<String> components = new ArrayList<String>();
-
-    for (int j = 0; j < numberOfComponents; j++) {
-      components.add(phaseArray[0].getComponents()[j].getName());
-    }
-    String[] componentList = new String[components.size()];
-    for (int j = 0; j < numberOfComponents; j++) {
-      componentList[j] = components.get(j);
-    }
-    return componentList;
   }
 
   /** {@inheritDoc} */
@@ -4481,42 +4525,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void renameComponent(String oldName, String newName) {
-    componentNames.set(getPhase(0).getComponent(oldName).getComponentNumber(), newName);
-    for (int i = 0; i < maxNumberOfPhases; i++) {
-      getPhase(i).getComponent(oldName).setComponentName(newName);
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setComponentNameTag(String nameTag) {
-    componentNameTag = nameTag;
-    for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
-      renameComponent(componentNames.get(i), componentNames.get(i) + nameTag);
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setComponentNameTagOnNormalComponents(String nameTag) {
-    componentNameTag = nameTag;
-    for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
-      if (!getPhase(0).getComponent(i).isIsTBPfraction()
-          && !getPhase(0).getComponent(i).isIsPlusFraction()) {
-        renameComponent(componentNames.get(i), componentNames.get(i) + nameTag);
-      }
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public String getComponentNameTag() {
-    return componentNameTag;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void addGasToLiquid(double fraction) {
     for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
       double change = getPhase(0).getComponent(i).getNumberOfMolesInPhase() * fraction;
@@ -4970,14 +4978,6 @@ abstract class SystemThermo implements SystemInterface {
       waxCharacterisation = new WaxCharacterise(this);
     }
     return waxCharacterisation.getModel();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setComponentNames(String[] componentNames) {
-    for (int i = 0; i < componentNames.length; i++) {
-      this.componentNames.set(i, componentNames[i]);
-    }
   }
 
   /** {@inheritDoc} */
