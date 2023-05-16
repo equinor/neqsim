@@ -63,5 +63,15 @@ class SystemThermoTest extends neqsim.NeqSimTest {
 
     assertEquals(2.0, fluid1.getComponent("methane").getNumberOfmoles());
     assertEquals(2.0, fluid1.getComponent("C7_PC").getNumberOfmoles());
+
+    neqsim.thermo.system.SystemPrEos fluid3 = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
+    fluid3.addComponent("nitrogen", 1.0);
+    fluid3.addTBPfraction("C8", 1.0, 0.092, 0.82);
+
+    fluid1.addFluid(fluid3);
+
+    assertEquals(2.0, fluid1.getComponent("methane").getNumberOfmoles());
+    assertEquals(1.0, fluid1.getComponent("nitrogen").getNumberOfmoles());
+    assertEquals(1.0, fluid1.getComponent("C8_PC").getNumberOfmoles());
   }
 }
