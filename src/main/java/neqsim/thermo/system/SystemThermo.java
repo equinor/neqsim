@@ -350,33 +350,6 @@ abstract class SystemThermo implements SystemInterface {
     }
   }
 
-  /**
-   * <p>
-   * addHydratePhase2.
-   * </p>
-   */
-  public void addHydratePhase2() {
-    if (!multiPhaseCheck) {
-      setMultiPhaseCheck(true);
-    }
-    phaseArray[3] = new PhaseHydrate();
-    phaseArray[3].setTemperature(phaseArray[0].getTemperature());
-    phaseArray[3].setPressure(phaseArray[0].getPressure());
-    for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
-      if (getPhase(0).getComponent(i).isIsTBPfraction()) {
-        phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
-        phaseArray[3].getComponent("default")
-            .setComponentName(getPhase(0).getComponent(i).getName());
-      } else {
-        phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
-            getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
-      }
-    }
-    setNumberOfPhases(4);
-  }
-
   /** {@inheritDoc} */
   @Override
   public void addSolidComplexPhase(String type) {
@@ -458,6 +431,33 @@ abstract class SystemThermo implements SystemInterface {
     ((PhaseHydrate) phaseArray[4]).setSolidRefFluidPhase(phaseArray[0]);
 
     setNumberOfPhases(5);
+  }
+
+  /**
+   * <p>
+   * addHydratePhase2.
+   * </p>
+   */
+  public void addHydratePhase2() {
+    if (!multiPhaseCheck) {
+      setMultiPhaseCheck(true);
+    }
+    phaseArray[3] = new PhaseHydrate();
+    phaseArray[3].setTemperature(phaseArray[0].getTemperature());
+    phaseArray[3].setPressure(phaseArray[0].getPressure());
+    for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
+      if (getPhase(0).getComponent(i).isIsTBPfraction()) {
+        phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
+            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+        phaseArray[3].getComponent("default")
+            .setComponentName(getPhase(0).getComponent(i).getName());
+      } else {
+        phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
+            getPhase(0).getComponent(i).getNumberOfmoles(),
+            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+      }
+    }
+    setNumberOfPhases(4);
   }
 
   /** {@inheritDoc} */
