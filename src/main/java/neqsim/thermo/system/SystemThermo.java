@@ -740,20 +740,6 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void changeComponentName(String name, String newName) {
-    for (int i = 0; i < numberOfComponents; i++) {
-      if (componentNames.get(i).equals(name)) {
-        componentNames.set(i, newName);
-      }
-    }
-
-    for (int i = 0; i < maxNumberOfPhases; i++) {
-      getPhase(i).getComponent(name).setComponentName(newName);
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void addSalt(String componentName, double value) {
     double val1 = 1e-20;
     double val2 = 1e-20;
@@ -1337,6 +1323,20 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void changeComponentName(String name, String newName) {
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (componentNames.get(i).equals(name)) {
+        componentNames.set(i, newName);
+      }
+    }
+
+    for (int i = 0; i < maxNumberOfPhases; i++) {
+      getPhase(i).getComponent(name).setComponentName(newName);
+    }
   }
 
   /** {@inheritDoc} */
