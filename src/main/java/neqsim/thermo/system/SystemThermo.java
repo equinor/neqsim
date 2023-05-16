@@ -1392,6 +1392,20 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public void addToComponentNames(String postfix) {
+    for (int j = 0; j < componentNames.size(); j++) {
+      componentNames.set(j, componentNames.get(j) + postfix);
+    }
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      for (int j = 0; j < componentNames.size(); j++) {
+        getPhase(i).getComponent(j)
+            .setComponentName(getPhase(i).getComponent(j).getComponentName() + postfix);
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String getComponentNameTag() {
     return componentNameTag;
   }
@@ -3908,20 +3922,6 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setFluidName(java.lang.String fluidName) {
     this.fluidName = fluidName;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void addToComponentNames(java.lang.String name) {
-    for (int j = 0; j < componentNames.size(); j++) {
-      componentNames.set(j, componentNames.get(j) + name);
-    }
-    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      for (int j = 0; j < componentNames.size(); j++) {
-        getPhase(i).getComponent(j)
-            .setComponentName(getPhase(i).getComponent(j).getComponentName() + name);
-      }
-    }
   }
 
   /**
