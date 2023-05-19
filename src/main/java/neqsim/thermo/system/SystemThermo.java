@@ -2258,7 +2258,7 @@ abstract class SystemThermo implements SystemInterface {
 
   /**
    * Verify if system has a phase of a specific type.
-   * 
+   *
    * @param pt PhaseType to look for.
    * @return True if system contains a phase of requested type.
    */
@@ -2330,6 +2330,17 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public PhaseInterface getPhaseOfType(String phaseTypeName) {
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
+        return getPhase(i);
+      }
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public int getPhaseNumberOfPhase(String phaseTypeName) {
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
@@ -2348,17 +2359,6 @@ abstract class SystemThermo implements SystemInterface {
       }
     }
     return phaseIndex[0];
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public PhaseInterface getPhaseOfType(String phaseTypeName) {
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
-        return getPhase(i);
-      }
-    }
-    return null;
   }
 
   /** {@inheritDoc} */
