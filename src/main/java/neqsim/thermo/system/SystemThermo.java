@@ -2267,6 +2267,11 @@ abstract class SystemThermo implements SystemInterface {
       if (getPhase(i).getType() == pt) {
         return true;
       }
+      if (getPhase(i).getPhaseTypeName().equals(pt.getDesc())) {
+        logger.error(
+            "Bug in setting phasetype somewhere. Phasetype and phasetypename should be the same.");
+        return true;
+      }
     }
     return false;
   }
