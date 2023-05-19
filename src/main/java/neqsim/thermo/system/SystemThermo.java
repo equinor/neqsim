@@ -236,16 +236,14 @@ abstract class SystemThermo implements SystemInterface {
 
       if (index != -1) {
         addComponent(index, addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+      } else if (addSystem.getPhase(0).getComponent(i).isIsTBPfraction()) {
+        addTBPfraction(
+            addSystem.getPhase(0).getComponent(i).getComponentName().replaceFirst("_PC", ""),
+            addSystem.getPhase(0).getComponent(i).getNumberOfmoles(),
+            addSystem.getPhase(0).getComponent(i).getMolarMass(),
+            addSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
       } else {
-        if (addSystem.getPhase(0).getComponent(i).isIsTBPfraction()) {
-          addTBPfraction(
-              addSystem.getPhase(0).getComponent(i).getComponentName().replaceFirst("_PC", ""),
-              addSystem.getPhase(0).getComponent(i).getNumberOfmoles(),
-              addSystem.getPhase(0).getComponent(i).getMolarMass(),
-              addSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
-        } else {
-          addComponent(addSystem.getComponent(i));
-        }
+        addComponent(addSystem.getComponent(i));
       }
     }
     if (addedNewComponent) {
