@@ -8,7 +8,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  *
  */
-class TPFlashTestHyghTemp {
+class TPFlashTestHighTemp {
 
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
@@ -47,9 +47,10 @@ class TPFlashTestHyghTemp {
 
     testSystem.setMixingRule("classic");
 
-    testSystem.setMolarComposition(new double[]{1.63e-3, 3.23e-3, 0, 3e-1, 4.6e-2, 1.4e-2, 2.2e-2, 3.9e-3, 8.8e-3, 2.6e-3, 3.2e-2, 1.2e-1, 1.5e-1, 9.8e-2,
-    7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4});
-    //testSystem.setMultiPhaseCheck(true);
+    testSystem.setMolarComposition(new double[] {1.63e-3, 3.23e-3, 0, 3e-1, 4.6e-2, 1.4e-2, 2.2e-2,
+        3.9e-3, 8.8e-3, 2.6e-3, 3.2e-2, 1.2e-1, 1.5e-1, 9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2,
+        1e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4});
+    // testSystem.setMultiPhaseCheck(true);
   }
 
   @Test
@@ -61,17 +62,24 @@ class TPFlashTestHyghTemp {
       testOps = new ThermodynamicOperations(testSystem);
       testOps.TPflash();
       testSystem.initProperties();
-      System.out.print(testSystem.getPhaseFraction("gas", "mole") + " numerofphases " + testSystem.getNumberOfPhases() + " temp " + testSystem.getTemperature("C") + " hasoil " + testSystem.hasPhaseType("oil")+ " gibbs energy " +testSystem.getGibbsEnergy()+ " gibbs energy " + " density " + testSystem.getDensity("kg/m3") + " \n");
+      System.out.print(testSystem.getPhaseFraction("gas", "mole") + " numerofphases "
+          + testSystem.getNumberOfPhases() + " temp " + testSystem.getTemperature("C") + " hasoil "
+          + testSystem.hasPhaseType("oil") + " gibbs energy " + testSystem.getGibbsEnergy()
+          + " gibbs energy " + " density " + testSystem.getDensity("kg/m3") + " \n");
     }
     testSystem.setTemperature(269.0, "C");
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
-    System.out.print(testSystem.getPhaseFraction("gas", "mole") + " numerofphases " + testSystem.getNumberOfPhases() + " temp " + testSystem.getTemperature("C") + " hasoil " + testSystem.hasPhaseType("oil")+ " gibbs energy " +testSystem.getGibbsEnergy()+ " gibbs energy " + " density " + testSystem.getDensity("kg/m3") + " \n");
- 
+    System.out.print(testSystem.getPhaseFraction("gas", "mole") + " numerofphases "
+        + testSystem.getNumberOfPhases() + " temp " + testSystem.getTemperature("C") + " hasoil "
+        + testSystem.hasPhaseType("oil") + " gibbs energy " + testSystem.getGibbsEnergy()
+        + " gibbs energy " + " density " + testSystem.getDensity("kg/m3") + " \n");
+
     testSystem.setTemperature(100.0, "C");
     testOps.TPflash();
     testSystem.display();
-    System.out.print(testSystem.getPhaseFraction("oil", "mole") + " temp " + testSystem.getTemperature("C") + "\n");
+    System.out.print(testSystem.getPhaseFraction("oil", "mole") + " temp "
+        + testSystem.getTemperature("C") + "\n");
 
 
 
