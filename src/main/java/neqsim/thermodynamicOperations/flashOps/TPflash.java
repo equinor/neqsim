@@ -26,7 +26,8 @@ public class TPflash extends Flash {
    * Constructor for TPflash.
    * </p>
    */
-  public TPflash() {}
+  public TPflash() {
+  }
 
   /**
    * <p>
@@ -51,8 +52,9 @@ public class TPflash extends Flash {
    * Constructor for TPflash.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
+   * @param system         a {@link neqsim.thermo.system.SystemInterface} object
+   * @param checkForSolids Set true to check for solid phase and do solid phase
+   *                       calculations.
    */
   public TPflash(SystemInterface system, boolean checkForSolids) {
     this(system);
@@ -221,9 +223,10 @@ public class TPflash extends Flash {
     minGibsLogFugCoef = new double[system.getPhase(0).getNumberOfComponents()];
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
-      minGibsLogFugCoef[i] =
-          system.getPhase(minGibbsPhase).getComponent(i).getLogFugacityCoefficient();
+      if (system.getPhase(minGibbsPhase).getComponent(i).getz() > 1e-50) {
+        minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
+      }
+      minGibsLogFugCoef[i] = system.getPhase(minGibbsPhase).getComponent(i).getLogFugacityCoefficient();
     }
 
     presdiff = system.getPhase(1).getPressure() / system.getPhase(0).getPressure();
@@ -289,14 +292,16 @@ public class TPflash extends Flash {
       dgonRT = -1.0;
     } else {
       for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        tpdy += system.getPhase(0).getComponent(i).getx()
-            * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
-                + Math.log(system.getPhase(0).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
-                - minGibsLogFugCoef[i]);
-        tpdx += system.getPhase(1).getComponent(i).getx()
-            * (Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
-                + Math.log(system.getPhase(1).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
-                - minGibsLogFugCoef[i]);
+        if (system.getComponent(i).getz() > 1e-50) {
+          tpdy += system.getPhase(0).getComponent(i).getx()
+              * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
+                  + Math.log(system.getPhase(0).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
+                  - minGibsLogFugCoef[i]);
+          tpdx += system.getPhase(1).getComponent(i).getx()
+              * (Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
+                  + Math.log(system.getPhase(1).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
+                  - minGibsLogFugCoef[i]);
+        }
       }
 
       dgonRT = system.getPhase(0).getBeta() * tpdy + (1.0 - system.getPhase(0).getBeta()) * tpdx;
@@ -323,7 +328,9 @@ public class TPflash extends Flash {
       }
     }
 
-    if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
+    if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta()))
+
+    {
       if (system.checkStability() && stabilityCheck()) {
         if (system.doMultiPhaseCheck()) {
           // logger.info("one phase flash is stable - checking multiphase flash....");
@@ -430,16 +437,14 @@ public class TPflash extends Flash {
           system.getChemicalReactionOperations().solveChemEq(phase, 1);
 
           for (i = 0; i < system.getPhases()[phase].getNumberOfComponents(); i++) {
-            chemdev +=
-                Math.abs(xchem[i] - system.getPhase(phase).getComponent(i).getx()) / xchem[i];
+            chemdev += Math.abs(xchem[i] - system.getPhase(phase).getComponent(i).getx()) / xchem[i];
           }
         }
         diffChem = Math.abs(oldChemDiff - chemdev);
       }
       // logger.info("chemdev: " + chemdev + " iter: " + totiter);
       totiter++;
-    } while ((diffChem > 1e-6 && chemdev > 1e-6 && totiter < 300)
-        || (system.isChemicalSystem() && totiter < 2));
+    } while ((diffChem > 1e-6 && chemdev > 1e-6 && totiter < 300) || (system.isChemicalSystem() && totiter < 2));
     if (system.isChemicalSystem()) {
       sucsSubs();
     }
