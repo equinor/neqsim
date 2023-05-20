@@ -167,85 +167,81 @@ public class waterDegasserTest {
     Assertions.assertEquals(0, hydrocyclone_main.getLiquidOutStream().getFlowRate("kg/hr"));
     Assertions.assertEquals(33946.08070091754,
         hydrocyclone_main.getWaterOutStream().getFlowRate("kg/hr"));
-
-    neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_main_stream =
-        new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
-            "TP_SETTER_FOR_THE_DEGASSER_MAIN_STREAM", hydrocyclone_main.getWaterOutStream());
-    heater_TP_setter_main_stream.setOutPressure(6.22176469039917, "bara");
-    heater_TP_setter_main_stream.setOutTemperature(77.92657470703125, "C");
-    heater_TP_setter_main_stream.run();
-    System.out.println(heater_TP_setter_main_stream.getOutStream().getFlowRate("kg/hr"));
-
-    neqsim.thermo.system.SystemSrkCPAstatoil fluid_test_separator =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
-    fluid_test_separator.addComponent("water", 0.15);
-    fluid_test_separator.addComponent("nitrogen", 2.35521735969531e-003);
-    fluid_test_separator.addComponent("CO2", 4.08789934579643e-002);
-    fluid_test_separator.addComponent("methane", 0.368428826847070);
-    fluid_test_separator.addComponent("ethane", 0.05236965335060);
-    fluid_test_separator.addComponent("propane", 3.05388164099689e-002);
-    fluid_test_separator.addComponent("i-butane", 3.79517339704697e-003);
-    fluid_test_separator.addComponent("n-butane", 1.07659554327202e-002);
-    fluid_test_separator.addComponent("i-pentane", 3.34941594776651e-003);
-    fluid_test_separator.addComponent("n-pentane", 4.44976204442086e-003);
-    fluid_test_separator.addTBPfraction("nC6", 5.12045113841502e-003, 86.1800003051758 / 1000,
-        86.1800003051758 / (1000 * 0.131586722637079));
-    fluid_test_separator.addTBPfraction("C7", 8.61084195264582e-003, 94.8470001220703 / 1000,
-        94.8470001220703 / (1000 * 0.130402631747591));
-    fluid_test_separator.addTBPfraction("C8", 1.12202354604739e-002, 106.220001220703 / 1000,
-        106.220001220703 / (1000 * 0.141086913827126));
-    fluid_test_separator.addTBPfraction("C9", 6.84786693345152e-003, 120.457000732422 / 1000,
-        120.457000732422 / (1000 * 0.156630031108116));
-    fluid_test_separator.addTBPfraction("C10-C11", 7.66033733147483e-003, 140.369003295898 / 1000,
-        140.369003295898 / (1000 * 0.178710051949529));
-    fluid_test_separator.addTBPfraction("C12-C13", 3.61717376417156e-003, 167.561996459961 / 1000,
-        167.561996459961 / (1000 * 0.208334072812978));
-    fluid_test_separator.addTBPfraction("C14-C15", 2.69924953579736e-003, 197.501007080078 / 1000,
-        197.501007080078 / (1000 * 0.240670271622303));
-    fluid_test_separator.addTBPfraction("C16-C17", 1.71199871320840e-003, 229.033996582031 / 1000,
-        229.033996582031 / (1000 * 0.274302534479916));
-    fluid_test_separator.addTBPfraction("C18-C20", 1.63521808584951e-003, 262.010986328125 / 1000,
-        262.010986328125 / (1000 * 0.308134346902454));
-    fluid_test_separator.addTBPfraction("C21-C23", 8.73694665389487e-004, 303.558990478516 / 1000,
-        303.558990478516 / (1000 * 0.350224115520606));
-    fluid_test_separator.addTBPfraction("C24-C28", 7.13595681402909e-004, 355.920013427734 / 1000,
-        355.920013427734 / (1000 * 0.402198101307449));
-    fluid_test_separator.addTBPfraction("C29-C35", 3.28149989883086e-004, 437.281005859375 / 1000,
-        437.281005859375 / (1000.0 * 0.481715346021770));
-    // fluid_test_separator.addTBPfraction("C36-C80",7.98472675241508e-005,608.036010742188/1000,608.036010742188/(1000*0.642772477456171));
-    fluid_test_separator.setMixingRule(10);
-    fluid_test_separator.setMultiPhaseCheck(true);
-    fluid_test_separator.init(0);
-
-    neqsim.processSimulation.processEquipment.stream.Stream inlet_stream_test_sep =
-        new neqsim.processSimulation.processEquipment.stream.Stream(
-            "TEST_SEPARATOR_INLET,fluid_test_separator", fluid_test_separator);
-    inlet_stream_test_sep.setTemperature(39.92721557617188, "C");
-    inlet_stream_test_sep.setPressure(1.4343990154266357, "bara");
-    inlet_stream_test_sep.setFlowRate(472.5621656362427, "kg/hr");
-    inlet_stream_test_sep.run();
-
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator test_separator =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            inlet_stream_test_sep);
-    test_separator.setName("TEST_SEPARATOR");
-    test_separator.run();
-
-    neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_test_stream =
-        new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
-            "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
-    heater_TP_setter_test_stream.setOutPressure(6.22176469039917, "bara");
-    heater_TP_setter_test_stream.setOutTemperature(77.92657470703125, "C");
-    heater_TP_setter_test_stream.run();
-
-    neqsim.processSimulation.processEquipment.mixer.StaticMixer mixing_degasser =
-        new neqsim.processSimulation.processEquipment.mixer.StaticMixer();
-    mixing_degasser.setName("MIXING_BEFORE_THE_DEGASSER");
-    mixing_degasser.addStream(heater_TP_setter_main_stream.getOutStream());
-    mixing_degasser.addStream(heater_TP_setter_test_stream.getOutStream());
-    mixing_degasser.run();
-
-    System.out.println(mixing_degasser.getOutStream().getFlowRate("kg/hr"));
-    // Should be arount 33946.08070091751
+    /*
+     * neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_main_stream =
+     * new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
+     * "TP_SETTER_FOR_THE_DEGASSER_MAIN_STREAM", hydrocyclone_main.getWaterOutStream());
+     * heater_TP_setter_main_stream.setOutPressure(6.22176469039917, "bara");
+     * heater_TP_setter_main_stream.setOutTemperature(77.92657470703125, "C");
+     * heater_TP_setter_main_stream.run();
+     * System.out.println(heater_TP_setter_main_stream.getOutStream().getFlowRate("kg/hr"));
+     * 
+     * neqsim.thermo.system.SystemSrkCPAstatoil fluid_test_separator = new
+     * neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+     * fluid_test_separator.addComponent("water", 0.15);
+     * fluid_test_separator.addComponent("nitrogen", 2.35521735969531e-003);
+     * fluid_test_separator.addComponent("CO2", 4.08789934579643e-002);
+     * fluid_test_separator.addComponent("methane", 0.368428826847070);
+     * fluid_test_separator.addComponent("ethane", 0.05236965335060);
+     * fluid_test_separator.addComponent("propane", 3.05388164099689e-002);
+     * fluid_test_separator.addComponent("i-butane", 3.79517339704697e-003);
+     * fluid_test_separator.addComponent("n-butane", 1.07659554327202e-002);
+     * fluid_test_separator.addComponent("i-pentane", 3.34941594776651e-003);
+     * fluid_test_separator.addComponent("n-pentane", 4.44976204442086e-003);
+     * fluid_test_separator.addTBPfraction("nC6", 5.12045113841502e-003, 86.1800003051758 / 1000,
+     * 86.1800003051758 / (1000 * 0.131586722637079)); fluid_test_separator.addTBPfraction("C7",
+     * 8.61084195264582e-003, 94.8470001220703 / 1000, 94.8470001220703 / (1000 *
+     * 0.130402631747591)); fluid_test_separator.addTBPfraction("C8", 1.12202354604739e-002,
+     * 106.220001220703 / 1000, 106.220001220703 / (1000 * 0.141086913827126));
+     * fluid_test_separator.addTBPfraction("C9", 6.84786693345152e-003, 120.457000732422 / 1000,
+     * 120.457000732422 / (1000 * 0.156630031108116));
+     * fluid_test_separator.addTBPfraction("C10-C11", 7.66033733147483e-003, 140.369003295898 /
+     * 1000, 140.369003295898 / (1000 * 0.178710051949529));
+     * fluid_test_separator.addTBPfraction("C12-C13", 3.61717376417156e-003, 167.561996459961 /
+     * 1000, 167.561996459961 / (1000 * 0.208334072812978));
+     * fluid_test_separator.addTBPfraction("C14-C15", 2.69924953579736e-003, 197.501007080078 /
+     * 1000, 197.501007080078 / (1000 * 0.240670271622303));
+     * fluid_test_separator.addTBPfraction("C16-C17", 1.71199871320840e-003, 229.033996582031 /
+     * 1000, 229.033996582031 / (1000 * 0.274302534479916));
+     * fluid_test_separator.addTBPfraction("C18-C20", 1.63521808584951e-003, 262.010986328125 /
+     * 1000, 262.010986328125 / (1000 * 0.308134346902454));
+     * fluid_test_separator.addTBPfraction("C21-C23", 8.73694665389487e-004, 303.558990478516 /
+     * 1000, 303.558990478516 / (1000 * 0.350224115520606));
+     * fluid_test_separator.addTBPfraction("C24-C28", 7.13595681402909e-004, 355.920013427734 /
+     * 1000, 355.920013427734 / (1000 * 0.402198101307449));
+     * fluid_test_separator.addTBPfraction("C29-C35", 3.28149989883086e-004, 437.281005859375 /
+     * 1000, 437.281005859375 / (1000.0 * 0.481715346021770)); //
+     * fluid_test_separator.addTBPfraction("C36-C80",7.98472675241508e-005,608.036010742188/1000,608
+     * .036010742188/(1000*0.642772477456171)); fluid_test_separator.setMixingRule(10);
+     * fluid_test_separator.setMultiPhaseCheck(true); fluid_test_separator.init(0);
+     * 
+     * neqsim.processSimulation.processEquipment.stream.Stream inlet_stream_test_sep = new
+     * neqsim.processSimulation.processEquipment.stream.Stream(
+     * "TEST_SEPARATOR_INLET,fluid_test_separator", fluid_test_separator);
+     * inlet_stream_test_sep.setTemperature(39.92721557617188, "C");
+     * inlet_stream_test_sep.setPressure(1.4343990154266357, "bara");
+     * inlet_stream_test_sep.setFlowRate(472.5621656362427, "kg/hr"); inlet_stream_test_sep.run();
+     * 
+     * neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator test_separator = new
+     * neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+     * inlet_stream_test_sep); test_separator.setName("TEST_SEPARATOR"); test_separator.run();
+     * 
+     * neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_test_stream =
+     * new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
+     * "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
+     * heater_TP_setter_test_stream.setOutPressure(6.22176469039917, "bara");
+     * heater_TP_setter_test_stream.setOutTemperature(77.92657470703125, "C");
+     * heater_TP_setter_test_stream.run();
+     * 
+     * neqsim.processSimulation.processEquipment.mixer.StaticMixer mixing_degasser = new
+     * neqsim.processSimulation.processEquipment.mixer.StaticMixer();
+     * mixing_degasser.setName("MIXING_BEFORE_THE_DEGASSER");
+     * mixing_degasser.addStream(heater_TP_setter_main_stream.getOutStream());
+     * mixing_degasser.addStream(heater_TP_setter_test_stream.getOutStream());
+     * mixing_degasser.run();
+     * 
+     * System.out.println(mixing_degasser.getOutStream().getFlowRate("kg/hr")); // Should be arount
+     * 33946.08070091751
+     */
   }
 }
