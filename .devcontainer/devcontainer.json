@@ -45,7 +45,8 @@
 	"ms-vscode.test-adapter-converter",
 	"shengchen.vscode-checkstyle",
 	"mechatroner.rainbow-csv",
-	"redhat.vscode-xml"
+	"redhat.vscode-xml",
+	"eamodio.gitlens"
 ]
 
 
