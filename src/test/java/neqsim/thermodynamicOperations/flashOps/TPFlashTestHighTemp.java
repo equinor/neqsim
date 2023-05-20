@@ -1,5 +1,6 @@
 package neqsim.thermodynamicOperations.flashOps;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -56,33 +57,18 @@ class TPFlashTestHighTemp {
   @Test
   void testRun() {
     testSystem.setPressure(88, "bara");
-
-    for (int i = 0; i < 400; i++) {
-      testSystem.setTemperature(0.0 + i * 1, "C");
-      testOps = new ThermodynamicOperations(testSystem);
-      testOps.TPflash();
-      testSystem.initProperties();
-      System.out.print(testSystem.getPhaseFraction("gas", "mole") + " numerofphases "
-          + testSystem.getNumberOfPhases() + " temp " + testSystem.getTemperature("C") + " hasoil "
-          + testSystem.hasPhaseType("oil") + " gibbs energy " + testSystem.getGibbsEnergy()
-          + " gibbs energy " + " density " + testSystem.getDensity("kg/m3") + " \n");
-    }
-    testSystem.setTemperature(269.0, "C");
+    /*
+     * for (int i = 0; i < 400; i++) { testSystem.setTemperature(0.0 + i * 1, "C"); testOps = new
+     * ThermodynamicOperations(testSystem); testOps.TPflash(); testSystem.initProperties();
+     * System.out.print(testSystem.getPhaseFraction("gas", "mole") + " numerofphases " +
+     * testSystem.getNumberOfPhases() + " temp " + testSystem.getTemperature("C") + " hasoil " +
+     * testSystem.hasPhaseType("oil") + " gibbs energy " + testSystem.getGibbsEnergy() +
+     * " gibbs energy " + " density " + testSystem.getDensity("kg/m3") + " \n"); }
+     */
+    testSystem.setTemperature(268.0, "C");
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
-    System.out.print(testSystem.getPhaseFraction("gas", "mole") + " numerofphases "
-        + testSystem.getNumberOfPhases() + " temp " + testSystem.getTemperature("C") + " hasoil "
-        + testSystem.hasPhaseType("oil") + " gibbs energy " + testSystem.getGibbsEnergy()
-        + " gibbs energy " + " density " + testSystem.getDensity("kg/m3") + " \n");
-
-    testSystem.setTemperature(100.0, "C");
-    testOps.TPflash();
-    testSystem.display();
-    System.out.print(testSystem.getPhaseFraction("oil", "mole") + " temp "
-        + testSystem.getTemperature("C") + "\n");
-
-
-
+    assertEquals(0.006832557441121211, testSystem.getPhaseFraction("gas", "mole"), 0.0001);
   }
 }
 
