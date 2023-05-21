@@ -57,9 +57,6 @@ abstract class Phase implements PhaseInterface {
   double pressure = 0;
 
   protected PhaseInterface[] refPhase = null;
-
-  protected int phaseType = 0;
-  protected String phaseTypeName = "gas";
   protected PhaseType pt = PhaseType.GAS;
 
 
@@ -410,7 +407,7 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void init() {
-    init(numberOfMolesInPhase / beta, numberOfComponents, initType, phaseType, beta);
+    init(numberOfMolesInPhase / beta, numberOfComponents, initType, pt.getValue(), beta);
   }
 
   /** {@inheritDoc} */
@@ -424,8 +421,8 @@ abstract class Phase implements PhaseInterface {
 
     this.beta = beta;
     numberOfMolesInPhase = beta * totalNumberOfMoles;
-    if (this.phaseType != phase) {
-      this.phaseType = phase;
+    if (this.pt.getValue() != phase) {
+      this.pt = PhaseType.byValue(phase);
       // setPhysicalProperties(physicalPropertyType);
     }
     this.setInitType(type);
@@ -1958,20 +1955,18 @@ abstract class Phase implements PhaseInterface {
   @Override
   public final void setType(PhaseType pt) {
     this.pt = pt;
-    this.phaseType = pt.getValue();
-    this.phaseTypeName = pt.getDesc();
   }
 
   /** {@inheritDoc} */
   @Override
   public final int getPhaseType() {
-    return phaseType;
+    return pt.getValue();
   }
 
   /** {@inheritDoc} */
   @Override
   public String getPhaseTypeName() {
-    return phaseTypeName;
+    return pt.getDesc();
   }
 
   /** {@inheritDoc} */

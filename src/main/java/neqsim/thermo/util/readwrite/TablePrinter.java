@@ -1,8 +1,11 @@
 package neqsim.thermo.util.readwrite;
+
+import java.io.Serializable;
+
 /**
  * A utility class for pretty printing a 2D string table.
  */
-public class TablePrinter {
+public class TablePrinter implements Serializable{
 
   /**
    * Prints a 2D string table in a formatted and visually appealing way.
