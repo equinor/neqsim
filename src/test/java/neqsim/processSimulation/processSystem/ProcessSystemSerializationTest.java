@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processSystem;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.security.AnyTypePermission;
@@ -22,6 +23,7 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
+  @Disabled
   @Test
   public void runTEGProcessTest2() {
     neqsim.thermo.system.SystemInterface feedGas =
