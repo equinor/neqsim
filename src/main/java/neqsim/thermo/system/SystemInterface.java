@@ -1561,9 +1561,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void display(String name);
 
   /**
-   * Prints a 2D string table in a formatted and visually appealing way.
+   * Prints the fluid in a visually appealing way.
    *
-   * @param table The 2D string table to be printed.
    */
   default public void prettyPrint() {
     neqsim.thermo.util.readwrite.TablePrinter.printTable(createTable(getFluidName()));
