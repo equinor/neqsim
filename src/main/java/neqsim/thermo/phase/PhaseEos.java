@@ -78,6 +78,9 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
       double beta) {
+    if (phase > 1) {
+      phase = 0;
+    }
     if (!mixingRuleDefined) {
       setMixingRule(1);
     }
@@ -94,7 +97,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       pressure = calcPressure();
     }
 
-    if (type != 0) {  
+    if (type != 0) {
       try {
         if (calcMolarVolume) {
           molarVolume = molarVolume(pressure, temperature,
