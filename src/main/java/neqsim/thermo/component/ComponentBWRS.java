@@ -56,10 +56,7 @@ public class ComponentBWRS extends ComponentSrk {
         dataSet.next();
         dataSet.getClob("name");
       } catch (Exception ex) {
-        dataSet.close();
-        dataSet = database
-            .getResultSet(("SELECT * FROM mbwr32param WHERE name='" + component_name + "'"));
-        dataSet.next();
+        logger.error(ex.getMessage(), ex);
       }
 
       for (int i = 0; i < 32; i++) {
