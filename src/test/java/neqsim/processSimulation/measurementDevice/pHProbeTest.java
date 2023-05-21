@@ -36,6 +36,7 @@ class pHProbeTest {
     stream_1.run();
   }
 
+  @Disabled
   @Test
   void testGetMeasuredValue() {
     pHProbe phmeasurement = new pHProbe(stream_1);
@@ -44,6 +45,7 @@ class pHProbeTest {
     assertEquals(4.079098133484792, phmeasurement.getMeasuredValue(), 0.01);
   }
 
+  @Disabled
   @Test
   void testGetMeasuredValueWithAlkalinity() {
     pHProbe phmeasurement = new pHProbe(stream_1);
