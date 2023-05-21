@@ -78,6 +78,9 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
       double beta) {
+    if (phase > 1) {
+      phase = 0;
+    }
     if (!mixingRuleDefined) {
       setMixingRule(1);
     }
@@ -95,7 +98,6 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     }
 
     if (type != 0) {
-      phaseTypeName = phase == 0 ? "liquid" : "gas";
       try {
         if (calcMolarVolume) {
           molarVolume = molarVolume(pressure, temperature,
@@ -127,7 +129,6 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         loc_ATT = calcATT(this, temperature, pressure, numberOfComponents);
       }
 
-      // logger.info("V/b" + (getVolume()/getB()) + " Z " + getZ());
       double sumHydrocarbons = 0.0;
       double sumAqueous = 0.0;
       for (int i = 0; i < numberOfComponents; i++) {
@@ -144,8 +145,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       } else if (sumHydrocarbons > sumAqueous) {
         setType(PhaseType.OIL);
       } else {
-        // setType(PhaseType.AQUEOUS); // todo: this breaks tests
-        phaseTypeName = "aqueous";
+        setType(PhaseType.AQUEOUS);
       }
 
       // if ((hasComponent("water") && getVolume() / getB() < 1.75 &&

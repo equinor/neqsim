@@ -411,7 +411,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * @return a double
    */
   public double calcGammaLRdV() {
-    if (phaseType == 1) {
+    if (pt.getValue() == 1) {
       return 0.0;
     }
     // return 0.0; // problem ved ren komponent
