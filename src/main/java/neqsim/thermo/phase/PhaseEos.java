@@ -94,9 +94,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       pressure = calcPressure();
     }
 
-    if (type != 0) {
-      pt = PhaseType.byValue(phase);
-      //phaseTypeName = phase == 0 ? "liquid" : "gas";
+    if (type != 0) {  
       try {
         if (calcMolarVolume) {
           molarVolume = molarVolume(pressure, temperature,
@@ -128,7 +126,6 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         loc_ATT = calcATT(this, temperature, pressure, numberOfComponents);
       }
 
-      // logger.info("V/b" + (getVolume()/getB()) + " Z " + getZ());
       double sumHydrocarbons = 0.0;
       double sumAqueous = 0.0;
       for (int i = 0; i < numberOfComponents; i++) {
@@ -145,8 +142,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       } else if (sumHydrocarbons > sumAqueous) {
         setType(PhaseType.OIL);
       } else {
-        setType(PhaseType.AQUEOUS); // todo: this breaks tests
-        // phaseTypeName = "aqueous";
+        setType(PhaseType.AQUEOUS);
       }
 
       // if ((hasComponent("water") && getVolume() / getB() < 1.75 &&
