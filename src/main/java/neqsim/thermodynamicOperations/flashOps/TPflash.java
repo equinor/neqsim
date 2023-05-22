@@ -52,9 +52,8 @@ public class TPflash extends Flash {
    * Constructor for TPflash.
    * </p>
    *
-   * @param system         a {@link neqsim.thermo.system.SystemInterface} object
-   * @param checkForSolids Set true to check for solid phase and do solid phase
-   *                       calculations.
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
   public TPflash(SystemInterface system, boolean checkForSolids) {
     this(system);
@@ -226,7 +225,8 @@ public class TPflash extends Flash {
       if (system.getPhase(minGibbsPhase).getComponent(i).getz() > 1e-50) {
         minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
       }
-      minGibsLogFugCoef[i] = system.getPhase(minGibbsPhase).getComponent(i).getLogFugacityCoefficient();
+      minGibsLogFugCoef[i] =
+          system.getPhase(minGibbsPhase).getComponent(i).getLogFugacityCoefficient();
     }
 
     presdiff = system.getPhase(1).getPressure() / system.getPhase(0).getPressure();
@@ -328,9 +328,7 @@ public class TPflash extends Flash {
       }
     }
 
-    if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta()))
-
-    {
+    if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
       if (system.checkStability() && stabilityCheck()) {
         if (system.doMultiPhaseCheck()) {
           // logger.info("one phase flash is stable - checking multiphase flash....");

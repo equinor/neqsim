@@ -59,7 +59,6 @@ abstract class Phase implements PhaseInterface {
   protected PhaseInterface[] refPhase = null;
   protected PhaseType pt = PhaseType.GAS;
 
-
   /**
    * <p>
    * Constructor for Phase.
@@ -423,7 +422,7 @@ abstract class Phase implements PhaseInterface {
     this.beta = beta;
     numberOfMolesInPhase = beta * totalNumberOfMoles;
     if (this.pt.getValue() != phase) {
-      this.pt = PhaseType.byValue(phase);
+      setType(PhaseType.byValue(phase));
       // setPhysicalProperties(physicalPropertyType);
     }
     this.setInitType(type);
@@ -1238,7 +1237,7 @@ abstract class Phase implements PhaseInterface {
    * </p>
    *
    * @param onlyPure a boolean
-   * @param name a {@link java.lang.String} object
+   * @param name a {@link String} object
    */
   public void initRefPhases(boolean onlyPure, String name) {
     refPhase = new PhaseInterface[numberOfComponents];
@@ -1960,18 +1959,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final int getPhaseType() {
-    return pt.getValue();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public String getPhaseTypeName() {
-    return pt.getDesc();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setMolarVolume(double molarVolume) {
     this.molarVolume = molarVolume;
   }
@@ -2169,7 +2156,7 @@ abstract class Phase implements PhaseInterface {
    * Getter for the field <code>thermoPropertyModelName</code>.
    * </p>
    *
-   * @return a {@link java.lang.String} object
+   * @return a {@link String} object
    */
   public String getThermoPropertyModelName() {
     return thermoPropertyModelName;

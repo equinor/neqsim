@@ -35,9 +35,9 @@ public interface PhaseEosInterface extends PhaseInterface {
    * getMixingRuleName.
    * </p>
    *
-   * @return a {@link java.lang.String} object
+   * @return a {@link String} object
    */
-  public java.lang.String getMixingRuleName();
+  public String getMixingRuleName();
 
   /**
    * <p>
@@ -80,7 +80,7 @@ public interface PhaseEosInterface extends PhaseInterface {
    * displayInteractionCoefficients.
    * </p>
    *
-   * @param intType a {@link java.lang.String} object
+   * @param intType a {@link String} object
    */
   public void displayInteractionCoefficients(String intType);
   // public double getA();
