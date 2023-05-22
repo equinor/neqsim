@@ -155,7 +155,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       // getComponent("DEG").getx() > 0.1) || (hasComponent("methanol") &&
       // getComponent("methanol").getx() > 0.5 || (hasComponent("ethanol") &&
       // getComponent("ethanol").getx() > 0.5))) {
-      // phaseTypeName = "aqueous";
+      // setType(PhaseType.AQUEOUS);
       // }
     }
   }
@@ -403,7 +403,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public java.lang.String getMixingRuleName() {
+  public String getMixingRuleName() {
     return mixRule.getMixingRuleName();
   }
 

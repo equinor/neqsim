@@ -59,7 +59,6 @@ abstract class Phase implements PhaseInterface {
   protected PhaseInterface[] refPhase = null;
   protected PhaseType pt = PhaseType.GAS;
 
-
   /**
    * <p>
    * Constructor for Phase.
@@ -80,7 +79,6 @@ abstract class Phase implements PhaseInterface {
       logger.error("Cloning failed.", ex);
     }
 
-    clonedPhase.pt = PhaseType.byValue(pt.getValue());
     clonedPhase.componentArray = this.componentArray.clone();
     for (int i = 0; i < numberOfComponents; i++) {
       clonedPhase.componentArray[i] = this.componentArray[i].clone();
@@ -1241,7 +1239,7 @@ abstract class Phase implements PhaseInterface {
    * </p>
    *
    * @param onlyPure a boolean
-   * @param name a {@link java.lang.String} object
+   * @param name a {@link String} object
    */
   public void initRefPhases(boolean onlyPure, String name) {
     refPhase = new PhaseInterface[numberOfComponents];
@@ -1963,18 +1961,6 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final int getPhaseType() {
-    return pt.getValue();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public String getPhaseTypeName() {
-    return pt.getDesc();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setMolarVolume(double molarVolume) {
     this.molarVolume = molarVolume;
   }
@@ -2172,7 +2158,7 @@ abstract class Phase implements PhaseInterface {
    * Getter for the field <code>thermoPropertyModelName</code>.
    * </p>
    *
-   * @return a {@link java.lang.String} object
+   * @return a {@link String} object
    */
   public String getThermoPropertyModelName() {
     return thermoPropertyModelName;

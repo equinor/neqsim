@@ -45,6 +45,7 @@ public class PhaseDesmukhMather extends PhaseGE {
     super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
     if (initType != 0) {
       setType(PhaseType.byValue(phase));
+      // phaseTypeName = phase == 0 ? "liquid" : "gas";
     }
     setMolarVolume(0.980e-3 * getMolarMass() * 1e5);
     Z = pressure * getMolarVolume() / (R * temperature);
