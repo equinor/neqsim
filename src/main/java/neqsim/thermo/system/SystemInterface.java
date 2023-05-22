@@ -1895,10 +1895,28 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to set the phase type of a given phase.
    * </p>
    *
-   * @param phaseToChange a int
-   * @param newPhaseType a int
+   * @param phaseToChange the phase number of the phase to set phase type
+   * @param newPhaseType the phasetype number to set phase type
    */
   public void setPhaseType(int phaseToChange, int newPhaseType);
+
+  /**
+   * method to set the phase type of a given phase.
+   *
+   * @param phaseToChange the phase number of the phase to set phase type
+   * @param phaseTypeName the phase type name (valid names are gas or liquid)
+   */
+  public void setPhaseType(int phaseToChange, String phaseTypeName);
+
+  /**
+   * Change the phase type of a given phase.
+   *
+   * @param phaseToChange the phase number of the phase to set phase type
+   * @param pt PhaseType to set
+   */
+  public default void setPhaseType(int phaseToChange, PhaseType pt) {
+    setPhaseType(phaseToChange, pt.getValue());
+  }
 
   /**
    * <p>
@@ -1909,14 +1927,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param newPhaseType a int
    */
   public void setPhaseType(String phases, int newPhaseType);
-
-  /**
-   * method to set the phase type of a given phase.
-   *
-   * @param phaseToChange the phase number of the phase to set phase type
-   * @param phaseTypeName the phase type name (valid names are gas or liquid)
-   */
-  public void setPhaseType(int phaseToChange, String phaseTypeName);
 
   /**
    * <p>

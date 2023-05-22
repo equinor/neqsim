@@ -2906,17 +2906,16 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setPhaseType(int phaseToChange, String phaseTypeName) {
     // System.out.println("new phase type: cha " + newPhaseType);
-    int newPhaseType = 1;
-    if (allowPhaseShift) {
-      if (phaseTypeName.equals("gas")) {
-        newPhaseType = 1;
-      } else if (StateOfMatter.isLiquid(PhaseType.byDesc(phaseTypeName))) {
-        newPhaseType = 0;
-      } else {
-        newPhaseType = 0;
-      }
-      phaseType[phaseIndex[phaseToChange]] = newPhaseType;
+    int newPhaseType = 0;
+    if (phaseTypeName.equals("gas")) {
+      newPhaseType = 1;
+    } else if (StateOfMatter.isLiquid(PhaseType.byDesc(phaseTypeName))) {
+      newPhaseType = 0;
+    } else {
+      newPhaseType = 0;
     }
+
+    setPhaseType(phaseToChange, newPhaseType);
   }
 
   /** {@inheritDoc} */
