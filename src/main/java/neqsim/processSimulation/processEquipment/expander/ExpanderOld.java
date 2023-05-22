@@ -37,7 +37,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
    * Constructor for ExpanderOld.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ExpanderOld() {
     this("ExpanderOld");
   }
@@ -50,7 +50,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ExpanderOld(StreamInterface inletStream) {
     this("ExpanderOld", inletStream);
   }

@@ -30,10 +30,10 @@ public class GORfitter extends TwoPortEquipment {
   String unitT = "C";
   String unitP = "bara";
 
-  @Deprecated
   /**
    * <p>Constructor for GORfitter.</p>
    */
+  @Deprecated(forRemoval = true)
   public GORfitter() {
     super("GOR fitter");
   }
@@ -45,7 +45,7 @@ public class GORfitter extends TwoPortEquipment {
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public GORfitter(StreamInterface stream) {
     this("GORfitter", stream);
   }

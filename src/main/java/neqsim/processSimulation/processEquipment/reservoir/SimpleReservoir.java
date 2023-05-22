@@ -52,7 +52,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * Constructor for SimpleReservoir.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public SimpleReservoir() {
     this("SimpleReservoir");
   }

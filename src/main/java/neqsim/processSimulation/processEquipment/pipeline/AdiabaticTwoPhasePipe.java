@@ -49,7 +49,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    * Constructor for AdiabaticTwoPhasePipe.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AdiabaticTwoPhasePipe() {}
 
   /**
@@ -60,7 +60,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AdiabaticTwoPhasePipe(StreamInterface inStream) {
     this("AdiabaticTwoPhasePipe", inStream);
   }

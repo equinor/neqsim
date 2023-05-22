@@ -25,7 +25,7 @@ public class StaticMixer extends Mixer {
    * Constructor for StaticMixer.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public StaticMixer() {}
 
   /**

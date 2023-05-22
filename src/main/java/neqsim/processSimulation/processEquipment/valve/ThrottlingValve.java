@@ -50,7 +50,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ThrottlingValve(StreamInterface inletStream) {
     this("ThrottlingValve", inletStream);
   }

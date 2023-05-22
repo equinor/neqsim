@@ -16,7 +16,7 @@ public class RachigRingPacking extends Packing {
    * Constructor for RachigRingPacking.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public RachigRingPacking() {
     this("RachigRingPacking");
   }

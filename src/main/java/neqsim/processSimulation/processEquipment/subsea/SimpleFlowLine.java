@@ -30,7 +30,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public SimpleFlowLine(StreamInterface inStream) {
     this("SimpleFlowLine", inStream);
 

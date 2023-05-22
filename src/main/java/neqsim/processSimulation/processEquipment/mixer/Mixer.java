@@ -42,7 +42,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
    * Constructor for Mixer.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Mixer() {
     super("Mixer");
   }

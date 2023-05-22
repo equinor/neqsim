@@ -30,7 +30,7 @@ public class Packing extends NamedBaseClass implements PackingInterface {
    * Constructor for Packing.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Packing() {
     super("Packing");
   }

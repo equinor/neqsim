@@ -32,7 +32,7 @@ public class SubseaWell extends TwoPortEquipment {
    * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public SubseaWell(StreamInterface instream) {
     super("SubseaWell");
     this.inStream = instream;

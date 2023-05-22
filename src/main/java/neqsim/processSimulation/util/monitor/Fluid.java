@@ -30,7 +30,7 @@ public class Fluid extends NamedBaseClass {
    * Constructor for Fluid.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Fluid() {
     this("Fluid");
   }

@@ -41,6 +41,7 @@ public class GasTurbine extends TwoPortEquipment {
    * Constructor for GasTurbine.
    * </p>
    */
+  @Deprecated(forRemoval = true)
   public GasTurbine() {
     this("GasTurbine");
   }
@@ -72,7 +73,7 @@ public class GasTurbine extends TwoPortEquipment {
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public GasTurbine(StreamInterface inletStream) {
     this();
     setInletStream(inletStream);

@@ -46,7 +46,7 @@ public interface MixerInterface extends ProcessEquipmentInterface {
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    * @deprecated use {@link #getOutletStream} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public default StreamInterface getOutStream() {
     return getOutletStream();
   }

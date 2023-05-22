@@ -29,7 +29,7 @@ public class Filter extends TwoPortEquipment {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Filter(StreamInterface inStream) {
     this("Filter", inStream);
   }

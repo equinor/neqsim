@@ -122,7 +122,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
    * @return the alkalinity
    * @deprecated Replaced by {@link getAlkalinity}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public double getAlkanility() {
     return getAlkalinity();
   }
@@ -146,7 +146,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
    * @param alkalinity the alkalinity to set
    * @deprecated Replaced by {@link setAlkalinity}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setAlkanility(double alkalinity) {
     setAlkalinity(alkalinity);
   }

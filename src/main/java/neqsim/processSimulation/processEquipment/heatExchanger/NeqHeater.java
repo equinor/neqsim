@@ -23,7 +23,7 @@ public class NeqHeater extends Heater {
    * Constructor for NeqHeater.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public NeqHeater() {
     this("NeqHeater");
   }
@@ -36,7 +36,7 @@ public class NeqHeater extends Heater {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public NeqHeater(StreamInterface inStream) {
     this("NeqHeater", inStream);
   }

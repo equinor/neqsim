@@ -22,7 +22,7 @@ public class NeqStream extends Stream {
    * Constructor for NeqStream.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public NeqStream() {
     super("NeqStream");
   }
@@ -34,7 +34,7 @@ public class NeqStream extends Stream {
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public NeqStream(SystemInterface thermoSystem) {
     super(thermoSystem);
   }
@@ -46,7 +46,7 @@ public class NeqStream extends Stream {
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public NeqStream(StreamInterface stream) {
     super(stream);
   }

@@ -45,7 +45,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * Constructor for Pump.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Pump() {
     super("Pump");
   }
@@ -58,7 +58,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Pump(StreamInterface inletStream) {
     this();
     setInletStream(inletStream);

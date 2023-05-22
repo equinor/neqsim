@@ -42,7 +42,7 @@ public class ThreePhaseSeparator extends Separator {
    * Constructor for ThreePhaseSeparator.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ThreePhaseSeparator() {
     this("ThreePhaseSeparator");
   }
@@ -55,7 +55,7 @@ public class ThreePhaseSeparator extends Separator {
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ThreePhaseSeparator(StreamInterface inletStream) {
     this("ThreePhaseSeparator", inletStream);
   }

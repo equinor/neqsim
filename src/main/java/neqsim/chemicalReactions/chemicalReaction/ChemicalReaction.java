@@ -49,7 +49,7 @@ public class ChemicalReaction extends NamedBaseClass
    *             {@link #ChemicalReaction(String, String[], double[], double[], double, double, double)}
    *             instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ChemicalReaction() {
     super("ChemicalReaction");
   }

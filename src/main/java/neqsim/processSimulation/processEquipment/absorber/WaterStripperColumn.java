@@ -51,7 +51,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    * Constructor for WaterStripperColumn.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public WaterStripperColumn() {}
 
   /**

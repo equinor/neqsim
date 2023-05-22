@@ -25,7 +25,7 @@ public class SimpleTPoutPipeline extends Pipeline {
    * Constructor for SimpleTPoutPipeline.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public SimpleTPoutPipeline() {}
 
   /**
@@ -36,7 +36,7 @@ public class SimpleTPoutPipeline extends Pipeline {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public SimpleTPoutPipeline(StreamInterface inStream) {
     this("SimpleTPoutPipeline", inStream);
   }

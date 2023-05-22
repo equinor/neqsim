@@ -39,7 +39,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * Constructor for Stream.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Stream() {
     super("Stream");
   }
@@ -51,7 +51,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Stream(StreamInterface stream) {
     this("Stream", stream);
   }
@@ -63,7 +63,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Stream(SystemInterface thermoSystem) {
     this("Stream", thermoSystem);
   }

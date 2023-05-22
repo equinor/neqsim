@@ -29,7 +29,7 @@ public class Hydrocyclone extends Separator {
    * Constructor for Hydrocyclone.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Hydrocyclone() {
     this("Hydrocyclone");
   }
@@ -42,7 +42,7 @@ public class Hydrocyclone extends Separator {
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Hydrocyclone(StreamInterface inletStream) {
     this("Hydrocyclone", inletStream);
   }

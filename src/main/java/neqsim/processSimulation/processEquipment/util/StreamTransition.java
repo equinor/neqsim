@@ -22,7 +22,7 @@ public class StreamTransition extends TwoPortEquipment {
    * Constructor for StreamTransition.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public StreamTransition() {
     super("StreamTransition");
   }
@@ -37,7 +37,7 @@ public class StreamTransition extends TwoPortEquipment {
    * @param outletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public StreamTransition(StreamInterface inletStream, StreamInterface outletStream) {
     this("StreamTransition", inletStream, outletStream);
   }

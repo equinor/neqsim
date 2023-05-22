@@ -18,7 +18,7 @@ public class Cooler extends Heater {
    * Constructor for Cooler.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Cooler() {
     super();
   }
@@ -31,7 +31,7 @@ public class Cooler extends Heater {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Cooler(StreamInterface inStream) {
     super(inStream);
   }

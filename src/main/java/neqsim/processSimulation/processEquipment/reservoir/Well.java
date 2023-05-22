@@ -17,7 +17,9 @@ public class Well extends NamedBaseClass {
   private static final long serialVersionUID = 1000;
 
   private StreamInterface stream = null;
-  double x, y, z;
+  double x;
+  double y;
+  double z;
 
   /**
    * <p>
@@ -26,7 +28,7 @@ public class Well extends NamedBaseClass {
    *
    * @deprecated use {@link #Well(String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Well() {
     this("Well");
   }

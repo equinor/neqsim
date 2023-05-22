@@ -26,7 +26,7 @@ public class TwoPhasePipeLine extends Pipeline {
    * Constructor for TwoPhasePipeLine.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TwoPhasePipeLine() {
     this("TwoPhasePipeLine");
   }
@@ -38,7 +38,7 @@ public class TwoPhasePipeLine extends Pipeline {
    *
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TwoPhasePipeLine(StreamInterface inStream) {
     this("TwoPhasePipeLine", inStream);
   }

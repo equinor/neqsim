@@ -25,7 +25,7 @@ public class ScalePotentialCheckStream extends Stream {
    * Constructor for ScalePotentialCheckStream.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ScalePotentialCheckStream() {
     super("ScalePotentialCheckStream");
   }
@@ -48,7 +48,7 @@ public class ScalePotentialCheckStream extends Stream {
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ScalePotentialCheckStream(StreamInterface stream) {
     super("ScalePotentialCheckStream", stream);
   }

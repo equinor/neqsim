@@ -20,8 +20,9 @@ public interface TwoPortInterface {
    * Get inlet Stream of twoport.
    *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @deprecated use {@link #getInletStream()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public default StreamInterface getInStream() {
     return getInletStream();
   }
@@ -53,7 +54,7 @@ public interface TwoPortInterface {
    * @return outlet Stream of TwoPortEquipment
    * @deprecated use {@link #getOutletStream()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public default StreamInterface getOutStream() {
     return getOutletStream();
   }

@@ -22,7 +22,7 @@ public class PallRingPacking extends Packing {
    * Constructor for PallRingPacking.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PallRingPacking() {
     this("PallRingPacking");
   }

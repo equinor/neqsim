@@ -92,7 +92,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * Constructor for AdiabaticTwoPhasePipe.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PipeBeggsAndBrills() {}
 
   /**
@@ -103,7 +103,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PipeBeggsAndBrills(StreamInterface inStream) {
     this("PipeBeggsAndBrills", inStream);
   }

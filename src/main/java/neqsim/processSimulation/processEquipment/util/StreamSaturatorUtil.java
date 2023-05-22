@@ -30,7 +30,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public StreamSaturatorUtil(StreamInterface inletStream) {
     this("StreamSaturatorUtil", inletStream);
   }

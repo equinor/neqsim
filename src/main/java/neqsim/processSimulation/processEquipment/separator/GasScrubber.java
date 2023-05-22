@@ -42,7 +42,7 @@ public class GasScrubber extends Separator {
    * Constructor for GasScrubber.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public GasScrubber() {
     this("GasScrubber");
   }
@@ -54,7 +54,7 @@ public class GasScrubber extends Separator {
    *
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public GasScrubber(StreamInterface inletStream) {
     this("GasScrubber", inletStream);
   }

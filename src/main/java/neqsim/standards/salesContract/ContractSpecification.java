@@ -20,19 +20,23 @@ import neqsim.util.NamedBaseClass;
 public class ContractSpecification extends NamedBaseClass {
   private static final long serialVersionUID = 1L;
   StandardInterface standard = null;
-  String description = "dew point temperature specification";
+  String description = "";
   private String country = "";
   private String terminal = "";
   private double minValue = 0;
   private double maxValue = 0;
-  private double referenceTemperatureMeasurement = 0, referenceTemperatureCombustion = 0;
+  private double referenceTemperatureMeasurement = 0;
+  private double referenceTemperatureCombustion = 0;
   private double referencePressure = 0;
-  private String unit = "", comments = "";
+  private String unit = "";
+  private String comments = "";
 
-  @Deprecated
   /**
-   * <p>Constructor for ContractSpecification.</p>
+   * <p>
+   * Constructor for ContractSpecification.
+   * </p>
    */
+  @Deprecated(forRemoval = true)
   public ContractSpecification() {
     super("ContractSpecification");
   }

@@ -49,7 +49,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * Constructor for SimpleTEGAbsorber.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public SimpleTEGAbsorber() {}
 
   /**

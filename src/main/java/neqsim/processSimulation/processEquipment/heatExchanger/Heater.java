@@ -39,7 +39,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    * Constructor for Heater.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Heater() {
     super("Heater");
   }
@@ -52,7 +52,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Heater(StreamInterface inStream) {
     this("Heater", inStream);
   }
@@ -289,7 +289,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    *
    * @param outStream the outStream to set
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setOutStream(StreamInterface outStream) {
     setOutletStream(outStream);
   }
@@ -297,14 +297,12 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    double entrop = 0.0;
-
     inStream.run();
     inStream.getFluid().init(3);
     outStream.run();
     outStream.getFluid().init(3);
 
-    entrop +=
+    double entrop =
         outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
 
     return entrop;

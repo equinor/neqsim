@@ -23,7 +23,7 @@ public class EquilibriumStream extends Stream {
    * Constructor for EquilibriumStream.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public EquilibriumStream() {}
 
   /**
@@ -33,7 +33,7 @@ public class EquilibriumStream extends Stream {
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public EquilibriumStream(SystemInterface thermoSystem) {
     super(thermoSystem);
   }
@@ -45,7 +45,7 @@ public class EquilibriumStream extends Stream {
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public EquilibriumStream(StreamInterface stream) {
     this("EquilibriumStream", stream.getThermoSystem());
   }

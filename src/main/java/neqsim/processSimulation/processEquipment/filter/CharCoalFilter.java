@@ -21,7 +21,7 @@ public class CharCoalFilter extends Filter {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public CharCoalFilter(StreamInterface inStream) {
     super(inStream);
   }

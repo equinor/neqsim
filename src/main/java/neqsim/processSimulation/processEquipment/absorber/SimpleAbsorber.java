@@ -37,7 +37,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    * Constructor for SimpleAbsorber.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public SimpleAbsorber() {
     this("SimpleAbsorber");
   }
@@ -49,7 +49,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    *
    * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public SimpleAbsorber(StreamInterface inStream1) {
     this("SimpleAbsorber", inStream1);
   }

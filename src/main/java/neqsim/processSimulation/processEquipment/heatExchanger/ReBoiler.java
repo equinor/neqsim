@@ -26,7 +26,7 @@ public class ReBoiler extends TwoPortEquipment {
    * Constructor for ReBoiler.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ReBoiler() {
     super("ReBoiler");
   }
@@ -39,7 +39,7 @@ public class ReBoiler extends TwoPortEquipment {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ReBoiler(StreamInterface inStream) {
     this("ReBoiler", inStream);
   }

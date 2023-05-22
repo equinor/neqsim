@@ -27,7 +27,7 @@ public class OnePhasePipeLine extends Pipeline {
    * Constructor for OnePhasePipeLine.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public OnePhasePipeLine() {
     this("OnePhasePipeLine");
   }

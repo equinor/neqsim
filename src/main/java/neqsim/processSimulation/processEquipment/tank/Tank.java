@@ -50,7 +50,7 @@ public class Tank extends ProcessEquipmentBaseClass {
    * Constructor for Tank.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Tank() {
     super("Tank");
     setCalculateSteadyState(false);
@@ -64,7 +64,7 @@ public class Tank extends ProcessEquipmentBaseClass {
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Tank(StreamInterface inletStream) {
     this("Tank", inletStream);
   }

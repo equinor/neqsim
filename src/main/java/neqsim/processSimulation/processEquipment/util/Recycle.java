@@ -79,7 +79,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * Constructor for Recycle.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Recycle() {
     this("Recycle");
   }
@@ -258,7 +258,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public StreamInterface getOutStream() {
     return mixedStream;
   }

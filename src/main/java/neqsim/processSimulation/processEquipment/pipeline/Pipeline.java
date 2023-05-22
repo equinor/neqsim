@@ -51,7 +51,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    * Constructor for Pipeline.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Pipeline() {
     this("Pipeline");
   }
@@ -64,7 +64,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Pipeline(StreamInterface inStream) {
     this("Pipeline", inStream);
   }

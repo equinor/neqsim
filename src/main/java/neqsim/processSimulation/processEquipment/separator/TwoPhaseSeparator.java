@@ -32,7 +32,7 @@ public class TwoPhaseSeparator extends Separator {
    * Constructor for TwoPhaseSeparator.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TwoPhaseSeparator() {
     this("TwoPhaseSeparator");
   }
@@ -45,7 +45,7 @@ public class TwoPhaseSeparator extends Separator {
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TwoPhaseSeparator(StreamInterface inletStream) {
     this("TwoPhaseSeparator", inletStream);
   }

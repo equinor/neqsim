@@ -49,7 +49,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
    * Constructor for HeatExchanger.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public HeatExchanger() {
     this("HeatExchanger");
   }
@@ -62,7 +62,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
    * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public HeatExchanger(StreamInterface inStream1) {
     this("HeatExchanger", inStream1);
   }
@@ -77,7 +77,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
    * @param inStream2 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public HeatExchanger(StreamInterface inStream1, StreamInterface inStream2) {
     this("HeatExchanger", inStream1, inStream2);
   }

@@ -60,7 +60,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Constructor for Compressor.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Compressor() {
     this("Compressor");
   }
@@ -73,7 +73,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Compressor(StreamInterface inletStream) {
     this();
     setInletStream(inletStream);
@@ -86,7 +86,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    *
    * @param interpolateMapLookup a boolean
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Compressor(boolean interpolateMapLookup) {
     this("Compressor", interpolateMapLookup);
   }

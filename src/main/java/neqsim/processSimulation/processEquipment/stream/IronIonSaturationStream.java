@@ -31,7 +31,7 @@ public class IronIonSaturationStream extends Stream {
    * Constructor for IronIonSaturationStream.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public IronIonSaturationStream() {
     this("IronIonSaturationStream");
   }
@@ -43,7 +43,7 @@ public class IronIonSaturationStream extends Stream {
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public IronIonSaturationStream(SystemInterface thermoSystem) {
     this("IronIonSaturationStream", thermoSystem);
   }
@@ -55,7 +55,7 @@ public class IronIonSaturationStream extends Stream {
    *
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public IronIonSaturationStream(StreamInterface stream) {
     this("IronIonSaturationStream", stream);
   }

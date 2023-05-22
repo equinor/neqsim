@@ -43,7 +43,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * Constructor for SetPoint.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public SetPoint() {
     this("SetPoint");
   }

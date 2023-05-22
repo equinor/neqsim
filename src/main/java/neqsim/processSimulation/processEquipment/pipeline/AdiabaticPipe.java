@@ -41,7 +41,7 @@ public class AdiabaticPipe extends Pipeline {
    * Constructor for AdiabaticPipe.
    * </p>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AdiabaticPipe() {
     this("AdiabaticPipe");
   }
@@ -54,7 +54,7 @@ public class AdiabaticPipe extends Pipeline {
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AdiabaticPipe(StreamInterface inStream) {
     this("AdiabaticPipe", inStream);
   }
