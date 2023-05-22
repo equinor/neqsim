@@ -1,5 +1,6 @@
 package neqsim.thermo.util.example;
 
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -52,14 +53,14 @@ public class TPflashCAPEOPEN {
         testSystem.setMolarComposition(
                 new double[] {0.0, 0.01, 0.01, 7.2, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0});
         testSystem.init(0, 0);
-        testSystem.setPhaseType(0, "gas");
+        testSystem.setPhaseType(0, PhaseType.GAS);
         testSystem.init(3);
         testSystem.initPhysicalProperties();
 
         testSystem.setMolarComposition(
                 new double[] {0.0, 0.01, 0.01, 7.2, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0});
         testSystem.init(0, 0);
-        testSystem.setPhaseType(0, "liquid");
+        testSystem.setPhaseType(0, PhaseType.LIQUID);
         testSystem.init(3);
         testSystem.initPhysicalProperties();
     }

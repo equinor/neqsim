@@ -588,7 +588,7 @@ abstract class SystemThermo implements SystemInterface {
     setTotalNumberOfMoles(newPhase.getNumberOfMolesInPhase());
     this.init(0);
     setNumberOfPhases(1);
-    setPhaseType(0, newPhase.getPhaseType());
+    setPhaseType(0, newPhase.getType());
     initBeta();
     init_x_y();
     this.init(1);
@@ -629,7 +629,7 @@ abstract class SystemThermo implements SystemInterface {
 
     newSystem.init(0);
     newSystem.setNumberOfPhases(1);
-    newSystem.setPhaseType(0, getPhase(phaseNumber).getPhaseType()); // phaseType[phaseNumber]);
+    newSystem.setPhaseType(0, getPhase(phaseNumber).getType()); // phaseType[phaseNumber]);
     newSystem.init(1);
     return newSystem;
   }
@@ -798,7 +798,7 @@ abstract class SystemThermo implements SystemInterface {
       refSystem.addComponent("default", 1.0, 273.15, 50.0, 0.1);
       refSystem.init(0);
       refSystem.setNumberOfPhases(1);
-      refSystem.setPhaseType(0, "liquid");
+      refSystem.setPhaseType(0, PhaseType.LIQUID);
       molarMass = 1000 * molarMass;
       TC = characterization.getTBPModel().calcTC(molarMass, density);
       PC = characterization.getTBPModel().calcPC(molarMass, density);
@@ -944,7 +944,7 @@ abstract class SystemThermo implements SystemInterface {
       refSystem.addComponent("default", 1.0, 273.15, 50.0, 0.1);
       refSystem.init(0);
       refSystem.setNumberOfPhases(1);
-      refSystem.setPhaseType(0, "liquid");
+      refSystem.setPhaseType(0, PhaseType.LIQUID);
       molarMass = 1000 * molarMass;
       // characterization.getTBPModel().calcTC(molarMass, density);
       TC = criticalTemperature;
