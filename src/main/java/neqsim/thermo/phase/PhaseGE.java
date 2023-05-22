@@ -110,7 +110,6 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
 
     // calc liquid density
-
     if (initType > 1) {
       // Calc Cp /Cv
       // Calc enthalpy/entropys

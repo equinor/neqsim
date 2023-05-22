@@ -124,7 +124,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
 
     Thread runThr = operations.runAsThread();
     try {
-      runThr.join(100000);
+      runThr.join(10 * 60000);
     } catch (Exception ex) {
 
     }

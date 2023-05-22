@@ -42,7 +42,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of {@link double} objects
    * @param Dij an array of {@link double} objects
-   * @param mixRule an array of {@link java.lang.String} objects
+   * @param mixRule an array of {@link String} objects
    * @param intparam an array of {@link double} objects
    */
   public PhaseGEUnifacUMRPRU(PhaseInterface phase, double[][] alpha, double[][] Dij,
@@ -161,7 +161,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * getQmix.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name a {@link String} object
    * @return a double
    */
   public double getQmix(String name) {
@@ -179,7 +179,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * getQmixdN.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name a {@link String} object
    * @return an array of {@link double} objects
    */
   public double[] getQmixdN(String name) {

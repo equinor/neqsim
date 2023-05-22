@@ -6,6 +6,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -998,13 +999,35 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setBmixType(int bmixType);
 
   /**
+   * Verify if system has a phase of a specific type.
+   *
+   * @param pt PhaseType to look for
+   * @return True if system contains a phase of requested type
+   */
+  public boolean hasPhaseType(PhaseType pt);
+
+  /**
+   * Verify if system has a phase of a specific type.
+   *
+   * @param phaseTypeName PhaseType to look for
+   * @return True if system contains a phase of requested type
+   * @deprecated Replaced by {@link hasPhaseType}
+   */
+  @Deprecated
+  public default boolean hasPhaseType(String phaseTypeName) {
+    return hasPhaseType(PhaseType.byDesc(phaseTypeName));
+  }
+
+  /**
    * <p>
    * hasSolidPhase.
    * </p>
    *
-   * @return a boolean
+   * @return True if system contains a solid phase
    */
-  public boolean hasSolidPhase();
+  public default boolean hasSolidPhase() {
+    return hasPhaseType(PhaseType.SOLID);
+  }
 
   /**
    * <p>
@@ -1538,6 +1561,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void display(String name);
 
   /**
+   * Prints the fluid in a visually appealing way.
+   *
+   */
+  public default void prettyPrint() {
+    neqsim.thermo.util.readwrite.TablePrinter.printTable(createTable(getFluidName()));
+  }
+
+  /**
    * <p>
    * addFluid.
    * </p>
@@ -1995,7 +2026,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public String[] getComponentNames();
 
-
   /**
    * <p>
    * Get component by name.
@@ -2359,16 +2389,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param totalNumberOfMoles Total molar flow rate of fluid in unit mol/sec
    */
   public void setTotalNumberOfMoles(double totalNumberOfMoles);
-
-  /**
-   * <p>
-   * hasPhaseType.
-   * </p>
-   *
-   * @param phaseTypeName a {@link java.lang.String} object
-   * @return a boolean
-   */
-  public boolean hasPhaseType(String phaseTypeName);
 
   /**
    * <p>

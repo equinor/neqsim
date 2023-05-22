@@ -57,11 +57,7 @@ abstract class Phase implements PhaseInterface {
   double pressure = 0;
 
   protected PhaseInterface[] refPhase = null;
-
-  protected int phaseType = 0;
-  protected String phaseTypeName = "gas";
   protected PhaseType pt = PhaseType.GAS;
-
 
   /**
    * <p>
@@ -1240,7 +1236,7 @@ abstract class Phase implements PhaseInterface {
    * </p>
    *
    * @param onlyPure a boolean
-   * @param name a {@link java.lang.String} object
+   * @param name a {@link String} object
    */
   public void initRefPhases(boolean onlyPure, String name) {
     refPhase = new PhaseInterface[numberOfComponents];
@@ -1958,20 +1954,6 @@ abstract class Phase implements PhaseInterface {
   @Override
   public final void setType(PhaseType pt) {
     this.pt = pt;
-    this.phaseType = pt.getValue();
-    this.phaseTypeName = pt.getDesc();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final int getPhaseType() {
-    return phaseType;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public String getPhaseTypeName() {
-    return phaseTypeName;
   }
 
   /** {@inheritDoc} */
@@ -2173,7 +2155,7 @@ abstract class Phase implements PhaseInterface {
    * Getter for the field <code>thermoPropertyModelName</code>.
    * </p>
    *
-   * @return a {@link java.lang.String} object
+   * @return a {@link String} object
    */
   public String getThermoPropertyModelName() {
     return thermoPropertyModelName;

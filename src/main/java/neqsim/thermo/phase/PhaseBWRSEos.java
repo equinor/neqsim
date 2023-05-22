@@ -449,13 +449,13 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   public double dFdT() {
     // double dv = temperature/1000.0;
     // temperature = temperature + dv;
-    // init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    // init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
     // double fold = getF();
     // temperature = temperature - 2*dv;
-    // init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    // init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
     // double fnew = getF();
     // temperature = temperature + dv;
-    // init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    // init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
     // System.out.println("dFdT " + ((fold-fnew)/(2*dv)) + " super " +
     // (getFpoldT()+getFexpdT())*1e3+ " phasetype " +getType());
     return (getFpoldT() + getFexpdT()) * 1e3; // (fold-fnew)/(2*dv);

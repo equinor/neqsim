@@ -43,6 +43,10 @@ public class PhaseDesmukhMather extends PhaseGE {
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
+    if (initType != 0) {
+      setType(phase);
+      // phaseTypeName = phase == 0 ? "liquid" : "gas";
+    }
     setMolarVolume(0.980e-3 * getMolarMass() * 1e5);
     Z = pressure * getMolarVolume() / (R * temperature);
   }
@@ -74,8 +78,8 @@ public class PhaseDesmukhMather extends PhaseGE {
 
               // if
               // (dataSet.getString("comp1").trim().equals(getComponents()[l].getComponentName())) {
-                // templ = k;
-                // tempk = l;
+              // templ = k;
+              // tempk = l;
               // }
               this.aij[k][l] = Double.parseDouble(dataSet.getString("aijDesMath"));
               this.bij[k][l] = Double.parseDouble(dataSet.getString("bijDesMath"));

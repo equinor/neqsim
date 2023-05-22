@@ -222,7 +222,9 @@ public class TPflash extends Flash {
     minGibsLogFugCoef = new double[system.getPhase(0).getNumberOfComponents()];
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
+      if (system.getPhase(minGibbsPhase).getComponent(i).getz() > 1e-50) {
+        minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
+      }
       minGibsLogFugCoef[i] =
           system.getPhase(minGibbsPhase).getComponent(i).getLogFugacityCoefficient();
     }
@@ -290,14 +292,16 @@ public class TPflash extends Flash {
       dgonRT = -1.0;
     } else {
       for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        tpdy += system.getPhase(0).getComponent(i).getx()
-            * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
-                + Math.log(system.getPhase(0).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
-                - minGibsLogFugCoef[i]);
-        tpdx += system.getPhase(1).getComponent(i).getx()
-            * (Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
-                + Math.log(system.getPhase(1).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
-                - minGibsLogFugCoef[i]);
+        if (system.getComponent(i).getz() > 1e-50) {
+          tpdy += system.getPhase(0).getComponent(i).getx()
+              * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
+                  + Math.log(system.getPhase(0).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
+                  - minGibsLogFugCoef[i]);
+          tpdx += system.getPhase(1).getComponent(i).getx()
+              * (Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
+                  + Math.log(system.getPhase(1).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
+                  - minGibsLogFugCoef[i]);
+        }
       }
 
       dgonRT = system.getPhase(0).getBeta() * tpdy + (1.0 - system.getPhase(0).getBeta()) * tpdx;
