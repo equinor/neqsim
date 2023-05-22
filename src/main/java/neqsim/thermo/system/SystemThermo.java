@@ -105,15 +105,15 @@ abstract class SystemThermo implements SystemInterface {
   public int maxNumberOfPhases = 2;
   protected int attractiveTermNumber = 0;
 
-  // phasetype to be enum
-  protected int[] phaseType = {1, 0, 0, 0, 0, 0};
+  // PhaseType of phases belonging to system.
+  protected PhaseType[] phaseType = new PhaseType[MAX_PHASES];
 
   // Index refers to position in phaseArray. First value of phaseIndex is the phase which is created
   // first and the last is the phase created last.
   protected int[] phaseIndex = {0, 1, 2, 3, 4, 5};
 
   // All phases of System. Flashes reorders phaseArray by density.
-  protected PhaseInterface[] phaseArray;
+  protected PhaseInterface[] phaseArray = new PhaseInterface[MAX_PHASES];
 
   protected ChemicalReactionOperations chemicalReactionOperations = null;
   private int mixingRule = 1;
@@ -136,7 +136,6 @@ abstract class SystemThermo implements SystemInterface {
    * </p>
    */
   public SystemThermo() {
-    phaseArray = new PhaseInterface[MAX_PHASES];
     characterization = new Characterise(this);
     interfaceProp = new InterfaceProperties(this);
   }
@@ -168,12 +167,14 @@ abstract class SystemThermo implements SystemInterface {
               "SystemThermo", "P", "is negative");
       throw new RuntimeException(ex);
     }
-    beta[0] = 1.0;
-    beta[1] = 1.0;
-    beta[2] = 1.0;
-    beta[3] = 1.0;
-    beta[4] = 1.0;
-    beta[5] = 1.0;
+
+    reInitPhaseType();
+    phaseType[4] = phaseType[3];
+    phaseType[5] = phaseType[3];
+
+    for (int i = 0; i < MAX_PHASES; i++) {
+      beta[i] = 1.0;
+    }
   }
 
   /** {@inheritDoc} */
@@ -186,8 +187,8 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void clearAll() {
     setTotalNumberOfMoles(0);
-    phaseType[0] = 1;
-    phaseType[1] = 0;
+    phaseType[0] = PhaseType.byValue(1);
+    phaseType[1] = PhaseType.byValue(0);
     numberOfComponents = 0;
     setNumberOfPhases(2);
     beta[0] = 1.0;
@@ -1813,11 +1814,11 @@ abstract class SystemThermo implements SystemInterface {
       // todo: should actually clear all entries in arrays?
       setNumberOfPhases(getMaxNumberOfPhases());
       for (int i = 0; i < numberOfPhases; i++) {
-        phaseType[i] = 0;
+        phaseType[i] = PhaseType.byValue(0);
         beta[i] = 1.0;
         phaseIndex[i] = i;
       }
-      phaseType[0] = 1;
+      phaseType[0] = PhaseType.byValue(1);
       for (int i = 0; i < numberOfPhases; i++) {
         if (isPhase(i)) {
           getPhase(i).init(getTotalNumberOfMoles(), numberOfComponents, type,
@@ -2898,7 +2899,7 @@ abstract class SystemThermo implements SystemInterface {
   public void setPhaseType(int phaseToChange, PhaseType pt) {
     // System.out.println("new phase type: cha " + pt);
     if (allowPhaseShift) {
-      phaseType[phaseIndex[phaseToChange]] = pt.getValue();
+      phaseType[phaseIndex[phaseToChange]] = pt;
     }
   }
 
@@ -2941,10 +2942,10 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void invertPhaseTypes() {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      if (phaseType[i] == 0) {
-        phaseType[i] = 1;
+      if (phaseType[i] == PhaseType.byValue(0)) {
+        phaseType[i] = PhaseType.byValue(1);
       } else {
-        phaseType[i] = 0;
+        phaseType[i] = PhaseType.byValue(0);
       }
     }
   }
@@ -2962,10 +2963,11 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void reInitPhaseType() {
-    phaseType[0] = 1;
-    phaseType[1] = 0;
-    phaseType[2] = 0;
-    phaseType[3] = 0;
+    phaseType[0] = PhaseType.byValue(1);
+    phaseType[1] = PhaseType.byValue(0);
+    phaseType[2] = PhaseType.byValue(0);
+    phaseType[3] = PhaseType.byValue(0);
+    // todo: why stop at 3 and not iterate through MAX_PHASES elements?
   }
 
   /** {@inheritDoc} */
