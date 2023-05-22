@@ -43,7 +43,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of {@link double} objects
    * @param Dij an array of {@link double} objects
-   * @param mixRule an array of {@link java.lang.String} objects
+   * @param mixRule an array of {@link String} objects
    * @param intparam an array of {@link double} objects
    */
   public PhaseGEUnifac(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
