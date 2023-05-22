@@ -26,8 +26,7 @@ public class TPflash extends Flash {
    * Constructor for TPflash.
    * </p>
    */
-  public TPflash() {
-  }
+  public TPflash() {}
 
   /**
    * <p>
@@ -435,14 +434,16 @@ public class TPflash extends Flash {
           system.getChemicalReactionOperations().solveChemEq(phase, 1);
 
           for (i = 0; i < system.getPhases()[phase].getNumberOfComponents(); i++) {
-            chemdev += Math.abs(xchem[i] - system.getPhase(phase).getComponent(i).getx()) / xchem[i];
+            chemdev +=
+                Math.abs(xchem[i] - system.getPhase(phase).getComponent(i).getx()) / xchem[i];
           }
         }
         diffChem = Math.abs(oldChemDiff - chemdev);
       }
       // logger.info("chemdev: " + chemdev + " iter: " + totiter);
       totiter++;
-    } while ((diffChem > 1e-6 && chemdev > 1e-6 && totiter < 300) || (system.isChemicalSystem() && totiter < 2));
+    } while ((diffChem > 1e-6 && chemdev > 1e-6 && totiter < 300)
+        || (system.isChemicalSystem() && totiter < 2));
     if (system.isChemicalSystem()) {
       sucsSubs();
     }

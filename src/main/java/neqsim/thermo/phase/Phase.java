@@ -79,7 +79,6 @@ abstract class Phase implements PhaseInterface {
       logger.error("Cloning failed.", ex);
     }
 
-    clonedPhase.pt = PhaseType.byValue(pt.getValue());
     clonedPhase.componentArray = this.componentArray.clone();
     for (int i = 0; i < numberOfComponents; i++) {
       clonedPhase.componentArray[i] = this.componentArray[i].clone();
