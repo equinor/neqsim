@@ -33,5 +33,10 @@ public class PhaseSrkEosTest {
       p2 = p.clone();
       Assertions.assertEquals(p.getType(), p2.getType());
     }
+
+    p.setType(PhaseType.GAS);
+    p2.setType(PhaseType.LIQUID);
+
+    Assertions.assertNotEquals(p.getType(), p2.getType());
   }
 }
