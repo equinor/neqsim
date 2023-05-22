@@ -797,7 +797,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    */
   public double dFLRdV() {
     return (FLRV() + dFdAlphaLR() * alphaLRdV) * 1e-5; // + FLRGammaLR()*gammLRdV +
-                                                      // 0*FLRXLR()*XLRdGammaLR()*gammLRdV)*1e-5;
+                                                       // 0*FLRXLR()*XLRdGammaLR()*gammLRdV)*1e-5;
   }
 
   /**
@@ -1424,7 +1424,8 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FBornTT() {
-    return 2.0 * (avagadroNumber * electronCharge * electronCharge
+    return 2.0
+        * (avagadroNumber * electronCharge * electronCharge
             / (4.0 * pi * vacumPermittivity * R * temperature * temperature * temperature))
         * (1.0 / getSolventDiElectricConstant() - 1.0) * bornX;
   }

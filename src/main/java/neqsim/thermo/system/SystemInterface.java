@@ -1561,6 +1561,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void display(String name);
 
   /**
+   * Prints the fluid in a visually appealing way.
+   *
+   */
+  public default void prettyPrint() {
+    neqsim.thermo.util.readwrite.TablePrinter.printTable(createTable(getFluidName()));
+  }
+
+  /**
    * <p>
    * addFluid.
    * </p>
@@ -2027,7 +2035,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return Component names in system.
    */
   public String[] getComponentNames();
-
 
   /**
    * <p>
