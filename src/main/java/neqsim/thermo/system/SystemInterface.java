@@ -314,10 +314,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * getInterfacialTension.
    * </p>
    *
-   * @param phase1 a int
-   * @param phase2 a int
+   * @param phase1 phase number of phase1
+   * @param phase2 phase number of phase2
    * @param unit a {@link java.lang.String} object
-   * @return a double
+   * @return interfacial tension with specified unit
    */
   public double getInterfacialTension(int phase1, int phase2, String unit);
 
@@ -1052,7 +1052,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return a {@link java.lang.String} object
    */
-  public java.lang.String getMixingRuleName();
+  public String getMixingRuleName();
 
   /**
    * <p>
@@ -1061,7 +1061,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return a {@link java.lang.String} object
    */
-  public java.lang.String getModelName();
+  public String getModelName();
 
   /**
    * <p>
@@ -1402,7 +1402,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return a {@link java.lang.String} object
    */
-  public java.lang.String getFluidInfo();
+  public String getFluidInfo();
 
   /**
    * <p>
@@ -1411,7 +1411,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param info a {@link java.lang.String} object
    */
-  public void setFluidInfo(java.lang.String info);
+  public void setFluidInfo(String info);
 
   /**
    * <p>
@@ -1891,32 +1891,51 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   // public double getdfugdt(int i, int j);
 
   /**
-   * <p>
-   * method to set the phase type of a given phase.
-   * </p>
+   * Change the phase type of a given phase.
    *
-   * @param phaseToChange a int
-   * @param newPhaseType a int
+   * @param phaseToChange the phase number of the phase to set phase type
+   * @param newPhaseType the phasetype number to set
+   * @deprecated Replaced by {@link setPhaseType}
    */
-  public void setPhaseType(int phaseToChange, int newPhaseType);
+  @Deprecated
+  public default void setPhaseType(int phaseToChange, int newPhaseType) {
+    setPhaseType(phaseToChange, PhaseType.byValue(newPhaseType));
+  }
 
   /**
-   * <p>
-   * setPhaseType.
-   * </p>
+   * Change the phase type of a given phase.
    *
-   * @param phases a {@link java.lang.String} object
-   * @param newPhaseType a int
+   * @param phaseToChange the phase number of the phase to set phase type
+   * @param phaseTypeName the phase type name, see PhaseTypes
    */
+  public default void setPhaseType(int phaseToChange, String phaseTypeName) {
+    setPhaseType(phaseToChange, PhaseType.byDesc(phaseTypeName));
+  }
+
+  /**
+   * Change the phase type of a given phase.
+   *
+   * @param phaseToChange the phase number of the phase to set phase type
+   * @param pt PhaseType to set
+   */
+  public void setPhaseType(int phaseToChange, PhaseType pt);
+
+  /**
+   * Set phase type of all phases.
+   *
+   * @param phases Set to "all" to set all phases, else nothing happens.
+   * @param newPhaseType the phasetype number to set
+   * @deprecated Replaced by {@link setAllPhaseType}
+   */
+  @Deprecated
   public void setPhaseType(String phases, int newPhaseType);
 
   /**
-   * method to set the phase type of a given phase.
+   * Set phase type of all phases.
    *
-   * @param phaseToChange the phase number of the phase to set phase type
-   * @param phaseTypeName the phase type name (valid names are gas or liquid)
+   * @param pt PhaseType to set phases as.
    */
-  public void setPhaseType(int phaseToChange, String phaseTypeName);
+  public void setAllPhaseType(PhaseType pt);
 
   /**
    * <p>
@@ -2198,7 +2217,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return a {@link java.lang.String} object
    */
-  public java.lang.String getFluidName();
+  public String getFluidName();
 
   /**
    * <p>
@@ -2207,7 +2226,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param fluidName a {@link java.lang.String} object
    */
-  public void setFluidName(java.lang.String fluidName);
+  public void setFluidName(String fluidName);
 
   /**
    * <p>
@@ -2514,7 +2533,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param name Component name to add
    */
-  public void addToComponentNames(java.lang.String name);
+  public void addToComponentNames(String name);
 
   /**
    * <p>
