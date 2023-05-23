@@ -3934,13 +3934,13 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public java.lang.String getFluidName() {
+  public String getFluidName() {
     return fluidName;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setFluidName(java.lang.String fluidName) {
+  public void setFluidName(String fluidName) {
     this.fluidName = fluidName;
   }
 
@@ -3979,7 +3979,7 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public java.lang.String getModelName() {
+  public String getModelName() {
     return modelName;
   }
 
@@ -3988,7 +3988,7 @@ abstract class SystemThermo implements SystemInterface {
    *
    * @param modelName New value of property modelName.
    */
-  public void setModelName(java.lang.String modelName) {
+  public void setModelName(String modelName) {
     this.modelName = modelName;
   }
 

@@ -1052,7 +1052,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return a {@link java.lang.String} object
    */
-  public java.lang.String getMixingRuleName();
+  public String getMixingRuleName();
 
   /**
    * <p>
@@ -1061,7 +1061,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return a {@link java.lang.String} object
    */
-  public java.lang.String getModelName();
+  public String getModelName();
 
   /**
    * <p>
@@ -1402,7 +1402,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return a {@link java.lang.String} object
    */
-  public java.lang.String getFluidInfo();
+  public String getFluidInfo();
 
   /**
    * <p>
@@ -1411,7 +1411,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param info a {@link java.lang.String} object
    */
-  public void setFluidInfo(java.lang.String info);
+  public void setFluidInfo(String info);
 
   /**
    * <p>
@@ -2223,7 +2223,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return a {@link java.lang.String} object
    */
-  public java.lang.String getFluidName();
+  public String getFluidName();
 
   /**
    * <p>
@@ -2232,7 +2232,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param fluidName a {@link java.lang.String} object
    */
-  public void setFluidName(java.lang.String fluidName);
+  public void setFluidName(String fluidName);
 
   /**
    * <p>
@@ -2539,7 +2539,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param name Component name to add
    */
-  public void addToComponentNames(java.lang.String name);
+  public void addToComponentNames(String name);
 
   /**
    * <p>
