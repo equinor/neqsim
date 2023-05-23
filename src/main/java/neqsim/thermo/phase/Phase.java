@@ -44,11 +44,15 @@ abstract class Phase implements PhaseInterface {
   public String thermoPropertyModelName = null;
 
   /**
-   * Mole fraction of this phase in system.
-   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>
+   * Mole fraction of this phase of system.
+   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>. NB! numberOfMolesInSystem is
+   * not known to the phase.
    */
   double beta = 1.0;
-  /** Number of moles in phase. <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code> */
+  /**
+   * Number of moles in phase. <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code>. NB!
+   * numberOfMolesInSystem is not known to the phase.
+   */
   public double numberOfMolesInPhase = 0;
 
   private int initType = 0;
@@ -164,13 +168,6 @@ abstract class Phase implements PhaseInterface {
   public void addMoles(int component, double dn) {
     numberOfMolesInPhase += dn;
     componentArray[component].addMoles(dn);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void addMolesChemReac(int component, double dn) {
-    numberOfMolesInPhase += dn;
-    componentArray[component].addMolesChemReac(dn);
   }
 
   /** {@inheritDoc} */
