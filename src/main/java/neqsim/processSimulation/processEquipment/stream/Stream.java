@@ -226,7 +226,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   @Override
   public void setThermoSystem(SystemInterface thermoSystem) {
     this.thermoSystem = thermoSystem;
-    // todo: when is stream not null?
+    // TODO: when is stream not null?
     if (stream != null) {
       stream.setThermoSystem(thermoSystem);
     }

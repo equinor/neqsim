@@ -70,7 +70,7 @@ abstract class SystemThermo implements SystemInterface {
   protected double criticalPressure = 0;
   private double totalNumberOfMoles = 0;
 
-  // todo: componentNameTag is not working yet, a kind of alias-postfix for Components from this
+  // TODO: componentNameTag is not working yet, a kind of alias-postfix for Components from this
   // system that will be passed on to other systems. used to find originator of specific components
   // or
   public String componentNameTag = "";
@@ -576,7 +576,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface phaseToSystem(PhaseInterface newPhase) {
-    // todo: other phaseToSystem functions returns clones.
+    // TODO: other phaseToSystem functions returns clones.
     for (int i = 0; i < newPhase.getNumberOfComponents(); i++) {
       newPhase.getComponents()[i]
           .setNumberOfmoles(newPhase.getComponents()[i].getNumberOfMolesInPhase());
@@ -1811,7 +1811,7 @@ abstract class SystemThermo implements SystemInterface {
    */
   public void initAnalytic(int type) {
     if (type == 0) {
-      // todo: should actually clear all entries in arrays?
+      // TODO: should actually clear all entries in arrays?
       setNumberOfPhases(getMaxNumberOfPhases());
       for (int i = 0; i < numberOfPhases; i++) {
         phaseType[i] = PhaseType.byValue(0);
@@ -1825,7 +1825,7 @@ abstract class SystemThermo implements SystemInterface {
               phaseType[phaseIndex[i]], beta[phaseIndex[i]]);
         }
       }
-      // todo: reduce maxnumberofphases as well? Some sort of multiphase reset here.
+      // TODO: reduce maxnumberofphases as well? Some sort of multiphase reset here.
       setNumberOfPhases(2);
     } else if (type == 1) {
       for (int i = 0; i < numberOfPhases; i++) {
@@ -2307,7 +2307,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isPhase(int i) {
-    // todo: what if i > numberofphases?
+    // TODO: what if i > numberofphases?
     if (i > phaseArray.length) {
       return false;
     }
@@ -3155,7 +3155,7 @@ abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * getPdVtn. Todo: document
+   * getPdVtn. TODO: document
    *
    * @return dpdv
    */
@@ -5043,7 +5043,7 @@ abstract class SystemThermo implements SystemInterface {
 
     switch (type) {
       case "PlusFluid":
-        // todo: really skip last component of molefraction?
+        // TODO: really skip last component of molefraction?
         for (int compNumb = 0; compNumb < molefractions.length - 1; compNumb++) {
           addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
         }
@@ -5054,7 +5054,7 @@ abstract class SystemThermo implements SystemInterface {
         }
         break;
       case "Plus":
-        // todo: compNumb can be negative
+        // TODO: compNumb can be negative
         for (int compNumb = 0; compNumb < this.numberOfComponents
             - getCharacterization().getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
           addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);

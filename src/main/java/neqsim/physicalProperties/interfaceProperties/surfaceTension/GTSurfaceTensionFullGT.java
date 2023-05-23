@@ -9,7 +9,7 @@ import no.uib.cipr.matrix.DenseMatrix;
 /**
  * <p>
  * GTSurfaceTensionFullGT class. Solving for the surface tension by direct Newton method. <br>
- * todo: Makeuse of binary interaction parameter for the influence parameter \f$\beta_{ij}\f$ when
+ * TODO: Make use of binary interaction parameter for the influence parameter \f$\beta_{ij}\f$ when
  * this becomes available in NeqSIM API.
  * </p>
  *
@@ -175,7 +175,7 @@ public class GTSurfaceTensionFullGT {
       this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
     }
 
-    // @todo Change to \f$c_{ij} = (1-\beta_{ij})\sqrt{c_ic_j}\f$ when a
+    // TODO: Change to \f$c_{ij} = (1-\beta_{ij})\sqrt{c_ic_j}\f$ when a
     // NeqSIM function for evaluating \f$\beta_{ij}\f$ becomes available.
     for (i = 0; i < ncomp; i++) {
       for (j = i; j < ncomp; j++) {
