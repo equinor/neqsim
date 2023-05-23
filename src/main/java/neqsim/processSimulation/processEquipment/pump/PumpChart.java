@@ -93,7 +93,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
         redhead[i][j] = head[i][j] / speed[i] / speed[i];
         reducedHeadFitter.add(redflow[i][j], redhead[i][j]);
         reducedEfficiencyFitter.add(redflow[i][j], redEfficiency[i][j]);
-        // todo: MLLU: not correct. speed[0] should be the requested speed
+        // TODO: MLLU: not correct. speed[0] should be the requested speed
         double flowFanLaw = flow[i][j] * speed[i] / speed[0];
         fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
       }

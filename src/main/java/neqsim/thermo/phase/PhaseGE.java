@@ -159,7 +159,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase);
-    // todo: compNumber not in use
+    // TODO: compNumber not in use
   }
 
   /**

@@ -378,7 +378,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       liquidOutStream.setCalculationIdentifier(id);
 
       for (int i = 0; i < numberOfTrays; i++) {
-        // todo: set calculation ids of child elements of trays
+        // TODO: set calculation ids of child elements of trays
         ((SimpleTray) trays.get(i)).setCalculationIdentifier(id);
       }
     }
