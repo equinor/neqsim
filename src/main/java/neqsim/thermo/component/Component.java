@@ -25,9 +25,11 @@ abstract class Component implements ComponentInterface {
   protected int componentNumber;
   /** Name of component. */
   protected String componentName = "default";
+
+  // todo: what does "HC", "inert" and "Component" mean?
   /**
-   * Type of component. Can be "normal", "TBP", "plus", "ion", what about "HC", "inert" and
-   * "Component?"
+   * Type of component. Can be "normal", "TBP", "plus", "ion", but what does "HC", "inert" and
+   * "Component?" do?
    */
   private String componentType = "Component";
 
@@ -52,6 +54,7 @@ abstract class Component implements ComponentInterface {
   protected double bCPA = 0.0;
   protected double mCPA = 0.0;
   protected double srkacentricFactor = 0.0;
+  // todo: what are the available options here?
   protected String referenceStateType = "solvent";
   protected String associationScheme = "0";
   protected String antoineLiqVapPresType = null;
@@ -492,19 +495,10 @@ abstract class Component implements ComponentInterface {
   @Override
   public void addMolesChemReac(double dn, double totdn) {
     numberOfMoles += totdn;
-    numberOfMolesInPhase += dn;
     if (numberOfMoles < 0) {
       numberOfMoles = 0;
     }
 
-    if (numberOfMolesInPhase < 0) {
-      numberOfMolesInPhase = 0;
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void addMoles(double dn) {
     numberOfMolesInPhase += dn;
     if (numberOfMolesInPhase < 0) {
       numberOfMolesInPhase = 0;

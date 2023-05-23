@@ -26,8 +26,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Helper function to create component. Typically called from constructors.
    * </p>
    *
-   * @param component_name Name of component
-   * @param moles Total number of moles of component.
+   * @param component_name Name of component.
+   * @param moles Total number of moles of component in system.
    * @param molesInPhase Number of moles in phase.
    * @param compnumber Index number of component in phase object component array.
    */
@@ -662,10 +662,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * addMoles.
+   * Change the number of moles of component of phase,i.e., <code>numberOfMolesInPhase</code> but do
+   * not change the total number of moles of component in system.
    * </p>
    *
-   * @param dn a double
+   * @param dn Number of moles of component added to phase
    */
   public default void addMoles(double dn) {
     addMolesChemReac(dn, 0);
@@ -673,10 +674,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * addMolesChemReac.
+   * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code>, and
+   * total number of moles of component in system, i.e., <code>numberOfMoles</code> with the same
+   * amount.
    * </p>
    *
-   * @param dn Number of moles to add to phase and total
+   * @param dn Number of moles of component added to phase and system
    */
   public default void addMolesChemReac(double dn) {
     addMolesChemReac(dn, dn);
@@ -684,11 +687,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * addMolesChemReac.
+   * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code>, and
+   * total number of moles of component in system, i.e., <code>numberOfMoles</code> with separate
+   * amounts.
    * </p>
    *
-   * @param dn Number of moles to add to phase
-   * @param totdn Number of moles to add total
+   * @param dn Number of moles of component to add to phase
+   * @param totdn Number of moles of component to add to system
    */
   public void addMolesChemReac(double dn, double totdn);
 
