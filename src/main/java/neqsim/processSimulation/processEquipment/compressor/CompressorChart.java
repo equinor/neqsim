@@ -95,7 +95,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         reducedHeadFitter.add(redflow[i][j], redhead[i][j]);
         reducedPolytropicEfficiencyFitter.add(redflow[i][j], redpolytropicEfficiency[i][j]);
         double flowFanLaw = flow[i][j] * speed[i] / speed[0];
-        // todo: MLLU: not correct. speed[0] should be the requested speed
+        // TODO: MLLU: not correct. speed[0] should be the requested speed
         fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
       }
     }

@@ -28,7 +28,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
   SystemInterface thermoSystem;
   ThermodynamicOperations thermoOps;
 
-  // todo: neither subclass of Compressor nor TwoPortEquipment
+  // TODO: neither subclass of Compressor nor TwoPortEquipment, nor used. remove class?
   double dH = 0.0;
   double pressure = 0.0;
 
