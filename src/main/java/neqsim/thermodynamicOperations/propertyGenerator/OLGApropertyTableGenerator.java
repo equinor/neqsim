@@ -161,7 +161,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
 
         if (!thermoSystem.hasPhaseType("gas")) {
-          // todo: here is a bug, calling with input oil does nothing.
+          // TODO: here is a bug, calling with input oil does nothing.
           thermoSystem.setPhaseType("oil", 1);
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
@@ -171,7 +171,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
 
         if (!thermoSystem.hasPhaseType("oil")) {
-          // todo: here is a bug, calling with input gas does nothing.
+          // TODO: here is a bug, calling with input gas does nothing.
           thermoSystem.setPhaseType("gas", 1);
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();

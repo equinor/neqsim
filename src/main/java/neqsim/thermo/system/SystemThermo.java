@@ -2967,7 +2967,7 @@ abstract class SystemThermo implements SystemInterface {
     phaseType[1] = PhaseType.byValue(0);
     phaseType[2] = PhaseType.byValue(0);
     phaseType[3] = PhaseType.byValue(0);
-    // todo: why stop at 3 and not iterate through MAX_PHASES elements?
+    // TODO: why stop at 3 and not iterate through MAX_PHASES elements?
   }
 
   /** {@inheritDoc} */
