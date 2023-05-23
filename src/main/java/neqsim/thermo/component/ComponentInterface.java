@@ -688,7 +688,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   /**
    * <p>
    * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code>, and
-   * total number of moles of component in system, i.e., <code>numberOfMoles</code> with different
+   * total number of moles of component in system, i.e., <code>numberOfMoles</code> with separate
    * amounts.
    * </p>
    *

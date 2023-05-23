@@ -801,7 +801,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code> and
    * <code>Component</code> properties for the number of moles of component of phase, i.e.,
    * <code>numberOfMolesInPhase</code>, and total number of moles of component in system, i.e.,
-   * <code>numberOfMoles</code> with different amounts.
+   * <code>numberOfMoles</code> with separate amounts.
    * 
    * NB! Phase fraction <code>beta</code> is not updated by this method. Must be done separately to
    * keep consistency between phase and component calculation of of total number of moles in system.
