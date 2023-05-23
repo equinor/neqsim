@@ -1945,9 +1945,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    *
    * @return a {@link String} object
-   * @deprecated Replace with {@link getType}
    */
-  @Deprecated
   public default String getPhaseTypeName() {
     return getType().getDesc();
   }
@@ -1958,9 +1956,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    *
    * @param phaseTypeName a {@link String} object
-   * @deprecated Replace with {@link setType}
    */
-  @Deprecated
   public default void setPhaseTypeName(String phaseTypeName) {
     setType(PhaseType.byDesc(phaseTypeName));
   }
