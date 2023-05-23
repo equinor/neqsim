@@ -1907,7 +1907,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param phaseToChange the phase number of the phase to set phase type
    * @param phaseTypeName the phase type name, see PhaseTypes
-   * @deprecated Replaced by {@link setPhaseType}
    */
   public default void setPhaseType(int phaseToChange, String phaseTypeName) {
     setPhaseType(phaseToChange, PhaseType.byDesc(phaseTypeName));
