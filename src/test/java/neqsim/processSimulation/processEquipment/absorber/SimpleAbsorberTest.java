@@ -26,7 +26,7 @@ public class SimpleAbsorberTest extends neqsim.NeqSimTest{
             stream_Hot);
     absorber1.setAproachToEquilibrium(0.75);
 
-    // todo: Test is not well behaved
+    // TODO: Test is not well behaved
     /*
      * neqsim.processSimulation.processSystem.ProcessSystem operations = new
      * neqsim.processSimulation.processSystem.ProcessSystem(); operations.add(stream_Hot);
