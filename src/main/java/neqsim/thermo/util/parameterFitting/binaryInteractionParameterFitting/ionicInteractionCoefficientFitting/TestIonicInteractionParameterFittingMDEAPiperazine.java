@@ -35,9 +35,6 @@ public class TestIonicInteractionParameterFittingMDEAPiperazine {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-
-
-
     try (NeqSimDataBase database = new NeqSimDataBase();) {
       double guess[] = {0.0007757516}; // , -0.00013534324}; //, -0.000210224}; //, -0.0002324934,
       // 0.0005};

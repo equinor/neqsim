@@ -114,7 +114,6 @@ public class TestIonicInteractionParameterFitting {
     // }
     double[] guess = {-0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
 
-
     try (NeqSimDataBase database = new NeqSimDataBase();) {
       ResultSet dataSet = database.getResultSet(
           "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND PressureCO2<'20' AND Reference<>'GPA'");
@@ -192,8 +191,6 @@ public class TestIonicInteractionParameterFitting {
     } catch (Exception ex) {
       logger.error("database error", ex);
     }
-
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(

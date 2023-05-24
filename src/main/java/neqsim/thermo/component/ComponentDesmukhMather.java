@@ -126,6 +126,7 @@ public class ComponentDesmukhMather extends ComponentGE {
       fugacityCoefficient = 1e-15;
       // System.out.println("fug " + fugacityCoefficient);
     }
+
     return fugacityCoefficient;
   }
 

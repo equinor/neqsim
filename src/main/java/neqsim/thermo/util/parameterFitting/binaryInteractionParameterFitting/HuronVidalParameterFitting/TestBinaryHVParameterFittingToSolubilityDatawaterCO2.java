@@ -34,7 +34,6 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-
     try (NeqSimDataBase database = new NeqSimDataBase();) {
       // inserting samples from database
     // ResultSet dataSet = database.getResultSet( "SELECT * FROM CO2watersolubility
@@ -85,7 +84,6 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
     } catch (Exception ex) {
       logger.error("database error", ex);
     }
-
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(

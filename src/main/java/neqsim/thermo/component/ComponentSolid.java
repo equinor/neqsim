@@ -63,6 +63,7 @@ public class ComponentSolid extends ComponentSrk {
     if (componentName.equals("methane")) {
       return 1e30;
     }
+
     return fugcoef2(phase1);
     // return fugcoef(phase1.getTemperature(), phase1.getPressure());
   }
@@ -121,6 +122,7 @@ public class ComponentSolid extends ComponentSrk {
     // fugacityCoefficient = 1e5;
     // dfugdt=0;
     // }
+
     return fugacityCoefficient;
   }
 

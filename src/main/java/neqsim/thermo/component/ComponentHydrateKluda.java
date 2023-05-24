@@ -120,6 +120,7 @@ public class ComponentHydrateKluda extends Component {
     } else {
       fugacityCoefficient = 1e5;
     }
+
     // System.out.println("fug " + fugacityCoefficient);
     return fugacityCoefficient;
   }

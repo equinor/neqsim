@@ -36,6 +36,7 @@ public class ComponentWonWax extends ComponentSolid {
     if (!isWaxFormer()) {
       return 1.0e30;
     }
+
     return fugcoef2(phase1);
   }
 

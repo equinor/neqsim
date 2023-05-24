@@ -36,6 +36,7 @@ public class ComponentWaxWilson extends ComponentSolid {
       fugacityCoefficient = 1.0e30;
       return fugacityCoefficient;
     }
+
     return fugcoef2(phase1);
   }
 
