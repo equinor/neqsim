@@ -199,15 +199,12 @@ public class ComponentHydrate extends Component {
         // getEmptyHydrateStructureVapourPressure(hydrateStructure,temp) *
         // Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)))*1e5)/pres;
         // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
-        // logFugacityCoefficient = Math.log(fugacityCoefficient);
-        // logFugacityCoefficient += val*boltzmannConstant/R;
-        // fugacityCoefficient = Math.exp(logFugacityCoefficient);
+        // fugacityCoefficient = Math.exp(Math.log(fugacityCoefficient) + val*boltzmannConstant/R);
         // System.out.println("fugacityCoefficient " + fugacityCoefficient);
       } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-6);
     } else {
       fugacityCoefficient = 1e5;
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     // System.out.println("fug " + fugacityCoefficient);
     return fugacityCoefficient;
   }

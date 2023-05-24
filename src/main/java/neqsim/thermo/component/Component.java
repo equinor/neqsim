@@ -47,7 +47,6 @@ abstract class Component implements ComponentInterface {
 
   protected int attractiveTermNumber = 0;
   protected int numberOfAssociationSites = 0;
-  protected double logFugacityCoefficient = 0.0;
   protected double associationVolume = 0.0;
   protected double associationEnergy = 0.0;
   protected double aCPA = 0.0;
@@ -945,7 +944,6 @@ abstract class Component implements ComponentInterface {
     fugacityCoefficient = 1.0;
     // this.fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
     // phase.getPressure());
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
 
@@ -1419,7 +1417,7 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public final double getLogFugacityCoefficient() {
-    return logFugacityCoefficient;
+    return Math.log(getFugacityCoefficient());
   }
 
   /** {@inheritDoc} */
@@ -1500,7 +1498,6 @@ abstract class Component implements ComponentInterface {
   @Override
   public void setFugacityCoefficient(double val) {
     fugacityCoefficient = val;
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
   }
 
   /** {@inheritDoc} */

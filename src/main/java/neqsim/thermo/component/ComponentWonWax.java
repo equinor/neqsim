@@ -58,7 +58,6 @@ public class ComponentWonWax extends ComponentSolid {
             * (1.0 - phase1.getTemperature() / getTriplePointTemperature()));
 
     fugacityCoefficient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
 

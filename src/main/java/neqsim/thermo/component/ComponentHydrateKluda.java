@@ -125,10 +125,7 @@ public class ComponentHydrateKluda extends Component {
                 * ((pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp))) * 1e5)
             / pres;
         // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
-        // logFugacityCoefficient = Math.log(fugacityCoefficient);
-        // logFugacityCoefficient += val*boltzmannConstant/R;
-
-        // fugacityCoefficient = Math.exp(logFugacityCoefficient);
+        // fugacityCoefficient = Math.exp(Math.log(fugacityCoefficient) + val*boltzmannConstant/R);
         logger.info("fugacityCoefficient " + fugacityCoefficient);
       } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-8);
     } else {

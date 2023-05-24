@@ -170,7 +170,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
       }
       fugacityCoefficient = maxFug;
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     hydrateStructure = stableStructure;
 
     return fugacityCoefficient;

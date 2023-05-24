@@ -122,7 +122,6 @@ public class ComponentSolid extends ComponentSrk {
 
     // System.out.println("solidfug " + SolidFug);
     fugacityCoefficient = SolidFug / (phase1.getPressure() * getx());
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
 
@@ -180,7 +179,6 @@ public class ComponentSolid extends ComponentSrk {
     // fugacityCoefficient = 1e5;
     // dfugdt=0;
     // }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
 
