@@ -1,5 +1,6 @@
 package neqsim.util.database;
 
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -21,43 +22,24 @@ import org.apache.logging.log4j.Logger;
  */
 public class NeqSimDataBase
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable, AutoCloseable {
-  /**
-   * <p>
-   * createTemporaryTables.
-   * </p>
-   *
-   * @return the createTemporaryTables
-   */
-  public static boolean createTemporaryTables() {
-    return createTemporaryTables;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>createTemporaryTables</code>.
-   * </p>
-   *
-   * @param createTemporaryTables the createTemporaryTables to set
-   */
-  public static void setCreateTemporaryTables(boolean createTemporaryTables) {
-    NeqSimDataBase.createTemporaryTables = createTemporaryTables;
-  }
-
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NeqSimDataBase.class);
+
   /** Constant <code>dataBasePath=""</code>. */
   public static String dataBasePath = "";
-  static Logger logger = LogManager.getLogger(NeqSimDataBase.class);
 
   private static boolean createTemporaryTables = false;
 
-  // private static String dataBaseType = "Derby";
-  // private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
   private static String username = "remote";
   private static String password = "remote";
 
+  // Default databasetype
   private static String dataBaseType = "H2fromCSV";
   private static String connectionString = "jdbc:h2:mem:neqsimthermodatabase";
-  private static boolean h2IsInit = false;
+  /** True if h2 database has been initialized, i.e., populated with tables */
+  private static boolean h2IsInitialized = false;
+  /** True while h2 database is being initialized. */
+  private static boolean h2IsInitalizing = false;
   // static String dataBaseType = "MSAccessUCanAccess";
   // public static String connectionString =
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
@@ -72,8 +54,8 @@ public class NeqSimDataBase
    * </p>
    */
   public NeqSimDataBase() {
-    if (dataBaseType == "H2fromCSV" && !h2IsInit) {
-      h2IsInit = true;
+    // Fill tables from csv-files if not initialized and not currently being initialized.
+    if (dataBaseType == "H2fromCSV" && !h2IsInitialized && !h2IsInitalizing) {
       initH2DatabaseFromCSVfiles();
     }
     setDataBaseType(dataBaseType);
@@ -158,49 +140,55 @@ public class NeqSimDataBase
 
   /**
    * <p>
-   * getResultSet.
+   * Getter for the field <code>statement</code>.
    * </p>
    *
-   * @param sqlString a {@link java.lang.String} object
-   * @return a ResultSet object
+   * @return a Statement object
    */
-  public ResultSet getResultSet(String sqlString) {
-    try {
-      ResultSet result = getStatement().executeQuery(sqlString);
-      return result;
-    } catch (Exception ex) {
-      logger.error("error loading NeqSimbataBase ", ex);
-      throw new RuntimeException(ex);
-    }
+  public Statement getStatement() {
+    return statement;
   }
 
   /**
    * <p>
-   * execute.
+   * Setter for the field <code>statement</code>.
    * </p>
    *
-   * @param sqlString a {@link java.lang.String} object
+   * @param statement a Statement object
    */
-  public void execute(String sqlString) {
+  public void setStatement(Statement statement) {
+    this.statement = statement;
+  }
+
+
+  /**
+   * <p>
+   * Execute query using execute.
+   * </p>
+   *
+   * @param sqlString Query to execute.
+   */
+  public boolean execute(String sqlString) {
     try {
       if (databaseConnection == null) {
         databaseConnection = this.openConnection();
         setStatement(databaseConnection.createStatement());
       }
-      getStatement().execute(sqlString);
+      return getStatement().execute(sqlString);
     } catch (Exception ex) {
       logger.error("error in NeqSimDataBase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      // TODO: should be checked against database type.
+      logger.error("The database must be registered on the local DBMS to work.");
       throw new RuntimeException(ex);
     }
   }
 
   /**
    * <p>
-   * execute.
+   * Execute query using executeQuery but do not return anything.
    * </p>
    *
-   * @param sqlString a {@link java.lang.String} object
+   * @param sqlString Query to execute.
    */
   public void executeQuery(String sqlString) {
     try {
@@ -211,7 +199,25 @@ public class NeqSimDataBase
       getStatement().executeQuery(sqlString);
     } catch (Exception ex) {
       logger.error("error in NeqSimDataBase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      // TODO: should be checked against database type.
+      logger.error("The database must be registered on the local DBMS to work.");
+      throw new RuntimeException(ex);
+    }
+  }
+
+  /**
+   * <p>
+   * Execute query using executeQueryy and return ResultSet.
+   * </p>
+   *
+   * @param sqlString Query to execute.
+   * @return a ResultSet object
+   */
+  public ResultSet getResultSet(String sqlString) {
+    try {
+      return getStatement().executeQuery(sqlString);
+    } catch (Exception ex) {
+      logger.error("error loading NeqSimbataBase ", ex);
       throw new RuntimeException(ex);
     }
   }
@@ -224,6 +230,28 @@ public class NeqSimDataBase
     if (statement != null) {
       statement.close();
     }
+  }
+
+  /**
+   * <p>
+   * createTemporaryTables.
+   * </p>
+   *
+   * @return the createTemporaryTables
+   */
+  public static boolean createTemporaryTables() {
+    return createTemporaryTables;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>createTemporaryTables</code>.
+   * </p>
+   *
+   * @param createTemporaryTables the createTemporaryTables to set
+   */
+  public static void setCreateTemporaryTables(boolean createTemporaryTables) {
+    NeqSimDataBase.createTemporaryTables = createTemporaryTables;
   }
 
   /**
@@ -289,28 +317,6 @@ public class NeqSimDataBase
       logger.error("error loading database driver.. ", ex);
       throw new RuntimeException(ex);
     }
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>statement</code>.
-   * </p>
-   *
-   * @return a Statement object
-   */
-  public Statement getStatement() {
-    return statement;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>statement</code>.
-   * </p>
-   *
-   * @param statement a Statement object
-   */
-  public void setStatement(Statement statement) {
-    this.statement = statement;
   }
 
   /**
@@ -401,93 +407,84 @@ public class NeqSimDataBase
     }
   }
 
+
+  /**
+   * Drops and re-creates table from contents in csv file.
+   * 
+   * @param tableName Name of table to replace
+   */
+  public static void updateTable(String tableName) {
+    updateTable(tableName, "data/" + tableName + ".csv");
+  }
+
+  /**
+   * Drops and re-creates table from contents in csv file.
+   * 
+   * @param tableName Name of table to replace
+   * @param path Path to csv file to
+   */
   public static void updateTable(String tableName, String path) {
-    String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + path + "')";
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      database.execute("DROP TABLE " + tableName);
+      URL url = database.getClass().getClassLoader().getResource(path);
+      if (url == null) {
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase",
+            "updateTable", "path", "- Resource " + path + " not found"));
+      }
+
+      database.execute("DROP TABLE IF EXISTS " + tableName);
+      String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + url + "')";
       database.execute(sqlString);
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (RuntimeException ex) {
+      throw ex;
+    } catch (Exception ex) {
+      logger.error("Failed updating table " + tableName, ex);
     }
   }
 
   public static void initH2DatabaseFromCSVfiles() {
+    h2IsInitalizing = true;
     neqsim.util.database.NeqSimDataBase.connectionString =
         "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
     neqsim.util.database.NeqSimDataBase.createTemporaryTables = false;
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
 
-    // Connection con = database.getConnection();
-    // Statement stmn = con.createStatement();
-    // stmn.execute(defaultDatabaseRootRoot)
+    try {
+      updateTable("COMP");
+      updateTable("INTER");
+      updateTable("element");
+      updateTable("ISO6976constants");
+      updateTable("ISO6976constants2016");
+      updateTable("STOCCOEFDATA");
+      updateTable("REACTIONDATA");
+      updateTable("ReactionKSPdata");
+      updateTable("AdsorptionParameters");
 
-    String createCOMP = "CREATE TABLE COMP AS SELECT * FROM CSVREAD('classpath:/data/COMP.csv')";
-    String createINTER = "CREATE TABLE INTER AS SELECT * FROM CSVREAD('classpath:/data/INTER.csv')";
-    String createElement =
-        "CREATE TABLE element AS SELECT * FROM CSVREAD('classpath:/data/element.csv')";
-    String create_iso6976 =
-        "CREATE TABLE iso6976constants AS SELECT * FROM CSVREAD('classpath:/data/ISO6976constants.csv')";
-    String create_iso6976_2016 =
-        "CREATE TABLE iso6976constants2016 AS SELECT * FROM CSVREAD('classpath:/data/ISO6976constants2016.csv')";
-    String create_STOCCOEFDATA =
-        "CREATE TABLE STOCCOEFDATA AS SELECT * FROM CSVREAD('classpath:/data/STOCCOEFDATA.csv')";
-    String create_REACTIONDATA =
-        "CREATE TABLE REACTIONDATA AS SELECT * FROM CSVREAD('classpath:/data/REACTIONDATA.csv')";
-    String ReactionKSPdata =
-        "CREATE TABLE ReactionKSPdata AS SELECT * FROM CSVREAD('classpath:/data/ReactionKSPdata.csv')";
-    String create_AdsorptionParameters =
-        "CREATE TABLE AdsorptionParameters AS SELECT * FROM CSVREAD('classpath:/data/AdsorptionParameters.csv')";
-    String create_UNIFACcomp =
-        "CREATE TABLE UNIFACcomp AS SELECT * FROM CSVREAD('classpath:/data/UNIFACcomp.csv')";
-    String create_UNIFACcompUMRPRU =
-        "CREATE TABLE UNIFACcompUMRPRU AS SELECT * FROM CSVREAD('classpath:/data/UNIFACcompUMRPRU.csv')";
-    String UNIFACGroupParam =
-        "CREATE TABLE UNIFACGroupParam AS SELECT * FROM CSVREAD('classpath:/data/UNIFACGroupParam.csv')";
-    String UNIFACInterParam =
-        "CREATE TABLE UNIFACInterParam AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParam.csv')";
-    String UNIFACInterParamA_UMR =
-        "CREATE TABLE UNIFACInterParamA_UMR AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamA_UMR.csv')";
-    String UNIFACInterParamA_UMRMC =
-        "CREATE TABLE UNIFACInterParamA_UMRMC AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamA_UMRMC.csv')";
-    String UNIFACInterParamB =
-        "CREATE TABLE UNIFACInterParamB AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamB.csv')";
-    String UNIFACInterParamB_UMR =
-        "CREATE TABLE UNIFACInterParamB_UMR AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamB_UMR.csv')";
-    String UNIFACInterParamB_UMRMC =
-        "CREATE TABLE UNIFACInterParamB_UMRMC AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamB_UMRMC.csv')";
-    String UNIFACInterParamC =
-        "CREATE TABLE UNIFACInterParamC AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamC.csv')";
-    String UNIFACInterParamC_UMR =
-        "CREATE TABLE UNIFACInterParamC_UMR AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamC_UMR.csv')";
-    String UNIFACInterParamC_UMRMC =
-        "CREATE TABLE UNIFACInterParamC_UMRMC AS SELECT * FROM CSVREAD('classpath:/data/UNIFACInterParamC_UMRMC.csv')";
+      updateTable("UNIFACcomp");
+      updateTable("UNIFACcompUMRPRU");
+      updateTable("UNIFACGroupParam");
+      updateTable("UNIFACInterParam");
 
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      database.execute(createCOMP);
-      database.execute(createINTER);
-      database.execute(createElement);
-      database.execute(create_iso6976);
-      database.execute(create_iso6976_2016);
-      database.execute(create_STOCCOEFDATA);
-      database.execute(create_REACTIONDATA);
-      database.execute(ReactionKSPdata);
-      database.execute(create_AdsorptionParameters);
-      database.execute(create_UNIFACcomp);
-      database.execute(create_UNIFACcompUMRPRU);
-      database.execute(UNIFACGroupParam);
-      database.execute(UNIFACInterParam);
-      database.execute(UNIFACInterParamA_UMR);
-      database.execute(UNIFACInterParamA_UMRMC);
-      database.execute(UNIFACInterParamB);
-      database.execute(UNIFACInterParamB_UMR);
-      database.execute(UNIFACInterParamB_UMRMC);
-      database.execute(UNIFACInterParamC);
-      database.execute(UNIFACInterParamC_UMR);
-      database.execute(UNIFACInterParamC_UMRMC);
-      database.execute("CREATE TABLE comptemp AS SELECT * FROM comp");
-      database.execute("CREATE TABLE intertemp AS SELECT * FROM inter");
-    } catch (Exception e) {
-      e.printStackTrace();
+      updateTable("UNIFACInterParamA_UMR");
+      updateTable("UNIFACInterParamA_UMRMC");
+
+      updateTable("UNIFACInterParamB");
+      updateTable("UNIFACInterParamB_UMR");
+      updateTable("UNIFACInterParamB_UMRMC");
+
+      updateTable("UNIFACInterParamC");
+      updateTable("UNIFACInterParamC_UMR");
+      updateTable("UNIFACInterParamC_UMRMC");
+
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
+        database.execute("CREATE TABLE comptemp AS SELECT * FROM comp");
+        database.execute("CREATE TABLE intertemp AS SELECT * FROM inter");
+      }
+
+      h2IsInitalizing = false;
+      h2IsInitialized = true;
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

@@ -86,3 +86,4 @@ test_*.ser
 # doxygen results
 html/
 latex/
+eclipse_dictionary.txt
