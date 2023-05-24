@@ -428,7 +428,7 @@ abstract class Phase implements PhaseInterface {
     this.beta = beta;
     numberOfMolesInPhase = beta * totalNumberOfMoles;
     if (this.pt != phase) {
-      this.pt = phase;
+      setType(phase);
       // setPhysicalProperties(physicalPropertyType);
     }
     this.setInitType(type);
@@ -1287,7 +1287,7 @@ abstract class Phase implements PhaseInterface {
         refPhase[i].addComponent(name, 10.0, 10.0, 1);
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
         refPhase[i].setMixingRule(this.getMixingRuleNumber());
-        refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, 1.0);
+        refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getType(), 1.0);
       }
     }
   }
@@ -1307,7 +1307,7 @@ abstract class Phase implements PhaseInterface {
     }
     refPhase[k].setTemperature(temperature);
     refPhase[k].setPressure(pressure);
-    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 1, 1, 1.0);
+    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 1, 1, this.getType(), 1.0);
     refPhase[k].getComponent(0).fugcoef(refPhase[k]);
     return refPhase[k].getComponent(0).getLogFugacityCoefficient();
   }
@@ -1338,7 +1338,7 @@ abstract class Phase implements PhaseInterface {
     }
     refPhase[k].setTemperature(temperature);
     refPhase[k].setPressure(pressure);
-    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, 1.0);
+    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getType(), 1.0);
     refPhase[k].getComponent(0).fugcoef(refPhase[k]);
     return refPhase[k].getComponent(0).getLogFugacityCoefficient();
   }

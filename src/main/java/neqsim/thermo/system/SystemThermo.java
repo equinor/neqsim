@@ -658,7 +658,7 @@ abstract class SystemThermo implements SystemInterface {
 
     newSystem.setNumberOfPhases(1);
     // newSystem.setPhaseType(0,
-    // getPhase(phaseNumber1).getPhaseType()); //phaseType[phaseNumber]);
+    // getPhase(phaseNumber1).getType()); //phaseType[phaseNumber]);
     newSystem.init(1);
     return newSystem;
   }
@@ -2284,7 +2284,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public final PhaseInterface getGasPhase() {
     for (int phase = 0; phase < numberOfPhases; phase++) {
-      if (phaseArray[phaseIndex[phase]].getPhaseType() == 1) {
+      if (phaseArray[phaseIndex[phase]].getType() == PhaseType.GAS) {
         return phaseArray[phase];
       }
     }
@@ -2296,7 +2296,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public final PhaseInterface getLiquidPhase() {
     for (int phase = 0; phase < numberOfPhases; phase++) {
-      if (phaseArray[phaseIndex[phase]].getPhaseType() == 0) {
+      if (phaseArray[phaseIndex[phase]].getType() == PhaseType.LIQUID) {
         return phaseArray[phase];
       }
     }
@@ -4564,17 +4564,6 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void setTotalNumberOfMoles(double totalNumberOfMoles) {
     this.totalNumberOfMoles = totalNumberOfMoles;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean hasPhaseType(String phaseTypeName) {
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getType().getDesc().equals(phaseTypeName)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /** {@inheritDoc} */
