@@ -1403,7 +1403,6 @@ abstract class Phase implements PhaseInterface {
   @Override
   public double getActivityCoefficient(int k) {
     double fug = 0.0;
-
     double oldFug = getComponent(k).getLogFugacityCoefficient();
     if (getComponent(k).getReferenceStateType().equals("solvent")) {
       fug = getLogPureComponentFugacity(k);
