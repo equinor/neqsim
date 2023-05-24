@@ -31,15 +31,15 @@ public class ComponentGEWilson extends ComponentGE {
 
   /**
    * <p>
-   * fugcoef.
+   * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} objectto get fugacity coefficient of.
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
    * @param phasetype a int
-   * @return a double
+   * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, int phasetype) {

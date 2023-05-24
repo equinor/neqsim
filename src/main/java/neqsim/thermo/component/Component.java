@@ -1416,12 +1416,6 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getLogFugacityCoefficient() {
-    return Math.log(getFugacityCoefficient());
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public final int getAttractiveTermNumber() {
     return attractiveTermNumber;
   }

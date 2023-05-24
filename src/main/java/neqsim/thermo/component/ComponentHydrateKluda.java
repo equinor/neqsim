@@ -76,25 +76,14 @@ public class ComponentHydrateKluda extends Component {
 
   /**
    * <p>
-   * setStructure.
+   * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param structure a int
-   */
-  public void setStructure(int structure) {
-    this.hydrateStructure = structure;
-  }
-
-  /**
-   * <p>
-   * fugcoef.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} objectto get fugacity coefficient of.
    * @param numberOfComps a int
    * @param temp a double
    * @param pres a double
-   * @return a double
+   * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
     if (componentName.equals("water")) {
@@ -155,6 +144,17 @@ public class ComponentHydrateKluda extends Component {
       dfugdt = 0;
     }
     return dfugdt;
+  }
+
+  /**
+   * <p>
+   * setStructure.
+   * </p>
+   *
+   * @param structure a int
+   */
+  public void setStructure(int structure) {
+    this.hydrateStructure = structure;
   }
 
   /**

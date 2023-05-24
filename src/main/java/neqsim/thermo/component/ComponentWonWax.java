@@ -30,7 +30,6 @@ public class ComponentWonWax extends ComponentSolid {
     super(component_name, moles, molesInPhase, compnumber);
   }
 
-  // Uses Claperyons equation to calculate the solid fugacity
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase1) {
@@ -61,8 +60,6 @@ public class ComponentWonWax extends ComponentSolid {
     return fugacityCoefficient;
   }
 
-  // public double fugcoef(PhaseInterface phase, int numberOfComps, double temp,
-  // double pres){
   /**
    * <p>
    * getWonActivityCoefficient.

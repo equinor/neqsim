@@ -46,7 +46,6 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
       gammaRefCor = activinf;
     }
 
-    // System.out.println("gamma " + gamma);
     return fugacityCoefficient;
   }
 }
