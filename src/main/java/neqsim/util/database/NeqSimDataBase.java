@@ -36,7 +36,9 @@ public class NeqSimDataBase
   // Default databasetype
   private static String dataBaseType = "H2fromCSV";
   private static String connectionString = "jdbc:h2:mem:neqsimthermodatabase";
+  /** True if h2 database has been initialized, i.e., populated with tables */
   private static boolean h2IsInitialized = false;
+  /** True while h2 database is being initialized. */
   private static boolean h2IsInitalizing = false;
   // static String dataBaseType = "MSAccessUCanAccess";
   // public static String connectionString =
