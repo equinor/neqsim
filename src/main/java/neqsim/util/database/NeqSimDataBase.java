@@ -54,7 +54,7 @@ public class NeqSimDataBase
    * </p>
    */
   public NeqSimDataBase() {
-    // Fill tables from csv-files if not initialized and not currently
+    // Fill tables from csv-files if not initialized and not currently being initialized.
     if (dataBaseType == "H2fromCSV" && !h2IsInitialized && !h2IsInitalizing) {
       initH2DatabaseFromCSVfiles();
     }
@@ -160,51 +160,35 @@ public class NeqSimDataBase
     this.statement = statement;
   }
 
-  /**
-   * <p>
-   * getResultSet.
-   * </p>
-   *
-   * @param sqlString a {@link java.lang.String} object
-   * @return a ResultSet object
-   */
-  public ResultSet getResultSet(String sqlString) {
-    try {
-      ResultSet result = getStatement().executeQuery(sqlString);
-      return result;
-    } catch (Exception ex) {
-      logger.error("error loading NeqSimbataBase ", ex);
-      throw new RuntimeException(ex);
-    }
-  }
 
   /**
    * <p>
-   * execute.
+   * Execute query using execute.
    * </p>
    *
-   * @param sqlString a {@link java.lang.String} object
+   * @param sqlString Query to execute.
    */
-  public void execute(String sqlString) {
+  public boolean execute(String sqlString) {
     try {
       if (databaseConnection == null) {
         databaseConnection = this.openConnection();
         setStatement(databaseConnection.createStatement());
       }
-      getStatement().execute(sqlString);
+      return getStatement().execute(sqlString);
     } catch (Exception ex) {
       logger.error("error in NeqSimDataBase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      // TODO: should be checked against database type.
+      logger.error("The database must be registered on the local DBMS to work.");
       throw new RuntimeException(ex);
     }
   }
 
   /**
    * <p>
-   * execute.
+   * Execute query using executeQuery but do not return anything.
    * </p>
    *
-   * @param sqlString a {@link java.lang.String} object
+   * @param sqlString Query to execute.
    */
   public void executeQuery(String sqlString) {
     try {
@@ -215,7 +199,25 @@ public class NeqSimDataBase
       getStatement().executeQuery(sqlString);
     } catch (Exception ex) {
       logger.error("error in NeqSimDataBase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      // TODO: should be checked against database type.
+      logger.error("The database must be registered on the local DBMS to work.");
+      throw new RuntimeException(ex);
+    }
+  }
+
+  /**
+   * <p>
+   * Execute query using executeQueryy and return ResultSet.
+   * </p>
+   *
+   * @param sqlString Query to execute.
+   * @return a ResultSet object
+   */
+  public ResultSet getResultSet(String sqlString) {
+    try {
+      return getStatement().executeQuery(sqlString);
+    } catch (Exception ex) {
+      logger.error("error loading NeqSimbataBase ", ex);
       throw new RuntimeException(ex);
     }
   }
