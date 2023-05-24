@@ -18,7 +18,7 @@ import neqsim.util.NamedBaseClass;
  * @author esol
  * @version $Id: $Id
  */
-public class Packing extends NamedBaseClass implements PackingInterface {
+public abstract class Packing extends NamedBaseClass implements PackingInterface {
   private static final long serialVersionUID = 1L;
   static Logger logger = LogManager.getLogger(Packing.class);
   double voidFractionPacking = 0.951;
@@ -29,18 +29,8 @@ public class Packing extends NamedBaseClass implements PackingInterface {
    * <p>
    * Constructor for Packing.
    * </p>
-   */
-  @Deprecated
-  public Packing() {
-    super("Packing");
-  }
-
-  /**
-   * <p>
-   * Constructor for Packing.
-   * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name Name of packing
    */
   public Packing(String name) {
     super(name);
@@ -63,8 +53,8 @@ public class Packing extends NamedBaseClass implements PackingInterface {
    * Constructor for Packing.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param material a {@link java.lang.String} object
+   * @param name Name of packing
+   * @param material Name of material
    * @param size a int
    */
   public Packing(String name, String material, int size) {
