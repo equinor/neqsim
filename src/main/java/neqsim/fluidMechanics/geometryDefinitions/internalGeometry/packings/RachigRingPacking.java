@@ -16,9 +16,8 @@ public class RachigRingPacking extends Packing {
    * Constructor for RachigRingPacking.
    * </p>
    */
-  @Deprecated
   public RachigRingPacking() {
-    this("RachigRingPacking");
+    super("RachigRingPacking");
   }
 
   /**
@@ -26,22 +25,10 @@ public class RachigRingPacking extends Packing {
    * Constructor for RachigRingPacking.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   */
-  public RachigRingPacking(String name) {
-    super(name);
-  }
-
-  /**
-   * <p>
-   * Constructor for RachigRingPacking.
-   * </p>
-   *
-   * @param name a {@link java.lang.String} object
    * @param material a {@link java.lang.String} object
    * @param size a int
    */
-  public RachigRingPacking(String name, String material, int size) {
-    super(name, material, size);
+  public RachigRingPacking(String material, int size) {
+    super("RachigRingPacking", material, size);
   }
 }

@@ -42,8 +42,7 @@ public class ReactorData extends GeometryDefinition {
   public ReactorData(double diameter, double roughness) {
     super(diameter, roughness);
     packing =
-        new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
-            "PallRingPacking");
+        new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
   }
 
   /**
@@ -64,8 +63,7 @@ public class ReactorData extends GeometryDefinition {
   public void setPackingType(int i) {
     // if(i!=100){
     packing =
-        new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
-            "PallRingPacking");
+        new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
     // }
   }
 
@@ -79,17 +77,14 @@ public class ReactorData extends GeometryDefinition {
   public void setPackingType(String name) {
     if (name.equals("pallring")) {
       packing =
-          new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
-              "pallring");
+          new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
     } else if (name.equals("rashigring")) {
       packing =
-          new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.RachigRingPacking(
-              "rashigring");
+          new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.RachigRingPacking();
     } else {
-      System.out.println("pakcing " + name + " not defined in database - using pallrings");
+      System.out.println("packing " + name + " not defined in database - using pallrings");
       packing =
-          new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
-              "pallring");
+          new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
     }
   }
 
@@ -99,16 +94,16 @@ public class ReactorData extends GeometryDefinition {
     if (name.equals("pallring")) {
       packing =
           new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
-              "pallring", material, size);
+              material, size);
     } else if (name.equals("rashigring")) {
       packing =
           new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.RachigRingPacking(
-              "rashigring", material, size);
+              material, size);
     } else {
-      System.out.println("pakcing " + name + " not defined in database - using pallrings");
+      System.out.println("packing " + name + " not defined in database - using pallrings");
       packing =
           new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
-              "pallring", material, size);
+              material, size);
     }
   }
 
