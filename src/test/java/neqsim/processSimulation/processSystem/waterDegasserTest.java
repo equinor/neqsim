@@ -242,8 +242,9 @@ public class waterDegasserTest {
     neqsim.processSimulation.processEquipment.separator.Separator separator_CFU
     = new neqsim.processSimulation.processEquipment.separator.Separator("SEPARATOR_CFU", heater_TP_setter_CFU.getOutletStream());
 
-    System.out.println("Total from CFU is in kg/day: " + separator_CFU.getGasOutStream().getFlowRate("kg/hr")*24);// here is the bug
-    System.out.println("Total from to Caisson in kg/day: " + separator_CFU.getLiquidOutStream().getFlowRate("kg/hr")*24);
+    System.out.println("Total gas flow rate to separator in kg/day: " + heater_TP_setter_CFU.getOutletStream().getFlowRate("kg/hr")*24);// here is the bug
+    System.out.println("Total gas flow rate from separator in kg/day: " + separator_CFU.getGasOutStream().getFlowRate("kg/hr")*24);// here is the bug
+    System.out.println("Total liquid flow rate from separator in kg/day: " + separator_CFU.getLiquidOutStream().getFlowRate("kg/hr")*24);
 
     //System.out.println("CO2 from CFU is in kg/day: " + separator_CFU.getGasOutStream().getFluid().getComponent("CO2").getFlowRate("kg/hr")*24); 
     //System.out.println("Water in gas phase from CFU is in kg/day: " + separator_CFU.getGasOutStream().getFluid().getComponent("water").getFlowRate("kg/hr")*24);
