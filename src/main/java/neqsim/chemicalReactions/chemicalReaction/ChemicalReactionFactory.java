@@ -83,4 +83,23 @@ public class ChemicalReactionFactory {
     return new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy,
         refT);
   }
+
+  /**
+   * Get names of all chemical rections in database.
+   *
+   * @return Names of all chemical reactions in database.
+   */
+  static public String[] getChemicalReactionNames() {
+    ArrayList<String> nameList = new ArrayList<String>();
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT name FROM reactionkspdata")) {
+      do {
+        nameList.add(dataSet.getString("name").trim());
+      } while (dataSet.next());
+    } catch (Exception ex) {
+      logger.error("Failed reading from database.");
+    }
+
+    return nameList.toArray(new String[0]);
+  }
 }

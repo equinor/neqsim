@@ -475,6 +475,14 @@ public class NeqSimDataBase
       updateTable("UNIFACInterParamC_UMR");
       updateTable("UNIFACInterParamC_UMRMC");
 
+      // TODO: missing tables: ionicData, reactiondatakenteisenberg, purecomponentvapourpressures,
+      // binarysystemviscosity, binaryliquiddiffusioncoefficientdata,
+      // purecomponentconductivitydata, purecomponentdensity, purecomponentsurfacetension2,
+      // BinaryComponentSurfaceTension, purecomponentsurfacetension,
+      // purecomponentviscosity,PureComponentVapourPressures
+      // technicalrequirements, technicalrequirements_process, materialpipeproperties,
+      // materialplateproperties, fittings, LuciaData, Luciadata8
+
       try (neqsim.util.database.NeqSimDataBase database =
           new neqsim.util.database.NeqSimDataBase()) {
         database.execute("CREATE TABLE comptemp AS SELECT * FROM comp");
