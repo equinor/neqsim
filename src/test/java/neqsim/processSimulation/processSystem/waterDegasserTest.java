@@ -220,11 +220,12 @@ public class waterDegasserTest {
             degasser.getWaterOutStream());
     heater_TP_setter_CFU.setOutPressure(6.22176469039917 - 0.5, "bara");
     heater_TP_setter_CFU.setOutTemperature(77.92657470703125, "C");
+    heater_TP_setter_CFU.run();
 
     neqsim.processSimulation.processEquipment.separator.Separator separator_CFU =
         new neqsim.processSimulation.processEquipment.separator.Separator("SEPARATOR_CFU",
             heater_TP_setter_CFU.getOutletStream());
-
+    separator_CFU.run();
     System.out.println("Total flow rate to separator in kg/day: "
         + heater_TP_setter_CFU.getOutletStream().getFlowRate("kg/hr") * 24);// here is the bug
     System.out.println("Total gas flow rate from separator in kg/day: "
@@ -243,18 +244,23 @@ public class waterDegasserTest {
         new neqsim.processSimulation.processEquipment.heatExchanger.Heater("TP_SETTER_CAISSON",
             separator_CFU.getLiquidOutStream());
     heater_TP_setter_CAISSON.setOutPressure(1.2, "bara");
+    heater_TP_setter_CAISSON.run();
 
 
     neqsim.processSimulation.processEquipment.separator.Separator separator_CAISSON =
         new neqsim.processSimulation.processEquipment.separator.Separator("SEPARATOR_CAISSON",
             heater_TP_setter_CAISSON.getOutletStream());
+    separator_CAISSON.run(); //
 
-    // System.out.println("Total from _CAISSON is in kg/day: " +
-    // separator_CAISSON.getGasOutStream().getFluid().getFlowRate("kg/hr")*24);
-    // System.out.println("CO2 from _CAISSON is in kg/day: " +
-    // separator_CAISSON.getGasOutStream().getFluid().getComponent("CO2").getFlowRate("kg/hr")*24);
-    // System.out.println("Water in gas phase from _CAISSON is in kg/day: " +
-    // separator_CAISSON.getGasOutStream().getFluid().getComponent("water").getFlowRate("kg/hr")*24);
+    separator_CAISSON.getGasOutStream().getFluid().prettyPrint();
+    System.out.println("Total from _CAISSON is in kg/day: "
+        + separator_CAISSON.getGasOutStream().getFluid().getFlowRate("kg/hr") * 24);
+    System.out.println("CO2 from _CAISSON is in kg/day: "
+        + separator_CAISSON.getGasOutStream().getFluid().getComponent("CO2").getFlowRate("kg/hr")
+            * 24);
+    System.out.println("Water in gas phase from _CAISSON is in kg/day: "
+        + separator_CAISSON.getGasOutStream().getFluid().getComponent("water").getFlowRate("kg/hr")
+            * 24);
 
   }
 }
