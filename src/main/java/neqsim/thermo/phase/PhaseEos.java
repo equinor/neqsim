@@ -76,10 +76,10 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
-    if (phase > 1) {
-      phase = 0;
+    if (phase.getValue() > 1) {
+      phase = PhaseType.LIQUID;
     }
     if (!mixingRuleDefined) {
       setMixingRule(1);
@@ -102,7 +102,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         if (calcMolarVolume) {
           molarVolume = molarVolume(pressure, temperature,
               getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase,
-              phase);
+              phase.getValue());
         }
       } catch (Exception ex) {
         logger.error("Failed to solve for molarVolume within the iteration limit.");
