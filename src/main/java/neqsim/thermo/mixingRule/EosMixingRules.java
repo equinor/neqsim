@@ -1257,7 +1257,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         gePhase = new PhaseGEUnifac(orgPhase, HValpha, HVDij, mixRule, intparam);
       }
       gePhase.init(phase.getNumberOfMolesInPhase(), phase.getNumberOfComponents(), 0,
-          phase.getPhaseType(), phase.getBeta());
+          phase.getType(), phase.getBeta());
       gePhase.setProperties(phase);
     }
 
@@ -1283,7 +1283,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
       gePhase.setProperties(phase);
       // gePhase.init(phase.getNumberOfMolesInPhase() ,
-      // phase.getNumberOfComponents(),0,phase.getPhaseType(),phase.getBeta());
+      // phase.getNumberOfComponents(),0,phase.getType(),phase.getBeta());
     }
 
     /**
@@ -1301,13 +1301,11 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setParams(phase, HValpha, HVDij, HVDijT, classicOrHV, intparam);
 
       if (mixingRuleGEModel.equals("NRTL")) {
-        // gePhase.init(phase.getNumberOfMolesInPhase() ,
-        // phase.getNumberOfComponents(),3,phase.getPhaseType(),phase.getBeta());
-        gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
+        gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure,
+            phase.getType().getValue());
       } else {
         gePhase.init((phase.getNumberOfMolesInPhase() / phase.getBeta()),
-            phase.getNumberOfComponents(), phase.getInitType(), phase.getPhaseType(),
-            phase.getBeta());
+            phase.getNumberOfComponents(), phase.getInitType(), phase.getType(), phase.getBeta());
       }
 
       hwfc = -1.0 / (1.0
@@ -1611,12 +1609,11 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setProperties(phase);
 
       if (mixingRuleGEModel.equals("NRTL")) {
-        // gePhase.init(phase.getNumberOfMolesInPhase(),
-        // phase.getNumberOfComponents(),3,phase.getPhaseType(),phase.getBeta());
-        gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getPhaseType());
+        gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure,
+            phase.getType().getValue());
       } else {
         gePhase.init(phase.getNumberOfMolesInPhase(), phase.getNumberOfComponents(), 3,
-            phase.getPhaseType(), phase.getBeta());
+            phase.getType(), phase.getBeta());
       }
 
       hwfc = -1.0 / (1.0

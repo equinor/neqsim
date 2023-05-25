@@ -258,10 +258,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param pt Type of phase.
    * @param beta Mole fraction of this phase in system.
    */
-  public default void init(double totalNumberOfMoles, int numberOfComponents, int type,
-      PhaseType pt, double beta) {
-    init(totalNumberOfMoles, numberOfComponents, type, pt.getValue(), beta);
-  }
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+      double beta);
 
   /**
    * <p>
@@ -276,8 +274,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @deprecated Replace with init-function using PhaseType input.
    */
   @Deprecated
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int ptNumber,
-      double beta);
+  public default void init(double totalNumberOfMoles, int numberOfComponents, int type,
+      int ptNumber, double beta) {
+    init(totalNumberOfMoles, numberOfComponents, type, PhaseType.byValue(ptNumber), beta);
+  }
 
   /**
    * <p>
@@ -1931,7 +1931,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Setter for property phaseType.
    * </p>
    *
-   * @param phaseType PhaseType as int.
+   * @param phaseType Phasetype as int.
    * @deprecated Replace with {@link setType}
    */
   @Deprecated

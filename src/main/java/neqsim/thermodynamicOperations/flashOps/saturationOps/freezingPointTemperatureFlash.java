@@ -125,7 +125,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
         maxNumberOfIterations = 100;
         do {
           iterations++;
-          // oldPhaseType = system.getPhase(0).getPhaseType();
+          // oldPhaseType = system.getPhase(0).getType();
           ops.TPflash(false);
           SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
           funk = system.getPhase(0).getComponent(k).getz();
