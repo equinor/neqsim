@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processSystem;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class waterDegasserTest {
@@ -144,124 +145,116 @@ public class waterDegasserTest {
         new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
             "TP_SETTER_HYDROCYCLONE_AFTER_1ST_SEPARATOR", separator_VA_01.getWaterOutStream());
     TP_setter_hydrocyclone.setOutPressure(61.0700675688386, "bara");
+    TP_setter_hydrocyclone.setOutTemperature(79.21922658197582, "C");
     TP_setter_hydrocyclone.run();
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator hydrocyclone_main =
-        (new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            "HYDROCYCLONE_AFTER_THE_1ST_SEPARATOR", TP_setter_hydrocyclone.getOutletStream()));
-    hydrocyclone_main.setEntrainment(0.01, "mole", "feed", "aqueous", "gas");
+        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+            "HYDROCYCLONE_AFTER_THE_1ST_SEPARATOR", TP_setter_hydrocyclone.getOutletStream());
+    hydrocyclone_main.setEntrainment(0.01, "mole", "feed", "gas", "aqueous");
     hydrocyclone_main.run();
 
-    // hydrocyclone_main.getFluid().prettyPrint();
+    hydrocyclone_main.getFluid().prettyPrint();
 
     // Bug here : received only water phase -> but produces only oil phase ?
-    // Assertions.assertEquals(33606.61989390833,
-    // hydrocyclone_main.getWaterOutStream().getFlowRate("kg/hr"), 1e-6);
-  
-     neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_main_stream =
-    new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
-    "TP_SETTER_FOR_THE_DEGASSER_MAIN_STREAM", hydrocyclone_main.getWaterOutStream());
+    Assertions.assertEquals(37206.866622,
+        hydrocyclone_main.getWaterOutStream().getFlowRate("kg/hr"), 1e-6);
+
+    neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_main_stream =
+        new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
+            "TP_SETTER_FOR_THE_DEGASSER_MAIN_STREAM", hydrocyclone_main.getWaterOutStream());
     heater_TP_setter_main_stream.setOutPressure(6.22176469039917, "bara");
     heater_TP_setter_main_stream.setOutTemperature(77.92657470703125, "C");
     heater_TP_setter_main_stream.run();
-    //System.out.println("Water in aqueous phase to the degasser in kg/day: " + heater_TP_setter_main_stream.getOutStream().getFlowRate( "kg/hr")*24);
-    
-    neqsim.thermo.system.SystemSrkCPAstatoil fluid_test_separator = new
-    neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
-    fluid_test_separator.addComponent("water", 0.15);
-    fluid_test_separator.addComponent("nitrogen", 2.35521735969531e-003);
-    fluid_test_separator.addComponent("CO2", 4.08789934579643e-002);
-    fluid_test_separator.addComponent("methane", 0.368428826847070);
-    fluid_test_separator.addComponent("ethane", 0.05236965335060);
-    fluid_test_separator.addComponent("propane", 3.05388164099689e-002);
-    fluid_test_separator.addComponent("i-butane", 3.79517339704697e-003);
-    fluid_test_separator.addComponent("n-butane", 1.07659554327202e-002);
-    fluid_test_separator.addComponent("i-pentane", 3.34941594776651e-003);
-    fluid_test_separator.addComponent("n-pentane", 4.44976204442086e-003);
-    fluid_test_separator.addTBPfraction("nC6", 5.12045113841502e-003, 86.1800003051758 / 1000,
-    86.1800003051758 / (1000*0.131586722637079)); fluid_test_separator.addTBPfraction("C7",
-    8.61084195264582e-003, 94.8470001220703 / 1000, 94.8470001220703 / (1000 *
-    0.130402631747591)); fluid_test_separator.addTBPfraction("C8", 1.12202354604739e-002,
-    106.220001220703 / 1000, 106.220001220703 / (1000 * 0.141086913827126));
-    fluid_test_separator.addTBPfraction("C9", 6.84786693345152e-003, 120.457000732422 / 1000,
-    120.457000732422 / (1000 * 0.156630031108116));
-    fluid_test_separator.addTBPfraction("C10-C11", 7.66033733147483e-003, 140.369003295898 /
-    1000, 140.369003295898 / (1000 * 0.178710051949529));
-    fluid_test_separator.addTBPfraction("C12-C13", 3.61717376417156e-003, 167.561996459961 /
-    1000, 167.561996459961 / (1000 * 0.208334072812978));
-    fluid_test_separator.addTBPfraction("C14-C15", 2.69924953579736e-003, 197.501007080078 /
-    1000, 197.501007080078 / (1000 * 0.240670271622303));
-    fluid_test_separator.addTBPfraction("C16-C17", 1.71199871320840e-003, 229.033996582031 /
-    1000, 229.033996582031 / (1000 * 0.274302534479916));
-    fluid_test_separator.addTBPfraction("C18-C20", 1.63521808584951e-003, 262.010986328125 /
-    1000, 262.010986328125 / (1000 * 0.308134346902454));
+    // System.out.println("Water in aqueous phase to the degasser in kg/day: " +
+    // heater_TP_setter_main_stream.getOutStream().getFlowRate( "kg/hr")*24);
 
-    fluid_test_separator.setMixingRule(10); fluid_test_separator.setMultiPhaseCheck(true);
-    fluid_test_separator.init(0);
-    
-    neqsim.processSimulation.processEquipment.stream.Stream inlet_stream_test_sep = new
-    neqsim.processSimulation.processEquipment.stream.Stream(
-    "TEST_SEPARATOR_INLET,fluid_test_separator", fluid_test_separator);
+    neqsim.thermo.system.SystemSrkCPAstatoil fluid_test_separator = fluid1.clone();
+    fluid_test_separator.setMolarComposition(new double[] {0.15, 2.35521735969531e-003,
+        4.08789934579643e-002, 0.368428826847070, 0.05236965335060, 3.05388164099689e-002,
+        3.79517339704697e-003, 1.07659554327202e-002, 3.34941594776651e-003, 4.44976204442086e-003,
+        5.12045113841502e-003, 8.61084195264582e-003, 1.12202354604739e-002, 6.84786693345152e-003,
+        7.66033733147483e-003, 3.61717376417156e-003, 2.69924953579736e-003, 1.71199871320840e-003,
+        1.63521808584951e-003});
+
+    neqsim.processSimulation.processEquipment.stream.Stream inlet_stream_test_sep =
+        new neqsim.processSimulation.processEquipment.stream.Stream(
+            "TEST_SEPARATOR_INLET,fluid_test_separator", fluid_test_separator);
     inlet_stream_test_sep.setTemperature(39.92721557617188, "C");
     inlet_stream_test_sep.setPressure(1.4343990154266357, "bara");
-    inlet_stream_test_sep.setFlowRate(472.5621656362427, "kg/hr"); inlet_stream_test_sep.run();
-    
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator test_separator = new
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-    inlet_stream_test_sep); 
-    test_separator.setName("TEST_SEPARATOR"); test_separator.run();
-    
+    inlet_stream_test_sep.setFlowRate(472.5621656362427, "kg/hr");
+    inlet_stream_test_sep.run();
+
+    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator test_separator =
+        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+            "TEST_SEPARATOR", inlet_stream_test_sep);
+    test_separator.run();
+
     neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_test_stream =
-    new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
-    "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
+        new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
+            "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
     heater_TP_setter_test_stream.setOutPressure(6.22176469039917, "bara");
     heater_TP_setter_test_stream.setOutTemperature(77.92657470703125, "C");
     heater_TP_setter_test_stream.run();
-    
-    neqsim.processSimulation.processEquipment.mixer.StaticMixer mixing_degasser = new
-    neqsim.processSimulation.processEquipment.mixer.StaticMixer();
-    mixing_degasser.setName("MIXING_BEFORE_THE_DEGASSER");
-    mixing_degasser.addStream(heater_TP_setter_main_stream.getOutStream());
-    mixing_degasser.addStream(heater_TP_setter_test_stream.getOutStream());
+
+    neqsim.processSimulation.processEquipment.mixer.StaticMixer mixing_degasser =
+        new neqsim.processSimulation.processEquipment.mixer.StaticMixer(
+            "MIXING_BEFORE_THE_DEGASSER");
+    mixing_degasser.addStream(heater_TP_setter_main_stream.getOutletStream());
+    mixing_degasser.addStream(heater_TP_setter_test_stream.getOutletStream());
     mixing_degasser.run();
-    
-    //System.out.println("Total from degasser is in kg/day: " + mixing_degasser.getOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr")*24); 
-    //System.out.println("CO2 from degasser is in kg/day: " + mixing_degasser.getOutStream().getFluid().getPhase("gas").getComponent("CO2").getFlowRate("kg/hr")*24); 
 
-        
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator degasser = new
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-      mixing_degasser.getOutStream()); 
-      degasser.setName("degasser"); test_separator.run();
+    // System.out.println("Total from degasser is in kg/day: " +
+    // mixing_degasser.getOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr")*24);
+    // System.out.println("CO2 from degasser is in kg/day: " +
+    // mixing_degasser.getOutStream().getFluid().getPhase("gas").getComponent("CO2").getFlowRate("kg/hr")*24);
 
-    neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_CFU = 
-      new neqsim.processSimulation.processEquipment.heatExchanger.Heater("TP_SETTER_CFU", degasser.getWaterOutStream());
+
+    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator degasser =
+        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator("degasser",
+            mixing_degasser.getOutletStream());
+    test_separator.run();
+
+    neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_CFU =
+        new neqsim.processSimulation.processEquipment.heatExchanger.Heater("TP_SETTER_CFU",
+            degasser.getWaterOutStream());
     heater_TP_setter_CFU.setOutPressure(6.22176469039917 - 0.5, "bara");
     heater_TP_setter_CFU.setOutTemperature(77.92657470703125, "C");
 
-    neqsim.processSimulation.processEquipment.separator.Separator separator_CFU
-    = new neqsim.processSimulation.processEquipment.separator.Separator("SEPARATOR_CFU", heater_TP_setter_CFU.getOutletStream());
+    neqsim.processSimulation.processEquipment.separator.Separator separator_CFU =
+        new neqsim.processSimulation.processEquipment.separator.Separator("SEPARATOR_CFU",
+            heater_TP_setter_CFU.getOutletStream());
 
-    System.out.println("Total flow rate to separator in kg/day: " + heater_TP_setter_CFU.getOutletStream().getFlowRate("kg/hr")*24);// here is the bug
-    System.out.println("Total gas flow rate from separator in kg/day: " + separator_CFU.getGasOutStream().getFlowRate("kg/hr")*24);// here is the bug
-    System.out.println("Total liquid flow rate from separator in kg/day: " + separator_CFU.getLiquidOutStream().getFlowRate("kg/hr")*24);
+    System.out.println("Total flow rate to separator in kg/day: "
+        + heater_TP_setter_CFU.getOutletStream().getFlowRate("kg/hr") * 24);// here is the bug
+    System.out.println("Total gas flow rate from separator in kg/day: "
+        + separator_CFU.getGasOutStream().getFlowRate("kg/hr") * 24);// here is the bug
+    System.out.println("Total liquid flow rate from separator in kg/day: "
+        + separator_CFU.getLiquidOutStream().getFlowRate("kg/hr") * 24);
 
-    //System.out.println("CO2 from CFU is in kg/day: " + separator_CFU.getGasOutStream().getFluid().getComponent("CO2").getFlowRate("kg/hr")*24); 
-    //System.out.println("Water in gas phase from CFU is in kg/day: " + separator_CFU.getGasOutStream().getFluid().getComponent("water").getFlowRate("kg/hr")*24);
-    
+    // System.out.println("CO2 from CFU is in kg/day: " +
+    // separator_CFU.getGasOutStream().getFluid().getComponent("CO2").getFlowRate("kg/hr")*24);
+    // System.out.println("Water in gas phase from CFU is in kg/day: " +
+    // separator_CFU.getGasOutStream().getFluid().getComponent("water").getFlowRate("kg/hr")*24);
 
 
-    neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_CAISSON = 
-      new neqsim.processSimulation.processEquipment.heatExchanger.Heater("TP_SETTER_CAISSON", separator_CFU.getLiquidOutStream());
+
+    neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_CAISSON =
+        new neqsim.processSimulation.processEquipment.heatExchanger.Heater("TP_SETTER_CAISSON",
+            separator_CFU.getLiquidOutStream());
     heater_TP_setter_CAISSON.setOutPressure(1.2, "bara");
-    
 
-    neqsim.processSimulation.processEquipment.separator.Separator separator_CAISSON
-    = new neqsim.processSimulation.processEquipment.separator.Separator("SEPARATOR_CAISSON", heater_TP_setter_CAISSON.getOutletStream());
-   
-    //System.out.println("Total from _CAISSON is in kg/day: " + separator_CAISSON.getGasOutStream().getFluid().getFlowRate("kg/hr")*24); 
-    //System.out.println("CO2 from _CAISSON is in kg/day: " + separator_CAISSON.getGasOutStream().getFluid().getComponent("CO2").getFlowRate("kg/hr")*24); 
-    //System.out.println("Water in gas phase from _CAISSON is in kg/day: " + separator_CAISSON.getGasOutStream().getFluid().getComponent("water").getFlowRate("kg/hr")*24);
-  
+
+    neqsim.processSimulation.processEquipment.separator.Separator separator_CAISSON =
+        new neqsim.processSimulation.processEquipment.separator.Separator("SEPARATOR_CAISSON",
+            heater_TP_setter_CAISSON.getOutletStream());
+
+    // System.out.println("Total from _CAISSON is in kg/day: " +
+    // separator_CAISSON.getGasOutStream().getFluid().getFlowRate("kg/hr")*24);
+    // System.out.println("CO2 from _CAISSON is in kg/day: " +
+    // separator_CAISSON.getGasOutStream().getFluid().getComponent("CO2").getFlowRate("kg/hr")*24);
+    // System.out.println("Water in gas phase from _CAISSON is in kg/day: " +
+    // separator_CAISSON.getGasOutStream().getFluid().getComponent("water").getFlowRate("kg/hr")*24);
+
   }
 }
