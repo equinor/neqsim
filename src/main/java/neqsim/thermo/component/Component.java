@@ -1340,13 +1340,13 @@ abstract class Component implements ComponentInterface {
   public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
     double dp = phase.getPressure() / 1.0e5;
-    double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setPressure(phase.getPressure() - dp);
-    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
-    double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setPressure(phase.getPressure() + dp);
-    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
     dfugdp = (Math.log(temp1) - Math.log(temp2)) / dp;
     return dfugdp;
@@ -1357,14 +1357,14 @@ abstract class Component implements ComponentInterface {
   public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
     double dt = phase.getTemperature() / 1.0e6;
-    double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setTemperature(phase.getTemperature() - dt);
-    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
-    double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     // phase.setTemperature(phase.getTemperature()+dt);
     // System.out.println("temp " + phase.getTemperature());
-    // phase.init(numberOfMolesInPhase, numberOfComponents, 1,phase.getPhaseType(),
+    // phase.init(numberOfMolesInPhase, numberOfComponents, 1,
     // phase.getBeta());
     // phase.getComponents()[componentNumber].fugcoef(phase, numberOfComponents,
     // phase.getTemperature(), phase.getPressure());

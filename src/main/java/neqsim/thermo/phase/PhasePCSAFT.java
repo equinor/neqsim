@@ -138,7 +138,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     if (type > 0) {
       for (int i = 0; i < numberOfComponents; i++) {
@@ -146,7 +146,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
             numberOfComponents, type);
       }
     }
-    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
   }
 
   /**

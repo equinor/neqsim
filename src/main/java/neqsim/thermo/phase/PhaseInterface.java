@@ -1931,7 +1931,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Setter for property phaseType.
    * </p>
    *
-   * @param phaseType PhaseType as int.
+   * @param phaseType Phasetype as int.
    * @deprecated Replace with {@link setType}
    */
   @Deprecated

@@ -65,7 +65,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     double oldtemp = temperature;
     if (type == 0) {
@@ -75,7 +75,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
       refBWRSPhase.init(1.0, 1, 3, pt, 1.0);
     }
     do {
-      super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
       oldtemp = refBWRSPhase.getTemperature();
       h_scale_mix = getNumberOfMolesInPhase() * getb() / brefBWRSPhase;
       double term1 = getA() / ((ComponentEosInterface) refBWRSPhase.getComponent(0)).getaT();
@@ -84,7 +84,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
       refBWRSPhase.setMolarVolume(getTotalVolume() / h_scale_mix);
       // refBWRSPhase.setPressure(refBWRSPhase.calcPressure());
       refBWRSPhase.setPressure(pressure * h_scale_mix / f_scale_mix);
-      refBWRSPhase.init(1.0, 1, type, pt, 1.0);
+      refBWRSPhase.init(1.0, 1, type, phase, 1.0);
     } while (Math.abs((oldtemp - refBWRSPhase.getTemperature()) / oldtemp) > 1e-8);
   }
 

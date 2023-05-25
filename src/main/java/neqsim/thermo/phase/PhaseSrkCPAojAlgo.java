@@ -123,7 +123,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     if (type == 0) {
       setTotalNumberOfAccociationSites(0);
@@ -200,11 +200,11 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
       cpamix = cpaSelect.getMixingRule(1, this);
     }
 
-    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     if (type > 0 && isConstantPhaseVolume()) {
       calcDelta();
       solveX();
-      super.init(totalNumberOfMoles, numberOfComponents, 1, pt, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, 1, phase, beta);
       gcpa = calc_g();
       // lngcpa = Math.log(gcpa);
       setGcpav(calc_lngV());

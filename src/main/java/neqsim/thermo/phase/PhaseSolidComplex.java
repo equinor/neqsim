@@ -36,9 +36,9 @@ public class PhaseSolidComplex extends PhaseSolid {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     setType(PhaseType.SOLIDCOMPLEX);
   }
 }

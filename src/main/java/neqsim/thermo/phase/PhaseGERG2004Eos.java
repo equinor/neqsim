@@ -80,15 +80,15 @@ public class PhaseGERG2004Eos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
-    IPHASE = pt.getValue() == 0 ? -1 : -2;
-    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+    IPHASE = phase.getValue() == 0 ? -1 : -2;
+    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     setxFracGERG();
 
     if (!okVolume) {
-      IPHASE = pt.getValue() == 0 ? -2 : -1;
-      super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+      IPHASE = phase.getValue() == 0 ? -2 : -1;
+      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
     if (type >= 1) {
       double[] temp = new double[18];
@@ -136,7 +136,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
                            // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       CvGERG = alloTPX[5]; // gergEOS.CPOTPX(temperature,pressure/10.0,
                            // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
   }
 
