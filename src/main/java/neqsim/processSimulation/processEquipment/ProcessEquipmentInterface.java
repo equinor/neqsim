@@ -44,6 +44,14 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
+   * needRecalculation.
+   * </p>
+   * Check if recalculation is needed.
+   */
+  public boolean needRecalculation();
+
+  /**
+   * <p>
    * setSpecification.
    * </p>
    *

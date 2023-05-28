@@ -315,6 +315,17 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     thermoSystem.initProperties();
   }
 
+  @Override
+  public boolean needRecalculation() {
+    if (this.stream.getThermoSystem().getTemperature() == thermoSystem.getTemperature()
+        && this.stream.getThermoSystem().getPressure() == thermoSystem.getPressure() && this.stream
+            .getThermoSystem().getFlowRate("kg/hr") == thermoSystem.getFlowRate("kg/hr")) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
