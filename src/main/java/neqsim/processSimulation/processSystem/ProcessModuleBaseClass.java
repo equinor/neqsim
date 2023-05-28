@@ -34,7 +34,9 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
       new neqsim.processSimulation.processSystem.ProcessSystem();
 
   /**
-   * <p>Constructor for ProcessModuleBaseClass.</p>
+   * <p>
+   * Constructor for ProcessModuleBaseClass.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -72,6 +74,10 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   @Override
   public ControllerDeviceInterface getController() {
     return null;
+  }
+
+  public boolean needRecalculation() {
+    return true;
   }
 
   /** {@inheritDoc} */

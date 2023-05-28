@@ -58,7 +58,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   @Override
   public void displayResult() {}
 
-
+  @Override
   public boolean needRecalculation() {
     return true;
   }
