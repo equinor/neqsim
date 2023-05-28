@@ -60,10 +60,25 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     outStream = new Stream("outStream", thermoSystem);
   }
 
+  @Override
+  public boolean needRecalculation() {
+    if (inStream.getTemperature() == thermoSystem.getTemperature()
+        && inStream.getPressure() == thermoSystem.getPressure()
+        && inStream.getFlowRate("kg/hr") == thermoSystem.getFlowRate("kg/hr")) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (!needRecalculation()) {
+      return;
+    }
     boolean changeBack = false;
+
     thermoSystem = inStream.getThermoSystem().clone();
     if (multiPhase && !thermoSystem.doMultiPhaseCheck()) {
       thermoSystem.setMultiPhaseCheck(true);
