@@ -58,6 +58,11 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   @Override
   public void displayResult() {}
 
+
+  public boolean needRecalculation() {
+    return true;
+  }
+
   /**
    * Create deep copy.
    *
