@@ -60,6 +60,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     outStream = new Stream("outStream", thermoSystem);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
     if (outStream == null || inStream == null) {
