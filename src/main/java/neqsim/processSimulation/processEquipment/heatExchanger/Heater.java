@@ -33,7 +33,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   private String temperatureUnit = "K";
   private String pressureUnit = "bara";
   double coolingMediumTemperature = 278.15;
-  
+
   // Results from previous calculation
   protected double lastTemperature = 0.0;
   protected double lastPressure = 0.0;
@@ -154,6 +154,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   public boolean needRecalculation() {
     if (inStream == null) {
       return true;
+
     }
     if (inStream.getFluid().getTemperature() == lastTemperature
         && inStream.getFluid().getPressure() == lastPressure
