@@ -33,6 +33,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   private String temperatureUnit = "K";
   private String pressureUnit = "bara";
   double coolingMediumTemperature = 278.15;
+  
+  // Results from previous calculation
   protected double lastTemperature = 0.0;
   protected double lastPressure = 0.0;
   protected double lastFlowRate = 0.0;
