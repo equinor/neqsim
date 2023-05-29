@@ -147,6 +147,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     this.pressureOut = pressure;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
     if (inStream.getFluid().getTemperature() == lastTemperature

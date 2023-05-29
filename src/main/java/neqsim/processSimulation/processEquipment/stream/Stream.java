@@ -319,6 +319,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     thermoSystem.initProperties();
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
     if (getFluid().getTemperature() == lastTemperature && getFluid().getPressure() == lastPressure

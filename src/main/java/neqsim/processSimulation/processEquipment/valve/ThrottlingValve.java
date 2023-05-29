@@ -156,6 +156,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     getOutletStream().getThermoSystem().setPressure(pressure, pressureUnit);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
     if (getInletStream().getThermoSystem().getTemperature() == thermoSystem.getTemperature()

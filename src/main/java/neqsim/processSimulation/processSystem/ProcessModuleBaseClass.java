@@ -76,10 +76,6 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return null;
   }
 
-  public boolean needRecalculation() {
-    return true;
-  }
-
   /** {@inheritDoc} */
   @Override
   public MechanicalDesign getMechanicalDesign() {
