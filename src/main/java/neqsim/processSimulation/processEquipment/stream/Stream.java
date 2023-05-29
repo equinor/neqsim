@@ -33,6 +33,10 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected static int numberOfStreams = 0;
   private double gasQuality = 0.5;
   protected StreamInterface stream = null;
+  protected double lastTemperature = 0.0;
+  protected double lastPressure = 0.0;
+  protected double lastFlowRate = 0.0;
+
 
   /**
    * <p>
@@ -317,9 +321,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   @Override
   public boolean needRecalculation() {
-    if (this.stream.getThermoSystem().getTemperature() == thermoSystem.getTemperature()
-        && this.stream.getThermoSystem().getPressure() == thermoSystem.getPressure() && this.stream
-            .getThermoSystem().getFlowRate("kg/hr") == thermoSystem.getFlowRate("kg/hr")) {
+    if (getFluid().getTemperature() == lastTemperature && getFluid().getPressure() == lastPressure
+        && Math.abs(getFluid().getFlowRate("kg/hr") - lastFlowRate)
+            / getFluid().getFlowRate("kg/hr") < 1e-6) {
       return false;
     } else {
       return true;
@@ -395,6 +399,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     thermoSystem.initProperties();
+
+    lastFlowRate = getFluid().getFlowRate("kg/hr");
+    lastTemperature = getFluid().getTemperature();
+    lastPressure = getFluid().getPressure();
+
     // System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
     // System.out.println("beta: " + thermoSystem.getBeta());
     setCalculationIdentifier(id);

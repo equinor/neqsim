@@ -62,9 +62,13 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
   @Override
   public boolean needRecalculation() {
-    if (inStream.getTemperature() == thermoSystem.getTemperature()
-        && inStream.getPressure() == thermoSystem.getPressure()
-        && inStream.getFlowRate("kg/hr") == thermoSystem.getFlowRate("kg/hr")) {
+    if (outStream == null || inStream == null) {
+      return true;
+    }
+    if (inStream.getTemperature() == outStream.getTemperature()
+        && inStream.getPressure() == outStream.getPressure()
+        && Math.abs(inStream.getFlowRate("kg/hr") - outStream.getFlowRate("kg/hr"))
+            / inStream.getFlowRate("kg/hr") < 1e-3) {
       return false;
     } else {
       return true;
@@ -74,9 +78,6 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    if (!needRecalculation()) {
-      return;
-    }
     boolean changeBack = false;
 
     thermoSystem = inStream.getThermoSystem().clone();
