@@ -131,7 +131,9 @@ public class ProcessModule extends SimulationBaseClass {
           int index = operationsIndex.indexOf(i);
           for (ProcessEquipmentInterface unitOperation : addedUnitOperations.get(index)
               .getUnitOperations()) {
-            unitOperation.run();
+            if (iteration == 0 || unitOperation.needRecalculation()) {
+              unitOperation.run();
+            }
           }
         } else if (modulesIndex.contains(i)) {
           int index = modulesIndex.indexOf(i);
