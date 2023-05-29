@@ -160,8 +160,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
         && inStream.getFluid().getPressure() == lastPressure
         && Math.abs(inStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
             / inStream.getFluid().getFlowRate("kg/hr") < 1e-6
-        && lastDuty == getDuty() && lastOutPressure == getOutletPressure()
-        && lastOutTemperature == getOutletTemperature() && getPressureDrop() == lastPressureDrop) {
+        && lastDuty == getDuty() && lastOutPressure == pressureOut
+        && lastOutTemperature == temperatureOut && getPressureDrop() == lastPressureDrop) {
       return false;
     } else {
       return true;
@@ -214,9 +214,9 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     lastPressure = inStream.getFluid().getPressure();
     lastFlowRate = inStream.getFluid().getFlowRate("kg/hr");
     lastDuty = getDuty();
-    lastOutPressure = system.getPressure();
-    lastOutTemperature = system.getTemperature();
-    lastPressureDrop = getPressureDrop();
+    lastOutPressure = pressureOut;
+    lastOutTemperature = temperatureOut;
+    lastPressureDrop = pressureDrop;
     setCalculationIdentifier(id);
   }
 
