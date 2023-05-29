@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -57,11 +58,11 @@ public class SaturateWithWater extends QfuncFlash {
     this.tpFlash = new TPflash(system);
     tpFlash.run();
     boolean hasAq = false;
-    if (system.hasPhaseType("aqueous")) {
+    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
       hasAq = true;
     }
     double lastdn = 0.0;
-    if (system.hasPhaseType("aqueous")) {
+    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
       lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
     } else {
       lastdn = system.getPhase(0).getNumberOfMolesInPhase() / 100.0;
@@ -81,12 +82,11 @@ public class SaturateWithWater extends QfuncFlash {
       tpFlash.run();
       // system.display();
       hasAq = system.hasPhaseType("aqueous");
-    } while ((i < 50 && Math.abs(dn) > 1e-6) || !hasAq && i < 50);
+    } while ((i < 50 && Math.abs(dn) > 1e-7) || !hasAq && i <= 50);
     if (i == 50) {
-      logger.error("could not find solution - in water sturate : dn  " + dn);
+      logger.error("could not find solution - in water saturate : dn  " + dn);
     }
     // logger.info("i " + i + " dn " + dn);
-    // System.out.println("i " + i + " dn " + dn) ; // system.display();
     system.removePhase(system.getNumberOfPhases() - 1);
     tpFlash.run();
   }
