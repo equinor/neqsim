@@ -34,7 +34,9 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
       new neqsim.processSimulation.processSystem.ProcessSystem();
 
   /**
-   * <p>Constructor for ProcessModuleBaseClass.</p>
+   * <p>
+   * Constructor for ProcessModuleBaseClass.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

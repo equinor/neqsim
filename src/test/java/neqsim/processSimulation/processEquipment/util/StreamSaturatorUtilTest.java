@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processSystem.ProcessSystem;
@@ -43,8 +45,7 @@ public class StreamSaturatorUtilTest extends neqsim.NeqSimTest {
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("water", 1.0);
 
-    Stream inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("inlet stream");
+    Stream inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
@@ -59,5 +60,29 @@ public class StreamSaturatorUtilTest extends neqsim.NeqSimTest {
     assertEquals(0.0012319218375683974 * 0.93,
         streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx(),
         1e-3);
+  }
+
+  @Test
+  void testNeedRecalculation() {
+    testSystem = new SystemSrkEos(298.0, 10.0);
+    testSystem.addComponent("methane", 100.0);
+    testSystem.addComponent("water", 1.0);
+
+    Stream inletStream = new Stream("inletStream", testSystem);
+    inletStream.setName("inlet stream");
+    inletStream.setPressure(pressure_inlet, "bara");
+    inletStream.setTemperature(temperature_inlet, "C");
+    inletStream.setFlowRate(gasFlowRate, "MSm3/day");
+    StreamSaturatorUtil streamSaturator = new StreamSaturatorUtil("saturator", inletStream);
+
+    processOps = new ProcessSystem();
+    processOps.add(inletStream);
+    processOps.add(streamSaturator);
+    processOps.run();
+
+    ((Stream) processOps.getUnit("inlet stream")).setTemperature(298.1, "K");
+    assertTrue(((StreamSaturatorUtil) processOps.getUnit("saturator")).needRecalculation());
+    processOps.run();
+    assertFalse(((StreamSaturatorUtil) processOps.getUnit("saturator")).needRecalculation());
   }
 }
