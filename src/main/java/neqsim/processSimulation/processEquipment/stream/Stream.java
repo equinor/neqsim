@@ -33,7 +33,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected static int numberOfStreams = 0;
   private double gasQuality = 0.5;
   protected StreamInterface stream = null;
-  
+
   // Results from previous run
   protected double lastTemperature = 0.0;
   protected double lastPressure = 0.0;
