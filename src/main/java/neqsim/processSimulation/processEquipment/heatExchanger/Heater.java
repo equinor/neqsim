@@ -33,6 +33,13 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   private String temperatureUnit = "K";
   private String pressureUnit = "bara";
   double coolingMediumTemperature = 278.15;
+  protected double lastTemperature = 0.0;
+  protected double lastPressure = 0.0;
+  protected double lastFlowRate = 0.0;
+  protected double lastOutPressure = 0.0;
+  protected double lastOutTemperature = 0.0;
+  protected double lastDuty = 0.0;
+  protected double lastPressureDrop = 0.0;
 
   /**
    * <p>
@@ -140,6 +147,20 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     this.pressureOut = pressure;
   }
 
+  @Override
+  public boolean needRecalculation() {
+    if (inStream.getFluid().getTemperature() == lastTemperature
+        && inStream.getFluid().getPressure() == lastPressure
+        && Math.abs(inStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
+            / inStream.getFluid().getFlowRate("kg/hr") < 1e-6
+        && lastDuty == getDuty() && lastOutPressure == getOutletPressure()
+        && lastOutTemperature == getOutletTemperature() && getPressureDrop() == lastPressureDrop) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -182,6 +203,13 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     // testOps.TPflash();
     // system.setTemperature(temperatureOut);
     getOutletStream().setThermoSystem(system);
+    lastTemperature = inStream.getFluid().getTemperature();
+    lastPressure = inStream.getFluid().getPressure();
+    lastFlowRate = inStream.getFluid().getFlowRate("kg/hr");
+    lastDuty = getDuty();
+    lastOutPressure = system.getPressure();
+    lastOutTemperature = system.getTemperature();
+    lastPressureDrop = getPressureDrop();
     setCalculationIdentifier(id);
   }
 
