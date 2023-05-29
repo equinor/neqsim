@@ -292,7 +292,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     return thermoSystem.getResultTable();
   }
 
-
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
