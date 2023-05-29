@@ -152,6 +152,9 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
+    if (inStream == null) {
+      return true;
+    }
     if (inStream.getFluid().getTemperature() == lastTemperature
         && inStream.getFluid().getPressure() == lastPressure
         && Math.abs(inStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
