@@ -398,7 +398,10 @@ public class ProcessSystem extends SimulationBaseClass {
       for (int i = 0; i < unitOperations.size(); i++) {
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
+            if (iter == 1
+                || ((ProcessEquipmentInterface) unitOperations.get(i)).needRecalculation()) {
+              ((ProcessEquipmentInterface) unitOperations.get(i)).run();
+            }
           } catch (Exception ex) {
             // String error = ex.getMessage();
             logger.error(ex.getMessage(), ex);
