@@ -2411,13 +2411,27 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getPhaseNumberOfPhase.
+   * Get phase number of phase of specific type.
    * </p>
    *
-   * @param phaseTypeName a {@link java.lang.String} object
-   * @return a int
+   * @param pt Phase type to look for.
+   * @return Phase number
    */
-  public int getPhaseNumberOfPhase(String phaseTypeName);
+  public int getPhaseNumberOfPhase(PhaseType pt);
+
+  /**
+   * <p>
+   * Get phase number of phase of specific type. *
+   * </p>
+   *
+   * @param phaseTypeName Name of phase type to look for
+   * @return Phase number
+   * @deprecated Replaced by getPhaseNumberOfPhase
+   */
+  @Deprecated
+  public default int getPhaseNumberOfPhase(String phaseTypeName) {
+    return getPhaseNumberOfPhase(PhaseType.byDesc(phaseTypeName));
+  }
 
   /**
    * <p>
