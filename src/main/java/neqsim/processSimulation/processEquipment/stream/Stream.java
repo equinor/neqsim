@@ -38,7 +38,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected double lastTemperature = 0.0;
   protected double lastPressure = 0.0;
   protected double lastFlowRate = 0.0;
-  public boolean isUpdated = true;
+  private boolean isUpdated = true;
 
   /**
    * <p>
