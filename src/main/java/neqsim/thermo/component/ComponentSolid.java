@@ -63,17 +63,77 @@ public class ComponentSolid extends ComponentSrk {
     if (componentName.equals("methane")) {
       return 1e30;
     }
+
     return fugcoef2(phase1);
     // return fugcoef(phase1.getTemperature(), phase1.getPressure());
   }
 
   /**
    * <p>
-   * fugcoef2.
+   * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @param temp a double
+   * @param pres a double
+   * @return Fugacity coefficient
+   */
+  public double fugcoef(double temp, double pres) {
+    if (Math.abs(Hsub) < 0.000001) {
+      CCequation = false;
+    }
+    if (Math.abs(AntoineASolid) < 0.000001) {
+      AntoineSolidequation = false;
+    }
+    if (CCequation || AntoineSolidequation) {
+      if (temp > getTriplePointTemperature() + 0.1) {
+        temp = getTriplePointTemperature();
+      }
+      if (CCequation) {
+        PvapSolid = getCCsolidVaporPressure(temp);
+        PvapSoliddT = getCCsolidVaporPressuredT(temp);
+        // System.out.println("pvap solid CC " + PvapSolid);
+      } else {
+        PvapSolid = getSolidVaporPressure(temp);
+        PvapSoliddT = getSolidVaporPressuredT(temp);
+        // System.out.println("pvap solid Antonie " + PvapSolid);
+      }
+    }
+
+    soldens = getPureComponentSolidDensity(temp) * 1000;
+    // System.out.println("solid density " + soldens);
+    // if(soldens>2000)
+    soldens = 1000.0;
+    solvol = 1.0 / soldens * getMolarMass();
+    // System.out.println("molmass " + getMolarMass());
+
+    refPhase.setTemperature(temp);
+    refPhase.setPressure(PvapSolid);
+    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, 1, 1.0);
+    refPhase.getComponent(0).fugcoef(refPhase);
+
+    // System.out.println("ref co2 fugcoef " +
+    // refPhase.getComponent(0).getFugacityCoefficient());
+    SolidFug = PvapSolid * Math.exp(solvol / (R * temp) * (pres - PvapSolid) * 1e5)
+        * refPhase.getComponent(0).getFugacityCoefficient();
+    // System.out.println("Pvap solid " + SolidFug);
+    dfugdt = Math.log(PvapSoliddT * Math.exp(solvol / (R * temp) * (pres - PvapSolid))) / pres;
+    fugacityCoefficient = SolidFug / pres;
+    // } else{
+    // fugacityCoefficient = 1e5;
+    // dfugdt=0;
+    // }
+
+    return fugacityCoefficient;
+  }
+
+  /**
+   * <p>
+   * Calculate, set and return fugacity coefficient.
+   * </p>
+   *
+   * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient
+   *        of.
+   * @return Fugacity coefficient
    */
   public double fugcoef2(PhaseInterface phase1) {
     refPhase.setTemperature(phase1.getTemperature());
@@ -122,65 +182,6 @@ public class ComponentSolid extends ComponentSrk {
 
     // System.out.println("solidfug " + SolidFug);
     fugacityCoefficient = SolidFug / (phase1.getPressure() * getx());
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
-    return fugacityCoefficient;
-  }
-
-  /**
-   * <p>
-   * fugcoef.
-   * </p>
-   *
-   * @param temp a double
-   * @param pres a double
-   * @return a double
-   */
-  public double fugcoef(double temp, double pres) {
-    if (Math.abs(Hsub) < 0.000001) {
-      CCequation = false;
-    }
-    if (Math.abs(AntoineASolid) < 0.000001) {
-      AntoineSolidequation = false;
-    }
-    if (CCequation || AntoineSolidequation) {
-      if (temp > getTriplePointTemperature() + 0.1) {
-        temp = getTriplePointTemperature();
-      }
-      if (CCequation) {
-        PvapSolid = getCCsolidVaporPressure(temp);
-        PvapSoliddT = getCCsolidVaporPressuredT(temp);
-        // System.out.println("pvap solid CC " + PvapSolid);
-      } else {
-        PvapSolid = getSolidVaporPressure(temp);
-        PvapSoliddT = getSolidVaporPressuredT(temp);
-        // System.out.println("pvap solid Antonie " + PvapSolid);
-      }
-    }
-
-    soldens = getPureComponentSolidDensity(temp) * 1000;
-    // System.out.println("solid density " + soldens);
-    // if(soldens>2000)
-    soldens = 1000.0;
-    solvol = 1.0 / soldens * getMolarMass();
-    // System.out.println("molmass " + getMolarMass());
-
-    refPhase.setTemperature(temp);
-    refPhase.setPressure(PvapSolid);
-    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, 1, 1.0);
-    refPhase.getComponent(0).fugcoef(refPhase);
-
-    // System.out.println("ref co2 fugcoef " +
-    // refPhase.getComponent(0).getFugacityCoefficient());
-    SolidFug = PvapSolid * Math.exp(solvol / (R * temp) * (pres - PvapSolid) * 1e5)
-        * refPhase.getComponent(0).getFugacityCoefficient();
-    // System.out.println("Pvap solid " + SolidFug);
-    dfugdt = Math.log(PvapSoliddT * Math.exp(solvol / (R * temp) * (pres - PvapSolid))) / pres;
-    fugacityCoefficient = SolidFug / pres;
-    // } else{
-    // fugacityCoefficient = 1e5;
-    // dfugdt=0;
-    // }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
 

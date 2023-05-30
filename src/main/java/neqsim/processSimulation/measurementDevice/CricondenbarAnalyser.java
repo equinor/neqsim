@@ -42,7 +42,6 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
     setConditionAnalysisMaxDeviation(1.0);
   }
 
-
   /** {@inheritDoc} */
   @Override
   public void displayResult() {

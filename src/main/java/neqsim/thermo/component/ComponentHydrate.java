@@ -128,36 +128,15 @@ public class ComponentHydrate extends Component {
 
   /**
    * <p>
-   * Setter for the field <code>hydrateStructure</code>.
+   * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param structure a int
-   */
-  public void setHydrateStructure(int structure) {
-    this.hydrateStructure = structure;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>hydrateStructure</code>.
-   * </p>
-   *
-   * @return a int
-   */
-  public int getHydrateStructure() {
-    return this.hydrateStructure;
-  }
-
-  /**
-   * <p>
-   * fugcoef.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient
+   *        of.
    * @param numberOfComps a int
    * @param temp a double
    * @param pres a double
-   * @return a double
+   * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
     if (componentName.equals("water")) {
@@ -199,17 +178,37 @@ public class ComponentHydrate extends Component {
         // getEmptyHydrateStructureVapourPressure(hydrateStructure,temp) *
         // Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)))*1e5)/pres;
         // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
-        // logFugacityCoefficient = Math.log(fugacityCoefficient);
-        // logFugacityCoefficient += val*boltzmannConstant/R;
-        // fugacityCoefficient = Math.exp(logFugacityCoefficient);
+        // fugacityCoefficient = Math.exp(Math.log(fugacityCoefficient) + val*boltzmannConstant/R);
         // System.out.println("fugacityCoefficient " + fugacityCoefficient);
       } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-6);
     } else {
       fugacityCoefficient = 1e5;
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
+
     // System.out.println("fug " + fugacityCoefficient);
     return fugacityCoefficient;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>hydrateStructure</code>.
+   * </p>
+   *
+   * @param structure a int
+   */
+  public void setHydrateStructure(int structure) {
+    this.hydrateStructure = structure;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>hydrateStructure</code>.
+   * </p>
+   *
+   * @return a int
+   */
+  public int getHydrateStructure() {
+    return this.hydrateStructure;
   }
 
   /**
