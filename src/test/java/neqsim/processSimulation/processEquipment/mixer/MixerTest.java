@@ -75,11 +75,16 @@ class MixerTest {
     processOps.add(waterStream);
     processOps.add(testMixer);
     processOps.run();
-
-    gasStream.setFlowRate(100.1, "kg/hr");
-    assertTrue(testMixer.needRecalculation());
-    gasStream.run();
+    assertFalse(gasStream.needRecalculation());
+    assertFalse(gasStream.needRecalculation());
     assertFalse(testMixer.needRecalculation());
+    gasStream.setFlowRate(100.1, "kg/hr");
+    assertTrue(gasStream.needRecalculation());
+    assertTrue(testMixer.needRecalculation());
+    processOps.run();
+    assertFalse(gasStream.needRecalculation());
+    assertFalse(testMixer.needRecalculation());
+
 
   }
 }
