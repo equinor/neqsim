@@ -215,7 +215,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   public boolean needRecalculation() {
     Iterator<StreamInterface> iter = streams.iterator();
     while (iter.hasNext()) {
-      if (iter.next().needRecalculation()) {
+      if (iter.next().isUpdated()) {
         return true;
       }
     }

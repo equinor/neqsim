@@ -38,7 +38,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected double lastTemperature = 0.0;
   protected double lastPressure = 0.0;
   protected double lastFlowRate = 0.0;
-
+  public boolean isUpdated = true;
 
   /**
    * <p>
@@ -327,8 +327,10 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (getFluid().getTemperature() == lastTemperature && getFluid().getPressure() == lastPressure
         && Math.abs(getFluid().getFlowRate("kg/hr") - lastFlowRate)
             / getFluid().getFlowRate("kg/hr") < 1e-6) {
+      isUpdated = false;
       return false;
     } else {
+      isUpdated = true;
       return true;
     }
   }
@@ -586,5 +588,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    */
   public void setStream(StreamInterface stream) {
     this.stream = stream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isUpdated() {
+    return isUpdated;
   }
 }
