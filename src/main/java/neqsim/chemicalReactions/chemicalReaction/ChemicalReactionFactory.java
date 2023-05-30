@@ -89,10 +89,11 @@ public class ChemicalReactionFactory {
    *
    * @return Names of all chemical reactions in database.
    */
-  static public String[] getChemicalReactionNames() {
+  public static String[] getChemicalReactionNames() {
     ArrayList<String> nameList = new ArrayList<String>();
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet("SELECT name FROM reactionkspdata")) {
+      dataSet.next();
       do {
         nameList.add(dataSet.getString("name").trim());
       } while (dataSet.next());
