@@ -75,10 +75,12 @@ abstract class SystemThermo implements SystemInterface {
   // or
   public String componentNameTag = "";
   protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;
-  protected double[] beta = new double[MAX_PHASES];
   protected int a;
 
   private ArrayList<String> componentNames = new ArrayList<String>();
+  // todo: replace numberOfComponents with length of componentNames.
+  protected int numberOfComponents = 0;
+
   // protected ArrayList<String> resultArray1 = new ArrayList<String>();
   protected String[] CapeOpenProperties11 = {"molecularWeight", "speedOfSound",
       "jouleThomsonCoefficient", "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy",
@@ -100,20 +102,25 @@ abstract class SystemThermo implements SystemInterface {
       "density.Dpressure", "density.Dmoles", "volume", "volume.Dpressure", "volume.Dtemperature",
       "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles",
       "compressibilityFactor"};
-  protected int numberOfComponents = 0;
-  protected int numberOfPhases = 2;
-  public int maxNumberOfPhases = 2;
   protected int attractiveTermNumber = 0;
 
+  /** Number of phases in use/existing. */
+  protected int numberOfPhases = 2;
+  /** Maximum allowed number of phases . */
+  public int maxNumberOfPhases = 2;
+  /**
+   * Array of indexes to phaseArray keeping track of the creation order of the phases where 0 is the
+   * first created phase and the lowest number is the phase created last.
+   */
+  protected int[] phaseIndex = {0, 1, 2, 3, 4, 5};
+  /**
+   * Array containing all phases of System. NB! Phases are reorered according to density, use
+   * phaseIndex to keep track of the creation order.
+   */
+  protected PhaseInterface[] phaseArray = new PhaseInterface[MAX_PHASES];
   // PhaseType of phases belonging to system.
   protected PhaseType[] phaseType = new PhaseType[MAX_PHASES];
-
-  // Index refers to position in phaseArray. First value of phaseIndex is the phase which is created
-  // first and the last is the phase created last.
-  protected int[] phaseIndex = {0, 1, 2, 3, 4, 5};
-
-  // All phases of System. Flashes reorders phaseArray by density.
-  protected PhaseInterface[] phaseArray = new PhaseInterface[MAX_PHASES];
+  protected double[] beta = new double[MAX_PHASES];
 
   protected ChemicalReactionOperations chemicalReactionOperations = null;
   private int mixingRule = 1;
@@ -2319,9 +2326,13 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final PhaseInterface getPhase(int i) {
-    if (i >= getNumberOfPhases() && phaseArray[phaseIndex[i]] == null) {
-      throw new RuntimeException("Can not return phase number " + i
-          + ". Current number of phases are " + getNumberOfPhases());
+    if (i < 0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getPhase",
+          "i", i + " is not valid, must be in the range 0-" + this.getNumberOfPhases()));
+    } else if (i >= getNumberOfPhases() && phaseArray[phaseIndex[i]] == null) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+          this.getClass() + ":getPhase - Can not return phase number " + i
+              + ". Current number of phases are " + getNumberOfPhases()));
     }
     return phaseArray[phaseIndex[i]];
   }
@@ -2329,12 +2340,17 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public PhaseInterface getPhase(String phaseTypeName) {
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
-        return getPhase(i);
-      }
+    PhaseType pt = PhaseType.byDesc(phaseTypeName);
+    if (!this.hasPhaseType(pt)) {
+      throw new RuntimeException("Phase with phase type " + pt + " not found.");
     }
-    throw new RuntimeException();
+
+    int phaseNum = getPhaseNumberOfPhase(pt);
+    if (phaseNum >= 0) {
+      return getPhase(phaseNum);
+    }
+
+    return null;
   }
 
   /** {@inheritDoc} */
@@ -2350,9 +2366,9 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public int getPhaseNumberOfPhase(String phaseTypeName) {
+  public int getPhaseNumberOfPhase(PhaseType pt) {
     for (int i = 0; i < numberOfPhases; i++) {
-      if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
+      if (getPhase(i).getType() == pt) {
         return i;
       }
     }
