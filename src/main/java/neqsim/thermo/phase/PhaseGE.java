@@ -28,7 +28,6 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
   EosMixingRules mixSelect = new EosMixingRules();
   EosMixingRulesInterface mixRuleEos;
 
-
   /**
    * <p>
    * Constructor for PhaseGE.
