@@ -157,7 +157,6 @@ class ComponentSplitterTest {
     processOps.add(exportStream);
 
     processOps.run();
-
     assertEquals(5.0, exportStream.getFlowRate("MSm3/day"), 1e-6);
     assertEquals(0.1, resycStream1.getFlowRate("MSm3/day"), 1e-6);
     // assertEquals(8.43553108874272, valve1.getPercentValveOpening(), 1e-2);

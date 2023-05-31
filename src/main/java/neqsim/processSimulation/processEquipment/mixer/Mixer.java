@@ -5,6 +5,7 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.UUID;
 import javax.swing.JDialog;
@@ -69,7 +70,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   public void replaceStream(int i, StreamInterface newStream) {
     streams.set(i, newStream);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public void removeInputStream(int i) {
@@ -207,6 +208,19 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   @Override
   public StreamInterface getOutletStream() {
     return mixedStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean needRecalculation() {
+    Iterator<StreamInterface> iter = streams.iterator();
+    while (iter.hasNext()) {
+      StreamInterface str = iter.next();
+      if (!str.solved()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */
