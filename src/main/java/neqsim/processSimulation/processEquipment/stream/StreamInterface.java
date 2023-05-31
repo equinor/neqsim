@@ -233,12 +233,4 @@ public interface StreamInterface extends ProcessEquipmentInterface {
   @Override
   public int hashCode();
 
-  /**
-   * <p>
-   * isUpdated.
-   * </p>
-   *
-   * @return a boolean
-   */
-  public boolean isUpdated();
 }

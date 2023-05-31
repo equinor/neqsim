@@ -216,7 +216,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     Iterator<StreamInterface> iter = streams.iterator();
     while (iter.hasNext()) {
       StreamInterface str = iter.next();
-      if (str.isUpdated()) {
+      if (!str.solved()) {
         return true;
       }
     }
