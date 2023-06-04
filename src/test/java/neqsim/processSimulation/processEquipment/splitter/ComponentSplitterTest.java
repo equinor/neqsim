@@ -49,6 +49,27 @@ class ComponentSplitterTest {
   }
 
   @Test
+  public void configSplitter() {
+    testSystem = new SystemSrkEos(298.0, 10.0);
+    testSystem.addComponent("methane", 100.0);
+    testSystem.addComponent("ethane", 10.0);
+    testSystem.addComponent("propane", 10.0);
+    processOps = new ProcessSystem();
+    Stream inletStream = new Stream("inletStream", testSystem);
+    inletStream.setName("inlet stream");
+    inletStream.setPressure(pressure_inlet, "bara");
+    inletStream.setTemperature(temperature_inlet, "C");
+    inletStream.setFlowRate(gasFlowRate, "MSm3/day");
+    inletStream.run();
+    Splitter splitter = new Splitter("splitter", inletStream, 3);
+    splitter.run();
+    assertEquals(0.815104472498348, splitter.getSplitStream(0).getFluid().getPhase(0).getZ(), 0.01);
+    assertEquals(0.815104472498348, splitter.getSplitStream(1).getFluid().getPhase(0).getZ(), 0.01);
+    assertEquals(0.815104472498348, splitter.getSplitStream(2).getFluid().getPhase(0).getZ(), 0.01);
+  }
+
+
+  @Test
   public void testRun() {
     processOps.run();
     // ((StreamInterface)processOps.getUnit("stream 1")).displayResult();
