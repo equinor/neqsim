@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,6 +61,19 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    Iterator<ProcessEquipmentInterface> iter = inputVariable.iterator();
+    while (iter.hasNext()) {
+      ProcessEquipmentInterface str = iter.next();
+      if (!str.solved()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     double sum = 0.0;
 
@@ -73,13 +87,13 @@ public class Calculator extends ProcessEquipmentBaseClass {
       }
     }
 
-    //System.out.println("make up TEG " + sum);
-    //((Stream) outputVariable).setFlowRate(sum, "kg/hr");
+    // System.out.println("make up TEG " + sum);
+    // ((Stream) outputVariable).setFlowRate(sum, "kg/hr");
     try {
       if (sum < 1e-10) {
         sum = 1e-10;
       }
-     ((Stream) outputVariable).setFlowRate(sum, "kg/hr");
+      ((Stream) outputVariable).setFlowRate(sum, "kg/hr");
       outputVariable.run();
       outputVariable.setCalculationIdentifier(id);
     } catch (Exception ex) {
