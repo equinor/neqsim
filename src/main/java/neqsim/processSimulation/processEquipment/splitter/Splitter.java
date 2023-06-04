@@ -98,7 +98,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     splitNumber = i;
     splitFactor = new double[splitNumber];
     splitFactor[0] = 1.0;
-    setInletStream(inletStream);
+    if (inletStream != null) {
+      setInletStream(inletStream);
+    }
   }
 
   /**
@@ -147,7 +149,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>calcSplitFactors.</p>
+   * <p>
+   * calcSplitFactors.
+   * </p>
    */
   public void calcSplitFactors() {
     double sum = 0.0;
