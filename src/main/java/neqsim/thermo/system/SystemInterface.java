@@ -657,7 +657,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * getPhase.
    * </p>
    *
-   * @param pt a {@link neqsim.thero.phase.PhaseType} object
+   * @param pt a {@link neqsim.thermo.phase.PhaseType} object
    * @return a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public PhaseInterface getPhase(PhaseType pt);
