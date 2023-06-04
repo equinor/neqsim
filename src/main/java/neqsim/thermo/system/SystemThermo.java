@@ -2337,10 +2337,7 @@ abstract class SystemThermo implements SystemInterface {
     return phaseArray[phaseIndex[i]];
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public PhaseInterface getPhase(String phaseTypeName) {
-    PhaseType pt = PhaseType.byDesc(phaseTypeName);
+  public PhaseInterface getPhase(PhaseType pt) {
     if (!this.hasPhaseType(pt)) {
       throw new RuntimeException("Phase with phase type " + pt + " not found.");
     }
@@ -2351,6 +2348,13 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PhaseInterface getPhase(String phaseTypeName) {
+    PhaseType pt = PhaseType.byDesc(phaseTypeName);
+    return getPhase(pt);
   }
 
   /** {@inheritDoc} */

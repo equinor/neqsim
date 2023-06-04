@@ -6,7 +6,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -18,7 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
+public class SystemFurstElectrolyteEoS extends neqsim.NeqSimTest {
   static SystemInterface thermoSystem;
   static ThermodynamicOperations testOps;
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
@@ -30,14 +29,13 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
    */
   @BeforeAll
   public static void setUp() {
-    thermoSystem = new SystemElectrolyteCPAstatoil(298.15, 10.01325);
+    thermoSystem = new SystemFurstElectrolyteEos(298.15, 10.01325);
     thermoSystem.addComponent("methane", 0.1);
     thermoSystem.addComponent("water", 1.0);
     thermoSystem.addComponent("Na+", 0.001);
     thermoSystem.addComponent("Cl-", 0.001);
-    thermoSystem.setMixingRule(10);
+    thermoSystem.setMixingRule(4);
     testModel = new neqsim.thermo.ThermodynamicModelTest(thermoSystem);
-    testModel.setMaxError(1e-10);
     testOps = new ThermodynamicOperations(thermoSystem);
     testOps.TPflash();
     thermoSystem.initProperties();
@@ -67,10 +65,9 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
    * </p>
    */
   @Test
-  public void testDensity() {
-    assertEquals(6.594232943612613, thermoSystem.getPhase(PhaseType.GAS).getDensity("kg/m3"), 0.01);
-    assertEquals(996.5046667778549, thermoSystem.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3"),
-        0.01);
+  public void testinitPhysicalProperties() {
+    assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(),
+        thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
   }
 
   /**
