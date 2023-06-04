@@ -37,7 +37,8 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * <p>
    * Check if process module needs recalculating.
    * </p>
-   * * @return a {@link java.lang.boolean} object
+   * 
+   * @return true or false
    */
   public default boolean needRecalculation() {
     return true;
