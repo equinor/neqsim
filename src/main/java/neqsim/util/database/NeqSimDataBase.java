@@ -430,12 +430,9 @@ public class NeqSimDataBase
         throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase",
             "updateTable", "path", "- Resource " + path + " not found"));
       }
-
       database.execute("DROP TABLE IF EXISTS " + tableName);
       String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + url + "')";
       database.execute(sqlString);
-    } catch (RuntimeException ex) {
-      throw ex;
     } catch (Exception ex) {
       logger.error("Failed updating table " + tableName, ex);
     }
