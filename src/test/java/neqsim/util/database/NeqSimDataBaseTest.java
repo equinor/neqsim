@@ -46,4 +46,9 @@ public class NeqSimDataBaseTest extends NeqSimTest {
     Assertions.assertEquals(16.04, molmass, 0.1);
     Assertions.assertFalse(failed, "Failed getting data from NeqsimDataBase");
   }
+
+  @Test
+  void testUpdateDatabase() {
+      neqsim.util.database.NeqSimDataBase.updateTable("COMP", "classpath:/data/COMP.csv");
+  }
 }
