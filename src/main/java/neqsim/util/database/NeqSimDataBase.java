@@ -434,8 +434,6 @@ public class NeqSimDataBase
       database.execute("DROP TABLE IF EXISTS " + tableName);
       String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + url + "')";
       database.execute(sqlString);
-    } catch (RuntimeException ex) {
-      throw ex;
     } catch (Exception ex) {
       logger.error("Failed updating table " + tableName, ex);
     }
