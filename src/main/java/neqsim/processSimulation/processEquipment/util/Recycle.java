@@ -331,8 +331,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     mixedStream.setCalculationIdentifier(id);
     setError(massBalanceCheck());
     setErrorFlow(massBalanceCheck2());
-    logger.info(name + " comp recycle error: " + getError());
-    logger.info(name + " flow recycle error: " + getErrorFlow());
+    logger.debug("comp recycle error: " + getError());
+    logger.debug("flow recycle error: " + getErrorFlow());
     lastIterationStream = (Stream) mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
     outletStream.setCalculationIdentifier(id);
