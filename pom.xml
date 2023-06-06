@@ -216,9 +216,6 @@
 				<configuration>
 					<excludes>
 						<exclude>neqsim/physicalProperties/util/parameterFitting/**/*</exclude>
-						<exclude>neqsim/fluidMechanics/util/parameterFitting/**/*</exclude>
-						<exclude>neqsim/PVTsimulation/util/parameterFitting/**/*</exclude>
-						<exclude>neqsim/thermo/util/parameterFitting/**/*</exclude>
 						<exclude>neqsim/statistics/util/parameterFitting/**/*</exclude>
 						<exclude>neqsim/PVTsimulation/util/parameterfitting/**/*</exclude>
 					</excludes>
