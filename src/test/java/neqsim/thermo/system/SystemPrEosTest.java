@@ -177,16 +177,17 @@ class SystemPrEoSTest extends neqsim.NeqSimTest {
       testOps.TPflash();
       testSystem.initProperties();
 
-      double isoThermComp = testSystem.getPhase("gas").getIsothermalCompressibility();
+      // double isoThermComp = testSystem.getPhase("gas").getIsothermalCompressibility();
       // assertEquals(1.0, isoThermComp, 1e-5);
 
-      double isobaricThermalExpansivity = testSystem.getPhase("gas").getIsobaricThermalExpansivity();
+      // double isobaricThermalExpansivity =
+      // testSystem.getPhase("gas").getIsobaricThermalExpansivity();
       // assertEquals(1.0, isobaricThermalExpansivity, 1e-5);
 
-      double compressibilityX = testSystem.getPhase("gas").getCompressibilityX();
+      // double compressibilityX = testSystem.getPhase("gas").getCompressibilityX();
       // assertEquals(1.0, compressibilityX, 1e-5);
 
-      double compressibilityY = testSystem.getPhase("gas").getCompressibilityY();
+      // double compressibilityY = testSystem.getPhase("gas").getCompressibilityY();
       // assertEquals(1.0, compressibilityY, 1e-5);
     }
     
