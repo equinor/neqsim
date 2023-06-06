@@ -32,6 +32,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ProcessSystem extends SimulationBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   transient Thread thisThread;
   String[][] signalDB = new String[1000][100];
@@ -43,7 +44,6 @@ public class ProcessSystem extends SimulationBaseClass {
       new ArrayList<MeasurementDeviceInterface>(0);
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
-  static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   /**
    * <p>

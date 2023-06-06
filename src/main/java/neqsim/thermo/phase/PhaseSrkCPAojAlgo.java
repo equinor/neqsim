@@ -27,6 +27,7 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  */
 public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseSrkCPAojAlgo.class);
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
@@ -78,8 +79,6 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
   // 1);
   MatrixStore<Double> hessianInvers2 = null;
   final Factory mtrxFactory = Primitive64Matrix.FACTORY;
-
-  static Logger logger = LogManager.getLogger(PhaseSrkCPAojAlgo.class);
 
   // private transient SimpleMatrix KlkTVMatrix = null, KlkTTMatrix = null,
   // KlkTMatrix = null, udotTimesmMatrix = null, mVector = null, udotMatrix =

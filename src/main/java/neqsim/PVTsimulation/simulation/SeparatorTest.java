@@ -15,14 +15,14 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class SeparatorTest extends BasePVTsimulation {
+  static Logger logger = LogManager.getLogger(SeparatorTest.class);
+
   double[] temperature = null;
   double[] pressure = null;
   double[] Sm3gas, m3oil;
   private double[] Bofactor;
   private double[] GOR = null;
   double oilVolumeStdCond = 0;
-
-  static Logger logger = LogManager.getLogger(SeparatorTest.class);
 
   /**
    * <p>

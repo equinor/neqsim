@@ -14,8 +14,9 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class TBPfractionModel implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  String name = "";
   static Logger logger = LogManager.getLogger(TBPfractionModel.class);
+
+  String name = "";
 
   /**
    * <p>
@@ -24,6 +25,9 @@ public class TBPfractionModel implements java.io.Serializable {
    */
   public TBPfractionModel() {}
 
+  /**
+   * Base model for something?
+   */
   public abstract class TBPBaseModel implements TBPModelInterface, Cloneable, java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
@@ -103,6 +107,9 @@ public class TBPfractionModel implements java.io.Serializable {
     }
   }
 
+  /**
+   * PedersenTBPModelSRK
+   */
   public class PedersenTBPModelSRK extends TBPBaseModel {
     private static final long serialVersionUID = 1000;
 

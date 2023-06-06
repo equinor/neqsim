@@ -17,6 +17,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  */
 public class SetPoint extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(SetPoint.class);
 
   ProcessEquipmentInterface sourceEquipment = null;
 
@@ -36,7 +37,6 @@ public class SetPoint extends ProcessEquipmentBaseClass {
 
   double oldInputValue = 0.0;
 
-  static Logger logger = LogManager.getLogger(SetPoint.class);
 
   /**
    * <p>

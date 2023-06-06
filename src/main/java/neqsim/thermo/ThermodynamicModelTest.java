@@ -20,9 +20,10 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ThermodynamicModelTest.class);
+
   SystemInterface system;
   private double maxError = 1e-10;
-  static Logger logger = LogManager.getLogger(ThermodynamicModelTest.class);
 
   /**
    * <p>

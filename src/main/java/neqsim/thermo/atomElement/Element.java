@@ -21,9 +21,10 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  */
 public class Element implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Element.class);
+
   String[] nameArray;
   double[] coefArray;
-  static Logger logger = LogManager.getLogger(Element.class);
 
   /**
    * <p>

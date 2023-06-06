@@ -17,6 +17,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  */
 public class Adjuster extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Adjuster.class);
 
   ProcessEquipmentInterface adjustedEquipment = null;
   ProcessEquipmentInterface targetEquipment = null;
@@ -36,8 +37,6 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
   int iterations = 0;
   private boolean activateWhenLess = false;
-
-  static Logger logger = LogManager.getLogger(Adjuster.class);
 
   /**
    * <p>

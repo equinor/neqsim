@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 public class NeqSimFluidDataBaseTest {
   Logger logger = LogManager.getFormatterLogger(NeqSimFluidDataBaseTest.class);
+
   @Disabled
   @Test
   void testMain() {
