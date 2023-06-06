@@ -20,23 +20,17 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   static Logger logger = LogManager.getLogger(SetPoint.class);
 
   ProcessEquipmentInterface sourceEquipment = null;
-
   ProcessEquipmentInterface targetEquipment = null;
 
-  String sourceVarialble = "";
-
+  String sourceVariable = "";
   String targetVariable = "";
-
   String targetPhase = "";
-
   String targetComponent = "";
 
   double targetValue = 0.0;
   String targetUnit = "";
   double inputValue = 0.0;
-
   double oldInputValue = 0.0;
-
 
   /**
    * <p>
@@ -92,7 +86,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment,
       String adjstedVariable) {
     this.sourceEquipment = adjustedEquipment;
-    this.sourceVarialble = adjstedVariable;
+    this.sourceVariable = adjstedVariable;
   }
 
   /**

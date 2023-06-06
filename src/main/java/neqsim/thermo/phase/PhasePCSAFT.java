@@ -78,7 +78,6 @@ public class PhasePCSAFT extends PhaseSrkEos {
   private double F2dispI2dNdN = 1.0;
   private double F1dispI1dVdV = 0.0;
 
-
   /**
    * <p>
    * Constructor for PhasePCSAFT.

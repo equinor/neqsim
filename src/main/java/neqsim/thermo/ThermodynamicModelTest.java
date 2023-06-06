@@ -136,7 +136,6 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
           // system.getPhases()[1].getComponents()[i].getNumberOfMolesInPhase()*system.getPhases()[1].getComponents()[i].getdfugdn(j));
         }
 
-
         // logger.info("test fugdn gas : " + j + " " + temp1 + " name " +
         // system.getPhases()[0].getComponents()[j].getComponentName());
         // logger.info("test fugdn liq : " + j + " " + temp2);

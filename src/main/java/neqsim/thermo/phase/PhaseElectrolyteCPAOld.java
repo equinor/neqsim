@@ -40,9 +40,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   int[][][][] crossAccociationScheme = null;
   double dFdVdXdXdVtotal = 0.0;
   double dFCPAdXdXdTtotal = 0.0;
-
   double dFCPAdTdT = 0.0;
-
 
   /**
    * <p>
