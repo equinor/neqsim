@@ -39,7 +39,6 @@ class SystemPrEoSTest extends neqsim.NeqSimTest {
     @Test
     @DisplayName("test a TPflash2")
     public void testTPflash2() {
-
         assertEquals(2, testSystem.getNumberOfPhases());
     }
 
@@ -177,18 +176,18 @@ class SystemPrEoSTest extends neqsim.NeqSimTest {
       testOps.TPflash();
       testSystem.initProperties();
 
-      // double isoThermComp = testSystem.getPhase("gas").getIsothermalCompressibility();
-      // assertEquals(1.0, isoThermComp, 1e-5);
+      double isoThermComp = testSystem.getPhase("gas").getIsothermalCompressibility();
+      assertEquals(1.0, isoThermComp, 1e-5);
 
-      // double isobaricThermalExpansivity =
-      // testSystem.getPhase("gas").getIsobaricThermalExpansivity();
-      // assertEquals(1.0, isobaricThermalExpansivity, 1e-5);
+      double isobaricThermalExpansivity =
+          testSystem.getPhase("gas").getIsobaricThermalExpansivity();
+      assertEquals(1.0, isobaricThermalExpansivity, 1e-5);
 
-      // double compressibilityX = testSystem.getPhase("gas").getCompressibilityX();
-      // assertEquals(1.0, compressibilityX, 1e-5);
+      double compressibilityX = testSystem.getPhase("gas").getCompressibilityX();
+      assertEquals(1.0, compressibilityX, 1e-5);
 
-      // double compressibilityY = testSystem.getPhase("gas").getCompressibilityY();
-      // assertEquals(1.0, compressibilityY, 1e-5);
+      double compressibilityY = testSystem.getPhase("gas").getCompressibilityY();
+      assertEquals(1.0, compressibilityY, 1e-5);
     }
     
 }

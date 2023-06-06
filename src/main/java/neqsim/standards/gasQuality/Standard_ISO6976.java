@@ -248,7 +248,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   /** {@inheritDoc} */
   @Override
   public double getValue(String returnParameter, java.lang.String returnUnit) {
-
     checkReferenceCondition();
 
     if (returnParameter.equals("GCV")) {
@@ -373,7 +372,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    * </p>
    */
   public void checkReferenceCondition() {
-
     Double[] validvalues = {0.0, 15.0, 15.55, 20.0};
 
     if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(energyRefT)::equals)) {

@@ -77,7 +77,6 @@ public class SystemUNIFAC extends SystemEos {
     }
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

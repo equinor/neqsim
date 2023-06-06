@@ -11,7 +11,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public class WellAllocator extends StreamMeasurementDeviceBaseClass {
-
   private static final long serialVersionUID = 1L;
   protected StreamInterface exportGasStream = null;
   protected StreamInterface exportOilStream = null;

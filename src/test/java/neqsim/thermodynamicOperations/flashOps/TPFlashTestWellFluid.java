@@ -10,7 +10,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  */
 class TPFlashTestWellFluid {
-
   static neqsim.thermo.system.SystemInterface wellFluid = null;
   static ThermodynamicOperations testOps = null;
 

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class CostaldTest extends neqsim.NeqSimTest {
-
   static neqsim.thermo.system.SystemInterface testSystem = null;
 
   @BeforeAll

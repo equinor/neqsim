@@ -18,7 +18,6 @@ import org.apache.logging.log4j.Logger;
  */
 public class NeqSimBlobDatabase
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(NeqSimBlobDatabase.class);
 

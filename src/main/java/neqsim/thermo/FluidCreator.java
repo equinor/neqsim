@@ -12,7 +12,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidCreator {
-
   /** Constant <code>hasWater=false</code> */
   public static boolean hasWater = false;
   /** Constant <code>autoSelectModel=false</code> */

@@ -7,7 +7,6 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class VirtualStreamTest {
-
   static neqsim.thermo.system.SystemInterface testSystem = null;
   double pressure_inlet = 85.0;
   double temperature_inlet = 35.0;
@@ -71,7 +70,6 @@ public class VirtualStreamTest {
 
   @Test
   void testSetTemperature() {
-
     virtStream.setTemperature(22.0, "C");
     virtStream.run();
     assertEquals(22.0, virtStream.getOutStream().getTemperature("C"), 1e-6);

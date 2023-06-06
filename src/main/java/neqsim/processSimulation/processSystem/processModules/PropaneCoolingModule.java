@@ -19,7 +19,6 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @version $Id: $Id
  */
 public class PropaneCoolingModule extends ProcessModuleBaseClass {
-
   /**
    * <p>Constructor for PropaneCoolingModule.</p>
    *

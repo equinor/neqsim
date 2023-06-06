@@ -1,8 +1,11 @@
 package neqsim.processSimulation.processSystem;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 public class waterDegasserTest {
+  Logger logger = LogManager.getLogger(waterDegasserTest.class);
 
   @Test
   public void runProcess() throws InterruptedException {
@@ -83,8 +86,8 @@ public class waterDegasserTest {
     process.add(heater_TP_setter_main_stream);
     process.run();
 
-    System.out.println("Finished TEST 1");
-    System.out.println(heater_TP_setter_main_stream.getOutletStream().getFluid().getPhase("gas")
+    logger.info("Finished TEST 1");
+    logger.info(heater_TP_setter_main_stream.getOutletStream().getFluid().getPhase("gas")
         .getFlowRate("kg/hr"));
   }
 

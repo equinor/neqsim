@@ -7,7 +7,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 class SaturationPressureTest extends neqsim.NeqSimTest {
-
   @BeforeAll
   static void setUpBeforeClass() throws Exception {}
 

@@ -126,7 +126,6 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     try {
       runThr.join(10 * 60000);
     } catch (Exception ex) {
-
     }
     double wtpWaterRichTEG =
         TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;

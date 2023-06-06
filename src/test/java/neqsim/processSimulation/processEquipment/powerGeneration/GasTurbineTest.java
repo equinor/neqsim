@@ -36,7 +36,6 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
 
   @Test
   void testGetMechanicalDesign() {
-
   }
 
   @Disabled
