@@ -22,7 +22,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   ProcessEquipmentInterface adjustedEquipment = null;
   ProcessEquipmentInterface targetEquipment = null;
 
-  String adjustedVarialble = "";
+  String adjustedVariable = "";
   String targetVariable = "";
   String targetPhase = "";
   String targetComponent = "";
@@ -71,7 +71,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
       String adjstedVariable) {
     this.adjustedEquipment = adjustedEquipment;
-    this.adjustedVarialble = adjstedVariable;
+    this.adjustedVariable = adjstedVariable;
   }
 
   /**
@@ -142,7 +142,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   public void run(UUID id) {
     oldError = error;
 
-    if (adjustedVarialble.equals("mass flow")) {
+    if (adjustedVariable.equals("mass flow")) {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate("kg/hr");
     } else {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getNumberOfMoles();
@@ -174,7 +174,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     error = deviation;
     logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
     if (iterations < 2) {
-      if (adjustedVarialble.equals("mass flow")) {
+      if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
             "kg/hr");
       } else {
@@ -184,7 +184,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     } else {
       double derivate = (error - oldError) / (inputValue - oldInputValue);
       double newVal = error / derivate;
-      if (adjustedVarialble.equals("mass flow")) {
+      if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
             "kg/hr");
       } else {
