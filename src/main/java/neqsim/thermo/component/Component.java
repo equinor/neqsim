@@ -518,7 +518,6 @@ abstract class Component implements ComponentInterface {
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
       int type) {
-
     if (totalNumberOfMoles == 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
           "totalNumberOfMoles", "must be larger than 0"));

@@ -15,14 +15,16 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class NewtonSolveABCD implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NewtonSolveABCD.class);
+
   int iter = 0;
   Matrix Jac;
   Matrix fvec;
-  Matrix sol, dx;
+  Matrix sol;
+  Matrix dx;
   int numberOfComponents = 0;
   TBPCharacterize characterizeClass;
   double[] calcTPBfraction = null;
-  static Logger logger = LogManager.getLogger(NewtonSolveABCD.class);
 
   /**
    * <p>

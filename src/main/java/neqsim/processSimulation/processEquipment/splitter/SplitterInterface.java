@@ -12,7 +12,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public interface SplitterInterface extends ProcessEquipmentInterface {
-
   /**
    * <p>
    * setSplitNumber.

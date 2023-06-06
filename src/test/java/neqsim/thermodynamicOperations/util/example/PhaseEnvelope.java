@@ -35,9 +35,6 @@ public class PhaseEnvelope {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
     int sstms = 1;
-
-    System.out.println(sstms);
-
     if (sstms == 1) {
       // TEST SYSTEM 1
       testSystem.addComponent("methane", 90.465);

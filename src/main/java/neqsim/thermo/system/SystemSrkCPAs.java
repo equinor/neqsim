@@ -63,7 +63,6 @@ public class SystemSrkCPAs extends SystemSrkCPA {
     this.useVolumeCorrection(true);
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -71,7 +70,6 @@ public class SystemSrkCPAs extends SystemSrkCPA {
     }
 
     if (hydrateCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhaseHydrate();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

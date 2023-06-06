@@ -20,9 +20,10 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ThermodynamicModelTest.class);
+
   SystemInterface system;
   private double maxError = 1e-10;
-  static Logger logger = LogManager.getLogger(ThermodynamicModelTest.class);
 
   /**
    * <p>
@@ -134,7 +135,6 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
           // logger.info("fug " +
           // system.getPhases()[1].getComponents()[i].getNumberOfMolesInPhase()*system.getPhases()[1].getComponents()[i].getdfugdn(j));
         }
-
 
         // logger.info("test fugdn gas : " + j + " " + temp1 + " name " +
         // system.getPhases()[0].getComponents()[j].getComponentName());

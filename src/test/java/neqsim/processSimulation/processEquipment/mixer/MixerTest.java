@@ -84,7 +84,5 @@ class MixerTest {
     processOps.run();
     assertFalse(gasStream.needRecalculation());
     assertFalse(testMixer.needRecalculation());
-
-
   }
 }

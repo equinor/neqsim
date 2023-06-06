@@ -89,7 +89,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * @param stream input stream
    */
   public Stream(String name, StreamInterface stream) {
-    super(name);
+    this(name);
     this.setStream(stream);
     thermoSystem = stream.getThermoSystem();
     numberOfStreams++;
@@ -323,6 +323,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
+    if (stream != null) {
+      thermoSystem = stream.getFluid();
+    }
     if (getFluid().getTemperature() == lastTemperature && getFluid().getPressure() == lastPressure
         && Math.abs(getFluid().getFlowRate("kg/hr") - lastFlowRate)
             / getFluid().getFlowRate("kg/hr") < 1e-6) {

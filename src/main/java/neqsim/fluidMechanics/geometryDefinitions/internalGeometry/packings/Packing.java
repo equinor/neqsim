@@ -21,6 +21,7 @@ import neqsim.util.NamedBaseClass;
 public abstract class Packing extends NamedBaseClass implements PackingInterface {
   private static final long serialVersionUID = 1L;
   static Logger logger = LogManager.getLogger(Packing.class);
+
   double voidFractionPacking = 0.951;
   double size = 0;
   double surfaceAreaPrVolume = 112.6;

@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class AdiabaticTwoPhasePipeTest {
-
   @Test
   public void testMain() {
     neqsim.thermo.system.SystemInterface testSystem =

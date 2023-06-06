@@ -147,7 +147,6 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to pressure")
   public void checkFugacityCoefficientsDP() {
-
     assertTrue(testModel.checkFugacityCoefficientsDP());
   }
 

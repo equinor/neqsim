@@ -34,7 +34,6 @@ abstract class ComponentGEUniquacmodifiedHV extends ComponentGEUniquac {
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, int phasetype) {
-
     // PhaseGEInterface phaseny = (PhaseGEInterface) phase.getPhase();
     // PhaseGEInterface GEPhase = phaseny.getGEphase();
 

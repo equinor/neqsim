@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class SevereSlugTest {
-
   @Test
   void testCheckFlowRegime1() {
     neqsim.thermo.system.SystemInterface testSystem2 =

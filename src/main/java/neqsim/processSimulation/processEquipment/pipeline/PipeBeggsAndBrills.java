@@ -42,7 +42,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class PipeBeggsAndBrills extends Pipeline {
-
   private static final long serialVersionUID = 1001;
 
   double inletPressure = 0;
@@ -240,7 +239,6 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return a {@link java.lang.String} object
    */
   public String calcFlowRegime() {
-
     // Calc input volume fraction
     area = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
     if (system.getNumberOfPhases() != 1) {
@@ -312,7 +310,6 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return a double
    */
   public double calcHydrostaticPressureDifference() {
-
     /*
      * Once the flow type has been determined then the liquid holdup can be calculated. Beggs and
      * Brill divided the liquid holdup calculation into two parts. First the liquid holdup for

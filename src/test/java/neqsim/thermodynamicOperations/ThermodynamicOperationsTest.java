@@ -363,7 +363,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   }
 
   private class TestData {
-
     private final String name;
     private String inputFile;
     private String outputFile;

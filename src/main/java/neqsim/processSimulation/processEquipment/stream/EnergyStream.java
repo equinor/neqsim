@@ -61,12 +61,15 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     EnergyStream other = (EnergyStream) obj;
     return Double.doubleToLongBits(duty) == Double.doubleToLongBits(other.duty);
   }

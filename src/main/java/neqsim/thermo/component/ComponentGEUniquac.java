@@ -20,11 +20,10 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentGEUniquac extends ComponentGE {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentGEUniquac.class);
 
   double r = 0;
   double q = 0;
-
-  static Logger logger = LogManager.getLogger(ComponentGEUniquac.class);
 
   /**
    * <p>

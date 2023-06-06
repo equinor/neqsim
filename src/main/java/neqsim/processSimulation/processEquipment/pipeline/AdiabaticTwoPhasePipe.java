@@ -235,7 +235,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     double oldPressure = 0.0;
     int iter = 0;
     if (!setPressureOut) {
-
       if (system.getFlowRate(maxflowunit) > flowLimit) {
         system.setTotalFlowRate(flowLimit, maxflowunit);
         testOps = new ThermodynamicOperations(system);
