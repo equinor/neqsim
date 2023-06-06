@@ -142,12 +142,15 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     SystemMechanicalDesign other = (SystemMechanicalDesign) obj;
     return numberOfModules == other.numberOfModules
         && Objects.equals(processSystem, other.processSystem)

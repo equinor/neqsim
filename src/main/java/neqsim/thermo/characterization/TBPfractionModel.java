@@ -26,7 +26,7 @@ public class TBPfractionModel implements java.io.Serializable {
   public TBPfractionModel() {}
 
   /**
-   * Base model for something?
+   * Base model for something.
    */
   public abstract class TBPBaseModel implements TBPModelInterface, Cloneable, java.io.Serializable {
     private static final long serialVersionUID = 1000;
