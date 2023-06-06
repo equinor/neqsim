@@ -15,12 +15,11 @@ import neqsim.thermo.component.ComponentGEInterface;
  */
 public class PhaseDesmukhMather extends PhaseGE {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseDesmukhMather.class);
 
   double GE = 0.0;
   double[][] aij;
   double[][] bij;
-
-  static Logger logger = LogManager.getLogger(PhaseDesmukhMather.class);
 
   /**
    * <p>

@@ -1021,9 +1021,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param phaseTypeName PhaseType to look for
    * @return True if system contains a phase of requested type
-   * @deprecated Replaced by {@link hasPhaseType}
    */
-  @Deprecated
   public default boolean hasPhaseType(String phaseTypeName) {
     return hasPhaseType(PhaseType.byDesc(phaseTypeName));
   }
@@ -2436,9 +2434,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param phaseTypeName Name of phase type to look for
    * @return Phase number
-   * @deprecated Replaced by getPhaseNumberOfPhase
    */
-  @Deprecated
   public default int getPhaseNumberOfPhase(String phaseTypeName) {
     return getPhaseNumberOfPhase(PhaseType.byDesc(phaseTypeName));
   }

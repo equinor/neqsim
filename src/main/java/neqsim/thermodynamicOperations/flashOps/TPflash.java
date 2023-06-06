@@ -167,7 +167,6 @@ public class TPflash extends Flash {
    * </p>
    */
   public void resetK() {
-
     for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       lnK[i] = lnOldK[i];
       system.getPhase(0).getComponents()[i].setK(Math.exp(lnK[i]));

@@ -10,7 +10,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  */
 class TPFlashTestHighTemp {
-
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
 

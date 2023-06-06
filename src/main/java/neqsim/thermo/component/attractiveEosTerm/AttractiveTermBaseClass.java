@@ -20,13 +20,12 @@ import neqsim.thermo.component.ComponentEosInterface;
  */
 public class AttractiveTermBaseClass implements AttractiveTermInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(AttractiveTermBaseClass.class);
 
   private ComponentEosInterface component = null;
   protected double m;
   protected double[] parameters = new double[3];
   protected double[] parametersSolid = new double[3];
-
-  static Logger logger = LogManager.getLogger(AttractiveTermBaseClass.class);
 
   /**
    * <p>

@@ -14,7 +14,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface ProcessEquipmentInterface extends SimulationInterface {
-
   /**
    * <p>
    * reportResults.

@@ -160,7 +160,6 @@ public class NeqSimDataBase
     this.statement = statement;
   }
 
-
   /**
    * <p>
    * Execute query using execute.
@@ -406,7 +405,6 @@ public class NeqSimDataBase
       throw new RuntimeException(ex);
     }
   }
-
 
   /**
    * Drops and re-creates table from contents in csv file.

@@ -16,7 +16,6 @@ import neqsim.thermo.component.ComponentPRvolcor;
  * @version $Id: $Id
  */
 public class PhasePrEosvolcor extends PhasePrEos {
-
   private static final long serialVersionUID = 1000;
   double loc_C = 0;
   private double CT;

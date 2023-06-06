@@ -40,7 +40,6 @@ public class PipelineDesignStandard extends DesignStandard {
     try (java.sql.ResultSet dataSet = database.getResultSet(
         ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Pipeline' AND Company='"
             + standardName + "'"))) {
-
       while (dataSet.next()) {
         String specName = dataSet.getString("SPECIFICATION");
         if (specName.equals("safetyFactor")) {

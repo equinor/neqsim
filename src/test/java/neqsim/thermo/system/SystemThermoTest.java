@@ -47,7 +47,6 @@ class SystemThermoTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test addFluids with pseudo component")
   public void testAddFluids() {
-
     neqsim.thermo.system.SystemPrEos fluid1 = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
     fluid1.addComponent("methane", 1.0);
     fluid1.addTBPfraction("C7", 1.0, 0.09, 0.81);

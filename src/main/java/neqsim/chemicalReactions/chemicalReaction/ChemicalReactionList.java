@@ -148,7 +148,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         return chemicalReactionList.get(i);
       }
     }
-    System.out.println("did not find reaction: " + name);
+    logger.warn("did not find reaction: " + name);
     return null;
   }
 

@@ -690,7 +690,6 @@ public class ComponentHydrate extends Component {
 
   // public double getEmptyHydrateStructureVapourPressure(int type, double
   // temperature){
-
   // if(type==0){
   // return Math.exp(par1_struc1+par2_struc1/temperature)*1.01325;
   // }
@@ -701,7 +700,6 @@ public class ComponentHydrate extends Component {
 
   // public double getEmptyHydrateStructureVapourPressuredT(int type, double
   // temperature){
-
   // if(type==0){
   // return
   // -par2_struc1/(temperature*temperature)*Math.exp(par1_struc1+par2_struc1/temperature);

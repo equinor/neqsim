@@ -11,7 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  */
 class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
-
   static neqsim.thermo.system.SystemInterface testSystem = null;
 
   File file = new File("src/test/java/neqsim/thermo/util/readwrite");
@@ -24,7 +23,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
    */
   @BeforeAll
   static void setUpBeforeClass() throws Exception {
-
   }
 
   /**

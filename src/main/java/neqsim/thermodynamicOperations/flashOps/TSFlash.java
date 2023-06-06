@@ -122,7 +122,7 @@ public class TSFlash extends QfuncFlash {
       testSystem.display();
 
       double Sspec = testSystem.getEntropy("kJ/kgK");
-      System.out.println("S spec " + Sspec);
+      logger.info("S spec " + Sspec);
       testSystem.setTemperature(293.15);
       testOps.TSflash(Sspec, "kJ/kgK");
       testSystem.display();
