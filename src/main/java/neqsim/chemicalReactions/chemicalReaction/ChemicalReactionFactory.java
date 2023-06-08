@@ -9,7 +9,6 @@ package neqsim.chemicalReactions.chemicalReaction;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.util.database.NeqSimDataBase;
 
 /**
  * <p>
@@ -47,31 +46,39 @@ public class ChemicalReactionFactory {
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
-            database.getResultSet("SELECT * FROM reactionkspdata where name='" + name + "'")) {
-      dataSet.next();
-      String reacname = dataSet.getString("name");
-      K[0] = Double.parseDouble(dataSet.getString("K1"));
-      K[1] = Double.parseDouble(dataSet.getString("K2"));
-      K[2] = Double.parseDouble(dataSet.getString("K3"));
-      K[3] = Double.parseDouble(dataSet.getString("K4"));
-      refT = Double.parseDouble(dataSet.getString("Tref"));
-      rateFactor = Double.parseDouble(dataSet.getString("r"));
+            database.getResultSet("SELECT * FROM reactiondata where name='" + name + "'")) {
+      if (dataSet.next()) {
+        String reacname = dataSet.getString("name");
+        K[0] = Double.parseDouble(dataSet.getString("K1"));
+        K[1] = Double.parseDouble(dataSet.getString("K2"));
+        K[2] = Double.parseDouble(dataSet.getString("K3"));
+        K[3] = Double.parseDouble(dataSet.getString("K4"));
+        refT = Double.parseDouble(dataSet.getString("Tref"));
+        rateFactor = Double.parseDouble(dataSet.getString("r"));
 
-      activationEnergy = Double.parseDouble(dataSet.getString("ACTENERGY"));
-      try (NeqSimDataBase database2 = new neqsim.util.database.NeqSimDataBase();
-          java.sql.ResultSet dataSet2 = database2
-              .getResultSet("SELECT * FROM stoccoefdata where reacname='" + reacname + "'")) {
-        dataSet2.next();
-        do {
-          names.add(dataSet2.getString("compname").trim());
-          stocCoef.add((dataSet2.getString("stoccoef")).trim());
-        } while (dataSet2.next());
-        // System.out.println("reaction added ok...");
-      } catch (Exception ex) {
-        logger.error("Could not add reaction", ex);
+        activationEnergy = Double.parseDouble(dataSet.getString("ACTENERGY"));
+        try (java.sql.ResultSet dataSet2 =
+            database.getResultSet("SELECT * FROM stoccoefdata where reacname='" + reacname + "'")) {
+          while (dataSet2.next()) {
+            names.add(dataSet2.getString("compname").trim());
+            stocCoef.add((dataSet2.getString("stoccoef")).trim());
+          }
+        } finally {
+          if (names.size() == 0) {
+            throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+                "ChemicalReactionFactory", "getChemicalReaction", "reacname",
+                "- found no data in table stoccoefdata for component named " + reacname));
+          }
+        }
+      } else {
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+            "ChemicalReactionFactory", "getChemicalReaction", "reacname",
+            "- found no data in table REACTIONDATA for component named " + name));
       }
     } catch (Exception ex) {
-      logger.error("Could not add reaction", ex);
+      // TODO: improve warning message, probably table missing?
+      logger.error("Failed getting data from REACTIONDATA for component named " + name + ":\n\t"
+          + ex.getMessage());
     }
 
     String[] nameArray = new String[names.size()];
@@ -92,7 +99,7 @@ public class ChemicalReactionFactory {
   public static String[] getChemicalReactionNames() {
     ArrayList<String> nameList = new ArrayList<String>();
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT name FROM reactionkspdata")) {
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT name FROM REACTIONDATA")) {
       dataSet.next();
       do {
         nameList.add(dataSet.getString("name").trim());
