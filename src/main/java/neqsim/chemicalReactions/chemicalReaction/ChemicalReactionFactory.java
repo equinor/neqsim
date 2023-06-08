@@ -27,7 +27,8 @@ public class ChemicalReactionFactory {
    * Constructor for ChemicalReactionFactory.
    * </p>
    */
-  public ChemicalReactionFactory() {}
+  public ChemicalReactionFactory() {
+  }
 
   /**
    * <p>
@@ -35,7 +36,8 @@ public class ChemicalReactionFactory {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return a {@link neqsim.chemicalReactions.chemicalReaction.ChemicalReaction} object
+   * @return a {@link neqsim.chemicalReactions.chemicalReaction.ChemicalReaction}
+   *         object
    */
   public static ChemicalReaction getChemicalReaction(String name) {
     ArrayList<String> names = new ArrayList<String>();
@@ -46,8 +48,7 @@ public class ChemicalReactionFactory {
     double activationEnergy = 0;
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet =
-            database.getResultSet("SELECT * FROM reactionkspdata where name='" + name + "'")) {
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM REACTIONDATA where name='" + name + "'")) {
       dataSet.next();
       String reacname = dataSet.getString("name");
       K[0] = Double.parseDouble(dataSet.getString("K1"));
@@ -92,7 +93,7 @@ public class ChemicalReactionFactory {
   public static String[] getChemicalReactionNames() {
     ArrayList<String> nameList = new ArrayList<String>();
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT name FROM reactionkspdata")) {
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT name FROM REACTIONDATA")) {
       dataSet.next();
       do {
         nameList.add(dataSet.getString("name").trim());
