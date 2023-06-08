@@ -52,6 +52,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public void readReactions(SystemInterface system) {
+    // TODO: refact and combine with chemicalreactionfactory?
     chemicalReactionList.clear();
     ArrayList<String> names = new ArrayList<String>();
     ArrayList<String> stocCoef = new ArrayList<String>();
