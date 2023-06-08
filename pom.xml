@@ -200,6 +200,14 @@
 					<show>private</show>
 					<nohelp>true</nohelp>
 				</configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
@@ -249,7 +257,7 @@
 					<execution>
 						<id>attach-sources</id>
 						<goals>
-							<goal>jar</goal>
+              <goal>jar-no-fork</goal>
 						</goals>
 					</execution>
 				</executions>
