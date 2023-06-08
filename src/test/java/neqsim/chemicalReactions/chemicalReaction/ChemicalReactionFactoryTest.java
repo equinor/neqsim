@@ -8,7 +8,9 @@ public class ChemicalReactionFactoryTest {
   void testGetChemicalReaction() {
     String[] reactionNames = ChemicalReactionFactory.getChemicalReactionNames();
     Assertions.assertNotEquals(0, reactionNames.length);
+
     ChemicalReactionFactory.getChemicalReaction("test");
+    ChemicalReactionFactory.getChemicalReaction("CO2water");
     ChemicalReactionFactory.getChemicalReaction(reactionNames[0]);
   }
 }
