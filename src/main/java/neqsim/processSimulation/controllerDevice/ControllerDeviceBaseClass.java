@@ -188,7 +188,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * Set derivative time of PID controller.
    * </p>
    *
-   * @param Td Deritivate time in seconds
+   * @param Td Derivative time in seconds
    */
   public void setTd(double Td) {
     this.Td = Td;
