@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.h2.jdbc.JdbcSQLSyntaxErrorException;
 
 /**
  * <p>
@@ -206,7 +207,7 @@ public class NeqSimDataBase
 
   /**
    * <p>
-   * Execute query using executeQueryy and return ResultSet.
+   * Execute query using executeQuery and return ResultSet.
    * </p>
    *
    * @param sqlString Query to execute.
@@ -215,6 +216,12 @@ public class NeqSimDataBase
   public ResultSet getResultSet(String sqlString) {
     try {
       return getStatement().executeQuery(sqlString);
+    } catch (JdbcSQLSyntaxErrorException ex) {
+      if (ex.getMessage().startsWith("Table ") && ex.getMessage().contains(" not found;")) {
+        throw new RuntimeException(new neqsim.util.exception.NotInitializedException(this,
+            "getResultSet", ex.getMessage()));
+      }
+      throw new RuntimeException(ex);
     } catch (Exception ex) {
       logger.error("error loading NeqSimbataBase ", ex);
       throw new RuntimeException(ex);
@@ -451,6 +458,7 @@ public class NeqSimDataBase
       updateTable("ISO6976constants2016");
       updateTable("STOCCOEFDATA");
       updateTable("REACTIONDATA");
+      // Table ReactionKSPdata is not in use anywhere
       updateTable("ReactionKSPdata");
       updateTable("AdsorptionParameters");
 
