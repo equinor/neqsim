@@ -112,14 +112,14 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
-   * setControllerParameters.
+   * Set PID tuning parameters.
    * </p>
    *
-   * @param Ksp a double
-   * @param Ti a double
-   * @param Td a double
+   * @param Kp Proportional gain
+   * @param Ti Integral time in seconds
+   * @param Td Derivative time in seconds
    */
-  public void setControllerParameters(double Ksp, double Ti, double Td);
+  public void setControllerParameters(double Kp, double Ti, double Td);
 
   /** {@inheritDoc} */
   @Override
