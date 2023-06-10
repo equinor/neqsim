@@ -255,10 +255,20 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     upMoles++;
     // double changeMoles = 0.0;
     for (int i = 0; i < components.length; i++) {
-      system.addComponent(components[i].getComponentNumber(),
-          (n_mol[i] - system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-              .getNumberOfMolesInPhase()),
-          phasenumb);
+      if (n_mol[i] >= system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+          .getNumberOfMolesInPhase()) {
+        system.addComponent(components[i].getComponentNumber(),
+            (n_mol[i]
+                - system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                    .getNumberOfMolesInPhase()),
+            phasenumb);
+      } else {
+        system.addComponent(components[i].getComponentNumber(),
+            (-0.99 * system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                .getNumberOfMolesInPhase()),
+            phasenumb);
+      }
+
 
       // changeMoles += n_mol[i] -
       // system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
