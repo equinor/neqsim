@@ -1329,7 +1329,7 @@ abstract class SystemThermo implements SystemInterface {
       if (phaseNumber == i) {
         k = 1.0;
       } else {
-        k = 1e-30;
+        k = 0.0;
       }
       phaseArray[phaseIndex[i]].addMolesChemReac(index, moles * k, moles);
     }

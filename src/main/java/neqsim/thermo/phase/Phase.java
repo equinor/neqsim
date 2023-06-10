@@ -173,8 +173,8 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void addMolesChemReac(int component, double dn, double totdn) {
-    if (numberOfMolesInPhase + dn < 0.0) {
-      String msg = "will lead to negative number of moles in phase.";
+    if ((numberOfMolesInPhase + dn) < 0.0) {
+      String msg = "will lead to negative number of moles in phase." + (numberOfMolesInPhase + dn);
       logger.error(msg);
       neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
