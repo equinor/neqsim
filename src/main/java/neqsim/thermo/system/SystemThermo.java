@@ -1308,12 +1308,12 @@ abstract class SystemThermo implements SystemInterface {
       logger.error("componentIndex higher than number of components in system");
       return;
     }
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
     for (PhaseInterface tmpPhase : phaseArray) {
       if (tmpPhase != null) {
         tmpPhase.addMolesChemReac(index, moles, moles);
       }
     }
+    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
   }
 
   /** {@inheritDoc} */
