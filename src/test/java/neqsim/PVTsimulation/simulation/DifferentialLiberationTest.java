@@ -11,7 +11,7 @@ public class DifferentialLiberationTest {
     SystemInterface tempSystem = new FluidCreator().create("black oil");
 
     DifferentialLiberation CVDsim = new DifferentialLiberation(tempSystem);
-    CVDsim.setPressures(new double[]{300.0, 250.0, 200.0, 150.0, 100.0, 70.0, 50.0, 30.0, 10.0});
+    CVDsim.setPressures(new double[] {300.0, 250.0, 200.0, 150.0, 100.0, 70.0, 50.0, 30.0, 10.0});
     CVDsim.setTemperature(310.0);
     CVDsim.runCalc();
   }

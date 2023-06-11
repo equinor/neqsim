@@ -169,11 +169,11 @@ public class ViscositySim extends BasePVTsimulation {
 
     double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4},};
     sepSim.setExperimentalData(expData);
-    sepSim.runTuning();
-    // sepSim.runCalc();
+    // sepSim.runTuning();
+    sepSim.runCalc();
     double a = sepSim.getGasViscosity()[0];
     double a2 = sepSim.getOilViscosity()[0];
-    sepSim.getThermoSystem().display();
+    // sepSim.getThermoSystem().display();
     // sepSim.tuneModel(exptemperatures, exppressures, expwaxFrations);
   }
 
