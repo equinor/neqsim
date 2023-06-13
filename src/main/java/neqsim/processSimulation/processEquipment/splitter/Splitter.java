@@ -229,12 +229,15 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       for (int j = 0; j < inletStream.getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
         int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
         double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
-        splitStream[i].getThermoSystem().addComponent(index, moles * splitFactor[i] - moles);
+        double change =
+            (moles * splitFactor[i] - moles > 0) ? moles : moles * splitFactor[i] - moles;
+        splitStream[i].getThermoSystem().addComponent(index, change);
       }
       ThermodynamicOperations thermoOps =
           new ThermodynamicOperations(splitStream[i].getThermoSystem());
       thermoOps.TPflash();
     }
+
     setCalculationIdentifier(id);
   }
 

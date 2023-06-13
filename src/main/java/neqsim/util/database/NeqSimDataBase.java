@@ -447,7 +447,6 @@ public class NeqSimDataBase
     h2IsInitalizing = true;
     neqsim.util.database.NeqSimDataBase.connectionString =
         "jdbc:h2:mem:neqsimthermodatabase;DB_CLOSE_DELAY=-1";
-    neqsim.util.database.NeqSimDataBase.createTemporaryTables = false;
     neqsim.util.database.NeqSimDataBase.dataBaseType = "H2";
 
     try {

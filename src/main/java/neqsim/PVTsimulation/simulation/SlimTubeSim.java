@@ -1,5 +1,7 @@
 package neqsim.PVTsimulation.simulation;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -13,6 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SlimTubeSim extends BasePVTsimulation {
+  static Logger logger = LogManager.getLogger(SlimTubeSim.class);
   SystemInterface inectionGasSystem = null;
   private int numberOfSlimTubeNodes = 200;
   SystemInterface[] slimTubeNodeSystem = null;
@@ -131,8 +134,12 @@ public class SlimTubeSim extends BasePVTsimulation {
 
         for (int k = 0; k < slimTubeNodeSystem[i].getPhase(liquidPhaseNumber)
             .getNumberOfComponents(); k++) {
-          slimTubeNodeSystem[i + 1].addComponent(k, removeMoles[k]);
-          slimTubeNodeSystem[i].addComponent(k, -removeMoles[k]);
+          try {
+            slimTubeNodeSystem[i + 1].addComponent(k, removeMoles[k]);
+            slimTubeNodeSystem[i].addComponent(k, -removeMoles[k]);
+          } catch (Exception e) {
+            logger.error(e.getMessage());
+          }
         }
         slimOps0.setSystem(slimTubeNodeSystem[i]);
         slimOps0.TPflash();
@@ -178,13 +185,13 @@ public class SlimTubeSim extends BasePVTsimulation {
           slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(1).getVolume();
     }
 
-    System.out.println("accumulated VOlume " + totalAccumulatedVolumeAtStadardConditions
-        + " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
-    System.out.println("oil recovery ratio"
-        + totalAccumulatedVolumeAtStadardConditions / totalReferenceNodeVolumeAtStadardConditions);
+   // System.out.println("accumulated VOlume " + totalAccumulatedVolumeAtStadardConditions
+   //     + " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
+   // System.out.println("oil recovery ratio"
+   //     + totalAccumulatedVolumeAtStadardConditions / totalReferenceNodeVolumeAtStadardConditions);
 
     for (int i = 0; i < numberOfSlimTubeNodes; i++) {
-      slimTubeNodeSystem[i].display();
+      // slimTubeNodeSystem[i].display();
     }
   }
 

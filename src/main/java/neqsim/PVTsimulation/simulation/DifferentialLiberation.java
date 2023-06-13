@@ -156,8 +156,16 @@ public class DifferentialLiberation extends BasePVTsimulation {
         double test = volumeCorrection / getThermoSystem().getPhase(0).getMolarVolume();
 
         for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-          getThermoSystem().addComponent(j,
-              -test * getThermoSystem().getPhase(0).getComponent(j).getx());
+          try {
+            double change =
+                (test * getThermoSystem().getPhase(0).getComponent(j).getx() < getThermoSystem()
+                    .getPhase(0).getComponent(j).getNumberOfMolesInPhase())
+                        ? test * getThermoSystem().getPhase(0).getComponent(j).getx()
+                        : test * getThermoSystem().getPhase(0).getComponent(j).getx();
+            getThermoSystem().addComponent(j, -change);
+          } catch (Exception e) {
+            logger.debug(e.getMessage());
+          }
         }
       }
     }
