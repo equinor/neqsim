@@ -12,14 +12,6 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
   // Composition of natural gas (in mole percent)
   private static final Map<String, Double> NATURAL_GAS_COMPOSITION = new HashMap<>();
 
-  static {
-    NATURAL_GAS_COMPOSITION.put("Methane", 0.80);
-    NATURAL_GAS_COMPOSITION.put("Ethane", 0.10);
-    NATURAL_GAS_COMPOSITION.put("Propane", 0.05);
-    NATURAL_GAS_COMPOSITION.put("Butane", 0.03);
-    NATURAL_GAS_COMPOSITION.put("Others", 0.02);
-  }
-
   // CO2 emissions factor for each component (in kg CO2 per kg of component burned)
   private static final Map<String, Double> CO2_EMISSIONS_FACTORS = new HashMap<>();
 
@@ -65,6 +57,18 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
       NATURAL_GAS_COMPOSITION.put("Ethane", stream.getFluid().getComponent("ethane").getz());
       CO2_EMISSIONS_FACTORS.put("Ethane", 3.75);
     }
+    if (stream.getFluid().getPhase(0).hasComponent("propane")) {
+      NATURAL_GAS_COMPOSITION.put("Propane", stream.getFluid().getComponent("propane").getz());
+      CO2_EMISSIONS_FACTORS.put("Propane", 5.5);
+    }
+    if (stream.getFluid().getPhase(0).hasComponent("n-butane")) {
+      NATURAL_GAS_COMPOSITION.put("n-butane", stream.getFluid().getComponent("n-butane").getz());
+      CO2_EMISSIONS_FACTORS.put("n-butane", 6.5);
+    }
+    if (stream.getFluid().getPhase(0).hasComponent("i-butane")) {
+      NATURAL_GAS_COMPOSITION.put("i-butane", stream.getFluid().getComponent("i-butane").getz());
+      CO2_EMISSIONS_FACTORS.put("i-butane", 6.5);
+    }
     // ....
   }
 
@@ -72,21 +76,26 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
   @Override
   public double getMeasuredValue(String unit) {
     setComponents();
-    return calculateCO2Emissions(NATURAL_GAS_COMPOSITION, CO2_EMISSIONS_FACTORS);
+    return calculateCO2Emissions(NATURAL_GAS_COMPOSITION, CO2_EMISSIONS_FACTORS)
+        * stream.getFluid().getFlowRate(unit);
   }
 
   public static void main(String[] args) {
     SystemInterface fluid = new SystemSrkEos(190, 10);
+    fluid.addComponent("nitrogen", 0.01);
+    fluid.addComponent("CO2", 0.01);
     fluid.addComponent("methane", 1);
-    fluid.addComponent("ethane", 0.1);
+    fluid.addComponent("ethane", 0.05);
+    fluid.addComponent("propane", 0.01);
+    fluid.addComponent("n-butane", 0.001);
+    fluid.addComponent("i-butane", 0.001);
 
     Stream stream1 = new Stream("stream1", fluid);
+    stream1.setFlowRate(1.0, "kg/hr");
     stream1.run();
-    CombustionEmissionsCalculator comp = new CombustionEmissionsCalculator("name1", stream1);;
+    CombustionEmissionsCalculator comp = new CombustionEmissionsCalculator("name1", stream1);
     System.out.println(
         "CO2 emissions from burning natural gas: " + comp.getMeasuredValue("kg/hr") + " kg/hr");
-    double co2Emissions = calculateCO2Emissions(NATURAL_GAS_COMPOSITION, CO2_EMISSIONS_FACTORS);
-    System.out.println("CO2 emissions from burning natural gas: " + co2Emissions + " kg");
   }
 
   public static double calculateCO2Emissions(Map<String, Double> composition,
