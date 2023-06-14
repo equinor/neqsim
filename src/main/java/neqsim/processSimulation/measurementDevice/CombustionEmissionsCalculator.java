@@ -2,7 +2,10 @@ package neqsim.processSimulation.measurementDevice;
 
 import java.util.HashMap;
 import java.util.Map;
+import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseClass {
 
@@ -51,7 +54,37 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
     super(name, "kg/hr", stream);
   }
 
+  public void setComponents() {
+    NATURAL_GAS_COMPOSITION.clear();
+    CO2_EMISSIONS_FACTORS.clear();
+    if (stream.getFluid().getPhase(0).hasComponent("methane")) {
+      NATURAL_GAS_COMPOSITION.put("Methane", stream.getFluid().getComponent("methane").getz());
+      CO2_EMISSIONS_FACTORS.put("Methane", 2.75);
+    }
+    if (stream.getFluid().getPhase(0).hasComponent("ethane")) {
+      NATURAL_GAS_COMPOSITION.put("Ethane", stream.getFluid().getComponent("ethane").getz());
+      CO2_EMISSIONS_FACTORS.put("Ethane", 3.75);
+    }
+    // ....
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMeasuredValue(String unit) {
+    setComponents();
+    return calculateCO2Emissions(NATURAL_GAS_COMPOSITION, CO2_EMISSIONS_FACTORS);
+  }
+
   public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(190, 10);
+    fluid.addComponent("methane", 1);
+    fluid.addComponent("ethane", 0.1);
+
+    Stream stream1 = new Stream("stream1", fluid);
+    stream1.run();
+    CombustionEmissionsCalculator comp = new CombustionEmissionsCalculator("name1", stream1);;
+    System.out.println(
+        "CO2 emissions from burning natural gas: " + comp.getMeasuredValue("kg/hr") + " kg/hr");
     double co2Emissions = calculateCO2Emissions(NATURAL_GAS_COMPOSITION, CO2_EMISSIONS_FACTORS);
     System.out.println("CO2 emissions from burning natural gas: " + co2Emissions + " kg");
   }
