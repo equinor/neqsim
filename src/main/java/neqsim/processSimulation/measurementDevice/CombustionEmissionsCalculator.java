@@ -2,10 +2,7 @@ package neqsim.processSimulation.measurementDevice;
 
 import java.util.HashMap;
 import java.util.Map;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 
 public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseClass {
 
@@ -15,14 +12,6 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
   // CO2 emissions factor for each component (in kg CO2 per kg of component
   // burned)
   private static final Map<String, Double> CO2_EMISSIONS_FACTORS = new HashMap<>();
-
-  static {
-    CO2_EMISSIONS_FACTORS.put("Methane", 2.75);
-    CO2_EMISSIONS_FACTORS.put("Ethane", 3.75);
-    CO2_EMISSIONS_FACTORS.put("Propane", 5.50);
-    CO2_EMISSIONS_FACTORS.put("Butane", 6.50);
-    CO2_EMISSIONS_FACTORS.put("Others", 4.25);
-  }
 
   /**
    * <p>
@@ -79,24 +68,6 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
     setComponents();
     return calculateCO2Emissions(NATURAL_GAS_COMPOSITION, CO2_EMISSIONS_FACTORS)
         * stream.getFluid().getFlowRate(unit);
-  }
-
-  public static void main(String[] args) {
-    SystemInterface fluid = new SystemSrkEos(190, 10);
-    fluid.addComponent("nitrogen", 0.01);
-    fluid.addComponent("CO2", 0.01);
-    fluid.addComponent("methane", 1);
-    fluid.addComponent("ethane", 0.05);
-    fluid.addComponent("propane", 0.01);
-    fluid.addComponent("n-butane", 0.001);
-    fluid.addComponent("i-butane", 0.001);
-
-    Stream stream1 = new Stream("stream1", fluid);
-    stream1.setFlowRate(1.0, "kg/hr");
-    stream1.run();
-    CombustionEmissionsCalculator comp = new CombustionEmissionsCalculator("name1", stream1);
-    System.out.println(
-        "CO2 emissions from burning natural gas: " + comp.getMeasuredValue("kg/hr") + " kg/hr");
   }
 
   public static double calculateCO2Emissions(Map<String, Double> composition,
