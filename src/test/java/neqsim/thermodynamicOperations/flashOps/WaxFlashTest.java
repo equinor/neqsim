@@ -43,6 +43,7 @@ class WaxFlashTest {
     testSystem.setMixingRule(2);
     testSystem.addSolidComplexPhase("wax");
     testSystem.setMultiphaseWaxCheck(true);
+    NeqSimDataBase.setCreateTemporaryTables(false);
   }
 
   /**

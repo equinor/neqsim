@@ -11,7 +11,6 @@ public class SlimTubeSimTest {
     SystemInterface gasSystem = new SystemSrkEos(298.0, 200.0);
     gasSystem.addComponent("CO2", 10.0);
     // gasSystem.addComponent("ethane", 2.0);
-    gasSystem.createDatabase(true);
     gasSystem.setMixingRule(2);
 
     SystemInterface oilSystem = new SystemSrkEos(298.0, 200.0);
@@ -33,7 +32,6 @@ public class SlimTubeSimTest {
     oilSystem.addTBPfraction("C19", 0.13, 270.0 / 1000.0, 0.854);
     oilSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.88);
     oilSystem.getCharacterization().characterisePlusFraction();
-    oilSystem.createDatabase(true);
     oilSystem.setMixingRule(2);
 
     SlimTubeSim sepSim = new SlimTubeSim(oilSystem, gasSystem);
