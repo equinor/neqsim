@@ -54,7 +54,7 @@ public class SlimTubeSim extends BasePVTsimulation {
     getThermoSystem().setTemperature(getTemperature());
     thermoOps.TPflash();
     if (getThermoSystem().getNumberOfPhases() > 1) {
-      System.out.println(
+      logger.debug(
           "more than one phase at initial pressure and temperature.....stopping slimtube simulation.");
       return;
     }
@@ -152,9 +152,11 @@ public class SlimTubeSim extends BasePVTsimulation {
         // slimTubeNodeSystem[i].display();
         // slimTubeNodeSystem[i + 1].display();
       }
-      System.out.println("time " + timeStep + " node " + numberOfSlimTubeNodes + " volume "
-          + (slimTubeNodeSystem[numberOfSlimTubeNodes].getVolume()) + " moles "
-          + slimTubeNodeSystem[numberOfSlimTubeNodes].getNumberOfMoles());
+      /*
+       * logger.DEBUG("time " + timeStep + " node " + numberOfSlimTubeNodes + " volume " +
+       * (slimTubeNodeSystem[numberOfSlimTubeNodes].getVolume()) + " moles " +
+       * slimTubeNodeSystem[numberOfSlimTubeNodes].getNumberOfMoles());
+       */
       slimTubeNodeSystem[numberOfSlimTubeNodes].setTemperature(288.15);
       slimTubeNodeSystem[numberOfSlimTubeNodes].setPressure(1.01325);
       slimOps1.TPflash();
@@ -167,10 +169,12 @@ public class SlimTubeSim extends BasePVTsimulation {
             slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(1).getVolume();
       }
 
-      System.out.println("accumulated VOlume " + totalAccumulatedVolumeAtStadardConditions
-          + " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
-      System.out.println("oil recovery ratio" + totalAccumulatedVolumeAtStadardConditions
-          / totalReferenceNodeVolumeAtStadardConditions);
+      /*
+       * System.out.println("accumulated VOlume " + totalAccumulatedVolumeAtStadardConditions +
+       * " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
+       * System.out.println("oil recovery ratio" + totalAccumulatedVolumeAtStadardConditions /
+       * totalReferenceNodeVolumeAtStadardConditions);
+       */
     }
 
     slimTubeNodeSystem[numberOfSlimTubeNodes].setTemperature(288.15);
@@ -185,10 +189,12 @@ public class SlimTubeSim extends BasePVTsimulation {
           slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(1).getVolume();
     }
 
-   // System.out.println("accumulated VOlume " + totalAccumulatedVolumeAtStadardConditions
-   //     + " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
-   // System.out.println("oil recovery ratio"
-   //     + totalAccumulatedVolumeAtStadardConditions / totalReferenceNodeVolumeAtStadardConditions);
+    // System.out.println("accumulated VOlume " +
+    // totalAccumulatedVolumeAtStadardConditions
+    // + " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
+    // System.out.println("oil recovery ratio"
+    // + totalAccumulatedVolumeAtStadardConditions /
+    // totalReferenceNodeVolumeAtStadardConditions);
 
     for (int i = 0; i < numberOfSlimTubeNodes; i++) {
       // slimTubeNodeSystem[i].display();
