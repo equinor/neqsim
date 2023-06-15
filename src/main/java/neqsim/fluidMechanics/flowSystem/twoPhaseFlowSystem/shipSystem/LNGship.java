@@ -97,11 +97,11 @@ public class LNGship
    */
   public void useStandardVersion(String isoName, String version) {
     if (version.equals("2016")) {
-      setStandardISO6976(new Standard_ISO6976(thermoSystem, getStandardISO6976().getVolRefT(),
+      setStandardISO6976(new Standard_ISO6976_2016(thermoSystem, getStandardISO6976().getVolRefT(),
           getStandardISO6976().getEnergyRefT(), "volume"));
       logger.info("using  ISO6976 version 2016");
     } else {
-      setStandardISO6976(new Standard_ISO6976_2016(thermoSystem, getStandardISO6976().getVolRefT(),
+      setStandardISO6976(new Standard_ISO6976(thermoSystem, getStandardISO6976().getVolRefT(),
           getStandardISO6976().getEnergyRefT(), "volume"));
       logger.info("using  ISO6976 version 1995");
     }
