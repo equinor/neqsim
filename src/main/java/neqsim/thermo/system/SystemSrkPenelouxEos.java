@@ -17,16 +17,7 @@ public class SystemSrkPenelouxEos extends SystemSrkEos {
    * Constructor of a fluid object using the SRK-EoS.
    */
   public SystemSrkPenelouxEos() {
-    super();
-    modelName = "SRK-Peneloux-EOS";
-    getCharacterization().setTBPModel("PedersenSRK"); // (RiaziDaubert PedersenPR PedersenSRK
-    attractiveTermNumber = 0;
-
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseSrkPenelouxEos();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -36,15 +27,7 @@ public class SystemSrkPenelouxEos extends SystemSrkEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkPenelouxEos(double T, double P) {
-    super(T, P);
-    modelName = "SRK-Peneloux-EOS";
-    getCharacterization().setTBPModel("PedersenSRK");
-    attractiveTermNumber = 0;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseSrkPenelouxEos();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -55,11 +38,12 @@ public class SystemSrkPenelouxEos extends SystemSrkEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkPenelouxEos(double T, double P, boolean checkForSolids) {
-    this(T, P);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     modelName = "SRK-Peneloux-EOS";
+    getCharacterization().setTBPModel("PedersenSRK");
     attractiveTermNumber = 0;
-    setNumberOfPhases(5);
-    solidPhaseCheck = checkForSolids;
+
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseSrkPenelouxEos();
       phaseArray[i].setTemperature(T);
@@ -67,6 +51,7 @@ public class SystemSrkPenelouxEos extends SystemSrkEos {
     }
 
     if (solidPhaseCheck) {
+      setNumberOfPhases(5);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

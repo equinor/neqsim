@@ -1027,7 +1027,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       try {
         hessianInvers = hessianMatrix.invert();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        // logger.error(ex.getMessage(), ex);
         return false;
       }
       if (solvedX) {

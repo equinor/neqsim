@@ -71,6 +71,7 @@ public class SlimTubeSim extends BasePVTsimulation {
     }
 
     slimTubeNodeSystem[numberOfSlimTubeNodes].reset();
+    slimTubeNodeSystem[numberOfSlimTubeNodes].init(0);
     slimTubeNodeSystem[numberOfSlimTubeNodes].init(1);
 
     ThermodynamicOperations slimOps0 = new ThermodynamicOperations(slimTubeNodeSystem[0]);
