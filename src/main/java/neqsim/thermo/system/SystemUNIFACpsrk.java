@@ -19,13 +19,7 @@ public class SystemUNIFACpsrk extends SystemEos {
    * </p>
    */
   public SystemUNIFACpsrk() {
-    super();
-    modelName = "UNIFAC-GE-model";
-    attractiveTermNumber = 0;
-    phaseArray[0] = new PhaseSrkEos();
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseGEUnifacPSRK();
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -37,17 +31,7 @@ public class SystemUNIFACpsrk extends SystemEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemUNIFACpsrk(double T, double P) {
-    super(T, P);
-    attractiveTermNumber = 0;
-    modelName = "UNIFAC-GE-model";
-    phaseArray[0] = new PhaseSrkEos();
-    phaseArray[0].setTemperature(T);
-    phaseArray[0].setPressure(P);
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseGEUnifacPSRK();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -60,9 +44,9 @@ public class SystemUNIFACpsrk extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemUNIFACpsrk(double T, double P, boolean checkForSolids) {
-    this(T, P);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     attractiveTermNumber = 0;
-    setNumberOfPhases(4);
     modelName = "UNIFAC-GE-model";
     solidPhaseCheck = checkForSolids;
 
@@ -76,6 +60,7 @@ public class SystemUNIFACpsrk extends SystemEos {
     }
 
     if (solidPhaseCheck) {
+      setNumberOfPhases(4);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

@@ -16,9 +16,7 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
    * </p>
    */
   public SystemSrkTwuCoonStatoilEos() {
-    super();
-    modelName = "TwuCoonStatoil-EOS";
-    attractiveTermNumber = 18;
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -30,9 +28,7 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkTwuCoonStatoilEos(double T, double P) {
-    super(T, P);
-    modelName = "TwuCoonStatoil-EOS";
-    attractiveTermNumber = 18;
+    this(T, P, false);
   }
 
   /**
@@ -45,7 +41,8 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkTwuCoonStatoilEos(double T, double P, boolean checkForSolids) {
-    super(T, P, checkForSolids);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     modelName = "TwuCoonStatoil-EOS";
     attractiveTermNumber = 18;
   }

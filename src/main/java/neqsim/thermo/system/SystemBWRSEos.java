@@ -21,14 +21,7 @@ public class SystemBWRSEos extends SystemEos {
    * </p>
    */
   public SystemBWRSEos() {
-    super();
-    modelName = "BWRS-EOS";
-    attractiveTermNumber = 0;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseBWRSEos();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -40,14 +33,7 @@ public class SystemBWRSEos extends SystemEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemBWRSEos(double T, double P) {
-    super(T, P);
-    modelName = "BWRS-EOS";
-    attractiveTermNumber = 0;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseBWRSEos();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -60,11 +46,10 @@ public class SystemBWRSEos extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemBWRSEos(double T, double P, boolean checkForSolids) {
-    this(T, P);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     modelName = "BWRS-EOS";
     attractiveTermNumber = 0;
-    setNumberOfPhases(5);
-    solidPhaseCheck = checkForSolids;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseBWRSEos();
@@ -73,6 +58,7 @@ public class SystemBWRSEos extends SystemEos {
     }
 
     if (solidPhaseCheck) {
+      setNumberOfPhases(5);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

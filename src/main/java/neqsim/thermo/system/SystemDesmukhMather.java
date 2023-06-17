@@ -19,13 +19,7 @@ public class SystemDesmukhMather extends SystemEos {
    * </p>
    */
   public SystemDesmukhMather() {
-    super();
-    modelName = "Desmukh-Mather-model";
-    attractiveTermNumber = 0;
-    phaseArray[0] = new PhaseSrkEos();
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseDesmukhMather(); // modifiedWS();
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -37,17 +31,7 @@ public class SystemDesmukhMather extends SystemEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemDesmukhMather(double T, double P) {
-    super(T, P);
-    attractiveTermNumber = 0;
-    modelName = "Desmukh-Mather-model";
-    phaseArray[0] = new PhaseSrkEos();
-    phaseArray[0].setTemperature(T);
-    phaseArray[0].setPressure(P);
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseDesmukhMather(); // new PhaseGENRTLmodifiedWS();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -60,11 +44,10 @@ public class SystemDesmukhMather extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemDesmukhMather(double T, double P, boolean checkForSolids) {
-    this(T, P);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     attractiveTermNumber = 0;
-    setNumberOfPhases(4);
     modelName = "Desmukh-Mather-model";
-    solidPhaseCheck = checkForSolids;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);
@@ -76,6 +59,7 @@ public class SystemDesmukhMather extends SystemEos {
     }
 
     if (solidPhaseCheck) {
+      setNumberOfPhases(4);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

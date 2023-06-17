@@ -19,12 +19,7 @@ public class SystemPrCPA extends SystemPrEos {
    * </p>
    */
   public SystemPrCPA() {
-    super();
-    modelName = "CPA-PR-EOS";
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrCPA();
-    }
-    this.useVolumeCorrection(true);
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -36,14 +31,7 @@ public class SystemPrCPA extends SystemPrEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPrCPA(double T, double P) {
-    super(T, P);
-    modelName = "CPA-PR-EOS";
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrCPA();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-    this.useVolumeCorrection(true);
+    this(T, P, false);
   }
 
   /**
@@ -56,8 +44,10 @@ public class SystemPrCPA extends SystemPrEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPrCPA(double T, double P, boolean checkForSolids) {
-    super(T, P, checkForSolids);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     modelName = "CPA-PR-EOS";
+
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrCPA();
       phaseArray[i].setTemperature(T);
