@@ -15,9 +15,7 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
    * </p>
    */
   public SystemSrkSchwartzentruberEos() {
-    super();
-    modelName = "ScRK-EOS";
-    attractiveTermNumber = 2;
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -29,9 +27,7 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkSchwartzentruberEos(double T, double P) {
-    super(T, P);
-    modelName = "ScRK-EOS";
-    attractiveTermNumber = 2;
+    this(T, P, false);
   }
 
   /**
@@ -44,7 +40,8 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkSchwartzentruberEos(double T, double P, boolean checkForSolids) {
-    super(T, P, checkForSolids);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     modelName = "ScRK-EOS";
     attractiveTermNumber = 2;
   }

@@ -38,7 +38,7 @@ import neqsim.thermo.phase.PhaseWax;
 import neqsim.thermo.phase.StateOfMatter;
 import neqsim.util.database.NeqSimDataBase;
 
-/*
+/**
  * This is the base class of the System classes.
  */
 abstract class SystemThermo implements SystemInterface {
@@ -145,6 +145,14 @@ abstract class SystemThermo implements SystemInterface {
   public SystemThermo() {
     characterization = new Characterise(this);
     interfaceProp = new InterfaceProperties(this);
+
+    reInitPhaseType();
+    phaseType[4] = phaseType[3];
+    phaseType[5] = phaseType[3];
+
+    for (int i = 0; i < MAX_PHASES; i++) {
+      beta[i] = 1.0;
+    }
   }
 
   /**
@@ -169,14 +177,6 @@ abstract class SystemThermo implements SystemInterface {
           new neqsim.util.exception.InvalidInputException(this.getClass().getSimpleName(),
               "SystemThermo", "P", "is negative");
       throw new RuntimeException(ex);
-    }
-
-    reInitPhaseType();
-    phaseType[4] = phaseType[3];
-    phaseType[5] = phaseType[3];
-
-    for (int i = 0; i < MAX_PHASES; i++) {
-      beta[i] = 1.0;
     }
   }
 
@@ -1136,7 +1136,6 @@ abstract class SystemThermo implements SystemInterface {
         throw new RuntimeException(
             new neqsim.util.exception.InvalidInputException(this, "addComponent", "moles", msg));
       }
-      setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
       // System.out.println("adding " + componentName);
       componentNames.add(componentName);
       for (int i = 0; i < getMaxNumberOfPhases(); i++) {
@@ -1153,7 +1152,6 @@ abstract class SystemThermo implements SystemInterface {
         }
       }
 
-      setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
       // System.out.println("adding chem reac " + componentName);
       for (PhaseInterface tmpPhase : phaseArray) {
         if (tmpPhase != null) {
@@ -1161,6 +1159,7 @@ abstract class SystemThermo implements SystemInterface {
         }
       }
     }
+    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
   }
 
   /** {@inheritDoc} */
@@ -1769,6 +1768,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void reset() {
     for (int i = 0; i < numberOfComponents; i++) {
+      // TODO: numeric issue, nearly zero
       addComponent(getPhase(0).getComponent(i).getComponentName(),
           -getPhase(0).getComponent(i).getNumberOfmoles());
     }
@@ -2261,6 +2261,9 @@ abstract class SystemThermo implements SystemInterface {
    */
   public boolean hasPhaseType(PhaseType pt) {
     for (int i = 0; i < numberOfPhases; i++) {
+      if (getPhase(i) == null) {
+        continue;
+      }
       if (getPhase(i).getType() == pt) {
         return true;
       }
@@ -3668,12 +3671,13 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void setSolidPhaseCheck(boolean solidPhaseCheck) {
-    // init(0);
+    this.solidPhaseCheck = solidPhaseCheck;
+
+
     final int oldphase = numberOfPhases;
-    if (!this.solidPhaseCheck) {
+    if (solidPhaseCheck && !this.hasSolidPhase()) {
       addSolidPhase();
     }
-    this.solidPhaseCheck = solidPhaseCheck;
     // init(0);
 
     for (int phase = 0; phase < numberOfPhases; phase++) {
@@ -3730,10 +3734,12 @@ abstract class SystemThermo implements SystemInterface {
     if (getMaxNumberOfPhases() < 3) {
       if (multiPhaseCheck) {
         setMaxNumberOfPhases(3);
-        phaseArray[2] = phaseArray[1].clone();
-        phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleNumber());
-        phaseArray[2].resetPhysicalProperties();
-        phaseArray[2].initPhysicalProperties();
+        if (phaseArray[1] != null) {
+          phaseArray[2] = phaseArray[1].clone();
+          phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleNumber());
+          phaseArray[2].resetPhysicalProperties();
+          phaseArray[2].initPhysicalProperties();
+        }
       } else {
         setMaxNumberOfPhases(2);
       }
@@ -4569,6 +4575,13 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void setTotalNumberOfMoles(double totalNumberOfMoles) {
+    if (totalNumberOfMoles < 0) {
+      /*
+       * throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+       * "setTotalNumberOfMoles", "totalNumberOfMoles", "can not be less than 0."));
+       */
+      totalNumberOfMoles = 0;
+    }
     this.totalNumberOfMoles = totalNumberOfMoles;
   }
 

@@ -18,12 +18,7 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
    * </p>
    */
   public SystemFurstElectrolyteEos() {
-    super();
-    modelName = "Electrolyte-ScRK-EOS";
-    attractiveTermNumber = 2;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseModifiedFurstElectrolyteEos();
-    }
+    this(298.15, 1.0);
   }
 
   /**

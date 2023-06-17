@@ -167,6 +167,8 @@ public class NeqSimDataBase
    * </p>
    *
    * @param sqlString Query to execute.
+   * @return True if the first result is a ResultSet object; false if it is an update count or there
+   *         are no results
    */
   public boolean execute(String sqlString) {
     try {
