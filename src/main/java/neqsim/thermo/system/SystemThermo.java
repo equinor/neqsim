@@ -166,8 +166,6 @@ abstract class SystemThermo implements SystemInterface {
   public SystemThermo(double T, double P) {
     this();
     if (T < 0.0) {
-      String msg = "Negative input temperature";
-      logger.error(msg);
       neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this.getClass().getSimpleName(),
               "SystemThermo", "T", "is negative");
@@ -175,8 +173,6 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     if (P < 0.0) {
-      String msg = "Negative input pressure";
-      logger.error(msg);
       neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this.getClass().getSimpleName(),
               "SystemThermo", "P", "is negative");
@@ -777,14 +773,10 @@ abstract class SystemThermo implements SystemInterface {
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
       double density) {
     if (density < 0.0) {
-      String msg = "Negative input density.";
-      logger.error(msg);
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "addTBPfraction", "density", "is negative."));
     }
     if (molarMass < 0.0) {
-      String msg = "Negative input molar mass.";
-      logger.error(msg);
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "addTBPfraction", "molarMass", "is negative."));
     }
@@ -922,15 +914,11 @@ abstract class SystemThermo implements SystemInterface {
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
       double density, double criticalTemperature, double criticalPressure, double acentricFactor) {
     if (density < 0.0 || molarMass < 0.0) {
-      String msg = "Negative input density.";
-      logger.error(msg);
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "addTBPfraction", "density", "is negative."));
     }
 
     if (density < 0.0 || molarMass < 0.0) {
-      String msg = "Negative input molar mass.";
-      logger.error(msg);
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "addTBPfraction", "molarMass", "is negative."));
     }
@@ -1144,8 +1132,7 @@ abstract class SystemThermo implements SystemInterface {
         throw new RuntimeException("No component with name: " + componentName + " in database");
       }
       if (moles < 0.0) {
-        String msg = "Negative input number of moles of component: " + componentName;
-        logger.error(msg);
+        String msg = "is negative input for component: " + componentName;
         throw new RuntimeException(
             new neqsim.util.exception.InvalidInputException(this, "addComponent", "moles", msg));
       }
@@ -1248,7 +1235,6 @@ abstract class SystemThermo implements SystemInterface {
     // Add new component
     if (moles < 0.0) {
       String msg = "Negative input number of moles.";
-      logger.error(msg);
       neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this, "addComponent", "moles", msg);
       throw new RuntimeException(ex);
