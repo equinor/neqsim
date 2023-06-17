@@ -38,17 +38,18 @@ public class SlimTubeSim extends BasePVTsimulation {
   public void run() {
     slimTubeNodeSystem = new SystemInterface[numberOfSlimTubeNodes + 1];
 
-    double totalReferenceNodeVolumeAtStadardConditions = 0;
     getThermoSystem().setPressure(1.01325);
     getThermoSystem().setTemperature(288.15);
     thermoOps.TPflash();
-    totalReferenceNodeVolumeAtStadardConditions =
-        getThermoSystem().getPhase(0).getVolume() * numberOfSlimTubeNodes;
 
-    if (getThermoSystem().getNumberOfPhases() > 1) {
-      totalReferenceNodeVolumeAtStadardConditions =
-          getThermoSystem().getPhase(1).getVolume() * numberOfSlimTubeNodes;
-    }
+
+    /*
+     * double totalReferenceNodeVolumeAtStadardConditions; if (getThermoSystem().getNumberOfPhases()
+     * > 1) { totalReferenceNodeVolumeAtStadardConditions =
+     * getThermoSystem().getPhase(1).getVolume() * numberOfSlimTubeNodes; } else {
+     * totalReferenceNodeVolumeAtStadardConditions = getThermoSystem().getPhase(0).getVolume() *
+     * numberOfSlimTubeNodes; }
+     */
 
     getThermoSystem().setPressure(getPressure());
     getThermoSystem().setTemperature(getTemperature());
@@ -70,8 +71,8 @@ public class SlimTubeSim extends BasePVTsimulation {
       slimTubeNodeSystem[i] = getThermoSystem().clone();
     }
 
-    slimTubeNodeSystem[numberOfSlimTubeNodes].reset();
-    slimTubeNodeSystem[numberOfSlimTubeNodes].init(1);
+    // slimTubeNodeSystem[numberOfSlimTubeNodes].reset();
+    // slimTubeNodeSystem[numberOfSlimTubeNodes].init(1);
 
     ThermodynamicOperations slimOps0 = new ThermodynamicOperations(slimTubeNodeSystem[0]);
     ThermodynamicOperations slimOps1 = new ThermodynamicOperations(slimTubeNodeSystem[0]);
