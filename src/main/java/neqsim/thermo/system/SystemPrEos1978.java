@@ -19,15 +19,7 @@ public class SystemPrEos1978 extends SystemEos {
    * </p>
    */
   public SystemPrEos1978() {
-    super();
-    modelName = "PR1978-EOS";
-    getCharacterization().setTBPModel("PedersenPR");
-    attractiveTermNumber = 13;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrEos();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -39,15 +31,7 @@ public class SystemPrEos1978 extends SystemEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPrEos1978(double T, double P) {
-    super(T, P);
-    modelName = "PR1978-EOS";
-    getCharacterization().setTBPModel("PedersenPR");
-    attractiveTermNumber = 13;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrEos();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -60,11 +44,10 @@ public class SystemPrEos1978 extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPrEos1978(double T, double P, boolean checkForSolids) {
-    this(T, P);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     attractiveTermNumber = 13;
-    setNumberOfPhases(5);
     modelName = "PR1978-EOS";
-    solidPhaseCheck = checkForSolids;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrEos();
@@ -73,6 +56,7 @@ public class SystemPrEos1978 extends SystemEos {
     }
 
     if (solidPhaseCheck) {
+      setNumberOfPhases(5);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

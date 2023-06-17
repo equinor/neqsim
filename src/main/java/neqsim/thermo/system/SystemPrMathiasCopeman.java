@@ -15,9 +15,7 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
    * </p>
    */
   public SystemPrMathiasCopeman() {
-    super();
-    modelName = "Mathias-Copeman-PR-EOS";
-    attractiveTermNumber = 13;
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -29,9 +27,7 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPrMathiasCopeman(double T, double P) {
-    super(T, P);
-    modelName = "Mathias-Copeman-PR-EOS";
-    attractiveTermNumber = 13;
+    this(T, P, false);
   }
 
   /**
@@ -44,7 +40,8 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPrMathiasCopeman(double T, double P, boolean checkForSolids) {
-    super(T, P, checkForSolids);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     attractiveTermNumber = 13;
     modelName = "Mathias-Copeman-PR-EOS";
   }

@@ -20,9 +20,7 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
    * </p>
    */
   public SystemPrEosDelft1998() {
-    super();
-    modelName = "PR Delft1998 EOS";
-    attractiveTermNumber = 7;
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -34,9 +32,7 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPrEosDelft1998(double T, double P) {
-    super(T, P);
-    modelName = "PR Delft1998 EOS";
-    attractiveTermNumber = 7;
+    super(T, P, false);
   }
 
   /**
@@ -49,9 +45,10 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPrEosDelft1998(double T, double P, boolean checkForSolids) {
-    this(T, P);
-    attractiveTermNumber = 7;
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     modelName = "PR Delft1998 EOS";
+    attractiveTermNumber = 7;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrEos();

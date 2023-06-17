@@ -16,16 +16,7 @@ public class SystemUMRCPAEoS extends SystemPrEos {
    * </p>
    */
   public SystemUMRCPAEoS() {
-    super();
-    modelName = "UMR-CPA";
-    attractiveTermNumber = 19;
-    useVolumeCorrection(false);
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseUMRCPA();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-      phaseArray[i].useVolumeCorrection(false);
-    }
+    this(298.15, 1.0);
   }
 
   /**

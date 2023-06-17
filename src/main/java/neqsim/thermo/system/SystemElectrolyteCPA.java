@@ -18,14 +18,7 @@ public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
    * </p>
    */
   public SystemElectrolyteCPA() {
-    super();
-    modelName = "Electrolyte-CPA-EOS";
-    attractiveTermNumber = 0;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseElectrolyteCPA();
-    }
-    FurstElectrolyteConstants.setFurstParams("electrolyteCPA");
-    this.useVolumeCorrection(false);
+    this(298.15, 1.0);
   }
 
   /**

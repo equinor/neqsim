@@ -15,10 +15,7 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
    * </p>
    */
   public SystemUMRPRUMCEos() {
-    super();
-    setBmixType(1);
-    modelName = "UMR-PRU-MC-EoS";
-    attractiveTermNumber = 13;
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -30,16 +27,7 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemUMRPRUMCEos(double T, double P) {
-    super(T, P);
-    setBmixType(1);
-    modelName = "UMR-PRU-MC-EoS";
-    attractiveTermNumber = 13;
-    CapeOpenProperties11 = new String[] {"speedOfSound", "jouleThomsonCoefficient",
-        "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy",
-        "fugacityCoefficient", "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature",
-        "logFugacityCoefficient.Dpressure", "logFugacityCoefficient.Dmoles", "enthalpy",
-        "enthalpy.Dtemperature", "entropy", "heatCapacityCp", "heatCapacityCv", "density",
-        "volume"};
+    this(T, P, false);
   }
 
   /**
@@ -52,10 +40,17 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemUMRPRUMCEos(double T, double P, boolean checkForSolids) {
-    super(T, P, checkForSolids);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     setBmixType(1);
-    attractiveTermNumber = 13;
     modelName = "UMR-PRU-MC-EoS";
+    attractiveTermNumber = 13;
+    CapeOpenProperties11 = new String[] {"speedOfSound", "jouleThomsonCoefficient",
+        "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy",
+        "fugacityCoefficient", "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature",
+        "logFugacityCoefficient.Dpressure", "logFugacityCoefficient.Dmoles", "enthalpy",
+        "enthalpy.Dtemperature", "entropy", "heatCapacityCp", "heatCapacityCv", "density",
+        "volume"};
   }
 
   /** {@inheritDoc} */
