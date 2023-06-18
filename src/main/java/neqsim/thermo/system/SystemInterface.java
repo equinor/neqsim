@@ -1847,7 +1847,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * initBeta.
+   * Calculate system beta values using Phase.getNumberOfMolesInPhase and getTotalNumberOfMoles.
    * </p>
    */
   public void initBeta();

@@ -1630,6 +1630,9 @@ abstract class SystemThermo implements SystemInterface {
       this.beta[phaseIndex[i]] = getPhase(i).getNumberOfMolesInPhase() / getTotalNumberOfMoles();
       // System.out.println("beta " + beta[i]);
     }
+    if (this.getSumBeta() != 1.0) {
+      logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0");
+    }
   }
 
   /** {@inheritDoc} */
@@ -3107,7 +3110,9 @@ abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    return getSumBeta() == 1;
+    double betaSum = getSumBeta();
+
+    return betaSum == 1;
   }
 
   /** {@inheritDoc} */
