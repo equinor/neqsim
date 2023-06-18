@@ -71,7 +71,7 @@ public class SlimTubeSim extends BasePVTsimulation {
     }
 
     slimTubeNodeSystem[numberOfSlimTubeNodes].reset();
-    slimTubeNodeSystem[numberOfSlimTubeNodes].init(0);
+    // slimTubeNodeSystem[numberOfSlimTubeNodes].init(0);
     slimTubeNodeSystem[numberOfSlimTubeNodes].init(1);
 
     ThermodynamicOperations slimOps0 = new ThermodynamicOperations(slimTubeNodeSystem[0]);
@@ -139,7 +139,7 @@ public class SlimTubeSim extends BasePVTsimulation {
             slimTubeNodeSystem[i + 1].addComponent(k, removeMoles[k]);
             slimTubeNodeSystem[i].addComponent(k, -removeMoles[k]);
           } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.warn(e.getMessage());
           }
         }
         slimOps0.setSystem(slimTubeNodeSystem[i]);
