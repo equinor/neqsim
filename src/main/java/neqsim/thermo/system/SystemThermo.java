@@ -1646,6 +1646,9 @@ public abstract class SystemThermo implements SystemInterface {
         || this.getSumBeta() > 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit) {
       logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0");
     }
+    if (this.getSumBeta() != 1.0) {
+      logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0");
+    }
   }
 
   /** {@inheritDoc} */
@@ -3080,7 +3083,9 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    return getSumBeta() == 1;
+    double betaSum = getSumBeta();
+
+    return betaSum == 1;
   }
 
   >>>>>>>
