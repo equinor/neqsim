@@ -31,13 +31,6 @@ public class TPmultiflashWAX extends TPflash {
    * <p>
    * Constructor for TPmultiflashWAX.
    * </p>
-   */
-  public TPmultiflashWAX() {}
-
-  /**
-   * <p>
-   * Constructor for TPmultiflashWAX.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -76,13 +76,6 @@ public class pTphaseEnvelope1 extends BaseOperation {
    * <p>
    * Constructor for pTphaseEnvelope1.
    * </p>
-   */
-  public pTphaseEnvelope1() {}
-
-  /**
-   * <p>
-   * Constructor for pTphaseEnvelope1.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param name a {@link java.lang.String} object

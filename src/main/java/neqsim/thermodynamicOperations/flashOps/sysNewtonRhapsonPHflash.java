@@ -60,13 +60,6 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    * <p>
    * Constructor for sysNewtonRhapsonPHflash.
    * </p>
-   */
-  public sysNewtonRhapsonPHflash() {}
-
-  /**
-   * <p>
-   * Constructor for sysNewtonRhapsonPHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int

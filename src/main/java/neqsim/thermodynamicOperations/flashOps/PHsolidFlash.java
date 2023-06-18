@@ -30,13 +30,6 @@ public class PHsolidFlash extends Flash {
    * <p>
    * Constructor for PHsolidFlash.
    * </p>
-   */
-  public PHsolidFlash() {}
-
-  /**
-   * <p>
-   * Constructor for PHsolidFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param ent a double

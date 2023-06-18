@@ -35,13 +35,6 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
    * <p>
    * Constructor for freezingPointTemperatureFlashTR.
    * </p>
-   */
-  public freezingPointTemperatureFlashTR() {}
-
-  /**
-   * <p>
-   * Constructor for freezingPointTemperatureFlashTR.
-   * </p>
    *
    * @param Freeze a boolean
    */

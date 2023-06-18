@@ -17,13 +17,6 @@ public class dewPointPressureFlash extends constantDutyTemperatureFlash {
    * <p>
    * Constructor for dewPointPressureFlash.
    * </p>
-   */
-  public dewPointPressureFlash() {}
-
-  /**
-   * <p>
-   * Constructor for dewPointPressureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

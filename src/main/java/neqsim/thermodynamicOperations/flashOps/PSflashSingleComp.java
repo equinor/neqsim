@@ -20,13 +20,6 @@ public class PSflashSingleComp extends Flash {
    * <p>
    * Constructor for PSflashSingleComp.
    * </p>
-   */
-  public PSflashSingleComp() {}
-
-  /**
-   * <p>
-   * Constructor for PSflashSingleComp.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double

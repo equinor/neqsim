@@ -23,13 +23,6 @@ public class VSflash extends Flash {
    * <p>
    * Constructor for VSflash.
    * </p>
-   */
-  public VSflash() {}
-
-  /**
-   * <p>
-   * Constructor for VSflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double

@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -34,15 +35,11 @@ public abstract class constantDutyFlash implements ConstantDutyFlashInterface {
   double[] lnOldK;
   double[] oldDeltalnK;
   double[] deltalnK;
-  double[] tm = {1, 1};
+  double[] tm = { 1, 1 };
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
-  /**
-   * <p>
-   * Constructor for constantDutyFlash.
-   * </p>
-   */
-  public constantDutyFlash() {}
+  public constantDutyFlash() {
+  }
 
   /**
    * <p>
@@ -153,5 +150,6 @@ public abstract class constantDutyFlash implements ConstantDutyFlashInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addData(String name, double[][] data) {}
+  public void addData(String name, double[][] data) {
+  }
 }
