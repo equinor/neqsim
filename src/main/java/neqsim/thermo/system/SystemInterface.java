@@ -637,7 +637,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * Get phase number i from SystemInterface object.
    *
-   * @param i a int
+   * @param i Phase number
    * @return a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public PhaseInterface getPhase(int i);
@@ -664,13 +664,31 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getPhaseIndexOfPhase.
+   * Indexed getter for property phaseIndex.
+   * </p>
+   *
+   * @param i Phase number
+   * @return PhaseIndex to index into phaseArray.
+   */
+  public int getPhaseIndex(int i);
+
+  /**
+   * Get property phaseIndex corresponding to a phase.
+   *
+   * @param phase Phase object to search for.
+   * @return PhaseIndex to index into phaseArray.
+   */
+  public int getPhaseIndex(PhaseInterface phase);
+
+  /**
+   * <p>
+   * Get property phaseIndex corresponding to a phase.
    * </p>
    *
    * @param phaseTypeName a {@link java.lang.String} object
-   * @return a int
+   * @return PhaseIndex to index into phaseArray.
    */
-  public int getPhaseIndexOfPhase(String phaseTypeName);
+  public int getPhaseIndex(String phaseTypeName);
 
   /**
    * <p>
@@ -1156,10 +1174,21 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * addComponent.
    * </p>
    *
-   * @param index a int
-   * @param moles a double
+   * @param index Component number to add
+   * @param moles number of moles (per second) of the component to be added to the fluid
    */
   public void addComponent(int index, double moles);
+
+  /**
+   * <p>
+   * addComponent.
+   * </p>
+   *
+   * @param index Component number to add
+   * @param moles number of moles (per second) of the component to be added to the fluid
+   * @param phaseNumber a int
+   */
+  public void addComponent(int index, double moles, int phaseNumber);
 
   /**
    * <p>
@@ -1169,17 +1198,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param name Name of the component to remove. See NeqSim database for component in the database.
    */
   public void removeComponent(String name);
-
-  /**
-   * <p>
-   * addComponent.
-   * </p>
-   *
-   * @param index a int
-   * @param moles a double
-   * @param phaseNumber a int
-   */
-  public void addComponent(int index, double moles, int phaseNumber);
 
   /**
    * <p>
@@ -1197,8 +1215,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Getter for property <code>beta</code> for a specific phase.
    * </p>
    *
-   * @param phase Index of phase to get beta for.
-   * @return Beta value
+   * @param phase Number of phase to get beta for.
+   * @return Beta value for
    */
   public double getBeta(int phase);
 
@@ -1217,7 +1235,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Setter for property <code>beta</code> for a given phase.
    * </p>
    *
-   * @param phase Index of phase to set beta for.
+   * @param phase Phase number to set beta for.
    * @param b Beta value to set.
    */
   public void setBeta(int phase, double b);
@@ -1277,16 +1295,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    */
   public void normalizeBeta();
-
-  /**
-   * <p>
-   * Indexed getter for property phaseIndex.
-   * </p>
-   *
-   * @param index a int
-   * @return a int
-   */
-  public int getPhaseIndex(int index);
 
   /**
    * <p>
@@ -1423,7 +1431,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * setPhaseIndex.
+   * Indexed setter for property <code>phaseIndex</code>.
+   * <code>this.phaseIndex[index] = phaseIndex;</code>
    * </p>
    *
    * @param index a int
@@ -1433,14 +1442,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * Indexed setter for property phaseIndex. NB! Transfers the pressure and temperature from the
-   * currently existing phase object at index numb
+   * Set <code>phaseArray[phaseIndex] = phase</code>. NB! Transfers the pressure and temperature
+   * from the currently existing phase object at index numb
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numb a int
+   * @param index Phase index to insert object at
    */
-  public void setPhase(PhaseInterface phase, int numb);
+  public void setPhase(PhaseInterface phase, int index);
 
   /**
    * method to read pure component and interaction parameters from the NeqSim database and create
@@ -1627,10 +1636,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * calcBeta.
+   * calcBeta. For simple gas liquid systems.
    * </p>
    *
-   * @return a double
+   * @return Beta Mole fraction contained in the heaviest phase, i.e., liquid phase.
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
