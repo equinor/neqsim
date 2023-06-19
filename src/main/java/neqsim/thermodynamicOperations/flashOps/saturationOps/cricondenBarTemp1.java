@@ -48,13 +48,6 @@ public class cricondenBarTemp1 implements java.io.Serializable {
    * <p>
    * Constructor for cricondenBarTemp1.
    * </p>
-   */
-  public cricondenBarTemp1() {}
-
-  /**
-   * <p>
-   * Constructor for cricondenBarTemp1.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -21,13 +21,6 @@ public class VHflash extends Flash {
    * <p>
    * Constructor for VHflash.
    * </p>
-   */
-  public VHflash() {}
-
-  /**
-   * <p>
-   * Constructor for VHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double

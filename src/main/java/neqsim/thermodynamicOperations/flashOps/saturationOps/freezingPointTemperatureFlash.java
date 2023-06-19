@@ -31,13 +31,6 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
    * <p>
    * Constructor for freezingPointTemperatureFlash.
    * </p>
-   */
-  public freezingPointTemperatureFlash() {}
-
-  /**
-   * <p>
-   * Constructor for freezingPointTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

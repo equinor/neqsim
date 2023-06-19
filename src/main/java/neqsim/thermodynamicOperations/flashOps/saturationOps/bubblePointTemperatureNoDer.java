@@ -20,13 +20,6 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
    * <p>
    * Constructor for bubblePointTemperatureNoDer.
    * </p>
-   */
-  public bubblePointTemperatureNoDer() {}
-
-  /**
-   * <p>
-   * Constructor for bubblePointTemperatureNoDer.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -20,13 +20,6 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
    * <p>
    * Constructor for bubblePointPressureFlash.
    * </p>
-   */
-  public bubblePointPressureFlash() {}
-
-  /**
-   * <p>
-   * Constructor for bubblePointPressureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

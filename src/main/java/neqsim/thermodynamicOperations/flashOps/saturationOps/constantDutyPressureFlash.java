@@ -17,13 +17,6 @@ public class constantDutyPressureFlash extends constantDutyFlash {
    * <p>
    * Constructor for constantDutyPressureFlash.
    * </p>
-   */
-  public constantDutyPressureFlash() {}
-
-  /**
-   * <p>
-   * Constructor for constantDutyPressureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -51,13 +51,6 @@ public class CricondenThermFlash extends pTphaseEnvelope {
    * <p>
    * Constructor for CricondenThermFlash.
    * </p>
-   */
-  public CricondenThermFlash() {}
-
-  /**
-   * <p>
-   * Constructor for CricondenThermFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param name a {@link java.lang.String} object
