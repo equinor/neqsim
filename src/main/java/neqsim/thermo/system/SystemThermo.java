@@ -2375,10 +2375,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public int getPhaseIndex(String phaseTypeName) {
-<<<<<<< HEAD
     // TODO: returning first if not found, not same as the others.
-=======
->>>>>>> c4107698 (bugfix: systemthermo addcomponent could add moles multiple times)
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
         return phaseIndex[i];
@@ -3071,8 +3068,11 @@ public abstract class SystemThermo implements SystemInterface {
     return sum;
   }
 
-  <<<<<<<HEAD=======
-
+  /**
+   * Verify if beta array has valid values and sum is approximately equal to 1.
+   * 
+   * @return True if beta values are valid. False indicates that a flash must be done.
+   */
   public final boolean isBetaValid() {
     for (double b : this.beta) {
       if (b < 0) {
@@ -3084,13 +3084,11 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     double betaSum = getSumBeta();
+    boolean valid = betaSum > 1 - ThermodynamicModelSettings.phaseFractionMinimumLimit
+        && betaSum < 1 + ThermodynamicModelSettings.phaseFractionMinimumLimit;
 
-    return betaSum == 1;
+    return valid;
   }
-
-  >>>>>>>
-
-  c4107698 (bugfix: systemthermo addcomponent could add moles multiple times)
 
   /** {@inheritDoc} */
   @Override
