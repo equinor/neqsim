@@ -18,7 +18,8 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
    * Constructor for constantDutyTemperatureFlash.
    * </p>
    */
-  public constantDutyTemperatureFlash() {}
+  public constantDutyTemperatureFlash() {
+  }
 
   /**
    * <p>

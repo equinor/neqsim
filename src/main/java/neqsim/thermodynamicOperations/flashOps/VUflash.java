@@ -27,13 +27,6 @@ public class VUflash extends Flash {
    * <p>
    * Constructor for VUflash.
    * </p>
-   */
-  public VUflash() {}
-
-  /**
-   * <p>
-   * Constructor for VUflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double

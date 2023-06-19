@@ -32,13 +32,6 @@ public class VUflashQfunc extends Flash {
    * <p>
    * Constructor for VUflashQfunc.
    * </p>
-   */
-  public VUflashQfunc() {}
-
-  /**
-   * <p>
-   * Constructor for VUflashQfunc.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double

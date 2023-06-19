@@ -25,13 +25,6 @@ public class cricondebarFlash extends constantDutyPressureFlash {
    * <p>
    * Constructor for cricondebarFlash.
    * </p>
-   */
-  public cricondebarFlash() {}
-
-  /**
-   * <p>
-   * Constructor for cricondebarFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

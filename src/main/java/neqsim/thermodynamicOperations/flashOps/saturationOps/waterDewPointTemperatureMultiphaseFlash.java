@@ -21,13 +21,6 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
    * <p>
    * Constructor for waterDewPointTemperatureMultiphaseFlash.
    * </p>
-   */
-  public waterDewPointTemperatureMultiphaseFlash() {}
-
-  /**
-   * <p>
-   * Constructor for waterDewPointTemperatureMultiphaseFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

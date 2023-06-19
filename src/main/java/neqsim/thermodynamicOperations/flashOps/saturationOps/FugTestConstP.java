@@ -35,13 +35,6 @@ public class FugTestConstP extends constantDutyTemperatureFlash
    * <p>
    * Constructor for FugTestConstP.
    * </p>
-   */
-  public FugTestConstP() {}
-
-  /**
-   * <p>
-   * Constructor for FugTestConstP.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

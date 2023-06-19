@@ -7,11 +7,14 @@
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import java.text.DecimalFormat;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
@@ -105,7 +108,8 @@ public class pTphaseEnvelope extends BaseOperation {
    * Constructor for pTphaseEnvelope.
    * </p>
    */
-  public pTphaseEnvelope() {}
+  public pTphaseEnvelope() {
+  }
 
   /**
    * <p>

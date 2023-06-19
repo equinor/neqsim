@@ -25,13 +25,6 @@ public class SaturateWithWater extends QfuncFlash {
    * <p>
    * Constructor for SaturateWithWater.
    * </p>
-   */
-  public SaturateWithWater() {}
-
-  /**
-   * <p>
-   * Constructor for SaturateWithWater.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

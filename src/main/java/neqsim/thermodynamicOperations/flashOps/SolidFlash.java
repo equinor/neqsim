@@ -31,13 +31,6 @@ public class SolidFlash extends TPflash {
    * <p>
    * Constructor for SolidFlash.
    * </p>
-   */
-  public SolidFlash() {}
-
-  /**
-   * <p>
-   * Constructor for SolidFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

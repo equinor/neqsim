@@ -22,13 +22,6 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
    * <p>
    * Constructor for calcSaltSatauration.
    * </p>
-   */
-  public calcSaltSatauration() {}
-
-  /**
-   * <p>
-   * Constructor for calcSaltSatauration.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param name a {@link java.lang.String} object
