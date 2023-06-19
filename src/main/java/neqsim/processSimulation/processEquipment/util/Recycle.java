@@ -146,7 +146,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     if (numberOfInputStreams == 0) {
       mixedStream = streams.get(0).clone();
       // mixedStream.getThermoSystem().setNumberOfPhases(2);
-      // mixedStream.getThermoSystem().reInitPhaseType();
       // mixedStream.getThermoSystem().init(0);
       // mixedStream.getThermoSystem().init(3);
     }
