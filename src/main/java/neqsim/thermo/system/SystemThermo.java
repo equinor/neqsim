@@ -23,6 +23,7 @@ import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
@@ -3100,6 +3101,11 @@ abstract class SystemThermo implements SystemInterface {
     return sum;
   }
 
+  /**
+   * Verify if beta array has valid values and sum is approximately equal to 1.
+   * 
+   * @return True if beta values are valid. False indicates that a flash must be done.
+   */
   public final boolean isBetaValid() {
     for (double b : this.beta) {
       if (b < 0) {
@@ -3111,8 +3117,10 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     double betaSum = getSumBeta();
+    boolean valid = betaSum > 1 - ThermodynamicModelSettings.phaseFractionMinimumLimit
+        && betaSum < 1 + ThermodynamicModelSettings.phaseFractionMinimumLimit;
 
-    return betaSum == 1;
+    return valid;
   }
 
   /** {@inheritDoc} */
