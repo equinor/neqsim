@@ -284,7 +284,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         system.setTotalFlowRate(flowLimit, maxflowunit);
         system.init(1);
       }
-      // SetTotalFlowRate resets beta factors, but they are fixed in run below
       inStream.getThermoSystem().setTotalFlowRate(system.getFlowRate(maxflowunit), maxflowunit);
       inStream.run(id);
     } else {
