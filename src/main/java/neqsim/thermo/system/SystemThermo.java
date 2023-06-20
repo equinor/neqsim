@@ -114,7 +114,7 @@ abstract class SystemThermo implements SystemInterface {
    * Array of indexes to phaseArray keeping track of the creation order of the phases where 0 is the
    * first created phase and the lowest number is the phase created last.
    */
-  protected int[] phaseIndex = {0, 1, 2, 3, 4, 5};
+  protected int[] phaseIndex;
   /**
    * Array containing all phases of System. NB! Phases are reorered according to density, use
    * phaseIndex to keep track of the creation order.
@@ -149,13 +149,7 @@ abstract class SystemThermo implements SystemInterface {
     characterization = new Characterise(this);
     interfaceProp = new InterfaceProperties(this);
 
-    reInitPhaseType();
-    phaseType[4] = phaseType[3];
-    phaseType[5] = phaseType[3];
-
-    for (int i = 0; i < MAX_PHASES; i++) {
-      beta[i] = 1.0;
-    }
+    reInitPhaseInformation();
   }
 
   /**
@@ -1818,21 +1812,14 @@ abstract class SystemThermo implements SystemInterface {
    */
   public void initAnalytic(int type) {
     if (type == 0) {
-      // TODO: should actually clear all entries in arrays?
-      setNumberOfPhases(getMaxNumberOfPhases());
-      for (int i = 0; i < numberOfPhases; i++) {
-        phaseType[i] = PhaseType.byValue(0);
-        beta[i] = 1.0;
-        phaseIndex[i] = i;
-      }
-      phaseType[0] = PhaseType.byValue(1);
-      for (int i = 0; i < numberOfPhases; i++) {
+      reInitPhaseInformation();
+
+      for (int i = 0; i < getMaxNumberOfPhases(); i++) {
         if (isPhase(i)) {
           getPhase(i).init(getTotalNumberOfMoles(), numberOfComponents, type,
               phaseType[phaseIndex[i]], beta[phaseIndex[i]]);
         }
       }
-      // TODO: reduce maxnumberofphases as well? Some sort of multiphase reset here.
       setNumberOfPhases(2);
     } else if (type == 1) {
       for (int i = 0; i < numberOfPhases; i++) {
@@ -3017,6 +3004,22 @@ abstract class SystemThermo implements SystemInterface {
     phaseType[2] = PhaseType.byValue(0);
     phaseType[3] = PhaseType.byValue(0);
     // TODO: why stop at 3 and not iterate through MAX_PHASES elements?
+  }
+
+  /**
+   * Re-initialize phasetype, beta and phaseindex arrays, same initialization which is used in
+   * constructor.
+   */
+  public void reInitPhaseInformation() {
+    reInitPhaseType();
+    phaseType[4] = phaseType[3];
+    phaseType[5] = phaseType[3];
+
+    for (int i = 0; i < MAX_PHASES; i++) {
+      beta[i] = 1.0;
+    }
+
+    phaseIndex = new int[] {0, 1, 2, 3, 4, 5};
   }
 
   /** {@inheritDoc} */
