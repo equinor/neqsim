@@ -23,7 +23,6 @@ import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
@@ -1291,16 +1290,10 @@ abstract class SystemThermo implements SystemInterface {
       return;
     }
 
-    if (!this.isBetaValid()) {
-      logger.error("Beta array contains invalid values");
-      return;
-    }
-
     for (int phaseNum = 0; phaseNum < getNumberOfPhases(); phaseNum++) {
       PhaseInterface tmpPhase = getPhase(phaseNum);
       if (tmpPhase != null) {
-        double currBeta = this.beta[getPhaseIndex(tmpPhase)];
-        tmpPhase.addMolesChemReac(index, currBeta * moles, currBeta * moles);
+        tmpPhase.addMolesChemReac(index, moles, moles);
       }
     }
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
@@ -3102,28 +3095,6 @@ abstract class SystemThermo implements SystemInterface {
       sum += getBeta(k);
     }
     return sum;
-  }
-
-  /**
-   * Verify if beta array has valid values and sum is approximately equal to 1.
-   * 
-   * @return True if beta values are valid. False indicates that a flash must be done.
-   */
-  public final boolean isBetaValid() {
-    for (double b : this.beta) {
-      if (b < 0) {
-        return false;
-      }
-      if (b > 1.0) {
-        return false;
-      }
-    }
-
-    double betaSum = getSumBeta();
-    boolean valid = betaSum > 1 - ThermodynamicModelSettings.phaseFractionMinimumLimit
-        && betaSum < 1 + ThermodynamicModelSettings.phaseFractionMinimumLimit;
-
-    return valid;
   }
 
   /** {@inheritDoc} */
