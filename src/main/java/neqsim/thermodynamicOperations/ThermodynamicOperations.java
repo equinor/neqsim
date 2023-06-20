@@ -2087,7 +2087,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         fluidProperties[t] = this.system.getProperties().getValues();
       } catch (Exception ex) {
         calculationError[t] = ex.getMessage();
-        logger.error(ex.getMessage(), ex);
+        // StackTraceElement[] st = StackTraceCleaner.cleanStackTrace(ex.getStackTrace(), "neqsim");
+        // ex.setStackTrace(st);
+        logger.warn(calculationError[t]);
       }
     }
 

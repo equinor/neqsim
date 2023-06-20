@@ -102,7 +102,7 @@ public class EclipseFluidReadWrite {
         }
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      logger.error(ex.getMessage());
     }
   }
 

@@ -1129,7 +1129,9 @@ abstract class SystemThermo implements SystemInterface {
 
     if (addForFirstTime) {
       if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-        throw new RuntimeException("No component with name: " + componentName + " in database");
+        throw new RuntimeException(
+            new neqsim.util.exception.InvalidInputException(this, "addComponent", "componentName",
+                "with value " + componentName + " not found in database."));
       }
       if (moles < 0.0) {
         String msg = "is negative input for component: " + componentName;
