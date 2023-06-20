@@ -43,13 +43,6 @@ public class HPTphaseEnvelope extends BaseOperation {
    * <p>
    * Constructor for HPTphaseEnvelope.
    * </p>
-   */
-  public HPTphaseEnvelope() {}
-
-  /**
-   * <p>
-   * Constructor for HPTphaseEnvelope.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

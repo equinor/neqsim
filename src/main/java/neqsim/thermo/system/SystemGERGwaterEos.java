@@ -19,14 +19,7 @@ public class SystemGERGwaterEos extends SystemPrEos {
    * </p>
    */
   public SystemGERGwaterEos() {
-    super();
-    modelName = "GERG-water-EOS";
-    attractiveTermNumber = 10;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrEos();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -38,14 +31,7 @@ public class SystemGERGwaterEos extends SystemPrEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemGERGwaterEos(double T, double P) {
-    super(T, P);
-    modelName = "GERG-water-EOS";
-    attractiveTermNumber = 10;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrEos();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -58,11 +44,10 @@ public class SystemGERGwaterEos extends SystemPrEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemGERGwaterEos(double T, double P, boolean checkForSolids) {
-    this(T, P);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     modelName = "GERG-water-EOS";
     attractiveTermNumber = 10;
-    setNumberOfPhases(5);
-    solidPhaseCheck = checkForSolids;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrEos();
@@ -71,6 +56,7 @@ public class SystemGERGwaterEos extends SystemPrEos {
     }
 
     if (solidPhaseCheck) {
+      setNumberOfPhases(5);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

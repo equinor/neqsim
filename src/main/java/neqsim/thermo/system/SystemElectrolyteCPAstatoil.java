@@ -18,14 +18,7 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
    * </p>
    */
   public SystemElectrolyteCPAstatoil() {
-    super();
-    modelName = "Electrolyte-CPA-EOS-statoil";
-    attractiveTermNumber = 15;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseElectrolyteCPAstatoil();
-    }
-    FurstElectrolyteConstants.setFurstParams("electrolyteCPA");
-    this.useVolumeCorrection(true);
+    this(298.15, 1.0);
   }
 
   /**

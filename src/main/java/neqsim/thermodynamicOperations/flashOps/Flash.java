@@ -53,13 +53,6 @@ abstract class Flash extends BaseOperation {
 
   /**
    * <p>
-   * Constructor for Flash.
-   * </p>
-   */
-  public Flash() {}
-
-  /**
-   * <p>
    * findLowestGibbsEnergyPhase.
    * </p>
    *

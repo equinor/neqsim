@@ -15,9 +15,7 @@ public class SystemPsrkEos extends SystemSrkEos {
    * </p>
    */
   public SystemPsrkEos() {
-    super();
-    modelName = "Predictive-SRK-EOS";
-    attractiveTermNumber = 4;
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -29,9 +27,7 @@ public class SystemPsrkEos extends SystemSrkEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPsrkEos(double T, double P) {
-    super(T, P);
-    modelName = "Predictive-SRK-EOS";
-    attractiveTermNumber = 4;
+    this(T, P, false);
   }
 
   /**
@@ -44,7 +40,8 @@ public class SystemPsrkEos extends SystemSrkEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPsrkEos(double T, double P, boolean checkForSolids) {
-    super(T, P, checkForSolids);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     attractiveTermNumber = 4;
     modelName = "Predictive-SRK-EOS";
   }

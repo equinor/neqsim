@@ -21,13 +21,6 @@ public class WATcalc extends constantDutyTemperatureFlash {
    * <p>
    * Constructor for WATcalc.
    * </p>
-   */
-  public WATcalc() {}
-
-  /**
-   * <p>
-   * Constructor for WATcalc.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

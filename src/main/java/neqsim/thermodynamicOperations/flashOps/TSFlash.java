@@ -28,13 +28,6 @@ public class TSFlash extends QfuncFlash {
    * <p>
    * Constructor for TSFlash.
    * </p>
-   */
-  public TSFlash() {}
-
-  /**
-   * <p>
-   * Constructor for TSFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double

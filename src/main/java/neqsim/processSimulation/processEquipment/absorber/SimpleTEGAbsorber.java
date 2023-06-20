@@ -70,7 +70,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     if (numberOfInputStreams == 0) {
       mixedStream = (Stream) streams.get(0).clone();
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
       mixedStream.getThermoSystem().init(3);
     }
@@ -329,7 +328,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // double yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
       mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
       mixStream();
       // System.out.println("feed total number of water " +

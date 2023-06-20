@@ -1034,7 +1034,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return True if system contains a solid phase
    */
   public default boolean hasSolidPhase() {
-    return hasPhaseType(PhaseType.SOLID);
+    return hasPhaseType(PhaseType.SOLID); // || hasPhaseType(PhaseType.SOLIDCOMPLEX);
   }
 
   /**
@@ -1433,7 +1433,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * Indexed setter for property phaseIndex.
+   * Indexed setter for property phaseIndex. NB! Transfers the pressure and temperature from the
+   * currently existing phase object at index numb
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object

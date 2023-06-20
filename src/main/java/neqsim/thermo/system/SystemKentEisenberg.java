@@ -19,13 +19,7 @@ public class SystemKentEisenberg extends SystemEos {
    * </p>
    */
   public SystemKentEisenberg() {
-    super();
-    modelName = "Kent Eisenberg-model";
-    attractiveTermNumber = 0;
-    phaseArray[0] = new PhaseSrkEos();
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseKentEisenberg();
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -37,17 +31,7 @@ public class SystemKentEisenberg extends SystemEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemKentEisenberg(double T, double P) {
-    super(T, P);
-    attractiveTermNumber = 0;
-    modelName = "Kent Eisenberg-model";
-    phaseArray[0] = new PhaseSrkEos();
-    phaseArray[0].setTemperature(T);
-    phaseArray[0].setPressure(P);
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseKentEisenberg(); // new PhaseGENRTLmodifiedWS();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -60,11 +44,10 @@ public class SystemKentEisenberg extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemKentEisenberg(double T, double P, boolean checkForSolids) {
-    this(T, P);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     attractiveTermNumber = 0;
-    setNumberOfPhases(4);
     modelName = "Kent Eisenberg-model";
-    solidPhaseCheck = checkForSolids;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);
@@ -76,6 +59,7 @@ public class SystemKentEisenberg extends SystemEos {
     }
 
     if (solidPhaseCheck) {
+      setNumberOfPhases(4);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

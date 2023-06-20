@@ -24,13 +24,6 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
    * <p>
    * Constructor for checkScalePotential.
    * </p>
-   */
-  public checkScalePotential() {}
-
-  /**
-   * <p>
-   * Constructor for checkScalePotential.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNumber a int
