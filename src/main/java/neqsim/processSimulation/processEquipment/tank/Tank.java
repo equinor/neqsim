@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.tank;
 
 import java.util.UUID;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -353,9 +354,10 @@ public class Tank extends ProcessEquipmentBaseClass {
     gasOutStream.getThermoSystem().setPressure(pres);
     liquidOutStream.getThermoSystem().setPressure(pres);
 
-    inletStreamMixer.run();
-    gasOutStream.run();
-    liquidOutStream.run();
+    UUID id = UUID.randomUUID();
+    inletStreamMixer.run(id);
+    gasOutStream.run(id);
+    liquidOutStream.run(id);
   }
 
   /**

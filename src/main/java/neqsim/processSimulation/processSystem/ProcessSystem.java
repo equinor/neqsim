@@ -8,9 +8,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
+
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
@@ -400,7 +402,7 @@ public class ProcessSystem extends SimulationBaseClass {
           try {
             if (iter == 1
                 || ((ProcessEquipmentInterface) unitOperations.get(i)).needRecalculation()) {
-              ((ProcessEquipmentInterface) unitOperations.get(i)).run();
+              ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
             }
           } catch (Exception ex) {
             // String error = ex.getMessage();
@@ -410,7 +412,7 @@ public class ProcessSystem extends SimulationBaseClass {
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
             && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
+            ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
           } catch (Exception ex) {
             // String error = ex.getMessage();
             logger.error(ex.getMessage(), ex);

@@ -1,8 +1,10 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
@@ -378,12 +380,14 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     gasStreamFromAbsorber = gasStreamToAbsorber.clone();
     // gasStreamFromAbsorber.getThermoSystem().addComponent("water", 1.0);
     gasStreamFromAbsorber.getThermoSystem().setTemperature(waterDewPontSpecification);
-    gasStreamFromAbsorber.run();
+
+    UUID id = UUID.randomUUID();
+    gasStreamFromAbsorber.run(id);
     double y1 = gasStreamFromAbsorber.getThermoSystem().getPhase(0).getComponent("water").getx();
     gasStreamFromAbsorber.getThermoSystem().setTemperature(waterDewPontSpecification - 10.0);
-    gasStreamFromAbsorber.run();
+    gasStreamFromAbsorber.run(id);
     double y0 = gasStreamFromAbsorber.getThermoSystem().getPhase(0).getComponent("water").getx();
-    gasStreamFromAbsorber.run();
+    gasStreamFromAbsorber.run(id);
     calcGlycolConcentration(y0);
 
     double Ea = (yN - y1) / (yN - y0);
@@ -401,7 +405,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
     gasStreamFromAbsorber.getThermoSystem().removePhase(1);
     gasStreamFromAbsorber.getThermoSystem().setTemperature(designGasFeedTemperature);
-    gasStreamFromAbsorber.run();
+    gasStreamFromAbsorber.run(id);
     /*
      * absorbtionColumn.setNumberOfTheoreticalStages( numberOfTheoreticalEquilibriumStages);
      * absorbtionColumn.getMechanicalDesign().setMaxDesignGassVolumeFlow(
@@ -415,7 +419,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         leanGlycolMolarFlowRate * (1.0 - leanGlycolMolarFraction));
     this.leanTEGStreamToAbsorber.getThermoSystem().addComponent("TEG",
         leanGlycolMolarFlowRate * leanGlycolMolarFraction);
-    this.leanTEGStreamToAbsorber.run();
+    this.leanTEGStreamToAbsorber.run(id);
   }
 
   /** {@inheritDoc} */

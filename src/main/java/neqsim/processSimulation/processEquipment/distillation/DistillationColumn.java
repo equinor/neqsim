@@ -3,8 +3,10 @@ package neqsim.processSimulation.processEquipment.distillation;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -326,7 +328,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double errOld;
       int iter = 0;
       double[] oldtemps = new double[numberOfTrays];
-      ((SimpleTray) trays.get(feedTrayNumber)).run();
+      ((SimpleTray) trays.get(feedTrayNumber)).run(id);
 
       do {
         iter++;
@@ -341,11 +343,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           ((Mixer) trays.get(i - 1)).replaceStream(replaceStream1,
               trays.get(i).getLiquidOutStream());
           trays.get(i - 1).setPressure(bottomTrayPressure - (i - 1) * dp);
-          ((SimpleTray) trays.get(i - 1)).run();
+          ((SimpleTray) trays.get(i - 1)).run(id);
         }
         int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
         ((Mixer) trays.get(0)).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
-        ((SimpleTray) trays.get(0)).run();
+        ((SimpleTray) trays.get(0)).run(id);
 
         for (int i = 1; i <= numberOfTrays - 1; i++) {
           int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
@@ -353,14 +355,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
             replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
           }
           ((Mixer) trays.get(i)).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
-          ((SimpleTray) trays.get(i)).run();
+          ((SimpleTray) trays.get(i)).run(id);
         }
 
         for (int i = numberOfTrays - 2; i == feedTrayNumber; i--) {
           int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
           ((Mixer) trays.get(i)).replaceStream(replaceStream,
               trays.get(i + 1).getLiquidOutStream());
-          ((SimpleTray) trays.get(i)).run();
+          ((SimpleTray) trays.get(i)).run(id);
         }
         for (int i = 0; i < numberOfTrays; i++) {
           err += Math.abs(

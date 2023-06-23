@@ -1,5 +1,7 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
+import java.util.UUID;
+
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
@@ -61,16 +63,15 @@ public class Cooler extends Heater {
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    double entrop = 0.0;
-
-    inStream.run();
+    UUID id = UUID.randomUUID();
+    inStream.run(id);
     inStream.getFluid().init(3);
-    getOutletStream().run();
+    getOutletStream().run(id);
     getOutletStream().getFluid().init(3);
 
     double heatTransferEntropyProd = coolingMediumTemperature * getDuty();
     System.out.println("heat entropy " + heatTransferEntropyProd);
-    entrop += getOutletStream().getThermoSystem().getEntropy(unit)
+    double entrop = getOutletStream().getThermoSystem().getEntropy(unit)
         - inStream.getThermoSystem().getEntropy(unit);
 
     return entrop;
