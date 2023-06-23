@@ -32,7 +32,6 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public abstract class PhysicalProperties
     implements PhysicalPropertiesInterface, ThermodynamicConstantsInterface {
-
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhysicalProperties.class);
 

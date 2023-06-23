@@ -173,7 +173,7 @@ public class GasTurbine extends TwoPortEquipment {
     locHeater.getOutletStream().getFluid().addComponent("methane", -moleMethane);
     locHeater.getOutletStream().getFluid().addComponent("oxygen", -moleMethane * 2.0);
 
-    // todo: Init fails because there is less than moleMethane of oxygen
+    // TODO: Init fails because there is less than moleMethane of oxygen
     locHeater.getOutletStream().getFluid().init(3);
     // locHeater.getOutStream().run(id);
     locHeater.displayResult();

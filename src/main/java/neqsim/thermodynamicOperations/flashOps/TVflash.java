@@ -26,13 +26,6 @@ public class TVflash extends Flash {
    * <p>
    * Constructor for TVflash.
    * </p>
-   */
-  public TVflash() {}
-
-  /**
-   * <p>
-   * Constructor for TVflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double

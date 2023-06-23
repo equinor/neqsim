@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class nmVOCTest extends neqsim.NeqSimTest {
-
   static ProcessSystem process1;
   static NMVOCAnalyser vocanalyser1;
 

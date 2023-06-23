@@ -79,76 +79,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
         phase.getPressure());
   }
 
-  /**
-   * <p>
-   * fugcoef2.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numberOfComps a int
-   * @param temp a double
-   * @param pres a double
-   * @return a double
-   */
-  public double fugcoef2(PhaseInterface phase, int numberOfComps, double temp, double pres) {
-    // this is empty hydrate latice fugacity coefficient equation 8.9
-    if (componentName.equals("water")) {
-      // this is the empty hydrate fugacity devited by pressure (why??)
-      double solvol = getMolarVolumeHydrate(hydrateStructure, temp);
-      if (hydrateStructure == -1) {
-        fugacityCoefficient = getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
-            * Math.exp(solvol / (R * temp)
-                * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5)
-            / pres;
-      } else {
-        double val = 0.0;
-        double tempy = 1.0;
-
-        for (int cavType = 0; cavType < 2; cavType++) {
-          tempy = 0.0;
-          for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-            double tee = ((ComponentHydrate) phase.getComponent(j)).calcYKI(hydrateStructure,
-                cavType, phase);
-            tempy += tee;
-          }
-          val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
-        }
-        // System.out.println("val " + Math.exp(val));
-        /*
-         * System.out.println("fugacity " +
-         * (getEmptyHydrateStructureVapourPressure(hydrateStructure, temp) * Math.exp(solvol / (R *
-         * temp) * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5) /
-         * pres)); System.out.println("temperature " + temp); System.out.println("pressure " +
-         * pres); System.out.println("vapor pressure " +
-         * (getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)));
-         * System.out.println("fugacity folas " +
-         * (getEmptyHydrateStructureVapourPressure(hydrateStructure, temp) * Math.exp(solvol / (R *
-         * temp) * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5)));
-         */
-
-        // System.out.println("pointing "
-        // +(Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStruct,temp))*1e5))));
-        fugacityCoefficient =
-            Math.exp(val) * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
-                * Math.exp(solvol / (R * temp)
-                    * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5)
-                / pres;
-        // System.out.println("fugcoef " + tempfugcoef + "structure " +
-        // (hydrateStruct+1));
-
-        // System.out.println("structure " + (hydrateStructure+1));
-      }
-    } else {
-      fugacityCoefficient = 1e50;
-    }
-
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
-
-    // System.out.println("reading fugacity coeffiicent calculation");
-
-    return fugacityCoefficient;
-  }
-
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
@@ -236,8 +166,74 @@ public class ComponentHydrateGF extends ComponentHydrate {
       }
       fugacityCoefficient = maxFug;
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     hydrateStructure = stableStructure;
+    return fugacityCoefficient;
+  }
+
+  /**
+   * <p>
+   * fugcoef2.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComps a int
+   * @param temp a double
+   * @param pres a double
+   * @return a double
+   */
+  public double fugcoef2(PhaseInterface phase, int numberOfComps, double temp, double pres) {
+    // this is empty hydrate latice fugacity coefficient equation 8.9
+    if (componentName.equals("water")) {
+      // this is the empty hydrate fugacity devited by pressure (why??)
+      double solvol = getMolarVolumeHydrate(hydrateStructure, temp);
+      if (hydrateStructure == -1) {
+        fugacityCoefficient = getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
+            * Math.exp(solvol / (R * temp)
+                * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5)
+            / pres;
+      } else {
+        double val = 0.0;
+        double tempy = 1.0;
+
+        for (int cavType = 0; cavType < 2; cavType++) {
+          tempy = 0.0;
+          for (int j = 0; j < phase.getNumberOfComponents(); j++) {
+            double tee = ((ComponentHydrate) phase.getComponent(j)).calcYKI(hydrateStructure,
+                cavType, phase);
+            tempy += tee;
+          }
+          val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
+        }
+        // System.out.println("val " + Math.exp(val));
+        /*
+         * System.out.println("fugacity " +
+         * (getEmptyHydrateStructureVapourPressure(hydrateStructure, temp) * Math.exp(solvol / (R *
+         * temp) * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5) /
+         * pres)); System.out.println("temperature " + temp); System.out.println("pressure " +
+         * pres); System.out.println("vapor pressure " +
+         * (getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)));
+         * System.out.println("fugacity folas " +
+         * (getEmptyHydrateStructureVapourPressure(hydrateStructure, temp) * Math.exp(solvol / (R *
+         * temp) * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5)));
+         */
+
+        // System.out.println("pointing "
+        // +(Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStruct,temp))*1e5))));
+        fugacityCoefficient =
+            Math.exp(val) * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
+                * Math.exp(solvol / (R * temp)
+                    * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) * 1e5)
+                / pres;
+        // System.out.println("fugcoef " + tempfugcoef + "structure " +
+        // (hydrateStruct+1));
+
+        // System.out.println("structure " + (hydrateStructure+1));
+      }
+    } else {
+      fugacityCoefficient = 1e50;
+    }
+
+    // System.out.println("reading fugacity coefficient calculation");
     return fugacityCoefficient;
   }
 

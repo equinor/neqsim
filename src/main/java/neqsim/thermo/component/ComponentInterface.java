@@ -26,8 +26,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Helper function to create component. Typically called from constructors.
    * </p>
    *
-   * @param component_name Name of component
-   * @param moles Total number of moles of component.
+   * @param component_name Name of component.
+   * @param moles Total number of moles of component in system.
    * @param molesInPhase Number of moles in phase.
    * @param compnumber Index number of component in phase object component array.
    */
@@ -453,13 +453,51 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * fugcoef.
+   * Calculate, set and return fugacity coefficient.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient
+   *        of.
+   * @return Fugacity coefficient
+   */
+  public double fugcoef(PhaseInterface phase);
+
+  /**
+   * <p>
+   * setFugacityCoefficient.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void setFugacityCoefficient(double val);
+
+  /**
+   * <p>
+   * fugcoefDiffPresNumeric.
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
    * @return a double
    */
-  public double fugcoef(PhaseInterface phase);
+  public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure);
+
+  /**
+   * <p>
+   * fugcoefDiffTempNumeric.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @return a double
+   */
+  public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure);
 
   /**
    * <p>
@@ -484,15 +522,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * setStokesCationicDiameter.
-   * </p>
-   *
-   * @param stokesCationicDiameter a double
-   */
-  public void setStokesCationicDiameter(double stokesCationicDiameter);
-
-  /**
-   * <p>
    * logfugcoefdP.
    * </p>
    *
@@ -510,6 +539,53 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @return an array of {@link double} objects
    */
   public double[] logfugcoefdN(PhaseInterface phase);
+
+  /**
+   * <p>
+   * setdfugdt.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void setdfugdt(double val);
+
+  /**
+   * <p>
+   * setdfugdp.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void setdfugdp(double val);
+
+  /**
+   * <p>
+   * setdfugdn.
+   * </p>
+   *
+   * @param i a int
+   * @param val a double
+   */
+  public void setdfugdn(int i, double val);
+
+  /**
+   * <p>
+   * setdfugdx.
+   * </p>
+   *
+   * @param i a int
+   * @param val a double
+   */
+  public void setdfugdx(int i, double val);
+
+  /**
+   * <p>
+   * setStokesCationicDiameter.
+   * </p>
+   *
+   * @param stokesCationicDiameter a double
+   */
+  public void setStokesCationicDiameter(double stokesCationicDiameter);
 
   /**
    * <p>
@@ -541,15 +617,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public default double getTripplePointDensity() {
     return getTriplePointDensity();
   }
-
-  /**
-   * <p>
-   * setFugacityCoefficient.
-   * </p>
-   *
-   * @param val a double
-   */
-  public void setFugacityCoefficient(double val);
 
   /**
    * <p>
@@ -662,20 +729,38 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * addMolesChemReac.
+   * Change the number of moles of component of phase,i.e., <code>numberOfMolesInPhase</code> but do
+   * not change the total number of moles of component in system.
    * </p>
    *
-   * @param dn Number of moles to add to phase and total
+   * @param dn Number of moles of component added to phase
    */
-  public void addMolesChemReac(double dn);
+  public default void addMoles(double dn) {
+    addMolesChemReac(dn, 0);
+  }
 
   /**
    * <p>
-   * addMolesChemReac.
+   * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code>, and
+   * total number of moles of component in system, i.e., <code>numberOfMoles</code> with the same
+   * amount.
    * </p>
    *
-   * @param dn Number of moles to add to phase
-   * @param totdn Number of moles to add total
+   * @param dn Number of moles of component added to phase and system
+   */
+  public default void addMolesChemReac(double dn) {
+    addMolesChemReac(dn, dn);
+  }
+
+  /**
+   * <p>
+   * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code>, and
+   * total number of moles of component in system, i.e., <code>numberOfMoles</code> with separate
+   * amounts.
+   * </p>
+   *
+   * @param dn Number of moles of component to add to phase
+   * @param totdn Number of moles of component to add to system
    */
   public void addMolesChemReac(double dn, double totdn);
 
@@ -957,15 +1042,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * addMoles.
-   * </p>
-   *
-   * @param dn a double
-   */
-  public void addMoles(double dn);
-
-  /**
-   * <p>
    * getGibbsEnergyOfFormation.
    * </p>
    *
@@ -989,7 +1065,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    *
    * @return a double
    */
-  public double getLogFugacityCoefficient();
+  public default double getLogFugacityCoefficient() {
+    return Math.log(getFugacityCoefficient());
+  }
 
   /**
    * <p>
@@ -1543,72 +1621,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @return a double
    */
   public double getPureComponentHeatOfVaporization(double temperature);
-
-  /**
-   * <p>
-   * fugcoefDiffPresNumeric.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @return a double
-   */
-  public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure);
-
-  /**
-   * <p>
-   * fugcoefDiffTempNumeric.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @return a double
-   */
-  public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure);
-
-  /**
-   * <p>
-   * setdfugdt.
-   * </p>
-   *
-   * @param val a double
-   */
-  public void setdfugdt(double val);
-
-  /**
-   * <p>
-   * setdfugdp.
-   * </p>
-   *
-   * @param val a double
-   */
-  public void setdfugdp(double val);
-
-  /**
-   * <p>
-   * setdfugdn.
-   * </p>
-   *
-   * @param i a int
-   * @param val a double
-   */
-  public void setdfugdn(int i, double val);
-
-  /**
-   * <p>
-   * setdfugdx.
-   * </p>
-   *
-   * @param i a int
-   * @param val a double
-   */
-  public void setdfugdx(int i, double val);
 
   /**
    * <p>

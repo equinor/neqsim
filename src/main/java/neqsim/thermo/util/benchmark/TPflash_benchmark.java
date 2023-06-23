@@ -23,7 +23,6 @@ public class TPflash_benchmark {
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String args[]) {
-
     SystemInterface testSystem = new SystemSrkEos(303.15, 35.01325);
     // SystemInterface testSystem = new SystemSrkCPAstatoil(303.15, 10.0);
     // SystemInterface testSystem = new SystemUMRPRUMCEos(303.0, 10.0);

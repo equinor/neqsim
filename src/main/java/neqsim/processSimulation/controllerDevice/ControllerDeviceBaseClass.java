@@ -35,10 +35,12 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double response = 30.0;
   int propConstant = 1;
   private boolean reverseActing = false;
-  private double Ksp = 1.0;
-  private double Tint = 300.0;
+  private double Kp = 1.0;
+  private double Ti = 300.0;
+  private double Td = 0.0;
+
+  // Internal state of integration contribution
   private double TintValue = 0.0;
-  private double Tderiv = 300.0;
 
   /**
    * <p>Constructor for ControllerDeviceBaseClass.</p>
@@ -67,13 +69,15 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     }
     oldoldError = error;
     oldError = error;
+
+    // Error is normalized
     error =
         transmitter.getMeasuredPercentValue() - (controllerSetPoint - transmitter.getMinimumValue())
             / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100;
 
-    TintValue += Ksp / Tint * error * dt;
-    double TderivValue = Ksp * Tderiv * (error - oldError) / dt;
-    response = initResponse + propConstant * (Ksp * error + TintValue + TderivValue);
+    TintValue += Kp / Ti * error * dt;
+    double TderivValue = Kp * Td * (error - oldError) / dt;
+    response = initResponse + propConstant * (Kp * error + TintValue + TderivValue);
     // System.out.println("error " + error + " %");
     // error = device.getMeasuredPercentValue()-controlValue;
     // double regulatorSignal = error*1.0;
@@ -118,75 +122,75 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
   /**
    * <p>
-   * getKsp.
+   * Get proportional gain of PID controller.
    * </p>
    *
-   * @return a double
+   * @return Proportional gain of PID controller
    */
-  public double getKsp() {
-    return Ksp;
+  public double getKp() {
+    return Kp;
   }
 
   /**
    * <p>
-   * setKsp.
+   * Set proportional gain of PID controller.
    * </p>
    *
-   * @param Ksp a double
+   * @param Kp Proportional gain of PID controller
    */
-  public void setKsp(double Ksp) {
-    this.Ksp = Ksp;
+  public void setKp(double Kp) {
+    this.Kp = Kp;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setControllerParameters(double Ksp, double Ti, double Td) {
-    this.setKsp(Ksp);
-    this.setTint(Ti);
-    this.setTderiv(Td);
+  public void setControllerParameters(double Kp, double Ti, double Td) {
+    this.setKp(Kp);
+    this.setTi(Ti);
+    this.setTd(Td);
   }
 
   /**
    * <p>
-   * getTint.
+   * Get integral time of PID controller.
    * </p>
    *
-   * @return a double
+   * @return Integral time in seconds
    */
-  public double getTint() {
-    return Tint;
+  public double getTi() {
+    return Ti;
   }
 
   /**
    * <p>
-   * setTint.
+   * Set integral time of PID controller.
    * </p>
    *
-   * @param Tint a double
+   * @param Ti Integral time in seconds
    */
-  public void setTint(double Tint) {
-    this.Tint = Tint;
+  public void setTi(double Ti) {
+    this.Ti = Ti;
   }
 
   /**
    * <p>
-   * getTderiv.
+   * Get derivative time of PID controller.
    * </p>
    *
-   * @return a double
+   * @return Derivative time of controller
    */
-  public double getTderiv() {
-    return Tderiv;
+  public double getTd() {
+    return Td;
   }
 
   /**
    * <p>
-   * setTderiv.
+   * Set derivative time of PID controller.
    * </p>
    *
-   * @param Tderiv a double
+   * @param Td Derivative time in seconds
    */
-  public void setTderiv(double Tderiv) {
-    this.Tderiv = Tderiv;
+  public void setTd(double Td) {
+    this.Td = Td;
   }
 }

@@ -14,7 +14,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public interface ProcessEquipmentInterface extends SimulationInterface {
-
   /**
    * <p>
    * reportResults.
@@ -32,6 +31,18 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * @return a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
    */
   public MechanicalDesign getMechanicalDesign();
+
+  /**
+   * <p>
+   * Check if process module needs recalculating.
+   * </p>
+   * 
+   * @return true or false
+   * 
+   */
+  public default boolean needRecalculation() {
+    return true;
+  }
 
   /**
    * <p>

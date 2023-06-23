@@ -54,7 +54,7 @@ public class StaticPhaseMixer extends StaticMixer {
         for (int p = 0; p < numberOfPhases; p++) {
           moles[p] = streams.get(k).getThermoSystem().getPhase(p).getComponents()[i]
               .getNumberOfMolesInPhase();
-          phaseType[p] = streams.get(k).getThermoSystem().getPhase(p).getPhaseType();
+          phaseType[p] = streams.get(k).getThermoSystem().getPhase(p).getType().getValue();
         }
         if (k == 1) {
           phaseType[0] = 0;

@@ -5,6 +5,7 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.UUID;
 import javax.swing.JDialog;
@@ -69,7 +70,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   public void replaceStream(int i, StreamInterface newStream) {
     streams.set(i, newStream);
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public void removeInputStream(int i) {
@@ -86,7 +87,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       if (getNumberOfInputStreams() == 0) {
         mixedStream = (Stream) streams.get(0).clone(); // cloning the first stream
         // mixedStream.getThermoSystem().setNumberOfPhases(2);
-        // mixedStream.getThermoSystem().reInitPhaseType();
         // mixedStream.getThermoSystem().init(0);
         // mixedStream.getThermoSystem().init(3);
       }
@@ -211,6 +211,19 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    Iterator<StreamInterface> iter = streams.iterator();
+    while (iter.hasNext()) {
+      StreamInterface str = iter.next();
+      if (!str.solved()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
@@ -223,7 +236,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() > 0) {
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
 
       mixStream();

@@ -35,13 +35,6 @@ public class TPmultiflash_1 extends TPflash {
    * <p>
    * Constructor for TPmultiflash_1.
    * </p>
-   */
-  public TPmultiflash_1() {}
-
-  /**
-   * <p>
-   * Constructor for TPmultiflash_1.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

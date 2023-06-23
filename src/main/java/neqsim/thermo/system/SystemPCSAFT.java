@@ -22,16 +22,7 @@ public class SystemPCSAFT extends SystemSrkEos {
    * </p>
    */
   public SystemPCSAFT() {
-    super();
-    modelName = "PCSAFT-EOS";
-    attractiveTermNumber = 0;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePCSAFTRahmat();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-    }
-    this.useVolumeCorrection(false);
-    commonInitialization();
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -43,16 +34,7 @@ public class SystemPCSAFT extends SystemSrkEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPCSAFT(double T, double P) {
-    super(T, P);
-    modelName = "PCSAFT-EOS";
-    attractiveTermNumber = 0;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePCSAFTRahmat();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-    this.useVolumeCorrection(false);
-    commonInitialization();
+    this(T, P, false);
   }
 
   /**
@@ -65,19 +47,20 @@ public class SystemPCSAFT extends SystemSrkEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPCSAFT(double T, double P, boolean checkForSolids) {
-    this(T, P);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     modelName = "PCSAFT-EOS";
     attractiveTermNumber = 0;
-    setNumberOfPhases(5);
-    solidPhaseCheck = checkForSolids;
+
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePCSAFTRahmat();
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }
     commonInitialization();
+
     if (solidPhaseCheck) {
-      // System.out.println("here first");
+      setNumberOfPhases(5);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -85,7 +68,6 @@ public class SystemPCSAFT extends SystemSrkEos {
     }
 
     if (hydrateCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhaseHydrate();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

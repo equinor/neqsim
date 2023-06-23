@@ -487,7 +487,7 @@ public class GERG2004EOS {
    * </p>
    */
   public GERG2004EOS() {
-    // todo: does not work
+    // TODO: does not work
     System.loadLibrary("test2");
   }
 

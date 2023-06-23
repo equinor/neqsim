@@ -232,4 +232,5 @@ public interface StreamInterface extends ProcessEquipmentInterface {
   /** {@inheritDoc} */
   @Override
   public int hashCode();
+
 }

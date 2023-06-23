@@ -18,6 +18,8 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  */
 public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<UNIFACgroup> {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(UNIFACgroup.class);
+
   double R = 0.0;
   double Q = 0.0;
   int n = 0;
@@ -36,7 +38,6 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   String groupName = "";
   int mainGroup = 0;
   int subGroup = 0;
-  static Logger logger = LogManager.getLogger(UNIFACgroup.class);
 
   /**
    * <p>

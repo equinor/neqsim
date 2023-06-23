@@ -98,7 +98,7 @@ public class SaturationTemperature extends BasePVTsimulation {
 
     SimulationInterface satPresSim = new SaturationTemperature(tempSystem);
     satPresSim.run();
-    satPresSim.getThermoSystem().display();
+    // satPresSim.getThermoSystem().display();
     /*
      * double saturationPressure = 350.0; double saturationTemperature = 273.15 + 80;
      * 

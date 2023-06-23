@@ -45,13 +45,6 @@ public class TPmultiflash extends TPflash {
    * <p>
    * Constructor for TPmultiflash.
    * </p>
-   */
-  public TPmultiflash() {}
-
-  /**
-   * <p>
-   * Constructor for TPmultiflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -366,7 +359,7 @@ public class TPmultiflash extends TPflash {
           try {
             clonedSystem.get(0).getPhase(1).getComponents()[cc].setx(nomb);
           } catch (Exception ex) {
-            System.out.println(ex.getMessage());
+            logger.warn(ex.getMessage());
           }
         }
       }

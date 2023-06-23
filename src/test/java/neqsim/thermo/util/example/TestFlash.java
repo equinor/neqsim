@@ -4,6 +4,7 @@ import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.api.ioc.CalculationResult;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -82,7 +83,7 @@ public class TestFlash {
       fluid.init(0); // careful: this method will reset forced phase types
       fluid.setMaxNumberOfPhases(1);
       fluid.setForcePhaseTypes(true);
-      fluid.setPhaseType(0, "gas");
+      fluid.setPhaseType(0, PhaseType.GAS);
     } else if (fluidNumber == 3) {
       // Fluid water
       fluid.addComponent("water", 1.0);

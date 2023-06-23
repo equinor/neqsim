@@ -113,7 +113,6 @@ public class DifferentialLiberation extends BasePVTsimulation {
       }
       totalVolume[i] = getThermoSystem().getVolume();
       liquidVolume[i] = getThermoSystem().getVolume();
-      System.out.println("volume " + totalVolume[i]);
 
       if (getThermoSystem().getNumberOfPhases() > 1) {
         if (!saturationConditionFound) {
@@ -156,8 +155,16 @@ public class DifferentialLiberation extends BasePVTsimulation {
         double test = volumeCorrection / getThermoSystem().getPhase(0).getMolarVolume();
 
         for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-          getThermoSystem().addComponent(j,
-              -test * getThermoSystem().getPhase(0).getComponent(j).getx());
+          try {
+            double change =
+                (test * getThermoSystem().getPhase(0).getComponent(j).getx() < getThermoSystem()
+                    .getPhase(0).getComponent(j).getNumberOfMolesInPhase())
+                        ? test * getThermoSystem().getPhase(0).getComponent(j).getx()
+                        : test * getThermoSystem().getPhase(0).getComponent(j).getx();
+            getThermoSystem().addComponent(j, -change);
+          } catch (Exception e) {
+            logger.debug(e.getMessage());
+          }
         }
       }
     }
@@ -180,11 +187,12 @@ public class DifferentialLiberation extends BasePVTsimulation {
         Bg[i] = gasVolume[i] / getGasStandardVolume()[i];
         Rs[i] = (totalGasStandardVolume - total) / VoilStd;
       }
-      System.out.println("Bo " + getBo()[i] + " Bg " + getBg()[i] + " Rs " + getRs()[i]
-          + " oil density " + getOilDensity()[i] + "  gas gracvity " + getRelGasGravity()[i]
-          + " Zgas " + getZgas()[i] + " gasstdvol " + getGasStandardVolume()[i]);
+      /*
+       * System.out.println("Bo " + getBo()[i] + " Bg " + getBg()[i] + " Rs " + getRs()[i] +
+       * " oil density " + getOilDensity()[i] + "  gas gracvity " + getRelGasGravity()[i] + " Zgas "
+       * + getZgas()[i] + " gasstdvol " + getGasStandardVolume()[i]);
+       */
     }
-    System.out.println("test finished");
   }
 
   /**

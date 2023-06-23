@@ -53,13 +53,6 @@ abstract class Flash extends BaseOperation {
 
   /**
    * <p>
-   * Constructor for Flash.
-   * </p>
-   */
-  public Flash() {}
-
-  /**
-   * <p>
    * findLowestGibbsEnergyPhase.
    * </p>
    *
@@ -232,7 +225,7 @@ abstract class Flash extends BaseOperation {
               double kronDelt = (i == k) ? 1.5 : 0.0; // adding 0.5 to diagonal
               df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                   * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k)); // *
-                                                                           // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                                                                            // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
             }
           }
 
@@ -246,7 +239,7 @@ abstract class Flash extends BaseOperation {
           // logger.info("err newton " + error[j]);
         }
 
-        // logger.info("norm f " + f.norm1());
+        logger.info("norm f " + f.norm1());
         // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {

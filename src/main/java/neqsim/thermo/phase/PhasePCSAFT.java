@@ -15,10 +15,10 @@ import neqsim.thermo.component.ComponentPCSAFT;
  */
 public class PhasePCSAFT extends PhaseSrkEos {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhasePCSAFT.class);
 
   double nSAFT = 1.0;
   double dnSAFTdV = 1.0;
-
   double dnSAFTdVdV = 1.0;
 
   double dmeanSAFT = 0.0;
@@ -32,17 +32,12 @@ public class PhasePCSAFT extends PhaseSrkEos {
   double volumeSAFT = 1.0;
   double daHCSAFTdN = 1.0;
   double daHSSAFTdN = 1.0;
-
   double dgHSSAFTdN = 1.0;
-
   double daHSSAFTdNdN = 1.0;
-
   double dgHSSAFTdNdN = 1.0;
 
   int useHS = 1;
-
   int useDISP1 = 1;
-
   int useDISP2 = 1;
 
   private double[][] aConstSAFT = {
@@ -60,52 +55,28 @@ public class PhasePCSAFT extends PhaseSrkEos {
       {0.0976883116, -0.2557574982, -9.1558561530, 20.642075974, -38.804430052, 93.626774077,
           -29.666905585}};
   private double F1dispVolTerm = 1.0;
-
   private double F1dispSumTerm = 1.0;
-
   private double F1dispI1 = 1.0;
-
   private double F2dispI2 = 1.0;
-
   private double F2dispZHC = 1.0;
-
   private double F2dispZHCdN = 1.0;
-
   private double F2dispZHCdm = 1.0;
-
   private double F2dispZHCdV = 1.0;
-
   private double F2dispI2dVdV = 0.0;
-
   private double F2dispZHCdVdV = 0.0;
-
   private double F1dispI1dNdN = 1.0;
-
   private double F1dispVolTermdV = 1.0;
-
   private double F1dispVolTermdVdV = 1.0;
-
   private double F1dispI1dN = 1.0;
-
   private double F1dispI1dm = 1.0;
-
   private double F1dispI1dV = 1.0;
-
   private double F2dispI2dV = 1.0;
-
   private double F2dispI2dN = 1.0;
-
   private double F2dispI2dm = 1.0;
-
   private double F2dispSumTerm = 0.0;
-
   private double F2dispZHCdNdN = 1.0;
-
   private double F2dispI2dNdN = 1.0;
-
   private double F1dispI1dVdV = 0.0;
-
-  static Logger logger = LogManager.getLogger(PhasePCSAFT.class);
 
   /**
    * <p>
@@ -138,7 +109,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     if (type > 0) {
       for (int i = 0; i < numberOfComponents; i++) {

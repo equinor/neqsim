@@ -146,7 +146,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     if (type == 0) {
       setTotalNumberOfAccociationSites(0);

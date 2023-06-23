@@ -18,7 +18,6 @@ import org.apache.logging.log4j.Logger;
  */
 public class NeqSimBlobDatabase
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(NeqSimBlobDatabase.class);
 
@@ -115,7 +114,7 @@ public class NeqSimBlobDatabase
         return DriverManager.getConnection(getConnectionString(), username, password);
       }
     } catch (Exception ex) {
-      logger.error("error loading NeqSimDataBase... ", ex);
+      logger.error("error loading NeqSimBlobDatabase... ", ex);
       throw new RuntimeException(ex);
     } finally {
       try {
@@ -152,7 +151,7 @@ public class NeqSimBlobDatabase
       ResultSet result = getStatement().executeQuery(sqlString);
       return result;
     } catch (Exception ex) {
-      logger.error("error loading NeqSimbataBase ", ex);
+      logger.error("error loading NeqSimBlobDatabase ", ex);
       throw new RuntimeException(ex);
     }
   }

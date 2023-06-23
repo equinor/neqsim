@@ -78,7 +78,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     // if(type==0) calcaij();
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);

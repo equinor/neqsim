@@ -73,7 +73,6 @@ public class WaxFractionSim extends BasePVTsimulation {
       System.out.println("adding....");
 
       for (int i = 0; i < experimentalData[0].length; i++) {
-
         ArrayList<Double> guessArray = new ArrayList<Double>();
         for (int p = 0; p < 3; p++) {
           guessArray.add(getThermoSystem().getWaxModel().getWaxParameters()[p]);

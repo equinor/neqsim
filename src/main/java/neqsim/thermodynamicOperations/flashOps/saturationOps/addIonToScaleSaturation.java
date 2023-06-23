@@ -27,13 +27,6 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
    * <p>
    * Constructor for addIonToScaleSaturation.
    * </p>
-   */
-  public addIonToScaleSaturation() {}
-
-  /**
-   * <p>
-   * Constructor for addIonToScaleSaturation.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNumber a int

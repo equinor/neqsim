@@ -23,13 +23,7 @@ public class SystemDuanSun extends SystemEos {
    * </p>
    */
   public SystemDuanSun() {
-    super();
-    modelName = "Duan-Sun-model";
-    attractiveTermNumber = 0;
-    phaseArray[0] = new PhaseSrkEos();
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseDuanSun();
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -41,17 +35,7 @@ public class SystemDuanSun extends SystemEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemDuanSun(double T, double P) {
-    super(T, P);
-    attractiveTermNumber = 0;
-    modelName = "Duan-Sun-model";
-    phaseArray[0] = new PhaseSrkEos();
-    phaseArray[0].setTemperature(T);
-    phaseArray[0].setPressure(P);
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseDuanSun(); // new PhaseGENRTLmodifiedWS();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -64,11 +48,10 @@ public class SystemDuanSun extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemDuanSun(double T, double P, boolean checkForSolids) {
-    this(T, P);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     attractiveTermNumber = 0;
-    setNumberOfPhases(4);
     modelName = "Duan-Sun-model";
-    solidPhaseCheck = checkForSolids;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);
@@ -80,7 +63,7 @@ public class SystemDuanSun extends SystemEos {
     }
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
+      setNumberOfPhases(4);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

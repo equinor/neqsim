@@ -16,7 +16,6 @@ import neqsim.thermo.component.ComponentPRvolcor;
  * @version $Id: $Id
  */
 public class PhasePrEosvolcor extends PhasePrEos {
-
   private static final long serialVersionUID = 1000;
   double loc_C = 0;
   private double CT;
@@ -33,7 +32,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     loc_C = calcC(this, temperature, pressure, numberOfComponents);

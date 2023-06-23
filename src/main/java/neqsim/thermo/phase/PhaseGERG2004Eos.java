@@ -80,14 +80,14 @@ public class PhaseGERG2004Eos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
-    IPHASE = phase == 0 ? -1 : -2;
+    IPHASE = phase.getValue() == 0 ? -1 : -2;
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     setxFracGERG();
 
     if (!okVolume) {
-      IPHASE = phase == 0 ? -2 : -1;
+      IPHASE = phase.getValue() == 0 ? -2 : -1;
       super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
     if (type >= 1) {

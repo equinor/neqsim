@@ -36,13 +36,12 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
 
   @Test
   void testGetMechanicalDesign() {
-
   }
 
   @Disabled
   @Test
   void testRun() {
-    // todo: test not working
+    // TODO: test not working
     gasStream.run();
     GasTurbine gasturb = new GasTurbine("turbine", gasStream);
 

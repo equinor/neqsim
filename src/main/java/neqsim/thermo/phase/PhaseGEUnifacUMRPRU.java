@@ -16,13 +16,13 @@ import neqsim.thermo.component.ComponentGEUniquac;
  */
 public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseGEUnifacUMRPRU.class);
+
   double[] Qmix = null;
   double[][] QmixdN = null;
   String[] gropuNames = null;
   double VCommontemp = 0.0;
   double FCommontemp = 0.0;
-
-  static Logger logger = LogManager.getLogger(PhaseGEUnifacUMRPRU.class);
 
   /**
    * <p>

@@ -4,13 +4,13 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.equinor</groupId>
+	<groupId>com.equinor.neqsim</groupId>
 	<artifactId>neqsim</artifactId>
 	<packaging>jar</packaging>
 	<version>${revision}${sha1}${changelist}</version>
 
 	<properties>
-		<revision>2.4.7</revision>
+		<revision>2.5.2</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
@@ -184,7 +184,7 @@
 				<configuration>
 					<release>11</release> <!-- Upgrade jdk version to 11 if you are having issues compiling -->
 					<encoding>${project.build.sourceEncoding}</encoding>
-					<!-- Uncomment below to get compiler warnings 
+					<!-- Uncomment below to get compiler warnings
 					<compilerArgs>
 						<arg>-Xlint</arg>
 					</compilerArgs>
@@ -200,6 +200,14 @@
 					<show>private</show>
 					<nohelp>true</nohelp>
 				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
@@ -216,9 +224,6 @@
 				<configuration>
 					<excludes>
 						<exclude>neqsim/physicalProperties/util/parameterFitting/**/*</exclude>
-						<exclude>neqsim/fluidMechanics/util/parameterFitting/**/*</exclude>
-						<exclude>neqsim/PVTsimulation/util/parameterFitting/**/*</exclude>
-						<exclude>neqsim/thermo/util/parameterFitting/**/*</exclude>
 						<exclude>neqsim/statistics/util/parameterFitting/**/*</exclude>
 						<exclude>neqsim/PVTsimulation/util/parameterfitting/**/*</exclude>
 					</excludes>
@@ -241,6 +246,19 @@
 						<phase>test</phase>
 						<goals>
 							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.3.0</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
 						</goals>
 					</execution>
 				</executions>

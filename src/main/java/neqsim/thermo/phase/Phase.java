@@ -44,11 +44,15 @@ abstract class Phase implements PhaseInterface {
   public String thermoPropertyModelName = null;
 
   /**
-   * Mole fraction of this phase in system.
-   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>
+   * Mole fraction of this phase of system.
+   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>. NB! numberOfMolesInSystem is
+   * not known to the phase.
    */
   double beta = 1.0;
-  /** Number of moles in phase. <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code> */
+  /**
+   * Number of moles in phase. <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code>. NB!
+   * numberOfMolesInSystem is not known to the phase.
+   */
   public double numberOfMolesInPhase = 0;
 
   private int initType = 0;
@@ -83,7 +87,7 @@ abstract class Phase implements PhaseInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       clonedPhase.componentArray[i] = this.componentArray[i].clone();
     }
-    // System.out.println("cloed length: " + componentArray.length);
+    // System.out.println("cloned length: " + componentArray.length);
     if (physicalPropertyHandler != null) {
       clonedPhase.physicalPropertyHandler = this.physicalPropertyHandler.clone();
     }
@@ -168,30 +172,15 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addMolesChemReac(int component, double dn) {
-    numberOfMolesInPhase += dn;
-    componentArray[component].addMolesChemReac(dn);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void addMolesChemReac(int component, double dn, double totdn) {
+    if ((numberOfMolesInPhase + dn) / numberOfMolesInPhase < -1e-10) {
+      String msg = "will lead to negative number of moles in phase." + (numberOfMolesInPhase + dn);
+      neqsim.util.exception.InvalidInputException ex =
+          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
+      throw new RuntimeException(ex);
+    }
     numberOfMolesInPhase += dn;
     componentArray[component].addMolesChemReac(dn, totdn);
-    if (numberOfMolesInPhase < 0.0 || getComponent(component).getNumberOfMolesInPhase() < 0.0) {
-      String msg = "Negative number of moles in phase.";
-      logger.error(msg);
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", msg);
-      throw new RuntimeException(ex);
-    }
-    if (getComponent(component).getNumberOfMolesInPhase() < 0.0) {
-      String msg = "Negative number of moles of component " + component;
-      logger.error(msg);
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", msg);
-      throw new RuntimeException(ex);
-    }
   }
 
   /** {@inheritDoc} */
@@ -406,12 +395,12 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void init() {
-    init(numberOfMolesInPhase / beta, numberOfComponents, initType, pt.getValue(), beta);
+    init(numberOfMolesInPhase / beta, numberOfComponents, initType, getType(), beta);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     if (totalNumberOfMoles <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
@@ -420,8 +409,8 @@ abstract class Phase implements PhaseInterface {
 
     this.beta = beta;
     numberOfMolesInPhase = beta * totalNumberOfMoles;
-    if (this.pt.getValue() != phase) {
-      setType(PhaseType.byValue(phase));
+    if (this.pt != phase) {
+      setType(phase);
       // setPhysicalProperties(physicalPropertyType);
     }
     this.setInitType(type);
@@ -1280,7 +1269,7 @@ abstract class Phase implements PhaseInterface {
         refPhase[i].addComponent(name, 10.0, 10.0, 1);
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
         refPhase[i].setMixingRule(this.getMixingRuleNumber());
-        refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getPhaseType(), 1.0);
+        refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getType(), 1.0);
       }
     }
   }
@@ -1300,7 +1289,7 @@ abstract class Phase implements PhaseInterface {
     }
     refPhase[k].setTemperature(temperature);
     refPhase[k].setPressure(pressure);
-    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 1, 1, this.getPhaseType(), 1.0);
+    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 1, 1, this.getType(), 1.0);
     refPhase[k].getComponent(0).fugcoef(refPhase[k]);
     return refPhase[k].getComponent(0).getLogFugacityCoefficient();
   }
@@ -1331,7 +1320,7 @@ abstract class Phase implements PhaseInterface {
     }
     refPhase[k].setTemperature(temperature);
     refPhase[k].setPressure(pressure);
-    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getPhaseType(), 1.0);
+    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getType(), 1.0);
     refPhase[k].getComponent(0).fugcoef(refPhase[k]);
     return refPhase[k].getComponent(0).getLogFugacityCoefficient();
   }
@@ -1343,7 +1332,7 @@ abstract class Phase implements PhaseInterface {
     dilphase.addMoles(k, -(1.0 - 1e-10) * dilphase.getComponent(k).getNumberOfMolesInPhase());
     dilphase.getComponent(k).setx(1e-10);
     dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1,
-        dilphase.getPhaseType(), 1.0);
+        dilphase.getType(), 1.0);
     dilphase.getComponent(k).fugcoef(dilphase);
     return dilphase.getComponent(k).getLogFugacityCoefficient();
   }
@@ -1396,7 +1385,6 @@ abstract class Phase implements PhaseInterface {
   @Override
   public double getActivityCoefficient(int k) {
     double fug = 0.0;
-
     double oldFug = getComponent(k).getLogFugacityCoefficient();
     if (getComponent(k).getReferenceStateType().equals("solvent")) {
       fug = getLogPureComponentFugacity(k);

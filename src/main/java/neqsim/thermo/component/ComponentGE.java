@@ -63,7 +63,6 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
       // gamma* benyttes ikke
       gammaRefCor = activinf;
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
 
     return fugacityCoefficient;
   }

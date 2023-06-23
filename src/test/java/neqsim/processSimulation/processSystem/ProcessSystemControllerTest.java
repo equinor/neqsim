@@ -32,12 +32,10 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
 
   @Test
   void testGetTime() {
-
   }
 
   @Test
   void testGetTimeStep() {
-
   }
 
   private SystemInterface getTestSystem() {

@@ -267,7 +267,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   @Test
   @SuppressWarnings("unchecked")
   void testpropertyFlashRegressions() throws IOException {
-    // todo: make these tests work
+    // TODO: make these tests work
     // make output log of differences per failing test and see check if it is related to change in
     // component input data
     Collection<TestData> testData = getTestData();
@@ -363,7 +363,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   }
 
   private class TestData {
-
     private final String name;
     private String inputFile;
     private String outputFile;

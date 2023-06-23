@@ -258,10 +258,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param pt Type of phase.
    * @param beta Mole fraction of this phase in system.
    */
-  public default void init(double totalNumberOfMoles, int numberOfComponents, int type,
-      PhaseType pt, double beta) {
-    init(totalNumberOfMoles, numberOfComponents, type, pt.getValue(), beta);
-  }
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+      double beta);
 
   /**
    * <p>
@@ -276,8 +274,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @deprecated Replace with init-function using PhaseType input.
    */
   @Deprecated
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int ptNumber,
-      double beta);
+  public default void init(double totalNumberOfMoles, int numberOfComponents, int type,
+      int ptNumber, double beta) {
+    init(totalNumberOfMoles, numberOfComponents, type, PhaseType.byValue(ptNumber), beta);
+  }
 
   /**
    * <p>
@@ -765,22 +765,51 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * addMolesChemReac.
+   * Change the number of moles of component of phase,i.e., <code>numberOfMolesInPhase</code> but do
+   * not change the total number of moles of component in system.
+   * 
+   * NB! Phase fraction <code>beta</code> is not updated by this method. Must be done separately to
+   * keep consistency between phase and component calculation of of total number of moles in system.
    * </p>
    *
-   * @param component a int
-   * @param dn a double
+   * @param component Component number to change
+   * @param dn Number of moles of component added to phase
    */
-  public void addMolesChemReac(int component, double dn);
+  public default void addMoles(int component, double dn) {
+    addMolesChemReac(component, dn, 0);
+  }
 
   /**
    * <p>
-   * addMolesChemReac.
+   * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code>, and
+   * total number of moles of component in system, i.e., <code>numberOfMoles</code> with the same
+   * amount.
+   * 
+   * NB! Phase fraction <code>beta</code> is not updated by this method. Must be done separately to
+   * keep consistency between phase and component calculation of of total number of moles in system.
    * </p>
    *
-   * @param component Component number
-   * @param dn a double
-   * @param totdn a double
+   * @param component Component number to change
+   * @param dn Number of moles of component added to phase and system
+   */
+  public default void addMolesChemReac(int component, double dn) {
+    addMolesChemReac(component, dn, dn);
+  }
+
+  /**
+   * <p>
+   * Change the number of moles of component of phase, i.e., <code>numberOfMolesInPhase</code> and
+   * <code>Component</code> properties for the number of moles of component of phase, i.e.,
+   * <code>numberOfMolesInPhase</code>, and total number of moles of component in system, i.e.,
+   * <code>numberOfMoles</code> with separate amounts.
+   * 
+   * NB! Phase fraction <code>beta</code> is not updated by this method. Must be done separately to
+   * keep consistency between phase and component calculation of of total number of moles in system.
+   * </p>
+   *
+   * @param component Component number to change
+   * @param dn Number of moles of component to add to phase
+   * @param totdn Number of moles of component to add to system
    */
   public void addMolesChemReac(int component, double dn, double totdn);
 
@@ -1041,16 +1070,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   double getg();
-
-  /**
-   * <p>
-   * addMoles.
-   * </p>
-   *
-   * @param component a int
-   * @param dn a double
-   */
-  public void addMoles(int component, double dn);
 
   /**
    * method to return enthalpy of a phase in unit Joule.
@@ -1912,7 +1931,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Setter for property phaseType.
    * </p>
    *
-   * @param phaseType PhaseType as int.
+   * @param phaseType Phasetype as int.
    * @deprecated Replace with {@link setType}
    */
   @Deprecated
@@ -1926,9 +1945,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    *
    * @return a {@link String} object
-   * @deprecated Replace with {@link getType}
    */
-  @Deprecated
   public default String getPhaseTypeName() {
     return getType().getDesc();
   }
@@ -1939,9 +1956,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    *
    * @param phaseTypeName a {@link String} object
-   * @deprecated Replace with {@link setType}
    */
-  @Deprecated
   public default void setPhaseTypeName(String phaseTypeName) {
     setType(PhaseType.byDesc(phaseTypeName));
   }

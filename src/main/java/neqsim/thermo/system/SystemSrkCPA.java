@@ -19,13 +19,7 @@ public class SystemSrkCPA extends SystemSrkEos {
    * </p>
    */
   public SystemSrkCPA() {
-    super();
-    modelName = "CPA-SRK-EOS";
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseSrkCPA();
-    }
-    this.useVolumeCorrection(true);
-    commonInitialization();
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -37,15 +31,7 @@ public class SystemSrkCPA extends SystemSrkEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkCPA(double T, double P) {
-    super(T, P);
-    modelName = "CPA-SRK-EOS";
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseSrkCPA();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-    this.useVolumeCorrection(true);
-    commonInitialization();
+    this(T, P, false);
   }
 
   /**
@@ -58,7 +44,8 @@ public class SystemSrkCPA extends SystemSrkEos {
    * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
    */
   public SystemSrkCPA(double T, double P, boolean checkForSolids) {
-    super(T, P, checkForSolids);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseSrkCPA();
       phaseArray[i].setTemperature(T);
@@ -68,7 +55,6 @@ public class SystemSrkCPA extends SystemSrkEos {
     commonInitialization();
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -76,7 +62,6 @@ public class SystemSrkCPA extends SystemSrkEos {
     }
 
     if (hydrateCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhaseHydrate();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

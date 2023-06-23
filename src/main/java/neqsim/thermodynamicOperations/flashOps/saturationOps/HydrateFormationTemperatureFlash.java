@@ -22,13 +22,6 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
    * <p>
    * Constructor for HydrateFormationTemperatureFlash.
    * </p>
-   */
-  public HydrateFormationTemperatureFlash() {}
-
-  /**
-   * <p>
-   * Constructor for HydrateFormationTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

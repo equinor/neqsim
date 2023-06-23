@@ -17,17 +17,6 @@ public class BerlSaddlePacking extends Packing {
    * </p>
    */
   public BerlSaddlePacking() {
-    this("BerlSaddlePacking");
-  }
-
-  /**
-   * <p>
-   * Constructor for BerlSaddlePacking.
-   * </p>
-   *
-   * @param name a {@link java.lang.String} object
-   */
-  public BerlSaddlePacking(String name) {
-    super(name);
+    super("BerlSaddlePacking");
   }
 }

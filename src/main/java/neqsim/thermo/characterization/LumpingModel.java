@@ -14,13 +14,14 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class LumpingModel implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(LumpingModel.class);
+
   int numberOfLumpedComponents = 7;
   int numberOfPseudocomponents = 7;
   private String[] lumpedComponentNames = null;
   double[] fractionOfHeavyEnd = null;
   String name = "";
   SystemInterface system = null;
-  static Logger logger = LogManager.getLogger(LumpingModel.class);
 
   /**
    * <p>

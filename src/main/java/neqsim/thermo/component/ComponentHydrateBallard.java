@@ -96,7 +96,6 @@ public class ComponentHydrateBallard extends ComponentHydrate {
     } else {
       fugacityCoefficient = 1e50;
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
 
     return fugacityCoefficient;
   }

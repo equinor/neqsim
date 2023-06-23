@@ -426,7 +426,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     gamma2 = 2.2;
     iter = 0;
     while (Math.abs(gamma2 - gamma1) > 1e-5 && iter < 200) {
-
       holdUp2 = (gamma2 - 0.5 * Math.sin(2 * gamma2)) / (pi);
       function2 = Math.pow(holdUp2, 3) * Math.pow((pi / gamma2), (n + 1)) - friction;
 
@@ -770,7 +769,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   // iter = 0;
 
   // while(Math.abs(usg1 - usg2) > 1e-5 && iter < 200){
-
   // severeSlug.setSuperficialGasVelocity(usg1);
   // severeSlug.checkFlowRegime(fluid, pipe, severeSlug);
   // function1 = severeSlug.slugValue - 0.05;

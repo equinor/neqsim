@@ -1,11 +1,15 @@
 package neqsim.util.database;
 
 import java.sql.ResultSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NeqSimFluidDataBaseTest {
+  Logger logger = LogManager.getFormatterLogger(NeqSimFluidDataBaseTest.class);
+
   @Disabled
   @Test
   void testMain() {

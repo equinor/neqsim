@@ -113,6 +113,7 @@ public class DensitySim extends BasePVTsimulation {
     gasDensity = new double[pressure.length];
     oilDensity = new double[pressure.length];
     aqueousDensity = new double[pressure.length];
+    waxFraction = new double[pressure.length];
 
     for (int i = 0; i < pressure.length; i++) {
       // thermoOps.setSystem(getThermoSystem());
@@ -168,11 +169,11 @@ public class DensitySim extends BasePVTsimulation {
 
     double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4},};
     sepSim.setExperimentalData(expData);
-    sepSim.runTuning();
-    // sepSim.runCalc();
+    // sepSim.runTuning();
+    sepSim.runCalc();
     double a = sepSim.getGasDensity()[0];
     double a2 = sepSim.getOilDensity()[0];
-    sepSim.getThermoSystem().display();
+    // sepSim.getThermoSystem().display();
     // sepSim.tuneModel(exptemperatures, exppressures, expwaxFrations);
   }
 

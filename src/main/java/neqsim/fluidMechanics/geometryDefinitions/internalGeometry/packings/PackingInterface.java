@@ -17,7 +17,7 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 public interface PackingInterface {
   /**
    * <p>
-   * getSize.
+   * Getter for property size.
    * </p>
    *
    * @return a double
@@ -26,7 +26,7 @@ public interface PackingInterface {
 
   /**
    * <p>
-   * getSurfaceAreaPrVolume.
+   * Getter for property surfaceAreaPrVolume.
    * </p>
    *
    * @return a double
@@ -35,7 +35,7 @@ public interface PackingInterface {
 
   /**
    * <p>
-   * getVoidFractionPacking.
+   * Getter for property voidFractionPacking.
    * </p>
    *
    * @return a double
@@ -44,7 +44,7 @@ public interface PackingInterface {
 
   /**
    * <p>
-   * setVoidFractionPacking.
+   * Setter for property voidFractionPacking.
    * </p>
    *
    * @param voidFractionPacking a double

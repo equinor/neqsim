@@ -46,13 +46,6 @@ public class cricondenBarTemp implements java.io.Serializable {
    * <p>
    * Constructor for cricondenBarTemp.
    * </p>
-   */
-  public cricondenBarTemp() {}
-
-  /**
-   * <p>
-   * Constructor for cricondenBarTemp.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int

@@ -14,11 +14,10 @@ import neqsim.thermo.component.ComponentBWRS;
  */
 public class PhaseBWRSEos extends PhaseSrkEos {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseBWRSEos.class);
 
   int OP = 9;
   int OE = 6;
-
-  static Logger logger = LogManager.getLogger(PhaseBWRSEos.class);
 
   /**
    * <p>
@@ -52,7 +51,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     double oldMolDens = 0;
     if (type == 0) {
@@ -430,15 +429,15 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     getComponent(0).addMoles(dn);
     numberOfMolesInPhase += dn;
 
-    init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     double fold = getF();
     numberOfMolesInPhase -= 2 * dn;
     getComponent(0).addMoles(-2 * dn);
-    init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     double fnew = getF();
     numberOfMolesInPhase += dn;
     getComponent(0).addMoles(dn);
-    init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     // System.out.println("F " + getFpol()*1e3+ " "+ getFexp()*1e3 + " super " +
     // super.getF() + " phasetype " +getType());
     return (fold - fnew) / (2 * dn);
@@ -470,13 +469,13 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   public double dFdTdT() {
     double dv = temperature / 1000.0;
     temperature += dv;
-    init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
-    final double fold = dFdT();
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
+    double fold = dFdT();
     temperature -= 2 * dv;
-    init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     double fnew = dFdT();
     temperature += dv;
-    init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     return (fold - fnew) / (2 * dv);
   }
 
