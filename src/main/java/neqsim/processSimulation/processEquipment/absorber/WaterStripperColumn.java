@@ -72,7 +72,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
     if (numberOfInputStreams == 0) {
       mixedStream = (Stream) streams.get(0).clone();
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
       mixedStream.getThermoSystem().init(3);
     }
@@ -308,7 +307,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
       double absorptionEffiency = 0.0;
       mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
       mixStream();
       double enthalpy = calcMixStreamEnthalpy();

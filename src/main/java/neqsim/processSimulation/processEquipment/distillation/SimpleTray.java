@@ -129,7 +129,6 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() > 0) {
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
 
       mixStream();

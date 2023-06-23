@@ -87,7 +87,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       if (getNumberOfInputStreams() == 0) {
         mixedStream = (Stream) streams.get(0).clone(); // cloning the first stream
         // mixedStream.getThermoSystem().setNumberOfPhases(2);
-        // mixedStream.getThermoSystem().reInitPhaseType();
         // mixedStream.getThermoSystem().init(0);
         // mixedStream.getThermoSystem().init(3);
       }
@@ -237,7 +236,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() > 0) {
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
 
       mixStream();
