@@ -98,21 +98,19 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     }
 
     if (type != 0) {
-      try {
-        if (calcMolarVolume) {
+      if (calcMolarVolume) {
+        try {
           molarVolume = molarVolume(pressure, temperature,
               getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase,
               phase.getValue());
+        } catch (Exception ex) {
+          // logger.warn("Failed to solve for molarVolume within the iteration limit.");
+          throw new RuntimeException(ex);
+          // logger.info("moles " + numberOfMolesInPhase);
+          // logger.info("molarVolume " + getMolarVolume());
+          // logger.info("setting molar volume to ideal gas molar volume.............");
+          // setMolarVolume((R * temperature) / pressure);
         }
-      } catch (Exception ex) {
-        logger.error("Failed to solve for molarVolume within the iteration limit.");
-        throw new RuntimeException(ex);
-        // logger.error("too many iterations in volume calc!", ex);
-        // logger.info("moles " + numberOfMolesInPhase);
-        // logger.info("molarVolume " + getMolarVolume());
-        // logger.info("setting molar volume to ideal gas molar volume.............");
-        // setMolarVolume((R * temperature) / pressure);
-        // System.exit(0);
       }
 
       Z = pressure * getMolarVolume() / (R * temperature);
@@ -287,10 +285,10 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
         : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
-    if (BonV < 0) {
+    if (BonV < 1.0e-4) {
       BonV = 1.0e-4;
     }
-    if (BonV > 1.0) {
+    if (BonV > 1.0 - 1.0e-4) {
       BonV = 1.0 - 1.0e-4;
     }
 
@@ -306,12 +304,18 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     if (Btemp < 0) {
       logger.info("b negative in volume calc");
     }
+    if (Double.isNaN(getMolarVolume())) {
+      throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
+    }
+
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
     boolean changeFase = false;
     double error = 1.0;
     double errorOld = 1.0e10;
     int iterations = 0;
     int maxIterations = 300;
+
+    System.out.println("DO");
     do {
       errorOld = error;
       iterations++;
@@ -363,7 +367,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
       setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
       Z = pressure * getMolarVolume() / (R * temperature);
-      // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
+      System.out.println("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold) / BonVold));
     } while (Math.abs((BonV - BonVold) / BonVold) > 1.0e-10 && iterations < maxIterations);
     // logger.info("pressure " + Z*R*temperature/molarVolume);
     // logger.info("error in volume " +

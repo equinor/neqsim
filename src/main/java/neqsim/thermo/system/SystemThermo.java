@@ -23,6 +23,7 @@ import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
@@ -684,6 +685,7 @@ abstract class SystemThermo implements SystemInterface {
       if (flowRate < 1e-100) {
         setEmptyFluid();
       } else if (totalNumberOfMolesLocal > 1e-100) {
+        // (SIval / totalNumberOfMolesLocal - 1) * ...
         double change =
             SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
                 - getPhase(0).getComponent(i).getNumberOfmoles();
@@ -1580,7 +1582,7 @@ abstract class SystemThermo implements SystemInterface {
       }
       step = gbeta / deriv;
       // System.out.println("step : " + step);
-    } while (((Math.abs(step)) >= 1.0e-10 && iterations < maxIterations)); // &&
+    } while (Math.abs(step) >= 1.0e-10 && iterations < maxIterations); // &&
     // (Math.abs(nybeta)-Math.abs(maxBeta))>0.1);
 
     // System.out.println("beta: " + nybeta + " iterations: " + iterations);
@@ -1618,7 +1620,8 @@ abstract class SystemThermo implements SystemInterface {
       this.beta[phaseIndex[i]] = getPhase(i).getNumberOfMolesInPhase() / getTotalNumberOfMoles();
       // System.out.println("beta " + beta[i]);
     }
-    if (this.getSumBeta() != 1.0) {
+    if (this.getSumBeta() < 1.0 - ThermodynamicModelSettings.phaseFractionMinimumLimit
+        || this.getSumBeta() > 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit) {
       logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0");
     }
   }
