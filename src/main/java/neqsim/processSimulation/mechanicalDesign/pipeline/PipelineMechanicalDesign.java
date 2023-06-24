@@ -128,7 +128,6 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     operations.add(stream_1);
     operations.add(pipe);
 
-    // operations.run();
     operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("Statoil");
     operations.getSystemMechanicalDesign().runDesignCalculation();
     operations.getSystemMechanicalDesign().setDesign();
