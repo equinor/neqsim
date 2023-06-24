@@ -7,6 +7,7 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import java.util.UUID;
+
 import neqsim.processSimulation.conditionMonitor.ConditionMonitorSpecifications;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -438,9 +439,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     double entrop = 0.0;
 
     for (int i = 0; i < 2; i++) {
-      inStream[i].run();
+      UUID id = UUID.randomUUID();
+      inStream[i].run(id);
       inStream[i].getFluid().init(3);
-      outStream[i].run();
+      outStream[i].run(id);
       outStream[i].getFluid().init(3);
       entrop += outStream[i].getThermoSystem().getEntropy(unit)
           - inStream[i].getThermoSystem().getEntropy(unit);

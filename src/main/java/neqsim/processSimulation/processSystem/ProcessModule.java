@@ -3,9 +3,11 @@ package neqsim.processSimulation.processSystem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
@@ -132,12 +134,12 @@ public class ProcessModule extends SimulationBaseClass {
           for (ProcessEquipmentInterface unitOperation : addedUnitOperations.get(index)
               .getUnitOperations()) {
             if (iteration == 0 || unitOperation.needRecalculation()) {
-              unitOperation.run();
+              unitOperation.run(id);
             }
           }
         } else if (modulesIndex.contains(i)) {
           int index = modulesIndex.indexOf(i);
-          addedModules.get(index).run();
+          addedModules.get(index).run(id);
         }
       }
       iteration++;

@@ -6,6 +6,8 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.exception.IsNaNException;
+import neqsim.util.exception.TooManyIterationsException;
 
 /**
  * <p>
@@ -92,8 +94,11 @@ public class TPflash extends Flash {
     double oldBeta = system.getBeta();
     try {
       system.calcBeta();
-    } catch (Exception ex) {
-      logger.warn("Not able to calculate beta");
+    } catch (IsNaNException ex) {
+      logger.warn("Not able to calculate beta. Value is NaN");
+      system.setBeta(oldBeta);
+    } catch (TooManyIterationsException ex) {
+      logger.warn("Not able to calculate beta, calculation is not converging.");
       system.setBeta(oldBeta);
     }
     if (system.getBeta() > 1.0 - betaTolerance) {

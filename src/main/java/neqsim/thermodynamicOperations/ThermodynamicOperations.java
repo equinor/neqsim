@@ -3,11 +3,14 @@ package neqsim.thermodynamicOperations;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.util.List;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
@@ -2087,7 +2090,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         fluidProperties[t] = this.system.getProperties().getValues();
       } catch (Exception ex) {
         calculationError[t] = ex.getMessage();
-        logger.error(ex.getMessage(), ex);
+        logger.warn(calculationError[t]);
       }
     }
 

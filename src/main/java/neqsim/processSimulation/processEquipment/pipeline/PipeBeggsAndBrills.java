@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import java.util.UUID;
+
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -679,7 +680,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     operations.add(stream_1);
     operations.add(pipe);
     operations.run();
-
   }
 
   /**

@@ -7,6 +7,7 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import java.util.UUID;
+
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -332,14 +333,13 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    double entrop = 0.0;
-
-    inStream.run();
+    UUID id = UUID.randomUUID();
+    inStream.run(id);
     inStream.getFluid().init(3);
-    outStream.run();
+    outStream.run(id);
     outStream.getFluid().init(3);
 
-    entrop +=
+    double entrop =
         outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
 
     return entrop;
@@ -348,9 +348,10 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** {@inheritDoc} */
   @Override
   public double getExergyChange(String unit, double surroundingTemperature) {
-    inStream.run();
+    UUID id = UUID.randomUUID();
+    inStream.run(id);
     inStream.getFluid().init(3);
-    outStream.run();
+    outStream.run(id);
     outStream.getFluid().init(3);
 
     return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
