@@ -14,11 +14,14 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
@@ -1154,6 +1157,7 @@ abstract class SystemThermo implements SystemInterface {
 
       // System.out.println("adding chem reac " + componentName);
       for (PhaseInterface tmpPhase : phaseArray) {
+        // TODO: adding moles to all phases, not just the active ones.
         if (tmpPhase != null) {
           tmpPhase.addMolesChemReac(index, moles, moles);
         }
@@ -1294,8 +1298,8 @@ abstract class SystemThermo implements SystemInterface {
       return;
     }
 
-    for (int phaseNum = 0; phaseNum < getNumberOfPhases(); phaseNum++) {
-      PhaseInterface tmpPhase = getPhase(phaseNum);
+    for (PhaseInterface tmpPhase : phaseArray) {
+      // TODO: adding moles to all phases, not just the active ones.
       if (tmpPhase != null) {
         tmpPhase.addMolesChemReac(index, moles, moles);
       }
