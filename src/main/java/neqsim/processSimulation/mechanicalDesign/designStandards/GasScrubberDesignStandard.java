@@ -33,8 +33,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
   public GasScrubberDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    neqsim.util.database.NeqSimTechnicalDesignDatabase database =
-        new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
     try {
       try {

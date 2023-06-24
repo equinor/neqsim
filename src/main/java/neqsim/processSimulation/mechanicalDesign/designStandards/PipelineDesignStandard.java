@@ -34,8 +34,7 @@ public class PipelineDesignStandard extends DesignStandard {
     // double jointEfficiency =
     // equipment.getJointEfficiencyStandard().getJEFactor();
 
-    neqsim.util.database.NeqSimTechnicalDesignDatabase database =
-        new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
     try (java.sql.ResultSet dataSet = database.getResultSet(
         ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Pipeline' AND Company='"

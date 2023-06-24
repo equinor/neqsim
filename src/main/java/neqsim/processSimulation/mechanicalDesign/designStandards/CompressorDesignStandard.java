@@ -29,8 +29,7 @@ public class CompressorDesignStandard extends DesignStandard {
   public CompressorDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    neqsim.util.database.NeqSimTechnicalDesignDatabase database =
-        new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
     try (java.sql.ResultSet dataSet = database.getResultSet(
         ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Compressor' AND Company='"
