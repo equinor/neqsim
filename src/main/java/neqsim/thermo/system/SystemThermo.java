@@ -2365,6 +2365,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public int getPhaseNumberOfPhase(PhaseType pt) {
+    // TODO: returning first if not found, not same as the others.
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i).getType() == pt) {
         return i;
@@ -2382,6 +2383,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public int getPhaseIndex(String phaseTypeName) {
+    // TODO: returning first if not found, not same as the others.
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
         return phaseIndex[i];
