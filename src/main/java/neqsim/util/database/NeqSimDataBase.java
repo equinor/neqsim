@@ -479,7 +479,16 @@ public class NeqSimDataBase
       updateTable("UNIFACInterParamC_UMR");
       updateTable("UNIFACInterParamC_UMRMC");
       updateTable("MBWR32param");
-
+      updateTable("COMPSALT");
+      updateTable("TORG");
+      updateTable("TechnicalRequirements_Process");
+      updateTable("TechnicalRequirements_Piping");
+      updateTable("TechnicalRequirements_Material");
+      updateTable("TechnicalRequirements_Mechanical");
+      updateTable("Packing");
+      updateTable("MaterialPipeProperties");
+      updateTable("MaterialPlateProperties");
+      updateTable("Fittings");
       // TODO: missing tables: ionicData, reactiondatakenteisenberg, purecomponentvapourpressures,
       // binarysystemviscosity, binaryliquiddiffusioncoefficientdata,
       // purecomponentconductivitydata, purecomponentdensity, purecomponentsurfacetension2,
