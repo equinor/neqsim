@@ -37,8 +37,7 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
     super(name);
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       System.out.println("init packing");
-      java.sql.ResultSet dataSet =
-          database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
+      java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
       dataSet.next();
       size = 1e-3 * Double.parseDouble(dataSet.getString("size")); // C
       surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));
@@ -54,9 +53,9 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
    * Constructor for Packing.
    * </p>
    *
-   * @param name Name of packing
+   * @param name     Name of packing
    * @param material Name of material
-   * @param size a int
+   * @param size     a int
    */
   public Packing(String name, String material, int size) {
     super(name);
