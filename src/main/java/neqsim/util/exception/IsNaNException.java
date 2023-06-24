@@ -29,7 +29,7 @@ public class IsNaNException extends neqsim.util.exception.ThermoException {
    * @param msg detailed message
    */
   public IsNaNException(String className, String methodName, String msg) {
-    super(className, methodName, "Variable " + msg);
+    super(className, methodName, msg);
   }
 
   /**
@@ -40,6 +40,6 @@ public class IsNaNException extends neqsim.util.exception.ThermoException {
    * @param param the parameter that is NaN
    */
   public IsNaNException(Object obj, String methodName, String param) {
-    this(obj.getClass().getSimpleName(), methodName, param + " is NaN");
+    this(obj.getClass().getSimpleName(), methodName, "Variable " + param + " is NaN");
   }
 }
