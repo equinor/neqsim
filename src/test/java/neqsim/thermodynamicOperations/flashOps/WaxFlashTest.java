@@ -63,7 +63,7 @@ class WaxFlashTest {
     }
     double waxVolumeFrac = 0;
     if (testSystem.hasPhaseType("wax")) {
-      waxVolumeFrac = testSystem.getWtFraction(testSystem.getPhaseIndexOfPhase("wax"));
+      waxVolumeFrac = testSystem.getWtFraction(testSystem.getPhaseIndex("wax"));
     }
     assertEquals(30.33516095, waxT, 0.001);
     assertEquals(3.236072552269342E-4, waxVolumeFrac, 0.0001);

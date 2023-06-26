@@ -14,15 +14,19 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
@@ -37,6 +41,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseWax;
 import neqsim.thermo.phase.StateOfMatter;
 import neqsim.util.database.NeqSimDataBase;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * This is the base class of the System classes.
@@ -120,6 +125,7 @@ abstract class SystemThermo implements SystemInterface {
   protected PhaseInterface[] phaseArray = new PhaseInterface[MAX_PHASES];
   // PhaseType of phases belonging to system.
   protected PhaseType[] phaseType = new PhaseType[MAX_PHASES];
+  // Fraction of moles_in_phase / moles_in_system.
   protected double[] beta = new double[MAX_PHASES];
 
   protected ChemicalReactionOperations chemicalReactionOperations = null;
@@ -682,6 +688,7 @@ abstract class SystemThermo implements SystemInterface {
       if (flowRate < 1e-100) {
         setEmptyFluid();
       } else if (totalNumberOfMolesLocal > 1e-100) {
+        // (SIval / totalNumberOfMolesLocal - 1) * ...
         double change =
             SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
                 - getPhase(0).getComponent(i).getNumberOfmoles();
@@ -1150,6 +1157,7 @@ abstract class SystemThermo implements SystemInterface {
 
       // System.out.println("adding chem reac " + componentName);
       for (PhaseInterface tmpPhase : phaseArray) {
+        // TODO: adding moles to all phases, not just the active ones.
         if (tmpPhase != null) {
           tmpPhase.addMolesChemReac(index, moles, moles);
         }
@@ -1289,7 +1297,9 @@ abstract class SystemThermo implements SystemInterface {
       logger.error("componentIndex higher than number of components in system");
       return;
     }
+
     for (PhaseInterface tmpPhase : phaseArray) {
+      // TODO: adding moles to all phases, not just the active ones.
       if (tmpPhase != null) {
         tmpPhase.addMolesChemReac(index, moles, moles);
       }
@@ -1578,7 +1588,7 @@ abstract class SystemThermo implements SystemInterface {
       }
       step = gbeta / deriv;
       // System.out.println("step : " + step);
-    } while (((Math.abs(step)) >= 1.0e-10 && iterations < maxIterations)); // &&
+    } while (Math.abs(step) >= 1.0e-10 && iterations < maxIterations); // &&
     // (Math.abs(nybeta)-Math.abs(maxBeta))>0.1);
 
     // System.out.println("beta: " + nybeta + " iterations: " + iterations);
@@ -1615,6 +1625,10 @@ abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < numberOfPhases; i++) {
       this.beta[phaseIndex[i]] = getPhase(i).getNumberOfMolesInPhase() / getTotalNumberOfMoles();
       // System.out.println("beta " + beta[i]);
+    }
+    if (this.getSumBeta() < 1.0 - ThermodynamicModelSettings.phaseFractionMinimumLimit
+        || this.getSumBeta() > 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit) {
+      logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0");
     }
   }
 
@@ -2315,6 +2329,8 @@ abstract class SystemThermo implements SystemInterface {
     return phaseArray[phaseIndex[i]];
   }
 
+  /** {@inheritDoc} */
+  @Override
   public PhaseInterface getPhase(PhaseType pt) {
     if (!this.hasPhaseType(pt)) {
       throw new RuntimeException("Phase with phase type " + pt + " not found.");
@@ -2349,6 +2365,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public int getPhaseNumberOfPhase(PhaseType pt) {
+    // TODO: returning first if not found, not same as the others.
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i).getType() == pt) {
         return i;
@@ -2359,13 +2376,38 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public int getPhaseIndexOfPhase(String phaseTypeName) {
+  public final int getPhaseIndex(int index) {
+    return phaseIndex[index];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getPhaseIndex(String phaseTypeName) {
+    // TODO: returning first if not found, not same as the others.
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
         return phaseIndex[i];
       }
     }
     return phaseIndex[0];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getPhaseIndex(PhaseInterface phase) {
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (getPhase(i) == phase) {
+        return phaseIndex[i];
+      }
+    }
+    throw new RuntimeException(
+        new InvalidInputException(this, "getPhaseIndex", "phase", "is not found in phaseArray."));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final void setPhaseIndex(int index, int phaseIndex) {
+    this.phaseIndex[index] = phaseIndex;
   }
 
   /** {@inheritDoc} */
@@ -2950,12 +2992,12 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setPhase(PhaseInterface phase, int numb) {
-    double temp = phaseArray[numb].getTemperature();
-    double pres = phaseArray[numb].getPressure();
-    this.phaseArray[numb] = phase;
-    this.phaseArray[numb].setTemperature(temp);
-    this.phaseArray[numb].setPressure(pres);
+  public void setPhase(PhaseInterface phase, int index) {
+    double temp = phaseArray[index].getTemperature();
+    double pres = phaseArray[index].getPressure();
+    this.phaseArray[index] = phase;
+    this.phaseArray[index].setTemperature(temp);
+    this.phaseArray[index].setPressure(pres);
   }
 
   /** {@inheritDoc} */
@@ -3056,6 +3098,14 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public final double getBeta(int phase) {
     return beta[phaseIndex[phase]];
+  }
+
+  public final double getSumBeta() {
+    double sum = 0;
+    for (int k = 0; k < numberOfPhases; k++) {
+      sum += getBeta(k);
+    }
+    return sum;
   }
 
   /** {@inheritDoc} */
@@ -3659,18 +3709,6 @@ abstract class SystemThermo implements SystemInterface {
     } catch (Exception ex) {
       logger.error("error in SystemThermo Class...createDatabase() method", ex);
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final int getPhaseIndex(int index) {
-    return phaseIndex[index];
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final void setPhaseIndex(int index, int phaseIndex) {
-    this.phaseIndex[index] = phaseIndex;
   }
 
   /** {@inheritDoc} */
