@@ -29,7 +29,8 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
   public AdsorptionDehydrationDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    final neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    final neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase();
     java.sql.ResultSet dataSet = null;
     try {
       try {

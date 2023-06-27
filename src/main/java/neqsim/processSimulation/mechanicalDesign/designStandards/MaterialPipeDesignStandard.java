@@ -144,7 +144,8 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     this.grade = grade;
     specificationNumber = specNo;
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase();
     try (java.sql.ResultSet dataSet =
         database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
             + specificationNumber + "' AND grade='" + grade + "'"))) {

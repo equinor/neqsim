@@ -80,7 +80,8 @@ public class MaterialPlateDesignStandard extends DesignStandard {
     specificationNumber = specNo;
     divisionClassNumber = divClassNo;
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase();
     java.sql.ResultSet dataSet = null;
     try {
       try {

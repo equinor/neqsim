@@ -30,7 +30,7 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
     super(name, equipmentInn);
 
     java.sql.ResultSet dataSet = null;
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       dataSet = database.getResultSet(
           ("SELECT * FROM technicalrequirements WHERE EQUIPMENTTYPE='Absorber' AND Company='"
               + standardName + "'"));
