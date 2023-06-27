@@ -34,7 +34,7 @@ public class PipelineDesignStandard extends DesignStandard {
     // double jointEfficiency =
     // equipment.getJointEfficiencyStandard().getJEFactor();
 
-    neqsim.util.database.NeqSimDataNeqSimProcessDesignDataBaseBase database =
+    neqsim.util.database.NeqSimProcessDesignDataBase database =
         new neqsim.util.database.NeqSimProcessDesignDataBase();
 
     try (java.sql.ResultSet dataSet = database.getResultSet(
