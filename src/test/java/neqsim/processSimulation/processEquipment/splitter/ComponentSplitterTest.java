@@ -62,7 +62,7 @@ class ComponentSplitterTest {
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
     Splitter splitter = new Splitter("splitter", inletStream, 3);
-    splitter.setSplitFactors(new double[]{0.8,0.2,0.0});
+    splitter.setSplitFactors(new double[] {0.8, 0.2, 0.0});
     splitter.run();
     assertEquals(0.815104472498348, splitter.getSplitStream(0).getFluid().getPhase(0).getZ(), 0.01);
     assertEquals(0.815104472498348, splitter.getSplitStream(1).getFluid().getPhase(0).getZ(), 0.01);
