@@ -41,7 +41,9 @@ public class BaseContract implements ContractInterface {
   private int specificationsNumber = 0;
 
   /**
-   * <p>Constructor for BaseContract.</p>
+   * <p>
+   * Constructor for BaseContract.
+   * </p>
    */
   public BaseContract() {}
 

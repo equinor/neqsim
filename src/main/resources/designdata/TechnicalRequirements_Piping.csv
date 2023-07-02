@@ -1,0 +1,9 @@
+"ID","Type","CodeSpecification1","CodeSpecification2","CodeSpecification3","CodeSpecification4","CodeSpecification5"
+1,"pressure vessel design code","ASME - Pressure Vessel Code",,,,
+3,"material plate design codes","Carbon Steel Plates and Sheets","SA-516","55","1",
+4,"pipe joint efficiency factor","Seamles","1.9",,,
+5,"pipe joint efficiency factor","Electrical Resistance Weld","1.0",,,
+6,"pipe joint efficiency factor","Double Submerged Arc Weld","1.0",,,
+7,"pipe temperature derating factor","ANSI/ASME Standard B31.8","250","1",,
+8,"pipe temperature derating factor","ANSI/ASME Standard B31.8","300","0.967",,
+9,"pipe temperature derating factor","ANSI/ASME Standard B31.8","350","0.933",,

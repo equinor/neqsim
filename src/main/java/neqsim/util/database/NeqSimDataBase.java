@@ -479,7 +479,7 @@ public class NeqSimDataBase
       updateTable("UNIFACInterParamC_UMR");
       updateTable("UNIFACInterParamC_UMRMC");
       updateTable("MBWR32param");
-
+      updateTable("COMPSALT");
       // TODO: missing tables: ionicData, reactiondatakenteisenberg, purecomponentvapourpressures,
       // binarysystemviscosity, binaryliquiddiffusioncoefficientdata,
       // purecomponentconductivitydata, purecomponentdensity, purecomponentsurfacetension2,
@@ -494,7 +494,6 @@ public class NeqSimDataBase
         database.execute("CREATE TABLE intertemp AS SELECT * FROM inter");
       }
 
-      h2IsInitalizing = false;
       h2IsInitialized = true;
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
