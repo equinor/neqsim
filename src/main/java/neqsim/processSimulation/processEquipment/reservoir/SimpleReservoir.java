@@ -293,15 +293,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     this.waterVolume = waterVolume;
     ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
     ops.TPflash();
-
-    // thermoSystem.display();
     SystemInterface thermoSystem2 = thermoSystem.clone();
-
-    thermoSystem.setEmptyFluid(); // (1.0e-10);
-    // thermoSystem.init(1);
-    // thermoSystem.display();
-    // System.out.println("number of phases " + thermoSystem.getNumberOfPhases());
-    // double totalliquidVolume = 0.0;
+    thermoSystem.setEmptyFluid();
     for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
       double relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
       if (j >= 1) {
@@ -378,14 +371,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     double GOR = 0.0;
     double flow = 0.0;
     for (int i = 0; i < gasProducer.size(); i++) {
-      flow += gasProducer.get(i).getStream().getFluid().getNumberOfMoles();
+      flow += gasProducer.get(i).getStream().getFluid().getTotalNumberOfMoles();
       GOR += gasProducer.get(i).getGOR()
-          * gasProducer.get(i).getStream().getFluid().getNumberOfMoles();
+          * gasProducer.get(i).getStream().getFluid().getTotalNumberOfMoles();
     }
     for (int i = 0; i < oilProducer.size(); i++) {
-      flow += oilProducer.get(i).getStream().getFluid().getNumberOfMoles();
+      flow += oilProducer.get(i).getStream().getFluid().getTotalNumberOfMoles();
       GOR += oilProducer.get(i).getGOR()
-          * oilProducer.get(i).getStream().getFluid().getNumberOfMoles();
+          * oilProducer.get(i).getStream().getFluid().getTotalNumberOfMoles();
     }
     return GOR / flow;
   }
