@@ -93,10 +93,17 @@ public class SimpleReservoirTest {
 
     StreamInterface injectorGasStream = reservoirOps.addGasInjector("gasinjector_1");
     neqsim.thermo.system.SystemInterface fluidGas = fluid1.clone();
-    fluidGas.setMolarComposition(new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    fluidGas.setMolarComposition(new double[] {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0});
     injectorGasStream.setFluid(fluidGas);
     injectorGasStream.setFlowRate(10.01, "MSm3/day");
+
+    StreamInterface injectorWaterStream = reservoirOps.addWaterInjector("waterinjector_1");
+    neqsim.thermo.system.SystemInterface fluidWater = fluid1.clone();
+    fluidWater.setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0});
+    injectorWaterStream.setFluid(fluidWater);
+    injectorWaterStream.setFlowRate(1000.01, "kg/day");
 
     reservoirOps.run();
     logger.debug("pressure" + reservoirOps.getOilProducer(0).getStream().getPressure("bara"));
