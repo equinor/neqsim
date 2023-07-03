@@ -64,4 +64,47 @@ public class SimpleReservoirTest {
     logger.debug("oil production  " + reservoirOps.getOilProdution("Sm3/day") + " Sm3/day");
     logger.debug("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
   }
+
+  @Test
+  void testRun2() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemPrEos(373.15, 900.0);
+    fluid1.addComponent("water", 3.599);
+    fluid1.addComponent("nitrogen", 0.599);
+    fluid1.addComponent("CO2", 0.51);
+    fluid1.addComponent("methane", 62.8);
+    fluid1.addComponent("ethane", 8.12);
+    fluid1.addComponent("propane", 4.95);
+    fluid1.addComponent("i-butane", 1.25);
+    fluid1.addComponent("n-butane", 1.25);
+    fluid1.addComponent("i-pentane", 0.25);
+    fluid1.addComponent("n-pentane", 0.25);
+    fluid1.addComponent("n-hexane", 0.81);
+    fluid1.addPlusFraction("C7", 10.5, 180.0 / 1000.0, 840.0 / 1000.0);
+    fluid1.getCharacterization().characterisePlusFraction();
+    fluid1.setMixingRule(2);
+    fluid1.setMultiPhaseCheck(true);
+
+    SimpleReservoir reservoirOps = new SimpleReservoir("Well 1 reservoir");
+    reservoirOps.setReservoirFluid(fluid1, 0, 552.0 * 1e6, 10.0e6);
+
+    StreamInterface producedOilStream = reservoirOps.addOilProducer("oilproducer_1");
+    producedOilStream.setFlowRate(1000000.0, "kg/hr");
+
+    StreamInterface injectorGasStream = reservoirOps.addGasInjector("gasinjector_1");
+    neqsim.thermo.system.SystemInterface fluidGas = fluid1.clone();
+    fluidGas.setMolarComposition(new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0});
+    injectorGasStream.setFluid(fluidGas);
+    injectorGasStream.setFlowRate(10.01, "MSm3/day");
+
+    reservoirOps.run();
+    logger.debug("pressure" + reservoirOps.getOilProducer(0).getStream().getPressure("bara"));
+    reservoirOps.runTransient(1000000);
+    logger.debug("pressure" + reservoirOps.getOilProducer(0).getStream().getPressure("bara"));
+    reservoirOps.runTransient(1000000);
+    logger.debug("pressure" + reservoirOps.getOilProducer(0).getStream().getPressure("bara"));
+
+
+  }
 }
