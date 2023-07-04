@@ -30,7 +30,7 @@ public class SimpleReservoirTest {
     fluid1.setMultiPhaseCheck(true);
 
     SimpleReservoir reservoirOps = new SimpleReservoir("Well 1 reservoir");
-    reservoirOps.setReservoirFluid(fluid1, 0, 635949179.71, 10.0e7);
+    reservoirOps.setReservoirFluid(fluid1, 0, 635949179, 10.0e7);
 
     StreamInterface producedOilStream = reservoirOps.addOilProducer("oilproducer_1");
     producedOilStream.setFlowRate(6500.0 / 0.86 * 1000.0 * 4, "kg/day");
@@ -54,18 +54,6 @@ public class SimpleReservoirTest {
     double deltaTime = 24 * 60 * 60.0 * 365;
     for (int i = 0; i < 10; i++) {
       reservoirOps.runTransient(deltaTime);
-      System.out
-          .println("oil production  total" + reservoirOps.getOilProductionTotal("MSm3") + " MSm3");
-      System.out.println("gas in place (GIP) " + reservoirOps.getGasInPlace("GSm3") + " GSm3");
-      System.out.println("oil in place (OIP) " + reservoirOps.getOilInPlace("MSm3") + " MSm3");
-      double recoveredwithgas =
-          (reservoirOps.getOilProductionTotal("MSm3") + reservoirOps.getGasProductionTotal("GSm3"))
-              / (reservoirOps.getOOIP("MSm3") + reservoirOps.getOGIP("GSm3")) * 100.0;
-      double recovered = (reservoirOps.getOilProductionTotal("MSm3"))
-          / (reservoirOps.getOOIP("MSm3") + reservoirOps.getOGIP("GSm3")) * 100.0;
-
-      System.out
-          .println("recovered [%] " + recovered + "   recoveredgasoil [%] " + recoveredwithgas);
     }
     Assertions.assertEquals(352.274030, reservoirOps.getReservoirFluid().getPressure("bara"), 0.1);
 

@@ -495,7 +495,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * (thermoSystem.hasPhaseType("aqueous")) System.out.println("water volume " +
      * thermoSystem.getPhase("aqueous").getVolume("m3"));
      */
-    System.out.println("pressure " + thermoSystem.getPressure("bara"));
+    // System.out.println("pressure " + thermoSystem.getPressure("bara"));
 
     if (thermoSystem.hasPhaseType("gas")) {
       for (int k = 0; k < gasProducer.size(); k++) {
