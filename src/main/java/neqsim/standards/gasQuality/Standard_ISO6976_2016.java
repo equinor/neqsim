@@ -131,8 +131,6 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
               .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
           logger.info("added component not specified by ISO6976constants2016 "
               + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
-        } finally {
-          dataSet.close();
         }
 
         carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));
@@ -158,9 +156,9 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         Hinf20[i] = Double.parseDouble(dataSet.getString("Hinfmolar20"));
         Hinf25[i] = Double.parseDouble(dataSet.getString("Hinfmolar25"));
         Hinf60F[i] = Double.parseDouble(dataSet.getString("Hinfmolar60F"));
-      }
 
-      dataSet.close();
+        dataSet.close();
+      }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

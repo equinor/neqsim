@@ -122,7 +122,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         try {
-          dataSet = database.getResultSet(("SELECT * FROM iso6976constants WHERE ComponentName='"
+          dataSet = database.getResultSet(("SELECT * FROM ISO6976constants WHERE ComponentName='"
               + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
           dataSet.next();
           dataSet.getString("ID");
