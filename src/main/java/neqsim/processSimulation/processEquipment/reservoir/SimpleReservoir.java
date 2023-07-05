@@ -36,6 +36,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   ArrayList<Well> oilProducer = new ArrayList<Well>();
   ArrayList<Well> gasInjector = new ArrayList<Well>();
   ArrayList<Well> waterInjector = new ArrayList<Well>();
+  ArrayList<Well> waterProducer = new ArrayList<Well>();
 
   double gasProductionTotal = 0.0;
   double oilProductionTotal = 0.0;
@@ -139,6 +140,24 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     // waterInStream.init(0);
     waterInStream.getFluid().setTotalFlowRate(1.0e-1, "kg/sec");
     newWell.setStream(waterInStream);
+    return newWell.getStream();
+  }
+
+  /**
+   * <p>
+   * addWaterProducer.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public StreamInterface addWaterProducer(String name) {
+    Well newWell = new Well(name);
+    waterProducer.add(newWell);
+    StreamInterface waterOutStream = new Stream("waterOutStream");
+    waterOutStream.setFluid(thermoSystem.phaseToSystem("aqueous"));
+    waterOutStream.getFluid().setTotalFlowRate(1.0e-1, "kg/sec");
+    newWell.setStream(waterOutStream);
     return newWell.getStream();
   }
 
@@ -249,6 +268,18 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
       }
     }
     return null;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>waterProducer</code>.
+   * </p>
+   *
+   * @param i a int
+   * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
+   */
+  public Well getWaterProducer(int i) {
+    return waterProducer.get(i);
   }
 
   /**
@@ -371,6 +402,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     for (int i = 0; i < waterInjector.size(); i++) {
       waterInjector.get(i).getStream().run(id);
     }
+    for (int i = 0; i < waterProducer.size(); i++) {
+      waterProducer.get(i).getStream().run(id);
+    }
     for (int i = 0; i < gasInjector.size(); i++) {
       gasInjector.get(i).getStream().run(id);
     }
@@ -478,6 +512,10 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         thermoSystem.addComponent(i,
             waterInjector.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles() * dt);
       }
+      for (int k = 0; k < waterProducer.size(); k++) {
+        thermoSystem.addComponent(i,
+            -waterProducer.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles() * dt);
+      }
       for (int k = 0; k < gasInjector.size(); k++) {
         thermoSystem.addComponent(i,
             gasInjector.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles() * dt);
@@ -520,6 +558,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     for (int k = 0; k < waterInjector.size(); k++) {
       waterInjector.get(k).getStream().run(id);
     }
+    for (int k = 0; k < waterProducer.size(); k++) {
+      waterProducer.get(k).getStream().run(id);
+    }
     for (int k = 0; k < gasInjector.size(); k++) {
       gasInjector.get(k).getStream().run(id);
     }
@@ -546,6 +587,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
     for (int k = 0; k < waterInjector.size(); k++) {
       waterInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
+    }
+    for (int k = 0; k < waterProducer.size(); k++) {
+      waterProducer.get(k).getStream().setPressure(thermoSystem.getPressure());
     }
     for (int k = 0; k < gasInjector.size(); k++) {
       gasInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
@@ -597,7 +641,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(reservoirOps);
-    operations.save("c:/temp/resmode1.neqsim");
+    // operations.save("c:/temp/resmode1.neqsim");
 
     System.out.println("gas in place (GIP) " + reservoirOps.getGasInPlace("GSm3") + " GSm3");
     System.out.println("oil in place (OIP) " + reservoirOps.getOilInPlace("MSm3") + " MSm3");

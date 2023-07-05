@@ -30,10 +30,13 @@ public class SimpleReservoirTest {
     fluid1.setMultiPhaseCheck(true);
 
     SimpleReservoir reservoirOps = new SimpleReservoir("Well 1 reservoir");
-    reservoirOps.setReservoirFluid(fluid1, 0, 635949179, 10.0e7);
+    reservoirOps.setReservoirFluid(fluid1, 0, 635949179.71, 10.0e7);
 
     StreamInterface producedOilStream = reservoirOps.addOilProducer("oilproducer_1");
     producedOilStream.setFlowRate(6500.0 / 0.86 * 1000.0 * 4, "kg/day");
+
+    StreamInterface producedWaterStream = reservoirOps.addWaterProducer("waterproducer_1");
+    producedWaterStream.setFlowRate(0.0 * 1000.0 * 4, "kg/day");
 
     StreamInterface injectorGasStream = reservoirOps.addGasInjector("gasinjector_1");
     neqsim.thermo.system.SystemInterface fluidGas = fluid1.clone();
