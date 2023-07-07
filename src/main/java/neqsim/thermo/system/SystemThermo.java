@@ -2194,8 +2194,8 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void initProperties() {
     if (!isInitialized) {
-      init(0);
-      setNumberOfPhases(1);
+      // init(0);
+      // setNumberOfPhases(1);
     }
     initThermoProperties();
     initPhysicalProperties();
@@ -3394,8 +3394,8 @@ abstract class SystemThermo implements SystemInterface {
     if (isInitialized) {
       initProperties();
     } else {
-      init(0);
-      setNumberOfPhases(1);
+      // init(0);
+      // setNumberOfPhases(1);
       initProperties();
     }
 
