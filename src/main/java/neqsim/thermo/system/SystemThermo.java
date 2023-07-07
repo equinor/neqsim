@@ -2194,8 +2194,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void initProperties() {
     if (!isInitialized) {
-      init(0);
-      setNumberOfPhases(1);
+      init_x_y();
     }
     initThermoProperties();
     initPhysicalProperties();
@@ -3388,16 +3387,11 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public String[][] createTable(String name) {
-    // System.out.println("number of comps : " + numberOfComponents + " number of
-    // phases " + numberOfPhases);
-
-    if (isInitialized) {
-      initProperties();
-    } else {
-      init(0);
-      setNumberOfPhases(1);
-      initProperties();
+    
+    if (!isInitialized) {
+      init_x_y();
     }
+    initProperties();
 
     java.text.DecimalFormat nf = new java.text.DecimalFormat();
 
