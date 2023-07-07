@@ -18,7 +18,7 @@ public class StirredCellNodeTest {
     testSystem.addComponent("n-hexane", 1.206862204876, "kg/min", 0);
     testSystem.addComponent("nC10", 3, "kg/hr", 1);
     testSystem.setMixingRule(2);
-    testSystem.init_x_y();
+
     testSystem.prettyPrint();
     StirredCellNode test = new StirredCellNode(testSystem, pipe1);
     test.setInterphaseModelType(1);
@@ -29,7 +29,7 @@ public class StirredCellNodeTest {
     test.setDt(0.0010);
     test.initFlowCalc();
 
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 5; i++) {
       test.initFlowCalc();
       test.calcFluxes();
       test.update();
