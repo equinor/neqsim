@@ -19,7 +19,7 @@ public class StirredCellNodeTest {
     testSystem.addComponent("nC10", 3, "kg/hr", 1);
     testSystem.setMixingRule(2);
 
-    testSystem.prettyPrint();
+    //testSystem.prettyPrint();
     StirredCellNode test = new StirredCellNode(testSystem, pipe1);
     test.setInterphaseModelType(1);
     test.getFluidBoundary().useFiniteFluxCorrection(true);
@@ -35,6 +35,6 @@ public class StirredCellNodeTest {
       test.update();
       // test.getBulkSystem().prettyPrint();
     }
-    test.getBulkSystem().prettyPrint();
+    //test.getBulkSystem().prettyPrint();
   }
 }
