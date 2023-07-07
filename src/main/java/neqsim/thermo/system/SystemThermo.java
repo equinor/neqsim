@@ -1788,6 +1788,9 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void init(int type) {
+    if (!isInitialized) {
+      calc_x_y();
+    }
     if (this.numericDerivatives) {
       initNumeric(type);
     } else {
@@ -1814,6 +1817,7 @@ abstract class SystemThermo implements SystemInterface {
    *        calculate all derivatives and 4 to calculate all derivatives numerically
    */
   public void initAnalytic(int type) {
+
     if (type == 0) {
       reInitPhaseInformation();
 
@@ -3387,7 +3391,7 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public String[][] createTable(String name) {
-    
+
     if (!isInitialized) {
       init_x_y();
     }
