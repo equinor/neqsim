@@ -290,6 +290,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     return newFluid;
   }
 
+
   /**
    * method to return interfacial tension between two phases.
    *
@@ -1595,6 +1596,17 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return SystemInterface
    */
   public SystemInterface addFluid(SystemInterface addSystem);
+
+  /**
+   * <p>
+   * addFluid.
+   * </p>
+   *
+   * @param addSystem a {@link neqsim.thermo.system.SystemInterface} object
+   * @param phase phase number of phase to add fluid to
+   * @return SystemInterface
+   */
+  public SystemInterface addFluid(SystemInterface addSystem, int phase);
 
   /**
    * <p>
