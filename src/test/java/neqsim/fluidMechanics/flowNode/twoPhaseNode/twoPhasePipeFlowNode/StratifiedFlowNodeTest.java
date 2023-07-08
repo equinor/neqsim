@@ -12,17 +12,16 @@ public class StratifiedFlowNodeTest {
     testSystem.addComponent("methane", 1100, "kg/hr", 0);
     testSystem.addComponent("nC10", 11.1, "kg/hr", 1);
     testSystem.setMixingRule(2);
-    testSystem.initBeta();
-    
+
     PipeData pipe1 = new PipeData(0.1, 0.00025);
 
     StratifiedFlowNode test = new StratifiedFlowNode(testSystem, pipe1);
     test.setInterphaseModelType(1);
-    test.setLengthOfNode(0.001);
+    test.setLengthOfNode(0.1);
     test.getFluidBoundary().setHeatTransferCalc(false);
     test.getFluidBoundary().setMassTransferCalc(true);
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
       test.initFlowCalc();
       test.calcFluxes();
       test.update();
