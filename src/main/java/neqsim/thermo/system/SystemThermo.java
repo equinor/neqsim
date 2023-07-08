@@ -1789,6 +1789,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void init(int type) {
     if (!isInitialized) {
+      initBeta();
       calc_x_y();
     }
     if (this.numericDerivatives) {
