@@ -1625,7 +1625,6 @@ abstract class SystemThermo implements SystemInterface {
   public final void initBeta() {
     for (int i = 0; i < numberOfPhases; i++) {
       this.beta[phaseIndex[i]] = getPhase(i).getNumberOfMolesInPhase() / getTotalNumberOfMoles();
-      // System.out.println("beta " + beta[i]);
     }
     if (this.getSumBeta() < 1.0 - ThermodynamicModelSettings.phaseFractionMinimumLimit
         || this.getSumBeta() > 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit) {
@@ -1714,8 +1713,6 @@ abstract class SystemThermo implements SystemInterface {
             .setz(getPhase(j).getComponents()[i].getNumberOfmoles() / getTotalNumberOfMoles());
         getPhase(j).getComponents()[i].setx(getPhase(j).getComponents()[i].getNumberOfMolesInPhase()
             / getPhase(j).getNumberOfMolesInPhase());
-        // x += getPhase(j).getComponents()[i].getx();
-        // z += getPhase(j).getComponents()[i].getz();
       }
       getPhase(j).normalize();
     }
@@ -1790,7 +1787,7 @@ abstract class SystemThermo implements SystemInterface {
   public void init(int type) {
     if (!isInitialized) {
       initBeta();
-      calc_x_y();
+      init_x_y();
     }
     if (this.numericDerivatives) {
       initNumeric(type);
@@ -2198,9 +2195,6 @@ abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void initProperties() {
-    if (!isInitialized) {
-      init_x_y();
-    }
     initThermoProperties();
     initPhysicalProperties();
   }

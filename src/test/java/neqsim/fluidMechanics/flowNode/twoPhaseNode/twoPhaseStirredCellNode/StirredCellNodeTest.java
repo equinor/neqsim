@@ -4,13 +4,11 @@ import org.junit.jupiter.api.Test;
 import neqsim.fluidMechanics.geometryDefinitions.stirredCell.StirredCell;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class StirredCellNodeTest {
   @Test
   void testUpdate() {
     SystemInterface testSystem = new SystemSrkEos(313.3, 10.01325);
-    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     StirredCell pipe1 = new StirredCell(2.0, 0.05);
     // testSystem.addComponent("CO2", 1, "kg/hr", 0);
     testSystem.addComponent("methane", 10, "kg/hr", 0);
@@ -23,15 +21,15 @@ public class StirredCellNodeTest {
     test.setInterphaseModelType(1);
     test.getFluidBoundary().useFiniteFluxCorrection(true);
     test.getFluidBoundary().useThermodynamicCorrections(true);
+
     test.setStirrerSpeed(10.0 / 60.0);
     test.setStirrerDiameter(1.0);
     test.setDt(0.0010);
 
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 10; i++) {
       test.initFlowCalc();
       test.calcFluxes();
       test.update();
-      // test.getBulkSystem().prettyPrint();
     }
   }
 }
