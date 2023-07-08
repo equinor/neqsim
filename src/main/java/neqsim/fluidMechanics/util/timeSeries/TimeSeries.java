@@ -112,7 +112,7 @@ public class TimeSeries implements java.io.Serializable {
         timeSteps[p] = stepLength;
         temp += stepLength;
         times[p] = temp;
-        if (Double.isNaN(outletMolarFlowRate[0])) {
+        if (outletMolarFlowRate != null) {
           outletMolarFlowRates[p] = outletMolarFlowRate[k];
         }
         thermoSystems[p++] = inletThermoSystem[k].clone();
