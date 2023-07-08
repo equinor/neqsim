@@ -497,7 +497,8 @@ abstract class Component implements ComponentInterface {
       String msg = "will lead to negative number of moles of component in phase";
       neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
-      throw new RuntimeException(ex);
+      // throw new RuntimeException(ex);
+      logger.error(ex.getMessage());
     }
     numberOfMoles += totdn;
     numberOfMolesInPhase += dn;
