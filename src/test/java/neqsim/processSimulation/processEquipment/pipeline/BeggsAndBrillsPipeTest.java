@@ -23,6 +23,7 @@ public class BeggsAndBrillsPipeTest {
         testSystem.getFlowRate("m3/hr"), 1e-4);
   }
 
+  @Test
   public void testFlowVolumeCorrection() {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 15), 1.01325);
