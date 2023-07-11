@@ -355,8 +355,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to return flow rate of fluid.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, kg/hr m3/sec, m3/min, m3/hr, mole/sec,
-   *        mole/min, mole/hr, Sm3/hr, Sm3/day
+   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min, m3/hr,
+   *        Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, mole/sec, mole/min, mole/hr
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
@@ -1155,7 +1155,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param name Name of the component to add. See NeqSim database for component in the database.
    * @param moles number of moles (per second) of the component to be added to the fluid
-   * @param phaseNumber the phase number of the phase to add the component to
+   * @param phaseNumber Number of the phase to add the component to
    */
   public void addComponent(String name, double moles, int phaseNumber);
 
@@ -1165,7 +1165,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param name Name of the component to add. See NeqSim database for component in the database.
    * @param value rate of the component to add to the fluid
    * @param unitName the unit of the flow rate (eg. mol/sec, kg/sec, etc.)
-   * @param phaseNumber the phase number of the phase to add the component to
+   * @param phaseNumber Number of the phase to add the component to
    */
   public void addComponent(String name, double value, String unitName, int phaseNumber);
 
@@ -1186,7 +1186,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param index Component number to add
    * @param moles number of moles (per second) of the component to be added to the fluid
-   * @param phaseNumber a int
+   * @param phaseNumber Number of the phase to add the component to
    */
   public void addComponent(int index, double moles, int phaseNumber);
 
@@ -1711,22 +1711,22 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getPressure();
 
   /**
-   * <p>
-   * method to return pressure of phase.
-   * </p>
-   *
-   * @param phaseNumber a int
-   * @return a double
-   */
-  public double getPressure(int phaseNumber);
-
-  /**
    * method to return pressure in a specified unit.
    *
    * @param unit Supported units are bara, barg, Pa and MPa
    * @return pressure in specified unit
    */
   public double getPressure(String unit);
+
+  /**
+   * <p>
+   * method to return pressure of phase.
+   * </p>
+   *
+   * @param phaseNumber Number of the phase to get pressure for
+   * @return pressure in unit bara
+   */
+  public double getPressure(int phaseNumber);
 
   /**
    * <p>
@@ -1799,7 +1799,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMolarVolume();
 
   /**
-   * method to get the total molar mass of a fluid.
+   * Get molar mass of system.
    *
    * @return molar mass in unit kg/mol
    */
@@ -1891,11 +1891,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getTemperature.
+   * method to return temperature.
    * </p>
    *
-   * @param phaseNumber a int
-   * @return a double
+   * @param phaseNumber phase to get temperature of
+   * @return temperature in unit Kelvin
    */
   public double getTemperature(int phaseNumber);
 

@@ -290,7 +290,6 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     return getCp();
   }
 
-  // return speed of sound in water constant 1470.0 m/sec
   /** {@inheritDoc} */
   @Override
   public double getZ() {

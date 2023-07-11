@@ -205,6 +205,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     // inletStream.getThermoSystem().getDensity());
 
     if (!valveCvSet) {
+      // If valve CV is not set, calculate it from inletstream flow, percent opening and
+      // differential pressure over valve.
       Cv = inStream.getThermoSystem().getTotalNumberOfMoles() / (getPercentValveOpening() / 100.0
           * Math.sqrt(
               (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
