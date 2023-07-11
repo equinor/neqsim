@@ -265,6 +265,16 @@ abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public SystemInterface addFluid(SystemInterface addSystem, int phase) {
+    for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
+      addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
+          addSystem.getPhase(0).getComponent(i).getNumberOfmoles(), phase);
+    }
+    return this;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void addPhase() {
     /*
      * if (maxNumberOfPhases < 6 && !hydrateCheck) { ArrayList phaseList = new ArrayList(0); for
