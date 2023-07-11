@@ -719,6 +719,22 @@ abstract class SystemThermo implements SystemInterface {
       return totalNumberOfMoles * getMolarMass();
     } else if (flowunit.equals("kg/min")) {
       return totalNumberOfMoles * getMolarMass() * 60.0;
+    } else if (flowunit.equals("kg/hr")) {
+      return totalNumberOfMoles * getMolarMass() * 3600.0;
+    } else if (flowunit.equals("kg/day")) {
+      return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0;
+    } else if (flowunit.equals("m3/sec")) {
+      initPhysicalProperties("density");
+      return totalNumberOfMoles * getMolarMass() / getDensity("kg/m3");
+      // return getVolume() / 1.0e5;
+    } else if (flowunit.equals("m3/min")) {
+      initPhysicalProperties("density");
+      return totalNumberOfMoles * getMolarMass() * 60.0 / getDensity("kg/m3");
+      // return getVolume() / 1.0e5 * 60.0;
+    } else if (flowunit.equals("m3/hr")) {
+      // return getVolume() / 1.0e5 * 3600.0;
+      initPhysicalProperties("density");
+      return totalNumberOfMoles * getMolarMass() * 3600.0 / getDensity("kg/m3");
     } else if (flowunit.equals("Sm3/sec")) {
       return totalNumberOfMoles * ThermodynamicConstantsInterface.R
           * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
@@ -731,22 +747,6 @@ abstract class SystemThermo implements SystemInterface {
     } else if (flowunit.equals("MSm3/day")) {
       return totalNumberOfMoles * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
           * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0 / 1.0e6;
-    } else if (flowunit.equals("kg/hr")) {
-      return totalNumberOfMoles * getMolarMass() * 3600.0;
-    } else if (flowunit.equals("kg/day")) {
-      return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0;
-    } else if (flowunit.equals("m3/hr")) {
-      // return getVolume() / 1.0e5 * 3600.0;
-      initPhysicalProperties("density");
-      return totalNumberOfMoles * getMolarMass() * 3600.0 / getDensity("kg/m3");
-    } else if (flowunit.equals("m3/min")) {
-      initPhysicalProperties("density");
-      return totalNumberOfMoles * getMolarMass() * 60.0 / getDensity("kg/m3");
-      // return getVolume() / 1.0e5 * 60.0;
-    } else if (flowunit.equals("m3/sec")) {
-      initPhysicalProperties("density");
-      return totalNumberOfMoles * getMolarMass() / getDensity("kg/m3");
-      // return getVolume() / 1.0e5;
     } else if (flowunit.equals("mole/sec")) {
       return totalNumberOfMoles;
     } else if (flowunit.equals("mole/min")) {

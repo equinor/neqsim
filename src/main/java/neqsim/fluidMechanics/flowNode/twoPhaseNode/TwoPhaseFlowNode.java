@@ -94,8 +94,9 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void initFlowCalc() {
-    this.init();
+
     initVelocity();
+    init();
 
     phaseFraction[0] = getBulkSystem().getBeta();
     phaseFraction[1] = 1.0 - phaseFraction[0];

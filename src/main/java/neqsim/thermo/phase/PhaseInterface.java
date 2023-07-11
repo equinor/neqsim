@@ -396,8 +396,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * method to return flow rate of a phase.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, m3/sec, m3/min, m3/hr, mole/sec, mole/min,
-   *        mole/hr
+   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, m3/sec, m3/min, m3/hr, ft3/sec,
+   *        mole/sec, mole/min, mole/hr
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
@@ -1438,7 +1438,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getPressure(String unit);
 
   /**
-   * method to get molar mass of a fluid phase.
+   * Get molar mass of phase.
    *
    * @return molar mass in unit kg/mol
    */
