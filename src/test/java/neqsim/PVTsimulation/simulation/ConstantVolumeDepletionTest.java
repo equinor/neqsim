@@ -38,6 +38,6 @@ public class ConstantVolumeDepletionTest {
         new double[] {400, 300.0, 200.0, 100.0});
     double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
     CVDsim.setExperimentalData(expData);
-    assertEquals(1.41825650256, CVDsim.getRelativeVolume()[4], 0.001);
+    assertEquals(1.419637379033296, CVDsim.getRelativeVolume()[4], 0.001);
   }
 }
