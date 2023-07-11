@@ -304,12 +304,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   /** {@inheritDoc} */
   @Override
-  public double getFlowRate(String unit) {
-    return this.getFluid().getFlowRate(unit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void runTPflash() {
     if (stream != null) {
       thermoSystem = this.stream.getThermoSystem().clone();
