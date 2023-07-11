@@ -142,7 +142,7 @@ public class StratifiedFlowNodeTest {
     SystemInterface[] fluids = new SystemInterface[10];
     PipeData[] pipes = new PipeData[10];
 
-    SystemInterface testSystem = new SystemSrkEos(313.3, 100.01325);
+    SystemInterface testSystem = new SystemSrkEos(313.3, 10.01325);
     testSystem.addComponent("methane", 1100, "kg/hr", 0);
     testSystem.addComponent("nC10", 11.1, "kg/hr", 1);
     testSystem.setMixingRule(2);
@@ -160,9 +160,9 @@ public class StratifiedFlowNodeTest {
       oilPhases[i].setPhaseType(0, PhaseType.OIL);
     }
 
-    for (int time = 0; time < 4000; time++) {
+    for (int time = 0; time < 40; time++) {
       for (int i = 0; i < 9; i++) {
-        fluids[i] = new SystemSrkEos(313.3, 100.01325);
+        fluids[i] = new SystemSrkEos(313.3, 10.01325);
         fluids[i].addFluid(gasPhases[i], 0);
         fluids[i].addFluid(oilPhases[i], 1);
         fluids[i].setMixingRule(2);
@@ -172,7 +172,7 @@ public class StratifiedFlowNodeTest {
 
         nodes[i] = new StratifiedFlowNode(fluids[i], pipes[i]);
         nodes[i].setInterphaseModelType(1);
-        nodes[i].setLengthOfNode(0.01);
+        nodes[i].setLengthOfNode(0.5);
         nodes[i].getFluidBoundary().setHeatTransferCalc(false);
         nodes[i].getFluidBoundary().setMassTransferCalc(true);
 
@@ -186,10 +186,15 @@ public class StratifiedFlowNodeTest {
         oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
 
         // gasPhases[i + 1].prettyPrint();
-        // oilPhases[i].prettyPrint();
         System.out.println(
             "time " + time + " node " + i + "  mass oil " + oilPhases[i].getFlowRate("kg/hr"));
       }
+
+      oilPhases[0].prettyPrint();
+      System.out.println("flux methane " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(0)
+          + " [mol/m2*sec]");
+      System.out.println(
+          "flux nC10 " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
     }
 
   }
