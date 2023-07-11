@@ -399,4 +399,27 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       getOperations().chemicalEquilibrium();
     }
   }
+
+  public void update(double deltaTime) {
+    System.out.println("contact area " + getInterphaseContactArea());
+    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
+         .getNumberOfComponents(); componentNumber++) {
+      double liquidMolarRate =
+          getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+
+      double gasMolarRate =
+          -getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+
+      System.out.println("liquidMolarRate" + liquidMolarRate);
+      getBulkSystem().getPhase(0).addMoles(componentNumber,
+          this.flowDirection[0] * gasMolarRate * deltaTime);
+      getBulkSystem().getPhase(1).addMoles(componentNumber,
+          this.flowDirection[1] * liquidMolarRate * deltaTime);
+    }
+
+    getBulkSystem().initBeta();
+    getBulkSystem().init_x_y();
+    getBulkSystem().initProperties();
+
+  }
 }

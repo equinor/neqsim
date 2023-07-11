@@ -5,6 +5,7 @@ import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class StratifiedFlowNodeTest {
   @Test
@@ -143,51 +144,61 @@ public class StratifiedFlowNodeTest {
     PipeData[] pipes = new PipeData[10];
 
     SystemInterface testSystem = new SystemSrkEos(313.3, 10.01325);
-    testSystem.addComponent("methane", 1100, "kg/hr", 0);
-    testSystem.addComponent("nC10", 11.1, "kg/hr", 1);
+    testSystem.addComponent("methane", 2.0, "MSm3/day", 0);
+    testSystem.addComponent("ethane", 0.10, "MSm3/day", 0);
+    testSystem.addComponent("nC10", 1000.0, "kg/hr", 1);
     testSystem.setMixingRule(2);
     testSystem.initProperties();
 
+    ThermodynamicOperations flash = new ThermodynamicOperations(testSystem);
+    flash.TPflash();
+
     gasPhases[0] = testSystem.phaseToSystem(0);
-    gasPhases[0].setTotalFlowRate(1100.0, "kg/hr");
+    gasPhases[0].setTotalFlowRate(2.0, "MSm3/day");
     gasPhases[0].setNumberOfPhases(1);
     gasPhases[0].setPhaseType(0, PhaseType.GAS);
 
     for (int i = 0; i < oilPhases.length; i++) {
       oilPhases[i] = testSystem.phaseToSystem(1);
-      oilPhases[i].setTotalFlowRate(10.0, "kg/hr");
+      oilPhases[i].setTotalFlowRate(1000.0, "kg/hr");
       oilPhases[i].setNumberOfPhases(1);
       oilPhases[i].setPhaseType(0, PhaseType.OIL);
     }
 
-    for (int time = 0; time < 40; time++) {
+    for (int time = 0; time < 200; time++) {
+
       for (int i = 0; i < 9; i++) {
-        fluids[i] = new SystemSrkEos(313.3, 10.01325);
+        fluids[i] = new SystemSrkEos(278.3, 100.01325);
         fluids[i].addFluid(gasPhases[i], 0);
         fluids[i].addFluid(oilPhases[i], 1);
         fluids[i].setMixingRule(2);
         fluids[i].initProperties();
 
-        pipes[i] = new PipeData(0.1, 0.00025);
+        pipes[i] = new PipeData(1.1, 0.00025);
 
         nodes[i] = new StratifiedFlowNode(fluids[i], pipes[i]);
         nodes[i].setInterphaseModelType(1);
-        nodes[i].setLengthOfNode(0.5);
+        nodes[i].setLengthOfNode(1.0);
         nodes[i].getFluidBoundary().setHeatTransferCalc(false);
         nodes[i].getFluidBoundary().setMassTransferCalc(true);
+        nodes[i].getFluidBoundary().useFiniteFluxCorrection(false);
 
         nodes[i].initFlowCalc();
         nodes[i].calcFluxes();
-        nodes[i].update();
 
-        if (i <= 9) {
-          gasPhases[i + 1] = nodes[i].getBulkSystem().phaseToSystem(0);
+        try {
+          nodes[i].update(1.0);
+          if (i <= 9) {
+            gasPhases[i + 1] = nodes[i].getBulkSystem().phaseToSystem(0);
+          }
+          oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
+        } catch (Exception e) {
+          e.printStackTrace();
         }
-        oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
 
         // gasPhases[i + 1].prettyPrint();
-        System.out.println(
-            "time " + time + " node " + i + "  mass oil " + oilPhases[i].getFlowRate("kg/hr"));
+        System.out.println("time " + time + " node " + i + "  mass oil "
+            + oilPhases[i].getFlowRate("kg/hr") + "  gas velocity " + nodes[i].getVelocity(0));
       }
 
       oilPhases[0].prettyPrint();
@@ -195,6 +206,56 @@ public class StratifiedFlowNodeTest {
           + " [mol/m2*sec]");
       System.out.println(
           "flux nC10 " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
+      System.out.println("ethane gas "
+          + nodes[0].getBulkSystem().getPhase(0).getComponent(1).getNumberOfMolesInPhase()
+          + " liquid "
+          + nodes[0].getBulkSystem().getPhase(1).getComponent(1).getNumberOfMolesInPhase());
+    }
+
+    for (int time = 0; time < 2000; time++) {
+
+      for (int i = 0; i < 9; i++) {
+        fluids[i] = new SystemSrkEos(278.3, 100.01325);
+        fluids[i].addFluid(gasPhases[i], 0);
+        fluids[i].addFluid(oilPhases[i], 1);
+        fluids[i].setMixingRule(2);
+        fluids[i].initProperties();
+
+        pipes[i] = new PipeData(1.1, 0.00025);
+
+        nodes[i] = new StratifiedFlowNode(fluids[i], pipes[i]);
+        nodes[i].setInterphaseModelType(1);
+        nodes[i].setLengthOfNode(1.0);
+        nodes[i].getFluidBoundary().setHeatTransferCalc(false);
+        nodes[i].getFluidBoundary().setMassTransferCalc(true);
+        nodes[i].getFluidBoundary().useFiniteFluxCorrection(false);
+
+        nodes[i].initFlowCalc();
+        nodes[i].calcFluxes();
+        try {
+          nodes[i].update(1.0);
+          if (i <= 9) {
+            gasPhases[i + 1] = nodes[i].getBulkSystem().phaseToSystem(0);
+          }
+          oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+
+        // gasPhases[i + 1].prettyPrint();
+        System.out.println("time " + time + " node " + i + "  mass oil "
+            + oilPhases[i].getFlowRate("kg/hr") + "  gas velocity " + nodes[i].getVelocity(0));
+      }
+
+      oilPhases[0].prettyPrint();
+      System.out.println("flux methane " + nodes[1].getFluidBoundary().getInterphaseMolarFlux(0)
+          + " [mol/m2*sec]");
+      System.out.println(
+          "flux ethane " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
+      System.out.println("ethane gas "
+          + nodes[0].getBulkSystem().getPhase(0).getComponent(1).getNumberOfMolesInPhase()
+          + " liquid "
+          + nodes[0].getBulkSystem().getPhase(1).getComponent(1).getNumberOfMolesInPhase());
     }
 
   }
