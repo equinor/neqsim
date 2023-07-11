@@ -16,7 +16,7 @@ public class StratifiedFlowNodeTest {
 
     PipeData pipe1 = new PipeData(0.1, 0.00025);
 
-    StratifiedFlowNode test = new StratifiedFlowNode(testSystem, puipe1);
+    StratifiedFlowNode test = new StratifiedFlowNode(testSystem, pipe1);
     test.setInterphaseModelType(1);
     test.setLengthOfNode(0.1);
     test.getFluidBoundary().setHeatTransferCalc(false);
