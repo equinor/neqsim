@@ -1,39 +1,11 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import java.util.UUID;
-
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * https://www.ihsenergy.ca/support/documentation_ca/Piper/2018_1/Content/HTML_Files/Reference%
- * 20materials/Pressure_loss_correlations/c-te-pressure.htm
- *
- */
-
-/*
- * For multiphase flow, many of the published correlations are applicable for "vertical flow" only,
- * while others apply for "horizontal flow" only. Few correlations apply to the whole spectrum of
- * flow situations that may be encountered in oil and gas operations, namely uphill, downhill,
- * horizontal, inclined and vertical flow. The Beggs and Brill (1973) correlation, is one of the few
- * published correlations capable of handling all these flow directions. It was developed using
- * 1" and 1-1/2" sections of pipe that could be inclined at any angle from the horizontal.
- * 
- * The Beggs and Brill multiphase correlation deals with both the friction pressure loss and the
- * hydrostatic pressure difference. First the appropriate flow regime for the particular combination
- * of gas and liquid rates (Segregated, Intermittent or Distributed) is determined. The liquid
- * holdup, and hence, the in-situ density of the gas-liquid mixture is then calculated according to
- * the appropriate flow regime, to obtain the hydrostatic pressure difference. A two-phase friction
- * factor is calculated based on the "input" gas-liquid ratio and the Fanning friction factor. From
- * this the friction pressure loss is calculated using "input" gas-liquid mixture properties. A more
- * detailed discussion of each step is given in the following documentation.
- * 
- * If only a single-phase fluid is flowing, the Beggs and Brill multiphase correlation devolves to
- * the Fanning Gas or Fanning Liquid correlation.
- */
 /**
  * <p>
  * AdiabaticTwoPhasePipe class.
@@ -57,7 +29,6 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   private double pressureOutLimit = 0.0;
 
-  double length = 100.0;
 
   double flowLimit = 1e20;
 
@@ -76,8 +47,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   double area;
   double supGasVel;
   double supLiquidVel;
-  double elevation = 0;
-  double angle;
   boolean setPipeElevation;
   double mixtureDensity;
   double hydrostaticPressureDrop;
@@ -85,7 +54,11 @@ public class PipeBeggsAndBrills extends Pipeline {
   double supMixVel;
   double frictionPressureLoss;
   double pressureDrop;
-  int numberOfIncrements = 1;
+  int numberOfIncrements = 5;
+
+  double length = 0;
+  double elevation = 0;
+  double angle = 0;
 
   /**
    * <p>
@@ -181,6 +154,20 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.angle = angle;
   }
 
+  public void calcMissingValue(){
+    if (length == 0) {
+      // Calculate length based on elevation and angle
+      length = elevation/Math.sin(Math.toRadians(angle));
+  } else if (elevation == 0) {
+      // Calculate elevation based on length and angle
+      elevation = length*Math.sin(Math.toRadians(angle));
+  } else if (angle == 0) {
+      // Calculate angle based on length and elevation
+      angle = Math.toDegrees(Math.asin(elevation / length));
+  } 
+}
+
+
   /**
    * <p>
    * Setter for the field <code>numberOfIncrements</code>.
@@ -244,16 +231,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     area = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
     if (system.getNumberOfPhases() != 1) {
       supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
+      System.out.println(supLiquidVel);
       supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
+      System.out.println(supGasVel);
       supMixVel = supLiquidVel + supGasVel;
       mixtureFroudeNumber = Math.pow(supMixVel, 2) / (32.174 * insideDiameter);
       inputVolumeFractionLiquid = supLiquidVel / supMixVel;
-      /*
-       * Unlike the Gray or the Hagedorn and Brown correlations, the Beggs and Brill correlation
-       * requires that a flow pattern be determined. Since the original flow pattern map was
-       * created, it has been modified. We have used this modified flow pattern map for our
-       * calculations. The transition lines for the modified correlation are defined as follows
-       */
     } else {
       if (system.hasPhaseType("gas")) {
         supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
@@ -266,7 +249,6 @@ public class PipeBeggsAndBrills extends Pipeline {
         inputVolumeFractionLiquid = 1.0;
         flowPattern = "Single Phase";
       }
-      System.out.println("Only one phase in the pipe");
     }
 
     double L1 = 316 * Math.pow(inputVolumeFractionLiquid, 0.302);
@@ -311,13 +293,6 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return a double
    */
   public double calcHydrostaticPressureDifference() {
-    /*
-     * Once the flow type has been determined then the liquid holdup can be calculated. Beggs and
-     * Brill divided the liquid holdup calculation into two parts. First the liquid holdup for
-     * horizontal flow, EL(0), is determined, and then this holdup is modified for inclined flow.
-     * EL(0) must be ≥ CL and therefore when EL(0) is smaller than CL, EL(0) is assigned a value of
-     * CL. There is a separate calculation of liquid holdup (EL(0)) for each flow type
-     */
     double B = 1 - A;
 
     double BThetta;
@@ -388,9 +363,9 @@ public class PipeBeggsAndBrills extends Pipeline {
       BThetta = 1 + betta * (Math.sin(1.8 * angle * 0.01745329)
           - (1.0 / 3.0) * Math.pow(Math.sin(1.8 * angle * 0.01745329), 3.0));
       El = BThetta * El;
-
+      System.out.println(El);
       mixtureDensity =
-          system.getPhase(1).getDensity("lb/ft3") * El + system.getPhase(0).getDensity() * (1 - El);
+          system.getPhase(1).getDensity("lb/ft3") * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
     } else {
       if (system.hasPhaseType("gas")) {
         mixtureDensity = system.getPhase(0).getDensity("lb/ft3");
@@ -399,7 +374,12 @@ public class PipeBeggsAndBrills extends Pipeline {
       }
     }
 
-    hydrostaticPressureDrop = mixtureDensity * 32.2 * elevation;
+    hydrostaticPressureDrop = mixtureDensity * 32.2 * elevation; //32.2 - g
+    
+
+    System.out.println("liquidDensity" + system.getPhase(1).getDensity("lb/ft3"));
+    System.out.println("gasDensity" + + system.getPhase(0).getDensity("lb/ft3"));
+    System.out.println("mixtureDensity" + mixtureDensity);
     return hydrostaticPressureDrop;
   }
 
@@ -461,10 +441,13 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return a double
    */
   public double calcPressureDrop() {
+    calcMissingValue();
     convertSystemUnitToImperial();
     calcFlowRegime();
     hydrostaticPressureDrop = calcHydrostaticPressureDifference();
     frictionPressureLoss = calcFrictionPressureLoss();
+    System.out.println(hydrostaticPressureDrop);
+    System.out.println(frictionPressureLoss);
     pressureDrop = (hydrostaticPressureDrop + frictionPressureLoss);
     convertSystemUnitToMetric();
     return pressureDrop;
@@ -474,18 +457,13 @@ public class PipeBeggsAndBrills extends Pipeline {
   @Override
   public void run(UUID id) {
     length = length / numberOfIncrements;
+    elevation = elevation / numberOfIncrements;
     system = inStream.getThermoSystem().clone();
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     testOps.TPflash();
     system.initProperties();
     double enthalpyInlet = system.getEnthalpy();
     for (int i = 1; i <= numberOfIncrements; i++) {
-      System.out.println(system.getNumberOfPhases());
-      System.out.println(system.hasPhaseType("gas"));
-      System.out.println(system.hasPhaseType("oil"));
-      System.out.println(system.getFlowRate("kg/hr"));
-      System.out.println(system.getComponent("methane").getz());
-      // System.out.println(system.getComponent("n-heptane").getz());
       inletPressure = system.getPressure();
       pressureDrop = calcPressureDrop();
 
@@ -493,11 +471,9 @@ public class PipeBeggsAndBrills extends Pipeline {
       system.setPressure(pressureOut);
       testOps.PHflash(enthalpyInlet);
       system.initProperties();
-      System.out.println(system.getTemperature("C"));
     }
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
-    System.out.println(pressureOut);
   }
 
   /** {@inheritDoc} */
@@ -648,38 +624,6 @@ public class PipeBeggsAndBrills extends Pipeline {
    */
   public void setOutletElevation(double outletElevation) {
     this.outletElevation = outletElevation;
-  }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param name an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] name) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 10);
-    testSystem.addComponent("methane", 5, "MSm^3/day");
-    testSystem.addComponent("n-heptane", 5, "MSm^3/day");
-    testSystem.setMixingRule(2);
-    testSystem.init(0);
-
-    Stream stream_1 = new Stream("Stream1", testSystem);
-
-    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(stream_1);
-    pipe.setDiameter(1.017112);
-    pipe.setPipeWallRoughness(5e-6);
-    pipe.setLength(10000);
-    pipe.setElevation(0.0);
-    pipe.setAngle(0);
-    pipe.setNumberOfIncrements(2);
-
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
-    operations.add(stream_1);
-    operations.add(pipe);
-    operations.run();
   }
 
   /**
