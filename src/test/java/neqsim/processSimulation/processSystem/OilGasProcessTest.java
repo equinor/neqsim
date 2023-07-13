@@ -76,7 +76,9 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator3rdStage =
         new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            "3rd stage separator", valve2.getOutletStream());
+            "3rd stage separator");
+    seprator3rdStage.addStream(valve2.getOutletStream());
+    seprator3rdStage.addStream(recircstream1);
 
 
 
@@ -118,12 +120,12 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     operations.run();
 
-    assertEquals(16687.4465256156, seprator3rdStage.getGasOutStream().getFlowRate("kg/hr"), 0.001);
+    assertEquals(17195.25050, seprator3rdStage.getGasOutStream().getFlowRate("kg/hr"), 0.001);
 
     assertEquals(seprator3rdStage.getGasOutStream().getFlowRate("kg/hr"),
         coolerLP.getOutletStream().getFlowRate("kg/hr"), 1e-4);
 
-        System.out.println("recycle flow " + recycle1.getOutletStream().getFlowRate("kg/hr"));
+    // System.out.println("recycle flow " + recycle1.getOutletStream().getFlowRate("kg/hr"));
     // valveLP1.getOutletStream().getFluid().prettyPrint();
 
   }

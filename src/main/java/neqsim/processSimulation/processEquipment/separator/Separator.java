@@ -107,6 +107,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public Separator(String name, StreamInterface inletStream) {
     this(name);
     setInletStream(inletStream);
+    numberOfInputStreams++;
   }
 
   /**
