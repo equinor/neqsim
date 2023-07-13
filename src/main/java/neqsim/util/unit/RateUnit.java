@@ -9,6 +9,7 @@ package neqsim.util.unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * <p>
@@ -113,7 +114,8 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
     } else if (name.equals("idSm3/day")) {
       factor = 1.0 / molarmass / (3600.0 * 24.0) * stddens;
     } else {
-      logger.error("unit not supported " + name);
+      throw new RuntimeException(
+          new InvalidInputException(this, "getConversionFactor", "unit", "not supported"));
     }
 
     return factor;
