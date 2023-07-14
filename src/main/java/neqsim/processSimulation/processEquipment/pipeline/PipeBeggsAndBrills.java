@@ -20,6 +20,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   // Inlet pressure of the pipeline (initialization)
   double inletPressure = 0;
+  double totalPressureDrop = 0;
 
   // Outlet properties initialization [K] and [bar]
   protected double temperatureOut = 270;
@@ -626,6 +627,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     testOps.TPflash();
     system.initProperties();
     double enthalpyInlet = system.getEnthalpy();
+    double pipeInletPressure = system.getPressure();
     for (int i = 1; i <= numberOfIncrements; i++) {
 
       lengthProfile.add(length);
@@ -647,7 +649,7 @@ public class PipeBeggsAndBrills extends Pipeline {
       system.initProperties();
       temperatureProfile.add(system.getTemperature());
     }
-
+    totalPressureDrop = pipeInletPressure - system.getPressure();
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
   }
@@ -704,14 +706,26 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   /**
    * <p>
-   * Getter for the field <code>pressureDrop</code>.
+   * Getter for the field <code>LastSegmentPressureDrop</code>.
+   * </p>
+   *
+   * @return pressure drop last segment
+   */
+  public double getLastSegmentPressureDrop() {
+    return pressureDrop;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>totalPressureDrop</code>.
    * </p>
    *
    * @return total pressure drop
    */
   public double getPressureDrop() {
-    return pressureDrop;
+    return totalPressureDrop;
   }
+
 
   /**
    * <p>

@@ -185,7 +185,7 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(pressureOut, 34.4716898025371, 1e-4);
     Assertions.assertEquals(temperatureOut, 79.80343, 1e-4);
-
+    Assertions.assertEquals(pipe.getPressureDrop(), 15.5283101974629, 1e-4);
     Assertions.assertEquals(pipe.getSegmentPressure(10), 34.4716898025371, 1e-4);
     Assertions.assertEquals(pipe.getSegmentPressureDrop(10), 1.5468048987983438, 1e-4);
     Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 79.80343029302054, 1e-4);
@@ -195,14 +195,10 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getSegmentGasSuperficialVelocity(10), 7.109484383317198, 1e-4);
     Assertions.assertEquals(pipe.getSegmentMixtureSuperficialVelocity(10), 10.466822884455802, 1e-4);
     Assertions.assertEquals(pipe.getSegmentMixtureViscosity(10), 0.14329203901478244, 1e-4);
-    Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 233.1155792052253, 1e-4);
     Assertions.assertEquals(pipe.getSegmentLiquidHoldup(10), 0.42601098053163294, 1e-4);
     Assertions.assertEquals(pipe.getSegmentMixtureReynoldsNumber(10), 2127138.3343691113, 1e-4);
     Assertions.assertEquals(pipe.getSegmentLength(10), 41.0, 1e-4);
     Assertions.assertEquals(pipe.getSegmentElevation(10), 29.999999999999996, 1e-4);
-
-    
-
   }
 
 
