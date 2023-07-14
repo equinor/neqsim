@@ -20,89 +20,89 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   // Inlet pressure of the pipeline (initialization)
   double inletPressure = 0;
-  
+
   // Outlet properties initialization [K] and [bar]
   protected double temperatureOut = 270;
   protected double pressureOut = 0.0;
-  
+
   // Unit for maximum flow
   String maxflowunit = "kg/hr";
-  
+
   // Inside diameter of the pipe [m]
   double insideDiameter = 0.1;
-  
+
   // Roughness of the pipe wall [m]
   double pipeWallRoughness = 1e-5;
 
-  
+
   // Flow pattern of the fluid in the pipe
   private String regime = "unknown";
-  
+
   // Volume fraction of liquid in the input mixture
   double inputVolumeFractionLiquid;
-  
+
   // Froude number of the mixture
   double mixtureFroudeNumber;
-  
+
   // Specification of the pipe
   String pipeSpecification = "AP02";
-  
+
   // Ref. Beggs and Brills
   double A;
-  
+
   // Area of the pipe [m2]
   double area;
-  
+
   // Superficial gas velocity in the pipe [m/s]
   double supGasVel;
-  
+
   // Superficial liquid velocity in the pipe [m/s]
   double supLiquidVel;
-  
+
   // Density of the mixture [kg/m3]
   double mixtureDensity;
-  
+
   // Hydrostatic pressure drop in the pipe [bar]
   double hydrostaticPressureDrop;
-  
+
   // Holdup ref. Beggs and Brills
   double El = 0;
-  
+
   // Superficial mixture velocity in the pipe [m/s]
   double supMixVel;
-  
+
   // Frictional pressure loss in the pipe [bar]
   double frictionPressureLoss;
-  
+
   // Total pressure drop in the pipe [bar]
   double pressureDrop;
-  
+
   // Number of pipe increments for calculations
   int numberOfIncrements = 5;
-  
+
   // Length of the pipe [m]
   double length = 0;
-  
+
   // Elevation of the pipe [m]
   double elevation = 0;
-  
+
   // Angle of the pipe [degrees]
   double angle = 0;
-  
+
   // Density of the liquid in the mixture in case of water and oil phases present together
   double mixtureLiquidDensity;
-  
+
   // Viscosity of the liquid in the mixture in case of water and oil phases present together
   double mixtureLiquidViscosity;
-  
+
   // Mass fraction of oil in the mixture in case of water and oil phases present together
   double mixtureOilMassFraction;
-  
+
   // Volume fraction of oil in the mixture in case of water and oil phases present together
   double mixtureOilVolumeFraction;
 
 
-  //Results initialization (for each segment)
+  // Results initialization (for each segment)
 
   List<Double> pressureProfile = new ArrayList<>();
   List<Double> temperatureProfile = new ArrayList<>();
@@ -190,7 +190,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   public void setElevation(double elevation) {
     this.elevation = elevation;
   }
-  
+
 
   /**
    * <p>
@@ -249,20 +249,20 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
 
-/**
- * Converts the input values from the system measurement units to imperial units.
- * Needed because the main equations and coefficients are developed for imperial system
- * <p>
- * The conversions applied are:
- * </p>
- * <ul>
- *     <li>Inside Diameter (m) - (feet): multiplied by 3.2808399 </li>
- *     <li>Angle (m) - (feet): multiplied by 0.01745329 </li>
- *     <li>Elevation (m) - (feet): multiplied by 3.2808399 </li>
- *     <li>Length (m) - (feet): multiplied by 3.2808399 </li>
- *     <li>Pipe Wall Roughness (m) - (feet): multiplied by 3.2808399</li>
- * </ul>
- */
+  /**
+   * Converts the input values from the system measurement units to imperial units. Needed because
+   * the main equations and coefficients are developed for imperial system
+   * <p>
+   * The conversions applied are:
+   * </p>
+   * <ul>
+   * <li>Inside Diameter (m) - (feet): multiplied by 3.2808399</li>
+   * <li>Angle (m) - (feet): multiplied by 0.01745329</li>
+   * <li>Elevation (m) - (feet): multiplied by 3.2808399</li>
+   * <li>Length (m) - (feet): multiplied by 3.2808399</li>
+   * <li>Pipe Wall Roughness (m) - (feet): multiplied by 3.2808399</li>
+   * </ul>
+   */
   public void convertSystemUnitToImperial() {
     insideDiameter = insideDiameter * 3.2808399;
     angle = 0.01745329 * angle;
@@ -271,21 +271,22 @@ public class PipeBeggsAndBrills extends Pipeline {
     pipeWallRoughness = pipeWallRoughness * 3.2808399;
   }
 
-/**
- * Converts the input values from imperial units to the system measurement units.
- * Needed because the main equations and coefficients are developed for imperial system
- * <p>
- * The conversions applied are the inverse of those in the {@link #convertSystemUnitToImperial()} method:
- * </p> 
- * <ul>
- *     <li>Inside Diameter (ft - m): divided by 3.2808399 </li>
- *     <li>Angle (ft - m): divided by 0.01745329 </li>
- *     <li>Elevation (ft - m): divided by 3.2808399 </li>
- *     <li>Length (ft - m): divided by 3.2808399 </li>
- *     <li>Pipe Wall Roughness (ft - m): divided by 3.2808399 </li>
- *     <li>Pressure Drop (lb/inch) -(bar): multiplied by 1.48727E-05 </li>
- * </ul>
- */
+  /**
+   * Converts the input values from imperial units to the system measurement units. Needed because
+   * the main equations and coefficients are developed for imperial system
+   * <p>
+   * The conversions applied are the inverse of those in the {@link #convertSystemUnitToImperial()}
+   * method:
+   * </p>
+   * <ul>
+   * <li>Inside Diameter (ft - m): divided by 3.2808399</li>
+   * <li>Angle (ft - m): divided by 0.01745329</li>
+   * <li>Elevation (ft - m): divided by 3.2808399</li>
+   * <li>Length (ft - m): divided by 3.2808399</li>
+   * <li>Pipe Wall Roughness (ft - m): divided by 3.2808399</li>
+   * <li>Pressure Drop (lb/inch) -(bar): multiplied by 1.48727E-05</li>
+   * </ul>
+   */
   public void convertSystemUnitToMetric() {
     insideDiameter = insideDiameter / 3.2808399;
     angle = angle / 0.01745329;
@@ -297,47 +298,53 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
 
-public void calculateMissingValue() {
-  if (length == 0) {
-    length = calculateLength();
-  } else if (elevation == 0) {
-    elevation = calculateElevation();
-  } else if (angle == 0) {
-    angle = calculateAngle();
+  public void calculateMissingValue() {
+    if (length == 0) {
+      length = calculateLength();
+    } else if (elevation == 0) {
+      elevation = calculateElevation();
+    } else if (angle == 0) {
+      angle = calculateAngle();
+    }
+    if (Math.abs(elevation) > Math.abs(length)) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "calcMissingValue",
+              "elevation", "- cannot be higher than length of the pipe" + length));
+    }
   }
-  if (Math.abs(elevation) > Math.abs(length)) {
-    throw new RuntimeException(
-        new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "calcMissingValue",
-            "elevation", "- cannot be higher than length of the pipe" + length));
-  }
-}
-
-/**
-Calculates the length based on the elevation and angle.
-@return the calculated length.
-*/
-private double calculateLength() {
-  return elevation / Math.sin(Math.toRadians(angle));
-}
-/**
-
-Calculates the elevation based on the length and angle.
-@return the calculated elevation.
-*/
-private double calculateElevation() {
-  return length * Math.sin(Math.toRadians(angle));
-}
-/**
-
-Calculates the angle based on the length and elevation.
-@return the calculated angle.
-*/
-private double calculateAngle() {
-  return Math.toDegrees(Math.asin(elevation / length));
-}
-/**
 
   /**
+   * Calculates the length based on the elevation and angle.
+   * 
+   * @return the calculated length.
+   */
+  private double calculateLength() {
+    return elevation / Math.sin(Math.toRadians(angle));
+  }
+
+  /**
+   * 
+   * Calculates the elevation based on the length and angle.
+   * 
+   * @return the calculated elevation.
+   */
+  private double calculateElevation() {
+    return length * Math.sin(Math.toRadians(angle));
+  }
+
+  /**
+   * 
+   * Calculates the angle based on the length and elevation.
+   * 
+   * @return the calculated angle.
+   */
+  private double calculateAngle() {
+    return Math.toDegrees(Math.asin(elevation / length));
+  }
+
+  /**
+   * 
+   * /**
    * <p>
    * calcFlowRegime.
    * </p>
@@ -358,9 +365,9 @@ private double calculateAngle() {
       supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
       supMixVel = supLiquidVel + supGasVel;
 
-      liquidSuperficialVelocityProfile.add(supLiquidVel/3.2808399); // to meters
-      gasSuperficialVelocityProfile.add(supGasVel/3.2808399);
-      mixtureSuperficialVelocityProfile.add(supMixVel/3.2808399);
+      liquidSuperficialVelocityProfile.add(supLiquidVel / 3.2808399); // to meters
+      gasSuperficialVelocityProfile.add(supGasVel / 3.2808399);
+      mixtureSuperficialVelocityProfile.add(supMixVel / 3.2808399);
 
       mixtureFroudeNumber = Math.pow(supMixVel, 2) / (32.174 * insideDiameter);
       inputVolumeFractionLiquid = supLiquidVel / supMixVel;
@@ -409,7 +416,6 @@ private double calculateAngle() {
     flowRegimeProfile.add(regime);
     return regime;
   }
-
 
 
 
@@ -573,7 +579,7 @@ private double calculateAngle() {
     }
 
     mixtureViscosityProfile.add(muNoSlip);
-    mixtureDensityProfile.add(rhoNoSlip*16.01846);
+    mixtureDensityProfile.add(rhoNoSlip * 16.01846);
 
     double ReNoSlip =
         rhoNoSlip * supMixVel * insideDiameter * (16 / (3.28 * 3.28)) / (0.001 * muNoSlip);
@@ -665,9 +671,9 @@ private double calculateAngle() {
         / (Math.PI / 4.0 * Math.pow(insideDiameter, 2.0));
   }
 
-  
-  /** 
-   * @return double
+
+  /**
+   * @return total length in meter
    */
   public double getLength() {
     return length;
@@ -701,7 +707,7 @@ private double calculateAngle() {
    * Getter for the field <code>pressureDrop</code>.
    * </p>
    *
-   * @return a double
+   * @return total pressure drop
    */
   public double getPressureDrop() {
     return pressureDrop;
@@ -715,293 +721,294 @@ private double calculateAngle() {
    * @return a list double
    */
   public List<Double> getPressureProfile() {
-      return new ArrayList<>(pressureProfile);
+    return new ArrayList<>(pressureProfile);
   }
 
 
-  
-  /** 
+
+  /**
    * <p>
    * getSegmentPressure
    * </p>
    *
-   * @param index
-   * @return Double
+   * @param index segment number
+   * @return segment pressure as double
    */
   public Double getSegmentPressure(int index) {
     if (index >= 1 && index < pressureProfile.size() + 1) {
-        return pressureProfile.get(index - 1);
+      return pressureProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
 
-  
-  /** 
+
+  /**
    * 
-   * @return List<Double>
+   * @return list of results
+   * 
    */
   public List<Double> getPressureDropProfile() {
-      return new ArrayList<>(pressureDropProfile);
+    return new ArrayList<>(pressureDropProfile);
   }
 
-  
-  /** 
-   * @param index
+
+  /**
+   * @param index segment number
    * @return Double
    */
   public Double getSegmentPressureDrop(int index) {
     if (index >= 1 && index < pressureDropProfile.size() + 1) {
-        return pressureDropProfile.get(index - 1);
+      return pressureDropProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
 
-  
-  /** 
-   * @return List<Double>
+
+  /**
+   * @return list of temperatures
    */
   public List<Double> getTemperatureProfile() {
-      return new ArrayList<>(temperatureProfile);
+    return new ArrayList<>(temperatureProfile);
   }
 
-  
-  /** 
-   * @param index
+
+  /**
+   * @param index segment number
    * @return Double
    */
   public Double getSegmentTemperature(int index) {
     if (index >= 1 && index < temperatureProfile.size() + 1) {
-        return temperatureProfile.get(index - 1);
+      return temperatureProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
 
-  
-  /** 
-   * @return List<String>
+
+  /**
+   * @return list of flow regime names
    */
   public List<String> getFlowRegimeProfile() {
-      return new ArrayList<>(flowRegimeProfile);
+    return new ArrayList<>(flowRegimeProfile);
   }
 
-  
-  /** 
-   * @param index
+
+  /**
+   * @param index segment number
    * @return String
    */
   public String getSegmentFlowRegime(int index) {
     if (index >= 1 && index < flowRegimeProfile.size() + 1) {
-        return flowRegimeProfile.get(index - 1);
+      return flowRegimeProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
 
 
 
-/** 
- * @return List<Double>
- */
-public List<Double> getLiquidSuperficialVelocityProfile() {
+  /**
+   * @return list of liquid superficial velocity profile
+   */
+  public List<Double> getLiquidSuperficialVelocityProfile() {
     return new ArrayList<>(liquidSuperficialVelocityProfile);
-}
+  }
 
 
 
-/** 
- * @return List<Double>
- */
-public List<Double> getGasSuperficialVelocityProfile() {
+  /**
+   * @return list of gas superficial velocities
+   */
+  public List<Double> getGasSuperficialVelocityProfile() {
     return new ArrayList<>(gasSuperficialVelocityProfile);
-}
+  }
 
 
-/** 
- * @return List<Double>
- */
-public List<Double> getMixtureSuperficialVelocityProfile() {
+  /**
+   * @return list of mixture superficial velocity profile
+   */
+  public List<Double> getMixtureSuperficialVelocityProfile() {
     return new ArrayList<>(mixtureSuperficialVelocityProfile);
-}
+  }
 
 
 
-/** 
- * @return List<Double>
- */
-public List<Double> getMixtureViscosityProfile() {
+  /**
+   * @return list of mixture viscosity
+   */
+  public List<Double> getMixtureViscosityProfile() {
     return new ArrayList<>(mixtureViscosityProfile);
-}
+  }
 
 
 
-/** 
- * @return List<Double>
- */
-public List<Double> getMixtureDensityProfile() {
+  /**
+   * @return list of density profile
+   */
+  public List<Double> getMixtureDensityProfile() {
     return new ArrayList<>(mixtureDensityProfile);
-}
+  }
 
 
 
-/** 
- * @return List<Double>
- */
-public List<Double> getLiquidHoldupProfile() {
+  /**
+   * @return list of hold-up
+   */
+  public List<Double> getLiquidHoldupProfile() {
     return new ArrayList<>(liquidHoldupProfile);
-}
+  }
 
 
 
-/** 
- * @return List<Double>
- */
-public List<Double> getMixtureReynoldsNumber() {
+  /**
+   * @return list of reynold numbers
+   */
+  public List<Double> getMixtureReynoldsNumber() {
     return new ArrayList<>(mixtureReynoldsNumber);
-}
+  }
 
 
 
-/** 
- * @return List<Double>
- */
-public List<Double> getLengthProfile() {
+  /**
+   * @return list of length profile
+   */
+  public List<Double> getLengthProfile() {
     return new ArrayList<>(lengthProfile);
-}
+  }
 
 
 
-/** 
- * @return List<Double>
- */
-public List<Double> getElevationProfile() {
+  /**
+   * @return list of elevation profile
+   */
+  public List<Double> getElevationProfile() {
     return new ArrayList<>(elevationProfile);
-}
+  }
 
 
 
-/** 
- * @param index
- * @return Double
- */
-public Double getSegmentLiquidSuperficialVelocity(int index) {
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentLiquidSuperficialVelocity(int index) {
     if (index >= 1 && index <= liquidSuperficialVelocityProfile.size()) {
-        return liquidSuperficialVelocityProfile.get(index - 1);
+      return liquidSuperficialVelocityProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
-}
+  }
 
 
 
-/** 
- * @param index
- * @return Double
- */
-public Double getSegmentGasSuperficialVelocity(int index) {
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentGasSuperficialVelocity(int index) {
     if (index >= 1 && index <= gasSuperficialVelocityProfile.size()) {
-        return gasSuperficialVelocityProfile.get(index - 1);
+      return gasSuperficialVelocityProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
-}
+  }
 
 
 
-/** 
- * @param index
- * @return Double
- */
-public Double getSegmentMixtureSuperficialVelocity(int index) {
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentMixtureSuperficialVelocity(int index) {
     if (index >= 1 && index <= mixtureSuperficialVelocityProfile.size()) {
-        return mixtureSuperficialVelocityProfile.get(index - 1);
+      return mixtureSuperficialVelocityProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
-}
+  }
 
 
-/** 
- * @param index
- * @return Double
- */
-public Double getSegmentMixtureViscosity(int index) {
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentMixtureViscosity(int index) {
     if (index >= 1 && index <= mixtureViscosityProfile.size()) {
-        return mixtureViscosityProfile.get(index - 1);
+      return mixtureViscosityProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
-}
+  }
 
 
 
-/** 
- * @param index
- * @return Double
- */
-public Double getSegmentMixtureDensity(int index) {
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentMixtureDensity(int index) {
     if (index >= 1 && index <= mixtureDensityProfile.size()) {
-        return mixtureDensityProfile.get(index - 1);
+      return mixtureDensityProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
-}
+  }
 
 
-/** 
- * @param index
- * @return Double
- */
-public Double getSegmentLiquidHoldup(int index) {
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentLiquidHoldup(int index) {
     if (index >= 1 && index <= liquidHoldupProfile.size()) {
-        return liquidHoldupProfile.get(index - 1);
+      return liquidHoldupProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
-}
+  }
 
 
 
-/** 
- * @param index
- * @return Double
- */
-public Double getSegmentMixtureReynoldsNumber(int index) {
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentMixtureReynoldsNumber(int index) {
     if (index >= 1 && index <= mixtureReynoldsNumber.size()) {
-        return mixtureReynoldsNumber.get(index - 1);
+      return mixtureReynoldsNumber.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
-}
+  }
 
 
 
-/** 
- * @param index
- * @return Double
- */
-public Double getSegmentLength(int index) {
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentLength(int index) {
     if (index >= 1 && index <= lengthProfile.size()) {
-        return lengthProfile.get(index - 1);
+      return lengthProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
-}
+  }
 
 
 
-/** 
- * @param index
- * @return Double
- */
-public Double getSegmentElevation(int index) {
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentElevation(int index) {
     if (index >= 1 && index <= elevationProfile.size()) {
-        return elevationProfile.get(index - 1);
+      return elevationProfile.get(index - 1);
     } else {
-        throw new IndexOutOfBoundsException("Index is out of bounds.");
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
-}
+  }
 
 }
