@@ -134,6 +134,7 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(pressureOut, 13.735508907175728, 1e-4);
     Assertions.assertEquals(temperatureOut, 38.82331519652632, 1e-4);
+
   }
 
 
@@ -184,13 +185,31 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(pressureOut, 34.4716898025371, 1e-4);
     Assertions.assertEquals(temperatureOut, 79.80343, 1e-4);
+
+    Assertions.assertEquals(pipe.getSegmentPressure(10), 34.4716898025371, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentPressureDrop(10), 1.5468048987983438, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 79.80343029302054, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentFlowRegime(10), "INTERMITTENT");
+    Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 233.1155792052253, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentLiquidSuperficialVelocity(10), 3.357338501138603, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentGasSuperficialVelocity(10), 7.109484383317198, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentMixtureSuperficialVelocity(10), 10.466822884455802, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentMixtureViscosity(10), 0.14329203901478244, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 233.1155792052253, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentLiquidHoldup(10), 0.42601098053163294, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentMixtureReynoldsNumber(10), 2127138.3343691113, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentLength(10), 41.0, 1e-4);
+    Assertions.assertEquals(pipe.getSegmentElevation(10), 29.999999999999996, 1e-4);
+
+    
+
   }
 
 
 
   @Test
   public void testPipeLineBeggsAndBrills4() {
-    //One phase
+    // One phase
     double pressure = 150; // bara
     double temperature = 80; // C
     double massFlowRate = 110000.000000000;
@@ -205,9 +224,6 @@ public class BeggsAndBrillsPipeTest {
     testSystem.setPressure(pressure, "bara");
     testSystem.setTemperature(temperature, "C");
     testSystem.setTotalFlowRate(massFlowRate, "kg/hr");
-
-    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.TPflash();
     testSystem.initPhysicalProperties();
 
     Stream stream_1 = new Stream("Stream1", testSystem);
@@ -220,17 +236,18 @@ public class BeggsAndBrillsPipeTest {
     pipe.setDiameter(0.125);
     pipe.setNumberOfIncrements(10);
 
+    // test with only water phase
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
-    //operations.run();
+    operations.run();
 
     double pressureOut = pipe.getOutletPressure();
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
 
-    //Assertions.assertEquals(temperatureOut, 75.0748, 1e-4);
-    //Assertions.assertEquals(pressureOut, 124.04439, 1e-4);
+    Assertions.assertEquals(temperatureOut, 75.0748, 1e-4);
+    Assertions.assertEquals(pressureOut, 124.04439, 1e-4);
 
 
     neqsim.thermo.system.SystemInterface testSystem2 =
@@ -243,9 +260,6 @@ public class BeggsAndBrillsPipeTest {
     testSystem2.setPressure(pressure, "bara");
     testSystem2.setTemperature(temperature, "C");
     testSystem2.setTotalFlowRate(massFlowRate, "kg/hr");
-
-    ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
-    testOps.TPflash();
     testSystem2.initPhysicalProperties();
 
     Stream stream_2 = new Stream("Stream1", testSystem2);
@@ -265,10 +279,54 @@ public class BeggsAndBrillsPipeTest {
     operations2.run();
 
     double pressureOut2 = pipe2.getOutletPressure();
-    double temperatureOut2 = pipe2.getOutletTemperature() - 273.15;
 
-    Assertions.assertEquals(temperatureOut2, 78.20515, 1e-4);
+
     Assertions.assertEquals(pressureOut2, 238.8205556280226, 1e-4);
+
+
+
+    neqsim.thermo.system.SystemInterface testSystem3 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 45), 1.01325);
+
+    testSystem3.addComponent("ethane", 1);
+    testSystem3.setMixingRule(2);
+    testSystem3.init(0);
+    testSystem3.useVolumeCorrection(true);
+    testSystem3.setPressure(pressure, "bara");
+    testSystem3.setTemperature(temperature, "C");
+    testSystem3.setTotalFlowRate(massFlowRate, "kg/hr");
+    testSystem3.initPhysicalProperties();
+
+    ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem3);
+    testOps2.TPflash();
+    testSystem3.initPhysicalProperties();
+
+    Assertions.assertEquals(testSystem3.hasPhaseType("oil"), true);
+
+    Stream stream_3 = new Stream("Stream1", testSystem3);
+    stream_3.setFlowRate(massFlowRate, "kg/hr");
+
+    PipeBeggsAndBrills pipe3 = new PipeBeggsAndBrills(stream_3);
+    pipe3.setPipeWallRoughness(0);
+    pipe3.setLength(10000.0);
+    pipe3.setElevation(1500);
+    pipe3.setDiameter(0.125);
+    pipe3.setNumberOfIncrements(10);
+
+    neqsim.processSimulation.processSystem.ProcessSystem operations3 =
+        new neqsim.processSimulation.processSystem.ProcessSystem();
+    operations3.add(stream_3);
+    operations3.add(pipe3);
+    operations3.run();
+
+    double pressureOut3 = pipe3.getOutletPressure();
+    double temperatureOut3 = pipe3.getOutletTemperature() - 273.15;
+
+    Assertions.assertEquals(testSystem3.hasPhaseType("gas"), true);
+
+    Assertions.assertEquals(temperatureOut3, -11.04463, 1e-4);
+    Assertions.assertEquals(pressureOut3, 18.3429, 1e-4);
+
   }
 
 }
