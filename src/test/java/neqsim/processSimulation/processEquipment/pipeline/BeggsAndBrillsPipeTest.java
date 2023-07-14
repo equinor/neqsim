@@ -252,23 +252,23 @@ public class BeggsAndBrillsPipeTest {
     stream_2.setFlowRate(massFlowRate, "kg/hr");
 
     PipeBeggsAndBrills pipe2 = new PipeBeggsAndBrills(stream_2);
-    pipe.setPipeWallRoughness(0);
-    pipe.setLength(1500.0);
-    pipe.setElevation(-1000);
-    pipe.setDiameter(0.125);
-    pipe.setNumberOfIncrements(10);
+    pipe2.setPipeWallRoughness(0);
+    pipe2.setLength(1500.0);
+    pipe2.setElevation(-1000);
+    pipe2.setDiameter(0.125);
+    pipe2.setNumberOfIncrements(10);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations2 =
         new neqsim.processSimulation.processSystem.ProcessSystem();
-    operations.add(stream_2);
-    operations.add(pipe2);
-    operations.run();
+    operations2.add(stream_2);
+    operations2.add(pipe2);
+    operations2.run();
 
-    double pressureOut2 = pipe.getOutletPressure();
-    double temperatureOut2 = pipe.getOutletTemperature() - 273.15;
+    double pressureOut2 = pipe2.getOutletPressure();
+    double temperatureOut2 = pipe2.getOutletTemperature() - 273.15;
 
-    //Assertions.assertEquals(temperatureOut2, 75.0748, 1e-4);
-    //Assertions.assertEquals(pressureOut2, 124.04439, 1e-4);
+    Assertions.assertEquals(temperatureOut2, 78.20515, 1e-4);
+    Assertions.assertEquals(pressureOut2, 238.8205556280226, 1e-4);
   }
 
 }

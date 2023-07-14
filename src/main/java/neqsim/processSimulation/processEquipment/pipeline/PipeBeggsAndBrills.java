@@ -406,10 +406,6 @@ public class PipeBeggsAndBrills extends Pipeline {
         mixtureDensity = system.getPhase(1).getDensity("lb/ft3");
       }
     }
-
-    System.out.println("Mixture Density is " + mixtureDensity);
-    System.out.println("elevation " + elevation);
-    System.out.println("angle " + angle);
     hydrostaticPressureDrop = mixtureDensity * 32.2 * elevation; //32.2 - g
   
     return hydrostaticPressureDrop;
@@ -482,11 +478,8 @@ public class PipeBeggsAndBrills extends Pipeline {
     convertSystemUnitToImperial();
     calcFlowRegime();
     hydrostaticPressureDrop = calcHydrostaticPressureDifference();
-    System.out.println(hydrostaticPressureDrop);
     frictionPressureLoss = calcFrictionPressureLoss();
-    System.out.println(frictionPressureLoss);
     pressureDrop = (hydrostaticPressureDrop + frictionPressureLoss);
-    System.out.println("pressureDrop" + pressureDrop);
     convertSystemUnitToMetric();
     return pressureDrop;
   }
@@ -507,7 +500,6 @@ public class PipeBeggsAndBrills extends Pipeline {
       inletPressure = system.getPressure();
       pressureDrop = calcPressureDrop();
       pressureOut = inletPressure - pressureDrop;
-      System.out.println("Pressure out is "  + pressureOut );
        if (pressureOut < 0)
     {
         throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
