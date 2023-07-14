@@ -81,13 +81,13 @@ public class PipeBeggsAndBrills extends Pipeline {
   int numberOfIncrements = 5;
 
   // Length of the pipe [m]
-  double length = 0;
+  double length = Double.NaN;
 
   // Elevation of the pipe [m]
-  double elevation = 0;
+  double elevation = Double.NaN;
 
   // Angle of the pipe [degrees]
-  double angle = 0;
+  double angle = Double.NaN;
 
   // Density of the liquid in the mixture in case of water and oil phases present together
   double mixtureLiquidDensity;
@@ -299,11 +299,11 @@ public class PipeBeggsAndBrills extends Pipeline {
 
 
   public void calculateMissingValue() {
-    if (length == 0) {
+    if (Double.isNaN(length)) {
       length = calculateLength();
-    } else if (elevation == 0) {
+    } else if (Double.isNaN(elevation)) {
       elevation = calculateElevation();
-    } else if (angle == 0) {
+    } else if (Double.isNaN(angle)) {
       angle = calculateAngle();
     }
     if (Math.abs(elevation) > Math.abs(length)) {
