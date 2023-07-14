@@ -735,6 +735,8 @@ abstract class SystemThermo implements SystemInterface {
       // return getVolume() / 1.0e5 * 3600.0;
       initPhysicalProperties("density");
       return totalNumberOfMoles * getMolarMass() * 3600.0 / getDensity("kg/m3");
+    } else if (flowunit.equals("idSm3/hr")) {
+      return totalNumberOfMoles * getMolarMass() * 3600.0 / getIdealLiquidDensity("kg/m3");
     } else if (flowunit.equals("Sm3/sec")) {
       return totalNumberOfMoles * ThermodynamicConstantsInterface.R
           * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
