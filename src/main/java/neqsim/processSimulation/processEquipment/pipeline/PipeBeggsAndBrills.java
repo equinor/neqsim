@@ -59,7 +59,11 @@ public class PipeBeggsAndBrills extends Pipeline {
   double length = 0;
   double elevation = 0;
   double angle = 0;
-
+  
+  double mixtureLiquidDensity;
+  double mixtureLiquidViscosity;
+  double mixtureOilMassFraction; 
+  double mixtureOilVolumeFraction;
   /**
    * <p>
    * Constructor for AdiabaticTwoPhasePipe.
@@ -154,7 +158,8 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.angle = angle;
   }
 
-  public void calcMissingValue(){
+  public void calcMissingValue() {
+
     if (length == 0) {
       // Calculate length based on elevation and angle
       length = elevation/Math.sin(Math.toRadians(angle));
@@ -165,6 +170,12 @@ public class PipeBeggsAndBrills extends Pipeline {
       // Calculate angle based on length and elevation
       angle = Math.toDegrees(Math.asin(elevation / length));
   } 
+  if (Math.abs(elevation) > Math.abs(length))
+    {
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+            "PipeBeggsAndBrills", "calcMissingValue", "elevation",
+            "- cannot be higher than length of the pipe" + length));
+    }
 }
 
 
@@ -230,10 +241,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     // Calc input volume fraction
     area = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
     if (system.getNumberOfPhases() != 1) {
-      supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
-      System.out.println(supLiquidVel);
+      if (system.getNumberOfPhases() == 3){
+        supLiquidVel = (system.getPhase(1).getFlowRate("ft3/sec") + system.getPhase(2).getFlowRate("ft3/sec")) / area;
+      } else{
+        supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
+      }
       supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
-      System.out.println(supGasVel);
       supMixVel = supLiquidVel + supGasVel;
       mixtureFroudeNumber = Math.pow(supMixVel, 2) / (32.174 * insideDiameter);
       inputVolumeFractionLiquid = supLiquidVel / supMixVel;
@@ -257,9 +270,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     double L4 = 0.5 * Math.pow(inputVolumeFractionLiquid, -6.738);
 
     if (flowPattern != "Single Phase") {
-      // The flow type can then be readily determined either from a representative flow pattern map
-      // or
-      // according to the following conditions
       if ((inputVolumeFractionLiquid < 0.01 && mixtureFroudeNumber < L1)
           || (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber < L2)) {
         flowPattern = "SEGREGATED";
@@ -320,8 +330,25 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
 
     if (flowPattern != "Single Phase") {
-      // Oil surface tension
-      double SG = system.getPhase(1).getDensity("lb/ft3") / (1000 * 0.0624279606);
+      // Liquid surface tension
+      double SG;
+      if (system.getNumberOfPhases() == 3){
+        mixtureOilMassFraction = system.getPhase(1).getFlowRate("kg/hr") / (system.getPhase(1).getFlowRate("kg/hr")
+         + system.getPhase(2).getFlowRate("kg/hr"));
+        mixtureOilVolumeFraction = system.getPhase(1).getVolume() / (system.getPhase(1).getVolume()
+         + system.getPhase(2).getVolume());
+
+        mixtureLiquidViscosity= system.getPhase(1).getViscosity("cP") * mixtureOilVolumeFraction
+            + (system.getPhase(2).getViscosity("cP")) * (1 - mixtureOilVolumeFraction);
+
+        mixtureLiquidDensity = (system.getPhase(1).getDensity("lb/ft3")*mixtureOilMassFraction + system.getPhase(2).getDensity("lb/ft3")*(1 - mixtureOilMassFraction));
+  
+        SG = (mixtureLiquidDensity)/ (1000 * 0.0624279606);
+      }
+      else{
+        SG = system.getPhase(1).getDensity("lb/ft3") / (1000 * 0.0624279606);
+      }
+  
 
       double APIgrav = (141.5 / (SG)) - 131.0;
       double sigma68 = 39.0 - 0.2571 * APIgrav;
@@ -362,10 +389,16 @@ public class PipeBeggsAndBrills extends Pipeline {
       betta = (betta > 0) ? betta : 0;
       BThetta = 1 + betta * (Math.sin(1.8 * angle * 0.01745329)
           - (1.0 / 3.0) * Math.pow(Math.sin(1.8 * angle * 0.01745329), 3.0));
+  
       El = BThetta * El;
-      System.out.println(El);
+      if (system.getNumberOfPhases() == 3){
+        mixtureDensity =
+          mixtureLiquidDensity * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
+      }
+      else{
       mixtureDensity =
           system.getPhase(1).getDensity("lb/ft3") * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
+      }
     } else {
       if (system.hasPhaseType("gas")) {
         mixtureDensity = system.getPhase(0).getDensity("lb/ft3");
@@ -374,12 +407,11 @@ public class PipeBeggsAndBrills extends Pipeline {
       }
     }
 
+    System.out.println("Mixture Density is " + mixtureDensity);
+    System.out.println("elevation " + elevation);
+    System.out.println("angle " + angle);
     hydrostaticPressureDrop = mixtureDensity * 32.2 * elevation; //32.2 - g
-    
-
-    System.out.println("liquidDensity" + system.getPhase(1).getDensity("lb/ft3"));
-    System.out.println("gasDensity" + + system.getPhase(0).getDensity("lb/ft3"));
-    System.out.println("mixtureDensity" + mixtureDensity);
+  
     return hydrostaticPressureDrop;
   }
 
@@ -399,6 +431,12 @@ public class PipeBeggsAndBrills extends Pipeline {
       if (flowPattern != "Single Phase") {
         double y = Math.log(inputVolumeFractionLiquid / (Math.pow(El, 2)));
         S = y / (-0.0523 + 3.18 * y - 0.872 * Math.pow(y, 2.0) + 0.01853 * Math.pow(y, 4));
+        if (system.getNumberOfPhases() == 3){
+          rhoNoSlip = mixtureLiquidDensity * inputVolumeFractionLiquid
+            + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
+          muNoSlip = mixtureLiquidViscosity * inputVolumeFractionLiquid
+            + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+        }
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
             + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
         muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
@@ -441,14 +479,14 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return a double
    */
   public double calcPressureDrop() {
-    calcMissingValue();
     convertSystemUnitToImperial();
     calcFlowRegime();
     hydrostaticPressureDrop = calcHydrostaticPressureDifference();
-    frictionPressureLoss = calcFrictionPressureLoss();
     System.out.println(hydrostaticPressureDrop);
+    frictionPressureLoss = calcFrictionPressureLoss();
     System.out.println(frictionPressureLoss);
     pressureDrop = (hydrostaticPressureDrop + frictionPressureLoss);
+    System.out.println("pressureDrop" + pressureDrop);
     convertSystemUnitToMetric();
     return pressureDrop;
   }
@@ -456,9 +494,11 @@ public class PipeBeggsAndBrills extends Pipeline {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    calcMissingValue();
     length = length / numberOfIncrements;
     elevation = elevation / numberOfIncrements;
     system = inStream.getThermoSystem().clone();
+    system.setMultiPhaseCheck(true);
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     testOps.TPflash();
     system.initProperties();
@@ -466,8 +506,15 @@ public class PipeBeggsAndBrills extends Pipeline {
     for (int i = 1; i <= numberOfIncrements; i++) {
       inletPressure = system.getPressure();
       pressureDrop = calcPressureDrop();
-
       pressureOut = inletPressure - pressureDrop;
+      System.out.println("Pressure out is "  + pressureOut );
+       if (pressureOut < 0)
+    {
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+            "PipeBeggsAndBrills", "run: calcOutletPressure", "pressure out",
+            "- Outlet pressure is negative" + pressureOut));
+    }
+
       system.setPressure(pressureOut);
       testOps.PHflash(enthalpyInlet);
       system.initProperties();
