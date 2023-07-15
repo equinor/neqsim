@@ -123,4 +123,24 @@ public class Well extends NamedBaseClass {
     }
     return volume;
   }
+
+  /**
+   * <p>
+   * getStdWaterProduction.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getStdWaterProduction() {
+    SystemInterface locStream = (stream.getFluid()).clone();
+    locStream.setTemperature(288.15);
+    locStream.setPressure(1.01325);
+    ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
+    ops.TPflash();
+    double volume = Double.NaN;
+    if (locStream.hasPhaseType("aqueous")) {
+      volume = locStream.getPhase("aqueous").getVolume("m3");
+    }
+    return volume;
+  }
 }

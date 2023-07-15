@@ -484,6 +484,29 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     return volume;
   }
 
+  /**
+   * <p>
+   * getWaterProdution.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getWaterProdution(String unit) {
+    double volume = 0.0;
+    for (int i = 0; i < gasProducer.size(); i++) {
+      volume += gasProducer.get(i).getStdWaterProduction();
+    }
+    for (int i = 0; i < oilProducer.size(); i++) {
+      volume += oilProducer.get(i).getStdWaterProduction();
+    }
+    if (unit.equals("Sm3/sec")) {
+    } else if (unit.equals("Sm3/day")) {
+      volume = volume * 60.0 * 60 * 24;
+    }
+    return volume;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
