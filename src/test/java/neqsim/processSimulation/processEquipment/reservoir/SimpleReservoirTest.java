@@ -36,7 +36,7 @@ public class SimpleReservoirTest {
     producedOilStream.setFlowRate(6500.0 / 0.86 * 1000.0 * 4, "kg/day");
 
     StreamInterface producedWaterStream = reservoirOps.addWaterProducer("waterproducer_1");
-    producedWaterStream.setFlowRate(0.0 * 1000.0 * 4, "kg/day");
+    producedWaterStream.setFlowRate(10000, "kg/day");
 
     StreamInterface injectorGasStream = reservoirOps.addGasInjector("gasinjector_1");
     neqsim.thermo.system.SystemInterface fluidGas = fluid1.clone();
@@ -59,6 +59,6 @@ public class SimpleReservoirTest {
       reservoirOps.runTransient(deltaTime);
     }
     Assertions.assertEquals(352.274030, reservoirOps.getReservoirFluid().getPressure("bara"), 0.1);
-
+    Assertions.assertEquals(11.698, reservoirOps.getWaterProdution("Sm3/day"), 0.1);
   }
 }

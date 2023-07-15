@@ -500,9 +500,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     for (int i = 0; i < oilProducer.size(); i++) {
       volume += oilProducer.get(i).getStdWaterProduction();
     }
+    for (int i = 0; i < waterProducer.size(); i++) {
+      volume += waterProducer.get(i).getStdWaterProduction();
+    }
     if (unit.equals("Sm3/sec")) {
     } else if (unit.equals("Sm3/day")) {
       volume = volume * 60.0 * 60 * 24;
+    } else if (unit.equals("Sm3/hr")) {
+      volume = volume * 60.0 * 60;
     }
     return volume;
   }
