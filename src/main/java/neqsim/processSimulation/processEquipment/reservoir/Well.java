@@ -97,7 +97,7 @@ public class Well extends NamedBaseClass {
     locStream.setPressure(1.01325);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
-    double volume = Double.NaN;
+    double volume = 0;
     if (locStream.hasPhaseType("gas")) {
       volume = locStream.getPhase("gas").getVolume("m3");
     }
@@ -117,9 +117,29 @@ public class Well extends NamedBaseClass {
     locStream.setPressure(1.01325);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
-    double volume = Double.NaN;
+    double volume = 0;
     if (locStream.hasPhaseType("oil")) {
       volume = locStream.getPhase("oil").getVolume("m3");
+    }
+    return volume;
+  }
+
+  /**
+   * <p>
+   * getStdWaterProduction.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getStdWaterProduction() {
+    SystemInterface locStream = (stream.getFluid()).clone();
+    locStream.setTemperature(288.15);
+    locStream.setPressure(1.01325);
+    ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
+    ops.TPflash();
+    double volume = 0;
+    if (locStream.hasPhaseType("aqueous")) {
+      volume = locStream.getPhase("aqueous").getVolume("m3");
     }
     return volume;
   }
