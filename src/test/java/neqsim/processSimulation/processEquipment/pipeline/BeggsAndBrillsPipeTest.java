@@ -325,30 +325,4 @@ public class BeggsAndBrillsPipeTest {
 
   }
 
-
-
-  @Test
-  public void testPipeLineBeggsAndBrills5() {
-
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 45), 1.01325);
-    String fluidPath =
-        "/workspaces/neqsim/src/test/java/neqsim/processSimulation/processEquipment/pipeline/Fluid check";
-    testSystem = testSystem.readObjectFromFile(fluidPath, "testFluid");
-    Assertions.assertEquals(testSystem.getFlowRate("m3/sec"), 0.17703398587786842, 1e-4);
-    Stream stream1 = new Stream("Stream1", testSystem);
-    double inletTemperature = testSystem.getTemperature("C");
-    PipeBeggsAndBrills pipe1 = new PipeBeggsAndBrills(stream1);
-    pipe1.setDiameter(0.40);
-    pipe1.setPipeWallRoughness(5e-6);
-    pipe1.setLength(10000);
-    pipe1.setElevation(3500.0);
-    pipe1.setNumberOfIncrements(3);
-    pipe1.setRunIsothermal(true); // Problem with PHflash if is false
-    pipe1.run();
-
-    Assertions.assertEquals(pipe1.getOutletStream().getTemperature("C"), inletTemperature, 1e-4);
-    Assertions.assertEquals(pipe1.getOutletStream().getPressure("bara"), 330.74944, 1e-4);
-  }
-
 }
