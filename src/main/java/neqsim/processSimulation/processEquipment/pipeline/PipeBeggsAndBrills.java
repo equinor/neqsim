@@ -19,8 +19,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   private static final long serialVersionUID = 1001;
 
   // Inlet pressure of the pipeline (initialization)
-  double inletPressure = 0;
-  double totalPressureDrop = 0;
+  private double inletPressure = 0;
+
+  private double totalPressureDrop = 0;
 
   // Outlet properties initialization [K] and [bar]
   protected double temperatureOut = 270;
@@ -30,97 +31,103 @@ public class PipeBeggsAndBrills extends Pipeline {
   String maxflowunit = "kg/hr";
 
   // Inside diameter of the pipe [m]
-  double insideDiameter = 0.1;
+  private double insideDiameter = 0.1;
 
   // Roughness of the pipe wall [m]
-  double pipeWallRoughness = 1e-5;
+  private double pipeWallRoughness = 1e-5;
 
+  // Flag to run isothermal calculations 
+  private boolean runIsothermal = false;
 
   // Flow pattern of the fluid in the pipe
   private String regime = "unknown";
 
   // Volume fraction of liquid in the input mixture
-  double inputVolumeFractionLiquid;
+  private double inputVolumeFractionLiquid;
 
   // Froude number of the mixture
-  double mixtureFroudeNumber;
+  private double mixtureFroudeNumber;
 
   // Specification of the pipe
-  String pipeSpecification = "AP02";
+  private String pipeSpecification = "AP02";
 
   // Ref. Beggs and Brills
-  double A;
+  private double A;
 
   // Area of the pipe [m2]
-  double area;
+  private double area;
 
   // Superficial gas velocity in the pipe [m/s]
-  double supGasVel;
+  private double supGasVel;
 
   // Superficial liquid velocity in the pipe [m/s]
-  double supLiquidVel;
+  private double supLiquidVel;
 
   // Density of the mixture [kg/m3]
-  double mixtureDensity;
+  private double mixtureDensity;
 
   // Hydrostatic pressure drop in the pipe [bar]
-  double hydrostaticPressureDrop;
+  private double hydrostaticPressureDrop;
 
   // Holdup ref. Beggs and Brills
-  double El = 0;
+  private double El = 0;
 
   // Superficial mixture velocity in the pipe [m/s]
-  double supMixVel;
+  private double supMixVel;
 
   // Frictional pressure loss in the pipe [bar]
-  double frictionPressureLoss;
+  private double frictionPressureLoss;
 
   // Total pressure drop in the pipe [bar]
-  double pressureDrop;
+  private double pressureDrop;
 
   // Number of pipe increments for calculations
-  int numberOfIncrements = 5;
+  private int numberOfIncrements = 5;
 
   // Length of the pipe [m]
-  double length = Double.NaN;
+  private double length = Double.NaN;
 
   // Elevation of the pipe [m]
-  double elevation = Double.NaN;
+  private double elevation = Double.NaN;
 
   // Angle of the pipe [degrees]
-  double angle = Double.NaN;
+  private double angle = Double.NaN;
 
   // Density of the liquid in the mixture in case of water and oil phases present together
-  double mixtureLiquidDensity;
+  private double mixtureLiquidDensity;
 
   // Viscosity of the liquid in the mixture in case of water and oil phases present together
-  double mixtureLiquidViscosity;
+  private double mixtureLiquidViscosity;
 
   // Mass fraction of oil in the mixture in case of water and oil phases present together
-  double mixtureOilMassFraction;
+  private double mixtureOilMassFraction;
 
   // Volume fraction of oil in the mixture in case of water and oil phases present together
-  double mixtureOilVolumeFraction;
+  private double mixtureOilVolumeFraction;
+
+  private double cumulativeLength  = 0.0;
+
+  private double cumulativeElevation = 0.0;
 
 
   // Results initialization (for each segment)
 
-  List<Double> pressureProfile = new ArrayList<>();
-  List<Double> temperatureProfile = new ArrayList<>();
-  List<Double> pressureDropProfile = new ArrayList<>();
-  List<String> flowRegimeProfile = new ArrayList<>();
+  private List<Double> pressureProfile = new ArrayList<>();
+  private List<Double> temperatureProfile = new ArrayList<>();
+  private List<Double> pressureDropProfile = new ArrayList<>();
+  private List<String> flowRegimeProfile = new ArrayList<>();
 
-  List<Double> liquidSuperficialVelocityProfile = new ArrayList<>();
-  List<Double> gasSuperficialVelocityProfile = new ArrayList<>();
-  List<Double> mixtureSuperficialVelocityProfile = new ArrayList<>();
+  private List<Double> liquidSuperficialVelocityProfile = new ArrayList<>();
+  private List<Double> gasSuperficialVelocityProfile = new ArrayList<>();
+  private List<Double> mixtureSuperficialVelocityProfile = new ArrayList<>();
 
-  List<Double> mixtureViscosityProfile = new ArrayList<>();
-  List<Double> mixtureDensityProfile = new ArrayList<>();
-  List<Double> liquidHoldupProfile = new ArrayList<>();
-  List<Double> mixtureReynoldsNumber = new ArrayList<>();
+  private List<Double> mixtureViscosityProfile = new ArrayList<>();
+  private List<Double> mixtureDensityProfile = new ArrayList<>();
+  private List<Double> liquidHoldupProfile = new ArrayList<>();
+  private List<Double> mixtureReynoldsNumber = new ArrayList<>();
 
-  List<Double> lengthProfile = new ArrayList<>();
-  List<Double> elevationProfile = new ArrayList<>();
+  private List<Double> lengthProfile = new ArrayList<>();
+  private List<Double> elevationProfile = new ArrayList<>();
 
   /**
    * <p>
@@ -247,6 +254,18 @@ public class PipeBeggsAndBrills extends Pipeline {
    */
   public void setNumberOfIncrements(int numberOfIncrements) {
     this.numberOfIncrements = numberOfIncrements;
+  }
+
+
+  /**
+   * <p>
+   * Setter for the field <code>runIsothermal</code>.
+   * </p>
+   *
+   * @param runIsothermal a boolean
+   */
+  public void setRunIsothermal(boolean runIsothermal) {
+    this.runIsothermal = runIsothermal;
   }
 
 
@@ -619,19 +638,23 @@ public class PipeBeggsAndBrills extends Pipeline {
   @Override
   public void run(UUID id) {
     calculateMissingValue();
+    double enthalpyInlet = Double.NaN;
     length = length / numberOfIncrements;
     elevation = elevation / numberOfIncrements;
     system = inStream.getThermoSystem().clone();
-    system.setMultiPhaseCheck(true);
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     testOps.TPflash();
     system.initProperties();
-    double enthalpyInlet = system.getEnthalpy();
+    if (!runIsothermal){
+      enthalpyInlet = system.getEnthalpy();
+    }
     double pipeInletPressure = system.getPressure();
     for (int i = 1; i <= numberOfIncrements; i++) {
+      cumulativeLength += length;
+      cumulativeElevation += elevation;
 
-      lengthProfile.add(length);
-      elevationProfile.add(elevation);
+      lengthProfile.add(cumulativeLength);
+      elevationProfile.add(cumulativeElevation);
 
       inletPressure = system.getPressure();
       pressureDrop = calcPressureDrop();
@@ -645,7 +668,9 @@ public class PipeBeggsAndBrills extends Pipeline {
       }
 
       system.setPressure(pressureOut);
-      testOps.PHflash(enthalpyInlet);
+      if (!runIsothermal){
+        testOps.PHflash(enthalpyInlet);
+      }
       system.initProperties();
       temperatureProfile.add(system.getTemperature());
     }
@@ -675,11 +700,28 @@ public class PipeBeggsAndBrills extends Pipeline {
 
 
   /**
-   * @return total length in meter
+   * @return angle in degrees
+   */
+  public double getAngle() {
+    return angle;
+  }
+
+
+  /**
+   * @return total length of the pipe in m 
    */
   public double getLength() {
-    return length;
+    return cumulativeLength;
   }
+
+    /**
+   * @return total elevation of the pipe in m 
+   */
+  public double getElevation() {
+    return cumulativeElevation;
+  }
+
+
 
   /**
    * <p>
