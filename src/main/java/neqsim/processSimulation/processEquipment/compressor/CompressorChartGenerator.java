@@ -38,11 +38,24 @@ public class CompressorChartGenerator {
     head[0][0] = refhead;
 
     double[][] polyEff = new double[1][1];
-    polyEff[0][0] = compressor.getPolytropicEfficiency();
+    polyEff[0][0] = compressor.getPolytropicEfficiency() * 100.0;
 
     compChart.setHeadUnit("kJ/kg");
     compChart.setCurves(chartConditions, speed, flow, head, polyEff);
+
+    double minFlowSurgeFlow = 0.3 * refflow;
+    double refSurgeFlow = 0.5 * refflow;
+    double maxSurgeFlow = 0.8 * refflow;
+    double headSurgeRef = compChart.getPolytropicHead(refSurgeFlow, refspeed);
+    double headSurgeMin = compChart.getPolytropicHead(minFlow, minSpeed);
+    double headSurgeMax = compChart.getPolytropicHead(maxSurgeFlow, maxSpeed);
+
+    SurgeCurve surgecurve = new SurgeCurve();
+
+    surgecurve.setCurve(new double[3], new double[] {minFlowSurgeFlow, refSurgeFlow, maxSurgeFlow},
+        new double[] {headSurgeMin, headSurgeRef, headSurgeMax});
+
+    compChart.setSurgeCurve(surgecurve);
     return compChart;
   }
-
 }

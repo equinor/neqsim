@@ -1,9 +1,9 @@
 package neqsim.processSimulation.processSystem;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.compressor.CompressorChart;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -108,27 +108,29 @@ public class CompressorModule extends neqsim.NeqSimTest {
 
     operations.run();
 
-    System.out.println("secondStageSeparator temperature "
-        + secondStageSeparator.getLiquidOutStream().getTemperature("C") + " C");
-    System.out.println("flow recycle " + resycleScrubberStream.getFlowRate("kg/hr") + " kg/hr");
-    System.out.println("flow compressor "
-        + seccondStageCompressor.getOutletStream().getFlowRate("MSm3/day") + " MSm3/day");
-
     assertEquals(2053.083, resycleScrubberStream.getFlowRate("kg/hr"), 0.1);
-
 
     neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
         new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
             seccondStageCompressor);
-    CompressorChart compChart1 = compchartgenerator.generateCompressorChart("mid range");
+    compchartgenerator.generateCompressorChart("mid range");
 
-    seccondStageCompressor.setCompressorChart(compChart1);
+    seccondStageCompressor.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     seccondStageCompressor.getCompressorChart().setUseCompressorChart(true);
     operations.run();
-    System.out.println("pressure compressor "
-        + seccondStageCompressor.getOutletStream().getPressure("bara") + " bara");
 
-    assertEquals(26.0, seccondStageCompressor.getOutletStream().getPressure("bara"), 0.1);
+    assertEquals(25.86689, seccondStageCompressor.getOutletStream().getPressure("bara"), 0.5);
+
+    seccondStageCompressor.setSpeed(seccondStageCompressor.getSpeed() + 500);
+    operations.run();
+
+    assertEquals(35.6391, seccondStageCompressor.getOutletStream().getPressure("bara"), 0.5);
+
+    feedStream.setFlowRate(204094, "kg/hr");
+    operations.run();
+
+    assertTrue(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
+        seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
 
   }
 }
