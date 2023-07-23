@@ -302,7 +302,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
     logger.info("flow rate old in recycle " + outletStream.getFlowRate("kg/hr"));
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-
+    if (numberOfInputStreams == 1 && thermoSystem2.getFlowRate("kg/hr") < 1e-100) {
+      setError(0);
+      setErrorFlow(0);
+      return;
+    }
     mixedStream.setThermoSystem(thermoSystem2);
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() > 1) {

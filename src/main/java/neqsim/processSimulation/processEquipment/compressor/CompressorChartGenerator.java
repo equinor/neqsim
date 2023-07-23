@@ -11,38 +11,42 @@ public class CompressorChartGenerator {
     this.compressor = inpcompressor;
   }
 
-  public CompressorChart generateCompressorChart(String string) {
-    CompressorChart compChart = new CompressorChart();
-    compChart.setUseCompressorChart(true);
+  /**
+   * @param generationOption string to specify how to generate the compressor chart
+   * @return a {@link neqsim.processSimulation.processEquipment.compressor.CompressorChart} object
+   */
+  public CompressorChart generateCompressorChart(String generationOption) {
 
-    int refspeed = compressor.getSpeed();
-
-    double refhead = compressor.getPolytropicHead("kJ/kg");
-    double refflow = compressor.getInletStream().getFlowRate("m3/hr");
-    double minFlow = refflow / 2.0;
-    double maxFLow = refflow * 2.0;
-    double minSpeed = refspeed / 2.0;
-    double maxSpeed = refspeed * 2.0;
-
+    // Generation compressor chart
     double[] chartConditions = new double[3];
     chartConditions[0] = compressor.getOutletStream().getFluid().getMolarMass("kg/mol");
 
-
+    int refspeed = compressor.getSpeed();
     double[] speed = new double[1];
     speed[0] = refspeed;
+    double minSpeed = refspeed / 2.0;
+    double maxSpeed = refspeed * 2.0;
 
+    double refflow = compressor.getInletStream().getFlowRate("m3/hr");
     double[][] flow = new double[1][1];
     flow[0][0] = refflow;
+    double minFlow = refflow / 2.0;
+    double maxFlow = refflow * 2.0;
 
+    double refhead = compressor.getPolytropicHead("kJ/kg");
     double[][] head = new double[1][1];
     head[0][0] = refhead;
 
     double[][] polyEff = new double[1][1];
     polyEff[0][0] = compressor.getPolytropicEfficiency() * 100.0;
 
+    CompressorChart compChart = new CompressorChart();
+    compChart.setUseCompressorChart(true);
     compChart.setHeadUnit("kJ/kg");
     compChart.setCurves(chartConditions, speed, flow, head, polyEff);
 
+
+    // Generating surge curve
     double minFlowSurgeFlow = 0.3 * refflow;
     double refSurgeFlow = 0.5 * refflow;
     double maxSurgeFlow = 0.8 * refflow;

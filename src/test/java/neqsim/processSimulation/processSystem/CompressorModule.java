@@ -6,8 +6,10 @@ import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
+import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
+import neqsim.processSimulation.processEquipment.splitter.Splitter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
@@ -75,10 +77,16 @@ public class CompressorModule extends neqsim.NeqSimTest {
         new ThreePhaseSeparator("inlet separator", valve1.getOutletStream());
     secondStageSeparator.addStream(resycleScrubberStream);
 
+    StreamInterface gasResycleStream = feedStream.clone();
+    gasResycleStream.setFlowRate(1.0, "kg/hr");
+
+    Mixer gasmixer = new Mixer("gas recycle mixer");
+    gasmixer.addStream(secondStageSeparator.getGasOutStream());
+    // gasmixer.addStream(gasResycleStream);
 
     // Setting up compressor module
     Compressor seccondStageCompressor =
-        new Compressor("2nd stage compressor", secondStageSeparator.getGasOutStream());
+        new Compressor("2nd stage compressor", gasmixer.getOutletStream());
     seccondStageCompressor.setUsePolytropicCalc(true);
     seccondStageCompressor.setPolytropicEfficiency(0.9);
     seccondStageCompressor.setOutletPressure(26.0, "bara");
@@ -88,6 +96,20 @@ public class CompressorModule extends neqsim.NeqSimTest {
     afterCooler.setOutTemperature(25.0, "C");
 
     Separator scrubber1 = new Separator("after cooler scrubber", afterCooler.getOutletStream());
+
+    Stream gasFromScrubber = new Stream("gas from scrubber", scrubber1.getGasOutStream());
+
+    Splitter gassplitter = new Splitter("gas splitter", gasFromScrubber);
+    gassplitter.setSplitFactors(new double[] {0.1, 0.9});
+
+    ThrottlingValve recycleValve =
+        new ThrottlingValve("antisurge valve", gassplitter.getSplitStream(0));
+    recycleValve.setOutletPressure(10.0, "bara");
+
+    Recycle recycle2 = new Recycle("recycle 2");
+    recycle2.addStream(recycleValve.getOutletStream());
+    recycle2.setOutletStream(gasResycleStream);
+
 
     Recycle recycle1 = new Recycle("recycle 1");
     recycle1.addStream(scrubber1.getLiquidOutStream());
@@ -101,9 +123,15 @@ public class CompressorModule extends neqsim.NeqSimTest {
     operations.add(valve1);
     operations.add(resycleScrubberStream);
     operations.add(secondStageSeparator);
+    operations.add(gasResycleStream);
+    operations.add(gasmixer);
     operations.add(seccondStageCompressor);
     operations.add(afterCooler);
     operations.add(scrubber1);
+    operations.add(gasFromScrubber);
+    operations.add(gassplitter);
+    operations.add(recycleValve);
+    operations.add(recycle2);
     operations.add(recycle1);
 
     operations.run();
