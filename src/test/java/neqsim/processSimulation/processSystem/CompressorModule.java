@@ -3,6 +3,7 @@ package neqsim.processSimulation.processSystem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
+import neqsim.processSimulation.processEquipment.compressor.CompressorChart;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -112,5 +113,20 @@ public class CompressorModule extends neqsim.NeqSimTest {
         + seccondStageCompressor.getOutletStream().getFlowRate("MSm3/day") + " MSm3/day");
 
     assertEquals(2053.083055683, resycleScrubberStream.getFlowRate("kg/hr"), 0.1);
+
+
+    neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
+        new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
+            seccondStageCompressor);
+    CompressorChart compChart1 = compchartgenerator.generateCompressorChart("mid range");
+
+    seccondStageCompressor.setCompressorChart(compChart1);
+
+    operations.run();
+    System.out.println("pressure compressor "
+        + seccondStageCompressor.getOutletStream().getPressure("bara") + " bara");
+
+    assertEquals(26.0, seccondStageCompressor.getOutletStream().getPressure("bara"), 0.1);
+
   }
 }
