@@ -469,7 +469,13 @@ public class TPmultiflash extends TPflash {
 
           // f.print(10, 10);
           // df.print(10, 10);
-          SimpleMatrix dx = df.plus(identitytimesConst).solve(f).negative();
+          SimpleMatrix dx = null;
+          try {
+            dx = df.plus(identitytimesConst).solve(f).negative();
+          } catch (Exception e) {
+            dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
+          }
+
           // dx.print(10, 10);
 
           for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {

@@ -79,6 +79,8 @@ public class CompressorModule extends neqsim.NeqSimTest {
     // Setting up compressor module
     Compressor seccondStageCompressor =
         new Compressor("2nd stage compressor", secondStageSeparator.getGasOutStream());
+    seccondStageCompressor.setUsePolytropicCalc(true);
+    seccondStageCompressor.setPolytropicEfficiency(0.9);
     seccondStageCompressor.setOutletPressure(26.0, "bara");
 
     Cooler afterCooler =
@@ -112,7 +114,7 @@ public class CompressorModule extends neqsim.NeqSimTest {
     System.out.println("flow compressor "
         + seccondStageCompressor.getOutletStream().getFlowRate("MSm3/day") + " MSm3/day");
 
-    assertEquals(2053.083055683, resycleScrubberStream.getFlowRate("kg/hr"), 0.1);
+    assertEquals(2053.083, resycleScrubberStream.getFlowRate("kg/hr"), 0.1);
 
 
     neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
@@ -121,7 +123,7 @@ public class CompressorModule extends neqsim.NeqSimTest {
     CompressorChart compChart1 = compchartgenerator.generateCompressorChart("mid range");
 
     seccondStageCompressor.setCompressorChart(compChart1);
-
+    seccondStageCompressor.getCompressorChart().setUseCompressorChart(true);
     operations.run();
     System.out.println("pressure compressor "
         + seccondStageCompressor.getOutletStream().getPressure("bara") + " bara");

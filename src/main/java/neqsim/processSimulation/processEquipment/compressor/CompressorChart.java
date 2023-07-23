@@ -389,4 +389,20 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     // && Objects.equals(reducedPolytropicEfficiencyFitter,
     // other.reducedPolytropicEfficiencyFitter)
   }
+
+  public double getMaxSpeedCurve() {
+    return maxSpeedCurve;
+  }
+
+  public void setMaxSpeedCurve(double maxSpeedCurve) {
+    this.maxSpeedCurve = maxSpeedCurve;
+  }
+
+  public double getMinSpeedCurve() {
+    return minSpeedCurve;
+  }
+
+  public void setMinSpeedCurve(double minSpeedCurve) {
+    this.minSpeedCurve = minSpeedCurve;
+  }
 }
