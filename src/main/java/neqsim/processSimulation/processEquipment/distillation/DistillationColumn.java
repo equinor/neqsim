@@ -3,10 +3,8 @@ package neqsim.processSimulation.processEquipment.distillation;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -48,7 +46,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   neqsim.processSimulation.processSystem.ProcessSystem distoperations;
   Heater heater;
   Separator separator2;
-
+  private double err = 1.0e10;
   /**
    * <p>
    * Constructor for DistillationColumn.
@@ -324,7 +322,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (isDoInitializion()) {
         this.init();
       }
-      double err = 1.0e10;
+      err = 1.0e10;
       double errOld;
       int iter = 0;
       double[] oldtemps = new double[numberOfTrays];
@@ -369,6 +367,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
               oldtemps[i] - ((MixerInterface) trays.get(i)).getThermoSystem().getTemperature());
         }
         logger.info("error iter " + err + " iteration " + iter);
+        System.out.println("error iter " + err + " iteration " + iter);
         // massBalanceCheck();
       } while (err > 1e-4 && err < errOld && iter < 10); // && !massBalanceCheck());
 
@@ -649,6 +648,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public double getInternalDiameter() {
     return internalDiameter;
+  }
+
+
+  /**
+ * <p>
+ * Getter for the field <code>solved</code>.
+ * </p>
+ *
+ * @return a boolean
+ */
+  public boolean solved() {
+    return (err < 1e-4);
   }
 
   /**
