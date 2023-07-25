@@ -36,6 +36,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   double topTrayPressure = -1.0;
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
+  int maxNumberOfIterations = 10;
   private int feedTrayNumber = 1;
   StreamInterface stream_3 = new Stream("stream_3");
   StreamInterface gasOutStream = new Stream("gasOutStream");
@@ -371,9 +372,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         logger.info("error iter " + err + " iteration " + iter);
         // System.out.println("error iter " + err + " iteration " + iter);
         // massBalanceCheck();
-      } while (err > 1e-4 && err < errOld && iter < 10); // && !massBalanceCheck());
-
+      } while (err > 1e-4 && err < errOld && iter < maxNumberOfIterations); // &&
+                                                                            // !massBalanceCheck());
       // massBalanceCheck();
+      // componentMassBalanceCheck("water");
       gasOutStream.setThermoSystem(
           trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
       gasOutStream.setCalculationIdentifier(id);
@@ -725,6 +727,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public boolean solved() {
     return (err < 1e-4);
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>maxNumberOfIterations</code>.
+   * </p>
+   *
+   * @param maxIter a double
+   */
+  public void setMaxNumberOfIterations(int maxIter) {
+    this.maxNumberOfIterations = maxIter;
   }
 
   /**
