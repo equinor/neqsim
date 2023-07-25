@@ -171,8 +171,8 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 
     if (mixedStream.getFluid().getNumberOfPhases() >= 3) {
       System.out
-          .println("error...." + mixedStream.getFluid().getNumberOfPhases() + "phases on tray");
-      logger.warn("error...." + mixedStream.getFluid().getNumberOfPhases() + "phases on tray");
+          .println("error...." + mixedStream.getFluid().getNumberOfPhases() + " phases on tray");
+      logger.warn("error...." + mixedStream.getFluid().getNumberOfPhases() + " phases on tray");
     }
   }
 
