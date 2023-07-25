@@ -71,7 +71,7 @@ public class DistillationColumnTest {
     gasToReboilerStream.setPressure(1.12, "bara");
     gasToReboilerStream.run();
 
-    DistillationColumn column = new DistillationColumn(10, true, true);
+    DistillationColumn column = new DistillationColumn(1, true, true);
     column.setName("TEG regeneration column");
     column.addFeedStream(richTEGStream, 1);
     column.getReboiler().setOutTemperature(273.15 + 202);
