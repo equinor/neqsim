@@ -210,7 +210,7 @@ public class GlycolModulesTest extends  neqsim.NeqSimTest {
       column.setName("TEG regeneration column");
       column.addFeedStream(glycol_flash_valve2.getOutStream(), 1);
       column.getReboiler().setOutTemperature(273.15 + 201.86991706268591);
-      column.getCondenser().setOutTemperature(273.15 + 102.80145109927442);
+      column.getCondenser().setOutTemperature(273.15 + 112.80145109927442);
       column.getTray(1).addStream(gasToReboiler);
       column.setTopPressure(1.1582401511485543);
       column.setBottomPressure(1.1714901511485545);
