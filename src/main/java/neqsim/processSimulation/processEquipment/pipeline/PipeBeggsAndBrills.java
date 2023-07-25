@@ -85,10 +85,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   private int numberOfIncrements = 5;
 
   // Length of the pipe [m]
-  private double length = Double.NaN;
+  private double totalLength = Double.NaN;
 
   // Elevation of the pipe [m]
-  private double elevation = Double.NaN;
+  private double totalElevation = Double.NaN;
 
   // Angle of the pipe [degrees]
   private double angle = Double.NaN;
@@ -105,29 +105,33 @@ public class PipeBeggsAndBrills extends Pipeline {
   // Volume fraction of oil in the mixture in case of water and oil phases present together
   private double mixtureOilVolumeFraction;
 
-  private double cumulativeLength  = 0.0;
+  private double cumulativeLength;
 
-  private double cumulativeElevation = 0.0;
+  private double cumulativeElevation;
+
+  //For segment calculation
+  double length;
+  double elevation;
 
 
   // Results initialization (for each segment)
 
-  private List<Double> pressureProfile = new ArrayList<>();
-  private List<Double> temperatureProfile = new ArrayList<>();
-  private List<Double> pressureDropProfile = new ArrayList<>();
-  private List<String> flowRegimeProfile = new ArrayList<>();
+  private List<Double> pressureProfile;
+  private List<Double> temperatureProfile;
+  private List<Double> pressureDropProfile;
+  private List<String> flowRegimeProfile;
 
-  private List<Double> liquidSuperficialVelocityProfile = new ArrayList<>();
-  private List<Double> gasSuperficialVelocityProfile = new ArrayList<>();
-  private List<Double> mixtureSuperficialVelocityProfile = new ArrayList<>();
+  private List<Double> liquidSuperficialVelocityProfile;
+  private List<Double> gasSuperficialVelocityProfile;
+  private List<Double> mixtureSuperficialVelocityProfile;
 
-  private List<Double> mixtureViscosityProfile = new ArrayList<>();
-  private List<Double> mixtureDensityProfile = new ArrayList<>();
-  private List<Double> liquidHoldupProfile = new ArrayList<>();
-  private List<Double> mixtureReynoldsNumber = new ArrayList<>();
+  private List<Double> mixtureViscosityProfile;
+  private List<Double> mixtureDensityProfile;
+  private List<Double> liquidHoldupProfile;
+  private List<Double> mixtureReynoldsNumber;
 
-  private List<Double> lengthProfile = new ArrayList<>();
-  private List<Double> elevationProfile = new ArrayList<>();
+  private List<Double> lengthProfile;
+  private List<Double> elevationProfile;
 
   /**
    * <p>
@@ -196,7 +200,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @param elevation a double
    */
   public void setElevation(double elevation) {
-    this.elevation = elevation;
+    this.totalElevation = elevation;
   }
 
 
@@ -208,7 +212,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @param length the length to set
    */
   public void setLength(double length) {
-    this.length = length;
+    this.totalLength = length;
   }
 
   /**
@@ -319,18 +323,25 @@ public class PipeBeggsAndBrills extends Pipeline {
 
 
   public void calculateMissingValue() {
-    if (Double.isNaN(length)) {
-      length = calculateLength();
-    } else if (Double.isNaN(elevation)) {
-      elevation = calculateElevation();
+    if (Double.isNaN(totalLength)) {
+      totalLength = calculateLength();
+    } else if (Double.isNaN(totalElevation)) {
+      totalElevation = calculateElevation();
     } else if (Double.isNaN(angle)) {
       angle = calculateAngle();
     }
-    if (Math.abs(elevation) > Math.abs(length)) {
+    if (Math.abs(totalElevation) > Math.abs(totalLength)) {
       throw new RuntimeException(
           new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "calcMissingValue",
               "elevation", "- cannot be higher than length of the pipe" + length));
     }
+
+    if (Double.isNaN(totalElevation) || Double.isNaN(totalLength) || Double.isNaN(angle)) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "calcMissingValue",
+              "elevation or length or angle", "cannot be null"));
+  }
+
   }
 
   /**
@@ -339,7 +350,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return the calculated length.
    */
   private double calculateLength() {
-    return elevation / Math.sin(Math.toRadians(angle));
+    return totalElevation / Math.sin(Math.toRadians(angle));
   }
 
   /**
@@ -349,7 +360,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return the calculated elevation.
    */
   private double calculateElevation() {
-    return length * Math.sin(Math.toRadians(angle));
+    return totalLength * Math.sin(Math.toRadians(angle));
   }
 
   /**
@@ -359,7 +370,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return the calculated angle.
    */
   private double calculateAngle() {
-    return Math.toDegrees(Math.asin(elevation / length));
+    return Math.toDegrees(Math.asin(totalElevation / totalLength));
   }
 
   /**
@@ -637,18 +648,39 @@ public class PipeBeggsAndBrills extends Pipeline {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    pressureProfile = new ArrayList<>();
+    temperatureProfile = new ArrayList<>();
+
+    pressureDropProfile = new ArrayList<>();
+    flowRegimeProfile = new ArrayList<>();
+
+    liquidSuperficialVelocityProfile = new ArrayList<>();
+    gasSuperficialVelocityProfile = new ArrayList<>();
+    mixtureSuperficialVelocityProfile = new ArrayList<>();
+
+    mixtureViscosityProfile = new ArrayList<>();
+    mixtureDensityProfile = new ArrayList<>();
+    liquidHoldupProfile = new ArrayList<>();
+    mixtureReynoldsNumber = new ArrayList<>();
+
+    lengthProfile = new ArrayList<>();
+    elevationProfile = new ArrayList<>();
+
     calculateMissingValue();
     double enthalpyInlet = Double.NaN;
-    length = length / numberOfIncrements;
-    elevation = elevation / numberOfIncrements;
+    length = totalLength / numberOfIncrements;
+    elevation = totalElevation / numberOfIncrements;
     system = inStream.getThermoSystem().clone();
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     testOps.TPflash();
     system.initProperties();
+
     if (!runIsothermal){
       enthalpyInlet = system.getEnthalpy();
     }
     double pipeInletPressure = system.getPressure();
+    cumulativeLength = 0.0;
+    cumulativeElevation = 0.0;
     for (int i = 1; i <= numberOfIncrements; i++) {
       cumulativeLength += length;
       cumulativeElevation += elevation;
