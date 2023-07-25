@@ -957,7 +957,7 @@ public class TPmultiflash extends TPflash {
           // diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) /
           // oldBeta);
           // logger.info("diff multiphase " + diff);
-        } while (diff > 1e-12 && !removePhase && (diff < oldDiff || iterations < 50)
+        } while (diff > 1e-14 && !removePhase && (diff < oldDiff || iterations < 50)
             && iterations < 200);
         // this.solveBeta(true);
         if (iterations >= 199) {

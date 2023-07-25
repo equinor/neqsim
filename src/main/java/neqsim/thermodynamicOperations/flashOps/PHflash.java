@@ -127,7 +127,7 @@ public class PHflash extends Flash {
       } else if (error < 0 && system.getTemperature() < minTemperature) {
         minTemperature = system.getTemperature();
       }
-    } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3) && iterations < 200);
+    } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-12 || iterations < 3) && iterations < 200);
     return 1.0 / nyTemp;
   }
 
@@ -181,7 +181,7 @@ public class PHflash extends Flash {
       // if(iterations>100) System.out.println("temp " + system.getTemperature() + "
       // iter "+ iterations + " error "+ error + " correction " + newCorr + " factor
       // "+ factor);
-    } while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
+    } while (((error + erorOld) > 1e-14 || iterations < 3) && iterations < 200);
     // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
     // " error "+ error );
     return 1.0 / nyTemp;
