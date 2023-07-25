@@ -369,7 +369,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
               oldtemps[i] - ((MixerInterface) trays.get(i)).getThermoSystem().getTemperature());
         }
         logger.info("error iter " + err + " iteration " + iter);
-        System.out.println("error iter " + err + " iteration " + iter);
+        // System.out.println("error iter " + err + " iteration " + iter);
         // massBalanceCheck();
       } while (err > 1e-4 && err < errOld && iter < 10); // && !massBalanceCheck());
 
