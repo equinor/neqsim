@@ -749,6 +749,9 @@ abstract class SystemThermo implements SystemInterface {
     } else if (flowunit.equals("MSm3/day")) {
       return totalNumberOfMoles * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
           * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0 / 1.0e6;
+    } else if (flowunit.equals("MSm3/hr")) {
+      return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
+          * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0 / 1.0e6;
     } else if (flowunit.equals("mole/sec")) {
       return totalNumberOfMoles;
     } else if (flowunit.equals("mole/min")) {
