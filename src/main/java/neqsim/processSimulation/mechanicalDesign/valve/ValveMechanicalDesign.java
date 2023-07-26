@@ -68,6 +68,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     valveCvMax = valve1.getThermoSystem().getVolume("m3/hr")
         * Math.sqrt(valve1.getThermoSystem().getDensity("kg/m3") / 1000.0 / dP);
     valveWeight = valveCvMax * 100.0;
+    setWeightTotal(valveWeight);
   }
 
   /** {@inheritDoc} */

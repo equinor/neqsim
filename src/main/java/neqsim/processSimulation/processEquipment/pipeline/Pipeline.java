@@ -46,6 +46,8 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   double[] outerHeatTransferCoeffs = {1e-5, 1e-5}; // , 1e-5, 1e-5, 1e-5};
   double[] wallHeatTransferCoeffs = {1e-5, 1e-5}; // , 1e-5, 1e-5, 1e-5};
 
+  PipelineMechanicalDesign pipelineMechanicalDesign = null;
+
   /**
    * <p>
    * Constructor for Pipeline.
@@ -93,6 +95,12 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
     super(name, inStream);
   }
 
+  @Override
+  public void initMechanicalDesign() {
+    pipelineMechanicalDesign = new PipelineMechanicalDesign(this);
+  }
+
+
   /**
    * {@inheritDoc}
    *
@@ -101,7 +109,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    */
   @Override
   public PipelineMechanicalDesign getMechanicalDesign() {
-    return new PipelineMechanicalDesign(this);
+    return pipelineMechanicalDesign;
   }
 
   /** {@inheritDoc} */

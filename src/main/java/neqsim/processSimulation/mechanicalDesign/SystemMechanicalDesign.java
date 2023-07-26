@@ -61,6 +61,8 @@ public class SystemMechanicalDesign implements java.io.Serializable {
       try {
         if (!((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)) == null)) {
           ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
+              .initMechanicalDesign();
+          ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
               .getMechanicalDesign().calcDesign();
           totalPlotSpace += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
               .getMechanicalDesign().getModuleHeight()

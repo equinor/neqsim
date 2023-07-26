@@ -25,6 +25,15 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
+   * Get a <code>initMechanicalDesign</code> for the equipment.
+   * </p>
+   **/
+  default void initMechanicalDesign() {
+
+  }
+
+  /**
+   * <p>
    * Get a <code>mechanicalDesign</code> for the equipment.
    * </p>
    *
