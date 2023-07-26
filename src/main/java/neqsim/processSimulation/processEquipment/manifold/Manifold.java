@@ -67,6 +67,17 @@ public class Manifold extends ProcessEquipmentBaseClass {
     return localsplitter.getSplitStream(i);
   }
 
+
+  /**
+   * <p>
+   * getMixedStream.
+   * </p>
+   *
+   **/
+  public StreamInterface getMixedStream() {
+    return localmixer.getOutletStream();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
