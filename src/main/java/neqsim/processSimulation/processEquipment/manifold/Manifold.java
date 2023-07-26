@@ -58,6 +58,8 @@ public class Manifold extends ProcessEquipmentBaseClass {
    */
   public void setSplitFactors(double[] splitFact) {
     splitFactors = splitFact;
+    localsplitter.setInletStream(localmixer.getOutletStream());
+    localsplitter.setSplitFactors(splitFactors);
   }
 
   /** {@inheritDoc} */
@@ -68,12 +70,8 @@ public class Manifold extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-
     localmixer.run(id);
-
-    localsplitter = new Splitter("local splitter");
     localsplitter.setInletStream(localmixer.getOutletStream());
-    localsplitter.setSplitFactors(splitFactors);
     localsplitter.run();
   }
 
