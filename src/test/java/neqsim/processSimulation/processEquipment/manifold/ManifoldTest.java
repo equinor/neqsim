@@ -41,6 +41,7 @@ public class ManifoldTest {
     assertEquals(0.5, manifold1.getSplitStream(0).getFlowRate("MSm3/day"), 0.01);
     assertEquals(manifold1.getSplitStream(1).getFluid().getComponent(0).getx(),
         manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
+    assertEquals(5.0, manifold1.getMixedStream().getFlowRate("MSm3/day"), 0.01);
   }
 
   @Test
@@ -86,6 +87,7 @@ public class ManifoldTest {
         manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
     assertEquals(stream1FromManifold.getFluid().getComponent(0).getx(),
         manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
+    assertEquals(5.0, manifold1.getMixedStream().getFlowRate("MSm3/day"), 0.01);
 
 
 
