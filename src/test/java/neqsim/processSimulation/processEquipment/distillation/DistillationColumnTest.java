@@ -72,15 +72,15 @@ public class DistillationColumnTest {
     column.setName("TEG regeneration column");
     column.addFeedStream(richTEGStream, 1);
     column.getReboiler().setOutTemperature(273.15 + 202);
-    // column.getCondenser().setOutTemperature(273.15 + 88.332145);
-    column.getCondenser().setHeatInput(-38573.1693);
+    column.getCondenser().setOutTemperature(273.15 + 88.165861);
+    // column.getCondenser().setHeatInput(-50000);
     column.getTray(1).addStream(gasToReboilerStream);
     column.setTopPressure(1.12);
     column.setBottomPressure(1.12);
     column.setInternalDiameter(0.56);
+    column.setMaxNumberOfIterations(100);
     // while (!column.solved()) {
     column.run();
-    column.setMaxNumberOfIterations(10);
     // }
 
     double waterFlowRateInColumn =
