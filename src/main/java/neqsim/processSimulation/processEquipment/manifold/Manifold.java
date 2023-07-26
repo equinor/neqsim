@@ -12,7 +12,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * <p>
  * Manifold class.
  * </p>
- * A manifold is a process unit that can tak in any numer of streams and distribut them into a
+ * A manifold is a process unit that can take in any number of streams and distribute them into a
  * number of output streams. In NeqSim it is created as a combination of a mixer and a splitter.
  *
  * @author Even Solbraa
