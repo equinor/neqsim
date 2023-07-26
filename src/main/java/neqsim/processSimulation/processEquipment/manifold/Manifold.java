@@ -71,7 +71,7 @@ public class Manifold extends ProcessEquipmentBaseClass {
 
     localmixer.run(id);
 
-    localsplitter = new Splitter("loca splitter");
+    localsplitter = new Splitter("local splitter");
     localsplitter.setInletStream(localmixer.getOutletStream());
     localsplitter.setSplitFactors(splitFactors);
     localsplitter.run();
