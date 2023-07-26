@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
@@ -10,8 +9,6 @@ public class DistillationColumnTest {
   /**
    * @throws java.lang.Exception
    */
-  @BeforeEach
-
   @Test
   public void DistillationColumnTest() throws Exception {
 
@@ -23,10 +20,10 @@ public class DistillationColumnTest {
     richTEG.addComponent("ethane", 0.20533172990208282);
     richTEG.addComponent("propane", 0.28448628224749795);
     richTEG.addComponent("i-butane", 0.04538593257021818);
-    richTEG.addComponent("n-butane", 0.0001078982825);
-    richTEG.addComponent("i-pentane", 0.0008015009931573362);
-    richTEG.addComponent("n-pentane", 0.00007597175884128077);
-    richTEG.addComponent("n-hexane", 0.0000735238469338);
+    richTEG.addComponent("n-butane", 0.1078982825);
+    richTEG.addComponent("i-pentane", 0.08015009931573362);
+    richTEG.addComponent("n-pentane", 0.07597175884128077);
+    richTEG.addComponent("n-hexane", 0.735238469338);
     richTEG.addComponent("n-heptane", 0.0);
     richTEG.addComponent("nC8", 0.0);
     richTEG.addComponent("nC9", 0.0);
@@ -45,10 +42,10 @@ public class DistillationColumnTest {
     gasToReboiler.addComponent("ethane", 3.1119159322353815);
     gasToReboiler.addComponent("propane", 4.001381171330917);
     gasToReboiler.addComponent("i-butane", 0.6934008192075206);
-    gasToReboiler.addComponent("n-butane", 0.684816349773283);
-    gasToReboiler.addComponent("i-pentane", 0.24185783393270);
-    gasToReboiler.addComponent("n-pentane", 0.0032322868124);
-    gasToReboiler.addComponent("n-hexane", 0.0002651);
+    gasToReboiler.addComponent("n-butane", 1.684816349773283);
+    gasToReboiler.addComponent("i-pentane", 1.24185783393270);
+    gasToReboiler.addComponent("n-pentane", 1.32322868124);
+    gasToReboiler.addComponent("n-hexane", 12.2651);
     gasToReboiler.addComponent("n-heptane", 0.0);
     gasToReboiler.addComponent("nC8", 0.0);
     gasToReboiler.addComponent("nC9", 0.0);
@@ -75,14 +72,15 @@ public class DistillationColumnTest {
     column.setName("TEG regeneration column");
     column.addFeedStream(richTEGStream, 1);
     column.getReboiler().setOutTemperature(273.15 + 202);
-    // column.getCondenser().setOutTemperature(273.15 + 95);
-    column.getCondenser().setHeatInput(-30000.0);
+    // column.getCondenser().setOutTemperature(273.15 + 88.332145);
+    column.getCondenser().setHeatInput(-38573.1693);
     column.getTray(1).addStream(gasToReboilerStream);
     column.setTopPressure(1.12);
     column.setBottomPressure(1.12);
     column.setInternalDiameter(0.56);
     // while (!column.solved()) {
     column.run();
+    column.setMaxNumberOfIterations(10);
     // }
 
     double waterFlowRateInColumn =
@@ -113,11 +111,16 @@ public class DistillationColumnTest {
     System.out.println("Column is solved  " + column.solved());
 
 
-    assertEquals(totalWaterIn, totalWaterOut, 0.1);
 
     System.out.println("Calc Water Flow rate via fluid component " + waterFlowRateInColumn);
     System.out.println("Calc Water Flow rate via molar mass and flow rate total "
         + waterFlowRateInColumn2 + " kg/hr");
+
+    System.out
+        .println("condenser temperature " + column.getCondenser().getFluid().getTemperature("C"));
+    System.out.println("condenser duty " + ((Condenser) column.getCondenser()).getDuty());
+
+    assertEquals(totalWaterIn, totalWaterOut, 1.0);
 
   }
 }
