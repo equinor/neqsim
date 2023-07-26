@@ -73,18 +73,18 @@ public class ManifoldTest {
     manifold1.addStream(inletStream2);
     manifold1.setSplitFactors(new double[] {0.1, 0.5, 0.4});
 
-    Stream stresm1FromManifol = new Stream("stream 1 from manifold", manifold1.getSplitStream(0));
+    Stream stream1FromManifold = new Stream("stream 1 from manifold", manifold1.getSplitStream(0));
 
     processOps.add(inletStream);
     processOps.add(inletStream2);
     processOps.add(manifold1);
-    processOps.add(stresm1FromManifol);
+    processOps.add(stream1FromManifold);
     processOps.run();
 
     assertEquals(0.5, manifold1.getSplitStream(0).getFlowRate("MSm3/day"), 0.01);
     assertEquals(manifold1.getSplitStream(1).getFluid().getComponent(0).getx(),
         manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
-    assertEquals(stresm1FromManifol.getFluid().getComponent(0).getx(),
+    assertEquals(stream1FromManifold.getFluid().getComponent(0).getx(),
         manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
 
 
