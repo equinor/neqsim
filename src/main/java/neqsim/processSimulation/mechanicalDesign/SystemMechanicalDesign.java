@@ -36,6 +36,10 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     this.processSystem = processSystem;
   }
 
+  public ProcessSystem getProcess() {
+    return processSystem;
+  }
+
   /**
    * <p>
    * setCompanySpecificDesignStandards.
@@ -45,7 +49,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    */
   public void setCompanySpecificDesignStandards(String name) {
     for (int i = 0; i < this.processSystem.getUnitOperations().size(); i++) {
-      this.processSystem.getUnitOperations().get(i).getMechanicalDesign()
+      this.getProcess().getUnitOperations().get(i).getMechanicalDesign()
           .setCompanySpecificDesignStandards(name);
     }
   }
@@ -133,6 +137,25 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    */
   public int getTotalNumberOfModules() {
     return numberOfModules;
+  }
+
+  /**
+   * <p>
+   * getMechanicalWeight.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getMechanicalWeight(String unit) {
+    double weight = 0.0;
+    for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
+      processSystem.getUnitOperations().get(i).getMechanicalDesign().calcDesign();
+      System.out.println("Name " + processSystem.getUnitOperations().get(i).getName() + "  weight "
+          + processSystem.getUnitOperations().get(i).getMechanicalDesign().getWeightTotal());
+      weight += processSystem.getUnitOperations().get(i).getMechanicalDesign().getWeightTotal();
+    }
+    return weight;
   }
 
   /** {@inheritDoc} */

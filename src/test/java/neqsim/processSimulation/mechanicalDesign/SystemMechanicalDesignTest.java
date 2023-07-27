@@ -2,6 +2,7 @@ package neqsim.processSimulation.mechanicalDesign;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
@@ -156,5 +157,17 @@ public class SystemMechanicalDesignTest {
         new ValveMechanicalDesign((ThrottlingValve) operations.getUnit("valve1"));
     valve1MechDesign.calcDesign();
     System.out.println("valve total weight " + valve1MechDesign.getWeightTotal());
+  }
+
+
+  @Test
+  void testCostEstimateProcess() {
+    SystemMechanicalDesign mecDesign = new SystemMechanicalDesign(operations);
+    mecDesign.runDesignCalculation();
+
+    CostEstimateBaseClass costEst = new CostEstimateBaseClass(mecDesign);
+    costEst.getWeightBasedCAPEXEstimate();
+
+    System.out.println("weight based cost estmate " + costEst.getWeightBasedCAPEXEstimate());
   }
 }

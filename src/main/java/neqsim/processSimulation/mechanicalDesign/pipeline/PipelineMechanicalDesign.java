@@ -66,8 +66,9 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
 
     // ASME/ANSI Code B31.8
     if (designStandardCode.equals("ANSI/ASME Standard B31.8")) {
-      wallThickness = ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
-          .getMaxOperationPressure() * innerDiameter
+      wallThickness =
+          ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaxOperationPressure()
+              * innerDiameter
               / (2.0
                   * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
                       .getMaterialPipeDesignStandard().getDesignFactor()
@@ -128,9 +129,9 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     operations.add(stream_1);
     operations.add(pipe);
 
-    operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("Statoil");
-    operations.getSystemMechanicalDesign().runDesignCalculation();
-    operations.getSystemMechanicalDesign().setDesign();
+    // operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("Statoil");
+    // operations.getSystemMechanicalDesign().runDesignCalculation();
+    // operations.getSystemMechanicalDesign().setDesign();
     operations.run();
   }
 }

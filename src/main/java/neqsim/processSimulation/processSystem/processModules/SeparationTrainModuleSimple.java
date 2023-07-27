@@ -40,7 +40,9 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
   double exportOilTemperature = 273.15 + 30;
 
   /**
-   * <p>Constructor for SeparationTrainModuleSimple.</p>
+   * <p>
+   * Constructor for SeparationTrainModuleSimple.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -299,16 +301,16 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
     ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("2nd stage recompressor"))
         .getMechanicalDesign().displayResults();
 
-    operations.getSystemMechanicalDesign().runDesignCalculation();
-    operations.getSystemMechanicalDesign().getTotalPlotSpace();
-    System.out.println("Modules " + operations.getSystemMechanicalDesign().getTotalVolume());
+    //operations.getSystemMechanicalDesign().runDesignCalculation();
+    //operations.getSystemMechanicalDesign().getTotalPlotSpace();
+    //System.out.println("Modules " + operations.getSystemMechanicalDesign().getTotalVolume());
 
-    System.out
-        .println("Modules " + operations.getSystemMechanicalDesign().getTotalNumberOfModules());
-    System.out.println("Weight " + operations.getSystemMechanicalDesign().getTotalWeight());
-    System.out.println("Plot space " + operations.getSystemMechanicalDesign().getTotalPlotSpace());
-    System.out.println("CAPEX " + operations.getCostEstimator().getWeightBasedCAPEXEstimate());
-    System.out.println("CAPEX " + operations.getCostEstimator().getCAPEXestimate());
+    //System.out
+    //    .println("Modules " + operations.getSystemMechanicalDesign().getTotalNumberOfModules());
+    //System.out.println("Weight " + operations.getSystemMechanicalDesign().getTotalWeight());
+    //System.out.println("Plot space " + operations.getSystemMechanicalDesign().getTotalPlotSpace());
+    //System.out.println("CAPEX " + operations.getCostEstimator().getWeightBasedCAPEXEstimate());
+    //System.out.println("CAPEX " + operations.getCostEstimator().getCAPEXestimate());
 
     /*
      * separationModule.getOutputStream("Inlet separator").displayResult();

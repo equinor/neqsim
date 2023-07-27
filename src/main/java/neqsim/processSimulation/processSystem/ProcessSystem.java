@@ -13,9 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
-import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
-import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
@@ -716,28 +714,6 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * Get a SystemMechanicalDesign object from processSystem.
-   * </p>
-   *
-   * @return a new SystemMechanicalDesign object
-   */
-  public SystemMechanicalDesign getSystemMechanicalDesign() {
-    return new SystemMechanicalDesign(this);
-  }
-
-  /**
-   * <p>
-   * Get a CostEstimateBaseClass object from processSystem.
-   * </p>
-   *
-   * @return a new CostEstimateBaseClass object
-   */
-  public CostEstimateBaseClass getCostEstimator() {
-    return new CostEstimateBaseClass(this);
-  }
-
-  /**
-   * <p>
    * getEntropyProduction.
    * </p>
    *
@@ -838,25 +814,6 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     return heat;
-  }
-
-  /**
-   * <p>
-   * getMechanicalWeight.
-   * </p>
-   *
-   * @param unit a {@link java.lang.String} object
-   * @return a double
-   */
-  public double getMechanicalWeight(String unit) {
-    double weight = 0.0;
-    for (int i = 0; i < unitOperations.size(); i++) {
-      unitOperations.get(i).getMechanicalDesign().calcDesign();
-      System.out.println("Name " + unitOperations.get(i).getName() + "  weight "
-          + unitOperations.get(i).getMechanicalDesign().getWeightTotal());
-      weight += unitOperations.get(i).getMechanicalDesign().getWeightTotal();
-    }
-    return weight;
   }
 
   /**

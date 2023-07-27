@@ -79,7 +79,7 @@ public class testGasScrubber {
     scrubber.getGasLoadFactor();
 
     // do design of process
-    operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("StatoilTR");
+    // operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("StatoilTR");
 
     // operations.runProcessDesignCalculation();
     // prosessdesign do: calculate flow rates of TEG, amine, calculates heat duty
@@ -88,8 +88,8 @@ public class testGasScrubber {
     // operations.runMechanicalDesignCalculation();
     // calculates diameters of colums, wall thickness, weight, size of equipment,
     // tray spacing
-    operations.getSystemMechanicalDesign().runDesignCalculation();
-    operations.getSystemMechanicalDesign().setDesign();
+    // operations.getSystemMechanicalDesign().runDesignCalculation();
+    // operations.getSystemMechanicalDesign().setDesign();
     operations.run();
     scrubber.getGasLoadFactor();
     // operations.calcDesign();
