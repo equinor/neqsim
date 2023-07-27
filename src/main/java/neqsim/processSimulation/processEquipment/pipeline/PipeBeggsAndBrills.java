@@ -39,6 +39,15 @@ public class PipeBeggsAndBrills extends Pipeline {
   // Flag to run isothermal calculations 
   private boolean runIsothermal = false;
 
+  // Flag to run constant wall temperature calculations 
+  private boolean runConstantWallTemperature = false;
+
+  // Wall temperature 
+  private double wallTemperature;
+
+  // W/m2 K
+  private double overallHeatTransferCoefficient;
+
   // Flow pattern of the fluid in the pipe
   private String regime = "unknown";
 
@@ -108,6 +117,8 @@ public class PipeBeggsAndBrills extends Pipeline {
   private double cumulativeLength  = 0.0;
 
   private double cumulativeElevation = 0.0;
+
+
 
 
   // Results initialization (for each segment)
@@ -266,6 +277,64 @@ public class PipeBeggsAndBrills extends Pipeline {
    */
   public void setRunIsothermal(boolean runIsothermal) {
     this.runIsothermal = runIsothermal;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>runConstantWallTemperature</code>.
+   * </p>
+   *
+   * @param runConstantWallTemperature a boolean
+   */
+  public void setRunConstantWallTemperature(boolean runConstantWallTemperature) {
+    this.runConstantWallTemperature = runConstantWallTemperature;
+    this.runIsothermal = false;
+  }
+
+ /**
+   * <p>
+   * Setter for the field <code>wallTemperature</code>.
+   * </p>
+   *
+   * @param wallTemperature a double
+   */
+  public void setWallTemperature(double wallTemperature){
+    this.wallTemperature = wallTemperature;
+  }
+
+    /**
+   * <p>
+   * Setter for the field <code>wallTemperature</code>.
+   * </p>
+   *
+   * @param wallTemperature a double
+   */
+  public void setWallTemperature(double wallTemperature, String units) {
+    this.runConstantWallTemperature = true;
+    if (units == "C"){
+      this.wallTemperature = wallTemperature + 273.15;
+    }
+    else if(units == "K"){
+      this.wallTemperature = wallTemperature;
+    }
+    else{
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "setWallTemperature",
+              "temperature", "- cannot find units" + units));
+    }
+  }
+  
+
+
+  /**
+   * <p>
+   * Setter for the field <code>overallHeatTransferCoefficient</code>.
+   * </p>
+   *
+   * @param overallHeatTransferCoefficient a double
+   */
+  public void setOverallHeatTransferCoefficient(double overallHeatTransferCoefficient) {
+    this.overallHeatTransferCoefficient = overallHeatTransferCoefficient;
   }
 
 
@@ -650,6 +719,11 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
     double pipeInletPressure = system.getPressure();
     for (int i = 1; i <= numberOfIncrements; i++) {
+      System.out.println("Temperature " + system.getTemperature());
+      if (runConstantWallTemperature){
+        enthalpyInlet += (overallHeatTransferCoefficient*Math.PI*insideDiameter*length
+        *length*(wallTemperature - system.getTemperature())*getSuperficialVelocity());
+      }
       cumulativeLength += length;
       cumulativeElevation += elevation;
 
