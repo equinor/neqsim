@@ -3,9 +3,11 @@ package neqsim.processSimulation.mechanicalDesign;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
+import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDesign;
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
+import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
 import neqsim.processSimulation.processEquipment.pump.Pump;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -84,8 +86,6 @@ public class SystemMechanicalDesignTest {
     seprator3rdStage.addStream(valve2.getOutletStream());
     seprator3rdStage.addStream(recircstream1);
 
-
-
     ThrottlingValve pipeloss1st =
         new ThrottlingValve("pipeloss1st", seprator3rdStage.getGasOutStream());
     pipeloss1st.setOutletPressure(2.7 - 0.03);
@@ -126,7 +126,8 @@ public class SystemMechanicalDesignTest {
 
   @Test
   void testRunDesignCalculationforProcess() {
-    // Test to run desgn calculation for a full process using the SystemMechanicalDesign class
+    // Test to run desgn calculation for a full process using the
+    // SystemMechanicalDesign class
     SystemMechanicalDesign mecDesign = new SystemMechanicalDesign(operations);
     mecDesign.runDesignCalculation();
 
@@ -159,6 +160,32 @@ public class SystemMechanicalDesignTest {
     System.out.println("valve total weight " + valve1MechDesign.getWeightTotal());
   }
 
+  @Test
+  void testRunDesignForPipeline() {
+
+    AdiabaticPipe pipe = new AdiabaticPipe("pipe1",
+        ((neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator) operations
+            .getUnit("1st stage separator")).getGasOutStream());
+    pipe.setDiameter(1.0);
+    pipe.setLength(1000.0);
+    pipe.setPipeWallRoughness(10e-6);
+    pipe.setInletElevation(0.0);
+    pipe.setOutletElevation(20.0);
+
+    pipe.run();
+
+    System.out.println("out pressure " + pipe.getOutletStream().getPressure("bara"));
+
+    PipelineMechanicalDesign pipeMechDesign = new PipelineMechanicalDesign(pipe);
+    pipeMechDesign.setMaxOperationPressure(100.0);
+    pipeMechDesign.setMaxOperationTemperature(273.155 + 60.0);
+    pipeMechDesign.setMinOperationPressure(50.0);
+    pipeMechDesign.setMaxDesignGassVolumeFlow(100.0);
+    pipeMechDesign.setCompanySpecificDesignStandards("Statoil");
+    pipeMechDesign.calcDesign();
+
+    System.out.println("wall thickness " + pipeMechDesign.getWallThickness());
+  }
 
   @Test
   void testCostEstimateProcess() {
