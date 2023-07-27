@@ -27,7 +27,8 @@ public class CostEstimateBaseClass implements java.io.Serializable {
    * Constructor for CostEstimateBaseClass.
    * </p>
    *
-   * @param process a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+   * @param process a {@link neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign}
+   *        object
    */
   public CostEstimateBaseClass(SystemMechanicalDesign processdesign) {
     this.processdesign = processdesign;
@@ -38,7 +39,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
    * Constructor for CostEstimateBaseClass.
    * </p>
    *
-   * @param process input process
+   * @param processdesign a {@link neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign}
    * @param costFactor cost factor
    */
   public CostEstimateBaseClass(SystemMechanicalDesign processdesign, double costFactor) {
