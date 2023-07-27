@@ -1,6 +1,9 @@
 package neqsim.processSimulation.mechanicalDesign;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
+import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.pump.Pump;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -12,8 +15,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class SystemMechanicalDesignTest {
-  @Test
-  void testRunDesignCalculation() {
+  static neqsim.processSimulation.processSystem.ProcessSystem operations;
+
+  @BeforeAll
+  static void createProcess() {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
     thermoSystem.addComponent("water", 51.0);
     thermoSystem.addComponent("nitrogen", 51.0);
@@ -99,8 +104,7 @@ public class SystemMechanicalDesignTest {
     recycle1.addStream(valveLP1.getOutletStream());
     recycle1.setOutletStream(recircstream1);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    operations = new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(feedStream);
     operations.add(seprator1stStage);
     operations.add(valve1);
@@ -117,18 +121,40 @@ public class SystemMechanicalDesignTest {
     operations.add(recycle1);
 
     operations.run();
+  }
 
-    SystemMechanicalDesign mecDesign = operations.getSystemMechanicalDesign();
+  @Test
+  void testRunDesignCalculationforProcess() {
+    // Test to run desgn calculation for a full process using the SystemMechanicalDesign class
+    SystemMechanicalDesign mecDesign = new SystemMechanicalDesign(operations);
     mecDesign.runDesignCalculation();
 
     System.out.println("total process weight " + mecDesign.getTotalWeight() + " kg");
     System.out.println("total process volume " + mecDesign.getTotalVolume() + " m3");
     System.out.println("total plot space " + mecDesign.getTotalPlotSpace() + " m2");
+    System.out.println("separator inner diameter "
+        + ((Separator) operations.getUnit("sepregenGas")).getMechanicalDesign().innerDiameter);
+    System.out.println("valve weight "
+        + ((ThrottlingValve) operations.getUnit("valve1")).getMechanicalDesign().getWeightTotal());
+  }
 
-    System.out
-        .println("separator inner diameter " + sepregenGas.getMechanicalDesign().innerDiameter);
+  @Test
+  void testRunDesignCalculationforSeparator() {
+    // Test to run design calculation for a process unit (separator using the
+    // SeparatorMechanicalDesign class)
+    SeparatorMechanicalDesign sepMechDesign =
+        new SeparatorMechanicalDesign((Separator) operations.getUnit("sepregenGas"));
+    sepMechDesign.calcDesign();
+    System.out.println("separator inner diameter " + sepMechDesign.innerDiameter);
+    System.out.println("separator weight vessel shell " + sepMechDesign.weigthVesselShell);
+    System.out.println("separator weight structual steel " + sepMechDesign.weightStructualSteel);
+  }
 
-    System.out.println("valve weight " + valve1.getMechanicalDesign().getWeightTotal());
-
+  @Test
+  void testRunDesignCalculationforValve() {
+    ValveMechanicalDesign valve1MechDesign =
+        new ValveMechanicalDesign((ThrottlingValve) operations.getUnit("valve1"));
+    valve1MechDesign.calcDesign();
+    System.out.println("valve total weight " + valve1MechDesign.getWeightTotal());
   }
 }
