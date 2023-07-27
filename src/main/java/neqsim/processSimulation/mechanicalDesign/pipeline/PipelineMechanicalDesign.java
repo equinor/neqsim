@@ -66,17 +66,11 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
 
     // ASME/ANSI Code B31.8
     if (designStandardCode.equals("ANSI/ASME Standard B31.8")) {
-      wallThickness = ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
-          .getMaxOperationPressure() * innerDiameter
-              / (2.0
-                  * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
-                      .getMaterialPipeDesignStandard().getDesignFactor()
-                  * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
-                      .getMaterialPipeDesignStandard().getEfactor()
-                  * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
-                      .getMaterialPipeDesignStandard().getTemperatureDeratingFactor()
-                  * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
-                      .getMaterialPipeDesignStandard().getMinimumYeildStrength());
+      wallThickness = getMaxOperationPressure() * innerDiameter
+          / (2.0 * getMaterialPipeDesignStandard().getDesignFactor()
+              * getMaterialPipeDesignStandard().getEfactor()
+              * getMaterialPipeDesignStandard().getTemperatureDeratingFactor()
+              * getMaterialPipeDesignStandard().getMinimumYeildStrength());
     } else if (designStandardCode.equals("ANSI/ASME Standard B31.3")) {
       wallThickness = 0.0001; // to be implemented
       // ((AdiabaticPipe)
@@ -128,9 +122,9 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     operations.add(stream_1);
     operations.add(pipe);
 
-    operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("Statoil");
-    operations.getSystemMechanicalDesign().runDesignCalculation();
-    operations.getSystemMechanicalDesign().setDesign();
+    // operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("Statoil");
+    // operations.getSystemMechanicalDesign().runDesignCalculation();
+    // operations.getSystemMechanicalDesign().setDesign();
     operations.run();
   }
 }

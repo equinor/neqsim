@@ -68,6 +68,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   private double designLiquidLevelFraction = 0.8;
   ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
+  SeparatorMechanicalDesign separatorMechanicalDesign;
+
   /**
    * Constructor for Separator.
    */
@@ -118,7 +120,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   @Override
   public SeparatorMechanicalDesign getMechanicalDesign() {
-    return new SeparatorMechanicalDesign(this);
+    return separatorMechanicalDesign;
+  }
+
+  @Override
+  public void initMechanicalDesign() {
+    separatorMechanicalDesign = new SeparatorMechanicalDesign(this);
   }
 
   /**
