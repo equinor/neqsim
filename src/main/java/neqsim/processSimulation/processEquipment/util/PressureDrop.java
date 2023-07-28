@@ -37,9 +37,10 @@ public class PressureDrop extends ThrottlingValve {
   public void setPressureDrop(double pressureDrop, String unit) {
     if (unit.equals("bara")) {
       this.pressureDrop = pressureDrop;
-    }
-    if (unit.equals("Pa")) {
+    } else if (unit.equals("Pa")) {
       this.pressureDrop = pressureDrop / 1e5;
+    } else {
+      throw new RuntimeException("pressure drop unit not supported: " + unit);
     }
   }
 
