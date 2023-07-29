@@ -157,9 +157,14 @@ public class DistillationColumnTest {
     column.setBottomPressure(30.0);
     column.run();
 
-    column.getCondenser().getGasOutStream().getFluid().prettyPrint();
+    double massbalance = (gasToDeethanizerStream.getFlowRate("kg/hr")
+        - column.getReboiler().getLiquidOutStream().getFlowRate("kg/hr")
+        - ((Condenser) column.getCondenser()).getGasOutStream().getFlowRate("kg/hr"))
+        / gasToDeethanizerStream.getFlowRate("kg/hr") * 100;
 
-    column.getReboiler().getGasOutStream().getFluid().prettyPrint();
+    assertEquals(0.0, massbalance, 0.2);
+    // column.getCondenser().getGasOutStream().getFluid().prettyPrint();
+    // column.getReboiler().getGasOutStream().getFluid().prettyPrint();
 
 
   }
