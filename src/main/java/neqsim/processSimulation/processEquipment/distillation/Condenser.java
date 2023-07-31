@@ -133,7 +133,7 @@ public class Condenser extends SimpleTray {
       } catch (Exception e) {
         e.printStackTrace();
       }
-      mixedStream.getThermoSystem().init(2);
+      mixedStream.getThermoSystem().init(3);
       // mixedStream.getThermoSystem().prettyPrint();
 
       mixedStreamSplitter = new Splitter("splitter", mixedStream, 2);
