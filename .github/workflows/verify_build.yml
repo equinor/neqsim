@@ -6,8 +6,6 @@ on:
     branches: # Only run for changes in master branch and any releases branch
       - master
       - 'releases/**'
-    # paths: # Only run if some java-file is updated
-    #  - '*.java' 
   pull_request:
     branches: 
       - master
@@ -27,7 +25,15 @@ jobs:
       - name: Generate javadoc
         run: mvn javadoc:javadoc
       - name: Run tests
-        run: mvn -B test --file pom.xml
+        run: mvn -B test --file pom.xml -ntp
+      - name: Create coverage report from jacoco execution data
+        run: mvn -B jacoco:report -ntp
+      - name: Upload jacoco coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: jacoco.xml
+          name: codecov
+          token: ${{ secrets.CODECOV_TOKEN }}
         
   test_java_8:
     name: Assert tests and javadoc with java 8
@@ -43,5 +49,5 @@ jobs:
           java-version: '8'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava8.xml
+        run: mvn -B test --file pomJava8.xml -ntp
 
