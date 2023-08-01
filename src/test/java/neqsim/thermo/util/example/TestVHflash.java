@@ -2,6 +2,7 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -26,7 +27,7 @@ public class TestVHflash {
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String args[]) {
-    double pressureInTank = 1.01325; // Pa
+    double pressureInTank = ThermodynamicConstantsInterface.referencePressure; // Pa
     double temperatureInTank = 293.15;
     double totalMolesInTank = 136000 * pressureInTank * 1.0e5 / 8.314 / temperatureInTank;
     double molefractionNitrogenInTank = 0.95;

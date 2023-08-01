@@ -7,6 +7,7 @@ import neqsim.PVTsimulation.util.parameterfitting.CMEFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -152,7 +153,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       gasVolume[i] = getThermoSystem().getPhase(0).getNumberOfMolesInPhase()
           * getThermoSystem().getPhase(0).getMolarMass() / density[i]; // getThermoSystem().getPhase(0).getVolume();
       gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume()
-          * getThermoSystem().getPhase(0).getPressure() / 1.01325
+          * getThermoSystem().getPhase(0).getPressure()
+          / ThermodynamicConstantsInterface.referencePressure
           / getThermoSystem().getPhase(0).getZ() * 288.15 / getThermoSystem().getTemperature();
       Bg[i] = gasVolume[i] * 1e5 / gasStandardVolume[i];
       Zgas[i] = getThermoSystem().getPhase(0).getZ();

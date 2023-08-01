@@ -2,6 +2,7 @@ package neqsim.physicalProperties.util.examples;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -26,8 +27,10 @@ public class TestCondensate {
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String args[]) {
-    // SystemInterface testSystem = new SystemSrkEos(273.15 + 15.0, 1.01325);
-    SystemInterface testSystem = new SystemPrEos(273.15 + 15.0, 1.01325);
+    // SystemInterface testSystem = new SystemSrkEos(273.15 + 15.0,
+    // ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem =
+        new SystemPrEos(273.15 + 15.0, ThermodynamicConstantsInterface.referencePressure);
     // testSystem.getCharacterization().setTBPModel("PedersenSRKHeavyOil");
 
     testSystem.setFluidName("Condensate1");

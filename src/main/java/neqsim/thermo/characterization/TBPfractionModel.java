@@ -2,6 +2,7 @@ package neqsim.thermo.characterization;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -55,7 +56,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
       double TBR = TB / TC;
-      double PBR = 1.01325 / PC;
+      double PBR = ThermodynamicConstantsInterface.referencePressure / PC;
       if (TBR < 0.8) {
         return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR)
             - 0.169347 * Math.pow(TBR, 6.0))
@@ -72,7 +73,8 @@ public class TBPfractionModel implements java.io.Serializable {
       double TC = calcTC(molarMass, density);
       double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
-      return 3.0 / 7.0 * Math.log10(PC / 1.01325) / (TC / TB - 1.0) - 1.0;
+      return 3.0 / 7.0 * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure)
+          / (TC / TB - 1.0) - 1.0;
     }
 
     @Override
@@ -278,7 +280,8 @@ public class TBPfractionModel implements java.io.Serializable {
       double TC = calcTC(molarMass, density);
       double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
-      return 3.0 / 7.0 * Math.log10(PC / 1.01325) / (TC / TB - 1.0) - 1.0;
+      return 3.0 / 7.0 * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure)
+          / (TC / TB - 1.0) - 1.0;
     }
 
     @Override
@@ -295,7 +298,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
       double TBR = TB / TC;
-      double PBR = 1.01325 / PC;
+      double PBR = ThermodynamicConstantsInterface.referencePressure / PC;
       if (TBR < 0.8) {
         return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR)
             - 0.169347 * Math.pow(TBR, 6.0))

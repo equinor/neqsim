@@ -6,6 +6,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySystem.FluidBoundarySystem;
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.StratifiedFlowNode;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 
@@ -58,7 +59,7 @@ public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String[] args) {
-    SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
+    SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, ThermodynamicConstantsInterface.referencePressure);
     PipeData pipe1 = new PipeData(10.0, 0.025);
 
     testSystem.addComponent("methane", 0.061152181, 0);

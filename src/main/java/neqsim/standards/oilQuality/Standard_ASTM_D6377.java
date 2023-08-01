@@ -2,6 +2,7 @@ package neqsim.standards.oilQuality;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -36,7 +37,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   @Override
   public void calculate() {
     this.thermoSystem.setTemperature(273.15 + 37.8);
-    this.thermoSystem.setPressure(1.01325);
+    this.thermoSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
     this.thermoOps = new ThermodynamicOperations(thermoSystem);
     try {
       this.thermoOps.bubblePointPressureFlash(false);

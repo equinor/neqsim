@@ -3,6 +3,7 @@ package neqsim.processSimulation.measurementDevice;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -177,7 +178,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
     } else if (measurement.equals("GOR_std")) {
       SystemInterface tempFluid = stream.getThermoSystem().clone();
       tempFluid.setTemperature(15.0, "C");
-      tempFluid.setPressure(1.01325, "bara");
+      tempFluid.setPressure(ThermodynamicConstantsInterface.referencePressure, "bara");
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
       try {
         thermoOps.TPflash();

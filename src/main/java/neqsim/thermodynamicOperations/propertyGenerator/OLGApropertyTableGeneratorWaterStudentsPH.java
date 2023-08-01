@@ -8,6 +8,7 @@ import java.io.Writer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -253,7 +254,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
    */
   public void initCalc() {
     double stdTemp = 288.15;
-    double stdPres = 1.01325;
+    double stdPres = ThermodynamicConstantsInterface.referencePressure;
     // double GOR, GLR;
     double[] molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
     double[] MW = new double[thermoSystem.getPhase(0).getNumberOfComponents()];

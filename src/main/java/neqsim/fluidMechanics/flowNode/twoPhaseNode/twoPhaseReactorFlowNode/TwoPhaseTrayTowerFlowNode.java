@@ -5,6 +5,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.TwoPhaseFlowNode;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -129,15 +130,16 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
   public static void main(String[] args) {
     /*
      * System.out.println("Starter....."); SystemSrkEos testSystem = new SystemSrkEos(275.3,
-     * 1.01325); ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem); PipeData
-     * pipe1 = new PipeData(10.0, 0.025);
+     * ThermodynamicConstantsInterface.referencePressure); ThermodynamicOperations testOps = new
+     * ThermodynamicOperations(testSystem); PipeData pipe1 = new PipeData(10.0, 0.025);
      * 
      * testSystem.addComponent("methane", 0.011152181, 0); testSystem.addComponent("ethane",
      * 0.00011152181, 0); testSystem.addComponent("water", 0.00462204876, 1);
      * testSystem.addComponent("methane", 0.061152181, 0); testSystem.addComponent("water",
      * 0.00862204876, 1);
      */
-    SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
+    SystemInterface testSystem =
+        new SystemFurstElectrolyteEos(275.3, ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     PipeData pipe1 = new PipeData(10.0, 0.025);
 

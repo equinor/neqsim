@@ -1,5 +1,6 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -15,7 +16,8 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
   private static final long serialVersionUID = 1000;
 
   /** Constant <code>referenceSystem</code>. */
-  public static SystemInterface referenceSystem = new SystemSrkEos(273.0, 1.01325);
+  public static SystemInterface referenceSystem =
+      new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
   double[] GVcoef = {-2.147621e5, 2.190461e5, -8.618097e4, 1.496099e4, -4.730660e2, -2.331178e2,
       3.778439e1, -2.320481, 5.311764e-2};
   double condRefA = -0.25276292;
@@ -167,7 +169,8 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
       T0 = 273.15;
     }
 
-    double nstarRef = getRefComponentViscosity(T0, 1.01325);
+    double nstarRef =
+        getRefComponentViscosity(T0, ThermodynamicConstantsInterface.referencePressure);
     double CpID = referenceSystem.getLowestGibbsEnergyPhase().getComponent(0).getCp0(T0);
     double Ffunc = 1.0 + 0.053432 * redDens - 0.030182 * redDens * redDens
         - 0.029725 * redDens * redDens * redDens;
@@ -340,7 +343,8 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     double T0 = phase.getPhase().getTemperature()
         * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix * alfaMix / alfa0;
     double P0 =
-        1.01325 * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix * alfaMix / alfa0;
+        ThermodynamicConstantsInterface.referencePressure
+            * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix * alfaMix / alfa0;
 
     double refVisosity = getRefComponentViscosity(T0, P0);
     double viscosity = refVisosity * Math.pow(TCmix / Tc0, -1.0 / 6.0)

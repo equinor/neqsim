@@ -17,6 +17,7 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>
@@ -156,7 +157,7 @@ public class TEGdehydrationProcessDistillationAaHa {
     column.getReboiler().setOutTemperature(273.15 + 201.0);
     column.getCondenser().setOutTemperature(273.15 + 92.0);
     column.getReboiler().addStream(gasToReboiler);
-    column.setTopPressure(1.01325);
+    column.setTopPressure(ThermodynamicConstantsInterface.referencePressure);
     column.setBottomPressure(1.02);
 
     Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());

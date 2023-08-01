@@ -1,5 +1,6 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -14,8 +15,10 @@ import neqsim.thermo.system.SystemSrkEos;
 public class PFCTViscosityMethodMod86 extends Viscosity {
   private static final long serialVersionUID = 1000;
 
-  // SystemInterface referenceSystem = new SystemBWRSEos(273.15, 1.01325);
-  SystemInterface referenceSystem = new SystemSrkEos(273.0, 1.01325);
+  // SystemInterface referenceSystem = new SystemBWRSEos(273.15,
+  // ThermodynamicConstantsInterface.referencePressure);
+  SystemInterface referenceSystem =
+      new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
   int phaseTypeNumb = 1;
   double[] GVcoef = {-2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3,
       -9.627993e1, 4.274152, -8.141531e-2};

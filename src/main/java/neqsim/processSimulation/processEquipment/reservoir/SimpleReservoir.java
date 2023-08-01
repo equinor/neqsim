@@ -12,6 +12,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -190,7 +191,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   public double getGasInPlace(String unit) {
     SystemInterface locStream = (thermoSystem).clone();
     locStream.setTemperature(288.15);
-    locStream.setPressure(1.01325);
+    locStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
     locStream.initProperties();
@@ -215,7 +216,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   public double getOilInPlace(String unit) {
     SystemInterface locStream = (thermoSystem).clone();
     locStream.setTemperature(288.15);
-    locStream.setPressure(1.01325);
+    locStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
     locStream.initProperties();

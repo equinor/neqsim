@@ -33,7 +33,8 @@ public class ModelTest {
         // SystemInterface testSystem = new SystemFurstElectrolyteEos(273.14 + 12,
         // 61.0);
         // SystemInterface testSystem = new SystemUMRPRUMCEos(300.0, 10.0);
-        // SystemInterface testSystem = new SystemSrkEos(298.15, 1.01325);
+        // SystemInterface testSystem = new SystemSrkEos(298.15,
+        // ThermodynamicConstantsInterface.referencePressure);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
         //testSystem.addComponent("methane", 100);

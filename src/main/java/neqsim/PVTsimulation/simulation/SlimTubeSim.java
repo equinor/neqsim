@@ -2,6 +2,7 @@ package neqsim.PVTsimulation.simulation;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -38,7 +39,7 @@ public class SlimTubeSim extends BasePVTsimulation {
   public void run() {
     slimTubeNodeSystem = new SystemInterface[numberOfSlimTubeNodes + 1];
 
-    getThermoSystem().setPressure(1.01325);
+    getThermoSystem().setPressure(ThermodynamicConstantsInterface.referencePressure);
     getThermoSystem().setTemperature(288.15);
     thermoOps.TPflash();
 
@@ -162,7 +163,8 @@ public class SlimTubeSim extends BasePVTsimulation {
        * slimTubeNodeSystem[numberOfSlimTubeNodes].getNumberOfMoles());
        */
       slimTubeNodeSystem[numberOfSlimTubeNodes].setTemperature(288.15);
-      slimTubeNodeSystem[numberOfSlimTubeNodes].setPressure(1.01325);
+      slimTubeNodeSystem[numberOfSlimTubeNodes]
+          .setPressure(ThermodynamicConstantsInterface.referencePressure);
       slimOps1.TPflash();
 
       /*
@@ -183,7 +185,8 @@ public class SlimTubeSim extends BasePVTsimulation {
     }
 
     slimTubeNodeSystem[numberOfSlimTubeNodes].setTemperature(288.15);
-    slimTubeNodeSystem[numberOfSlimTubeNodes].setPressure(1.01325);
+    slimTubeNodeSystem[numberOfSlimTubeNodes]
+        .setPressure(ThermodynamicConstantsInterface.referencePressure);
     slimOps1.TPflash();
 
     /*

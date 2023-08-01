@@ -11,6 +11,7 @@ import neqsim.processSimulation.processEquipment.util.MoleFractionControllerUtil
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -82,7 +83,7 @@ public class OffshoreProcess3 {
 
     ThrottlingValve waterDPvalve =
         new ThrottlingValve("Water HP to LP valve", inletSeparator.getWaterOutStream());
-    waterDPvalve.setOutletPressure(1.01325);
+    waterDPvalve.setOutletPressure(ThermodynamicConstantsInterface.referencePressure);
 
     Separator waterStabSep =
         new Separator("water degassing separator", waterDPvalve.getOutletStream());

@@ -5,6 +5,7 @@ import java.text.FieldPosition;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -23,12 +24,12 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   // metering conditions
   ArrayList<String> componentsNotDefinedByStandard = new ArrayList<String>();
   double volRefT = 0;
-  double volRefP = 1.01325;
+  double volRefP = ThermodynamicConstantsInterface.referencePressure;
   double R = 8.314510;
   double molRefm3 = 0.0;
   // combustion conditions
   double energyRefT = 25;
-  double energyRefP = 1.01325;
+  double energyRefP = ThermodynamicConstantsInterface.referencePressure;
   String referenceType = "volume"; // mass volume molar
   String energyUnit = "KJ/Nm3";
   double energy = 1.0;

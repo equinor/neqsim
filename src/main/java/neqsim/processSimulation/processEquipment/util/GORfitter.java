@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -20,7 +21,7 @@ public class GORfitter extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(GORfitter.class);
 
-  double pressure = 1.01325;
+  double pressure = ThermodynamicConstantsInterface.referencePressure;
   double temperature = 15.0;
   private String referenceConditions = "standard"; // "actual";
   private boolean fitAsGVF = false;
@@ -164,7 +165,7 @@ public class GORfitter extends TwoPortEquipment {
     }
     if (!getReferenceConditions().equals("actual")) {
       tempFluid.setTemperature(15.0, "C");
-      tempFluid.setPressure(1.01325, "bara");
+      tempFluid.setPressure(ThermodynamicConstantsInterface.referencePressure, "bara");
     }
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
     try {

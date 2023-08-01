@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -128,7 +129,8 @@ public class EclipseFluidReadWrite {
    */
   public static SystemInterface read(String inputFile) {
     neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(288.15, 1.01325);
+        new neqsim.thermo.system.SystemSrkEos(288.15,
+            ThermodynamicConstantsInterface.referencePressure);
 
     double[][] kij = null;
     try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
@@ -152,11 +154,14 @@ public class EclipseFluidReadWrite {
         if (st.trim().equals("EOS")) {
           EOS = br.readLine().replace("/", "");
           if (EOS.contains("SRK")) {
-            fluid = new neqsim.thermo.system.SystemSrkEos(288.15, 100.01325);
+            fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
+                ThermodynamicConstantsInterface.referencePressure);
           } else if (EOS.contains("PR")) {
-            fluid = new neqsim.thermo.system.SystemPrEos(288.15, 1.01325);
+            fluid = new neqsim.thermo.system.SystemPrEos(288.15,
+                ThermodynamicConstantsInterface.referencePressure);
           } else if (EOS.contains("PR78")) {
-            fluid = new neqsim.thermo.system.SystemPrEos1978(288.15, 1.01325);
+            fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
+                ThermodynamicConstantsInterface.referencePressure);
           }
         }
         if (st.equals("CNAMES")) {

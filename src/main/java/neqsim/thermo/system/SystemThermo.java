@@ -818,7 +818,7 @@ abstract class SystemThermo implements SystemInterface {
     try {
       refSystem = this.getClass().getDeclaredConstructor().newInstance();
       refSystem.setTemperature(273.15 + 15.0);
-      refSystem.setPressure(1.01325);
+      refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       refSystem.addComponent("default", 1.0, 273.15, 50.0, 0.1);
       refSystem.init(0);
       refSystem.setNumberOfPhases(1);
@@ -833,7 +833,7 @@ abstract class SystemThermo implements SystemInterface {
       // Math.pow((molarMass/5.805e-5*Math.pow(density,0.9371)), 1.0/2.3776);
       // acs = TBPfractionModel.calcAcentricFactor(molarMass, density);
       // System.out.println("acentric " + acs);
-      // 3.0/7.0*Math.log10(PC/1.01325)/(TC/TB-1.0)-1.0;
+      // 3.0/7.0*Math.log10(PC/ThermodynamicConstantsInterface.referencePressure)/(TC/TB-1.0)-1.0;
       molarMass /= 1000.0;
 
       for (int i = 0; i < refSystem.getNumberOfPhases(); i++) {
@@ -851,7 +851,7 @@ abstract class SystemThermo implements SystemInterface {
       }
 
       refSystem.setTemperature(273.15 + 15.0);
-      refSystem.setPressure(1.01325);
+      refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       refSystem.init(1);
       // refSystem.display();
       racketZ = characterization.getTBPModel().calcRacketZ(refSystem, molarMass * 1000.0, density);
@@ -869,7 +869,7 @@ abstract class SystemThermo implements SystemInterface {
       // refSystem.getPhase(1).getComponent(0).setRacketZ(racketZ);
 
       // // refSystem.setTemperature(273.15+80.0);
-      // // refSystem.setPressure(1.01325);
+      // // refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       // // refSystem.init(1);
       // //refSystem.initPhysicalProperties();
       // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();
@@ -960,7 +960,7 @@ abstract class SystemThermo implements SystemInterface {
     try {
       refSystem = this.getClass().getDeclaredConstructor().newInstance();
       refSystem.setTemperature(273.15 + 15.0);
-      refSystem.setPressure(1.01325);
+      refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       refSystem.addComponent("default", 1.0, 273.15, 50.0, 0.1);
       refSystem.init(0);
       refSystem.setNumberOfPhases(1);
@@ -992,7 +992,7 @@ abstract class SystemThermo implements SystemInterface {
       }
 
       refSystem.setTemperature(273.15 + 15.0);
-      refSystem.setPressure(1.01325);
+      refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       refSystem.init(1);
       // refSystem.display();
       racketZ = characterization.getTBPModel().calcRacketZ(refSystem, molarMass * 1000.0, density);
@@ -1010,7 +1010,7 @@ abstract class SystemThermo implements SystemInterface {
       // refSystem.getPhase(1).getComponent(0).setRacketZ(racketZ);
 
       // // refSystem.setTemperature(273.15+80.0);
-      // // refSystem.setPressure(1.01325);
+      // // refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       // // refSystem.init(1);
       // // refSystem.initPhysicalProperties();
       // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();
