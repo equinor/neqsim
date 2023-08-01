@@ -31,7 +31,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     double P = 10;
     double T = 20;
-    String unitP = "Bar";
+    String unitP = "bara";
     String unitT = "C";
 
     ops.flash(FlashType.PT, P, T, unitP, unitT);
