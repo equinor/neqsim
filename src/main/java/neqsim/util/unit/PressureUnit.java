@@ -1,5 +1,6 @@
 package neqsim.util.unit;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.exception.InvalidInputException;
 
 /**
@@ -18,11 +19,11 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
    * Constructor for PressureUnit.
    * </p>
    *
-   * @param value a double
-   * @param name a {@link java.lang.String} object
+   * @param value Pressure value
+   * @param unit Engineering unit of value
    */
-  public PressureUnit(double value, String name) {
-    super(value, name);
+  public PressureUnit(double value, String unit) {
+    super(value, unit);
   }
 
   /** {@inheritDoc} */
@@ -36,12 +37,12 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
   @Override
   public double getValue(String tounit) {
     if (tounit.equals("barg")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue - 1.01325;
-
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          - ThermodynamicConstantsInterface.referencePressure;
     }
     if (inunit.equals("barg")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue + 1.01325;
-
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          + ThermodynamicConstantsInterface.referencePressure;
     } else {
       return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
     }
@@ -80,6 +81,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
         throw new RuntimeException(
             new InvalidInputException(this, "getConversionFactor", name, "unit not supproted"));
     }
+
     return conversionFactor;
   }
 }
