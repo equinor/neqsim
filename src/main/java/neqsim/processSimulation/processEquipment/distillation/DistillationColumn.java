@@ -112,7 +112,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     setDoInitializion(false);
     ((Runnable) trays.get(feedTrayNumber)).run();
-
+    getTray(feedTrayNumber).getFluid().prettyPrint();
     if (getTray(feedTrayNumber).getFluid().getNumberOfPhases() == 1) {
       for (int i = 0; i < numberOfTrays; i++) {
         if (getTray(i).getNumberOfInputStreams() > 0 && i != feedTrayNumber) {
@@ -141,12 +141,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     ((MixerInterface) trays.get(numberOfTrays - 1))
-        .addStream(trays.get(feedTrayNumber).getGasOutStream());
+        .addStream(trays.get(feedTrayNumber).getGasOutStream().clone());
     // ((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem()
     // .setTotalNumberOfMoles(((Mixer) trays.get(numberOfTrays -
     // 1)).getStream(0).getThermoSystem()
     // .getTotalNumberOfMoles() * (1.0));
-    ((MixerInterface) trays.get(0)).addStream(trays.get(feedTrayNumber).getLiquidOutStream());
+    ((MixerInterface) trays.get(0))
+        .addStream(trays.get(feedTrayNumber).getLiquidOutStream().clone());
     int streamNumbReboil = (trays.get(0)).getNumberOfInputStreams() - 1;
     // ((Mixer)
     // trays.get(0)).getStream(streamNumbReboil).getThermoSystem().setTotalNumberOfMoles(
@@ -188,7 +189,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       ((Runnable) trays.get(i)).run();
     }
 
-    ((MixerInterface) trays.get(numberOfTrays - 1)).replaceStream(0,
+    int numberOfStreamsTop = trays.get(numberOfTrays - 1).getNumberOfInputStreams() - 1;
+    ((MixerInterface) trays.get(numberOfTrays - 1)).replaceStream(numberOfStreamsTop,
         trays.get(numberOfTrays - 2).getGasOutStream());
     trays.get(numberOfTrays - 1).init();
     ((Runnable) trays.get(numberOfTrays - 1)).run();
