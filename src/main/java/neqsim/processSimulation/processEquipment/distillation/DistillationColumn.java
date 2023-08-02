@@ -12,6 +12,7 @@ import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -111,7 +112,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     setDoInitializion(false);
     ((Runnable) trays.get(feedTrayNumber)).run();
-
     if (getTray(feedTrayNumber).getFluid().getNumberOfPhases() == 1) {
       for (int i = 0; i < numberOfTrays; i++) {
         if (getTray(i).getNumberOfInputStreams() > 0 && i != feedTrayNumber) {
@@ -139,27 +139,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       getTray(feedTrayNumber).getThermoSystem().init(3);
     }
 
-    ((MixerInterface) trays.get(numberOfTrays - 1))
-        .addStream(trays.get(feedTrayNumber).getGasOutStream());
-    ((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem()
-        .setTotalNumberOfMoles(((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem()
-            .getTotalNumberOfMoles() * (1.0));
-    ((MixerInterface) trays.get(0)).addStream(trays.get(feedTrayNumber).getLiquidOutStream());
-    int streamNumbReboil = (trays.get(0)).getNumberOfInputStreams() - 1;
-    ((Mixer) trays.get(0)).getStream(streamNumbReboil).getThermoSystem().setTotalNumberOfMoles(
-        ((Mixer) trays.get(0)).getStream(streamNumbReboil).getThermoSystem().getTotalNumberOfMoles()
-            * (1.0));
+    // ((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem()
+    // .setTotalNumberOfMoles(((Mixer) trays.get(numberOfTrays -
+    // 1)).getStream(0).getThermoSystem()
+    // .getTotalNumberOfMoles() * (1.0));
+    ((MixerInterface) trays.get(0))
+        .addStream(trays.get(feedTrayNumber).getLiquidOutStream().clone());
+    // ((Mixer)
+    // trays.get(0)).getStream(streamNumbReboil).getThermoSystem().setTotalNumberOfMoles(
+    // ((Mixer)
+    // trays.get(0)).getStream(streamNumbReboil).getThermoSystem().getTotalNumberOfMoles()
+    // * (1.0));
 
     // ((Runnable) trays.get(numberOfTrays - 1)).run();
     ((Runnable) trays.get(0)).run();
 
-    condenserTemperature =
-        ((MixerInterface) trays.get(numberOfTrays - 1)).getThermoSystem().getTemperature();
-    reboilerTemperature = ((MixerInterface) trays.get(0)).getThermoSystem().getTemperature();
 
-    // double deltaTemp = (reboilerTemperature - condenserTemperature) /
-    // (numberOfTrays * 1.0);
-    double feedTrayTemperature = getTray(getFeedTrayNumber()).getThermoSystem().getTemperature();
+    double feedTrayTemperature = getTray(getFeedTrayNumber()).getTemperature();
+
+    if (trays.get(numberOfTrays - 1).getNumberOfInputStreams() > 0) {
+      condenserTemperature =
+          ((MixerInterface) trays.get(numberOfTrays - 1)).getThermoSystem().getTemperature();
+    } else {
+      condenserTemperature = feedTrayTemperature - 1.0;
+    }
+
+    reboilerTemperature = ((MixerInterface) trays.get(0)).getThermoSystem().getTemperature();
 
     double deltaTempCondenser =
         (feedTrayTemperature - condenserTemperature) / (numberOfTrays * 1.0 - feedTrayNumber - 1);
@@ -178,16 +183,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           .setTemperature(getTray(getFeedTrayNumber()).getThermoSystem().getTemperature() + delta);
     }
 
-    for (int i = 1; i < numberOfTrays - 1; i++) {
+    for (int i = 1; i < numberOfTrays; i++) {
       ((MixerInterface) trays.get(i)).addStream(trays.get(i - 1).getGasOutStream());
       trays.get(i).init();
       ((Runnable) trays.get(i)).run();
     }
-
-    ((MixerInterface) trays.get(numberOfTrays - 1)).replaceStream(0,
-        trays.get(numberOfTrays - 2).getGasOutStream());
-    trays.get(numberOfTrays - 1).init();
-    ((Runnable) trays.get(numberOfTrays - 1)).run();
 
     for (int i = numberOfTrays - 2; i >= 1; i--) {
       ((MixerInterface) trays.get(i)).addStream(trays.get(i + 1).getLiquidOutStream());
@@ -198,6 +198,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     ((MixerInterface) trays.get(0)).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
     trays.get(0).init();
     ((Runnable) trays.get(0)).run();
+
+    // massBalanceCheck();
+
   }
 
   /**
@@ -315,7 +318,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     for (int i = 0; i < numberOfTrays; i++) {
       trays.get(i).setPressure(bottomTrayPressure - i * dp);
     }
-    getTray(feedTrayNumber).getStream(0).setThermoSystem(feedStream.getThermoSystem().clone());
+    SystemInterface inpS = (SystemInterface) feedStream.getThermoSystem().clone();
+    getTray(feedTrayNumber).getStream(0).setThermoSystem(inpS);
 
     if (numberOfTrays == 1) {
       ((SimpleTray) trays.get(0)).run(id);
@@ -347,6 +351,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           ((SimpleTray) trays.get(i - 1)).run(id);
         }
         int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
+        trays.get(0).setPressure(bottomTrayPressure);
         ((Mixer) trays.get(0)).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
         ((SimpleTray) trays.get(0)).run(id);
 
@@ -365,6 +370,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
               trays.get(i + 1).getLiquidOutStream());
           ((SimpleTray) trays.get(i)).run(id);
         }
+        for (int i = 1; i <= numberOfTrays - 1; i++) {
+          int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
+          if (i == (numberOfTrays - 1)) {
+            replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+          }
+          ((Mixer) trays.get(i)).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
+          ((SimpleTray) trays.get(i)).run(id);
+        }
         for (int i = 0; i < numberOfTrays; i++) {
           err += Math.abs(
               oldtemps[i] - ((MixerInterface) trays.get(i)).getThermoSystem().getTemperature());
@@ -372,8 +385,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         logger.info("error iter " + err + " iteration " + iter);
         // System.out.println("error iter " + err + " iteration " + iter);
         // massBalanceCheck();
-      } while (err > 1e-4 && err < errOld && iter < maxNumberOfIterations); // &&
-                                                                            // !massBalanceCheck());
+      } while (err > 1e-4  && err < errOld && iter < maxNumberOfIterations); // &&
+      // !massBalanceCheck());
       // massBalanceCheck();
       // componentMassBalanceCheck("water");
       gasOutStream.setThermoSystem(
