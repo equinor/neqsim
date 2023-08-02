@@ -17,21 +17,19 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class NumericalDerivative implements java.io.Serializable {
+public final class NumericalDerivative implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
 
-  final static double CON = 1.4;
-  final static double CON2 = CON * CON;
-  final static double BIG = 1 * Math.pow(10, 30);
-  final static int NTAB = 100;
-  final static double SAFE = 2;
+  static final double CON = 1.4;
+  static final double CON2 = CON * CON;
+  static final double BIG = 1 * Math.pow(10, 30);
+  static final int NTAB = 100;
+  static final double SAFE = 2;
 
   /**
-   * <p>
-   * Constructor for NumericalDerivative.
-   * </p>
+   * Dummy constructor, not for use. Class is to be considered static.
    */
-  public NumericalDerivative() {}
+  private NumericalDerivative() {}
 
   /**
    * <p>
