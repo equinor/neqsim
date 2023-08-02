@@ -330,6 +330,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         this.init();
       }
       err = 1.0e10;
+      double errOld;
       int iter = 0;
       double[] oldtemps = new double[numberOfTrays];
       ((SimpleTray) trays.get(feedTrayNumber)).run(id);
@@ -384,8 +385,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         logger.info("error iter " + err + " iteration " + iter);
         // System.out.println("error iter " + err + " iteration " + iter);
         // massBalanceCheck();
-      } while (err > 1e-4 && iter < maxNumberOfIterations); // &&
-
+      } while (err > 1e-4 && err < errOld && iter < maxNumberOfIterations); // &&
       // !massBalanceCheck());
       // massBalanceCheck();
       // componentMassBalanceCheck("water");
