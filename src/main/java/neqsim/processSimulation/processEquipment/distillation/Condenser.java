@@ -95,7 +95,7 @@ public class Condenser extends SimpleTray {
    * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
    */
   public StreamInterface getProductOutStream() {
-    return super.getGasOutStream();
+    return getGasOutStream();
   }
 
   /**

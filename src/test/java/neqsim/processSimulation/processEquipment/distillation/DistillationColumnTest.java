@@ -166,8 +166,8 @@ public class DistillationColumnTest {
         / gasToDeethanizerStream.getFlowRate("kg/hr") * 100;
 
     assertEquals(0.0, massbalance, 0.2);
-    column.getGasOutStream().getFluid().prettyPrint();
-    column.getLiquidOutStream().getFluid().prettyPrint();
+    //column.getGasOutStream().getFluid().prettyPrint();
+    //column.getLiquidOutStream().getFluid().prettyPrint();
   }
 
   /**
@@ -179,7 +179,7 @@ public class DistillationColumnTest {
         new neqsim.thermo.system.SystemSrkEos(289.0, 11.00);
     gasToDbutanizer.addComponent("nitrogen", 3.09189E-7);
     gasToDbutanizer.addComponent("CO2", 2.20812E-4);
-    gasToDbutanizer.addComponent("methane", 0.7192E-1);
+    gasToDbutanizer.addComponent("methane", 0.097192E-1);
     gasToDbutanizer.addComponent("ethane", 0.15433E-1);
     gasToDbutanizer.addComponent("propane", 2.01019E-1);
     gasToDbutanizer.addComponent("i-butane", 2.953E-2);
@@ -191,9 +191,10 @@ public class DistillationColumnTest {
     gasToDbutanizer.setMixingRule("classic");
 
     StreamInterface gasToDebutanizerStream = new Stream("gasToDbutanizer", gasToDbutanizer);
+    gasToDebutanizerStream.setFlowRate(100.0, "kg/hr");
     gasToDebutanizerStream.run();
 
-    gasToDebutanizerStream.getFluid().prettyPrint();
+    // gasToDebutanizerStream.getFluid().prettyPrint();
 
     DistillationColumn column = new DistillationColumn(1, true, true);
     column.setName("Deethanizer");
@@ -205,7 +206,6 @@ public class DistillationColumnTest {
     column.setTopPressure(9.0);
     column.setBottomPressure(13.0);
     column.run();
-
     // ((Condenser) column.getCondenser()).getProductOutStream().getFluid().prettyPrint();
 
     // column.getReboiler().getLiquidOutStream().getFluid().prettyPrint();
@@ -215,6 +215,6 @@ public class DistillationColumnTest {
         - ((Condenser) column.getCondenser()).getProductOutStream().getFlowRate("kg/hr"))
         / gasToDebutanizerStream.getFlowRate("kg/hr") * 100;
 
-    // assertEquals(0.0, massbalance, 0.2);
+    assertEquals(0.0, massbalance, 0.2);
   }
 }
