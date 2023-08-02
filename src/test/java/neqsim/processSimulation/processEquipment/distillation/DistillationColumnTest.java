@@ -159,6 +159,7 @@ public class DistillationColumnTest {
     column.setBottomPressure(32.0);
     column.setMaxNumberOfIterations(50);
     column.run();
+    column.run();
 
     double massbalance = (gasToDeethanizerStream.getFlowRate("kg/hr")
         - column.getLiquidOutStream().getFlowRate("kg/hr")
