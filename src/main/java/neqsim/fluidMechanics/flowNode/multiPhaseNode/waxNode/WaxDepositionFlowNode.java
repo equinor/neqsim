@@ -60,12 +60,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
    */
   public WaxDepositionFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {
-    super(system, pipe);
-    this.flowNodeType = "wax deposition node";
-    this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-            this);
+    this(system, pipe);
   }
 
   /** {@inheritDoc} */

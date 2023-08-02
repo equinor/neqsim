@@ -55,13 +55,6 @@ public class LinearProgrammingChemicalEquilibrium
    * <p>
    * Constructor for LinearProgrammingChemicalEquilibrium.
    * </p>
-   */
-  public LinearProgrammingChemicalEquilibrium() {}
-
-  /**
-   * <p>
-   * Constructor for LinearProgrammingChemicalEquilibrium.
-   * </p>
    *
    * @param chemRefPot an array of {@link double} objects
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects

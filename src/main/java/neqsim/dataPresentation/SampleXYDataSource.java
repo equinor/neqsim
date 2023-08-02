@@ -32,13 +32,6 @@ public class SampleXYDataSource {
   String[] seriesName;
 
   /**
-   * Default constructor.
-   */
-  public SampleXYDataSource() {
-    // items=0;
-  }
-
-  /**
    * <p>
    * Constructor for SampleXYDataSource.
    * </p>

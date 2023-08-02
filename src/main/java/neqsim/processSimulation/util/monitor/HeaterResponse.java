@@ -21,13 +21,6 @@ public class HeaterResponse {
      * <p>
      * Constructor for HeaterResponse.
      * </p>
-     */
-    public HeaterResponse() {}
-
-    /**
-     * <p>
-     * Constructor for HeaterResponse.
-     * </p>
      *
      * @param inputHeater a {@link neqsim.processSimulation.processEquipment.heatExchanger.Heater}
      *        object

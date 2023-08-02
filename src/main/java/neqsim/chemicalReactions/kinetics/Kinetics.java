@@ -29,13 +29,6 @@ public class Kinetics implements java.io.Serializable {
    * <p>
    * Constructor for Kinetics.
    * </p>
-   */
-  public Kinetics() {}
-
-  /**
-   * <p>
-   * Constructor for Kinetics.
-   * </p>
    *
    * @param operations a {@link neqsim.chemicalReactions.ChemicalReactionOperations} object
    */
@@ -62,7 +55,10 @@ public class Kinetics implements java.io.Serializable {
    */
   public double calcReacMatrix(PhaseInterface phase, PhaseInterface interPhase, int comp) {
     ChemicalReaction reaction;
-    double reacCoef = 0.0, irr = 0.0, ktemp = 0.0, exponent = 0.0;
+    double reacCoef = 0.0;
+    double irr = 0.0;
+    double ktemp = 0.0;
+    double exponent = 0.0;
     Iterator<ChemicalReaction> e =
         operations.getReactionList().getChemicalReactionList().iterator();
     phase.getPhysicalProperties().calcEffectiveDiffusionCoefficients();

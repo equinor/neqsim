@@ -39,13 +39,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
 
   /**
    * <p>
-   * Constructor for ChemicalReactionList.
-   * </p>
-   */
-  public ChemicalReactionList() {}
-
-  /**
-   * <p>
    * readReactions.
    * </p>
    *
