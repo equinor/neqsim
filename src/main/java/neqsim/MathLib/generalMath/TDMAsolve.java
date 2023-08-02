@@ -14,7 +14,13 @@ package neqsim.MathLib.generalMath;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class TDMAsolve {
+public final class TDMAsolve {
+
+  /**
+   * Dummy constructor, not for use. Class is to be considered static.
+   */
+  private TDMAsolve() {}
+
   /**
    * <p>
    * solve.
@@ -26,11 +32,11 @@ public class TDMAsolve {
    * @param r an array of {@link double} objects
    * @return an array of {@link double} objects
    */
-  public static double[] solve(double a[], double b[], double c[], double r[]) {
+  public static double[] solve(double[] a, double[] b, double[] c, double[] r) {
     int length = a.length;
     double[] u = new double[length];
     double bet = 0;
-    double gam[] = new double[length];
+    double[] gam = new double[length];
 
     bet = b[0];
     u[0] = r[0] / bet;
