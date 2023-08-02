@@ -76,10 +76,16 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(res2.calculationError[0],
         "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input FlashMode must be 1, 2 or 3");
 
-    Assertions.assertEquals(res2, res2);
     Assertions.assertFalse(res2 == null);
+    Assertions.assertEquals(res2, res2);
+    Assertions.assertNotEquals(res2, null);
+    Assertions.assertNotEquals(res2, new Object());
     Assertions.assertEquals(res2.hashCode(), res2.hashCode());
     Assertions.assertFalse(res2 == res);
+
+    CalculationResult res2_copy =
+        new CalculationResult(res2.fluidProperties, res2.calculationError);
+    Assertions.assertEquals(res2, res2_copy);
   }
 
   @Test
