@@ -14,21 +14,19 @@ package neqsim.statistics.parameterFitting;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class NumericalDerivative implements java.io.Serializable {
+public final class NumericalDerivative implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
 
-  final static double CON = 1.4;
-  final static double CON2 = CON * CON;
-  final static double BIG = 1.0e30;
-  final static int NTAB = 10;
-  final static double SAFE = 2.0;
+  static final double CON = 1.4;
+  static final double CON2 = CON * CON;
+  static final double BIG = 1.0e30;
+  static final int NTAB = 10;
+  static final double SAFE = 2.0;
 
   /**
-   * <p>
-   * Constructor for NumericalDerivative.
-   * </p>
+   * Dummy constructor, not for use. Class is to be considered static.
    */
-  public NumericalDerivative() {}
+  private NumericalDerivative() {}
 
   /**
    * <p>
@@ -42,7 +40,9 @@ public class NumericalDerivative implements java.io.Serializable {
    */
   public static double calcDerivative(StatisticsBaseClass system, int sampleNumber,
       int parameterNumber) {
-    double errt, fac, hh, ans, err;
+    double errt;
+    double fac;
+    double hh;
     double h = Math.abs(system.getSampleSet().getSample(sampleNumber).getFunction()
         .getFittingParams(parameterNumber)) / 1.0e3;
     if (h == 0.0) {
@@ -50,7 +50,6 @@ public class NumericalDerivative implements java.io.Serializable {
       System.out.println("setting it to 1.0e-10");
       h = 1.0e-10;
     }
-    double[][] a = new double[NTAB][NTAB];
 
     hh = h;
     // System.out.println("hh " + hh);
@@ -65,9 +64,10 @@ public class NumericalDerivative implements java.io.Serializable {
     system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
         oldFittingParam1);
 
+    double[][] a = new double[NTAB][NTAB];
     a[0][0] = (val1 - val2) / (2.0 * hh);
-    ans = a[0][0];
-    err = BIG;
+    double ans = a[0][0];
+    double err = BIG;
 
     for (int i = 1; i <= 0 * NTAB - 1; i++) {
       hh /= CON;

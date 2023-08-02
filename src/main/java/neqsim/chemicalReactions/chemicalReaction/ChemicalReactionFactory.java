@@ -18,15 +18,13 @@ import org.apache.logging.log4j.Logger;
  * @author ESOL
  * @version $Id: $Id
  */
-public class ChemicalReactionFactory {
+public final class ChemicalReactionFactory {
   static Logger logger = LogManager.getLogger(ChemicalReactionFactory.class);
 
   /**
-   * <p>
-   * Constructor for ChemicalReactionFactory.
-   * </p>
+   * Dummy constructor, not for use. Class is to be considered static.
    */
-  public ChemicalReactionFactory() {}
+  private ChemicalReactionFactory() {}
 
   /**
    * <p>
