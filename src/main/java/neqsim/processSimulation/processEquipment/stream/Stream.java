@@ -54,7 +54,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * Constructor for Stream.
    * </p>
    *
-   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @param stream a
+   *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *               object
    */
   @Deprecated
   public Stream(StreamInterface stream) {
@@ -85,7 +87,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /**
    * Constructor for Stream.
    *
-   * @param name name of stream
+   * @param name   name of stream
    * @param stream input stream
    */
   public Stream(String name, StreamInterface stream) {
@@ -101,7 +103,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * Constructor for Stream.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public Stream(String name, SystemInterface thermoSystem) {
@@ -253,8 +255,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       } else if (thermoSystem.hasPhaseType("oil")) {
         this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"));
       } else if (thermoSystem.hasPhaseType("aqueous")) {
-        this.thermoSystem =
-            thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("aqueous"));
+        this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("aqueous"));
       } else {
         System.out.println("no phase of type " + phaseTypeName);
         System.out.println("...returning empty system ");
@@ -367,8 +368,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         double gasEnthalpy = thermoSystem.getPhase(0).getEnthalpy();
         double liquidEnthalpy = thermoSystem.getPhase(1).getEnthalpy();
 
-        double enthalpySpec =
-            getGasQuality() * gasEnthalpy + (1.0 - getGasQuality()) * liquidEnthalpy;
+        double enthalpySpec = getGasQuality() * gasEnthalpy + (1.0 - getGasQuality()) * liquidEnthalpy;
         thermoOps.PHflash(enthalpySpec);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
@@ -529,7 +529,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       ops.bubblePointPressureFlash(false);
     } catch (Exception ex) {
     }
-    return localSyst.getPressure(unit);
+    return localSyst.getPressure();
   }
 
   /** {@inheritDoc} */
@@ -544,9 +544,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * </p>
    *
    * @param propertyName a {@link java.lang.String} object
-   * @param unit a {@link java.lang.String} object
-   * @param phase a {@link java.lang.String} object
-   * @param component a {@link java.lang.String} object
+   * @param unit         a {@link java.lang.String} object
+   * @param phase        a {@link java.lang.String} object
+   * @param component    a {@link java.lang.String} object
    * @return a {@link java.lang.Object} object
    */
   public Object getProperty(String propertyName, String unit, String phase, String component) {
@@ -580,7 +580,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * Setter for the field <code>stream</code>.
    * </p>
    *
-   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @param stream a
+   *               {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *               object
    */
   public void setStream(StreamInterface stream) {
     this.stream = stream;
