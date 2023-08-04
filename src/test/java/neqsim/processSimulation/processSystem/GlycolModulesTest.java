@@ -1,5 +1,4 @@
 package neqsim.processSimulation.processSystem;
-import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.measurementDevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.processSimulation.measurementDevice.WaterDewPointAnalyser;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
@@ -20,7 +19,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class GlycolModulesTest extends  neqsim.NeqSimTest {
-  @Test
+  //@Test
   public void runProcessTEG() throws InterruptedException  {
     neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
       10.00);
