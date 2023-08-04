@@ -82,7 +82,7 @@ public class CompressorModule extends neqsim.NeqSimTest {
 
     Mixer gasmixer = new Mixer("gas recycle mixer");
     gasmixer.addStream(secondStageSeparator.getGasOutStream());
-    // gasmixer.addStream(gasResycleStream);
+    gasmixer.addStream(gasResycleStream);
 
     // Setting up compressor module
     Compressor seccondStageCompressor =
@@ -136,7 +136,7 @@ public class CompressorModule extends neqsim.NeqSimTest {
 
     operations.run();
 
-    assertEquals(2053.083, resycleScrubberStream.getFlowRate("kg/hr"), 0.1);
+    assertEquals(2024.2089083, resycleScrubberStream.getFlowRate("kg/hr"), 0.1);
 
     neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
         new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(

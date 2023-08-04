@@ -11,14 +11,12 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
 import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
-import neqsim.processSimulation.processEquipment.filter.Filter;
 import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
 import neqsim.processSimulation.processEquipment.pump.Pump;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.splitter.Splitter;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Calculator;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
@@ -174,107 +172,82 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   void testDisplayResult() {}
 
   @Test
-  void testGetAllUnitNames() {
-  }
+  void testGetAllUnitNames() {}
 
   @Test
-  void testGetConditionMonitor() {
-  }
+  void testGetConditionMonitor() {}
 
   @Test
-  void testGetCoolerDuty() {
-  }
+  void testGetCoolerDuty() {}
 
   @Test
-  void testGetCostEstimator() {
-  }
+  void testGetCostEstimator() {}
 
   @Test
-  void testGetEntropyProduction() {
-  }
+  void testGetEntropyProduction() {}
 
   @Test
-  void testGetExergyChange() {
-  }
+  void testGetExergyChange() {}
 
   @Test
-  void testGetHeaterDuty() {
-  }
+  void testGetHeaterDuty() {}
 
   @Test
-  void testGetMeasurementDevice() {
-  }
+  void testGetMeasurementDevice() {}
 
   @Test
-  void testGetMechanicalWeight() {
-  }
+  void testGetMechanicalWeight() {}
 
   @Test
-  void testGetPower() {
-  }
+  void testGetPower() {}
 
   @Test
-  void testGetSurroundingTemperature() {
-  }
+  void testGetSurroundingTemperature() {}
 
   @Test
-  void testGetSystemMechanicalDesign() {
-  }
+  void testGetSystemMechanicalDesign() {}
 
   @Test
-  void testGetUnit() {
-  }
+  void testGetUnit() {}
 
   @Test
-  void testGetUnitOperations() {
-  }
+  void testGetUnitOperations() {}
 
   @Test
-  void testOpen() {
-  }
+  void testOpen() {}
 
   @Test
-  void testPrintLogFile() {
-  }
+  void testPrintLogFile() {}
 
   @Test
-  void testReplaceObject() {
-  }
+  void testReplaceObject() {}
 
   @Test
-  void testReportMeasuredValues() {
-  }
+  void testReportMeasuredValues() {}
 
   @Test
-  void testReportResults() {
-  }
+  void testReportResults() {}
 
   @Test
-  void testRun() {
-  }
+  void testRun() {}
 
   @Test
-  void testRunAsThread() {
-  }
+  void testRunAsThread() {}
 
   @Test
-  void testSave() {
-  }
+  void testSave() {}
 
   @Test
-  void testSetFluid() {
-  }
+  void testSetFluid() {}
 
   @Test
   void testSetName() {}
 
   @Test
-  void testSetSystemMechanicalDesign() {
-  }
+  void testSetSystemMechanicalDesign() {}
 
   @Test
-  void testSize() {
-  }
+  void testSize() {}
 
   @Test
   void testView() {}
@@ -587,15 +560,16 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.add(leanTEGtoabs);
     operations.add(resycleLeanTEG);
     operations.run();
-    System.out.println("flowo " + hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr"));
-    System.out.println("makeup " + makeupTEG.getFlowRate("kg/hr"));
-    System.out.println("mixo " + coolerhOTteg3.getOutletStream().getFlowRate("kg/hr"));
-    System.out.println("leantoresirc " + leanTEGtoabs.getFlowRate("kg/hr"));
-    // operations.run();
-    System.out.println("flowo " + hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr"));
-    System.out.println("makeup " + makeupTEG.getFlowRate("kg/hr"));
-    System.out.println("mixo " + coolerhOTteg3.getOutletStream().getFlowRate("kg/hr"));
-    System.out.println("leantoresirc " + leanTEGtoabs.getFlowRate("kg/hr"));
+    /*
+     * System.out.println("flowo " + hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr"));
+     * System.out.println("makeup " + makeupTEG.getFlowRate("kg/hr")); System.out.println("mixo " +
+     * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); System.out.println("leantoresirc " +
+     * leanTEGtoabs.getFlowRate("kg/hr")); // operations.run(); System.out.println("flowo " +
+     * hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr")); System.out.println("makeup " +
+     * makeupTEG.getFlowRate("kg/hr")); System.out.println("mixo " +
+     * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); System.out.println("leantoresirc " +
+     * leanTEGtoabs.getFlowRate("kg/hr"));
+     */
     assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
   }
