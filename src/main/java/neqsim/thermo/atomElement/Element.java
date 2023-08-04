@@ -43,7 +43,11 @@ public class Element implements ThermodynamicConstantsInterface {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
             database.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"))) {
-      dataSet.next();
+
+      if (!dataSet.next()) {
+        return;
+      }
+
       do {
         names.add(dataSet.getString("atomelement").trim());
         stocCoef.add(dataSet.getString("number"));

@@ -79,10 +79,8 @@ public class DistillationColumnTest {
     column.setTopPressure(1.12);
     column.setBottomPressure(1.12);
     column.setInternalDiameter(0.56);
-    column.setMaxNumberOfIterations(100);
-    // while (!column.solved()) {
+    column.setMaxNumberOfIterations(40);
     column.run();
-    // }
 
     double waterFlowRateInColumn =
         richTEGStream.getFluid().getPhase(0).getComponent("water").getFlowRate("kg/hr")
@@ -106,21 +104,21 @@ public class DistillationColumnTest {
 
     double totalWaterIn = waterFlowRateInColumn2 + waterFlowRateInColumnGasToReb;
     double totalWaterOut = waterFlowRateOutColumn + waterFlowRateOutColumnLeanTEG;
-
-    System.out.println("Column in is " + totalWaterIn + " kg/hr");
-    System.out.println("Column out is " + totalWaterOut + " kg/hr");
-    System.out.println("Column is solved  " + column.solved());
-
-
-
-    System.out.println("Calc Water Flow rate via fluid component " + waterFlowRateInColumn);
-    System.out.println("Calc Water Flow rate via molar mass and flow rate total "
-        + waterFlowRateInColumn2 + " kg/hr");
-
-    System.out
-        .println("condenser temperature " + column.getCondenser().getFluid().getTemperature("C"));
-    System.out.println("condenser duty " + ((Condenser) column.getCondenser()).getDuty());
-
+    /*
+     * System.out.println("Column in is " + totalWaterIn + " kg/hr");
+     * System.out.println("Column out is " + totalWaterOut + " kg/hr");
+     * System.out.println("Column is solved  " + column.solved());
+     * 
+     * 
+     * 
+     * System.out.println("Calc Water Flow rate via fluid component " + waterFlowRateInColumn);
+     * System.out.println("Calc Water Flow rate via molar mass and flow rate total " +
+     * waterFlowRateInColumn2 + " kg/hr");
+     * 
+     * System.out .println("condenser temperature " +
+     * column.getCondenser().getFluid().getTemperature("C")); System.out.println("condenser duty " +
+     * ((Condenser) column.getCondenser()).getDuty());
+     */
     assertEquals(totalWaterIn, totalWaterOut, 1.0);
 
   }
@@ -167,8 +165,8 @@ public class DistillationColumnTest {
         / gasToDeethanizerStream.getFlowRate("kg/hr") * 100;
 
     assertEquals(0.0, massbalance, 0.2);
-    //column.getGasOutStream().getFluid().prettyPrint();
-    //column.getLiquidOutStream().getFluid().prettyPrint();
+    // column.getGasOutStream().getFluid().prettyPrint();
+    // column.getLiquidOutStream().getFluid().prettyPrint();
   }
 
   /**
