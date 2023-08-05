@@ -2187,6 +2187,6 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getIsobaricThermalExpansivity() {
-    return 1.0 / getTotalVolume() * getdPdTVn() / getdPdVTn();
+    return getIsothermalCompressibility() * getdPdTVn();
   }
 }
