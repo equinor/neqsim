@@ -81,6 +81,13 @@ class TVFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
+
+    double isothermalCompressibility = testSystem.getPhase(0).getIsothermalCompressibility();
+    double isobaricThermalExpansivity = testSystem.getPhase(0).getIsobaricThermalExpansivity();
+
+    assertEquals(2.1655529052373845E-4, isothermalCompressibility, 1e-6);
+    assertEquals(0.0019761208438481767, isobaricThermalExpansivity, 1e-6);
+
     double volume = testSystem.getVolume("m3");
     testSystem.setTemperature(20.0, "C");
     testOps.TVflash(volume, "m3");
