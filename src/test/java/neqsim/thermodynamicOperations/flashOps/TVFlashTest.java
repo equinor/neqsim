@@ -81,13 +81,9 @@ class TVFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    testSystem.prettyPrint();
-
     double volume = testSystem.getVolume("m3");
     testSystem.setTemperature(20.0, "C");
     testOps.TVflash(volume, "m3");
-    testSystem.prettyPrint();
-
     assertEquals(747.12062, testSystem.getPressure("bara"), 1.0);
   }
 }
