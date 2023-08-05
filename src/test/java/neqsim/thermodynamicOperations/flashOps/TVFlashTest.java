@@ -67,4 +67,30 @@ class TVFlashTest {
     }
     assertEquals(235310.3670621656, testSystem.getEnthalpy(), 1.0);
   }
+
+  @Test
+  void testLiquidThermalExpansion() {
+    testSystem = new neqsim.thermo.system.SystemPrEos(273.15 - 60.0, 40.0);
+    testSystem.addComponent("CO2", 1.0);
+    testSystem.addComponent("methane", 10.0);
+    testSystem.addComponent("ethane", 20.0);
+    testSystem.addComponent("propane", 20.0);
+    testSystem.addComponent("n-butane", 20.0);
+    testSystem.setMixingRule("classic");
+
+    testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initProperties();
+
+    double isothermalCompressibility = testSystem.getPhase(0).getIsothermalCompressibility();
+    double isobaricThermalExpansivity = testSystem.getPhase(0).getIsobaricThermalExpansivity();
+
+    assertEquals(2.1655529052373845E-4, isothermalCompressibility, 1e-6);
+    assertEquals(0.0019761208438481767, isobaricThermalExpansivity, 1e-6);
+
+    double volume = testSystem.getVolume("m3");
+    testSystem.setTemperature(20.0, "C");
+    testOps.TVflash(volume, "m3");
+    assertEquals(747.12062, testSystem.getPressure("bara"), 1.0);
+  }
 }
