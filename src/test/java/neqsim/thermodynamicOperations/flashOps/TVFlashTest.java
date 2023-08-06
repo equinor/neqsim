@@ -81,7 +81,7 @@ class TVFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-
+    
     double isothermalCompressibility = testSystem.getPhase(0).getIsothermalCompressibility();
     double isobaricThermalExpansivity = testSystem.getPhase(0).getIsobaricThermalExpansivity();
 
