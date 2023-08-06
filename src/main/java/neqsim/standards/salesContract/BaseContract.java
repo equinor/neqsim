@@ -72,7 +72,9 @@ public class BaseContract implements ContractInterface {
   public BaseContract(SystemInterface system, String terminal, String country) {
     int numb = 0;
     this.setContractName(contractName);
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    try (
+        neqsim.util.database.NeqSimContractDataBase database =
+            new neqsim.util.database.NeqSimContractDataBase();
         java.sql.ResultSet dataSet =
             database.getResultSet("SELECT * FROM gascontractspecifications WHERE TERMINAL='"
                 + terminal + "'" + " AND COUNTRY='" + country + "'")) {
@@ -83,8 +85,8 @@ public class BaseContract implements ContractInterface {
             dataSet.getString("SPECIFICATION"), dataSet.getString("COUNTRY"),
             dataSet.getString("TERMINAL"), Double.parseDouble(dataSet.getString("MINVALUE")),
             Double.parseDouble(dataSet.getString("MAXVALUE")), dataSet.getString("UNIT"),
-            Double.parseDouble(dataSet.getString("ReferenceTmeasurement")),
-            Double.parseDouble(dataSet.getString("ReferenceTcombustion")),
+            Double.parseDouble(dataSet.getString("ReferenceTdegC")),
+            Double.parseDouble(dataSet.getString("ReferenceTdegC")),
             Double.parseDouble(dataSet.getString("ReferencePbar")), dataSet.getString("Comments"));
         System.out.println("specification added..." + numb);
       }
