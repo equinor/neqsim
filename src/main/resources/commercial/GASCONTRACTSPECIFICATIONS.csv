@@ -1,0 +1,9 @@
+"ID","NAME","COUNTRY","TERMINAL","SPECIFICATION","MINVALUE","MAXVALUE","UNIT","METHOD","ReferenceTdegC","ReferencePbar","Comments", 
+0,"Contract1","NORWAY",,"waterdewpointTemperature",-1000.000000000,-10.000000000,"degC","ISO18453",0.000000000,70.000000000,"",
+1,"Contract1","NORWAY",,"hydrocarbondewpointTemperature",-1000.000000000,-10.000000000,"degC","StatoilBestPracticeHydrocarbonDewPoint",0.000000000,70.000000000,"",
+2,"Contract1","NORWAY",,"GCV",30000.000000000,40000.000000000,"kJ/Sm^3","ISO6976",0.000000000,1.013250000,"reference temperature of compustion=0C and reference temperature volume=15C"
+3,"Contract1","NORWAY",,"H2S content",0.000000000,5.000000000,"ppm","SulfurSpecificationMethod",0.000000000,1.013250000,"",
+4,"Contract1","NORWAY",,"Total sulfur content",0.000000000,30.000000000,"microg/Sm3","SulfurSpecificationMethod",0.000000000,1.013250000,"",
+5,"Contract1","NORWAY",,"SuperiorWobbeIndex",20000.000000000,40000.000000000,"kJ/Sm^3","ISO6976",0.000000000,1.013250000,"",
+6,"Contract1","NORWAY",,"RelativeDensity",0.600000000,1.000000000,"kg/Sm^3","ISO6976",0.000000000,1.013250000,"",
+7,"Contract1","UK","UK-GSMR1996","waterdewpointTemperature",-1000.000000000,-10.000000000,"degC","ISO18453",0.000000000,70.000000000,"",
