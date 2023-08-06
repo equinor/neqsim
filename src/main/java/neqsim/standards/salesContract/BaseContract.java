@@ -8,6 +8,7 @@ package neqsim.standards.salesContract;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -37,7 +38,7 @@ public class BaseContract implements ContractInterface {
   double waterDewPointTemperature = -12.0;
   double waterDewPointSpecPressure = 70.0;
   private String contractName = "";
-  ContractSpecification[] spesifications = new ContractSpecification[50];
+  ArrayList<ContractSpecification> spesifications = new ArrayList<ContractSpecification>();
   private int specificationsNumber = 0;
 
   /**
@@ -56,8 +57,8 @@ public class BaseContract implements ContractInterface {
    */
   public BaseContract(SystemInterface system) {
     StandardInterface standard = new Draft_ISO18453(system);
-    spesifications[0] = new ContractSpecification("", "", "", "water dew point specification",
-        standard, 0, 0, "degC", 0, 0, 0, "");
+    spesifications.add(new ContractSpecification("", "", "", "water dew point specification",
+        standard, 0, 0, "degC", 0, 0, 0, ""));
   }
 
   /**
@@ -81,20 +82,20 @@ public class BaseContract implements ContractInterface {
       while (dataSet.next()) {
         numb++;
         StandardInterface method = getMethod(system, dataSet.getString("METHOD"));
-        spesifications[numb - 1] = getSpecification(method, dataSet.getString("NAME"),
+        spesifications.add(getSpecification(method, dataSet.getString("NAME"),
             dataSet.getString("SPECIFICATION"), dataSet.getString("COUNTRY"),
             dataSet.getString("TERMINAL"), Double.parseDouble(dataSet.getString("MINVALUE")),
             Double.parseDouble(dataSet.getString("MAXVALUE")), dataSet.getString("UNIT"),
             Double.parseDouble(dataSet.getString("ReferenceTdegC")),
             Double.parseDouble(dataSet.getString("ReferenceTdegC")),
-            Double.parseDouble(dataSet.getString("ReferencePbar")), "");// dataSet.getString("Comments"));
+            Double.parseDouble(dataSet.getString("ReferencePbar")), ""));// dataSet.getString("Comments"));
         System.out.println(dataSet.getString("Comments"));
         System.out.println("specification added..." + numb);
       }
     } catch (Exception ex) {
       logger.error("error in comp", ex);
     } finally {
-      specificationsNumber = numb;
+      specificationsNumber = spesifications.size();
     }
   }
 
@@ -171,35 +172,33 @@ public class BaseContract implements ContractInterface {
   public void runCheck() {
     int j = 0;
     resultTable = new String[specificationsNumber][12];
-    for (int i = 0; i < specificationsNumber; i++) {
-      if (!(spesifications[i] == null)) {
+    for (ContractSpecification spesification : spesifications)
+      if (!(spesification == null)) {
         try {
-          spesifications[i].getStandard().calculate();
+          spesification.getStandard().calculate();
         } catch (Exception ex) {
           logger.error(ex.getMessage(), ex);
         }
-        spesifications[i].getStandard().setSalesContract(this);
-        System.out.println("Type: " + spesifications[i].getDescription() + " Standard "
-            + spesifications[i].getStandard().getName() + " : "
-            + spesifications[i].getStandard().isOnSpec());
-        getResultTable()[j][0] = spesifications[i].getDescription();
-        getResultTable()[j][1] = Double.toString(spesifications[i].getStandard()
-            .getValue(spesifications[i].getName(), spesifications[i].getUnit()));
-        getResultTable()[j][2] = spesifications[i].getCountry();
-        getResultTable()[j][3] = spesifications[i].getTerminal();
-        getResultTable()[j][4] = Double.toString(spesifications[i].getMinValue());
-        getResultTable()[j][5] = Double.toString(spesifications[i].getMaxValue());
-        getResultTable()[j][6] = spesifications[i].getUnit();
-        getResultTable()[j][7] = spesifications[i].getStandard().getName();
+        spesification.getStandard().setSalesContract(this);
+        System.out.println("Type: " + spesification.getDescription() + " Standard "
+            + spesification.getStandard().getName() + " : "
+            + spesification.getStandard().isOnSpec());
+        getResultTable()[j][0] = spesification.getDescription();
+        getResultTable()[j][1] = Double.toString(
+            spesification.getStandard().getValue(spesification.getName(), spesification.getUnit()));
+        getResultTable()[j][2] = spesification.getCountry();
+        getResultTable()[j][3] = spesification.getTerminal();
+        getResultTable()[j][4] = Double.toString(spesification.getMinValue());
+        getResultTable()[j][5] = Double.toString(spesification.getMaxValue());
+        getResultTable()[j][6] = spesification.getUnit();
+        getResultTable()[j][7] = spesification.getStandard().getName();
         getResultTable()[j][8] =
-            Double.toString(spesifications[i].getReferenceTemperatureMeasurement());
-        getResultTable()[j][9] =
-            Double.toString(spesifications[i].getReferenceTemperatureCombustion());
-        getResultTable()[j][10] = Double.toString(spesifications[i].getReferencePressure());
-        getResultTable()[j][11] = spesifications[i].getComments();
+            Double.toString(spesification.getReferenceTemperatureMeasurement());
+        getResultTable()[j][9] = Double.toString(spesification.getReferenceTemperatureCombustion());
+        getResultTable()[j][10] = Double.toString(spesification.getReferencePressure());
+        getResultTable()[j][11] = spesification.getComments();
         j++;
       }
-    }
   }
 
   /** {@inheritDoc} */
