@@ -38,8 +38,8 @@ public class Standard_ISO15403Test {
 
   @Test
   void testGetUnit() {
-    assertEquals("0", ISO15403.getValue("MON"));
-    assertEquals("0", ISO15403.getValue("NM"));
+    assertEquals("", ISO15403.getUnit("MON"));
+    assertEquals("", ISO15403.getUnit("NM"));
   }
 
   @Test
