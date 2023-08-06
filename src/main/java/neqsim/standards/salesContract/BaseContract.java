@@ -18,6 +18,7 @@ import neqsim.standards.StandardInterface;
 import neqsim.standards.gasQuality.BestPracticeHydrocarbonDewPoint;
 import neqsim.standards.gasQuality.Draft_ISO18453;
 import neqsim.standards.gasQuality.GasChromotograpyhBase;
+import neqsim.standards.gasQuality.Standard_ISO6974;
 import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.standards.gasQuality.SulfurSpecificationMethod;
 import neqsim.standards.gasQuality.UKspecifications_ICF_SI;
@@ -112,17 +113,14 @@ public class BaseContract implements ContractInterface {
     if (methodName.equals("ISO18453")) {
       return new Draft_ISO18453(system);
     }
-    if (methodName.equals("CO2")) {
-      return new GasChromotograpyhBase(system, "CO2");
-    }
-    if (methodName.equals("H2S")) {
-      return new GasChromotograpyhBase(system, "H2S");
+    if (methodName.equals("ISO6974")) {
+      return new Standard_ISO6974(system);
     }
     if (methodName.equals("Total sulphur")) {
-      return new GasChromotograpyhBase(system, "H2S");
+      return new GasChromotograpyhBase(system);
     }
     if (methodName.equals("oxygen")) {
-      return new GasChromotograpyhBase(system, "oxygen");
+      return new Standard_ISO6974(system);
     }
     if (methodName.equals("ISO6976")) {
       return new Standard_ISO6976(system);

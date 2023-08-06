@@ -12,7 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class GasChromotograpyhBase extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
-  String componentName = "", unit = "mol%";
+  String unit = "mol%";
 
   /**
    * <p>
@@ -22,9 +22,8 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param component a {@link java.lang.String} object
    */
-  public GasChromotograpyhBase(SystemInterface thermoSystem, String component) {
+  public GasChromotograpyhBase(SystemInterface thermoSystem) {
     super("gas cromotography", "Gas composition", thermoSystem);
-    this.componentName = component;
   }
 
   /** {@inheritDoc} */
@@ -36,7 +35,7 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String componentName, java.lang.String returnUnit) {
     unit = returnUnit;
     if (returnUnit.equals("mol%")) {
       return 100 * thermoSystem.getPhase(0).getComponent(componentName).getz();
@@ -50,7 +49,7 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter) {
+  public double getValue(String componentName) {
     return thermoSystem.getPhase(0).getComponent(componentName).getz();
   }
 
