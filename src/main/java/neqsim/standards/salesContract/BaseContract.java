@@ -111,6 +111,8 @@ public class BaseContract implements ContractInterface {
    */
   public StandardInterface getMethod(SystemInterface system, String methodName) {
     if (methodName.equals("ISO18453")) {
+      Draft_ISO18453 standard = new Draft_ISO18453(system);
+      standard.setReferencePressure(specificationsNumber);
       return new Draft_ISO18453(system);
     }
     if (methodName.equals("ISO6974")) {
@@ -178,12 +180,12 @@ public class BaseContract implements ContractInterface {
           logger.error(ex.getMessage(), ex);
         }
         spesification.getStandard().setSalesContract(this);
-        System.out.println("Type: " + spesification.getDescription() + " Standard "
+        System.out.println("Type: " + spesification.getSpecification() + " Standard "
             + spesification.getStandard().getName() + " : "
             + spesification.getStandard().isOnSpec());
-        getResultTable()[j][0] = spesification.getDescription();
-        getResultTable()[j][1] = Double.toString(
-            spesification.getStandard().getValue(spesification.getName(), spesification.getUnit()));
+        getResultTable()[j][0] = spesification.getSpecification();
+        getResultTable()[j][1] = Double.toString(spesification.getStandard()
+            .getValue(spesification.getSpecification(), spesification.getUnit()));
         getResultTable()[j][2] = spesification.getCountry();
         getResultTable()[j][3] = spesification.getTerminal();
         getResultTable()[j][4] = Double.toString(spesification.getMinValue());

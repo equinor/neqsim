@@ -22,5 +22,6 @@ public class Standard_ISO6974 extends GasChromotograpyhBase {
    */
   public Standard_ISO6974(SystemInterface thermoSystem) {
     super(thermoSystem);
+    setName("ISO6974");
   }
 }

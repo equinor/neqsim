@@ -23,8 +23,9 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
    * @param component a {@link java.lang.String} object
    */
   public GasChromotograpyhBase(SystemInterface thermoSystem) {
-    super("gas cromotography", "Gas composition", thermoSystem);
+    super("gas chromotography", "Gas composition", thermoSystem);
   }
+
 
   /** {@inheritDoc} */
   @Override
