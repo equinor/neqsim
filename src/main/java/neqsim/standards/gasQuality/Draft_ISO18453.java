@@ -17,12 +17,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Draft_ISO18453 extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
   static Logger logger = LogManager.getLogger(Draft_ISO18453.class);
-
   String dewPointTemperatureUnit = "C";
   String pressureUnit = "bar";
   double dewPointTemperature = 273.0;
   double dewPointTemperatureSpec = -12.0;
-  double referencePressure = 70.0;
   double initTemperature = 273.15;
   SystemInterface thermoSystem;
   ThermodynamicOperations thermoOps;
@@ -41,7 +39,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
       this.thermoSystem = thermoSystem;
     } else {
       // System.out.println("setting model GERG water...");
-      this.thermoSystem = new SystemGERGwaterEos(initTemperature, referencePressure);
+      this.thermoSystem = new SystemGERGwaterEos(initTemperature, getReferencePressure());
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         this.thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(),
             thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles());
@@ -61,7 +59,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
   @Override
   public void calculate() {
     this.thermoSystem.setTemperature(initTemperature);
-    this.thermoSystem.setPressure(referencePressure);
+    this.thermoSystem.setPressure(getReferencePressure());
 
     try {
       this.thermoOps.waterDewPointTemperatureFlash();
@@ -111,9 +109,5 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
   @Override
   public boolean isOnSpec() {
     return dewPointTemperature < getSalesContract().getWaterDewPointTemperature();
-  }
-
-  public void setReferencePressure(double referencePressure) {
-    this.referencePressure = referencePressure;
   }
 }
