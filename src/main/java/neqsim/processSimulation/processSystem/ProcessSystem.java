@@ -793,7 +793,13 @@ public class ProcessSystem extends SimulationBaseClass {
                 .getDuty();
       }
     }
-    return heat;
+    if (unit.equals("MW")) {
+      return heat / 1.0e6;
+    } else if (unit.equals("kW")) {
+      return heat / 1.0e3;
+    } else {
+      return heat;
+    }
   }
 
   /**
@@ -813,7 +819,13 @@ public class ProcessSystem extends SimulationBaseClass {
                 .getDuty();
       }
     }
-    return heat;
+    if (unit.equals("MW")) {
+      return heat / 1.0e6;
+    } else if (unit.equals("kW")) {
+      return heat / 1.0e3;
+    } else {
+      return heat;
+    }
   }
 
   /**
