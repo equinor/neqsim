@@ -85,6 +85,7 @@ public class Element implements ThermodynamicConstantsInterface {
   /**
    * GetNumberOfElements.
    *
+   * @param elementName name of element
    * @return NumberOfElements of a given type.
    */
   public double getNumberOfElements(String elementName) {

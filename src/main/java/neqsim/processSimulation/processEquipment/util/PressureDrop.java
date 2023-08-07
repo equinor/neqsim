@@ -29,6 +29,8 @@ public class PressureDrop extends ThrottlingValve {
    * <p>
    * Constructor for PressureDrop.
    * </p>
+   * 
+   * @param name the name of the pressure drop unit
    */
   public PressureDrop(String name) {
     super(name);
