@@ -83,6 +83,20 @@ public class Element implements ThermodynamicConstantsInterface {
   }
 
   /**
+   * GetNumberOfElements.
+   *
+   * @return NumberOfElements of a given type.
+   */
+  public double getNumberOfElements(String elementName) {
+    for (int i = 0; i < nameArray.length; i++) {
+      if (nameArray[i].equals(elementName)) {
+        return coefArray[i];
+      }
+    }
+    return 0.0;
+  }
+
+  /**
    * Getter for property coefArray.
    *
    * @return an array of {@link double} objects. Coefficient corresponding to nameArray.
