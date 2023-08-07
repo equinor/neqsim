@@ -164,4 +164,6 @@ public interface StandardInterface {
    * @param resultTable an array of {@link java.lang.String} objects
    */
   public void setResultTable(String[][] resultTable);
+
+  public void setReferencePressure(double referencePressure);
 }

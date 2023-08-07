@@ -20,7 +20,7 @@ import neqsim.util.NamedBaseClass;
 public class ContractSpecification extends NamedBaseClass {
   private static final long serialVersionUID = 1L;
   StandardInterface standard = null;
-  String description = "dew point temperature specification";
+  String specification = "dew point temperature specification";
   private String country = "";
   private String terminal = "";
   private double minValue = 0;
@@ -31,7 +31,9 @@ public class ContractSpecification extends NamedBaseClass {
 
   @Deprecated
   /**
-   * <p>Constructor for ContractSpecification.</p>
+   * <p>
+   * Constructor for ContractSpecification.
+   * </p>
    */
   public ContractSpecification() {
     super("ContractSpecification");
@@ -43,7 +45,7 @@ public class ContractSpecification extends NamedBaseClass {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param description a {@link java.lang.String} object
+   * @param specification a {@link java.lang.String} object
    * @param country a {@link java.lang.String} object
    * @param terminal a {@link java.lang.String} object
    * @param standard a {@link neqsim.standards.StandardInterface} object
@@ -55,14 +57,14 @@ public class ContractSpecification extends NamedBaseClass {
    * @param referencePressure a double
    * @param comments a {@link java.lang.String} object
    */
-  public ContractSpecification(String name, String description, String country, String terminal,
+  public ContractSpecification(String name, String specification, String country, String terminal,
       StandardInterface standard, double minValue, double maxValue, String unit,
       double referenceTemperature, double referenceTemperatureComb, double referencePressure,
       String comments) {
     super(name);
     this.country = country;
     this.terminal = terminal;
-    this.description = description;
+    this.specification = specification;
     this.standard = standard;
     this.unit = unit;
     this.setReferenceTemperatureMeasurement(referenceTemperature);
@@ -92,21 +94,21 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * Getter for property description.
+   * Getter for property specification.
    *
-   * @return Value of property description.
+   * @return Value of property specification.
    */
-  public java.lang.String getDescription() {
-    return description;
+  public java.lang.String getSpecification() {
+    return specification;
   }
 
   /**
-   * Setter for property description.
+   * Setter for property specification.
    *
-   * @param description New value of property description.
+   * @param specification New value of property description.
    */
-  public void setDescription(java.lang.String description) {
-    this.description = description;
+  public void setSpecification(java.lang.String specification) {
+    this.specification = specification;
   }
 
   /**

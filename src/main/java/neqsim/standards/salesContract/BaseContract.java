@@ -18,6 +18,7 @@ import neqsim.standards.StandardInterface;
 import neqsim.standards.gasQuality.BestPracticeHydrocarbonDewPoint;
 import neqsim.standards.gasQuality.Draft_ISO18453;
 import neqsim.standards.gasQuality.GasChromotograpyhBase;
+import neqsim.standards.gasQuality.Standard_ISO6974;
 import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.standards.gasQuality.SulfurSpecificationMethod;
 import neqsim.standards.gasQuality.UKspecifications_ICF_SI;
@@ -82,13 +83,14 @@ public class BaseContract implements ContractInterface {
       while (dataSet.next()) {
         numb++;
         StandardInterface method = getMethod(system, dataSet.getString("METHOD"));
+        double referencePressure = Double.parseDouble(dataSet.getString("ReferencePbar"));
+        method.setReferencePressure(referencePressure);
         spesifications.add(getSpecification(method, dataSet.getString("NAME"),
             dataSet.getString("SPECIFICATION"), dataSet.getString("COUNTRY"),
             dataSet.getString("TERMINAL"), Double.parseDouble(dataSet.getString("MINVALUE")),
             Double.parseDouble(dataSet.getString("MAXVALUE")), dataSet.getString("UNIT"),
             Double.parseDouble(dataSet.getString("ReferenceTdegC")),
-            Double.parseDouble(dataSet.getString("ReferenceTdegC")),
-            Double.parseDouble(dataSet.getString("ReferencePbar")), ""));// dataSet.getString("Comments"));
+            Double.parseDouble(dataSet.getString("ReferenceTdegC")), referencePressure, ""));// dataSet.getString("Comments"));
         System.out.println(dataSet.getString("Comments"));
         System.out.println("specification added..." + numb);
       }
@@ -110,19 +112,18 @@ public class BaseContract implements ContractInterface {
    */
   public StandardInterface getMethod(SystemInterface system, String methodName) {
     if (methodName.equals("ISO18453")) {
+      Draft_ISO18453 standard = new Draft_ISO18453(system);
+      standard.setReferencePressure(specificationsNumber);
       return new Draft_ISO18453(system);
     }
-    if (methodName.equals("CO2")) {
-      return new GasChromotograpyhBase(system, "CO2");
-    }
-    if (methodName.equals("H2S")) {
-      return new GasChromotograpyhBase(system, "H2S");
+    if (methodName.equals("ISO6974")) {
+      return new Standard_ISO6974(system);
     }
     if (methodName.equals("Total sulphur")) {
-      return new GasChromotograpyhBase(system, "H2S");
+      return new GasChromotograpyhBase(system);
     }
     if (methodName.equals("oxygen")) {
-      return new GasChromotograpyhBase(system, "oxygen");
+      return new Standard_ISO6974(system);
     }
     if (methodName.equals("ISO6976")) {
       return new Standard_ISO6976(system);
@@ -180,12 +181,12 @@ public class BaseContract implements ContractInterface {
           logger.error(ex.getMessage(), ex);
         }
         spesification.getStandard().setSalesContract(this);
-        System.out.println("Type: " + spesification.getDescription() + " Standard "
+        System.out.println("Type: " + spesification.getSpecification() + " Standard "
             + spesification.getStandard().getName() + " : "
             + spesification.getStandard().isOnSpec());
-        getResultTable()[j][0] = spesification.getDescription();
-        getResultTable()[j][1] = Double.toString(
-            spesification.getStandard().getValue(spesification.getName(), spesification.getUnit()));
+        getResultTable()[j][0] = spesification.getSpecification();
+        getResultTable()[j][1] = Double.toString(spesification.getStandard()
+            .getValue(spesification.getSpecification(), spesification.getUnit()));
         getResultTable()[j][2] = spesification.getCountry();
         getResultTable()[j][3] = spesification.getTerminal();
         getResultTable()[j][4] = Double.toString(spesification.getMinValue());

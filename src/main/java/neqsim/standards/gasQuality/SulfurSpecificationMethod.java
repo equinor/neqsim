@@ -12,7 +12,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class SulfurSpecificationMethod extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
-  SystemInterface thermoSystem;
   String unit = "ppm";
   double H2Scontent = 0.0;
 
@@ -37,11 +36,23 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter, java.lang.String returnUnit) {
     thermoSystem.init(0);
-    if (thermoSystem.getPhase(0).hasComponent("H2S")) {
-      if (returnParameter.equals("H2S content")) {
+    if (returnParameter.equals("H2S")) {
+      if (thermoSystem.getPhase(0).hasComponent("H2S")) {
         H2Scontent = thermoSystem.getPhase(0).getComponent("H2S").getx() * 1e6;
         return H2Scontent;
+      } else {
+        return 0.0;
       }
+    }
+    if (returnParameter.equals("Total sulfur")) {
+      double sulfurcontent = 0.0;
+      if (thermoSystem.getPhase(0).hasComponent("H2S")) {
+        sulfurcontent += thermoSystem.getPhase(0).getComponent("H2S").getx() * 1e6;
+      }
+      if (thermoSystem.getPhase(0).hasComponent("SO2")) {
+        sulfurcontent += thermoSystem.getPhase(0).getComponent("So2").getx() * 1e6;
+      }
+      return sulfurcontent;
     }
     return 0.0;
   }
