@@ -1,5 +1,6 @@
 package neqsim.standards.salesContract;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemGERGwaterEos;
@@ -39,13 +40,14 @@ class BaseContractTest extends neqsim.NeqSimTest {
   @Test
   void testUKGSMR1996() {
     standard.runCheck();
-    standard.prettyPrint();
+    // standard.prettyPrint();
   }
 
   @Test
   void testUKGSMR19962() {
     standard = new BaseContract(testSystem, "central", "Brazil");
     standard.runCheck();
-    standard.prettyPrint();
+    assertEquals(2.18817727816606, Double.parseDouble(standard.getResultTable()[1][1]), 1e-6);
+    // standard.prettyPrint();
   }
 }
