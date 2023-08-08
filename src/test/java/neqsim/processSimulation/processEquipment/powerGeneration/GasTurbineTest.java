@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.powerGeneration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -35,8 +36,7 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void testGetMechanicalDesign() {
-  }
+  void testGetMechanicalDesign() {}
 
   @Disabled
   @Test
@@ -50,5 +50,29 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
 
     logger.info("power generated " + gasturb.getPower() / 1.0e6);
     logger.info("heat generated " + gasturb.getHeat() / 1.0e6);
+  }
+
+  @Test
+  void testIdealAiFuelRatio() {
+
+    testSystem = new SystemSrkEos(298.15, 1.0);
+    testSystem.addComponent("nitrogen", 1.0);
+    testSystem.addComponent("CO2", 2.0);
+    testSystem.addComponent("methane", 92.0);
+    testSystem.addComponent("ethane", 4.0);
+    testSystem.addComponent("propane", 2.0);
+    testSystem.addComponent("i-butane", 0.5);
+    testSystem.addComponent("n-butane", 0.5);
+
+    gasStream = new Stream("turbine stream", testSystem);
+    gasStream.setFlowRate(1.0, "MSm3/day");
+    gasStream.setTemperature(50.0, "C");
+    gasStream.setPressure(2.0, "bara");
+
+    GasTurbine gasturb = new GasTurbine("turbine");
+    gasturb.setInletStream(gasStream);
+    double AFR = gasturb.calcIdealAirGasRatio();
+    assertEquals(15.8435240974, AFR, 0.01);
+
   }
 }

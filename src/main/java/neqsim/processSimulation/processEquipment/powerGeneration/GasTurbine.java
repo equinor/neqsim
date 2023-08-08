@@ -166,8 +166,10 @@ public class GasTurbine extends TwoPortEquipment {
     locHeater.run(id);
 
     double moleMethane = outStreamAir.getFluid().getComponent("methane").getNumberOfmoles();
-    // double moleEthane = outStreamAir.getFluid().getComponent("ethane").getNumberOfmoles();
-    // double molePropane = outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
+    // double moleEthane =
+    // outStreamAir.getFluid().getComponent("ethane").getNumberOfmoles();
+    // double molePropane =
+    // outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
     locHeater.getOutletStream().getFluid().addComponent("CO2", moleMethane);
     locHeater.getOutletStream().getFluid().addComponent("water", moleMethane * 2.0);
     locHeater.getOutletStream().getFluid().addComponent("methane", -moleMethane);
@@ -192,4 +194,46 @@ public class GasTurbine extends TwoPortEquipment {
     this.heat = cooler1.getDuty();
     setCalculationIdentifier(id);
   }
+
+  /**
+   *
+   *
+   * <p>
+   * calcIdealAirGasRatio
+   * </p>
+   * Calculates ideal air fule rratio
+   */
+  public double calcIdealAirGasRatio() {
+    thermoSystem = inStream.getThermoSystem().clone();
+    double elementsH = 0.0;
+    double elementsC = 0.0;
+    double sumHC = 0.0;
+    double molMassHC = 0.0;
+    double wtFracHC = 0.0;
+    for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
+      if (thermoSystem.getComponent(i).isHydrocarbon()) {
+        sumHC += thermoSystem.getComponent(i).getz();
+        molMassHC +=
+            thermoSystem.getComponent(i).getz() * thermoSystem.getComponent(i).getMolarMass();
+        elementsC += thermoSystem.getComponent(i).getz()
+            * thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
+        elementsH += thermoSystem.getComponent(i).getz()
+            * thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
+      }
+
+    }
+    if (sumHC < 1e-100) {
+      return 0.0;
+    } else {
+      wtFracHC = molMassHC / thermoSystem.getMolarMass();
+      molMassHC /= sumHC;
+      elementsC /= sumHC;
+      elementsH /= sumHC;
+    }
+    double A = elementsC + elementsH / 4;
+
+    double AFR = A * (32.0 + 3.76 * 28.0) / 1000.0 / molMassHC*wtFracHC;
+    return AFR;
+  }
+
 }
