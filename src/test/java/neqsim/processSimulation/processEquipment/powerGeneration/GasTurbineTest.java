@@ -74,7 +74,7 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
 
     GasTurbine gasturb = new GasTurbine("turbine");
     gasturb.setInletStream(gasStream);
-    double AFR = gasturb.calcIdealAirGasRatio();
+    double AFR = gasturb.calcIdealAirFuelRatio();
     assertEquals(15.8430086719654, AFR, 0.0001);
 
   }
