@@ -63,6 +63,9 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     testSystem.addComponent("propane", 2.0);
     testSystem.addComponent("i-butane", 0.5);
     testSystem.addComponent("n-butane", 0.5);
+    testSystem.addComponent("n-pentane", 0.01);
+    testSystem.addComponent("i-pentane", 0.01);
+    testSystem.addComponent("n-hexane", 0.001);
 
     gasStream = new Stream("turbine stream", testSystem);
     gasStream.setFlowRate(1.0, "MSm3/day");
@@ -72,7 +75,7 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     GasTurbine gasturb = new GasTurbine("turbine");
     gasturb.setInletStream(gasStream);
     double AFR = gasturb.calcIdealAirGasRatio();
-    assertEquals(15.8435240974, AFR, 0.01);
+    assertEquals(15.8430086719654, AFR, 0.0001);
 
   }
 }
