@@ -89,6 +89,12 @@ public class Element implements ThermodynamicConstantsInterface {
    * @return NumberOfElements of a given type.
    */
   public double getNumberOfElements(String elementName) {
+    if (nameArray == null) {
+      neqsim.util.exception.InvalidInputException ex =
+          new neqsim.util.exception.InvalidInputException(this, "getNumberOfElements", elementName,
+              "component not in element database..");
+      throw new RuntimeException(ex);
+    }
     for (int i = 0; i < nameArray.length; i++) {
       if (nameArray[i].equals(elementName)) {
         return coefArray[i];
