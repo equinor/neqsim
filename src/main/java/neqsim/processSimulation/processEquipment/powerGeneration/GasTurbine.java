@@ -201,9 +201,9 @@ public class GasTurbine extends TwoPortEquipment {
    * <p>
    * calcIdealAirGasRatio
    * </p>
-   * Calculates ideal air fule rratio
+   * Calculates ideal air fuel ratio [kg air/kg fuel]
    */
-  public double calcIdealAirGasRatio() {
+  public double calcIdealAirFuelRatio() {
     thermoSystem = inStream.getThermoSystem().clone();
     double elementsH = 0.0;
     double elementsC = 0.0;
@@ -232,7 +232,7 @@ public class GasTurbine extends TwoPortEquipment {
     }
     double A = elementsC + elementsH / 4;
 
-    double AFR = A * (32.0 + 3.76 * 28.0) / 1000.0 / molMassHC*wtFracHC;
+    double AFR = A * (32.0 + 3.76 * 28.0) / 1000.0 / molMassHC * wtFracHC;
     return AFR;
   }
 
