@@ -424,24 +424,29 @@ public class NeqSimDataBase
     updateTable(tableName, "data/" + tableName + ".csv");
   }
 
-  /**
+/**
    * Drops and re-creates table from contents in csv file.
    * 
    * @param tableName Name of table to replace
    * @param path Path to csv file to
    */
   public static void updateTable(String tableName, String path) {
-    URL url = NeqSimDataBase.class.getClassLoader().getResource(path);
-    if (url == null) {
+    try {
+      java.nio.file.Paths.get(path);
+    } catch (Exception e) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase",
           "updateTable", "path", "- Resource " + path + " not found"));
     }
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    try {
       database.execute("DROP TABLE IF EXISTS " + tableName);
-      String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + url + "')";
+      String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + path + "')";
       database.execute(sqlString);
     } catch (Exception ex) {
+      updateTable(tableName);
       logger.error("Failed updating table " + tableName, ex);
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase",
+          "updateTable", "path", "- Resource " + path + " not found"));
     }
   }
 
