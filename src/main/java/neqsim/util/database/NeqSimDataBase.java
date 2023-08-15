@@ -55,7 +55,8 @@ public class NeqSimDataBase
    * </p>
    */
   public NeqSimDataBase() {
-    // Fill tables from csv-files if not initialized and not currently being initialized.
+    // Fill tables from csv-files if not initialized and not currently being
+    // initialized.
     if (dataBaseType == "H2fromCSV" && !h2IsInitialized && !h2IsInitalizing) {
       initH2DatabaseFromCSVfiles();
     }
@@ -445,6 +446,26 @@ public class NeqSimDataBase
     }
   }
 
+  /**
+   * Drops and re-creates table from contents in csv file.
+   * 
+   * @param tableName Name of table to replace
+   * @param path Path to csv file to
+   */
+  public static void replaceTable(String tableName, String path) {
+    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    try {
+      database.execute("DROP TABLE IF EXISTS " + tableName);
+      String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + path + "')";
+      database.execute(sqlString);
+    } catch (Exception ex) {
+      updateTable(tableName);
+      logger.error("Failed updating table " + tableName, ex);
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase",
+          "replaceTable", "path", "- Resource " + path + " not found"));
+    }
+  }
+
   public static void initH2DatabaseFromCSVfiles() {
     h2IsInitalizing = true;
     neqsim.util.database.NeqSimDataBase.connectionString =
@@ -480,9 +501,11 @@ public class NeqSimDataBase
       updateTable("UNIFACInterParamC_UMRMC");
       updateTable("MBWR32param");
       updateTable("COMPSALT");
-      // TODO: missing tables: ionicData, reactiondatakenteisenberg, purecomponentvapourpressures,
+      // TODO: missing tables: ionicData, reactiondatakenteisenberg,
+      // purecomponentvapourpressures,
       // binarysystemviscosity, binaryliquiddiffusioncoefficientdata,
-      // purecomponentconductivitydata, purecomponentdensity, purecomponentsurfacetension2,
+      // purecomponentconductivitydata, purecomponentdensity,
+      // purecomponentsurfacetension2,
       // BinaryComponentSurfaceTension, purecomponentsurfacetension,
       // purecomponentviscosity,PureComponentVapourPressures
       // technicalrequirements, technicalrequirements_process, materialpipeproperties,

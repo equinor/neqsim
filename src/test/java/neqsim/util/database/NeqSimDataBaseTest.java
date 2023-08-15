@@ -18,6 +18,16 @@ public class NeqSimDataBaseTest extends NeqSimTest {
   }
 
   @Test
+  void testReplaceTable() {
+    neqsim.util.database.NeqSimDataBase.replaceTable("COMP", "src/main/resources/data/COMP.csv");
+    RuntimeException thrown = Assertions.assertThrows(RuntimeException.class,
+        () -> neqsim.util.database.NeqSimDataBase.replaceTable("COMP", "file_does_not_exist.csv"));
+    Assertions.assertEquals(
+        "neqsim.util.exception.InvalidInputException: NeqSimDataBase:replaceTable - Input path - Resource file_does_not_exist.csv not found",
+        thrown.getMessage());
+  }
+
+  @Test
   void testUpdateTable() {
     neqsim.util.database.NeqSimDataBase.updateTable("COMP");
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class,
