@@ -1153,6 +1153,7 @@ abstract class Phase implements PhaseInterface {
     double refViscosity = getViscosity(); // viscosity in kg/msec
     double conversionFactor = 1.0;
     switch (unit) {
+      case "Pas":
       case "kg/msec":
         conversionFactor = 1.0;
         break;

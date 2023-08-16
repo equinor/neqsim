@@ -5,7 +5,7 @@ import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterfa
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
-import neqsim.thermo.phase.PhaseInterface;g
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**

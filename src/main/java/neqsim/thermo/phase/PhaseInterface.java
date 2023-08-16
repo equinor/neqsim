@@ -1111,7 +1111,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * method to return viscosity og the phase in a specified unit.
    *
-   * @param unit Supported units are kg/msec, cP (centipoise)
+   * @param unit Supported units are kg/msec, Pas, cP (centipoise)
    * @return viscosity in specified unit
    */
   public double getViscosity(String unit);
