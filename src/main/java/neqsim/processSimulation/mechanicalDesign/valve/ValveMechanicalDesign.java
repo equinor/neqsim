@@ -33,8 +33,9 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    * Constructor for ValveMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
-   *        object
+   * @param equipment a
+   *                  {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *                  object
    */
   public ValveMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -49,8 +50,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     if (getDesignStandard().containsKey("valve design codes")) {
       System.out.println("valve code standard: "
           + getDesignStandard().get("valve design codes").getStandardName());
-      valveCvMax =
-          ((ValveDesignStandard) getDesignStandard().get("valve design codes")).getValveCvMax();
+      valveCvMax = ((ValveDesignStandard) getDesignStandard().get("valve design codes")).getValveCvMax();
     } else {
       System.out.println("no valve code standard specified......using default");
     }
@@ -65,7 +65,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     outletPressure = valve1.getOutletPressure();
     dP = inletPressure - outletPressure;
 
-    valveCvMax = valve1.getThermoSystem().getVolume("m3/hr")
+    valveCvMax = valve1.getThermoSystem().getFlowRate("m3/hr")
         * Math.sqrt(valve1.getThermoSystem().getDensity("kg/m3") / 1000.0 / dP);
     valveWeight = valveCvMax * 100.0;
     setWeightTotal(valveWeight);
@@ -78,7 +78,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"Name", "Value", "Unit"};
+    String[] names = { "Name", "Value", "Unit" };
 
     String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 
