@@ -46,12 +46,14 @@ abstract class Phase implements PhaseInterface {
 
   /**
    * Mole fraction of this phase of system.
-   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>. NB! numberOfMolesInSystem is
+   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>. NB!
+   * numberOfMolesInSystem is
    * not known to the phase.
    */
   double beta = 1.0;
   /**
-   * Number of moles in phase. <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code>. NB!
+   * Number of moles in phase.
+   * <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code>. NB!
    * numberOfMolesInSystem is not known to the phase.
    */
   public double numberOfMolesInPhase = 0;
@@ -101,7 +103,7 @@ abstract class Phase implements PhaseInterface {
    * addcomponent. Increase number of components and add moles to phase.
    * </p>
    *
-   * @param name Name of component to add.
+   * @param name  Name of component to add.
    * @param moles Number of moles of component to add to phase.
    */
   public void addComponent(String name, double moles) {
@@ -118,7 +120,8 @@ abstract class Phase implements PhaseInterface {
     }
 
     if (this.hasComponent(name)) {
-      // should use addMoles/addMolesChemreac if adding/subtracting moles for component.
+      // should use addMoles/addMolesChemreac if adding/subtracting moles for
+      // component.
       throw new RuntimeException("Component already exists in phase");
     }
 
@@ -176,8 +179,8 @@ abstract class Phase implements PhaseInterface {
   public void addMolesChemReac(int component, double dn, double totdn) {
     if ((numberOfMolesInPhase + dn) / numberOfMolesInPhase < -1e-10) {
       String msg = "will lead to negative number of moles in phase." + (numberOfMolesInPhase + dn);
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
+      neqsim.util.exception.InvalidInputException ex = new neqsim.util.exception.InvalidInputException(this,
+          "addMolesChemReac", "dn", msg);
       throw new RuntimeException(ex);
     }
     numberOfMolesInPhase += dn;
@@ -284,8 +287,7 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public final double getPressure(String unit) {
-    neqsim.util.unit.PressureUnit presConversion =
-        new neqsim.util.unit.PressureUnit(getPressure(), "bara");
+    neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(getPressure(), "bara");
     return presConversion.getValue(unit);
   }
 
@@ -494,11 +496,11 @@ abstract class Phase implements PhaseInterface {
    * calcA.
    * </p>
    *
-   * @param comp a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param comp        a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcA(int comp, PhaseInterface phase, double temperature, double pressure,
@@ -1025,6 +1027,7 @@ abstract class Phase implements PhaseInterface {
       case "J":
         conversionFactor = 1.0;
         break;
+      case "kJ/kmol":
       case "J/mol":
         conversionFactor = 1.0 / getNumberOfMolesInPhase();
         break;
@@ -1035,7 +1038,7 @@ abstract class Phase implements PhaseInterface {
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
     }
     return refEnthalpy * conversionFactor;
   }
@@ -1121,7 +1124,7 @@ abstract class Phase implements PhaseInterface {
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
     }
     return refEntropy * conversionFactor;
   }
@@ -1157,7 +1160,7 @@ abstract class Phase implements PhaseInterface {
         conversionFactor = 1.0e3;
         break;
       default:
-        throw new RuntimeException();
+        throw new RuntimeException("unit not supported " + unit);
     }
     return refViscosity * conversionFactor;
   }
@@ -1181,7 +1184,7 @@ abstract class Phase implements PhaseInterface {
         conversionFactor = 0.01;
         break;
       default:
-        throw new RuntimeException();
+        throw new RuntimeException("unit not supported " + unit);
     }
     return refConductivity * conversionFactor;
   }
@@ -1207,7 +1210,7 @@ abstract class Phase implements PhaseInterface {
         conversionFactor = 0.01;
         break;
       default:
-        throw new RuntimeException();
+        throw new RuntimeException("unit not supported " + unit);
     }
     return refConductivity * conversionFactor;
   }
@@ -1226,7 +1229,7 @@ abstract class Phase implements PhaseInterface {
    * </p>
    *
    * @param onlyPure a boolean
-   * @param name a {@link String} object
+   * @param name     a {@link String} object
    */
   public void initRefPhases(boolean onlyPure, String name) {
     refPhase = new PhaseInterface[numberOfComponents];
@@ -1280,7 +1283,7 @@ abstract class Phase implements PhaseInterface {
    * getLogPureComponentFugacity.
    * </p>
    *
-   * @param k a int
+   * @param k    a int
    * @param pure a boolean
    * @return a double
    */
@@ -1552,7 +1555,7 @@ abstract class Phase implements PhaseInterface {
         conversionFactor = 1.0;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
     }
     return JTcoef * conversionFactor;
   }
@@ -1585,8 +1588,7 @@ abstract class Phase implements PhaseInterface {
         conversionFactor = 0.0624279606;
         break;
       default:
-        throw new RuntimeException(
-            "Could not create conversion factor because molar mass is NULL or 0");
+        throw new RuntimeException("unit not supported " + unit);
     }
     return refDensity * conversionFactor;
   }
@@ -1823,7 +1825,8 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
-      String[][] mixRule, double[][] intparam) {}
+      String[][] mixRule, double[][] intparam) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -1919,7 +1922,8 @@ abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRuleGEModel(String name) {}
+  public void setMixingRuleGEModel(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -2106,8 +2110,7 @@ abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity_AGA8() {
-    neqsim.thermo.util.GERG.NeqSimAGA8Detail test =
-        new neqsim.thermo.util.GERG.NeqSimAGA8Detail(this);
+    neqsim.thermo.util.GERG.NeqSimAGA8Detail test = new neqsim.thermo.util.GERG.NeqSimAGA8Detail(this);
     return test.getDensity();
   }
 

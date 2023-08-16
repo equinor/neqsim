@@ -1081,7 +1081,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * method to return phase enthalpy in a specified unit.
    *
-   * @param unit Supported units are J, J/mol, J/kg and kJ/kg
+   * @param unit Supported units are J, J/mol, kJ/kmol, J/kg and kJ/kg
    * @return enthalpy in specified unit
    */
   public double getEnthalpy(String unit);
