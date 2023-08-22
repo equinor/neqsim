@@ -67,7 +67,6 @@ public class ChemicalReactionOperations
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public ChemicalReactionOperations(SystemInterface system) {
-    initCalc = new LinearProgrammingChemicalEquilibrium();
     boolean newcomps = true;
     int old = system.getPhase(0).getNumberOfComponents();
     this.system = system;
