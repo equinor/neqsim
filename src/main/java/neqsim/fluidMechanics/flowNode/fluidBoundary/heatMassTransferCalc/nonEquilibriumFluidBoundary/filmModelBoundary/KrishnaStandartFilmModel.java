@@ -31,13 +31,6 @@ public class KrishnaStandartFilmModel extends
    * <p>
    * Constructor for KrishnaStandartFilmModel.
    * </p>
-   */
-  public KrishnaStandartFilmModel() {}
-
-  /**
-   * <p>
-   * Constructor for KrishnaStandartFilmModel.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

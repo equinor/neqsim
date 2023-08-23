@@ -56,18 +56,10 @@ public class ChemicalReactionOperations
    * <p>
    * Constructor for ChemicalReactionOperations.
    * </p>
-   */
-  public ChemicalReactionOperations() {}
-
-  /**
-   * <p>
-   * Constructor for ChemicalReactionOperations.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public ChemicalReactionOperations(SystemInterface system) {
-    initCalc = new LinearProgrammingChemicalEquilibrium();
     boolean newcomps = true;
     int old = system.getPhase(0).getNumberOfComponents();
     this.system = system;
@@ -292,8 +284,21 @@ public class ChemicalReactionOperations
    * </p>
    *
    * @return a boolean
+   * @deprecated Replaced by hasReactions()
    */
+  @Deprecated
   public boolean hasRections() {
+    return this.hasReactions();
+  }
+
+  /**
+   * <p>
+   * hasRections.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean hasReactions() {
     return components.length > 0;
   }
 

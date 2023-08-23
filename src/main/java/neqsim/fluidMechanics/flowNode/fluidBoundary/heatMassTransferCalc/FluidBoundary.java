@@ -65,13 +65,6 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * <p>
    * Constructor for FluidBoundary.
    * </p>
-   */
-  public FluidBoundary() {}
-
-  /**
-   * <p>
-   * Constructor for FluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
