@@ -2269,7 +2269,7 @@ abstract class SystemThermo implements SystemInterface {
   @Override
   public void chemicalReactionInit() {
     chemicalReactionOperations = new ChemicalReactionOperations(this);
-    chemicalSystem = chemicalReactionOperations.hasRections();
+    chemicalSystem = chemicalReactionOperations.hasReactions();
   }
 
   /** {@inheritDoc} */
