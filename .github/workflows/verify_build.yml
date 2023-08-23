@@ -33,7 +33,7 @@ jobs:
         with:
           file: jacoco.xml
           name: codecov
-          token: ${{ secrets.CODECOV_TOKEN }}
+          tags: coverage
         
   test_java_8:
     name: Assert tests and javadoc with java 8
