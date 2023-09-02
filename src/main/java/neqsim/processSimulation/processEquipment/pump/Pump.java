@@ -185,6 +185,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps.PHflash(hout, 0);
       } else if (pumpChart.isUsePumpChart()) {
+        thermoSystem = inStream.getThermoSystem().clone();
         double pumpHead = 0.0;
         pumpHead = getPumpChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
         isentropicEfficiency =
