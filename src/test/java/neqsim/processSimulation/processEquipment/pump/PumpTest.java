@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.pump;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
@@ -92,17 +93,12 @@ public class PumpTest extends neqsim.NeqSimTest {
         80.5229826589649, 79.2210931638144, 75.4719133864634, 69.6034181197298, 58.7322388482707}};
 
     Pump pump1 = new Pump("pump1", feedC10Stream);
-    pump1.setOutletPressure(10);
-    // pump1.run();
     pump1.getPumpChart().setCurves(chartConditions, speed, flow, head, polyEff);
     pump1.getPumpChart().setHeadUnit("meter");
     pump1.setSpeed(500);
-    pump1.calculateAsCompressor(false);
-    // pump1.setusePumpChart()
     pump1.run();
 
-    pump1.getFluid().prettyPrint();
-
+    Assertions.assertEquals(7.274237081101, pump1.getOutletPressure(), 1e-5);
 
   }
 

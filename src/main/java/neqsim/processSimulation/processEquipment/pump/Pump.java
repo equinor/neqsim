@@ -169,7 +169,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
       thermoOps.TPflash();
       thermoSystem.init(3);
     } else {
-      if (calculateAsCompressor) {
+      if (!pumpChart.isUsePumpChart() && calculateAsCompressor) {
         thermoSystem = inStream.getThermoSystem().clone();
         thermoSystem.setPressure(pressure, pressureUnit);
         // System.out.println("entropy inn.." + entropy);
