@@ -169,7 +169,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
       thermoOps.TPflash();
       thermoSystem.init(3);
     } else {
-      if (calculateAsCompressor) {
+      if (!pumpChart.isUsePumpChart() && calculateAsCompressor) {
         thermoSystem = inStream.getThermoSystem().clone();
         thermoSystem.setPressure(pressure, pressureUnit);
         // System.out.println("entropy inn.." + entropy);
@@ -185,6 +185,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps.PHflash(hout, 0);
       } else if (pumpChart.isUsePumpChart()) {
+        thermoSystem = inStream.getThermoSystem().clone();
         double pumpHead = 0.0;
         pumpHead = getPumpChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
         isentropicEfficiency =
