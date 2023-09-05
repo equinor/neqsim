@@ -14,7 +14,7 @@ import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
-abstract class Component implements ComponentInterface {
+public abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Component.class);
 

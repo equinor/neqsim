@@ -20,7 +20,7 @@ import neqsim.util.exception.InvalidInputException;
  *
  * @author Even Solbraa
  */
-abstract class Phase implements PhaseInterface {
+public abstract class Phase implements PhaseInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Phase.class);
 

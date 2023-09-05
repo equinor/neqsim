@@ -17,7 +17,7 @@ import neqsim.thermodynamicOperations.BaseOperation;
  *
  * @author Even Solbraa
  */
-abstract class Flash extends BaseOperation {
+public abstract class Flash extends BaseOperation {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Flash.class);
 
