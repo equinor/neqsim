@@ -43,7 +43,7 @@ import neqsim.util.exception.InvalidInputException;
 /**
  * This is the base class of the System classes.
  */
-abstract class SystemThermo implements SystemInterface {
+public abstract class SystemThermo implements SystemInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(SystemThermo.class);
 

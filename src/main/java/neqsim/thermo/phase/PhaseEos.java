@@ -16,7 +16,7 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  *
  * @author Even Solbraa
  */
-abstract class PhaseEos extends Phase implements PhaseEosInterface {
+public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhaseEos.class);
 
