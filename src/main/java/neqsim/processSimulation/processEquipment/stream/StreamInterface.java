@@ -37,7 +37,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param flowrate a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit     a {@link java.lang.String} object
    */
   public void setFlowRate(double flowrate, String unit);
 
@@ -109,8 +109,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * getFlowRate. Wrapper for SystemInterface.getFlowRate().
    * </p>
    *
-   * @param unit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min, m3/hr, Sm3/sec,
-   *        Sm3/hr, Sm3/day, MSm3/day, mole/sec, mole/min, mole/hr
+   * @param unit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec,
+   *             m3/min, m3/hr, Sm3/sec,
+   *             Sm3/hr, Sm3/day, MSm3/day, mole/sec, mole/min, mole/hr
    * @return flow rate in specified unit
    */
   public default double getFlowRate(String unit) {
@@ -123,7 +124,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param temperature a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit        a {@link java.lang.String} object
    * @return a double
    */
   public double TVP(double temperature, String unit);
@@ -151,7 +152,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * clone.
    * </p>
    *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface clone();
 
@@ -176,7 +179,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * setThermoSystemFromPhase.
    * </p>
    *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+   * @param thermoSystem  a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseTypeName a {@link java.lang.String} object
    */
   public void setThermoSystemFromPhase(SystemInterface thermoSystem, String phaseTypeName);
@@ -196,7 +199,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param pressure a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit     a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit);
 
@@ -206,7 +209,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param temperature a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit        a {@link java.lang.String} object
    */
   public void setTemperature(double temperature, String unit);
 
@@ -227,6 +230,24 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * @return a double
    */
   public double LCV();
+
+  /**
+   * <p>
+   * GCV.
+   * </p>
+   *
+   * @return a double
+   */
+  public double GCV(int volumeReferenceTemperature, double energyReferenceTemperature, String unit);
+
+  /**
+   * <p>
+   * WI.
+   * </p>
+   *
+   * @return a double
+   */
+  public double WI(int volumeReferenceTemperature, double energyReferenceTemperature, String unit);
 
   /** {@inheritDoc} */
   @Override
