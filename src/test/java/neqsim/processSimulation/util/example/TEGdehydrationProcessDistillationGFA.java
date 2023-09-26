@@ -453,9 +453,9 @@ public class TEGdehydrationProcessDistillationGFA {
     /*
      * System.out.println("water in wet gas  " + ((Stream)
      * operations.getUnit("water saturated feed gas")).getFluid()
-     * .getPhase(0).getComponent("water").getz() * 1.0e6 * 0.01802 * 101325.0 / (8.314 * 288.15));
-     * System.out.println("water in dry gas  " + ((Stream)
-     * operations.getUnit("dry gas from absorber")).getFluid()
+     * .getPhase(0).getComponent("water").getz() * 1.0e6 * 0.01802 * 101325.0 /
+     * (ThermodynamicConstantsInterface.R * 288.15)); System.out.println("water in dry gas  " +
+     * ((Stream) operations.getUnit("dry gas from absorber")).getFluid()
      * .getPhase(0).getComponent("water").getz() * 1.0e6); System.out.println("reboiler duty (KW) "
      * + ((Reboiler) ((DistillationColumn)
      * operations.getUnit("TEG regeneration column")).getReboiler()) .getDuty() / 1.0e3);
@@ -480,14 +480,16 @@ public class TEGdehydrationProcessDistillationGFA {
     /*
      * double waterInWetGasppm =
      * waterSaturatedFeedGas.getFluid().getPhase(0).getComponent("water").getz() * 1.0e6; double
-     * waterInWetGaskgMSm3 = waterInWetGasppm * 0.01802 * 101325.0 / (8.314 * 288.15); double
-     * TEGfeedwt = TEGFeed.getFluid().getPhase("aqueous").getWtFrac("TEG"); double TEGfeedflw =
+     * waterInWetGaskgMSm3 = waterInWetGasppm * 0.01802 * 101325.0 /
+     * (ThermodynamicConstantsInterface.R * 288.15); double TEGfeedwt =
+     * TEGFeed.getFluid().getPhase("aqueous").getWtFrac("TEG"); double TEGfeedflw =
      * TEGFeed.getFlowRate("kg/hr"); double waterInDehydratedGasppm =
      * dehydratedGas.getFluid().getPhase(0).getComponent("water").getz() * 1.0e6; double
-     * waterInDryGaskgMSm3 = waterInDehydratedGasppm * 0.01802 * 101325.0 / (8.314 * 288.15); double
-     * richTEG2 = richTEG.getFluid().getPhase("aqueous").getWtFrac("TEG"); double temp =
+     * waterInDryGaskgMSm3 = waterInDehydratedGasppm * 0.01802 * 101325.0 /
+     * (ThermodynamicConstantsInterface.R * 288.15); double richTEG2 =
+     * richTEG.getFluid().getPhase("aqueous").getWtFrac("TEG"); double temp =
      * ((Stream)operations.getUnit("feed to TEG absorber")).getFluid().getPhase(0).getComponent(
-     * "water").getz()*1.0e6*0.01802*101325.0/(8.314*288.15);
+     * "water").getz()*1.0e6*0.01802*101325.0/(ThermodynamicConstantsInterface.R*288.15);
      * System.out.println("reboiler duty (KW) " + ((Reboiler) column.getReboiler()).getDuty() /
      * 1.0e3); System.out.println("flow rate from reboiler " + ((Reboiler)
      * column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));

@@ -29,11 +29,13 @@ public class TestVHflash {
   public static void main(String args[]) {
     double pressureInTank = ThermodynamicConstantsInterface.referencePressure; // Pa
     double temperatureInTank = 293.15;
-    double totalMolesInTank = 136000 * pressureInTank * 1.0e5 / 8.314 / temperatureInTank;
+    double totalMolesInTank =
+        136000 * pressureInTank * 1.0e5 / ThermodynamicConstantsInterface.R / temperatureInTank;
     double molefractionNitrogenInTank = 0.95;
 
     double molesInjectedLNG = 200000.0;
-    double molesInjecedVacumBreakerGas = 18 * pressureInTank * 1.0e5 / 8.314 / temperatureInTank;
+    double molesInjecedVacumBreakerGas =
+        18 * pressureInTank * 1.0e5 / ThermodynamicConstantsInterface.R / temperatureInTank;
 
     SystemInterface testSystem = new SystemSrkEos(temperatureInTank, pressureInTank);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

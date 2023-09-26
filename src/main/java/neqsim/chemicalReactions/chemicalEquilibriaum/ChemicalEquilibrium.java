@@ -3,6 +3,7 @@ package neqsim.chemicalReactions.chemicalEquilibriaum;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -24,7 +25,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   double d_n_t = 0;
   int NSPEC = 2;
   int NELE = 2;
-  double R = 8.314;
+  double R = ThermodynamicConstantsInterface.R;
   Matrix x_solve;
   double y_solve;
   double n_t = 0.0;

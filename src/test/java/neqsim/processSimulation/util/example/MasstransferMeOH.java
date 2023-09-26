@@ -5,6 +5,7 @@ import neqsim.processSimulation.processEquipment.mixer.StaticPhaseMixer;
 import neqsim.processSimulation.processEquipment.separator.GasScrubber;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>
@@ -88,9 +89,10 @@ public class MasstransferMeOH {
     // operations.run();
     // ((DistillationColumn)operations.getUnit("TEG regeneration
     // column")).setNumberOfTrays(2);
-    System.out.println("water in wet gas [kg/MSm3] "
-        + ((Stream) operations.getUnit("water saturated feed gas")).getFluid().getPhase(0)
-            .getComponent("water").getz() * 1.0e6 * 0.01802 * 101325.0 / (8.314 * 288.15));
+    System.out.println(
+        "water in wet gas [kg/MSm3] " + ((Stream) operations.getUnit("water saturated feed gas"))
+            .getFluid().getPhase(0).getComponent("water").getz() * 1.0e6 * 0.01802 * 101325.0
+            / (ThermodynamicConstantsInterface.R * 288.15));
     // mainMixer.getFluid().display();
     // scrubber.getGasOutStream().displayResult();
     System.out.println("hydt " + gasFromScrubber.getHydrateEquilibriumTemperature());

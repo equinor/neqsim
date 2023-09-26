@@ -82,10 +82,11 @@ public class TBPfractionModel implements java.io.Serializable {
       double TC = calcTC(molarMass, density);
       double PC = calcPC(molarMass, density);
       double acs = calcAcentricFactor(molarMass, density); // thermoSystem.getPhase(thermoSystem.getPhaseIndex(0)).getComponent(0).getAcentricFactor();
-      double criticaVol = (0.2918 - 0.0928 * acs) * 8.314 * TC / PC * 10.0;
+      double criticaVol =
+          (0.2918 - 0.0928 * acs) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
       if (criticaVol < 0) {
         // logger.info("acentric factor in calc critVol " + acs);
-        criticaVol = (0.2918 - 0.0928) * 8.314 * TC / PC * 10.0;
+        criticaVol = (0.2918 - 0.0928) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
       }
       return criticaVol;
     }

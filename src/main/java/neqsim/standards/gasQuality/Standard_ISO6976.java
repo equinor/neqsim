@@ -25,6 +25,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   ArrayList<String> componentsNotDefinedByStandard = new ArrayList<String>();
   double volRefT = 0;
   double volRefP = ThermodynamicConstantsInterface.referencePressure;
+  // ThermodynamicConstantsInterface.R
   double R = 8.314510;
   double molRefm3 = 0.0;
   // combustion conditions
