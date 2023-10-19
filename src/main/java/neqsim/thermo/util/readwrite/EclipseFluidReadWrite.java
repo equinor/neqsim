@@ -24,7 +24,9 @@ public class EclipseFluidReadWrite {
   public static String pseudoName = "";
 
   /**
-   * <p>setComposition.</p>
+   * <p>
+   * setComposition.
+   * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param inputFile a {@link java.lang.String} object
@@ -36,7 +38,9 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * <p>setComposition.</p>
+   * <p>
+   * setComposition.
+   * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param inputFile a {@link java.lang.String} object
@@ -107,7 +111,9 @@ public class EclipseFluidReadWrite {
   }
 
   /**
-   * <p>read.</p>
+   * <p>
+   * read.
+   * </p>
    *
    * @param inputFile a {@link java.lang.String} object
    * @param pseudoNameIn a {@link java.lang.String} object
@@ -161,7 +167,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("CNAMES")) {
           while ((st = br.readLine().replace("/", "")) != null) {
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             names.add(st);
@@ -169,7 +175,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("TCRIT")) {
           while ((st = br.readLine().replace("/", "")) != null) {
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             TC.add(Double.parseDouble(st));
@@ -177,7 +183,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("PCRIT")) {
           while ((st = br.readLine().replace("/", "")) != null) {
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             PC.add(Double.parseDouble(st));
@@ -185,7 +191,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("ACF")) {
           while ((st = br.readLine().replace("/", "")) != null) {
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             ACF.add(Double.parseDouble(st));
@@ -193,7 +199,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("MW")) {
           while ((st = br.readLine().replace("/", "")) != null) {
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             MW.add(Double.parseDouble(st));
@@ -201,7 +207,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("TBOIL")) {
           while ((st = br.readLine().replace("/", "")) != null) {
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             TBOIL.add(Double.parseDouble(st));
@@ -209,7 +215,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("VCRIT")) {
           while ((st = br.readLine().replace("/", "")) != null) {
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             VCRIT.add(Double.parseDouble(st));
@@ -217,7 +223,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("SSHIFT")) {
           while ((st = br.readLine().replace("/", "")) != null) {
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             SSHIFT.add(Double.parseDouble(st));
@@ -225,7 +231,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("PARACHOR")) {
           while ((st = br.readLine().replace("/", "")) != null) {
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             PARACHOR.add(Double.parseDouble(st));
@@ -233,7 +239,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("ZI")) {
           while ((st = br.readLine().replace("/", "")) != null) {
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             ZI.add(Double.parseDouble(st));
@@ -245,7 +251,7 @@ public class EclipseFluidReadWrite {
           kij = new double[names.size()][names.size()];
           while ((st = br.readLine().replace("/", "")) != null) {
             numb++;
-            if (st.startsWith("--")) {
+            if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
 
