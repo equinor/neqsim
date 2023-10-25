@@ -55,11 +55,7 @@ public class NeqSimDataBase
    * </p>
    */
   public NeqSimDataBase() {
-    // Fill tables from csv-files if not initialized and not currently being
-    // initialized.
-    if (dataBaseType == "H2fromCSV" && !h2IsInitialized && !h2IsInitalizing) {
-      initH2DatabaseFromCSVfiles();
-    }
+    
     setDataBaseType(dataBaseType);
 
     try {
@@ -295,6 +291,12 @@ public class NeqSimDataBase
    */
   public static void setDataBaseType(String aDataBaseType, String connectionString) {
     dataBaseType = aDataBaseType;
+
+    // Fill tables from csv-files if not initialized and not currently being
+    // initialized.
+    if (dataBaseType == "H2fromCSV" && !h2IsInitialized && !h2IsInitalizing) {
+      initH2DatabaseFromCSVfiles();
+    }
 
     if (connectionString != null) {
       NeqSimDataBase.connectionString = connectionString;
