@@ -1,4 +1,4 @@
-![NeqSim Logo](https://github.com/equinor/neqsim/blob/logo/docs/wiki/logonobackgroundsmalll.png) NeqSim
+![NeqSim Logo](https://raw.githubusercontent.com/equinor/ecalc/main/docs/static/img/logo.svg)
 
 [![Build Status](https://neqsim.visualstudio.com/neqsim_cicd/_apis/build/status/neqsim_build?branchName=master)](https://neqsim.visualstudio.com/neqsim_cicd/_build/latest?definitionId=1&branchName=master)
 ![Build maven](https://github.com/equinor/neqsim/workflows/Build%20maven/badge.svg?branch=master)
