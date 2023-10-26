@@ -1,7 +1,5 @@
 ![NeqSim Logo](https://github.com/equinor/neqsim/blob/logo/docs/wiki/logonobackground.png)
 
-# NeqSim
-
 [![Build Status](https://neqsim.visualstudio.com/neqsim_cicd/_apis/build/status/neqsim_build?branchName=master)](https://neqsim.visualstudio.com/neqsim_cicd/_build/latest?definitionId=1&branchName=master)
 ![Build maven](https://github.com/equinor/neqsim/workflows/Build%20maven/badge.svg?branch=master)
 [![Known Vulnerabilities](https://snyk.io/test/github/equinor/neqsim/badge.svg)](https://snyk.io/test/github/equinor/neqsim)
