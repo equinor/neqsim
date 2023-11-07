@@ -587,15 +587,15 @@ public abstract class Phase implements PhaseInterface {
     double conversionFactor = 1.0;
     switch (unit) {
       case "m3/mol":
-        conversionFactor = 1.0 / 1.0e5;
+        conversionFactor = 1.0;
         break;
       case "litre/mol":
-        conversionFactor = 1.0 / 1.0e2;
+        conversionFactor = 1000.0;
         break;
       default:
         throw new RuntimeException("unit not supported " + unit);
     }
-    return molarVolume * conversionFactor;
+    return getMolarMass() / getDensity("kg/m3") * conversionFactor;
   }
 
   /** {@inheritDoc} */

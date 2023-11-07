@@ -33,6 +33,31 @@ class SystemPrEoSTest extends neqsim.NeqSimTest {
 
   /**
    * <p>
+   * testMolarVolume.
+   * </p>
+   */
+  @Test
+  @DisplayName("test testMolarVolume calc whre unit as input")
+  public void testMolarVolume() {
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
+    testSystem.addComponent("nitrogen", 0.01);
+    testSystem.addComponent("CO2", 0.01);
+    testSystem.addComponent("methane", 0.68);
+    testSystem.addComponent("ethane", 0.1);
+    testSystem.setMixingRule("classic");
+    testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initProperties();
+    assertEquals(testSystem.getMolarVolume("m3/mol"),
+        testSystem.getMolarMass("kg/mol") / testSystem.getDensity("kg/m3"));
+  }
+
+
+
+  /**
+   * <p>
    * testTPflash2.
    * </p>
    */
