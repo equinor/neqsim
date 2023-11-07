@@ -45,6 +45,14 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
     @Override
     public double getValue(String fromunit) {
         return 0.0;
+    }    
+  
+    /** {@inheritDoc} */
+    @Override
+    public double getValue(double val, String fromunit, String tounit) {
+        return 0.0;
     }
+
+  
 
 }
