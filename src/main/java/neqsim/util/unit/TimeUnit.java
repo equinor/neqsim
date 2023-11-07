@@ -17,4 +17,13 @@ package neqsim.util.unit;
 public class TimeUnit extends neqsim.util.unit.BaseUnit {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * 
+   * @param value
+   * @param name
+   */
+  public TimeUnit(double value, String name) {
+    super(value, name);
+  }
+
 }
