@@ -319,7 +319,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     // double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
     thermoSystem.init(3);
     gasOutStream.getThermoSystem().init(3);
-    liquidOutStream.getThermoSystem().init(3);
+    if (liquidOutStream.getThermoSystem().hasPhaseType("oil")) {
+      liquidOutStream.getThermoSystem().init(3);
+    }
+
     double volume1 = thermoSystem.getVolume();
     // System.out.println("volume1 " + volume1);
     double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()

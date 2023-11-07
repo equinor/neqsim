@@ -83,6 +83,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     flowController.setControllerSetPoint(63.5);
     flowController.setControllerParameters(0.1, 0.10, 0.0);
 
+    p = new ProcessSystem();
     p.add(stream1);
     p.add(valve1);
     p.add(separator1);
@@ -167,6 +168,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separatorPressureController.setControllerSetPoint(7.0);
     separatorPressureController.setControllerParameters(0.5, 10.0, 0.0);
 
+    p = new ProcessSystem();
     p.add(stream1);
     p.add(valve1);
 
@@ -210,5 +212,52 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
         assertEquals(p.getCalculationIdentifier(), sim.getCalculationIdentifier());
       }
     }
+  }
+
+  @Test
+  public void testDynamicCalculation3() {
+    neqsim.thermo.system.SystemInterface testSystem2 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 100.00);
+    testSystem2.addComponent("methane", 1.1);
+    testSystem2.addComponent("n-heptane", 1.1);
+    testSystem2.setMixingRule(2);
+
+
+    Stream feedStreeam = new Stream("Purge Stream", testSystem2);
+
+    Separator separator1 = new Separator("separator_1");
+    separator1.addStream(feedStreeam);
+    separator1.setCalculateSteadyState(false);
+    separator1.setInternalDiameter(1.0);
+    separator1.setSeparatorLength(3.0);
+
+    ThrottlingValve gasValve = new ThrottlingValve("valve_gas", separator1.getGasOutStream());
+    gasValve.setOutletPressure(7.0);
+    gasValve.setPercentValveOpening(50);
+
+    ThrottlingValve liquidValve = new ThrottlingValve("valve_gas", separator1.getLiquidOutStream());
+    liquidValve.setOutletPressure(7.0);
+    liquidValve.setPercentValveOpening(50);
+
+    p = new ProcessSystem();
+    p.add(feedStreeam);
+    p.add(separator1);
+    p.add(gasValve);
+    p.add(liquidValve);
+
+    p.run();
+
+    feedStreeam.setFlowRate(1e-10, "kg/sec");
+    liquidValve.setPercentValveOpening(1e-10);
+    System.out.println("pressure " + separator1.getPressure());
+    p.runTransient(0.01);
+    System.out.println("pressure " + separator1.getPressure());
+    p.runTransient(0.01);
+    System.out.println("pressure " + separator1.getPressure());
+    p.runTransient(0.01);
+    System.out.println("pressure " + separator1.getPressure());
+    p.runTransient(0.01);
+    System.out.println("pressure " + separator1.getPressure());
+
   }
 }
