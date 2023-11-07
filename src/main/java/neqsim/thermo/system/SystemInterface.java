@@ -1890,6 +1890,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMolarVolume();
 
   /**
+   * method to return molar volume of the fluid:
+   * eventual volume correction included.
+   * 
+   * @param unit Supported units are m3/mol, litre/mol
+   *
+   * @return molar volume volume in unit
+   */
+  public double getMolarVolume(String unit);
+
+  /**
    * Get molar mass of system.
    *
    * @return molar mass in unit kg/mol

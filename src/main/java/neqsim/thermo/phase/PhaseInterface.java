@@ -400,6 +400,16 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getMolarVolume();
 
   /**
+   * method to return molar volume of the fluid:
+   * eventual volume correction included.
+   * 
+   * @param unit Supported units are m3/mol, litre/mol
+   *
+   * @return molar volume volume in unit
+   */
+  public double getMolarVolume(String unit);
+
+  /**
    * method to return flow rate of a phase.
    *
    * @param flowunit Supported units are kg/sec, kg/min, kg/hr, m3/sec, m3/min,

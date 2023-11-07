@@ -2835,6 +2835,16 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getMolarVolume(String unit) {
+    double volume = 0;
+    for (int i = 0; i < numberOfPhases; i++) {
+      volume += beta[phaseIndex[i]] * getPhase(i).getMolarVolume(unit);
+    }
+    return volume;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getMolarVolume() {
     double volume = 0;
     for (int i = 0; i < numberOfPhases; i++) {
