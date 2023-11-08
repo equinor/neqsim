@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -22,21 +23,20 @@ public class FlowSetterTest {
     testFluid.addComponent("nC10", 4.053);
     testFluid.setMixingRule(2);
     testFluid.setMultiPhaseCheck(true);
-
-    testFluid.setTemperature(90.0, "C");
-    testFluid.setPressure(60.0, "bara");
     testFluid.setTotalFlowRate(1e6, "kg/hr");
 
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
 
     MultiPhaseMeter multiPhaseMeter = new MultiPhaseMeter("test", stream_1);
-    multiPhaseMeter.setTemperature(90.0, "C");
-    multiPhaseMeter.setPressure(60.0, "bara");
+    multiPhaseMeter.setTemperature(15.0, "C");
+    multiPhaseMeter.setPressure(1.01325, "bara");
 
     FlowSetter flowset = new FlowSetter("flowset", stream_1);
+    flowset.setTemperature(15.0, "C");
+    flowset.setPressure(1.01325, "bara");
     flowset.setGasFlowRate(multiPhaseMeter.getMeasuredValue("Gas Flow Rate", "Sm3/hr"), "Sm3/hr");
-    flowset.setOilFlowRate(multiPhaseMeter.getMeasuredValue("Oil Flow Rate", "Sm3/hr"), "Sm3/hr");
+    flowset.setOilFlowRate(multiPhaseMeter.getMeasuredValue("Oil Flow Rate", "m3/hr"), "m3/hr");
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -44,5 +44,8 @@ public class FlowSetterTest {
     operations.add(multiPhaseMeter);
     operations.add(flowset);
     operations.run();
+
+    assertEquals(flowset.getOutletStream().getFlowRate("kg/sec"), stream_1.getFlowRate("kg/sec"),
+        1.0);
   }
 }

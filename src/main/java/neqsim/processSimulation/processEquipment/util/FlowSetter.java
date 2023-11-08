@@ -131,22 +131,113 @@ public class FlowSetter extends TwoPortEquipment {
     this.unitT = unitT;
   }
 
+  /**
+   * <p>
+   * Get setGasFlowRate
+   * </p>
+   * 
+   * @param flowRate flow rate
+   * @param flowUnit Supported units are Sm3/sec, Sm3/hr, Sm3/day, MSm3/day
+   * @return gas flow rate in unit sm3/sec
+   */
   public void setGasFlowRate(double flowRate, String flowUnit) {
-    gasFlowRate = flowRate;
-    unitGasFlowRate = flowUnit;
+    double conversionFactor = 1.0;
+    switch (flowUnit) {
+      case "Sm3/sec":
+        conversionFactor = 1.0;
+        break;
+      case "Sm3/hr":
+        conversionFactor = 1.0 / 3600.0;
+        break;
+      case "Sm3/day":
+        conversionFactor = 1.0 / 3600.0 / 24.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + flowUnit);
+    }
+    gasFlowRate = flowRate * conversionFactor;
   }
 
+  /**
+   * <p>
+   * Get getGasFlowRate
+   * </p>
+   * 
+   * @param flowUnit Supported units are Sm3/sec, Sm3/hr, Sm3/day, MSm3/day
+   * @return gas flow rate in unit sm3/sec
+   */
   public double getGasFlowRate(String flowUnit) {
-    return gasFlowRate;
+    double conversionFactor = 1.0;
+    switch (flowUnit) {
+      case "Sm3/sec":
+        conversionFactor = 1.0;
+        break;
+      case "Sm3/hr":
+        conversionFactor = 1.0 / 3600.0;
+        break;
+      case "Sm3/day":
+        conversionFactor = 1.0 / 3600.0 / 24.0;
+        break;
+      case "MSm3/day":
+        conversionFactor = 1.0 / 3600.0 / 24.0 / 1e6;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + flowUnit);
+    }
+    return gasFlowRate * conversionFactor;
   }
 
+  /**
+   * <p>
+   * Get setOilFlowRate
+   * </p>
+   * 
+   * @param flowRate flow rate
+   * @param flowUnit Supported units are m3/sec, m3/hr, m3/day
+   * @return oil flow rate in unit m3/sec
+   */
   public void setOilFlowRate(double flowRate, String flowUnit) {
-    oilFlowRate = flowRate;
-    unitOilFlowRate = flowUnit;
+    double conversionFactor = 1.0;
+    switch (flowUnit) {
+      case "m3/sec":
+        conversionFactor = 1.0;
+        break;
+      case "m3/hr":
+        conversionFactor = 1.0 / 3600.0;
+        break;
+      case "m3/day":
+        conversionFactor = 1.0 / 3600.0 / 24.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + flowUnit);
+    }
+    oilFlowRate = flowRate * conversionFactor;
   }
 
+  /**
+   * <p>
+   * Get getOilFlowRate
+   * </p>
+   * 
+   * @param flowUnit Supported units are m3/sec, m3/hr, m3/day
+   * @return oil flow rate in unit m3/sec
+   */
   public double getOilFlowRate(String flowUnit) {
-    return oilFlowRate;
+    double conversionFactor = 1.0;
+    switch (flowUnit) {
+      case "m3/sec":
+        conversionFactor = 1.0;
+        break;
+      case "m3/hr":
+        conversionFactor = 1.0 / 3600.0;
+        break;
+      case "m3/day":
+        conversionFactor = 1.0 / 3600.0 / 24.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + flowUnit);
+    }
+    return oilFlowRate * conversionFactor;
   }
 
   public void setWaterFlowRate(double flowRate, String flowUnit) {
@@ -186,7 +277,7 @@ public class FlowSetter extends TwoPortEquipment {
       moleChange[i] = tempFluid.getPhase("gas").getComponent(i).getx()
           * (getGasFlowRate("Sm3/sec") / tempFluid.getPhase("gas").getMolarVolume("m3/mol"))
           + tempFluid.getPhase("oil").getComponent(i).getx()
-              * (getOilFlowRate("Sm3/sec") / tempFluid.getPhase("oil").getMolarVolume("m3/mol"))
+              * (getOilFlowRate("m3/sec") / tempFluid.getPhase("oil").getMolarVolume("m3/mol"))
           - tempFluid.getComponent(i).getNumberOfmoles();
     }
     tempFluid.init(0);
@@ -195,7 +286,7 @@ public class FlowSetter extends TwoPortEquipment {
     }
     tempFluid.setPressure((inStream.getThermoSystem()).getPressure());
     tempFluid.setTemperature((inStream.getThermoSystem()).getTemperature());
-    tempFluid.setTotalFlowRate(flow, "kg/sec");
+    // tempFluid.setTotalFlowRate(flow, "kg/sec");
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
