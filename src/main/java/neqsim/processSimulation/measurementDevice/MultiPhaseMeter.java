@@ -139,6 +139,60 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       return tempFluid.getPhase("gas").getCorrectedVolume()
           / tempFluid.getPhase("oil").getCorrectedVolume();
     }
+    if (measurement.equals("Gas Flow Rate")) {
+      SystemInterface tempFluid = stream.getThermoSystem().clone();
+      tempFluid.setTemperature(temperature, unitT);
+      tempFluid.setPressure(pressure, unitP);
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+      try {
+        thermoOps.TPflash();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+        return Double.NaN;
+      }
+      // tempFluid.display();
+      if (!tempFluid.hasPhaseType("gas")) {
+        return Double.NaN;
+      }
+      tempFluid.initPhysicalProperties("density");
+      return tempFluid.getPhase("gas").getFlowRate(unit);
+    }
+    if (measurement.equals("Oil Flow Rate")) {
+      SystemInterface tempFluid = stream.getThermoSystem().clone();
+      tempFluid.setTemperature(temperature, unitT);
+      tempFluid.setPressure(pressure, unitP);
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+      try {
+        thermoOps.TPflash();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+        return Double.NaN;
+      }
+      // tempFluid.display();
+      if (!tempFluid.hasPhaseType("oil")) {
+        return Double.NaN;
+      }
+      tempFluid.initPhysicalProperties("density");
+      return tempFluid.getPhase("oil").getFlowRate(unit);
+    }
+    if (measurement.equals("Water Flow Rate")) {
+      SystemInterface tempFluid = stream.getThermoSystem().clone();
+      tempFluid.setTemperature(temperature, unitT);
+      tempFluid.setPressure(pressure, unitP);
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+      try {
+        thermoOps.TPflash();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+        return Double.NaN;
+      }
+      // tempFluid.display();
+      if (!tempFluid.hasPhaseType("aqueous")) {
+        return Double.NaN;
+      }
+      tempFluid.initPhysicalProperties("density");
+      return tempFluid.getPhase("aqueous").getFlowRate(unit);
+    }
     if (measurement.equals("gasDensity") || measurement.equals("oilDensity")
         || measurement.equals("waterDensity")) {
       SystemInterface tempFluid = stream.getThermoSystem().clone();
