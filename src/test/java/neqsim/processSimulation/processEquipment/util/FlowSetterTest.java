@@ -21,9 +21,9 @@ public class FlowSetterTest {
     testFluid.addComponent("i-pentane", 0.056);
     testFluid.addComponent("n-pentane", 1.053);
     testFluid.addComponent("nC10", 4.053);
+    testFluid.addComponent("water", 10.00);
     testFluid.setMixingRule(2);
     testFluid.setMultiPhaseCheck(true);
-    testFluid.setTotalFlowRate(1e6, "kg/hr");
 
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
@@ -37,7 +37,7 @@ public class FlowSetterTest {
     flowset.setPressure(1.01325, "bara");
     flowset.setGasFlowRate(multiPhaseMeter.getMeasuredValue("Gas Flow Rate", "Sm3/hr"), "Sm3/hr");
     flowset.setOilFlowRate(multiPhaseMeter.getMeasuredValue("Oil Flow Rate", "m3/hr"), "m3/hr");
-
+    flowset.setWaterFlowRate(multiPhaseMeter.getMeasuredValue("Water Flow Rate", "m3/hr"), "m3/hr");
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(stream_1);
@@ -47,5 +47,7 @@ public class FlowSetterTest {
 
     assertEquals(flowset.getOutletStream().getFlowRate("kg/sec"), stream_1.getFlowRate("kg/sec"),
         1.0);
+
+    flowset.getOutletStream().getFluid().prettyPrint();
   }
 }

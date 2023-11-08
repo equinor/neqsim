@@ -175,6 +175,24 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       tempFluid.initPhysicalProperties("density");
       return tempFluid.getPhase("oil").getFlowRate(unit);
     }
+    if (measurement.equals("Water Flow Rate")) {
+      SystemInterface tempFluid = stream.getThermoSystem().clone();
+      tempFluid.setTemperature(temperature, unitT);
+      tempFluid.setPressure(pressure, unitP);
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+      try {
+        thermoOps.TPflash();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+        return Double.NaN;
+      }
+      // tempFluid.display();
+      if (!tempFluid.hasPhaseType("aqueous")) {
+        return Double.NaN;
+      }
+      tempFluid.initPhysicalProperties("density");
+      return tempFluid.getPhase("aqueous").getFlowRate(unit);
+    }
     if (measurement.equals("gasDensity") || measurement.equals("oilDensity")
         || measurement.equals("waterDensity")) {
       SystemInterface tempFluid = stream.getThermoSystem().clone();

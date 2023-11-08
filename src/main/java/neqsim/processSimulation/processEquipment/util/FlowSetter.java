@@ -240,13 +240,57 @@ public class FlowSetter extends TwoPortEquipment {
     return oilFlowRate * conversionFactor;
   }
 
+  /**
+   * <p>
+   * Get setWaterFlowRate
+   * </p>
+   * 
+   * @param flowRate flow rate
+   * @param flowUnit Supported units are m3/sec, m3/hr, m3/day
+   * @return water flow rate in unit m3/sec
+   */
   public void setWaterFlowRate(double flowRate, String flowUnit) {
-    waterFlowRate = flowRate;
-    unitWaterFlowRate = flowUnit;
+    double conversionFactor = 1.0;
+    switch (flowUnit) {
+      case "m3/sec":
+        conversionFactor = 1.0;
+        break;
+      case "m3/hr":
+        conversionFactor = 1.0 / 3600.0;
+        break;
+      case "m3/day":
+        conversionFactor = 1.0 / 3600.0 / 24.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + flowUnit);
+    }
+    waterFlowRate = flowRate * conversionFactor;
   }
 
+  /**
+   * <p>
+   * Get getWaterFlowRate
+   * </p>
+   * 
+   * @param flowUnit Supported units are m3/sec, m3/hr, m3/day
+   * @return water flow rate in unit m3/sec
+   */
   public double getWaterFlowRate(String flowUnit) {
-    return waterFlowRate;
+    double conversionFactor = 1.0;
+    switch (flowUnit) {
+      case "m3/sec":
+        conversionFactor = 1.0;
+        break;
+      case "m3/hr":
+        conversionFactor = 1.0 / 3600.0;
+        break;
+      case "m3/day":
+        conversionFactor = 1.0 / 3600.0 / 24.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + flowUnit);
+    }
+    return waterFlowRate * conversionFactor;
   }
 
   /** {@inheritDoc} */
@@ -284,9 +328,12 @@ public class FlowSetter extends TwoPortEquipment {
     for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
       tempFluid.addComponent(i, moleChange[i]);
     }
+    if (waterFlowRate > 0) {
+      tempFluid.addComponent("water", waterFlowRate * 1000.0, "kg/sec");
+    }
     tempFluid.setPressure((inStream.getThermoSystem()).getPressure());
     tempFluid.setTemperature((inStream.getThermoSystem()).getTemperature());
-    // tempFluid.setTotalFlowRate(flow, "kg/sec");
+
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
