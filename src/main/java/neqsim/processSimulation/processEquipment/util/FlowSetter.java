@@ -138,7 +138,7 @@ public class FlowSetter extends TwoPortEquipment {
    * 
    * @param flowRate flow rate
    * @param flowUnit Supported units are Sm3/sec, Sm3/hr, Sm3/day, MSm3/day
-   * @return gas flow rate in unit sm3/sec
+   * 
    */
   public void setGasFlowRate(double flowRate, String flowUnit) {
     double conversionFactor = 1.0;
@@ -194,7 +194,7 @@ public class FlowSetter extends TwoPortEquipment {
    * 
    * @param flowRate flow rate
    * @param flowUnit Supported units are m3/sec, m3/hr, m3/day
-   * @return oil flow rate in unit m3/sec
+   * 
    */
   public void setOilFlowRate(double flowRate, String flowUnit) {
     double conversionFactor = 1.0;
@@ -247,7 +247,7 @@ public class FlowSetter extends TwoPortEquipment {
    * 
    * @param flowRate flow rate
    * @param flowUnit Supported units are m3/sec, m3/hr, m3/day
-   * @return water flow rate in unit m3/sec
+   * 
    */
   public void setWaterFlowRate(double flowRate, String flowUnit) {
     double conversionFactor = 1.0;
