@@ -152,6 +152,9 @@ public class FlowSetter extends TwoPortEquipment {
       case "Sm3/day":
         conversionFactor = 1.0 / 3600.0 / 24.0;
         break;
+      case "MSm3/day":
+        conversionFactor = 1.0 / 3600.0 / 24.0 * 1e6;
+        break;
       default:
         throw new RuntimeException("unit not supported " + flowUnit);
     }
@@ -297,9 +300,8 @@ public class FlowSetter extends TwoPortEquipment {
   @Override
   public void run(UUID id) {
     SystemInterface tempFluid = inStream.getThermoSystem().clone();
-    double flow = tempFluid.getFlowRate("kg/sec");
 
-    if (flow < 1e-6) {
+    if (tempFluid.getFlowRate("kg/sec") < 1e-6) {
       outStream.setThermoSystem(tempFluid);
       return;
     }
