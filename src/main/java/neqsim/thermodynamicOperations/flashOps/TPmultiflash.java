@@ -375,7 +375,7 @@ public class TPmultiflash extends TPflash {
         iter++;
         err = 0;
 
-        if (iter <= 150 || !system.isImplementedCompositionDeriativesofFugacity()) {
+        if (iter <= 250 || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (iter % 7 == 0) {
             double vec1 = 0.0;
 
