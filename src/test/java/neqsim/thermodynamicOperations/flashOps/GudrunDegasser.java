@@ -53,7 +53,8 @@ class GudrunDegasser {
     fluid1.addComponent("n-hexane", 3.90587639808655);
     fluid1.addComponent("n-heptane", 3.90587639808655);
     fluid1.addComponent("water", 40.0);
-
+    fluid1.setMixingRule(10);
+    fluid1.setMultiPhaseCheck(true);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(fluid1);
 
@@ -105,6 +106,7 @@ class GudrunDegasser {
     }
 
     testOps.TPflash();
+    fluid1.prettyPrint();
 
     List<Double> molarComposition = new ArrayList<>();
     molarComposition.add(0.07649963805789309);
@@ -140,6 +142,7 @@ class GudrunDegasser {
             inlet_stream_test_sep);
     test_separator.setName("TEST_SEPARATOR");
     test_separator.run();
+    test_separator.getWaterOutStream().getThermoSystem().prettyPrint();
 
     neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_test_stream =
         new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
@@ -149,11 +152,12 @@ class GudrunDegasser {
     heater_TP_setter_test_stream.run();
     System.out.println("Gas out from degasser " + heater_TP_setter_test_stream.getOutStream()
         .getFluid().getPhase("gas").getFlowRate("kg/hr"));
-
+    heater_TP_setter_test_stream.getOutStream().getThermoSystem().prettyPrint();
+    
     neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_test_stream2 =
         new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
             "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
-    heater_TP_setter_test_stream2.setOutPressure(5.9061164855957 , "bara");
+    heater_TP_setter_test_stream2.setOutPressure(5.9061164855957, "bara");
     heater_TP_setter_test_stream2.setOutTemperature(79.8487854003906, "C");
     heater_TP_setter_test_stream2.run();
 
