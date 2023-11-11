@@ -4,7 +4,10 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
+import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
+import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -19,9 +22,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class FlowSetter extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(GORfitter.class);
-
-  double pressure = 1.01325;
-  double temperature = 15.0;
+  double[] pressure = new double[] {1.01325};
+  double[] temperature = new double[] {15};
   String unitT = "C";
   String unitP = "bara";
 
@@ -31,6 +33,8 @@ public class FlowSetter extends TwoPortEquipment {
   String unitGasFlowRate = "Sm3/day";
   String unitOilFlowRate = "m3/hr";
   String unitWaterFlowRate = "m3/hr";
+
+  ProcessSystem referenceProcess = null;
 
   @Deprecated
   /**
@@ -81,54 +85,6 @@ public class FlowSetter extends TwoPortEquipment {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>pressure</code>.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getPressure() {
-    return pressure;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>pressure</code>.
-   * </p>
-   *
-   * @param pressure a double
-   * @param unitP a {@link java.lang.String} object
-   */
-  public void setPressure(double pressure, String unitP) {
-    this.pressure = pressure;
-    this.unitP = unitP;
-  }
-
-  /**
-   * <p>
-   * getTemperature.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getTemperature() {
-    return temperature;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>temperature</code>.
-   * </p>
-   *
-   * @param temperature a double
-   * @param unitT a {@link java.lang.String} object
-   */
-  public void setTemperature(double temperature, String unitT) {
-    this.temperature = temperature;
-    this.unitT = unitT;
   }
 
   /**
@@ -301,13 +257,17 @@ public class FlowSetter extends TwoPortEquipment {
   public void run(UUID id) {
     SystemInterface tempFluid = inStream.getThermoSystem().clone();
 
+    if (referenceProcess == null) {
+      referenceProcess = getReferenceProcess(inStream);
+    }
+
+    ((StreamInterface) referenceProcess.getUnit("feed stream")).setFluid(inStream.getFluid());
+    referenceProcess.run();
+
     if (tempFluid.getFlowRate("kg/sec") < 1e-6) {
       outStream.setThermoSystem(tempFluid);
       return;
     }
-
-    tempFluid.setTemperature(temperature, unitT);
-    tempFluid.setPressure(pressure, unitP);
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
     try {
@@ -320,10 +280,12 @@ public class FlowSetter extends TwoPortEquipment {
 
     double[] moleChange = new double[tempFluid.getNumberOfComponents()];
     for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-      moleChange[i] = tempFluid.getPhase("gas").getComponent(i).getx()
-          * (getGasFlowRate("Sm3/sec") / tempFluid.getPhase("gas").getMolarVolume("m3/mol"))
-          + tempFluid.getPhase("oil").getComponent(i).getx()
-              * (getOilFlowRate("m3/sec") / tempFluid.getPhase("oil").getMolarVolume("m3/mol"))
+      moleChange[i] = tempFluid.getPhase("gas").getComponent(i).getNumberOfMolesInPhase()
+          * (getGasFlowRate("Sm3/hr")
+              / ((SystemInterface) referenceProcess.getUnit("gas")).getFlowRate("Sm3/hr"))
+          + tempFluid.getPhase("oil").getComponent(i).getNumberOfMolesInPhase()
+              * (getOilFlowRate("m3/hr")
+                  / ((SystemInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
           - tempFluid.getComponent(i).getNumberOfmoles();
     }
     tempFluid.init(0);
@@ -344,6 +306,28 @@ public class FlowSetter extends TwoPortEquipment {
     outStream.setThermoSystem(tempFluid);
     outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
+  }
+
+  public ProcessSystem getReferenceProcess(StreamInterface feedStream) {
+
+    StreamInterface feedStream1 = new Stream("feed stream", feedStream.getFluid().clone());
+    feedStream1.setTemperature(temperature[0], unitT);
+    feedStream1.setPressure(pressure[0], unitP);
+    ThreePhaseSeparator separator1ststage =
+        new ThreePhaseSeparator("1st stage separator", feedStream1);
+    StreamInterface gasExport = new Stream("gas", separator1ststage.getGasOutStream());
+    StreamInterface oilExport = new Stream("oil", separator1ststage.getOilOutStream());
+
+
+    ProcessSystem referenceProcess = new ProcessSystem();
+    referenceProcess.add(feedStream1);
+    referenceProcess.add(separator1ststage);
+    referenceProcess.add(gasExport);
+    referenceProcess.add(oilExport);
+    referenceProcess.run();
+    gasExport.getFluid().initPhysicalProperties("density");
+    oilExport.getFluid().initPhysicalProperties("density");
+    return referenceProcess;
   }
 
 }
