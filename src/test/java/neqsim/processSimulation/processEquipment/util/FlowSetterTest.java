@@ -125,8 +125,8 @@ public class FlowSetterTest {
 
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
-    stream_1.setPressure(10.0, "bara");
-    stream_1.setTemperature(80.0, "C");
+    stream_1.setPressure(1.01325, "bara");
+    stream_1.setTemperature(15.0, "C");
 
     FlowSetter flowset = new FlowSetter("flowset", stream_1);
 
@@ -138,6 +138,7 @@ public class FlowSetterTest {
 
     flowset.setGasFlowRate(gasFlow, "MSm3/day");
     flowset.setOilFlowRate(oilFlow, "m3/hr");
+    flowset.run();
     // flowset.setWaterFlowRate(waterFLow, "m3/hr");
 
     StreamInterface feedStream = flowset.getOutletStream();

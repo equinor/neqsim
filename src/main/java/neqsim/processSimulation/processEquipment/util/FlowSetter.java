@@ -282,10 +282,10 @@ public class FlowSetter extends TwoPortEquipment {
     for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
       moleChange[i] = tempFluid.getPhase("gas").getComponent(i).getNumberOfMolesInPhase()
           * (getGasFlowRate("Sm3/hr")
-              / ((SystemInterface) referenceProcess.getUnit("gas")).getFlowRate("Sm3/hr"))
+              / ((StreamInterface) referenceProcess.getUnit("gas")).getFlowRate("Sm3/hr"))
           + tempFluid.getPhase("oil").getComponent(i).getNumberOfMolesInPhase()
               * (getOilFlowRate("m3/hr")
-                  / ((SystemInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
+                  / ((StreamInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
           - tempFluid.getComponent(i).getNumberOfmoles();
     }
     tempFluid.init(0);
