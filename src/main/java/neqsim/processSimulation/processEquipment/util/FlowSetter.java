@@ -272,10 +272,7 @@ public class FlowSetter extends TwoPortEquipment {
     double error = 0.0;
     do {
       error = 0.0;
-      // ((StreamInterface) referenceProcess.getUnit("feed stream")).setFluid(tempFluid);
-      Stream ins = new Stream(tempFluid);
-      ins.run();
-      referenceProcess = createReferenceProcess(ins);
+      ((StreamInterface) referenceProcess.getUnit("feed stream")).setFluid(tempFluid);
       referenceProcess.run();
       ((StreamInterface) referenceProcess.getUnit("gas")).getFluid()
           .initPhysicalProperties("density");
@@ -330,7 +327,7 @@ public class FlowSetter extends TwoPortEquipment {
 
     ProcessSystem referenceProcess = new ProcessSystem();
 
-    StreamInterface feedStream1 = new Stream("feed stream", feedStream.getFluid().clone());
+    StreamInterface feedStream1 = new Stream("feed stream", feedStream.getFluid());
     feedStream1.setTemperature(temperature[0], unitT);
     feedStream1.setPressure(pressure[0], unitP);
     referenceProcess.add(feedStream1);
@@ -352,8 +349,8 @@ public class FlowSetter extends TwoPortEquipment {
       oilExport = new Stream("oil", separator1ststage.getOilOutStream());
     } else if (temperature.length == 2) {
       Heater heater2ndstage = new Heater("2nd stage heater", separator1ststage.getOilOutStream());
-      heater2ndstage.setOutPressure(pressure[1]);
-      heater2ndstage.setOutTemperature(temperature[1]);
+      heater2ndstage.setOutPressure(pressure[1], unitP);
+      heater2ndstage.setOutTemperature(temperature[1], unitT);
       referenceProcess.add(heater2ndstage);
 
       ThreePhaseSeparator separator2ndstage =
@@ -364,8 +361,8 @@ public class FlowSetter extends TwoPortEquipment {
       oilExport = new Stream("oil", separator2ndstage.getOilOutStream());
     } else if (temperature.length == 3) {
       Heater heater2ndstage = new Heater("2nd stage heater", separator1ststage.getOilOutStream());
-      heater2ndstage.setOutPressure(pressure[1]);
-      heater2ndstage.setOutTemperature(temperature[1]);
+      heater2ndstage.setOutPressure(pressure[1], unitP);
+      heater2ndstage.setOutTemperature(temperature[1], unitT);
       referenceProcess.add(heater2ndstage);
 
       ThreePhaseSeparator separator2ndstage =
@@ -373,8 +370,8 @@ public class FlowSetter extends TwoPortEquipment {
       referenceProcess.add(separator2ndstage);
 
       Heater heater3rdstage = new Heater("3rd stage heater", separator2ndstage.getOilOutStream());
-      heater3rdstage.setOutPressure(pressure[2]);
-      heater3rdstage.setOutTemperature(temperature[2]);
+      heater3rdstage.setOutPressure(pressure[2], unitP);
+      heater3rdstage.setOutTemperature(temperature[2], unitT);
       referenceProcess.add(heater3rdstage);
 
       ThreePhaseSeparator separator3rdstage =
