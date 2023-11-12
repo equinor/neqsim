@@ -269,7 +269,9 @@ public class FlowSetter extends TwoPortEquipment {
       return;
     }
 
-    for (int l = 0; l < 25; l++) {
+    double error = 0.0;
+    do {
+      error = 0.0;
       // ((StreamInterface) referenceProcess.getUnit("feed stream")).setFluid(tempFluid);
       Stream ins = new Stream(tempFluid);
       ins.run();
@@ -287,54 +289,26 @@ public class FlowSetter extends TwoPortEquipment {
             * (getGasFlowRate("Sm3/hr")
                 / ((StreamInterface) referenceProcess.getUnit("gas")).getFlowRate("Sm3/hr"))
             - ((StreamInterface) referenceProcess.getUnit("gas")).getFluid().getComponent(i)
-                .getNumberOfMolesInPhase();
+                .getNumberOfMolesInPhase()
 
-        // +
-
-        // ((StreamInterface) referenceProcess.getUnit("oil")).getFluid().getComponent(i)
-        // .getNumberOfMolesInPhase()
-        // * (getOilFlowRate("m3/hr")
-        // / ((StreamInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
-        // - ((StreamInterface) referenceProcess.getUnit("oil")).getFluid().getComponent(i)
-        // .getNumberOfMolesInPhase();
-      }
-      tempFluid.init(0);
-      for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-        tempFluid.addComponent(i, moleChange[i]);
-      }
-
-    }
-
-    for (int l = 0; l < 25; l++) {
-      // ((StreamInterface) referenceProcess.getUnit("feed stream")).setFluid(tempFluid);
-      Stream ins = new Stream(tempFluid);
-      ins.run();
-      referenceProcess = createReferenceProcess(ins);
-      referenceProcess.run();
-      ((StreamInterface) referenceProcess.getUnit("gas")).getFluid()
-          .initPhysicalProperties("density");
-      ((StreamInterface) referenceProcess.getUnit("oil")).getFluid()
-          .initPhysicalProperties("density");
-
-      double[] moleChange = new double[tempFluid.getNumberOfComponents()];
-      for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-        moleChange[i] = ((StreamInterface) referenceProcess.getUnit("oil")).getFluid()
-            .getComponent(i).getNumberOfMolesInPhase()
-            * (getOilFlowRate("m3/hr")
-                / ((StreamInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
+            + ((StreamInterface) referenceProcess.getUnit("oil")).getFluid().getComponent(i)
+                .getNumberOfMolesInPhase()
+                * (getOilFlowRate("m3/hr")
+                    / ((StreamInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
             - ((StreamInterface) referenceProcess.getUnit("oil")).getFluid().getComponent(i)
                 .getNumberOfMolesInPhase();
+        error += Math.abs(moleChange[i]);
       }
       tempFluid.init(0);
       for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
         tempFluid.addComponent(i, moleChange[i]);
       }
 
-    }
-
+    } while (error > ((StreamInterface) referenceProcess.getUnit("feed stream")).getFluid()
+        .getTotalNumberOfMoles() / 1e6);
 
     if (waterFlowRate > 0) {
-      tempFluid.addComponent("water", waterFlowRate * 1000.0, "kg/sec");
+      tempFluid.addComponent("water", getWaterFlowRate("m3/hr") * 1000.0, "kg/hr");
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
@@ -347,7 +321,7 @@ public class FlowSetter extends TwoPortEquipment {
     outStream.setThermoSystem(tempFluid);
     outStream.run();
     outStream.getFluid().initPhysicalProperties();
-    
+
     outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
@@ -421,6 +395,13 @@ public class FlowSetter extends TwoPortEquipment {
 
   public ProcessSystem getReferenceProcess() {
     return referenceProcess;
+  }
+
+  public void setSeparationPT(double[] pressure, String unitP, double[] temperature, String unitT) {
+    this.pressure = pressure;
+    this.unitP = unitP;
+    this.temperature = temperature;
+    this.unitT = unitT;
   }
 
 }
