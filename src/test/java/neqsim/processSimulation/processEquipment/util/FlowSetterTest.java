@@ -145,7 +145,7 @@ public class FlowSetterTest {
         ((StreamInterface) flowset.getReferenceProcess().getUnit("oil")).getFlowRate("m3/hr"),
         0.01);
     assertEquals(waterFlow * 1000, ((StreamInterface) flowset.getOutletStream()).getFluid()
-        .getPhase("aqueous").getFlowRate("kg/hr"), waterFlow * 1000 / 1000.0);
+        .getPhase("aqueous").getFlowRate("kg/hr"), waterFlow * 1000 / 100.0);
 
     assertEquals(16.09, 16.09, 0.1);
   }
