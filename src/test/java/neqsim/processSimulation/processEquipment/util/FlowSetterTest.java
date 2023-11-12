@@ -118,44 +118,36 @@ public class FlowSetterTest {
     testFluid.addComponent("n-butane", 0.487);
     testFluid.addComponent("i-pentane", 0.056);
     testFluid.addComponent("n-pentane", 1.053);
-    testFluid.addComponent("nC10", 4.053);
+    testFluid.addComponent("nC10", 40.053);
     // testFluid.addComponent("water", 10.00);
     testFluid.setMixingRule(2);
     testFluid.setMultiPhaseCheck(true);
 
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
-    stream_1.setPressure(1.01325, "bara");
-    stream_1.setTemperature(15.0, "C");
+    stream_1.setPressure(60.01325, "bara");
+    stream_1.setTemperature(50.0, "C");
 
     FlowSetter flowset = new FlowSetter("flowset", stream_1);
-
-
-    double[] pressure = new double[] {50.0, 10.0, 1.5};
-    double[] temperature = new double[] {50.0, 10.0, 1.5};
+    // double[] pressure = new double[] {50.0, 10.0, 1.5};
+    // double[] temperature = new double[] {50.0, 10.0, 1.5};
     // flowset.setTemperature(15.0, "C");
     // flowset.setPressure(pressure, "bara");
-
     flowset.setGasFlowRate(gasFlow, "MSm3/day");
     flowset.setOilFlowRate(oilFlow, "m3/hr");
     flowset.run();
     // flowset.setWaterFlowRate(waterFLow, "m3/hr");
 
-    StreamInterface feedStream = flowset.getOutletStream();
-
-    ThreePhaseSeparator separator = new ThreePhaseSeparator(feedStream);
-
-    StreamInterface gasFromSepStream = separator.getGasOutStream();
-
-
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
-    operations.add(stream_1);
-    operations.add(flowset);
-    operations.add(separator);
-    operations.run();
-
-    feedStream.getThermoSystem().prettyPrint();
-    assertEquals(gasFlow, gasFromSepStream.getFlowRate("MSm3/day"), 1.0);
+    flowset.getOutletStream().getFluid().prettyPrint();
+    assertEquals(gasFlow,
+        flowset.getOutletStream().getFluid().getPhase("gas").getFlowRate("MSm3/day"), 0.1);
+    assertEquals(oilFlow, flowset.getOutletStream().getFluid().getPhase("oil").getFlowRate("m3/hr"),
+        0.01);
+    assertEquals(oilFlow,
+        ((StreamInterface) flowset.getReferenceProcess().getUnit("gas")).getFlowRate("MSm3/day"),
+        0.01);
+    assertEquals(oilFlow,
+        ((StreamInterface) flowset.getReferenceProcess().getUnit("oil")).getFlowRate("m3/hr"),
+        0.01);
   }
 }
