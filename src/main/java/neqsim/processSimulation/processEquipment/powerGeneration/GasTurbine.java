@@ -197,12 +197,10 @@ public class GasTurbine extends TwoPortEquipment {
   }
 
   /**
-   *
-   *
    * <p>
-   * Calculates ideal air fuel ratio [kg air/kg fuel]
+   * Calculates ideal air fuel ratio [kg air/kg fuel].
    * </p>
-   * 
+   *
    * @return ideal air fuel ratio [kg air/kg fuel]
    */
   public double calcIdealAirFuelRatio() {
