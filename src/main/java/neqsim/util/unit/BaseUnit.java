@@ -35,24 +35,21 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
     this.inunit = name;
   }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getSIvalue() {
-        return SIvalue;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getSIvalue() {
+    return SIvalue;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getValue(String fromunit) {
-        return 0.0;
-    }    
-  
-    /** {@inheritDoc} */
-    @Override
-    public double getValue(double val, String fromunit, String tounit) {
-        return 0.0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(String fromunit) {
+    return 0.0;
+  }
 
-  
-
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(double val, String fromunit, String tounit) {
+    return 0.0;
+  }
 }
