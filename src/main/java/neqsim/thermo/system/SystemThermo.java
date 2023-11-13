@@ -731,19 +731,24 @@ public abstract class SystemThermo implements SystemInterface {
       return totalNumberOfMoles * getMolarMass() * 3600.0 / getIdealLiquidDensity("kg/m3");
     } else if (flowunit.equals("Sm3/sec")) {
       return totalNumberOfMoles * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
+          * ThermodynamicConstantsInterface.standardStateTemperature
+          / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("Sm3/hr")) {
       return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
+          * ThermodynamicConstantsInterface.standardStateTemperature
+          / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("Sm3/day")) {
       return totalNumberOfMoles * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
+          * ThermodynamicConstantsInterface.standardStateTemperature
+          / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("MSm3/day")) {
       return totalNumberOfMoles * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0 / 1.0e6;
+          * ThermodynamicConstantsInterface.standardStateTemperature
+          / ThermodynamicConstantsInterface.atm / 1.0e6;
     } else if (flowunit.equals("MSm3/hr")) {
       return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0 / 1.0e6;
+          * ThermodynamicConstantsInterface.standardStateTemperature
+          / ThermodynamicConstantsInterface.atm / 1.0e6;
     } else if (flowunit.equals("mole/sec")) {
       return totalNumberOfMoles;
     } else if (flowunit.equals("mole/min")) {
@@ -803,7 +808,7 @@ public abstract class SystemThermo implements SystemInterface {
     try {
       refSystem = this.getClass().getDeclaredConstructor().newInstance();
       refSystem.setTemperature(273.15 + 15.0);
-      refSystem.setPressure(1.01325);
+      refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       refSystem.addComponent("default", 1.0, 273.15, 50.0, 0.1);
       refSystem.init(0);
       refSystem.setNumberOfPhases(1);
@@ -818,7 +823,7 @@ public abstract class SystemThermo implements SystemInterface {
       // Math.pow((molarMass/5.805e-5*Math.pow(density,0.9371)), 1.0/2.3776);
       // acs = TBPfractionModel.calcAcentricFactor(molarMass, density);
       // System.out.println("acentric " + acs);
-      // 3.0/7.0*Math.log10(PC/1.01325)/(TC/TB-1.0)-1.0;
+      // 3.0/7.0*Math.log10(PC/ThermodynamicConstantsInterface.referencePressure)/(TC/TB-1.0)-1.0;
       molarMass /= 1000.0;
 
       for (int i = 0; i < refSystem.getNumberOfPhases(); i++) {
@@ -836,7 +841,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
 
       refSystem.setTemperature(273.15 + 15.0);
-      refSystem.setPressure(1.01325);
+      refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       refSystem.init(1);
       // refSystem.display();
       racketZ = characterization.getTBPModel().calcRacketZ(refSystem, molarMass * 1000.0, density);
@@ -854,7 +859,7 @@ public abstract class SystemThermo implements SystemInterface {
       // refSystem.getPhase(1).getComponent(0).setRacketZ(racketZ);
 
       // // refSystem.setTemperature(273.15+80.0);
-      // // refSystem.setPressure(1.01325);
+      // // refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       // // refSystem.init(1);
       // //refSystem.initPhysicalProperties();
       // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();
@@ -863,8 +868,8 @@ public abstract class SystemThermo implements SystemInterface {
       logger.error(ex.getMessage(), ex);
     }
 
-    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density); // 0.2918-0.0928*
-                                                                                                   // acs)*8.314*TC/PC*10.0;
+    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density);
+    // 0.2918-0.0928*acs)*ThermodynamicConstantsInterface.R*TC/PC*10.0;
     addComponent(componentName, numberOfMoles, TC, PC, acs);
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
     // System.out.println("watson " + Kwatson);
@@ -945,7 +950,7 @@ public abstract class SystemThermo implements SystemInterface {
     try {
       refSystem = this.getClass().getDeclaredConstructor().newInstance();
       refSystem.setTemperature(273.15 + 15.0);
-      refSystem.setPressure(1.01325);
+      refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       refSystem.addComponent("default", 1.0, 273.15, 50.0, 0.1);
       refSystem.init(0);
       refSystem.setNumberOfPhases(1);
@@ -977,7 +982,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
 
       refSystem.setTemperature(273.15 + 15.0);
-      refSystem.setPressure(1.01325);
+      refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       refSystem.init(1);
       // refSystem.display();
       racketZ = characterization.getTBPModel().calcRacketZ(refSystem, molarMass * 1000.0, density);
@@ -995,7 +1000,7 @@ public abstract class SystemThermo implements SystemInterface {
       // refSystem.getPhase(1).getComponent(0).setRacketZ(racketZ);
 
       // // refSystem.setTemperature(273.15+80.0);
-      // // refSystem.setPressure(1.01325);
+      // // refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       // // refSystem.init(1);
       // // refSystem.initPhysicalProperties();
       // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();
@@ -1005,7 +1010,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density); // 0.2918-0.0928*
-                                                                                                   // acs)*8.314*TC/PC*10.0;
+                                                                                                   // acs)*ThermodynamicConstantsInterface.R*TC/PC*10.0;
     addComponent(componentName, numberOfMoles, TC, PC, acs);
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
     // System.out.println("watson " + Kwatson);
@@ -2868,7 +2873,8 @@ public abstract class SystemThermo implements SystemInterface {
         conversionFactor = 0.0624279606;
         break;
       case "kg/Sm3":
-        return getMolarMass() * 101325.0 / ThermodynamicConstantsInterface.R
+        return getMolarMass() * ThermodynamicConstantsInterface.atm
+            / ThermodynamicConstantsInterface.R
             / ThermodynamicConstantsInterface.standardStateTemperature;
       case "mol/m3":
         conversionFactor = 1.0 / getMolarMass();

@@ -6,6 +6,7 @@
 
 package neqsim.thermo.util.example;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -28,7 +29,8 @@ public class ActivityCalc {
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String args[]) {
-    SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 42, 1.01325);
+    SystemInterface testSystem =
+        new SystemSrkCPAstatoil(273.15 + 42, ThermodynamicConstantsInterface.referencePressure);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 

@@ -226,7 +226,8 @@ public class StirredCellNode extends TwoPhaseFlowNode {
    */
   @SuppressWarnings("unused")
   public static void main(String[] args) {
-    // SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
+    // SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3,
+    // ThermodynamicConstantsInterface.referencePressure);
     // SystemInterface testSystem = new SystemSrkEos(313.3, 70.01325);
     SystemInterface testSystem = new SystemSrkCPAstatoil(313.3, 70.01325);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

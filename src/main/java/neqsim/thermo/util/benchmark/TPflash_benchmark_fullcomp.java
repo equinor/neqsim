@@ -28,7 +28,7 @@ public class TPflash_benchmark_fullcomp {
 
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 5.0, 10.0);
     // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(298.15,
-    // 1.01325);
+    // ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
     // testSystem.addComponent("CO2", 2.1);

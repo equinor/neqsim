@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -25,7 +26,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double stdPres = 1.01325;
+  double stdPres = ThermodynamicConstantsInterface.referencePressure;
   double stdPresATM = 1;
   double stdTemp = 288.15;
   double[] molfracs;

@@ -473,9 +473,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           polytropicFluidHead = polytropicHead;
           polytropicHeadMeter = polytropicHead * 1000.0 / 9.81;
         }
-        double pressureRatio = Math.pow((polytropicFluidHead * 1000.0
-            + (n / (n - 1.0) * z_inlet * 8.314 * (temperature_inlet) / MW))
-            / (n / (n - 1.0) * z_inlet * 8.314 * (temperature_inlet) / MW), n / (n - 1.0));
+        double pressureRatio = Math.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet
+            * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
+            / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet)
+                / MW),
+            n / (n - 1.0));
         setOutletPressure(thermoSystem.getPressure() * pressureRatio);
         if (getAntiSurge().isActive()) {
           logger.info("surge flow "

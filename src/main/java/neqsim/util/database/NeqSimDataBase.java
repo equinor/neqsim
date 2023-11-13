@@ -55,7 +55,6 @@ public class NeqSimDataBase
    * </p>
    */
   public NeqSimDataBase() {
-    
     setDataBaseType(dataBaseType);
 
     try {

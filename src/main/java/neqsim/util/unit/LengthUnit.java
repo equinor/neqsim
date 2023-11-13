@@ -17,10 +17,16 @@ package neqsim.util.unit;
 public class LengthUnit extends neqsim.util.unit.BaseUnit {
   private static final long serialVersionUID = 1000;
 
+
   /**
    * <p>
    * Constructor for LengthUnit.
    * </p>
+   * 
+   * @param value
+   * @param name
    */
-  public LengthUnit() {}
+  public LengthUnit(double value, String name) {
+    super(value, name);
+  }
 }

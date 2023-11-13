@@ -13,6 +13,7 @@ import neqsim.statistics.experimentalEquipmentData.wettedWallColumnData.WettedWa
 import neqsim.statistics.experimentalSampleCreation.readDataFromFile.wettedWallColumnReader.WettedWallColumnDataObject;
 import neqsim.statistics.experimentalSampleCreation.readDataFromFile.wettedWallColumnReader.WettedWallDataReader;
 import neqsim.statistics.experimentalSampleCreation.sampleCreator.SampleCreator;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -189,7 +190,8 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
         dNdt[i] = dPdt[i] * 1.0 / dPdn[i];
         err += Math.abs((dNdtOld[i] - dNdt[i]));
         // System.out.println("dndt: " + dNdt[i]);
-        dnVdt[i] = dNdt[i] * 8.314 * 298.15 / 101325.0 * 1000 * 60;
+        dnVdt[i] = dNdt[i] * ThermodynamicConstantsInterface.R * 298.15
+            / ThermodynamicConstantsInterface.atm * 1000 * 60;
         System.out.println("dVdt: " + dnVdt[i]);
       }
       System.out.println("err: " + err);

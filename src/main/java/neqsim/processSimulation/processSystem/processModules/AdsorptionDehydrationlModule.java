@@ -9,6 +9,7 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>
@@ -160,7 +161,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     double gasVelocity = 67.0 / Math.sqrt(gasDensity);
 
     double qa = designFlow / (numberOfAdsorptionBeds - 1.0) / 1440.0
-        * (1.01325 / designAdsorptionPressure) * (designAdsorptionTemperature / 288.15)
+        * (ThermodynamicConstantsInterface.referencePressure / designAdsorptionPressure)
+        * (designAdsorptionTemperature / 288.15)
         * tempStream.getThermoSystem().getPhase(0).getZ();
     adsorberInternalDiameter = Math.sqrt(4.0 * qa / Math.PI / gasVelocity);
 

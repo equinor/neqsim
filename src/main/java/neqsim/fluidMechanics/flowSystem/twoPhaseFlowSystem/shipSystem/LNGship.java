@@ -8,6 +8,7 @@ import neqsim.standards.StandardInterface;
 import neqsim.standards.gasQuality.Standard_ISO6578;
 import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.standards.gasQuality.Standard_ISO6976_2016;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -407,7 +408,8 @@ public class LNGship
     // thermo.system.SystemInterface testSystem = new
     // thermo.system.SystemGERG2004Eos(273.15 - 161.4, 1.0);
     neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(273.15 - 161.4, 1.013);
+        new neqsim.thermo.system.SystemSrkEos(273.15 - 161.4,
+            ThermodynamicConstantsInterface.referencePressure);
     /*
      * testSystem.addComponent("nitrogen", 0.0136); testSystem.addComponent("methane", 0.9186);
      * testSystem.addComponent("ethane", 0.0526); testSystem.addComponent("propane", 0.0115);

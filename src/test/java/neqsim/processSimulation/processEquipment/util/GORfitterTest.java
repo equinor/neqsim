@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -36,7 +37,7 @@ public class GORfitterTest {
 
     GORfitter gORFItter = new GORfitter("test", stream_1);
     gORFItter.setTemperature(15.0, "C");
-    gORFItter.setPressure(1.01325, "bara");
+    gORFItter.setPressure(ThermodynamicConstantsInterface.referencePressure, "bara");
     gORFItter.setReferenceConditions("actual");
     // gORFItter.setGVF(0.1);
     gORFItter.setGOR(10.1);

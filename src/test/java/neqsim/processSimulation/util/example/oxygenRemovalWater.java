@@ -5,6 +5,7 @@ import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>oxygenRemovalWater class.</p>
@@ -25,10 +26,10 @@ public class oxygenRemovalWater {
         neqsim.thermo.system.SystemInterface fluid1 = fluidCreator.create("air").autoSelectModel();
         fluid1.setMultiPhaseCheck(true);
         neqsim.thermo.system.SystemInterface fluid2 = fluidCreator.create("water");
-        fluid1.setPressure(1.01325);
+        fluid1.setPressure(ThermodynamicConstantsInterface.referencePressure);
         fluid1.setTemperature(273.15 + 10);
         fluid1.setTotalFlowRate(1.0, "kg/hr");
-        fluid2.setPressure(1.01325);
+        fluid2.setPressure(ThermodynamicConstantsInterface.referencePressure);
         fluid2.setTemperature(273.15 + 10);
         fluid2.setTotalFlowRate(3500.0, "kg/hr");
 

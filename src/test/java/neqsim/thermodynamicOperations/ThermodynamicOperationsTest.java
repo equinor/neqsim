@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import neqsim.api.ioc.CalculationResult;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
@@ -105,7 +106,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
 
     double temp = 373.15;
-    double press = 60.0 + 1.013;
+    double press = 60.0 + ThermodynamicConstantsInterface.referencePressure;
 
     List<Double> jP = Arrays.asList(new Double[] {press});
     List<Double> jT = Arrays.asList(new Double[] {temp});

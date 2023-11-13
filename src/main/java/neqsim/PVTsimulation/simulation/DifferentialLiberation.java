@@ -2,6 +2,7 @@ package neqsim.PVTsimulation.simulation;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -125,7 +126,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
           }
         }
         gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume()
-            * getThermoSystem().getPhase(0).getPressure() / 1.01325
+            * getThermoSystem().getPhase(0).getPressure()
+            / ThermodynamicConstantsInterface.referencePressure
             / getThermoSystem().getPhase(0).getZ() * 288.15 / getThermoSystem().getTemperature();
         totalGasStandardVolume += getGasStandardVolume()[i];
         // if (totalVolume[i] > saturationVolume) {
@@ -168,7 +170,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
         }
       }
     }
-    getThermoSystem().setPressure(1.01325);
+    getThermoSystem().setPressure(ThermodynamicConstantsInterface.referencePressure);
     getThermoSystem().setTemperature(288.15);
     try {
       thermoOps.TPflash();

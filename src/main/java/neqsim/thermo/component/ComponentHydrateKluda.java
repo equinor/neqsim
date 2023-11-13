@@ -2,6 +2,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -178,7 +179,8 @@ public class ComponentHydrateKluda extends Component {
           + par4_struc1 * temperature) / 1.0e5;
     }
     if (type == 1) {
-      return Math.exp(par1_struc2 + par2_struc2 / temperature) * 1.01325;
+      return Math.exp(par1_struc2 + par2_struc2 / temperature)
+          * ThermodynamicConstantsInterface.referencePressure;
     } else {
       return 0.0;
     }

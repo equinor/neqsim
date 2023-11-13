@@ -677,7 +677,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double calcR() {
-    double R = 8.314 / getMolarMass();
+    double R = ThermodynamicConstantsInterface.R / getMolarMass();
 
     return R;
   }
@@ -2159,16 +2159,20 @@ public abstract class Phase implements PhaseInterface {
       return numberOfMolesInPhase * 3600.0;
     } else if (flowunit.equals("Sm3/sec")) {
       return numberOfMolesInPhase * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
+          * ThermodynamicConstantsInterface.standardStateTemperature
+          / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("Sm3/hr")) {
       return numberOfMolesInPhase * 3600.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
+          * ThermodynamicConstantsInterface.standardStateTemperature
+          / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("Sm3/day")) {
       return numberOfMolesInPhase * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
+          * ThermodynamicConstantsInterface.standardStateTemperature
+          / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("MSm3/day")) {
       return numberOfMolesInPhase * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0 / 1.0e6;
+          * ThermodynamicConstantsInterface.standardStateTemperature
+          / ThermodynamicConstantsInterface.atm / 1.0e6;
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }

@@ -67,9 +67,11 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
    */
   public double getConversionFactor(String name) {
     double mol_m3 = 0.0;
-    double mol_Sm3 = 101325.0 / (ThermodynamicConstantsInterface.R * standardStateTemperature);
+    double mol_Sm3 = ThermodynamicConstantsInterface.atm
+        / (ThermodynamicConstantsInterface.R * standardStateTemperature);
     if (boilp < 25) {
-      mol_m3 = 101325.0 / (ThermodynamicConstantsInterface.R * standardStateTemperature);
+      mol_m3 = ThermodynamicConstantsInterface.atm
+          / (ThermodynamicConstantsInterface.R * standardStateTemperature);
     } else {
       mol_m3 = 1.0 / (molarmass) * stddens * 1000;
     }
