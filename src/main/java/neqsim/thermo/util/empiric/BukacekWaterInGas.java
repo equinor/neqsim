@@ -39,7 +39,10 @@ public class BukacekWaterInGas {
 
     double ans = mgwaterSm3 / molarMassGas; // mol water /Sm3 gas
 
-    double molgasSm3 = 101325.0 / (ThermodynamicConstantsInterface.R * 288.15); // mol gas/ Sm3
+    double molgasSm3 =
+        ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15); // mol
+                                                                                            // gas/
+                                                                                            // Sm3
 
     return ans / molgasSm3;
   }

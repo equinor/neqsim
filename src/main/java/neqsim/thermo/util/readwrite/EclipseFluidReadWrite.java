@@ -134,9 +134,8 @@ public class EclipseFluidReadWrite {
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
   public static SystemInterface read(String inputFile) {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(288.15,
-            ThermodynamicConstantsInterface.referencePressure);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
+        ThermodynamicConstantsInterface.referencePressure);
 
     double[][] kij = null;
     try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {

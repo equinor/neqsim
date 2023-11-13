@@ -264,8 +264,8 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         4.2903609488e-2, 1.4529023444e2, 6.1276818706e3};
     // double viscRefK[] = {-9.74602, 18.0834, -4126.66, 44.6055, 0.9676544, 81.8134, 15649.9};
 
-    double molDens =
-        101325.0 / ThermodynamicConstantsInterface.R / phase.getPhase().getTemperature() / 1.0e3;
+    double molDens = ThermodynamicConstantsInterface.atm / ThermodynamicConstantsInterface.R
+        / phase.getPhase().getTemperature() / 1.0e3;
     double critMolDens = 10.15;
     double redMolDens = (molDens - critMolDens) / critMolDens;
     double viscRefO = GVcoef[0] * Math.pow(temp, -1.0) + GVcoef[1] * Math.pow(temp, -2.0 / 3.0)

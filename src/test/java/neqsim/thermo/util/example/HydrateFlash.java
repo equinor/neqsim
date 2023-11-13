@@ -150,7 +150,8 @@ public class HydrateFlash {
     // testSystem.display();
     // System.out.println("kg vann/MSm^3 gas " +
     // (testSystem.getPhase(0).getComponent("water").getx() *
-    // testSystem.getPhase(0).getComponent("water").getMolarMass() * 101325.0 /
+    // testSystem.getPhase(0).getComponent("water").getMolarMass()
+    // *ThermodynamicConstantsInterface.atm /
     // ThermodynamicConstantsInterface.R / 288.15) * 1.0e6);
     // System.out.println("activity coef water " +
     // testSystem.getPhase(1).getActivityCoefficientSymetric(1));

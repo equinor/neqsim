@@ -91,8 +91,8 @@ public class MasstransferMeOH {
     // column")).setNumberOfTrays(2);
     System.out.println(
         "water in wet gas [kg/MSm3] " + ((Stream) operations.getUnit("water saturated feed gas"))
-            .getFluid().getPhase(0).getComponent("water").getz() * 1.0e6 * 0.01802 * 101325.0
-            / (ThermodynamicConstantsInterface.R * 288.15));
+            .getFluid().getPhase(0).getComponent("water").getz() * 1.0e6 * 0.01802
+            * ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15));
     // mainMixer.getFluid().display();
     // scrubber.getGasOutStream().displayResult();
     System.out.println("hydt " + gasFromScrubber.getHydrateEquilibriumTemperature());

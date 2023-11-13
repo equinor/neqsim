@@ -172,7 +172,7 @@ public class TPflashDehyd {
      * 
      * 
      * double solubility = testSystem.getPhase(1).getComponent("CO2").getx() *
-     * ThermodynamicConstantsInterface.R * 298.15 / 101325.0 /
+     * ThermodynamicConstantsInterface.R * 298.15 /ThermodynamicConstantsInterface.atm /
      * (testSystem.getPhase(1).getMolarMass()) * 1000;
      * 
      * System.out.println("selectivity " + seletivity); System.out.println("CO2 solubility " +
