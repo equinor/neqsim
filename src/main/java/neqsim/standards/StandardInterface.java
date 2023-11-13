@@ -165,5 +165,21 @@ public interface StandardInterface {
    */
   public void setResultTable(String[][] resultTable);
 
+  /**
+   * <p>
+   * Getter for the field <code>referencePressure</code>.
+   * </p>
+   *
+   * @return Reference pressure in bara
+   */
+  public double getReferencePressure();
+
+  /**
+   * <p>
+   * Setter for the field <code>referencePressure</code>.
+   * </p>
+   *
+   * @param referencePressure Reference pressure to set in in bara
+   */
   public void setReferencePressure(double referencePressure);
 }

@@ -14,6 +14,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
 
   File file = new File("src/test/java/neqsim/thermo/util/readwrite");
+  String fileA1 = file.getAbsolutePath() + "/A-1.E300";
   String fileA13 = file.getAbsolutePath() + "/A-13.E300";
   String fileA17 = file.getAbsolutePath() + "/A-17.E300";
   String fileA19 = file.getAbsolutePath() + "/A-19.E300";
@@ -22,8 +23,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
    * @throws java.lang.Exception
    */
   @BeforeAll
-  static void setUpBeforeClass() throws Exception {
-  }
+  static void setUpBeforeClass() throws Exception {}
 
   /**
    * Test method for
@@ -51,6 +51,17 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem.addFluid(testSystem3);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+  }
+
+  @Test
+  void testReadAndAddFluids2() throws IOException {
+    EclipseFluidReadWrite.pseudoName = "_A1";
+    testSystem = EclipseFluidReadWrite.read(fileA1);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(100.0, "bara");
+    testSystem.setTemperature(25.0, "C");
     testOps.TPflash();
   }
 

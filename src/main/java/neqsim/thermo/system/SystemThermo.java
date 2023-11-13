@@ -1,22 +1,12 @@
 package neqsim.thermo.system;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Toolkit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.sql.ResultSet;
-import java.text.FieldPosition;
 import java.util.ArrayList;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.chemicalReactions.ChemicalReactionOperations;
@@ -2831,6 +2821,16 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getMolarVolume(String unit) {
+    double volume = 0;
+    for (int i = 0; i < numberOfPhases; i++) {
+      volume += beta[phaseIndex[i]] * getPhase(i).getMolarVolume(unit);
+    }
+    return volume;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getMolarVolume() {
     double volume = 0;
     for (int i = 0; i < numberOfPhases; i++) {
@@ -3442,7 +3442,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     StringBuffer buf = new StringBuffer();
-    FieldPosition test = new FieldPosition(0);
+    java.text.FieldPosition test = new java.text.FieldPosition(0);
     for (int j = 0; j < getPhases()[0].getNumberOfComponents(); j++) {
       buf = new StringBuffer();
       table[j + 1][1] = nf.format(getPhase(0).getComponents()[j].getz(), buf, test).toString();
@@ -3630,21 +3630,22 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void display(String name) {
-    JFrame dialog = new JFrame("System-Report");
-    Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new BorderLayout());
+
+    javax.swing.JFrame dialog = new javax.swing.JFrame("System-Report");
+    java.awt.Dimension screenDimension = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+    java.awt.Container dialogContentPane = dialog.getContentPane();
+    dialogContentPane.setLayout(new java.awt.BorderLayout());
 
     String[] names = {"", "Feed", "Phase 1", "Phase 2", "Phase 3", "Phase 4", "Unit"};
     String[][] table = createTable(name);
-    JTable Jtab = new JTable(table, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
+    javax.swing.JTable Jtab = new javax.swing.JTable(table, names);
+    javax.swing.JScrollPane scrollpane = new javax.swing.JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);
 
     // setting the size of the frame and text size
     dialog.setSize(screenDimension.width / 2, screenDimension.height / 2); // pack();
     Jtab.setRowHeight(dialog.getHeight() / table.length);
-    Jtab.setFont(new Font("Serif", Font.PLAIN,
+    Jtab.setFont(new java.awt.Font("Serif", java.awt.Font.PLAIN,
         dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
 
     // dialog.pack();
@@ -3867,7 +3868,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface readObject(int ID) {
-    ResultSet rs = null;
+    java.sql.ResultSet rs = null;
     SystemThermo tempSystem = null;
     neqsim.util.database.NeqSimBlobDatabase database =
         new neqsim.util.database.NeqSimBlobDatabase();

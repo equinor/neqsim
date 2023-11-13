@@ -1,10 +1,10 @@
 /*
- * DataSmoothor.java
+ * DataSmoother.java
  *
  * Created on 31. januar 2001, 21:27
  */
 
-package neqsim.statistics.dataAnalysis.dataSmoothing;
+package neqsim.statistics.dataanalysis.datasmoothing;
 
 import Jama.Matrix;
 
@@ -16,20 +16,22 @@ import Jama.Matrix;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class DataSmoothor {
-  double[] nonSmoothedNumbers, smoothedNumbers, cCoef;
-  int nl = 0, nr = 0, ld = 0, m = 0, mm = 0, imj = 0, kk = 0;
+public class DataSmoother {
+  double[] nonSmoothedNumbers;
+  double[] smoothedNumbers;
+  double[] cCoef;
+  int nl = 0;
+  int nr = 0;
+  int ld = 0;
+  int m = 0;
+  int mm = 0;
+  int imj = 0;
+  int kk = 0;
   int[] index;
   double[][] a;
   double[] b;
-  double sum = 0, fac = 0;
-
-  /**
-   * <p>
-   * Constructor for DataSmoothor.
-   * </p>
-   */
-  public DataSmoothor() {}
+  double sum = 0;
+  double fac = 0;
 
   /**
    * <p>
@@ -42,7 +44,7 @@ public class DataSmoothor {
    * @param ld a int
    * @param m a int
    */
-  public DataSmoothor(double[] nonSmoothedNumbers, int nl, int nr, int ld, int m) {
+  public DataSmoother(double[] nonSmoothedNumbers, int nl, int nr, int ld, int m) {
     this.nonSmoothedNumbers = new double[nonSmoothedNumbers.length];
     this.smoothedNumbers = new double[nonSmoothedNumbers.length];
     this.cCoef = new double[nonSmoothedNumbers.length];
@@ -156,22 +158,5 @@ public class DataSmoothor {
    */
   public double[] getSmoothedNumbers() {
     return smoothedNumbers;
-  }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String args[]) {
-    double[] numbers = {10, 11, 12, 13, 14, 15, 15.5, 15, 19, 14, 14, 13, 12, 12, 11, 10, 9, 8};
-    DataSmoothor test = new DataSmoothor(numbers, 3, 3, 0, 4);
-    Matrix data = new Matrix(test.getSmoothedNumbers(), 1);
-    data.print(10, 2);
-    test.runSmoothing();
-    data = new Matrix(test.getSmoothedNumbers(), 1);
-    data.print(10, 2);
   }
 }

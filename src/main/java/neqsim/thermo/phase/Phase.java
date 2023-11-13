@@ -583,6 +583,23 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getMolarVolume(String unit) {
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "m3/mol":
+        conversionFactor = 1.0;
+        break;
+      case "litre/mol":
+        conversionFactor = 1000.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    return getMolarMass() / getDensity("kg/m3") * conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public int getNumberOfComponents() {
     return numberOfComponents;
   }

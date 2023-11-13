@@ -7,7 +7,7 @@
 package neqsim.statistics.experimentalSampleCreation.sampleCreator.wettedWallColumnSampleCreator;
 
 import Jama.Matrix;
-import neqsim.statistics.dataAnalysis.dataSmoothing.DataSmoothor;
+import neqsim.statistics.dataanalysis.datasmoothing.DataSmoother;
 import neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData;
 import neqsim.statistics.experimentalEquipmentData.wettedWallColumnData.WettedWallColumnData;
 import neqsim.statistics.experimentalSampleCreation.readDataFromFile.wettedWallColumnReader.WettedWallColumnDataObject;
@@ -27,7 +27,6 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class WettedWallColumnSampleCreator extends SampleCreator {
   WettedWallDataReader reader;
-  DataSmoothor smoothor;
   double[] time;
   double[] pressure;
   double[] inletLiquidTemperature;
@@ -116,33 +115,33 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
     Matrix data = new Matrix(pressure, 1);
     data.print(10, 2);
 
-    smoothor = new DataSmoothor(pressure, 10, 10, 0, 2);
-    smoothor.runSmoothing();
-    smoothedPressure = smoothor.getSmoothedNumbers();
+    DataSmoother smoother = new DataSmoother(pressure, 10, 10, 0, 2);
+    smoother.runSmoothing();
+    smoothedPressure = smoother.getSmoothedNumbers();
 
-    smoothor = new DataSmoothor(inletLiquidTemperature, 10, 10, 0, 2);
-    smoothor.runSmoothing();
-    smoothedInletLiquidTemperature = smoothor.getSmoothedNumbers();
+    smoother = new DataSmoother(inletLiquidTemperature, 10, 10, 0, 2);
+    smoother.runSmoothing();
+    smoothedInletLiquidTemperature = smoother.getSmoothedNumbers();
 
-    smoothor = new DataSmoothor(outletLiquidTemperature, 10, 10, 0, 2);
-    smoothor.runSmoothing();
-    smoothedOutletLiquidTemperature = smoothor.getSmoothedNumbers();
+    smoother = new DataSmoother(outletLiquidTemperature, 10, 10, 0, 2);
+    smoother.runSmoothing();
+    smoothedOutletLiquidTemperature = smoother.getSmoothedNumbers();
 
-    smoothor = new DataSmoothor(columnWallTemperature, 10, 10, 0, 2);
-    smoothor.runSmoothing();
-    smoothedColumnWallTemperature = smoothor.getSmoothedNumbers();
+    smoother = new DataSmoother(columnWallTemperature, 10, 10, 0, 2);
+    smoother.runSmoothing();
+    smoothedColumnWallTemperature = smoother.getSmoothedNumbers();
 
-    smoothor = new DataSmoothor(inletTotalGasFlowRate, 10, 10, 0, 2);
-    smoothor.runSmoothing();
-    smoothedInletTotalGasFlowRate = smoothor.getSmoothedNumbers();
+    smoother = new DataSmoother(inletTotalGasFlowRate, 10, 10, 0, 2);
+    smoother.runSmoothing();
+    smoothedInletTotalGasFlowRate = smoother.getSmoothedNumbers();
 
-    smoothor = new DataSmoothor(co2SupplyRate, 10, 10, 0, 2);
-    smoothor.runSmoothing();
-    smoothedCo2SupplyRate = smoothor.getSmoothedNumbers();
+    smoother = new DataSmoother(co2SupplyRate, 10, 10, 0, 2);
+    smoother.runSmoothing();
+    smoothedCo2SupplyRate = smoother.getSmoothedNumbers();
 
-    smoothor = new DataSmoothor(inletLiquidFlowRate, 10, 10, 0, 2);
-    smoothor.runSmoothing();
-    smoothedInletLiquidFlowRate = smoothor.getSmoothedNumbers();
+    smoother = new DataSmoother(inletLiquidFlowRate, 10, 10, 0, 2);
+    smoother.runSmoothing();
+    smoothedInletLiquidFlowRate = smoother.getSmoothedNumbers();
 
     data = new Matrix(smoothedPressure, 1);
     data.print(10, 2);

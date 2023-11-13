@@ -199,11 +199,15 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     this.referenceState = referenceState;
   }
 
-  public void setReferencePressure(double referencePressure) {
-    this.referencePressure = referencePressure;
+  /** {@inheritDoc} */
+  @Override
+  public double getReferencePressure() {
+    return referencePressure;
   }
 
-  public double getReferencePressure(){
-    return referencePressure;
+  /** {@inheritDoc} */
+  @Override
+  public void setReferencePressure(double referencePressure) {
+    this.referencePressure = referencePressure;
   }
 }

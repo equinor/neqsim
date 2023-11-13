@@ -200,9 +200,10 @@ public class GasTurbine extends TwoPortEquipment {
    *
    *
    * <p>
-   * calcIdealAirGasRatio
-   * </p>
    * Calculates ideal air fuel ratio [kg air/kg fuel]
+   * </p>
+   * 
+   * @return ideal air fuel ratio [kg air/kg fuel]
    */
   public double calcIdealAirFuelRatio() {
     thermoSystem = inStream.getThermoSystem().clone();
