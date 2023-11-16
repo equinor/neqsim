@@ -10,7 +10,7 @@ import neqsim.thermo.phase.PhaseTSTEos;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class SystemTSTEos extends SystemEos {
+public class SystemTSTEos extends SystemThermo {
   private static final long serialVersionUID = 1000;
   double[][] TBPfractionCoefs = {{73.404, 97.356, 0.61874, -2059.3, 0.0},
       {0.072846, 2.1881, 163.91, -4043.4, 1.0 / 3.0}, {0.37377, 0.005493, 0.011793, -4.9e-6, 0.0}};

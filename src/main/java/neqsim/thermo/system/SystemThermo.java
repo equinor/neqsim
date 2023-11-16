@@ -138,10 +138,7 @@ public abstract class SystemThermo implements SystemInterface {
    * </p>
    */
   public SystemThermo() {
-    characterization = new Characterise(this);
-    interfaceProp = new InterfaceProperties(this);
-
-    reInitPhaseInformation();
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -153,7 +150,10 @@ public abstract class SystemThermo implements SystemInterface {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemThermo(double T, double P) {
-    this();
+    characterization = new Characterise(this);
+    interfaceProp = new InterfaceProperties(this);
+
+    reInitPhaseInformation();
     if (T < 0.0) {
       neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this.getClass().getSimpleName(),
@@ -167,6 +167,20 @@ public abstract class SystemThermo implements SystemInterface {
               "SystemThermo", "P", "is negative");
       throw new RuntimeException(ex);
     }
+  }
+
+  /**
+   * <p>
+   * Constructor for SystemThermo.
+   * </p>
+   *
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to set checkForSolids true.
+   */
+  public SystemThermo(double T, double P, Boolean checkForSolids) {
+    this(T, P);
+    this.solidPhaseCheck = checkForSolids;
   }
 
   /** {@inheritDoc} */

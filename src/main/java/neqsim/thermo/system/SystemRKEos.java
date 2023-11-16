@@ -9,7 +9,7 @@ import neqsim.thermo.phase.PhaseRK;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class SystemRKEos extends SystemEos {
+public class SystemRKEos extends SystemThermo {
   private static final long serialVersionUID = 1000;
 
   /**

@@ -11,7 +11,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class SystemUNIFAC extends SystemEos {
+public class SystemUNIFAC extends SystemThermo {
   private static final long serialVersionUID = 1000;
 
   /**

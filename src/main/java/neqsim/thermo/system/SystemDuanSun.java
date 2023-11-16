@@ -11,7 +11,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class SystemDuanSun extends SystemEos {
+public class SystemDuanSun extends SystemThermo {
   private static final long serialVersionUID = 1000;
 
   protected String[] CapeOpenProperties11 =
