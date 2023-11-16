@@ -370,13 +370,14 @@ public class TPmultiflash extends TPflash {
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).isInert()) break;
       int iter = 0;
       double errOld = 1.0e100;
+      boolean useaccsubst = true;
       do {
         errOld = err;
         iter++;
         err = 0;
 
         if (iter <= 150 || !system.isImplementedCompositionDeriativesofFugacity()) {
-          if (iter % 7 == 0 && iter < 150) {
+          if (iter % 7 == 0 && iter < 150 && useaccsubst) {
             double vec1 = 0.0;
 
             double vec2 = 0.0;
@@ -395,9 +396,6 @@ public class TPmultiflash extends TPflash {
               logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
               err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
               Wi[j][i] = Math.exp(logWi[i]);
-            }
-            if (err > errOld) {
-              continue;
             }
           } else {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -423,7 +421,11 @@ public class TPmultiflash extends TPflash {
               err += Math.abs(logWi[i] - oldlogw[i]);
               Wi[j][i] = Math.exp(logWi[i]);
             }
+            if (iter > 2 && err > errOld) {
+              useaccsubst = false;
+            }
           }
+
         } else {
           SimpleMatrix f = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(), 1);
           SimpleMatrix df = null;
