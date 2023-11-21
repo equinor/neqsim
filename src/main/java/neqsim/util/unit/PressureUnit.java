@@ -39,10 +39,15 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
     if (tounit.equals("barg")) {
       return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
           - ThermodynamicConstantsInterface.referencePressure;
-    }
-    if (inunit.equals("barg")) {
+    } else if (inunit.equals("barg")) {
       return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
           + ThermodynamicConstantsInterface.referencePressure;
+    } else if (tounit.equals("atm")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          / ThermodynamicConstantsInterface.referencePressure;
+    } else if (inunit.equals("atm")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          * ThermodynamicConstantsInterface.referencePressure;
     } else {
       return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
     }
@@ -74,8 +79,14 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
       case "Pa":
         conversionFactor = 1.0e-5;
         break;
+      case "kPa":
+        conversionFactor = 1.0e-2;
+        break;
       case "MPa":
         conversionFactor = 10.0;
+        break;
+      case "atm":
+        conversionFactor = 1.0;
         break;
       default:
         throw new RuntimeException(
