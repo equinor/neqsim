@@ -2,6 +2,7 @@ package neqsim.processSimulation.processSystem;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.measurementDevice.WaterDewPointAnalyser;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
@@ -349,5 +350,9 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     } catch (Exception ex) {
       logger.error("Something failed");
     }
+
+    System.out.println("Flow rate teg " + makeupTEG.getFlowRate("kg/hr"));
+
+    Assertions.assertEquals(makeupTEG.getFlowRate("kg/hr"), 0.3734442702300514);
   }
 }
