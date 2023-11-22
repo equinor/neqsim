@@ -377,7 +377,7 @@ public class TPmultiflash extends TPflash {
         err = 0;
 
         if (iter <= 150 || !system.isImplementedCompositionDeriativesofFugacity()) {
-          if (iter % 7 == 0 && iter < 150 && useaccsubst) {
+          if (iter % 7 == 0) {
             double vec1 = 0.0;
 
             double vec2 = 0.0;
@@ -420,6 +420,7 @@ public class TPmultiflash extends TPflash {
               deltalogWi[i] = logWi[i] - oldlogw[i];
               err += Math.abs(logWi[i] - oldlogw[i]);
               Wi[j][i] = Math.exp(logWi[i]);
+              useaccsubst = true;
             }
             if (iter > 2 && err > errOld) {
               useaccsubst = false;

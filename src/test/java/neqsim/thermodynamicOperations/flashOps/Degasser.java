@@ -1,9 +1,15 @@
 package neqsim.thermodynamicOperations.flashOps;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.security.AnyTypePermission;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -183,32 +189,30 @@ class Degasser {
   /**
    * Test method for
    */
+  @Test
   void testRun2() {
-    /*
-     * XStream xstream = new XStream(); xstream.addPermission(AnyTypePermission.ANY); // Specify the
-     * file path to read Path filePath = Paths.get(
-     * "/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml");
-     * String xmlContents = ""; try { //xmlContents = Files.readString(filePath); } catch
-     * (IOException e) { e.printStackTrace(); }
-     * 
-     * // Deserialize from xml neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
-     * (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
-     * operationsCopy.run(); neqsim.processSimulation.processEquipment.separator.Separator
-     * VD02Separator = (neqsim.processSimulation.processEquipment.separator.Separator)
-     * operationsCopy .getUnit("Separator after CFU gas");
-     * neqsim.processSimulation.processEquipment.separator.Separator VD01Separator =
-     * (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
-     * .getUnit("Separator after degasser gas");
-     * neqsim.processSimulation.processEquipment.separator.Separator Degasser =
-     * (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
-     * .getUnit("Degasser");
-     * System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " +
-     * Degasser.getGasOutStream().getFlowRate("kg/hr"));
-     * System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " +
-     * VD01Separator.getGasOutStream().getFlowRate("kg/hr")); VD02Separator.getGasOutStream().run();
-     * System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " +
-     * VD02Separator.getGasOutStream().getFlowRate("kg/hr"));
-     */
+    XStream xstream = new XStream();
+      xstream.addPermission(AnyTypePermission.ANY);
+      // Specify the file path to read
+      Path filePath = Paths.get("/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml");
+      String xmlContents = "";
+      try {
+        xmlContents = Files.readString(filePath);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+
+      // Deserialize from xml
+      neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
+          (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
+      operationsCopy.run();
+      neqsim.processSimulation.processEquipment.separator.Separator VD02Separator = (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy.getUnit("Separator after CFU gas");
+      neqsim.processSimulation.processEquipment.separator.Separator VD01Separator = (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy.getUnit("Separator after degasser gas");
+      neqsim.processSimulation.processEquipment.separator.Separator Degasser = (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy.getUnit("Degasser");
+      System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " + Degasser.getGasOutStream().getFlowRate("kg/hr"));
+      System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " + VD01Separator.getGasOutStream().getFlowRate("kg/hr"));
+      VD02Separator.getGasOutStream().run();
+      System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " + VD02Separator.getGasOutStream().getFlowRate("kg/hr"));
 
   }
 }
