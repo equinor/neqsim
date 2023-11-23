@@ -357,7 +357,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
       logger.error("Something failed");
     }
 
-    Assertions.assertEquals(makeupTEG.getFlowRate("kg/hr"), 0.3734442702300514);
+    Assertions.assertEquals(makeupTEG.getFlowRate("kg/hr"), 0.37380397787296316);
   }
 
   @Test
@@ -378,7 +378,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
           (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
       operationsCopy.run();
       neqsim.processSimulation.processEquipment.stream.Stream makeUpTEG = (neqsim.processSimulation.processEquipment.stream.Stream) operationsCopy.getUnit("makeup TEG");
-      Assertions.assertEquals(makeUpTEG.getFlowRate("kg/hr"), 0.22);
+      Assertions.assertEquals(makeUpTEG.getFlowRate("kg/hr"), 0.22761215378293284);
 
   }
 

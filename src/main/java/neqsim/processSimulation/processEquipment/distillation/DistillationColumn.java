@@ -370,14 +370,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
               trays.get(i + 1).getLiquidOutStream());
           ((SimpleTray) trays.get(i)).run(id);
         }
-        for (int i = 1; i <= numberOfTrays - 1; i++) {
-          int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
-          if (i == (numberOfTrays - 1)) {
-            replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-          }
-          ((Mixer) trays.get(i)).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
-          ((SimpleTray) trays.get(i)).run(id);
-        }
+        // for (int i = 1; i <= numberOfTrays - 1; i++) {
+        //   int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
+        //   if (i == (numberOfTrays - 1)) {
+        //     replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        //   }
+        //   ((Mixer) trays.get(i)).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
+        //   ((SimpleTray) trays.get(i)).run(id);
+        // }
         for (int i = 0; i < numberOfTrays; i++) {
           err += Math.abs(
               oldtemps[i] - ((MixerInterface) trays.get(i)).getThermoSystem().getTemperature());
