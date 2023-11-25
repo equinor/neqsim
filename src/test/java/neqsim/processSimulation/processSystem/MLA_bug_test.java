@@ -363,22 +363,26 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
   @Test
   void testRunNEQSIMAPI() {
     XStream xstream = new XStream();
-      xstream.addPermission(AnyTypePermission.ANY);
-      // Specify the file path to read
-      Path filePath = Paths.get("/workspaces/neqsim/src/test/java/neqsim/processSimulation/processSystem/my_process_TEG.xml");
-      String xmlContents = "";
-      try {
-        xmlContents = Files.readString(filePath);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+    xstream.addPermission(AnyTypePermission.ANY);
+    // Specify the file path to read
 
-      // Deserialize from xml
-      neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
-          (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
-      operationsCopy.run();
-      neqsim.processSimulation.processEquipment.stream.Stream makeUpTEG = (neqsim.processSimulation.processEquipment.stream.Stream) operationsCopy.getUnit("makeup TEG");
-      Assertions.assertEquals(makeUpTEG.getFlowRate("kg/hr"), 0.22761215378293284);
+    Path filePath = Paths.get(
+        "/workspaces/neqsim/src/test/java/neqsim/processSimulation/processSystem/my_process_TEG.xml");
+    String xmlContents = "";
+    try {
+      xmlContents = new String(Files.readAllBytes(filePath));
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    // Deserialize from xml
+    neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
+        (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
+    operationsCopy.run();
+    neqsim.processSimulation.processEquipment.stream.Stream makeUpTEG =
+        (neqsim.processSimulation.processEquipment.stream.Stream) operationsCopy
+            .getUnit("makeup TEG");
+    Assertions.assertEquals(makeUpTEG.getFlowRate("kg/hr"), 0.22761215378293284);
 
   }
 

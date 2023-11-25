@@ -192,27 +192,37 @@ class Degasser {
   @Test
   void testRun2() {
     XStream xstream = new XStream();
-      xstream.addPermission(AnyTypePermission.ANY);
-      // Specify the file path to read
-      Path filePath = Paths.get("/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml");
-      String xmlContents = "";
-      try {
-        xmlContents = Files.readString(filePath);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+    xstream.addPermission(AnyTypePermission.ANY);
+    // Specify the file path to read
+    Path filePath = Paths.get(
+        "/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml");
+    String xmlContents = "";
+    try {
+      xmlContents = new String(Files.readAllBytes(filePath));
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
 
-      // Deserialize from xml
-      neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
-          (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
-      operationsCopy.run();
-      neqsim.processSimulation.processEquipment.separator.Separator VD02Separator = (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy.getUnit("Separator after CFU gas");
-      neqsim.processSimulation.processEquipment.separator.Separator VD01Separator = (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy.getUnit("Separator after degasser gas");
-      neqsim.processSimulation.processEquipment.separator.Separator Degasser = (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy.getUnit("Degasser");
-      System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " + Degasser.getGasOutStream().getFlowRate("kg/hr"));
-      System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " + VD01Separator.getGasOutStream().getFlowRate("kg/hr"));
-      VD02Separator.getGasOutStream().run();
-      System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " + VD02Separator.getGasOutStream().getFlowRate("kg/hr"));
+    // Deserialize from xml
+    neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
+        (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
+    operationsCopy.run();
+    neqsim.processSimulation.processEquipment.separator.Separator VD02Separator =
+        (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
+            .getUnit("Separator after CFU gas");
+    neqsim.processSimulation.processEquipment.separator.Separator VD01Separator =
+        (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
+            .getUnit("Separator after degasser gas");
+    neqsim.processSimulation.processEquipment.separator.Separator Degasser =
+        (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
+            .getUnit("Degasser");
+    System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is "
+        + Degasser.getGasOutStream().getFlowRate("kg/hr"));
+    System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is "
+        + VD01Separator.getGasOutStream().getFlowRate("kg/hr"));
+    VD02Separator.getGasOutStream().run();
+    System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is "
+        + VD02Separator.getGasOutStream().getFlowRate("kg/hr"));
 
   }
 }
