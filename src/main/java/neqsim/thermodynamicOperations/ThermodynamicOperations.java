@@ -3,14 +3,11 @@ package neqsim.thermodynamicOperations;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.util.List;
-
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
@@ -146,7 +143,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void TPflash() {
     double flowRate = system.getTotalNumberOfMoles();
     double minimumFlowRate = 1e-50;
-    if (flowRate < 1e-3) {
+    if (flowRate < 1e-5) {
       system.setTotalNumberOfMoles(1.0);
       system.init(1);
     }
@@ -157,13 +154,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else {
       run();
     }
-    if (flowRate < 1e-3) {
+    if (flowRate < 1e-5) {
       if (flowRate < minimumFlowRate) {
         system.setTotalNumberOfMoles(minimumFlowRate);
       } else {
         system.setTotalNumberOfMoles(flowRate);
       }
-      system.init(2);
+      system.init(1);
     }
   }
 

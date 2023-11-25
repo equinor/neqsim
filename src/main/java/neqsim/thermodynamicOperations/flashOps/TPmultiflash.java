@@ -377,7 +377,7 @@ public class TPmultiflash extends TPflash {
         err = 0;
 
         if (iter <= 150 || !system.isImplementedCompositionDeriativesofFugacity()) {
-          if (iter % 7 == 0 && iter < 150 && useaccsubst) {
+          if (iter % 7 == 0) {
             double vec1 = 0.0;
 
             double vec2 = 0.0;
@@ -420,6 +420,7 @@ public class TPmultiflash extends TPflash {
               deltalogWi[i] = logWi[i] - oldlogw[i];
               err += Math.abs(logWi[i] - oldlogw[i]);
               Wi[j][i] = Math.exp(logWi[i]);
+              useaccsubst = true;
             }
             if (iter > 2 && err > errOld) {
               useaccsubst = false;
@@ -840,6 +841,10 @@ public class TPmultiflash extends TPflash {
           }
         }
       } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 200);
+      if (iter > 198) {
+        System.out.println("too many iterations....." + err);
+        new Exception("to many iterations ");
+      }
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
