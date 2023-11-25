@@ -842,7 +842,8 @@ public class TPmultiflash extends TPflash {
         }
       } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 200);
       if (iter > 198) {
-        System.out.println("too many iterations....." + err);
+        System.out.println("too many iterations....." + err + " temperature "
+            + system.getTemperature("C") + " C " + system.getPressure("bara") + " bara");
         new Exception("to many iterations ");
       }
       // logger.info("err: " + err + " ITER " + iter);
@@ -932,6 +933,7 @@ public class TPmultiflash extends TPflash {
       double oldDiff = 1.0e10;
       double chemdev = 0;
       int iterOut = 0;
+      double maxerr = 1e-12;
       do {
         iterOut++;
         if (system.isChemicalSystem()) {
@@ -973,11 +975,16 @@ public class TPmultiflash extends TPflash {
           // diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) /
           // oldBeta);
           // logger.info("diff multiphase " + diff);
-        } while (diff > 1e-12 && !removePhase && (diff < oldDiff || iterations < 50)
+          if (iterations % 50 == 0) {
+            maxerr *= 100.0;
+          }
+        } while (diff > maxerr && !removePhase && (diff < oldDiff || iterations < 50)
             && iterations < 200);
         // this.solveBeta(true);
         if (iterations >= 199) {
           logger.error("error in multiphase flash..did not solve in 200 iterations");
+          logger.error("diff " + diff + " temperaure " + system.getTemperature("C") + " pressure "
+              + system.getPressure("bara"));
           diff = this.solveBeta();
         }
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
