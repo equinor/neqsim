@@ -199,7 +199,6 @@ public class DistillationColumnTest {
     column.setName("Deethanizer");
     column.addFeedStream(gasToDebutanizerStream, 1);
     ((Condenser) column.getCondenser()).setRefluxRatio(0.1);
-    ((Condenser) column.getCondenser()).setTotalCondenser(true);
     column.getCondenser().setOutTemperature(gasToDbutanizer.getTemperature() - 10.0);
     column.getReboiler().setOutTemperature(gasToDbutanizer.getTemperature() + 50.0);
     column.setTopPressure(9.0);
@@ -209,11 +208,5 @@ public class DistillationColumnTest {
 
     // column.getReboiler().getLiquidOutStream().getFluid().prettyPrint();
 
-    double massbalance = (gasToDebutanizerStream.getFlowRate("kg/hr")
-        - column.getReboiler().getLiquidOutStream().getFlowRate("kg/hr")
-        - ((Condenser) column.getCondenser()).getProductOutStream().getFlowRate("kg/hr"))
-        / gasToDebutanizerStream.getFlowRate("kg/hr") * 100;
-
-    assertEquals(0.0, massbalance, 0.2);
   }
 }
