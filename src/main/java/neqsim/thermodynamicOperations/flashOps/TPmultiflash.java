@@ -28,6 +28,7 @@ public class TPmultiflash extends TPflash {
   static Logger logger = LogManager.getLogger(TPmultiflash.class);
 
   // SystemInterface clonedSystem;
+  boolean startFromBottom = true;
   boolean multiPhaseTest = false;
   double[][] dQdbeta;
   double[][] Qmatrix;
@@ -340,7 +341,15 @@ public class TPmultiflash extends TPflash {
       }
     }
 
-    for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
+    int start = system.getPhase(0).getNumberOfComponents() - 1;
+    int end = 0;
+    int val = -1;
+    if (!startFromBottom) {
+      start = 0;
+      val = 1;
+      end = system.getPhase(0).getNumberOfComponents() - 1;
+    }
+    for (int j = start; j != end; j = j + val) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon()
@@ -372,6 +381,7 @@ public class TPmultiflash extends TPflash {
       double errOld = 1.0e100;
       boolean useaccsubst = true;
       do {
+        clonedSystem.get(0).init(1);
         errOld = err;
         iter++;
         err = 0;
@@ -1028,6 +1038,8 @@ public class TPmultiflash extends TPflash {
        */
       if (hasRemovedPhase && !secondTime) {
         secondTime = true;
+        startFromBottom = false;
+        stabilityAnalysis();
         run();
       }
       /*
