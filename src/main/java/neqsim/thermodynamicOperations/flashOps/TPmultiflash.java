@@ -371,12 +371,14 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
+      int maxsucssubiter = 50;
+      int maxiter = 100;
       do {
         errOld = err;
         iter++;
         err = 0;
 
-        if (iter <= 150 || !system.isImplementedCompositionDeriativesofFugacity()) {
+        if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (iter % 7 == 0 && useaccsubst) {
             double vec1 = 0.0;
 
@@ -513,7 +515,7 @@ public class TPmultiflash extends TPflash {
             clonedSystem.get(0).getPhase(1).getComponents()[i].setx(1e-50);
           }
         }
-      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 600);
+      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
@@ -530,7 +532,7 @@ public class TPmultiflash extends TPflash {
         xTrivialCheck0 += Math.abs(x[j][i] - system.getPhase(0).getComponent(i).getx());
         xTrivialCheck1 += Math.abs(x[j][i] - system.getPhase(1).getComponent(i).getx());
       }
-      if (iter >= 599) {
+      if (iter >= maxiter) {
         // logger.info("iter > maxiter multiphase stability ");
         // logger.info("error " + Math.abs(err));
         // logger.info("tm: " + tm[j]);
@@ -716,12 +718,14 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
+      int maxsucssubiter = 50;
+      int maxiter = 100;
       do {
         errOld = err;
         iter++;
         err = 0;
 
-        if (iter <= 150 || !system.isImplementedCompositionDeriativesofFugacity()) {
+        if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (iter % 7 == 0 && useaccsubst) {
             double vec1 = 0.0;
 
@@ -858,7 +862,7 @@ public class TPmultiflash extends TPflash {
             clonedSystem.get(0).getPhase(1).getComponents()[i].setx(1e-50);
           }
         }
-      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 600);
+      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
@@ -875,7 +879,7 @@ public class TPmultiflash extends TPflash {
         xTrivialCheck0 += Math.abs(x[j][i] - system.getPhase(0).getComponent(i).getx());
         xTrivialCheck1 += Math.abs(x[j][i] - system.getPhase(1).getComponent(i).getx());
       }
-      if (iter >= 599) {
+      if (iter >= maxiter - 1) {
         // logger.info("iter > maxiter multiphase stability ");
         // logger.info("error " + Math.abs(err));
         // logger.info("tm: " + tm[j]);
