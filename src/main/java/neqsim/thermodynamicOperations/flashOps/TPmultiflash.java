@@ -1190,7 +1190,7 @@ public class TPmultiflash extends TPflash {
           }
         }
       } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 200);
-      if (iter > maxIter-2) {
+      if (iter > maxiter-2) {
        // System.out.println("too many iterations....." + err + " temperature "
        //    + system.getTemperature("C") + " C " + system.getPressure("bara") + " bara");
         new Exception("to many iterations ");
@@ -1211,7 +1211,7 @@ public class TPmultiflash extends TPflash {
         xTrivialCheck0 += Math.abs(x[j][i] - system.getPhase(0).getComponent(i).getx());
         xTrivialCheck1 += Math.abs(x[j][i] - system.getPhase(1).getComponent(i).getx());
       }
-      if (iter >= maxIter-1) {
+      if (iter >= maxiter-1) {
         logger.info("iter > maxiter multiphase stability ");
         logger.info("error " + Math.abs(err));
         logger.info("tm: " + tm[j]);
