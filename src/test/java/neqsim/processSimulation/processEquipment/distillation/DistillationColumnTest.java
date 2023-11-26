@@ -1,212 +1,214 @@
-package neqsim.processSimulation.processEquipment.distillation;
+package neqsim.thermodynamicOperations.flashOps;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class DistillationColumnTest {
+/**
+ * @author ESOL
+ *
+ */
+class Degasser {
+  static neqsim.thermo.system.SystemInterface testSystem = null;
+  static ThermodynamicOperations testOps = null;
 
   /**
    * @throws java.lang.Exception
    */
+  @BeforeEach
+  void setUp() throws Exception {
+    testSystem = new neqsim.thermo.system.SystemPrEos(243.15, 300.0);
+    testSystem.addComponent("methane", 90.0);
+    testSystem.addComponent("ethane", 0.0);
+    testSystem.addComponent("propane", 0.0);
+    testSystem.addComponent("i-butane", 0.0);
+    testSystem.addComponent("n-butane", 0.0);
+    testSystem.addComponent("i-pentane", 0.0);
+    testSystem.addComponent("n-pentane", 0.0);
+    testSystem.addComponent("n-hexane", 0.0);
+    testSystem.addComponent("nitrogen", 10.0);
+    testSystem.setMixingRule("classic");
+  }
+
+  /**
+   * Test method for
+   */
   @Test
-  public void DistillationColumnTest() throws Exception {
-
-    neqsim.thermo.system.SystemInterface richTEG =
+  void testRun() {
+    neqsim.thermo.system.SystemInterface fluid1 =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
-    richTEG.addComponent("nitrogen", 0.0003884521907420086);
-    richTEG.addComponent("CO2", 0.3992611934362681);
-    richTEG.addComponent("methane", 0.1707852619527612);
-    richTEG.addComponent("ethane", 0.20533172990208282);
-    richTEG.addComponent("propane", 0.28448628224749795);
-    richTEG.addComponent("i-butane", 0.04538593257021818);
-    richTEG.addComponent("n-butane", 0.1078982825);
-    richTEG.addComponent("i-pentane", 0.08015009931573362);
-    richTEG.addComponent("n-pentane", 0.07597175884128077);
-    richTEG.addComponent("n-hexane", 0.735238469338);
-    richTEG.addComponent("n-heptane", 0.0);
-    richTEG.addComponent("nC8", 0.0);
-    richTEG.addComponent("nC9", 0.0);
-    richTEG.addComponent("benzene", 0.001);
-    richTEG.addComponent("water", 9.281170624865437);
-    richTEG.addComponent("TEG", 88.61393191277175);
-    richTEG.setMixingRule(10);
-    richTEG.setMultiPhaseCheck(false);
-    richTEG.init(0);
 
-    neqsim.thermo.system.SystemInterface gasToReboiler =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
-    gasToReboiler.addComponent("nitrogen", 0.007104922868929818);
-    gasToReboiler.addComponent("CO2", 4.944830745821265);
-    gasToReboiler.addComponent("methane", 3.013439464714221);
-    gasToReboiler.addComponent("ethane", 3.1119159322353815);
-    gasToReboiler.addComponent("propane", 4.001381171330917);
-    gasToReboiler.addComponent("i-butane", 0.6934008192075206);
-    gasToReboiler.addComponent("n-butane", 1.684816349773283);
-    gasToReboiler.addComponent("i-pentane", 1.24185783393270);
-    gasToReboiler.addComponent("n-pentane", 1.32322868124);
-    gasToReboiler.addComponent("n-hexane", 12.2651);
-    gasToReboiler.addComponent("n-heptane", 0.0);
-    gasToReboiler.addComponent("nC8", 0.0);
-    gasToReboiler.addComponent("nC9", 0.0);
-    gasToReboiler.addComponent("benzene", 0.000);
-    gasToReboiler.addComponent("water", 63.419578687948665);
-    gasToReboiler.addComponent("TEG", 4.293253985703371);
-    gasToReboiler.setMixingRule(10);
-    gasToReboiler.setMultiPhaseCheck(false);
-    gasToReboiler.init(0);
+    fluid1.addComponent("nitrogen", 0.110282450914383);
+    fluid1.addComponent("CO2", 8.92014980316162);
+    fluid1.addComponent("methane", 72.3870849609375);
+    fluid1.addComponent("ethane", 5.19349813461304);
+    fluid1.addComponent("propane", 5.20273065567017);
+    fluid1.addComponent("i-butane", 0.436239510774612);
+    fluid1.addComponent("n-butane", 1.39356422424316);
+    fluid1.addComponent("i-pentane", 0.769362509250641);
+    fluid1.addComponent("n-pentane", 0.543137490749359);
+    fluid1.addComponent("n-hexane", 3.90587639808655);
+    fluid1.addComponent("n-heptane", 3.90587639808655);
+    fluid1.addComponent("water", 40.0);
+    fluid1.setMixingRule(10);
+    fluid1.setMultiPhaseCheck(true);
 
-    Stream richTEGStream = new Stream("richTEGS", richTEG);
-    richTEGStream.setFlowRate(9400.0, "kg/hr");
-    richTEGStream.setTemperature(100, "C");
-    richTEGStream.setPressure(1.12, "bara");
-    richTEGStream.run();
+    ThermodynamicOperations testOps = new ThermodynamicOperations(fluid1);
 
-    Stream gasToReboilerStream = new Stream("gasToReboilerS", gasToReboiler);
-    gasToReboilerStream.setFlowRate(290, "kg/hr");
-    gasToReboilerStream.setTemperature(200, "C");
-    gasToReboilerStream.setPressure(1.12, "bara");
-    gasToReboilerStream.run();
+    testOps.TPflash();
 
-    DistillationColumn column = new DistillationColumn(1, true, true);
-    column.setName("TEG regeneration column");
-    column.addFeedStream(richTEGStream, 1);
-    column.getReboiler().setOutTemperature(273.15 + 202);
-    column.getCondenser().setOutTemperature(273.15 + 88.165861);
-    // column.getCondenser().setHeatInput(-50000);
-    column.getTray(1).addStream(gasToReboilerStream);
-    column.setTopPressure(1.12);
-    column.setBottomPressure(1.12);
-    column.setInternalDiameter(0.56);
-    column.setMaxNumberOfIterations(40);
-    column.run();
+    double[] intParameter = {
 
-    double waterFlowRateInColumn =
-        richTEGStream.getFluid().getPhase(0).getComponent("water").getFlowRate("kg/hr")
-            + richTEGStream.getFluid().getPhase(1).getComponent("water").getFlowRate("kg/hr");
-    double waterFlowRateInColumn2 = richTEGStream.getFluid().getComponent("water").getMolarMass()
-        * richTEGStream.getFluid().getFlowRate("mole/hr")
-        * richTEGStream.getFluid().getComponent("water").getz();
-    assertEquals(waterFlowRateInColumn, waterFlowRateInColumn2, 0.00001);
+        -0.24, // "CO2"
 
-    double waterFlowRateInColumnGasToReb = gasToReboilerStream.getFluid().getFlowRate("mole/hr")
-        * gasToReboilerStream.getFluid().getComponent("water").getMolarMass()
-        * gasToReboilerStream.getFluid().getComponent("water").getz();
-    double waterFlowRateOutColumn = column.getGasOutStream().getFluid().getFlowRate("mole/hr")
-        * column.getGasOutStream().getFluid().getComponent("water").getMolarMass()
-        * column.getGasOutStream().getFluid().getComponent("water").getz();
-    double waterFlowRateOutColumnLeanTEG =
-        column.getLiquidOutStream().getFluid().getFlowRate("mole/hr")
-            * column.getLiquidOutStream().getFluid().getComponent("water").getMolarMass()
-            * column.getLiquidOutStream().getFluid().getComponent("water").getz();
+        -0.721, // "methane"
+
+        0.11, // "ethane"
+
+        0.205, // "propane"
+
+        0.081, // "i-butane"
+
+        0.17, // "n-butane"
+
+        0.051, // "i-pentane"
+
+        0.1135, // "n-pentane"
+
+        0.0832, // "n-hexane"
+
+        0.0535 // "n-heptane"
+
+    };
+
+    String[] componentNames = fluid1.getComponentNames();
+
+    for (int i = 0; i < intParameter.length; i++) {
+
+      int componentIndex = findComponentIndex(componentNames, componentNames[i + 1]);// except
+                                                                                     // nitrogen 0
+      int waterIndex = findComponentIndex(componentNames, "water");
+
+      if (componentIndex != -1 && waterIndex != -1) {
+
+        ((PhaseEosInterface) fluid1.getPhases()[0]).getMixingRule()
+            .setBinaryInteractionParameter(componentIndex, waterIndex, intParameter[i]);
+
+        ((PhaseEosInterface) fluid1.getPhases()[1]).getMixingRule()
+            .setBinaryInteractionParameter(componentIndex, waterIndex, intParameter[i]);
+
+      } else {
+      }
+    }
+
+    testOps.TPflash();
+    fluid1.prettyPrint();
+
+    List<Double> molarComposition = new ArrayList<>();
+    molarComposition.add(0.07649963805789309);
+    molarComposition.add(10.028287212684818);
+    molarComposition.add(49.52052228615394);
+    molarComposition.add(3.64093888905641);
+    molarComposition.add(3.6620992636511893);
+    molarComposition.add(0.2995511776378937);
+    molarComposition.add(0.9605423088257289);
+    molarComposition.add(0.5032398365065283);
+    molarComposition.add(0.36145746378993904);
+    molarComposition.add(0.2364703087561068);
+    molarComposition.add(2.732003176453634);
+    molarComposition.add(27.978388438425913);
+
+    double[] molarCompositionArray =
+        molarComposition.stream().mapToDouble(Double::doubleValue).toArray();
+
+    neqsim.thermo.system.SystemInterface fluid_test_separator = fluid1.clone();
+    fluid_test_separator.setMolarComposition(molarCompositionArray);
+
+    neqsim.processSimulation.processEquipment.stream.Stream inlet_stream_test_sep =
+        new neqsim.processSimulation.processEquipment.stream.Stream("TEST_SEPARATOR_INLET",
+            fluid_test_separator);
+    inlet_stream_test_sep.setTemperature(72.6675872802734, "C");
+    inlet_stream_test_sep.setPressure(10.6767892837524, "bara");
+    inlet_stream_test_sep.setFlowRate(721.3143271348611, "kg/hr");
+    inlet_stream_test_sep.run();
+
+    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator test_separator =
+        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+            inlet_stream_test_sep);
+    test_separator.setName("TEST_SEPARATOR");
+    test_separator.run();
+    test_separator.getWaterOutStream().getThermoSystem().prettyPrint();
+
+    neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_test_stream =
+        new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
+            "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
+    heater_TP_setter_test_stream.setOutPressure(5.9061164855957 - 0.01, "bara");
+    heater_TP_setter_test_stream.setOutTemperature(79.8487854003906, "C");
+    heater_TP_setter_test_stream.run();
+    System.out.println("Gas out from degasser " + heater_TP_setter_test_stream.getOutStream()
+        .getFluid().getPhase("gas").getFlowRate("kg/hr"));
+    heater_TP_setter_test_stream.getOutStream().getThermoSystem().prettyPrint();
+
+    neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_test_stream2 =
+        new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
+            "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
+    heater_TP_setter_test_stream2.setOutPressure(5.9061164855957, "bara");
+    heater_TP_setter_test_stream2.setOutTemperature(79.8487854003906, "C");
+    heater_TP_setter_test_stream2.run();
+
+    System.out.println("Gas out from degasser2 " + heater_TP_setter_test_stream2.getOutStream()
+        .getFluid().getPhase("gas").getFlowRate("kg/hr"));
+
+  }
+
+  private int findComponentIndex(String[] componentNames, String componentName) {
+
+    for (int i = 0; i < componentNames.length; i++) {
+
+      if (componentNames[i].equals(componentName)) {
+
+        return i;
+
+      }
+    }
+
+    return -1; // Component not found
+
+  }
 
 
-    double totalWaterIn = waterFlowRateInColumn2 + waterFlowRateInColumnGasToReb;
-    double totalWaterOut = waterFlowRateOutColumn + waterFlowRateOutColumnLeanTEG;
+  /**
+   * Test method for
+   */
+  void testRun2() {
     /*
-     * System.out.println("Column in is " + totalWaterIn + " kg/hr");
-     * System.out.println("Column out is " + totalWaterOut + " kg/hr");
-     * System.out.println("Column is solved  " + column.solved());
+     * XStream xstream = new XStream(); xstream.addPermission(AnyTypePermission.ANY); // Specify the
+     * file path to read Path filePath = Paths.get(
+     * "/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml");
+     * String xmlContents = ""; try { //xmlContents = Files.readString(filePath); } catch
+     * (IOException e) { e.printStackTrace(); }
      * 
-     * 
-     * 
-     * System.out.println("Calc Water Flow rate via fluid component " + waterFlowRateInColumn);
-     * System.out.println("Calc Water Flow rate via molar mass and flow rate total " +
-     * waterFlowRateInColumn2 + " kg/hr");
-     * 
-     * System.out .println("condenser temperature " +
-     * column.getCondenser().getFluid().getTemperature("C")); System.out.println("condenser duty " +
-     * ((Condenser) column.getCondenser()).getDuty());
+     * // Deserialize from xml neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
+     * (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
+     * operationsCopy.run(); neqsim.processSimulation.processEquipment.separator.Separator
+     * VD02Separator = (neqsim.processSimulation.processEquipment.separator.Separator)
+     * operationsCopy .getUnit("Separator after CFU gas");
+     * neqsim.processSimulation.processEquipment.separator.Separator VD01Separator =
+     * (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
+     * .getUnit("Separator after degasser gas");
+     * neqsim.processSimulation.processEquipment.separator.Separator Degasser =
+     * (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
+     * .getUnit("Degasser");
+     * System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " +
+     * Degasser.getGasOutStream().getFlowRate("kg/hr"));
+     * System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " +
+     * VD01Separator.getGasOutStream().getFlowRate("kg/hr")); VD02Separator.getGasOutStream().run();
+     * System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " +
+     * VD02Separator.getGasOutStream().getFlowRate("kg/hr"));
      */
-    assertEquals(totalWaterIn, totalWaterOut, 1.0);
-
-  }
-
-  /**
-   * @throws java.lang.Exception
-   */
-  @Test
-  public void deethanizerTest() throws Exception {
-    neqsim.thermo.system.SystemInterface gasToDeethanizer =
-        new neqsim.thermo.system.SystemSrkEos(216, 30.00);
-    gasToDeethanizer.addComponent("nitrogen", 1.67366E-3);
-    gasToDeethanizer.addComponent("CO2", 1.06819E-4);
-    gasToDeethanizer.addComponent("methane", 5.14168E-1);
-    gasToDeethanizer.addComponent("ethane", 1.92528E-1);
-    gasToDeethanizer.addComponent("propane", 1.70001E-1);
-    gasToDeethanizer.addComponent("i-butane", 3.14561E-2);
-    gasToDeethanizer.addComponent("n-butane", 5.58678E-2);
-    gasToDeethanizer.addComponent("i-pentane", 1.29573E-2);
-    gasToDeethanizer.addComponent("n-pentane", 1.23719E-2);
-    gasToDeethanizer.addComponent("n-hexane", 5.12878E-3);
-    gasToDeethanizer.addComponent("n-heptane", 1.0E-2);
-    gasToDeethanizer.setMixingRule("classic");
-
-    Stream gasToDeethanizerStream = new Stream("gasToDeethanizer", gasToDeethanizer);
-    gasToDeethanizerStream.setFlowRate(100.0, "kg/hr");
-    gasToDeethanizerStream.run();
-
-    // gasToDeethanizerStream.getFluid().prettyPrint();
-
-    DistillationColumn column = new DistillationColumn(5, true, false);
-    column.setName("Deethanizer");
-    column.addFeedStream(gasToDeethanizerStream, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
-    column.setTopPressure(30.0);
-    column.setBottomPressure(32.0);
-    column.setMaxNumberOfIterations(50);
-    column.run();
-    column.run();
-
-    double massbalance = (gasToDeethanizerStream.getFlowRate("kg/hr")
-        - column.getLiquidOutStream().getFlowRate("kg/hr")
-        - column.getGasOutStream().getFlowRate("kg/hr"))
-        / gasToDeethanizerStream.getFlowRate("kg/hr") * 100;
-
-    assertEquals(0.0, massbalance, 0.2);
-    // column.getGasOutStream().getFluid().prettyPrint();
-    // column.getLiquidOutStream().getFluid().prettyPrint();
-  }
-
-  /**
-   * @throws java.lang.Exception
-   */
-  @Test
-  public void debutanizerTest() throws Exception {
-    neqsim.thermo.system.SystemInterface gasToDbutanizer =
-        new neqsim.thermo.system.SystemSrkEos(289.0, 11.00);
-    gasToDbutanizer.addComponent("nitrogen", 3.09189E-7);
-    gasToDbutanizer.addComponent("CO2", 2.20812E-4);
-    gasToDbutanizer.addComponent("methane", 0.097192E-1);
-    gasToDbutanizer.addComponent("ethane", 0.15433E-1);
-    gasToDbutanizer.addComponent("propane", 2.01019E-1);
-    gasToDbutanizer.addComponent("i-butane", 2.953E-2);
-    gasToDbutanizer.addComponent("n-butane", 3.91507E-2);
-    gasToDbutanizer.addComponent("i-pentane", 4.03877E-3);
-    gasToDbutanizer.addComponent("n-pentane", 2.98172E-3);
-    gasToDbutanizer.addComponent("n-hexane", 3.92672E-4);
-    gasToDbutanizer.addComponent("n-heptane", 8.52258E-3);
-    gasToDbutanizer.setMixingRule("classic");
-
-    StreamInterface gasToDebutanizerStream = new Stream("gasToDbutanizer", gasToDbutanizer);
-    gasToDebutanizerStream.setFlowRate(100.0, "kg/hr");
-    gasToDebutanizerStream.run();
-
-    // gasToDebutanizerStream.getFluid().prettyPrint();
-
-    DistillationColumn column = new DistillationColumn(1, true, true);
-    column.setName("Deethanizer");
-    column.addFeedStream(gasToDebutanizerStream, 1);
-    ((Condenser) column.getCondenser()).setRefluxRatio(0.1);
-    column.getCondenser().setOutTemperature(gasToDbutanizer.getTemperature() - 10.0);
-    column.getReboiler().setOutTemperature(gasToDbutanizer.getTemperature() + 50.0);
-    column.setTopPressure(9.0);
-    column.setBottomPressure(13.0);
-    column.run();
-    // ((Condenser) column.getCondenser()).getProductOutStream().getFluid().prettyPrint();
-
-    // column.getReboiler().getLiquidOutStream().getFluid().prettyPrint();
 
   }
 }
