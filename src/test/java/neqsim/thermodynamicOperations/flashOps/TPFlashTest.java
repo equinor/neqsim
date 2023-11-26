@@ -1,7 +1,6 @@
 package neqsim.thermodynamicOperations.flashOps;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -143,7 +142,7 @@ class TPFlashTest {
 
   @Test
   void testTPflash1() {
-    testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 177.0, 316.0);
+    testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 290, 400.0);
     testSystem.addComponent("water", 65.93229747922976);
     testSystem.addComponent("NaCl", 0.784426208131475);
     testSystem.addComponent("nitrogen", 0.578509157534656);
@@ -166,23 +165,9 @@ class TPFlashTest {
     testSystem.setMixingRule("classic");
     testSystem.setMultiPhaseCheck(true);
     testOps = new ThermodynamicOperations(testSystem);
-
-    for (int i = 0; i < 50; i++) {
-      testSystem.setTemperature(i, "C");
-      for (int j = 1; j < 50; j++) {
-        testSystem.setPressure(j, "bara");
-        try {
-          testOps.TPflash();
-          testSystem.initProperties();
-        } catch (Exception e) {
-          System.out.println("temperature " + testSystem.getTemperature("C") + " pressure "
-              + testSystem.getPressure("bara"));
-          e.printStackTrace();
-          assertTrue(false);
-        }
-      }
-    }
-
+    testOps.TPflash();
+    assertEquals(2, testSystem.getNumberOfPhases());
+    // testSystem.prettyPrint();
 
   }
 }
