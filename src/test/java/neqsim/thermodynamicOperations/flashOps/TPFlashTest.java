@@ -139,4 +139,35 @@ class TPFlashTest {
     assertEquals(0.27697023508525664, testSystem5.getBeta(), 1e-6);
     assertEquals(3, testSystem5.getNumberOfPhases());
   }
+
+  @Test
+  void testTPflash1() {
+    testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 290, 400.0);
+    testSystem.addComponent("water", 65.93229747922976);
+    testSystem.addComponent("NaCl", 0.784426208131475);
+    testSystem.addComponent("nitrogen", 0.578509157534656);
+    testSystem.addComponent("methane", 22.584113183429718);
+    testSystem.addComponent("ethane", 3.43870686718215);
+    testSystem.addComponent("propane", 0.26487350163523365);
+    testSystem.addComponent("i-butane", 0.04039429848533373);
+    testSystem.addComponent("n-butane", 0.1543856425679738);
+    testSystem.addComponent("i-pentane", 0.04039429848533373);
+    testSystem.addComponent("n-pentane", 0.1543856425679738);
+    testSystem.addTBPfraction("C6", 0.568724470114871, 84.93298402237961 / 1000.0,
+        666.591171644071 / 1000.0);
+    testSystem.addTBPfraction("C7", 0.9478147516962493, 90.01311937418495 / 1000.0,
+        746.9101810251765 / 1000.0);
+    testSystem.addTBPfraction("C8", 0.974840433764089, 102.34691375809437 / 1000.0,
+        776.2927119017166 / 1000.0);
+    testSystem.addTBPfraction("C9", 0.5505907716430188, 116.06055719132209 / 1000.0,
+        791.2983315058531 / 1000.0);
+    testSystem.addTBPfraction("C10", 1.9704404325720026, 221.831957 / 1000.0, 842.802708 / 1000.0);
+    testSystem.setMixingRule("classic");
+    testSystem.setMultiPhaseCheck(true);
+    testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    assertEquals(2, testSystem.getNumberOfPhases());
+    // testSystem.prettyPrint();
+
+  }
 }
