@@ -1,4 +1,4 @@
-package neqsim.processSimulation.processEquipment.distillation;
+package neqsim.thermodynamicOperations.flashOps;
 
 import java.io.IOException;
 import java.nio.file.Files;
