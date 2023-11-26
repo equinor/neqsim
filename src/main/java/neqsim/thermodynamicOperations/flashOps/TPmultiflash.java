@@ -718,8 +718,8 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
-      int maxsucssubiter = 50;
-      int maxiter = 100;
+      int maxsucssubiter = 150;
+      int maxiter = 200;
       do {
         errOld = err;
         iter++;
@@ -1190,8 +1190,8 @@ public class TPmultiflash extends TPflash {
         }
       } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 200);
       if (iter > 198) {
-        System.out.println("too many iterations....." + err + " temperature "
-            + system.getTemperature("C") + " C " + system.getPressure("bara") + " bara");
+        // System.out.println("too many iterations....." + err + " temperature "
+        // + system.getTemperature("C") + " C " + system.getPressure("bara") + " bara");
         new Exception("to many iterations ");
       }
       // logger.info("err: " + err + " ITER " + iter);
