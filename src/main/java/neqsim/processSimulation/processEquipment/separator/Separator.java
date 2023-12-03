@@ -274,7 +274,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         ops.TPflash();
         thermoSystem.init(3);
         thermoSystem.initPhysicalProperties("density");
-        thermoSystem.prettyPrint();
+        // thermoSystem.prettyPrint();
         if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
           liquidLevel = thermoSystem.getPhase(1).getVolume("m3") / (liquidVolume + gasVolume);
           liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter()
