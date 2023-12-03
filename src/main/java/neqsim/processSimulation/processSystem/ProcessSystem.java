@@ -33,7 +33,7 @@ public class ProcessSystem extends SimulationBaseClass {
   static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   transient Thread thisThread;
-  String[][] signalDB = new String[1000][100];
+  String[][] signalDB = new String[10000][100];
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   private ArrayList<ProcessEquipmentInterface> unitOperations =

@@ -43,7 +43,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double TintValue = 0.0;
 
   /**
-   * <p>Constructor for ControllerDeviceBaseClass.</p>
+   * <p>
+   * Constructor for ControllerDeviceBaseClass.
+   * </p>
    */
   public ControllerDeviceBaseClass() {
     super("controller");
@@ -75,7 +77,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         transmitter.getMeasuredPercentValue() - (controllerSetPoint - transmitter.getMinimumValue())
             / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100;
 
-    TintValue += Kp / Ti * error * dt;
+    if (Ti > 0)
+      TintValue += Kp / Ti * error * dt;
     double TderivValue = Kp * Td * (error - oldError) / dt;
     response = initResponse + propConstant * (Kp * error + TintValue + TderivValue);
     // System.out.println("error " + error + " %");
