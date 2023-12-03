@@ -244,7 +244,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     if (thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil")) {
       liquidOutStream.run(id);
     } else {
-      liquidOutStream.getFluid().init(3);
+      try {
+        liquidOutStream.getFluid().init(3);
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+      }
     }
     if (getCalculateSteadyState()) {
       thermoSystem = thermoSystem2;
@@ -274,7 +278,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         ops.TPflash();
         thermoSystem.init(3);
         thermoSystem.initPhysicalProperties("density");
-        // thermoSystem.prettyPrint();
         if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
           liquidLevel = thermoSystem.getPhase(1).getVolume("m3") / (liquidVolume + gasVolume);
           liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter()
@@ -324,17 +327,24 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       } catch (Exception e) {
         logger.error(e.getMessage());
       }
+      double deliq = 0.0;
+      if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+        deliq = -liquidOutStream.getThermoSystem().getEnthalpy();
+      }
       double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
-          - gasOutStream.getThermoSystem().getEnthalpy()
-          - liquidOutStream.getThermoSystem().getEnthalpy();
+          - gasOutStream.getThermoSystem().getEnthalpy() + deliq;
       double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
       thermoSystem.init(0);
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         double dncomp = 0.0;
         dncomp +=
             inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
-        dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles()
-            - liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
+        double dniliq = 0.0;
+        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+          dniliq = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
+        }
+        dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() + dniliq;
+
         thermoSystem.addComponent(i, dncomp * dt);
       }
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
