@@ -244,47 +244,52 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       liquidOutStream.getFluid().init(3);
     }
     // liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "aqueous");
-    try {
-      thermoSystem = thermoSystem2.clone();
-      thermoSystem.setTotalNumberOfMoles(1.0e-10);
-      thermoSystem.init(1);
-      // System.out.println("number of phases " + thermoSystem.getNumberOfPhases());
-      double totalliquidVolume = 0.0;
-      for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
-        double relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
-        if (j >= 1) {
-          relFact = liquidVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
+    if (getCalculateSteadyState()) {
+      thermoSystem = thermoSystem2;
+    } else {
+      try {
+        thermoSystem = thermoSystem2.clone();
+        // thermoSystem.setTotalNumberOfMoles(1.0);
+        thermoSystem.init(1);
+        // System.out.println("number of phases " + thermoSystem.getNumberOfPhases());
+        double totalliquidVolume = 0.0;
+        for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
+          double relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume("m3"));
+          if (j >= 1) {
+            relFact = liquidVolume / (thermoSystem2.getPhase(j).getVolume("m3"));
 
-          totalliquidVolume += liquidVolume / thermoSystem2.getPhase(j).getMolarVolume();
+            totalliquidVolume += liquidVolume / thermoSystem2.getPhase(j).getMolarVolume();
+          }
+
+          for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
+            thermoSystem.addComponent(i, Math.signum(relFact - 1.0) * relFact
+                * thermoSystem2.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
+          }
         }
-        for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
-          thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentNumber(),
-              relFact * thermoSystem2.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
+
+        if (thermoSystem.hasPhaseType("gas")) {
+          thermoSystem.setBeta(gasVolume / thermoSystem2.getPhase(0).getMolarVolume()
+              / (gasVolume / thermoSystem2.getPhase(0).getMolarVolume() + totalliquidVolume));
         }
-      }
+        thermoSystem.initBeta();
+        thermoSystem.init(3);
+        // System.out.println("moles in separator " + thermoSystem.getNumberOfMoles());
+        // double volume1 = thermoSystem.getVolume();
+        // System.out.println("volume1 bef " + volume1);
+        // System.out.println("beta " + thermoSystem.getBeta());
 
-      if (thermoSystem.hasPhaseType("gas")) {
-        thermoSystem.setBeta(gasVolume / thermoSystem2.getPhase(0).getMolarVolume()
-            / (gasVolume / thermoSystem2.getPhase(0).getMolarVolume() + totalliquidVolume));
+        liquidLevel = thermoSystem.getPhase(1).getVolume("m3") / (liquidVolume + gasVolume);
+        liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter()
+            * getSeparatorLength();
+        gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
+            * getInternalDiameter() * getSeparatorLength();
+        // System.out.println("moles out" +
+        // liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
       }
-      thermoSystem.initBeta();
-      thermoSystem.init(3);
-      // System.out.println("moles in separator " + thermoSystem.getNumberOfMoles());
-      // double volume1 = thermoSystem.getVolume();
-      // System.out.println("volume1 bef " + volume1);
-      // System.out.println("beta " + thermoSystem.getBeta());
-
-      liquidLevel = thermoSystem.getPhase(1).getVolume() * 1e-5 / (liquidVolume + gasVolume);
-      liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter()
-          * getSeparatorLength();
-      gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
-          * getInternalDiameter() * getSeparatorLength();
-      // System.out.println("moles out" +
-      // liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
     }
-    thermoSystem = thermoSystem2;
+    // thermoSystem = thermoSystem2;
     setCalculationIdentifier(id);
   }
 
@@ -307,49 +312,44 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       run(id);
       increaseTime(dt);
       return;
+    } else {
+      inletStreamMixer.run(id);
+      thermoSystem.init(3);
+      gasOutStream.getThermoSystem().init(3);
+      liquidOutStream.getThermoSystem().init(3);
+      double volume1 = thermoSystem.getVolume("m3");
+      // System.out.println("volume " + volume1);
+      double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
+          - gasOutStream.getThermoSystem().getEnthalpy()
+          - liquidOutStream.getThermoSystem().getEnthalpy();
+      // System.out.println("enthalph delta " + deltaEnergy);
+      double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
+      for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
+        double dn = inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0).getComponent(i)
+            .getNumberOfMolesInPhase()
+            + inletStreamMixer.getOutletStream().getThermoSystem().getPhase(1).getComponent(i)
+                .getNumberOfMolesInPhase()
+            - gasOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase()
+            - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i)
+                .getNumberOfMolesInPhase();
+        // System.out.println("dn " + dn);
+        thermoSystem.addComponent(inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0)
+            .getComponent(i).getComponentNumber(), dn * dt);
+      }
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+      thermoOps.VUflash(volume1, newEnergy, "m3", "J");
+
+      setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
+
+      liquidLevel = thermoSystem.getPhase(1).getVolume("m3") / (liquidVolume + gasVolume);
+      // System.out.println("liquid level " + liquidLevel);
+      liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter()
+          * getSeparatorLength();
+      // System.out.println("gasvol " + gasVolume + " liqvol " + liquidVolume);
+      gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
+          * getInternalDiameter() * getSeparatorLength();
+      setCalculationIdentifier(id);
     }
-
-    inletStreamMixer.run(id);
-
-    // System.out.println("moles out" +
-    // liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-    // double inMoles =
-    // inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
-    // double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
-    // double liqoutMoles = liquidOutStream.getThermoSystem().getNumberOfMoles();
-    thermoSystem.init(3);
-    gasOutStream.getThermoSystem().init(3);
-    liquidOutStream.getThermoSystem().init(3);
-    double volume1 = thermoSystem.getVolume();
-    // System.out.println("volume1 " + volume1);
-    double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
-        - gasOutStream.getThermoSystem().getEnthalpy()
-        - liquidOutStream.getThermoSystem().getEnthalpy();
-    // System.out.println("enthalph delta " + deltaEnergy);
-    double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
-    for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-      double dn = inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0).getComponent(i)
-          .getNumberOfMolesInPhase()
-          + inletStreamMixer.getOutletStream().getThermoSystem().getPhase(1).getComponent(i)
-              .getNumberOfMolesInPhase()
-          - gasOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase()
-          - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase();
-      // System.out.println("dn " + dn);
-      thermoSystem.addComponent(inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0)
-          .getComponent(i).getComponentNumber(), dn * dt);
-    }
-    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    thermoOps.VUflash(volume1, newEnergy);
-
-    setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
-
-    liquidLevel = thermoSystem.getPhase(1).getVolume() * 1e-5 / (liquidVolume + gasVolume);
-    // System.out.println("liquid level " + liquidLevel);
-    liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter()
-        * getSeparatorLength();
-    gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
-        * getInternalDiameter() * getSeparatorLength();
-    setCalculationIdentifier(id);
   }
 
   /**
@@ -499,7 +499,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @return a double
    */
   public double getGasSuperficialVelocity() {
-    return thermoSystem.getPhase(0).getTotalVolume() / 1e5
+    return thermoSystem.getPhase(0).getVolume("m3")
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * getInternalDiameter()
             * getInternalDiameter() / 4.0);
   }
@@ -554,7 +554,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     if (surfaceTension < 10.0e-3) {
       derating = 1.0 - 0.5 * (10.0e-3 - surfaceTension) / 10.0e-3;
     }
-    System.out.println("derating " + derating);
+    // System.out.println("derating " + derating);
     double term1 = (thermoSystem.getPhase(1).getPhysicalProperties().getDensity()
         - thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
         / thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
@@ -577,7 +577,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     if (surfaceTension < 10.0e-3) {
       derating = 1.0 - 0.5 * (10.0e-3 - surfaceTension) / 10.0e-3;
     }
-    System.out.println("derating " + derating);
+    // System.out.println("derating " + derating);
     double term1 = (thermoSystem.getPhase(phase).getPhysicalProperties().getDensity()
         - thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
         / thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
@@ -658,7 +658,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         return sec;
       }
     }
-    System.out.println("no section with name: " + name + " found.....");
+    // System.out.println("no section with name: " + name + " found.....");
     return null;
   }
 
