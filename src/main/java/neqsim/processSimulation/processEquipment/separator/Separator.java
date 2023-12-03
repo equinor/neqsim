@@ -331,11 +331,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       thermoSystem.init(0);
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         double dncomp = 0.0;
-        for (int j = 0; j < inletStreamMixer.getOutletStream().getFluid()
-            .getNumberOfPhases(); j++) {
-          dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getPhase(j).getComponent(i)
-              .getNumberOfMolesInPhase();
-        }
+        dncomp +=
+            inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
         dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles()
             - liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
         thermoSystem.addComponent(i, dncomp * dt);
