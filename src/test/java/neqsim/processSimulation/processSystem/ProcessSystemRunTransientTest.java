@@ -145,6 +145,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separator1.setCalculateSteadyState(false);
     separator1.setSeparatorLength(3.0);
     separator1.setInternalDiameter(0.8);
+    separator1.setLiquidLevel(0.5);
 
     ThrottlingValve valve2 = new ThrottlingValve("valve_2", separator1.getLiquidOutStream());
     valve2.setOutletPressure(1.0);
@@ -158,14 +159,14 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator1);
     separatorLevelTransmitter.setName("separatorLevelTransmitter1");
-    separatorLevelTransmitter.setMaximumValue(0.5);
+    separatorLevelTransmitter.setMaximumValue(0.8);
     separatorLevelTransmitter.setMinimumValue(0.2);
 
     ControllerDeviceInterface separatorLevelController = new ControllerDeviceBaseClass();
     separatorLevelController.setReverseActing(false);
     separatorLevelController.setTransmitter(separatorLevelTransmitter);
-    separatorLevelController.setControllerSetPoint(0.3);
-    separatorLevelController.setControllerParameters(0.510, 200.0, 0.0);
+    separatorLevelController.setControllerSetPoint(0.45);
+    separatorLevelController.setControllerParameters(0.0510, 200.0, 0.0);
 
     PressureTransmitter separatorPressureTransmitter =
         new PressureTransmitter(separator1.getGasOutStream());
@@ -177,7 +178,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separatorPressureController.setTransmitter(separatorPressureTransmitter);
     separatorPressureController.setReverseActing(false);
     separatorPressureController.setControllerSetPoint(7.0);
-    separatorPressureController.setControllerParameters(1.5, .0, 0.0);
+    separatorPressureController.setControllerParameters(0.05, 0.0, 0.0);
 
     p.add(stream1);
     p.add(streamPurge);
@@ -201,7 +202,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     // p.displayResult();
     p.setTimeStep(1.0);
-    for (int i = 0; i < 9000; i++) {
+    for (int i = 0; i < 900; i++) {
       System.out.println("pressure " + separator1.getGasOutStream().getPressure() + " flow "
           + separator1.getGasOutStream().getFlowRate("kg/hr") + " sepr height "
           + separatorLevelTransmitter.getMeasuredValue() + "valve2 opening "
