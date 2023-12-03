@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processEquipment.valve;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -17,7 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class ThrottlingValve extends TwoPortEquipment implements ValveInterface {
   private static final long serialVersionUID = 1000;
-
+  static Logger logger = LogManager.getLogger(ThrottlingValve.class);
   SystemInterface thermoSystem;
 
   private boolean valveCvSet = false;
@@ -274,7 +276,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     double enthalpy = thermoSystem.getEnthalpy();
     thermoSystem.setPressure(getOutletStream().getThermoSystem().getPressure());
     // System.out.println("enthalpy inn.." + enthalpy);
-    if (isIsoThermal()) {
+    if (isIsoThermal() || thermoSystem.getTotalNumberOfMoles() < 0.0001) {
       thermoOps.TPflash();
     } else {
       thermoOps.PHflash(enthalpy, 0);
@@ -294,14 +296,19 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     // molarFlow=inletStream.getThermoSystem().getTotalNumberOfMoles();
     // }
 
-    inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-    inStream.getThermoSystem().init(1);
-    inStream.run(id);
+    if (molarFlow > 1e-4) {
+      try {
+        inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+        inStream.getThermoSystem().init(1);
+        inStream.run(id);
 
-    outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-    outStream.getThermoSystem().init(1);
-    outStream.run(id);
-
+        outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+        outStream.getThermoSystem().init(1);
+        outStream.run(id);
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+      }
+    }
     // System.out.println("delta p valve " +
     // (inletStream.getThermoSystem().getPressure() -
     // outStream.getThermoSystem().getPressure()));

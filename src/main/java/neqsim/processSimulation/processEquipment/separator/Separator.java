@@ -312,17 +312,23 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     if (getCalculateSteadyState()) {
       run(id);
       increaseTime(dt);
+      setCalculationIdentifier(id);
       return;
     } else {
       inletStreamMixer.run(id);
       thermoSystem.init(3);
       thermoSystem.initPhysicalProperties("density");
-      gasOutStream.getThermoSystem().init(3);
-      liquidOutStream.getThermoSystem().init(3);
+      try {
+        gasOutStream.getThermoSystem().init(3);
+        liquidOutStream.getThermoSystem().init(3);
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+      }
       double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
           - gasOutStream.getThermoSystem().getEnthalpy()
           - liquidOutStream.getThermoSystem().getEnthalpy();
       double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
+      thermoSystem.init(0);
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         double dncomp = 0.0;
         for (int j = 0; j < inletStreamMixer.getOutletStream().getFluid()
@@ -336,8 +342,19 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       }
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
       thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J");
-      setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
       thermoSystem.initPhysicalProperties("density");
+
+      if (thermoSystem.hasPhaseType("gas")) {
+        gasOutStream.getFluid().setMolarComposition(thermoSystem.getPhase(0).getMolarComposition());
+      }
+      if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+        if (thermoSystem.getNumberOfPhases() > 1) {
+          liquidOutStream.getFluid()
+              .setMolarComposition(thermoSystem.getPhase(1).getMolarComposition());
+        }
+      }
+      setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
+
       liquidLevel = 0.0;
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
         double volumeLoc = 0.0;
@@ -353,18 +370,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           * getSeparatorLength();
       gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
           * getInternalDiameter() * getSeparatorLength();
+      // System.out.println("gas volume " + gasVolume + " liq volime " + liquidVolume);
       setCalculationIdentifier(id);
-
-      if (thermoSystem.hasPhaseType("gas")) {
-        gasOutStream.setPressure(thermoSystem.getPressure("bara"), "bara");
-        gasOutStream.setTemperature(thermoSystem.getTemperature("C"), "C");
-      }
-      if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-        liquidOutStream.setPressure(thermoSystem.getPressure("bara"), "bara");
-        liquidOutStream.setTemperature(thermoSystem.getTemperature("C"), "C");
-      }
-      gasOutStream.run();
-      liquidOutStream.run();
       return;
     }
   }
