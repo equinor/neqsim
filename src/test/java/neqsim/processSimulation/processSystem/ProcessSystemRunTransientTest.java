@@ -113,13 +113,13 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     neqsim.thermo.system.SystemInterface testSystem2 =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.1);
-    testSystem2.addComponent("water", 1.001);
+    testSystem2.addComponent("n-heptane", 1.001);
     testSystem2.setMixingRule(2);
 
     neqsim.thermo.system.SystemInterface testSystem3 =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem3.addComponent("methane", 1.1);
-    testSystem3.addComponent("water", 0.001);
+    testSystem3.addComponent("n-heptane", 0.001);
     testSystem3.setMixingRule(2);
 
     Stream stream1 = new Stream("Stream1", testSystem2);
@@ -152,12 +152,12 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     ThrottlingValve valve2 = new ThrottlingValve("valve_2", separator1.getLiquidOutStream());
     valve2.setOutletPressure(1.0);
-    valve2.setPercentValveOpening(25);
+    valve2.setPercentValveOpening(50);
     valve2.setCalculateSteadyState(false);
 
     ThrottlingValve valve3 = new ThrottlingValve("valve_3", separator1.getGasOutStream());
     valve3.setOutletPressure(1.0);
-    valve3.setPercentValveOpening(50);
+    valve3.setPercentValveOpening(10);
     valve3.setCalculateSteadyState(false);
 
     LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator1);
@@ -169,7 +169,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separatorLevelController.setReverseActing(false);
     separatorLevelController.setTransmitter(separatorLevelTransmitter);
     separatorLevelController.setControllerSetPoint(0.45);
-    separatorLevelController.setControllerParameters(0.1, 0.0, 0.0);
+    separatorLevelController.setControllerParameters(0.5, 0.0, 0.0);
 
     PressureTransmitter separatorPressureTransmitter =
         new PressureTransmitter(separator1.getGasOutStream());
@@ -181,7 +181,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separatorPressureController.setTransmitter(separatorPressureTransmitter);
     separatorPressureController.setReverseActing(false);
     separatorPressureController.setControllerSetPoint(7.0);
-    separatorPressureController.setControllerParameters(1.5, 100.0, 0.0);
+    separatorPressureController.setControllerParameters(0.35, 0, 0.0);
 
     p.add(stream1);
     p.add(streamPurge);

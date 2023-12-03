@@ -280,7 +280,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     double enthalpy = thermoSystem.getEnthalpy();
     thermoSystem.setPressure(getOutletStream().getThermoSystem().getPressure());
     // System.out.println("enthalpy inn.." + enthalpy);
-    if (isIsoThermal() || thermoSystem.getTotalNumberOfMoles() < 0.0001) {
+    if (isIsoThermal()) {
       thermoOps.TPflash();
     } else {
       thermoOps.PHflash(enthalpy, 0);

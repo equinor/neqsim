@@ -352,7 +352,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       thermoSystem.initPhysicalProperties("density");
 
       if (thermoSystem.hasPhaseType("gas")) {
-        gasOutStream.getFluid().setMolarComposition(thermoSystem.getPhase(0).getMolarComposition());
+        gasOutStream.getFluid()
+            .setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
       }
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
         if (thermoSystem.getNumberOfPhases() > 1) {
