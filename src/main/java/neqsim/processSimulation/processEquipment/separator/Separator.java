@@ -327,8 +327,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       } catch (Exception e) {
         logger.error(e.getMessage());
       }
+      boolean hasliq = false;
       double deliq = 0.0;
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+        hasliq = true;
         deliq = -liquidOutStream.getThermoSystem().getEnthalpy();
       }
       double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
@@ -340,7 +342,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         dncomp +=
             inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
         double dniliq = 0.0;
-        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+        if (hasliq) {
           dniliq = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
         }
         dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() + dniliq;

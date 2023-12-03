@@ -30,6 +30,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   private double Cv;
   private double maxMolarFlow = 1000.0;
   private double minMolarFlow = 0.0;
+  private double maxValveOpening = 100.0;
+  private double minValveOpening = 0.0;
   private double percentValveOpening = 100.0;
   double molarFlow = 0.0;
   private String pressureUnit = "bara";
@@ -292,26 +294,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
         * Math.sqrt(
             (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
                 / thermoSystem.getDensity());
-    // System.out.println("molar flow " + molarFlow);
-    // System.out.println("Cv " + getCv());
-    // System.out.println("density " + inletStream.getThermoSystem().getDensity());
 
-    // 8 } else {
-    // molarFlow=inletStream.getThermoSystem().getTotalNumberOfMoles();
-    // }
-
-    if (molarFlow > 1e-4) {
-      try {
-        inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-        inStream.getThermoSystem().init(1);
-        inStream.run(id);
-
-        outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-        outStream.getThermoSystem().init(1);
-        outStream.run(id);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-      }
+    try {
+      inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+      inStream.getThermoSystem().init(1);
+      // inStream.run(id);
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+    }
+    try {
+      outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+      outStream.getThermoSystem().init(1);
+      // outStream.run(id);
+    } catch (Exception e) {
+      logger.error(e.getMessage());
     }
     // System.out.println("delta p valve " +
     // (inletStream.getThermoSystem().getPressure() -
@@ -334,15 +330,19 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     if (hasController) {
       getController().runTransient(this.percentValveOpening, dt, id);
       this.percentValveOpening = getController().getResponse();
-      if (this.percentValveOpening > 100) {
-        this.percentValveOpening = 100;
+      if (this.percentValveOpening > maxValveOpening) {
+        this.percentValveOpening = maxValveOpening;
       }
-      if (this.percentValveOpening < 0) {
-        this.percentValveOpening = 1e-10;
+      if (this.percentValveOpening < minValveOpening) {
+        this.percentValveOpening = minValveOpening;
       }
       // System.out.println("valve opening " + this.percentValveOpening + " %");
     }
     setCalculationIdentifier(id);
+  }
+
+  public void setMinimumValveOpening(double minopen) {
+    minValveOpening = minopen;
   }
 
   /** {@inheritDoc} */
