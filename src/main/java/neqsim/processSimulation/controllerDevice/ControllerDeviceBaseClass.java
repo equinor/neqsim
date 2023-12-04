@@ -7,6 +7,8 @@
 package neqsim.processSimulation.controllerDevice;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
@@ -20,6 +22,7 @@ import neqsim.util.NamedBaseClass;
  */
 public class ControllerDeviceBaseClass extends NamedBaseClass implements ControllerDeviceInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ControllerDeviceBaseClass.class);
 
   /**
    * Unique identifier of which solve/run call was last called successfully.
@@ -48,7 +51,18 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * </p>
    */
   public ControllerDeviceBaseClass() {
-    super("controller");
+    this("controller");
+  }
+
+  /**
+   * <p>
+   * Constructor for ControllerDeviceBaseClass.
+   * </p>
+   *
+   * @param name Name of PID controller object
+   */
+  public ControllerDeviceBaseClass(String name) {
+    super(name);
   }
 
   /** {@inheritDoc} */
@@ -77,8 +91,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         transmitter.getMeasuredPercentValue() - (controllerSetPoint - transmitter.getMinimumValue())
             / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100;
 
-    if (Ti > 0)
+    if (Ti != 0) {
       TintValue += Kp / Ti * error * dt;
+    }
     double TderivValue = Kp * Td * (error - oldError) / dt;
     response = initResponse + propConstant * (Kp * error + TintValue + TderivValue);
     // System.out.println("error " + error + " %");
@@ -142,7 +157,11 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * @param Kp Proportional gain of PID controller
    */
   public void setKp(double Kp) {
-    this.Kp = Kp;
+    if (Kp >= 0) {
+      this.Kp = Kp;
+    } else {
+      logger.warn("Negative Kp is not allowed. Use setReverseActing.");
+    }
   }
 
   /** {@inheritDoc} */
@@ -172,7 +191,11 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * @param Ti Integral time in seconds
    */
   public void setTi(double Ti) {
-    this.Ti = Ti;
+    if (Ti >= 0) {
+      this.Ti = Ti;
+    } else {
+      logger.warn("Negative Ti is not allowed.");
+    }
   }
 
   /**
@@ -194,6 +217,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * @param Td Derivative time in seconds
    */
   public void setTd(double Td) {
-    this.Td = Td;
+    if (Td >= 0) {
+      this.Td = Td;
+    } else {
+      logger.warn("Negative Td is not allowed.");
+    }
   }
 }
