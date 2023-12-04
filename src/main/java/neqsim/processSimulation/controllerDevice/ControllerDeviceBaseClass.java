@@ -51,7 +51,18 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * </p>
    */
   public ControllerDeviceBaseClass() {
-    super("controller");
+    this("controller");
+  }
+
+  /**
+   * <p>
+   * Constructor for ControllerDeviceBaseClass.
+   * </p>
+   *
+   * @param name Name of PID controller object
+   */
+  public ControllerDeviceBaseClass(String name) {
+    super(name);
   }
 
   /** {@inheritDoc} */
@@ -80,8 +91,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         transmitter.getMeasuredPercentValue() - (controllerSetPoint - transmitter.getMinimumValue())
             / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100;
 
-    if (Ti > 0)
+    if (Ti != 0) {
       TintValue += Kp / Ti * error * dt;
+    }
     double TderivValue = Kp * Td * (error - oldError) / dt;
     response = initResponse + propConstant * (Kp * error + TintValue + TderivValue);
     // System.out.println("error " + error + " %");
@@ -145,7 +157,11 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * @param Kp Proportional gain of PID controller
    */
   public void setKp(double Kp) {
-    this.Kp = Kp;
+    if (Kp >= 0) {
+      this.Kp = Kp;
+    } else {
+      logger.warn("Negative Kp is not allowed. Use setReverseActing.");
+    }
   }
 
   /** {@inheritDoc} */
