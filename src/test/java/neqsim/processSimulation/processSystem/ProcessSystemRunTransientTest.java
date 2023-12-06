@@ -83,7 +83,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     flowController.setTransmitter(flowTransmitter);
     flowController.setReverseActing(true);
     flowController.setControllerSetPoint(73.5);
-    flowController.setControllerParameters(0.4, 10.0, 0.0);
+    flowController.setControllerParameters(0.2, 100.0, 0.0);
 
     p.add(stream1);
     p.add(valve1);
@@ -97,8 +97,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     p.run();
 
     // transient behaviour
-    p.setTimeStep(1.0);
-    for (int i = 0; i < 50; i++) {
+    p.setTimeStep(20.0);
+    for (int i = 0; i < 200; i++) {
       // System.out.println("volume flow " + flowTransmitter.getMeasuredValue() + " valve opening "
       // + valve1.getPercentValveOpening() + " pressure "
       // + separator1.getGasOutStream().getPressure());
@@ -125,12 +125,12 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     testSystem3.setMixingRule(2);
 
     Stream stream1 = new Stream("Stream1", testSystem2);
-    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setFlowRate(1090.0, "kg/hr");
     stream1.setPressure(10.0, "bara");
     stream1.setTemperature(25.0, "C");
 
     Stream streamPurge = new Stream("StreamPurge", testSystem3);
-    streamPurge.setFlowRate(5.0, "kg/hr");
+    streamPurge.setFlowRate(50.0, "kg/hr");
     streamPurge.setPressure(10.0, "bara");
     streamPurge.setTemperature(25.0, "C");
 
@@ -173,7 +173,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separatorLevelController.setReverseActing(false);
     separatorLevelController.setTransmitter(separatorLevelTransmitter);
     separatorLevelController.setControllerSetPoint(0.45);
-    separatorLevelController.setControllerParameters(5.0, 5000.0, 0.0);
+    separatorLevelController.setControllerParameters(2.0, 500.0, 0.0);
 
     PressureTransmitter separatorPressureTransmitter =
         new PressureTransmitter(separator1.getGasOutStream());
@@ -185,7 +185,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separatorPressureController.setTransmitter(separatorPressureTransmitter);
     separatorPressureController.setReverseActing(false);
     separatorPressureController.setControllerSetPoint(7.0);
-    separatorPressureController.setControllerParameters(0.35, 0, 0.0);
+    separatorPressureController.setControllerParameters(1, 100, 0.0);
 
     p.add(stream1);
     p.add(streamPurge);
@@ -208,8 +208,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     }
 
     // p.displayResult();
-    p.setTimeStep(50.0);
-    for (int i = 0; i < 200; i++) {
+    p.setTimeStep(10.0);
+    for (int i = 0; i < 250; i++) {
       // System.out.println("pressure " + separator1.getGasOutStream().getPressure() + " flow "
       // + separator1.getGasOutStream().getFlowRate("kg/hr") + " sepr height "
       // + separatorLevelTransmitter.getMeasuredValue() + "valve2 opening "
@@ -280,7 +280,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separatorPressureController.setTransmitter(separatorPressureTransmitter);
     separatorPressureController.setReverseActing(false);
     separatorPressureController.setControllerSetPoint(5.0);
-    separatorPressureController.setControllerParameters(0.5, 500.0, 0.0);
+    separatorPressureController.setControllerParameters(1, 200.0, 0.0);
 
     p.add(stream1);
     p.add(streamPurge);
@@ -298,8 +298,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     }
 
     // p.displayResult();
-    p.setTimeStep(20.0);
-    for (int i = 0; i < 200; i++) {
+    p.setTimeStep(10.0);
+    for (int i = 0; i < 500; i++) {
       // System.out.println("pressure " + separator1.getGasOutStream().getPressure() + " flow "
       // + separator1.getGasOutStream().getFlowRate("kg/hr") + "valve3 opening "
       // + valve3.getPercentValveOpening());
