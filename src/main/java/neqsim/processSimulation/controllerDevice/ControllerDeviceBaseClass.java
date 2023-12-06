@@ -92,13 +92,12 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
             / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100;
 
     if (Ti != 0) {
-      TintValue += Kp / Ti * error * dt;
+      TintValue = Kp / Ti * error;
     }
-    double TderivValue = Kp * Td * (error - oldError) / dt;
-    response = initResponse + propConstant * (Kp * error + TintValue + TderivValue);
-    // System.out.println("error " + error + " %");
-    // error = device.getMeasuredPercentValue()-controlValue;
-    // double regulatorSignal = error*1.0;
+    double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
+
+    response = initResponse
+        + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
     calcIdentifier = id;
   }
 
