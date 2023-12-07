@@ -670,6 +670,43 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     setCalculationIdentifier(id);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    }
+
+    // runController(dt, id);
+
+    thermoSystem = inStream.getThermoSystem().clone();
+    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+    thermoSystem.init(3);
+
+    double actualFlowRate = thermoSystem.getFlowRate("m3/hr");
+    double polytropicHead = outStream.getThermoSystem().getEnthalpy("kJ/kg")
+        - inStream.getThermoSystem().getEnthalpy("kJ/kg");
+    double actualFlowRateNew = 10.0;
+    // actualFlowRateNew = getCompressorChart().getActualFlowRate(polytropicHead, getSpeed());
+
+    try {
+      inStream.getThermoSystem().setTotalFlowRate(actualFlowRateNew, "m3/hr");
+      inStream.getThermoSystem().init(1);
+      // inStream.run(id);
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+    }
+    try {
+      outStream.getThermoSystem().setTotalFlowRate(actualFlowRateNew, "m3/hr");
+      outStream.getThermoSystem().init(1);
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+    }
+    setCalculationIdentifier(id);
+  }
+
   /**
    * <p>
    * generateCompressorCurves.

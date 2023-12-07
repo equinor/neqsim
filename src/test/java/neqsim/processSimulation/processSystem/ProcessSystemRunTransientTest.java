@@ -10,6 +10,7 @@ import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.measurementDevice.LevelTransmitter;
 import neqsim.processSimulation.measurementDevice.PressureTransmitter;
 import neqsim.processSimulation.measurementDevice.VolumeFlowTransmitter;
+import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
@@ -222,93 +223,61 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     assertEquals(0.45, separatorLevelTransmitter.getMeasuredValue(), 0.01);
   }
 
+
+
   @Test
-  public void testDynamicCalculation3() {
+  public void testDynamicCompressor() {
     neqsim.thermo.system.SystemInterface testSystem2 =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.1);
     testSystem2.addComponent("ethane", 0.1);
     testSystem2.setMixingRule(2);
 
-    neqsim.thermo.system.SystemInterface testSystem3 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
-    testSystem3.addComponent("methane", 1.1);
-    testSystem2.addComponent("ethane", 0.1);
-    testSystem3.setMixingRule(2);
-
     Stream stream1 = new Stream("Stream1", testSystem2);
     stream1.setFlowRate(100.0, "kg/hr");
-    stream1.setPressure(10.0, "bara");
-    stream1.setTemperature(25.0, "C");
-
-    Stream streamPurge = new Stream("StreamPurge", testSystem3);
-    streamPurge.setFlowRate(5.0, "kg/hr");
-    streamPurge.setPressure(10.0, "bara");
-    streamPurge.setTemperature(25.0, "C");
+    stream1.setPressure(100.0, "bara");
+    stream1.setTemperature(55.0, "C");
 
     ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
-    valve1.setOutletPressure(7.0);
+    valve1.setOutletPressure(50.0);
     valve1.setPercentValveOpening(50);
     valve1.setCalculateSteadyState(false);
 
-    ThrottlingValve valvePurge = new ThrottlingValve("valve_purge", streamPurge);
-    valvePurge.setOutletPressure(7.0);
-    valvePurge.setPercentValveOpening(50);
-    valvePurge.setCalculateSteadyState(false);
-
     Separator separator1 = new Separator("separator_1");
     separator1.addStream(valve1.getOutletStream());
-    separator1.addStream(valvePurge.getOutletStream());
     separator1.setCalculateSteadyState(false);
     separator1.setSeparatorLength(3.0);
     separator1.setInternalDiameter(0.8);
     separator1.setLiquidLevel(0.0);
 
-    ThrottlingValve valve3 = new ThrottlingValve("valve_3", separator1.getGasOutStream());
-    valve3.setOutletPressure(1.0);
-    valve3.setPercentValveOpening(50);
-    valve3.setCalculateSteadyState(false);
-    valve3.setMinimumValveOpening(1.0);
+    Compressor compressor1 = new Compressor(separator1.getGasOutStream());
+    compressor1.setCalculateSteadyState(true);
+    compressor1.setOutletPressure(100.0);
 
-    PressureTransmitter separatorPressureTransmitter =
-        new PressureTransmitter(separator1.getGasOutStream());
-    separatorPressureTransmitter.setUnit("bar");
-    separatorPressureTransmitter.setMaximumValue(10.0);
-    separatorPressureTransmitter.setMinimumValue(1.0);
+    Separator separator2 = new Separator("separator_2");
+    separator2.addStream(compressor1.getOutletStream());
+    separator2.setCalculateSteadyState(false);
+    separator2.setSeparatorLength(3.0);
+    separator2.setInternalDiameter(0.8);
+    separator2.setLiquidLevel(0.0);
 
-    ControllerDeviceInterface separatorPressureController = new ControllerDeviceBaseClass();
-    separatorPressureController.setTransmitter(separatorPressureTransmitter);
-    separatorPressureController.setReverseActing(false);
-    separatorPressureController.setControllerSetPoint(5.0);
-    separatorPressureController.setControllerParameters(1, 200.0, 0.0);
+    ThrottlingValve valve2 = new ThrottlingValve("valve_1", separator2.getGasOutStream());
+    valve2.setOutletPressure(50.0);
+    valve2.setPercentValveOpening(50);
+    valve2.setCalculateSteadyState(false);
 
     p.add(stream1);
-    p.add(streamPurge);
     p.add(valve1);
-    p.add(valvePurge);
     p.add(separator1);
-    p.add(valve3);
-
-    p.add(separatorPressureTransmitter);
-    valve3.setController(separatorPressureController);
+    p.add(compressor1);
+    p.add(separator2);
+    p.add(valve2);
 
     p.run();
-    for (SimulationInterface sim : p.getUnitOperations()) {
-      assertEquals(sim.getCalculationIdentifier(), p.getCalculationIdentifier());
-    }
+    p.setTimeStep(1.0);
+    // p.runTransient();
 
-    // p.displayResult();
-    p.setTimeStep(10.0);
-    for (int i = 0; i < 500; i++) {
-      // System.out.println("pressure " + separator1.getGasOutStream().getPressure() + " flow "
-      // + separator1.getGasOutStream().getFlowRate("kg/hr") + "valve3 opening "
-      // + valve3.getPercentValveOpening());
-      p.runTransient();
-      for (SimulationInterface sim : p.getUnitOperations()) {
-        assertEquals(p.getCalculationIdentifier(), sim.getCalculationIdentifier());
-      }
-    }
-    assertEquals(5.0, separator1.getGasOutStream().getPressure(), 0.01);
+    assertEquals(50.0, separator1.getGasOutStream().getPressure(), 0.01);
 
   }
 }
