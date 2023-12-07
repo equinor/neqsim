@@ -223,6 +223,7 @@ public class pTphaseEnvelope extends BaseOperation {
           new sysNewtonRhapsonPhaseEnvelope(system, 2, system.getPhase(0).getNumberOfComponents());
       startPres = system.getPressure();
       nonLinSolver.setu();
+
       for (np = 1; np < 9980; np++) {
         try {
           // solves the np point of the envelope
@@ -233,6 +234,7 @@ public class pTphaseEnvelope extends BaseOperation {
           // double TT = system.getPhase(0).getTemperature();
           // double PP = system.getPhase(0).getPressure();
         } catch (Exception e0) {
+
           // the envelope crushed.
           // this part keeps the old values
           // restarts the envelope from the other side
@@ -521,6 +523,7 @@ public class pTphaseEnvelope extends BaseOperation {
        */
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
+      throw ex;
     }
   }
 
