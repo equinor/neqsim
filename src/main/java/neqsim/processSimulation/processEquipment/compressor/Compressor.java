@@ -680,27 +680,28 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
 
     // runController(dt, id);
+    System.out.println("delta p compressor "
+        + (outStream.getThermoSystem().getPressure() - inStream.getThermoSystem().getPressure()));
 
-    thermoSystem = inStream.getThermoSystem().clone();
-    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    thermoSystem.init(3);
-
-    double actualFlowRate = thermoSystem.getFlowRate("m3/hr");
+    double guessFlow = inStream.getThermoSystem().getFlowRate("m3/hr");
+    outStream.getThermoSystem().init(3);
+    inStream.getThermoSystem().init(3);
     double polytropicHead = outStream.getThermoSystem().getEnthalpy("kJ/kg")
         - inStream.getThermoSystem().getEnthalpy("kJ/kg");
+    System.out.println("polytropic head " + polytropicHead);
     double actualFlowRateNew = 10.0;
-    // actualFlowRateNew = getCompressorChart().getActualFlowRate(polytropicHead, getSpeed());
+    actualFlowRateNew = getCompressorChart().getFlow(polytropicHead, getSpeed(), guessFlow);
 
     try {
-      inStream.getThermoSystem().setTotalFlowRate(actualFlowRateNew, "m3/hr");
-      inStream.getThermoSystem().init(1);
+      inStream.getThermoSystem().setTotalFlowRate(actualFlowRateNew, "Am3/hr");
+      inStream.getThermoSystem().init(3);
       // inStream.run(id);
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
     try {
-      outStream.getThermoSystem().setTotalFlowRate(actualFlowRateNew, "m3/hr");
-      outStream.getThermoSystem().init(1);
+      outStream.getThermoSystem().setTotalFlowRate(actualFlowRateNew, "Am3/hr");
+      outStream.getThermoSystem().init(3);
     } catch (Exception e) {
       logger.error(e.getMessage());
     }

@@ -246,7 +246,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     Separator separator1 = new Separator("separator_1");
     separator1.addStream(valve1.getOutletStream());
     separator1.setCalculateSteadyState(false);
-    separator1.setSeparatorLength(3.0);
+    separator1.setSeparatorLength(1.0);
     separator1.setInternalDiameter(0.8);
     separator1.setLiquidLevel(0.0);
 
@@ -257,11 +257,11 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     Separator separator2 = new Separator("separator_2");
     separator2.addStream(compressor1.getOutletStream());
     separator2.setCalculateSteadyState(false);
-    separator2.setSeparatorLength(3.0);
+    separator2.setSeparatorLength(1.0);
     separator2.setInternalDiameter(0.8);
     separator2.setLiquidLevel(0.0);
 
-    ThrottlingValve valve2 = new ThrottlingValve("valve_1", separator2.getGasOutStream());
+    ThrottlingValve valve2 = new ThrottlingValve("valve_2", separator2.getGasOutStream());
     valve2.setOutletPressure(50.0);
     valve2.setPercentValveOpening(50);
     valve2.setCalculateSteadyState(false);
@@ -274,10 +274,38 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     p.add(valve2);
 
     p.run();
+    assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
+
+    neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
+        new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
+            compressor1);
+    compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
+    compressor1.getCompressorChart().setUseCompressorChart(true);
+    p.run();
+    assertEquals(102.7, compressor1.getOutletStream().getPressure(), 2.01);
+    compressor1.setSpeed(compressor1.getSpeed() + 500);
+    p.run();
+    assertEquals(156.264, compressor1.getOutletStream().getPressure(), 2.01);
+
+    System.out.println("speed " + compressor1.getSpeed());
     p.setTimeStep(1.0);
     // p.runTransient();
 
     assertEquals(50.0, separator1.getGasOutStream().getPressure(), 0.01);
 
+    compressor1.setCalculateSteadyState(false);
+    compressor1.runTransient(1);
+    compressor1.setSpeed(compressor1.getSpeed() + 500);
+    compressor1.runTransient(1);
+    compressor1.setSpeed(compressor1.getSpeed() + 500);
+    compressor1.runTransient(1);
+    compressor1.setSpeed(compressor1.getSpeed() + 500);
+    compressor1.runTransient(1);
+    compressor1.setSpeed(compressor1.getSpeed() - 500);
+    compressor1.runTransient(1);
+    compressor1.setSpeed(compressor1.getSpeed() - 500);
+    compressor1.runTransient(1);
+    compressor1.setSpeed(compressor1.getSpeed() - 500);
+    compressor1.runTransient(1);
   }
 }
