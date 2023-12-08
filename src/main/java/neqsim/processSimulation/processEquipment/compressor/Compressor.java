@@ -680,15 +680,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
 
     // runController(dt, id);
-    System.out.println("delta p compressor "
-        + (outStream.getThermoSystem().getPressure() - inStream.getThermoSystem().getPressure()));
-
+    // System.out.println("delta p compressor "
+    // + (outStream.getThermoSystem().getPressure() - inStream.getThermoSystem().getPressure()));
+    inStream.getThermoSystem().initProperties();
     double guessFlow = inStream.getThermoSystem().getFlowRate("m3/hr");
     outStream.getThermoSystem().init(3);
     inStream.getThermoSystem().init(3);
     double polytropicHead = outStream.getThermoSystem().getEnthalpy("kJ/kg")
         - inStream.getThermoSystem().getEnthalpy("kJ/kg");
-    System.out.println("polytropic head " + polytropicHead);
+    // System.out.println("polytropic head " + polytropicHead);
     double actualFlowRateNew = 10.0;
     actualFlowRateNew = getCompressorChart().getFlow(polytropicHead, getSpeed(), guessFlow);
 

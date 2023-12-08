@@ -178,9 +178,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       newhead = getPolytropicHead(newflow, speed);
       error = newhead - head;
       derrordspeed = (error - olderror) / (newflow - oldflow);
-      if (Math.abs(error) > 1e-6)
-        newflow -= error / derrordspeed;
-      System.out.println("newflow " + newflow);
+      newflow -= error / derrordspeed;
+      // System.out.println("newflow " + newflow);
     } while (Math.abs(error) > 1e-6 && iter < 100);
 
     // change speed to minimize
