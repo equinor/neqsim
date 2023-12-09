@@ -21,7 +21,7 @@ public class CompressorChartGenerator {
     double[] chartConditions = new double[3];
     chartConditions[0] = compressor.getOutletStream().getFluid().getMolarMass("kg/mol");
 
-    int refspeed = compressor.getSpeed();
+    double refspeed = compressor.getSpeed();
     double[] speed = new double[1];
     speed[0] = refspeed;
     double minSpeed = refspeed / 2.0;

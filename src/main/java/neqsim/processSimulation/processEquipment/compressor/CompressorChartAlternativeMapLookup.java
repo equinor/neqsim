@@ -544,7 +544,7 @@ public class CompressorChartAlternativeMapLookup
 
   /** {@inheritDoc} */
   @Override
-  public double getFlow(double head, int speed, double guessFlow) {
+  public double getFlow(double head, double speed, double guessFlow) {
     return 0.0;
   }
 }

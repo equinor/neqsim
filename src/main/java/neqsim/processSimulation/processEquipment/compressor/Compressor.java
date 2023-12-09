@@ -38,7 +38,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public double dH = 0.0;
   public double inletEnthalpy = 0;
   public double pressure = 0.0;
-  private int speed = 3000;
+  private double speed = 3000;
+  private double maxspeed = 30000;
+  private double minspeed = 0;
   public double isentropicEfficiency = 1.0;
   public double polytropicEfficiency = 1.0;
   public boolean usePolytropicCalc = false;
@@ -678,7 +680,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       increaseTime(dt);
       return;
     }
-
+    runController(dt, id);
     thermoSystem = inStream.getThermoSystem().clone();
     thermoSystem.init(3);
     thermoSystem.initPhysicalProperties("density");
@@ -1030,9 +1032,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Getter for the field <code>speed</code>.
    * </p>
    *
-   * @return a int
+   * @return a double
    */
-  public int getSpeed() {
+  public double getSpeed() {
     return speed;
   }
 
@@ -1043,7 +1045,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    *
    * @param speed a int
    */
-  public void setSpeed(int speed) {
+  public void setSpeed(double speed) {
     this.speed = speed;
   }
 
@@ -1299,6 +1301,29 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    */
   public void setPropertyProfile(CompressorPropertyProfile propertyProfile) {
     this.propertyProfile = propertyProfile;
+  }
+
+  /**
+   * <p>
+   * runController.
+   * </p>
+   *
+   * @param dt a double
+   * @param id Calculation identifier
+   */
+  public void runController(double dt, UUID id) {
+    if (hasController) {
+      getController().runTransient(this.speed, dt, id);
+      this.speed = getController().getResponse();
+      if (this.speed > maxspeed) {
+        this.speed = maxspeed;
+      }
+      if (this.speed < minspeed) {
+        this.speed = minspeed;
+      }
+      // System.out.println("valve opening " + this.percentValveOpening + " %");
+    }
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

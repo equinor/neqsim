@@ -168,5 +168,5 @@ public interface CompressorChartInterface extends Cloneable {
   public int hashCode();
 
   /** {@inheritDoc} */
-  public double getFlow(double head, int speed, double guessFlow);
+  public double getFlow(double head, double speed, double guessFlow);
 }

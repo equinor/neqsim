@@ -164,7 +164,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
   /** {@inheritDoc} */
   @Override
-  public double getFlow(double head, int speed, double guessFlow) {
+  public double getFlow(double head, double speed, double guessFlow) {
     int iter = 1;
     double error = 1.0;
     double derrordspeed = 1.0;
