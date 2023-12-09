@@ -12,7 +12,10 @@ import neqsim.processSimulation.measurementDevice.PressureTransmitter;
 import neqsim.processSimulation.measurementDevice.VolumeFlowTransmitter;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.separator.Separator;
+import neqsim.processSimulation.processEquipment.splitter.Splitter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.util.Recycle;
+import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
@@ -547,6 +550,144 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
           + compressor1.getOutletStream().getPressure());
       p.runTransient();
     }
+  }
+
+  @Test
+  public void testAntiSurgeControl() {
+    neqsim.thermo.system.SystemInterface testSystem2 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    testSystem2.addComponent("methane", 1.1);
+    testSystem2.addComponent("ethane", 0.1);
+    testSystem2.setMixingRule(2);
+
+    Stream stream1 = new Stream("Stream1", testSystem2);
+    stream1.setFlowRate(501.0, "kg/hr");
+    stream1.setPressure(100.0, "bara");
+    stream1.setTemperature(55.0, "C");
+
+    Stream resycstream = stream1.clone();
+    resycstream.setFlowRate(0.001, "kg/hr");
+
+    ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
+    valve1.setOutletPressure(50.0);
+    valve1.setPercentValveOpening(50);
+    valve1.setCalculateSteadyState(false);
+
+    Separator separator1 = new Separator("separator_1");
+    separator1.addStream(valve1.getOutletStream());
+    separator1.addStream(resycstream);
+    separator1.setCalculateSteadyState(false);
+    separator1.setSeparatorLength(3.0);
+    separator1.setInternalDiameter(0.8);
+    separator1.setLiquidLevel(0.0);
+
+    Compressor compressor1 = new Compressor(separator1.getGasOutStream());
+    compressor1.setCalculateSteadyState(false);
+    compressor1.setOutletPressure(100.0);
+
+    Separator separator2 = new Separator("separator_2");
+    separator2.addStream(compressor1.getOutletStream());
+    separator2.setCalculateSteadyState(false);
+    separator2.setSeparatorLength(3.0);
+    separator2.setInternalDiameter(0.8);
+    separator2.setLiquidLevel(0.0);
+
+    Stream gasfromsep2 = new Stream("gas from sep", separator2.getGasOutStream());
+
+    Splitter splitter = new Splitter("splitter1", gasfromsep2);
+    splitter.setSplitFactors(new double[] {1.0, 0.0});
+
+    ThrottlingValve resycleValve =
+        new ThrottlingValve("anti surge valve", splitter.getSplitStream(1));
+    resycleValve.setPressure(47.0);
+
+    SetPoint pressureset =
+        new SetPoint("HP pump set", resycleValve, "pressure", separator1.getGasOutStream());
+
+    Recycle splitterResycle = new Recycle("resycle 1");
+    splitterResycle.addStream(resycleValve.getOutletStream());
+    splitterResycle.setOutletStream(resycstream);
+
+    ThrottlingValve valve2 = new ThrottlingValve("valve_2", splitter.getSplitStream(0));
+    valve2.setOutletPressure(50.0);
+    valve2.setPercentValveOpening(50);
+    valve2.setCalculateSteadyState(false);
+
+    PressureTransmitter separatorPressureTransmitter =
+        new PressureTransmitter(separator2.getGasOutStream());
+
+
+    ControllerDeviceInterface speedController = new ControllerDeviceBaseClass();
+    speedController.setReverseActing(true);
+    speedController.setTransmitter(separatorPressureTransmitter);
+    speedController.setControllerSetPoint(100.0);
+    speedController.setControllerParameters(1.0, 500.0, 0.0);
+    speedController.setActive(false);
+
+    p.add(stream1);
+    p.add(valve1);
+    p.add(separator1);
+    p.add(compressor1);
+    p.add(separator2);
+    p.add(gasfromsep2);
+    p.add(splitter);
+    p.add(resycleValve);
+    p.add(pressureset);
+    p.add(splitterResycle);
+    p.add(separatorPressureTransmitter);
+    p.add(valve2);
+    compressor1.setController(speedController);
+
+
+
+    p.run();
+    System.out.println(" speed " + compressor1.getSpeed() + "feed flow "
+        + stream1.getFlowRate("kg/hr") + " compressor flow rate "
+        + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+        + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p "
+        + (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure())
+        + " pres inn " + compressor1.getInletStream().getPressure() + " pres out "
+        + compressor1.getOutletStream().getPressure());
+    assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
+
+    neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
+        new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
+            compressor1);
+    compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
+    compressor1.getCompressorChart().setUseCompressorChart(true);
+    // compressor1.setCalculateSteadyState(true);
+    // p.run();
+
+    System.out.println("speed " + compressor1.getSpeed());
+    p.setTimeStep(10.0);
+
+
+    for (int i = 0; i < 100; i++) {
+      System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
+          + stream1.getFlowRate("kg/hr") + " compressor flow rate "
+          + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+          + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p "
+          + (compressor1.getOutletStream().getPressure()
+              - compressor1.getInletStream().getPressure())
+          + " pres inn " + compressor1.getInletStream().getPressure() + " pres out "
+          + compressor1.getOutletStream().getPressure());
+      p.runTransient();
+    }
+
+    splitter.setSplitFactors(new double[] {0.8, 0.2});
+
+    for (int i = 0; i < 100; i++) {
+      System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
+          + stream1.getFlowRate("kg/hr") + " compressor flow rate "
+          + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+          + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p "
+          + (compressor1.getOutletStream().getPressure()
+              - compressor1.getInletStream().getPressure())
+          + " pres inn " + compressor1.getInletStream().getPressure() + " pres out "
+          + compressor1.getOutletStream().getPressure());
+      p.runTransient();
+    }
+    System.out.println("pres valve out " + resycleValve.getOutletPressure());
   }
 
 }

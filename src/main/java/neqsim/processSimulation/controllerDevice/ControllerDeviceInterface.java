@@ -128,4 +128,20 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public int hashCode();
+
+  /**
+   * <p>
+   * setActive
+   * </p>
+   * Set if controller is active
+   */
+  public void setActive(boolean isActive);
+
+  /**
+   * <p>
+   * isActive
+   * </p>
+   * Specifies if controller is active
+   */
+  public boolean isActive();
 }
