@@ -51,7 +51,8 @@ public class CompressorMonitor extends MeasurementDeviceBaseClass {
     if (unit.equals("distance to surge")) {
       return compressor.getDistanceToSurge();
     } else {
-      return compressor.getSpeed();
+      return compressor.getDistanceToSurge();
+      // return compressor.getSpeed();
     }
   }
 }
