@@ -36,6 +36,7 @@ public class CompressorMonitor extends MeasurementDeviceBaseClass {
    */
   public CompressorMonitor(String name, Compressor compressor) {
     super(name, "rpm");
+    this.compressor = compressor;
   }
 
   /** {@inheritDoc} */
@@ -47,6 +48,10 @@ public class CompressorMonitor extends MeasurementDeviceBaseClass {
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
-    return compressor.getSpeed();
+    if (unit.equals("distance to surge")) {
+      return compressor.getDistanceToSurge();
+    } else {
+      return compressor.getSpeed();
+    }
   }
 }

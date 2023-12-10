@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.SimulationInterface;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
+import neqsim.processSimulation.measurementDevice.CompressorMonitor;
 import neqsim.processSimulation.measurementDevice.LevelTransmitter;
 import neqsim.processSimulation.measurementDevice.PressureTransmitter;
 import neqsim.processSimulation.measurementDevice.VolumeFlowTransmitter;
@@ -585,6 +586,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     compressor1.setCalculateSteadyState(false);
     compressor1.setOutletPressure(100.0);
 
+    CompressorMonitor surgemonitor = new CompressorMonitor(compressor1);
+
     Separator separator2 = new Separator("separator_2");
     separator2.addStream(compressor1.getOutletStream());
     separator2.setCalculateSteadyState(false);
@@ -595,11 +598,13 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     Stream gasfromsep2 = new Stream("gas from sep", separator2.getGasOutStream());
 
     Splitter splitter = new Splitter("splitter1", gasfromsep2);
-    splitter.setSplitFactors(new double[] {1.0, 0.0});
+    splitter.setFlowRates(new double[] {-1, 1.0}, "kg/hr");
 
     ThrottlingValve resycleValve =
         new ThrottlingValve("anti surge valve", splitter.getSplitStream(1));
     resycleValve.setPressure(47.0);
+
+
 
     SetPoint pressureset =
         new SetPoint("HP pump set", resycleValve, "pressure", separator1.getGasOutStream());
@@ -616,7 +621,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     PressureTransmitter separatorPressureTransmitter =
         new PressureTransmitter(separator2.getGasOutStream());
 
-
     ControllerDeviceInterface speedController = new ControllerDeviceBaseClass();
     speedController.setReverseActing(true);
     speedController.setTransmitter(separatorPressureTransmitter);
@@ -628,6 +632,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     p.add(valve1);
     p.add(separator1);
     p.add(compressor1);
+    p.add(surgemonitor);
     p.add(separator2);
     p.add(gasfromsep2);
     p.add(splitter);
@@ -661,7 +666,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     System.out.println("speed " + compressor1.getSpeed());
     p.setTimeStep(10.0);
 
-
+    valve2.setPercentValveOpening(5);
     for (int i = 0; i < 100; i++) {
       System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
           + stream1.getFlowRate("kg/hr") + " compressor flow rate "
@@ -670,7 +675,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
           + (compressor1.getOutletStream().getPressure()
               - compressor1.getInletStream().getPressure())
           + " pres inn " + compressor1.getInletStream().getPressure() + " pres out "
-          + compressor1.getOutletStream().getPressure());
+          + compressor1.getOutletStream().getPressure() + " distancetosurge "
+          + surgemonitor.getMeasuredValue("distance to surge"));
       p.runTransient();
     }
 

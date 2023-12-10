@@ -1002,6 +1002,12 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return getAntiSurge().isSurge();
   }
 
+  public double getDistanceToSurge() {
+    return (getInletStream().getFlowRate("m3/hr")
+        - getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead()))
+        / getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
+  }
+
   /**
    * <p>
    * isStoneWall.
