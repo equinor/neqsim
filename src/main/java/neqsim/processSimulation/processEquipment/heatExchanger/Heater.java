@@ -220,6 +220,22 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     setCalculationIdentifier(id);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    } else {
+      inStream.setPressure(outStream.getPressure());
+      inStream.run();
+      run(id);
+      increaseTime(dt);
+      return;
+    }
+
+  }
 
 
   /** {@inheritDoc} */

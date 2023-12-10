@@ -250,8 +250,12 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       increaseTime(dt);
       return;
     } else {
+
       Mixer mixer = new Mixer();
       for (int i = 0; i < splitStream.length; i++) {
+        splitStream[i].setPressure(inletStream.getPressure());
+        splitStream[i].setTemperature(inletStream.getTemperature("C"), "C");
+        splitStream[i].run();
         mixer.addStream(splitStream[i]);
       }
       mixer.run();
