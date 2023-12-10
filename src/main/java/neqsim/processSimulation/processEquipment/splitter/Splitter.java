@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -239,6 +240,27 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     }
 
     setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    } else {
+      Mixer mixer = new Mixer();
+      for (int i = 0; i < splitStream.length; i++) {
+        mixer.addStream(splitStream[i]);
+      }
+      mixer.run();
+
+      inletStream.setThermoSystem(mixer.getThermoSystem());
+      inletStream.run();
+      setCalculationIdentifier(id);
+      return;
+    }
   }
 
   /** {@inheritDoc} */
