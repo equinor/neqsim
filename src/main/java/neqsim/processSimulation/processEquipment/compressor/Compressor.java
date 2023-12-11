@@ -692,7 +692,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed);
     double polytropicHead = (outStream.getThermoSystem().getEnthalpy("kJ/kg")
         - inStream.getThermoSystem().getEnthalpy("kJ/kg")) * polytropicEfficiency / 100.0;
-    // polytropicHead = 106.44278644;
     polytropicFluidHead = polytropicHead;
     // System.out.println("polytropic head " + polytropicFluidHead + " pres inn "
     // + inStream.getPressure() + " out stream " + outStream.getPressure());
@@ -714,7 +713,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
-    
+
     dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
         * inStream.getThermoSystem().getTotalNumberOfMoles();
     setCalculationIdentifier(id);
