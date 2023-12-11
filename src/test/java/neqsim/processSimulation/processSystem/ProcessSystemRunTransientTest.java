@@ -477,7 +477,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     speedController.setReverseActing(true);
     speedController.setTransmitter(separatorPressureTransmitter);
     speedController.setControllerSetPoint(100.0);
-    speedController.setControllerParameters(1.0, 500.0, 0.0);
+    speedController.setControllerParameters(0.1, 500.0, 0.0);
 
     p.add(stream1);
     p.add(valve1);
@@ -541,7 +541,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
       p.runTransient();
     }
     speedController.setControllerSetPoint(120.0);
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 500; i++) {
       System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
           + stream1.getFlowRate("kg/hr") + " compressor flow rate "
           + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
