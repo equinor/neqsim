@@ -285,4 +285,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
         && Arrays.deepEquals(report, other.report)
         && Objects.equals(specification, other.specification);
   }
+
+  /** {@inheritDoc} */
+  public String[][] createTable(String name) {
+
+    String[][] table = new String[50][3];
+    String[] names = {"Property", "Value", "Unit"};
+    table[0][0] = "";
+    table[0][1] = "";
+    table[0][2] = "";
+    return table;
+  }
 }

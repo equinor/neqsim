@@ -241,4 +241,15 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   public double getPressure(String unit) {
     return 1.0;
   }
+
+  /** {@inheritDoc} */
+  public String[][] createTable(String name) {
+
+    String[][] table = new String[50][3];
+    String[] names = {"Property", "Value", "Unit"};
+    table[0][0] = "";
+    table[0][1] = "";
+    table[0][2] = "";
+    return table;
+  }
 }
