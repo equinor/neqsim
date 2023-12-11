@@ -708,7 +708,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     valve1.setPercentValveOpening(5.0);
     // valve2.setPercentValveOpening(5.0);
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 200; i++) {
       System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
           + stream1.getFlowRate("kg/hr") + " compressor flow rate "
           + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
@@ -727,7 +727,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     valve1.setPercentValveOpening(50.0);
     // valve2.setPercentValveOpening(5.0);
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
       System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
           + stream1.getFlowRate("kg/hr") + " compressor flow rate "
           + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
