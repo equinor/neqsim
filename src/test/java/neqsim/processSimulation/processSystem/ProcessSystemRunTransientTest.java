@@ -700,7 +700,11 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
           + surgemonitor.getMeasuredValue("distance to surge") + " antisurgeflow "
           + recycleValve.getOutletStream().getFlowRate("kg/hr") + " antisurgevalveopening "
           + recycleValve.getPercentValveOpening() + " compressorouttemperature "
-          + compressor1.getOutStream().getTemperature("C"));
+          + compressor1.getOutStream().getTemperature("C") + " surgeflow "
+          + compressor1.getCompressorChart().getSurgeCurve()
+              .getSurgeFlow(compressor1.getPolytropicFluidHead())
+          + " compressor flow rate " + compressor1.getInletStream().getFlowRate("m3/hr")
+          + " fluid head " + compressor1.getPolytropicFluidHead());
       p.runTransient();
     }
 
@@ -720,7 +724,11 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
           + surgemonitor.getMeasuredValue("distance to surge") + " antisurgeflow "
           + recycleValve.getOutletStream().getFlowRate("kg/hr") + " antisurgevalveopening "
           + recycleValve.getPercentValveOpening() + " compressorouttemperature "
-          + compressor1.getOutStream().getTemperature("C"));
+          + compressor1.getOutStream().getTemperature("C") + " surgeflow "
+          + compressor1.getCompressorChart().getSurgeCurve()
+              .getSurgeFlow(compressor1.getPolytropicFluidHead())
+          + " compressor flow rate " + compressor1.getInletStream().getFlowRate("m3/hr")
+          + " fluid head " + compressor1.getPolytropicFluidHead());
       p.runTransient();
     }
 
@@ -739,7 +747,12 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
           + surgemonitor.getMeasuredValue("distance to surge") + " antisurgeflow "
           + recycleValve.getOutletStream().getFlowRate("kg/hr") + " antisurgevalveopening "
           + recycleValve.getPercentValveOpening() + " compressorouttemperature "
-          + compressor1.getOutStream().getTemperature("C"));
+          + compressor1.getOutStream().getTemperature("C") + " surgeflow "
+          + compressor1.getCompressorChart().getSurgeCurve()
+              .getSurgeFlow(compressor1.getPolytropicFluidHead())
+          + " compressor flow rate " + compressor1.getInletStream().getFlowRate("m3/hr")
+          + " fluid head " + compressor1.getPolytropicFluidHead());
+
       p.runTransient();
     }
   }
