@@ -682,15 +682,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
     runController(dt, id);
 
-    thermoSystem = inStream.getThermoSystem().clone();
-    thermoSystem.init(3);
-    thermoSystem.initPhysicalProperties("density");
-
     inStream.getThermoSystem().init(3);
     outStream.getThermoSystem().init(3);
     double head = (outStream.getThermoSystem().getEnthalpy("kJ/kg")
         - inStream.getThermoSystem().getEnthalpy("kJ/kg"));
-    double guessFlow = thermoSystem.getFlowRate("m3/hr");
+    double guessFlow = inStream.getFluid().getFlowRate("m3/hr");
     double actualFlowRateNew = getCompressorChart().getFlow(head, getSpeed(), guessFlow);
 
     try {
@@ -709,6 +705,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
+
+    inletEnthalpy = inStream.getFluid().getEnthalpy();
+    thermoSystem = outStream.getThermoSystem().clone();
+    thermoSystem.initPhysicalProperties("density");
 
     polytropicEfficiency =
         compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;

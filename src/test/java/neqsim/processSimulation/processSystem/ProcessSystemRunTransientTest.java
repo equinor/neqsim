@@ -586,7 +586,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     Compressor compressor1 = new Compressor(separator1.getGasOutStream());
     compressor1.setCalculateSteadyState(false);
     compressor1.setOutletPressure(100.0);
-
     CompressorMonitor surgemonitor = new CompressorMonitor(compressor1);
     surgemonitor.setMaximumValue(5.0);
     surgemonitor.setMinimumValue(-5.0);
@@ -628,7 +627,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     valve2.setPercentValveOpening(50);
     valve2.setCalculateSteadyState(false);
     valve2.setMinimumValveOpening(1.0);
-    valve2.setCv(20.0);
+
     ControllerDeviceInterface surgeController = new ControllerDeviceBaseClass();
     surgeController.setReverseActing(true);
     surgeController.setTransmitter(surgemonitor);
@@ -680,7 +679,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
         + surgemonitor.getMeasuredValue("distance to surge") + " antisurgeflow "
         + recycleValve.getOutletStream().getFlowRate("kg/hr") + " antisurgevalveopening "
         + recycleValve.getPercentValveOpening() + " compressorouttemperature "
-        + compressor1.getOutStream().getTemperature("C"));
+        + compressor1.getOutStream().getTemperature("C") + " power " + compressor1.getPower("kW"));
 
     System.out.println("speed " + compressor1.getSpeed());
     p.setTimeStep(1.0);
@@ -704,7 +703,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
           + compressor1.getCompressorChart().getSurgeCurve()
               .getSurgeFlow(compressor1.getPolytropicFluidHead())
           + " compressor flow rate " + compressor1.getInletStream().getFlowRate("m3/hr")
-          + " fluid head " + compressor1.getPolytropicFluidHead());
+          + " fluid head " + compressor1.getPolytropicFluidHead() + " power "
+          + compressor1.getPower("kW"));
       p.runTransient();
     }
 
@@ -728,7 +728,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
           + compressor1.getCompressorChart().getSurgeCurve()
               .getSurgeFlow(compressor1.getPolytropicFluidHead())
           + " compressor flow rate " + compressor1.getInletStream().getFlowRate("m3/hr")
-          + " fluid head " + compressor1.getPolytropicFluidHead());
+          + " fluid head " + compressor1.getPolytropicFluidHead() + " power "
+          + compressor1.getPower("kW"));
       p.runTransient();
     }
 
@@ -751,7 +752,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
           + compressor1.getCompressorChart().getSurgeCurve()
               .getSurgeFlow(compressor1.getPolytropicFluidHead())
           + " compressor flow rate " + compressor1.getInletStream().getFlowRate("m3/hr")
-          + " fluid head " + compressor1.getPolytropicFluidHead());
+          + " fluid head " + compressor1.getPolytropicFluidHead() + " power "
+          + compressor1.getPower("kW"));
 
       p.runTransient();
     }
