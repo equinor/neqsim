@@ -681,28 +681,24 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       return;
     }
     runController(dt, id);
+
     thermoSystem = inStream.getThermoSystem().clone();
     thermoSystem.init(3);
     thermoSystem.initPhysicalProperties("density");
 
     inStream.getThermoSystem().init(3);
     outStream.getThermoSystem().init(3);
-
-    polytropicEfficiency =
-        compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed);
-    double polytropicHead = (outStream.getThermoSystem().getEnthalpy("kJ/kg")
-        - inStream.getThermoSystem().getEnthalpy("kJ/kg")) * polytropicEfficiency / 100.0;
-    polytropicFluidHead = polytropicHead;
-    // System.out.println("polytropic head " + polytropicFluidHead + " pres inn "
-    // + inStream.getPressure() + " out stream " + outStream.getPressure());
+    double head = (outStream.getThermoSystem().getEnthalpy("kJ/kg")
+        - inStream.getThermoSystem().getEnthalpy("kJ/kg"));
     double guessFlow = thermoSystem.getFlowRate("m3/hr");
-    double actualFlowRateNew = getCompressorChart().getFlow(polytropicHead, getSpeed(), guessFlow);
+    double actualFlowRateNew = getCompressorChart().getFlow(head, getSpeed(), guessFlow);
 
     try {
-      inStream.getThermoSystem().setTotalFlowRate(actualFlowRateNew, "Am3/hr");
+      inStream.setFlowRate(actualFlowRateNew, "Am3/hr");
       inStream.getThermoSystem().init(3);
       inStream.getThermoSystem().initPhysicalProperties("density");
       inStream.run(id);
+      inStream.getThermoSystem().init(3);
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
@@ -714,6 +710,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       logger.error(e.getMessage());
     }
 
+    polytropicEfficiency =
+        compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed);
+    polytropicFluidHead = head * polytropicEfficiency / 100.0;
     dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
         * inStream.getThermoSystem().getTotalNumberOfMoles();
     setCalculationIdentifier(id);

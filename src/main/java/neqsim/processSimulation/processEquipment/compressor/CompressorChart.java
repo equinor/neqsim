@@ -175,7 +175,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     double olderror = oldhead - head;
     do {
       iter++;
-      newhead = getPolytropicHead(newflow, speed);
+      newhead =
+          getPolytropicHead(newflow, speed) / (getPolytropicEfficiency(newflow, speed) / 100.0);
       error = newhead - head;
       derrordspeed = (error - olderror) / (newflow - oldflow);
       newflow -= error / derrordspeed;

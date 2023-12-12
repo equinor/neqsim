@@ -628,16 +628,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     valve2.setCalculateSteadyState(false);
     valve2.setMinimumValveOpening(1.0);
 
-    PressureTransmitter separatorPressureTransmitter =
-        new PressureTransmitter(separator2.getGasOutStream());
-
-    ControllerDeviceInterface speedController = new ControllerDeviceBaseClass();
-    speedController.setReverseActing(true);
-    speedController.setTransmitter(separatorPressureTransmitter);
-    speedController.setControllerSetPoint(100.0);
-    speedController.setControllerParameters(1.0, 500.0, 0.0);
-    speedController.setActive(false);
-
     ControllerDeviceInterface surgeController = new ControllerDeviceBaseClass();
     surgeController.setReverseActing(true);
     surgeController.setTransmitter(surgemonitor);
@@ -658,9 +648,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     p.add(recycleValve);
     p.add(pressureset);
     p.add(recycle);
-    p.add(separatorPressureTransmitter);
     p.add(valve2);
-    compressor1.setController(speedController);
     recycleValve.setController(surgeController);
 
     p.run();
@@ -735,7 +723,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     valve1.setPercentValveOpening(50.0);
     // valve2.setPercentValveOpening(5.0);
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
       System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
           + stream1.getFlowRate("kg/hr") + " compressor flow rate "
           + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
