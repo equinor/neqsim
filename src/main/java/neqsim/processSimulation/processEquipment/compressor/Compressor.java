@@ -1387,4 +1387,20 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         && usePolytropicCalc == other.usePolytropicCalc
         && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
   }
+
+  public void setMaximumSpeed(double maxSpeed) {
+    this.maxspeed = maxSpeed;
+  }
+
+  public void setMinimumSpeed(double minspeed) {
+    this.minspeed = minspeed;
+  }
+
+  public double getMaximumSpeed() {
+    return maxspeed;
+  }
+
+  public double getMinimumSpeed() {
+    return minspeed;
+  }
 }
