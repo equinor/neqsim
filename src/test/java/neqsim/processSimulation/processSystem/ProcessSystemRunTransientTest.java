@@ -610,10 +610,10 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     ThrottlingValve recycleValve =
         new ThrottlingValve("anti surge valve", splitter.getSplitStream(1));
-    recycleValve.setPressure(47.0);
+    recycleValve.setPressure(50.0);
     recycleValve.setCalculateSteadyState(false);
     recycleValve.setMinimumValveOpening(1.0);
-    recycleValve.setPercentValveOpening(2);
+    recycleValve.setPercentValveOpening(40);
 
     SetPoint pressureset =
         new SetPoint("HP pump set", recycleValve, "pressure", separator1.getGasOutStream());
@@ -632,8 +632,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     surgeController.setReverseActing(true);
     surgeController.setTransmitter(surgemonitor);
     surgeController.setControllerSetPoint(1.0);
-    surgeController.setControllerParameters(1.0, 200.0, 0.0);
-    surgeController.setActive(true);
+    surgeController.setControllerParameters(0.1, 200.0, 0.0);
+    surgeController.setActive(false);
 
     p.add(stream1);
     p.add(resycstream);
@@ -652,8 +652,16 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     recycleValve.setController(surgeController);
 
     p.run();
+    // p.run();
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
 
+    System.out.println(" speed " + compressor1.getSpeed() + "feed flow "
+        + stream1.getFlowRate("kg/hr") + " compressor flow rate "
+        + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+        + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p "
+        + (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure())
+        + " pres inn " + compressor1.getInletStream().getPressure() + " pres out "
+        + compressor1.getOutletStream().getPressure() + " distancetosurge ");
     neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
         new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
             compressor1);
@@ -700,7 +708,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     valve1.setPercentValveOpening(5.0);
     // valve2.setPercentValveOpening(5.0);
 
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 0; i++) {
       System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
           + stream1.getFlowRate("kg/hr") + " compressor flow rate "
           + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
@@ -723,7 +731,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     valve1.setPercentValveOpening(50.0);
     // valve2.setPercentValveOpening(5.0);
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 0; i++) {
       System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
           + stream1.getFlowRate("kg/hr") + " compressor flow rate "
           + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "

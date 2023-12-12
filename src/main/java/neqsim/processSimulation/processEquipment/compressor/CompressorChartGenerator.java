@@ -31,12 +31,12 @@ public class CompressorChartGenerator {
     double refflow = compressor.getInletStream().getFlowRate("m3/hr");
     double[][] flow = new double[1][3];
     flow[0][0] = refflow * 0.7;
-    flow[0][1] = refflow * 1.01;
+    flow[0][1] = refflow * 1.0;
     flow[0][2] = refflow * 1.43;
     double minFlow = refflow / 2.0;
     double maxFlow = refflow * 2.0;
 
-    double refhead = compressor.getPolytropicHead("kJ/kg");
+    double refhead = compressor.getPolytropicFluidHead();
     double[][] head = new double[1][3];
     head[0][0] = refhead * 1.5;
     head[0][1] = refhead;

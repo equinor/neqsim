@@ -711,8 +711,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
 
     polytropicEfficiency =
-        compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed);
-    polytropicFluidHead = head * polytropicEfficiency / 100.0;
+        compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
+    polytropicFluidHead = head * polytropicEfficiency;
     dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
         * inStream.getThermoSystem().getTotalNumberOfMoles();
     setCalculationIdentifier(id);
