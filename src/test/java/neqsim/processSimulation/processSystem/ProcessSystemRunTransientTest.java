@@ -569,7 +569,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
     valve1.setOutletPressure(50.0);
-    valve1.setPercentValveOpening(50);
+    valve1.setPercentValveOpening(20);
     valve1.setCalculateSteadyState(false);
 
     Stream resycstream = stream1.clone();
@@ -588,8 +588,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     compressor1.setOutletPressure(100.0);
 
     CompressorMonitor surgemonitor = new CompressorMonitor(compressor1);
-    surgemonitor.setMaximumValue(10.0);
-    surgemonitor.setMinimumValue(0.0);
+    surgemonitor.setMaximumValue(5.0);
+    surgemonitor.setMinimumValue(-5.0);
 
     Cooler aftercooler = new Cooler("after cooler", compressor1.getOutletStream());
     aftercooler.setOutTemperature(30.0, "C");
@@ -605,7 +605,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     Stream gasfromsep2 = new Stream("gas from sep", separator2.getGasOutStream());
 
     Splitter splitter = new Splitter("splitter1", gasfromsep2);
-    splitter.setSplitFactors(new double[] {0.5, 0.5});
+    splitter.setSplitFactors(new double[] {0.99, 0.01});
     splitter.setCalculateSteadyState(false);
 
     ThrottlingValve recycleValve =
@@ -613,7 +613,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     recycleValve.setPressure(50.0);
     recycleValve.setCalculateSteadyState(false);
     recycleValve.setMinimumValveOpening(1.0);
-    recycleValve.setPercentValveOpening(40);
+    recycleValve.setPercentValveOpening(10);
 
     SetPoint pressureset =
         new SetPoint("HP pump set", recycleValve, "pressure", separator1.getGasOutStream());
@@ -621,19 +621,20 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     Recycle recycle = new Recycle("resycle 1");
     recycle.addStream(recycleValve.getOutletStream());
     recycle.setOutletStream(resycstream);
+    recycle.setFlowAccuracy(1e-4);
 
     ThrottlingValve valve2 = new ThrottlingValve("valve_2", splitter.getSplitStream(0));
     valve2.setOutletPressure(50.0);
     valve2.setPercentValveOpening(50);
     valve2.setCalculateSteadyState(false);
     valve2.setMinimumValveOpening(1.0);
-
+    valve2.setCv(20.0);
     ControllerDeviceInterface surgeController = new ControllerDeviceBaseClass();
     surgeController.setReverseActing(true);
     surgeController.setTransmitter(surgemonitor);
-    surgeController.setControllerSetPoint(1.0);
-    surgeController.setControllerParameters(0.1, 200.0, 0.0);
-    surgeController.setActive(false);
+    surgeController.setControllerSetPoint(0.0);
+    surgeController.setControllerParameters(1.0, 200.0, 10.0);
+    surgeController.setActive(true);
 
     p.add(stream1);
     p.add(resycstream);
@@ -652,8 +653,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     recycleValve.setController(surgeController);
 
     p.run();
-    // p.run();
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
+    recycleValve.setCv(valve2.getCv());
 
     System.out.println(" speed " + compressor1.getSpeed() + "feed flow "
         + stream1.getFlowRate("kg/hr") + " compressor flow rate "
@@ -684,6 +685,9 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     System.out.println("speed " + compressor1.getSpeed());
     p.setTimeStep(1.0);
 
+    recycleValve.setPercentValveOpening(1.0);
+    valve2.setPercentValveOpening(100.0);
+
     for (int i = 0; i < 100; i++) {
       System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
           + stream1.getFlowRate("kg/hr") + " compressor flow rate "
@@ -705,10 +709,10 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     }
 
 
-    valve1.setPercentValveOpening(5.0);
-    // valve2.setPercentValveOpening(5.0);
+    valve1.setPercentValveOpening(1.0);
+    valve2.setPercentValveOpening(1.0);
 
-    for (int i = 0; i < 0; i++) {
+    for (int i = 0; i < 100; i++) {
       System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
           + stream1.getFlowRate("kg/hr") + " compressor flow rate "
           + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
@@ -729,9 +733,9 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     }
 
     valve1.setPercentValveOpening(50.0);
-    // valve2.setPercentValveOpening(5.0);
+    valve2.setPercentValveOpening(50.0);
 
-    for (int i = 0; i < 0; i++) {
+    for (int i = 0; i < 100; i++) {
       System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow "
           + stream1.getFlowRate("kg/hr") + " compressor flow rate "
           + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "

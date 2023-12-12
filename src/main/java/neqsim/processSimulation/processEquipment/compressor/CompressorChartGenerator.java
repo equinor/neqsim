@@ -53,9 +53,9 @@ public class CompressorChartGenerator {
 
 
     // Generating surge curve
-    double minFlowSurgeFlow = 0.3 * refflow;
-    double refSurgeFlow = 0.5 * refflow;
-    double maxSurgeFlow = 0.8 * refflow;
+    double minFlowSurgeFlow = 0.7 * refflow;
+    double refSurgeFlow = 0.8 * refflow;
+    double maxSurgeFlow = 0.9 * refflow;
     double headSurgeRef = compChart.getPolytropicHead(refSurgeFlow, refspeed);
     double headSurgeMin = compChart.getPolytropicHead(minFlow, minSpeed);
     double headSurgeMax = compChart.getPolytropicHead(maxSurgeFlow, maxSpeed);

@@ -327,7 +327,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @param id Calculation identifier
    */
   public void runController(double dt, UUID id) {
-    if (hasController) {
+    if (hasController && getController().isActive()) {
       getController().runTransient(this.percentValveOpening, dt, id);
       this.percentValveOpening = getController().getResponse();
       if (this.percentValveOpening > maxValveOpening) {
