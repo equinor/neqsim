@@ -1319,7 +1319,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * @param id Calculation identifier
    */
   public void runController(double dt, UUID id) {
-    if (hasController) {
+    if (hasController && getController().isActive()) {
       getController().runTransient(this.speed, dt, id);
       this.speed = getController().getResponse();
       if (this.speed > maxspeed) {
