@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import neqsim.PVTsimulation.simulation.SaturationPressure;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
@@ -264,5 +265,11 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     }
     assertEquals((testOps.get("cricondenbar")[0] - 273.15), -11.09948347, 0.02);
     assertEquals(testOps.get("cricondenbar")[1], 104.75329137038476, 0.02);
+
+    testSystem.setTemperature(-11.09948347, "C");
+    SaturationPressure satPresSim = new SaturationPressure(testSystem);
+    satPresSim.run();
+    assertEquals(satPresSim.getThermoSystem().getPressure(), 104.7532, 0.001);
+
   }
 }
