@@ -688,23 +688,21 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         - inStream.getThermoSystem().getEnthalpy("kJ/kg"));
     double guessFlow = inStream.getFluid().getFlowRate("m3/hr");
     double actualFlowRateNew = getCompressorChart().getFlow(head, getSpeed(), guessFlow);
+    if (actualFlowRateNew < 0.0 || Double.isNaN(actualFlowRateNew)) {
+      logger.error(
+          "actual flow rate is negative or NaN and would lead to failure of calculation: actual flow rate "
+              + actualFlowRateNew);
+    }
+    inStream.setFlowRate(actualFlowRateNew, "Am3/hr");
 
-    try {
-      inStream.setFlowRate(actualFlowRateNew, "Am3/hr");
-      inStream.getThermoSystem().init(3);
-      inStream.getThermoSystem().initPhysicalProperties("density");
-      inStream.run(id);
-      inStream.getThermoSystem().init(3);
-    } catch (Exception e) {
-      logger.error(e.getMessage());
-    }
-    try {
-      outStream.setFlowRate(inStream.getFlowRate("kg/hr"), "kg/hr");
-      outStream.run();
-      outStream.getThermoSystem().init(3);
-    } catch (Exception e) {
-      logger.error(e.getMessage());
-    }
+    inStream.getThermoSystem().init(3);
+    inStream.getThermoSystem().initPhysicalProperties("density");
+    inStream.run(id);
+    inStream.getThermoSystem().init(3);
+
+    outStream.setFlowRate(inStream.getFlowRate("kg/hr"), "kg/hr");
+    outStream.run();
+    outStream.getThermoSystem().init(3);
 
     inletEnthalpy = inStream.getFluid().getEnthalpy();
     thermoSystem = outStream.getThermoSystem().clone();
