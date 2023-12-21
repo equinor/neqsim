@@ -44,6 +44,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
   // Internal state of integration contribution
   private double TintValue = 0.0;
+  boolean isActive = true;
 
   /**
    * <p>
@@ -52,6 +53,19 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    */
   public ControllerDeviceBaseClass() {
     this("controller");
+  }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public void setActive(boolean isActive) {
+    this.isActive = isActive;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isActive() {
+    return isActive;
   }
 
   /**
@@ -80,6 +94,11 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public void runTransient(double initResponse, double dt, UUID id) {
+    if (!isActive) {
+      response = initResponse;
+      calcIdentifier = id;
+      return;
+    }
     if (isReverseActing()) {
       propConstant = -1;
     }

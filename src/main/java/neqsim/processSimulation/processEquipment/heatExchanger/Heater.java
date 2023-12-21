@@ -7,7 +7,6 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import java.util.UUID;
-
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -220,6 +219,24 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     lastPressureDrop = pressureDrop;
     setCalculationIdentifier(id);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    } else {
+      inStream.setPressure(outStream.getPressure());
+      inStream.run();
+      run(id);
+      increaseTime(dt);
+      return;
+    }
+
+  }
+
 
   /** {@inheritDoc} */
   @Override
