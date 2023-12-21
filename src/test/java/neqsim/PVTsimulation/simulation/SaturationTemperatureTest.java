@@ -98,7 +98,7 @@ class SaturationTemperatureTest extends neqsim.NeqSimTest {
       assertTrue(false);
       throw new Exception(ex);
     }
-    assertEquals((testOps.get("cricondentherm")[0] - 273.15), 23.469396812206867, 0.02);
+    assertEquals((testOps.get("cricondentherm")[0] - 273.15), 23.469, 0.02);
     assertEquals(testOps.get("cricondentherm")[1], 46.9326702068279, 0.02);
 
     testSystem.setPressure(testOps.get("cricondentherm")[1], "bara");
