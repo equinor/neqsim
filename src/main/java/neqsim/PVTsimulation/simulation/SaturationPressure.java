@@ -31,9 +31,9 @@ public class SaturationPressure extends BasePVTsimulation {
    * @return a double
    */
   public double calcSaturationPressure() {
-    boolean changed = false;
+    boolean isMultiPhaseCheckChanged = false;
     if (!getThermoSystem().doMultiPhaseCheck()) {
-      changed = true;
+      isMultiPhaseCheckChanged = true;
       getThermoSystem().setMultiPhaseCheck(true);
     }
     // getThermoSystem().isImplementedCompositionDeriativesofFugacity(false);
@@ -67,7 +67,7 @@ public class SaturationPressure extends BasePVTsimulation {
     } while (Math.abs(maxPres - minPres) > 1e-5 && iteration < 500);
     getThermoSystem().setPressure(maxPres);
     thermoOps.TPflash();
-    if (changed) {
+    if (isMultiPhaseCheckChanged) {
       getThermoSystem().setMultiPhaseCheck(false);
     }
     return getThermoSystem().getPressure();
