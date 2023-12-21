@@ -31,7 +31,7 @@ public class SaturationTemperature extends BasePVTsimulation {
    * @return a double
    */
   public double calcSaturationTemperature() {
-    boolean changed = false;;
+    boolean isMultiPhaseCheckChanged = false;
     if (!getThermoSystem().doMultiPhaseCheck()) {
       changed = true;
       getThermoSystem().setMultiPhaseCheck(true);
