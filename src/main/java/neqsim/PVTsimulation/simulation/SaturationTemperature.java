@@ -33,7 +33,7 @@ public class SaturationTemperature extends BasePVTsimulation {
   public double calcSaturationTemperature() {
     boolean isMultiPhaseCheckChanged = false;
     if (!getThermoSystem().doMultiPhaseCheck()) {
-      changed = true;
+      isMultiPhaseCheckChanged = true;
       getThermoSystem().setMultiPhaseCheck(true);
     }
     do {
@@ -61,7 +61,7 @@ public class SaturationTemperature extends BasePVTsimulation {
     } while (Math.abs(maxTemp - minTemp) > 1e-5 && iteration < 500);
     getThermoSystem().setTemperature(maxTemp);
     thermoOps.TPflash();
-    if (changed) {
+    if (isMultiPhaseCheckChanged) {
       getThermoSystem().setMultiPhaseCheck(false);
     }
     return getThermoSystem().getTemperature();
