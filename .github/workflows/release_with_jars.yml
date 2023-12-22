@@ -90,7 +90,32 @@ jobs:
         with:
           name: jarfiles
           path: staging
-                    
+
+    compile_java_21:
+    name: Build Neqsim ${{ needs.get_versions.outputs.version }} with java 21
+    needs: get_versions
+
+    if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out neqsim java project
+        uses: actions/checkout@v3
+      - name: Set up JDK 21 environment
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+      - name: Build java 21 version with Maven
+        run: mvn -B package --file pomJava21.xml
+      - name: Copy jar file to staging
+        run: mkdir staging && cp target/neqsim*Java21.jar staging
+      - uses: actions/upload-artifact@v2
+        with:
+          name: jarfiles
+          path: staging
+
   create_release:
     name: Create release v${{ needs.get_versions.outputs.version_8 }}
     runs-on: ubuntu-latest
