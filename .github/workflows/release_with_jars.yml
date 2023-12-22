@@ -110,7 +110,7 @@ jobs:
       - name: Build java 21 version with Maven
         run: mvn -B package --file pomJava21.xml
       - name: Rename files
-        run: cd target && find . -type f -name "neqsim-*.jar" -exec sh -c 'mv -f $0 ${0%.jar}-Java21.jar.' {} \;
+        run: cd target && find . -type f -name "neqsim-*.jar" -exec sh -c 'mv -f $0 ${0%.jar}-Java21.jar' {} \;
       - name: Copy jar file to staging
         run: cd .. && mkdir staging && cp target/neqsim*Java21.jar staging
       - uses: actions/upload-artifact@v2
