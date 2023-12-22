@@ -399,7 +399,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     lngamma = lngammaResidual + lngammaCombinational;
 
     if (Double.isNaN(lngamma)) {
-      logger.warn("gamma NaN......");
+      logger.error("gamma NaN......");
       lngamma = 0.0;
       gamma = 1.0;
       dlngammadt = 0;
