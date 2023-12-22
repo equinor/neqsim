@@ -401,6 +401,11 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
   }
 
+  /**
+   * <p>update.</p>
+   *
+   * @param deltaTime a double
+   */
   public void update(double deltaTime) {
     for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
         .getNumberOfComponents(); componentNumber++) {

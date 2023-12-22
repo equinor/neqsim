@@ -131,17 +131,21 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
-   * setActive
+   * setActive.
    * </p>
    * Set if controller is active
+   *
+   * @param isActive Set true to make controller active.
    */
   public void setActive(boolean isActive);
 
   /**
    * <p>
-   * isActive
+   * isActive.
    * </p>
    * Specifies if controller is active
+   *
+   * @return a boolean
    */
   public boolean isActive();
 }
