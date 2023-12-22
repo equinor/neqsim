@@ -91,7 +91,7 @@ jobs:
           name: jarfiles
           path: staging
 
-    compile_java_21:
+  compile_java_21:
     name: Build Neqsim ${{ needs.get_versions.outputs.version }} with java 21
     needs: get_versions
 
