@@ -38,7 +38,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public double dH = 0.0;
   public double inletEnthalpy = 0;
   public double pressure = 0.0;
-  private int speed = 3000;
+  private double speed = 3000;
+  private double maxspeed = 30000;
+  private double minspeed = 0;
   public double isentropicEfficiency = 1.0;
   public double polytropicEfficiency = 1.0;
   public boolean usePolytropicCalc = false;
@@ -670,6 +672,50 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     setCalculationIdentifier(id);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    }
+    runController(dt, id);
+
+    inStream.getThermoSystem().init(3);
+    outStream.getThermoSystem().init(3);
+    double head = (outStream.getThermoSystem().getEnthalpy("kJ/kg")
+        - inStream.getThermoSystem().getEnthalpy("kJ/kg"));
+    double guessFlow = inStream.getFluid().getFlowRate("m3/hr");
+    double actualFlowRateNew = getCompressorChart().getFlow(head, getSpeed(), guessFlow);
+    if (actualFlowRateNew < 0.0 || Double.isNaN(actualFlowRateNew)) {
+      logger.error(
+          "actual flow rate is negative or NaN and would lead to failure of calculation: actual flow rate "
+              + actualFlowRateNew);
+    }
+    inStream.setFlowRate(actualFlowRateNew, "Am3/hr");
+
+    inStream.getThermoSystem().init(3);
+    inStream.getThermoSystem().initPhysicalProperties("density");
+    inStream.run(id);
+    inStream.getThermoSystem().init(3);
+
+    outStream.setFlowRate(inStream.getFlowRate("kg/hr"), "kg/hr");
+    outStream.run();
+    outStream.getThermoSystem().init(3);
+
+    inletEnthalpy = inStream.getFluid().getEnthalpy();
+    thermoSystem = outStream.getThermoSystem().clone();
+    thermoSystem.initPhysicalProperties("density");
+
+    polytropicEfficiency =
+        compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
+    polytropicFluidHead = head * polytropicEfficiency;
+    dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
+        * inStream.getThermoSystem().getTotalNumberOfMoles();
+    setCalculationIdentifier(id);
+  }
+
   /**
    * <p>
    * generateCompressorCurves.
@@ -955,6 +1001,12 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return getAntiSurge().isSurge();
   }
 
+  public double getDistanceToSurge() {
+    return (getInletStream().getFlowRate("m3/hr")
+        - getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead()))
+        / getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
+  }
+
   /**
    * <p>
    * isStoneWall.
@@ -985,9 +1037,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Getter for the field <code>speed</code>.
    * </p>
    *
-   * @return a int
+   * @return a double
    */
-  public int getSpeed() {
+  public double getSpeed() {
     return speed;
   }
 
@@ -998,7 +1050,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    *
    * @param speed a int
    */
-  public void setSpeed(int speed) {
+  public void setSpeed(double speed) {
     this.speed = speed;
   }
 
@@ -1256,6 +1308,29 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.propertyProfile = propertyProfile;
   }
 
+  /**
+   * <p>
+   * runController.
+   * </p>
+   *
+   * @param dt a double
+   * @param id Calculation identifier
+   */
+  public void runController(double dt, UUID id) {
+    if (hasController && getController().isActive()) {
+      getController().runTransient(this.speed, dt, id);
+      this.speed = getController().getResponse();
+      if (this.speed > maxspeed) {
+        this.speed = maxspeed;
+      }
+      if (this.speed < minspeed) {
+        this.speed = minspeed;
+      }
+      // System.out.println("valve opening " + this.percentValveOpening + " %");
+    }
+    setCalculationIdentifier(id);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
@@ -1309,5 +1384,21 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         && useOutTemperature == other.useOutTemperature
         && usePolytropicCalc == other.usePolytropicCalc
         && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
+  }
+
+  public void setMaximumSpeed(double maxSpeed) {
+    this.maxspeed = maxSpeed;
+  }
+
+  public void setMinimumSpeed(double minspeed) {
+    this.minspeed = minspeed;
+  }
+
+  public double getMaximumSpeed() {
+    return maxspeed;
+  }
+
+  public double getMinimumSpeed() {
+    return minspeed;
   }
 }

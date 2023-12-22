@@ -41,7 +41,11 @@ public class PHflashSingleComp extends Flash {
       try {
         bubOps.TPflash();
         if (system.getPhase(0).getType() == PhaseType.GAS) {
-          bubOps.dewPointTemperatureFlash();
+          try {
+            bubOps.dewPointTemperatureFlash();
+          } catch (Exception e) {
+            system.setTemperature(298.0);
+          }
         } else {
           bubOps.bubblePointTemperatureFlash();
         }

@@ -31,9 +31,6 @@ class PHFlashTest {
     testSystem.setMixingRule("classic");
   }
 
-  /**
-   * Test method for {@link neqsim.thermodynamicOperations.flashOps.PHFlash#run()}.
-   */
   @Test
   void testRun() {
     testOps = new ThermodynamicOperations(testSystem);

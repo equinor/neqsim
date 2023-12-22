@@ -15,6 +15,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.unit.PressureUnit;
 
 /**
  * <p>
@@ -857,5 +858,15 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    */
   public double getTime() {
     return time;
+  }
+
+  public void setLowPressureLimit(double value, String unit) {
+    PressureUnit conver = new PressureUnit(value, unit);
+    lowPressureLimit = conver.getValue("bara");
+  }
+
+  public double getLowPressureLimit(String unit) {
+    PressureUnit conver = new PressureUnit(lowPressureLimit, "bara");
+    return  conver.getValue(unit);
   }
 }

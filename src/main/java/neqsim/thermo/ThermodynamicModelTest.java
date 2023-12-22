@@ -424,11 +424,8 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * 
-   * @param maxErr Maximum error before test will report failed Set maximum allowed error in model
-   *        check
-   *        </p>
+   * @param maxErr before test will report failed Set maximum allowed error in model check
    */
   public void setMaxError(double maxErr) {
     this.maxError = maxErr;

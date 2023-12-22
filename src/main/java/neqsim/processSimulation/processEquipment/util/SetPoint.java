@@ -71,7 +71,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
     this.targetEquipment = targetEquipment;
     this.targetVariable = targetVariable;
     this.sourceEquipment = sourceEquipment;
-    run();
+    // run();
   }
 
   /**
