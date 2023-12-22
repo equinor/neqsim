@@ -453,6 +453,7 @@ public class ChemicalReactionOperations
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phase);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
+        // todo: Will this crash below?
       }
       return solver.solve();
     }
