@@ -133,6 +133,15 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     }
 
     @Override
+    public double[][] getBinaryInteractionParameters() {
+      return intparam;
+    }
+
+    public void prettyPrintKij(){
+
+    }
+
+    @Override
     public double getBinaryInteractionParameterT1(int i, int j) {
       if (i == j) {
         return 0.0;

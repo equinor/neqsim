@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -250,44 +252,30 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("BIC")) {
-          int numb = 0;
-          // kij = new double[ZI.size()][ZI.size()];
+          int addedComps = 0;
           kij = new double[names.size()][names.size()];
+          int lengthLastLine = 0;
+          List<String> list = new ArrayList<String>();
           while ((st = br.readLine().replace("/", "")) != null) {
-            numb++;
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
-
-            // String[] arr = st.replace(" ","").split(" ");
             String[] arr = st.split("  ");
-            if (arr.length == 1) {
-              break;
+            List<String> templist = new ArrayList<String>(Arrays.asList(arr));
+            list.addAll(templist);
+            list.removeAll(Arrays.asList("", null));
+            if (lengthLastLine >= list.size()) {
+              continue;
             }
-
-            // List<String> list = Arrays.asList(arr);
-            for (int i = 0; i < arr.length - 1; i++) {
-              BIC.add(Double.parseDouble(arr[i + 1]));
-              kij[numb][i] = Double.parseDouble(arr[i + 1]);
-              kij[i][numb] = kij[numb][i];
-              // kij[numb-1][i] = Double.parseDouble(arr[i+1]);
-              // kij[i][numb-1] = kij[numb-1][i] ;
+            lengthLastLine = list.size();
+            for (int i = 0; i < list.size(); i++) {
+              BIC.add(Double.parseDouble(list.get(i)));
+              kij[i][addedComps + 1] = Double.parseDouble(list.get(i));
+              kij[addedComps + 1][i] = kij[i][addedComps + 1];
             }
-            // numb++;
-            Double.parseDouble(arr[1]);
-            // System.out.println(list.size());
-            // System.out.println(st);
-            // BIC.add(Double.parseDouble(st));
+            addedComps++;
+            list.clear();
           }
-
-          /*
-           * numb =0;
-           * 
-           * for (int i = 0; i < names.size(); i++) { for (int j = i; j < names.size(); j++) {
-           * if(i==j) continue; //System.out.println("ij " + i + " " + j+ " " + BIC.get(numb));
-           * System.out.println("ij " + i + " " + j+ " " + kij[i][j] ); //kij[i][j] = BIC.get(numb);
-           * //kij[j][i] = kij[i][j]; numb++; } }
-           */
         }
       }
       for (int counter = 0; counter < names.size(); counter++) {

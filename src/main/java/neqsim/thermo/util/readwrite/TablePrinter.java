@@ -68,7 +68,7 @@ public class TablePrinter implements Serializable {
   /**
    * Prints a row of the table with appropriate padding based on column widths.
    *
-   * @param row          The row of data to be printed.
+   * @param row The row of data to be printed.
    * @param columnWidths An array containing the maximum width of each column.
    */
   private static void printRow(String[] row, int[] columnWidths) {
@@ -83,5 +83,32 @@ public class TablePrinter implements Serializable {
       System.out.print(" |");
     }
     System.out.println();
+  }
+
+  /**
+   * Prints a 2D string table in a formatted and visually appealing way.
+   *
+   * @param table The 2D string table to be printed.
+   */
+  public static void printTable(double[][] doubletable) {
+    printTable(convertDoubleToString(doubletable));
+  }
+
+  // Function to convert 2D double array to 2D String array
+  public static String[][] convertDoubleToString(double[][] doubleArray) {
+    // Initialize the 2D String array with the same dimensions as the double array
+    String[][] stringArray = new String[doubleArray.length][];
+
+    for (int i = 0; i < doubleArray.length; i++) {
+      // Initialize the inner array with the same length as the corresponding double array
+      stringArray[i] = new String[doubleArray[i].length];
+
+      for (int j = 0; j < doubleArray[i].length; j++) {
+        // Convert each double value to string and store it
+        stringArray[i][j] = String.valueOf(doubleArray[i][j]);
+      }
+    }
+
+    return stringArray;
   }
 }
