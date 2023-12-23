@@ -6,6 +6,7 @@ import java.io.Serializable;
  * A utility class for pretty printing a 2D string table.
  */
 public class TablePrinter implements Serializable {
+
   /**
    * Prints a 2D string table in a formatted and visually appealing way.
    *
@@ -88,13 +89,17 @@ public class TablePrinter implements Serializable {
   /**
    * Prints a 2D string table in a formatted and visually appealing way.
    *
-   * @param table The 2D string table to be printed.
+   * @param table The 2D double table to be printed.
    */
-  public static void printTable(double[][] doubletable) {
-    printTable(convertDoubleToString(doubletable));
+  public static void printTable(double[][] table) {
+    printTable(convertDoubleToString(table));
   }
 
-  // Function to convert 2D double array to 2D String array
+  /**
+   * Returns a 2D string table in a formatted and visually appealing way.
+   *
+   * @param doubleArray The 2D double table to be printed.
+   */
   public static String[][] convertDoubleToString(double[][] doubleArray) {
     // Initialize the 2D String array with the same dimensions as the double array
     String[][] stringArray = new String[doubleArray.length][];
