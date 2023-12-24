@@ -728,7 +728,6 @@ public class TPmultiflash extends TPflash {
         if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (iter % 7 == 0 && useaccsubst) {
             double vec1 = 0.0;
-
             double vec2 = 0.0;
             double prod1 = 0.0;
             double prod2 = 0.0;

@@ -1,8 +1,15 @@
 package neqsim.processSimulation.processSystem;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.security.AnyTypePermission;
 import neqsim.processSimulation.measurementDevice.WaterDewPointAnalyser;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
@@ -349,5 +356,35 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     } catch (Exception ex) {
       logger.error("Something failed");
     }
+
+    Assertions.assertEquals(makeupTEG.getFlowRate("kg/hr"), 0.37380397787296316);
   }
+
+  @Test
+  void testRunNEQSIMAPI() {
+    XStream xstream = new XStream();
+    xstream.addPermission(AnyTypePermission.ANY);
+    // Specify the file path to read
+
+    Path filePath = Paths.get(
+        "/workspaces/neqsim/src/test/java/neqsim/processSimulation/processSystem/my_process_TEG.xml");
+    String xmlContents = "";
+    try {
+      xmlContents = new String(Files.readAllBytes(filePath));
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    // Deserialize from xml
+    neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
+        (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
+    operationsCopy.run();
+    neqsim.processSimulation.processEquipment.stream.Stream makeUpTEG =
+        (neqsim.processSimulation.processEquipment.stream.Stream) operationsCopy
+            .getUnit("makeup TEG");
+    Assertions.assertEquals(makeUpTEG.getFlowRate("kg/hr"), 0.22761215378293284);
+
+  }
+
+
 }
