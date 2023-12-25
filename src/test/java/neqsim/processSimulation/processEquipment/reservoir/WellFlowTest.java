@@ -77,10 +77,15 @@ public class WellFlowTest {
     pipeline.setElevation(200);
     pipeline.setDiameter(0.325);
 
+    // ThrottlingValve chokeValve = new ThrottlingValve("chocke");
+    // chokeValve.setInletStream(pipeline.getOutletStream());
+    // chokeValve.setOutletPressure(75.0, "bara");
+
+
     Adjuster adjuster = new Adjuster("adjuster");
     adjuster.setTargetVariable(pipeline.getOutletStream(), "pressure", 80.0, "bara");
-    adjuster.setAdjustedVariable(producedGasStream, "molarFlow");
-
+    adjuster.setAdjustedVariable(producedGasStream, "flow", "MSm3/day");
+    adjuster.setMaxAdjustedValue(1.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(reservoirOps);
@@ -91,7 +96,6 @@ public class WellFlowTest {
     process.run();
 
     System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
-
     System.out.println("production index " + wellflow.getWellProductionIndex() + " MSm3/day/bar^2");
     System.out.println("reservoir pressure " + producedGasStream.getPressure("bara"));
     System.out
@@ -102,7 +106,7 @@ public class WellFlowTest {
 
     // process.setTimeStep(60 * 60 * 24 * 365);
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 15; i++) {
       reservoirOps.runTransient(60 * 60 * 24 * 365);
       process.run();
       System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
