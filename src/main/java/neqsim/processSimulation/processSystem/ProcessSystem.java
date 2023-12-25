@@ -100,6 +100,38 @@ public class ProcessSystem extends SimulationBaseClass {
    * add.
    * </p>
    *
+   */
+  public void add(int position, ProcessEquipmentInterface operation) {
+    ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
+
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit == operation) {
+        return;
+      }
+    }
+
+    if (getAllUnitNames().contains(operation.getName())) {
+      String currClass = operation.getClass().getSimpleName();
+      int num = 1;
+      for (ProcessEquipmentInterface unit : units) {
+        if (unit.getClass().getSimpleName().equals(currClass)) {
+          num++;
+        }
+      }
+      operation.setName(currClass + Integer.toString(num));
+    }
+
+    getUnitOperations().add(position, operation);
+    if (operation instanceof ModuleInterface) {
+      ((ModuleInterface) operation).initializeModule();
+    }
+  }
+
+  /**
+   * <p>
+   * add.
+   * </p>
+   *
    * @param measurementDevice a
    *        {@link neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface} object
    */
