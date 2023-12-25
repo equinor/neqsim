@@ -55,8 +55,18 @@ public class WellFlow extends TwoPortEquipment {
     outStream.setThermoSystem(thermoSystem);
     if (useWellProductionIndex) {
       if (calcpressure) {
-        double presout = Math.sqrt(Math.pow(getInletStream().getPressure("bara"), 2.0)
-            - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex);
+        double presout = 1.0;
+        if (Math.pow(getInletStream().getPressure("bara"), 2.0)
+            - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex > 0) {
+          presout = Math.sqrt(Math.pow(getInletStream().getPressure("bara"), 2.0)
+              - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex);
+        } else {
+          logger.error("pressure lower that 0");
+          throw new RuntimeException(
+              new neqsim.util.exception.InvalidInputException("WellFlow", "run: calcOutletPressure",
+                  "pressure", "- Outlet pressure is negative" + pressureOut));
+        }
+        // System.out.println("out pres " + presout);
         outStream.setPressure(presout, "bara");
       } else {
         double flow = wellProductionIndex * (Math.pow(getInletStream().getPressure("bara"), 2.0)

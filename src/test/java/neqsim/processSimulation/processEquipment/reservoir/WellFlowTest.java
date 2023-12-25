@@ -59,13 +59,14 @@ public class WellFlowTest {
 
     SimpleReservoir reservoirOps = new SimpleReservoir("Well 1 reservoir");
     reservoirOps.setReservoirFluid(fluid1, 1e9, 10.0, 10.0e7);
+    reservoirOps.setLowPressureLimit(10.0, "bara");
 
     StreamInterface producedGasStream = reservoirOps.addGasProducer("gasproducer_1");
     producedGasStream.setFlowRate(9.0, "MSm3/day");
 
     WellFlow wellflow = new WellFlow("well flow unit");
     wellflow.setInletStream(producedGasStream);
-    wellflow.setWellProductionIndex(5.000100751427403E-3);
+    wellflow.setWellProductionIndex(10.000100751427403E-3);
 
     PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(wellflow.getOutletStream());
     pipe.setPipeWallRoughness(5e-6);
@@ -89,6 +90,7 @@ public class WellFlowTest {
         chokeValve.getOutletPressure(), "bara");
     adjuster.setAdjustedVariable(producedGasStream, "flow", "MSm3/day");
     adjuster.setMaxAdjustedValue(9.0);
+    adjuster.setMinAdjustedValue(1.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(reservoirOps);
@@ -133,10 +135,12 @@ public class WellFlowTest {
     process.add(3, compressor);
     // process.run();
 
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 8; i++) {
       reservoirOps.runTransient(60 * 60 * 24 * 365);
-      compressor.setOutletPressure(pipe.getOutletPressure() * 1.2);
+      compressor.setOutletPressure(pipe.getOutletPressure() * 2.0);
       process.run();
+      System.out.println("Compressor in pressure " + compressor.getInletStream().getPressure()
+          + " out pressure  " + compressor.getOutletStream().getPressure());
       System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
       System.out.println("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
       System.out
@@ -148,6 +152,54 @@ public class WellFlowTest {
       System.out
           .println("Total produced gas " + reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3");
       System.out.println("gas velocity " + pipeline.getSuperficialVelocity());
+
+    }
+
+    adjuster.setMaxAdjustedValue(4.0);
+    adjuster.setTargetVariable(pipeline.getOutletStream(), "pressure", 22.0, "bara");
+
+    for (int i = 0; i < 5; i++) {
+      reservoirOps.runTransient(60 * 60 * 24 * 365);
+      compressor.setOutletPressure(pipe.getOutletPressure() * 3.5);
+      process.run();
+      System.out.println("Compressor in pressure " + compressor.getInletStream().getPressure()
+          + " out pressure  " + compressor.getOutletStream().getPressure());
+      System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
+      System.out.println("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
+      System.out
+          .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") + " bara");
+
+      System.out.println("xmas pressure " + pipe.getOutletStream().getPressure("bara") + " bara");
+      System.out
+          .println("top side pressure " + pipeline.getOutletStream().getPressure("bara") + " bara");
+      System.out
+          .println("Total produced gas " + reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3");
+      System.out.println("gas velocity " + pipeline.getSuperficialVelocity());
+
+    }
+
+    adjuster.setMaxAdjustedValue(2.0);
+
+    for (int i = 0; i < 15; i++) {
+      if (producedGasStream.getPressure() > 15) {
+        reservoirOps.runTransient(60 * 60 * 24 * 365);
+        compressor.setOutletPressure(pipe.getOutletPressure() * 3.5);
+        process.run();
+
+        System.out.println("Compressor in pressure " + compressor.getInletStream().getPressure()
+            + " out pressure  " + compressor.getOutletStream().getPressure());
+        System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
+        System.out.println("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
+        System.out
+            .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") + " bara");
+
+        System.out.println("xmas pressure " + pipe.getOutletStream().getPressure("bara") + " bara");
+        System.out.println(
+            "top side pressure " + pipeline.getOutletStream().getPressure("bara") + " bara");
+        System.out.println(
+            "Total produced gas " + reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3");
+        System.out.println("gas velocity " + pipeline.getSuperficialVelocity());
+      }
 
     }
 
