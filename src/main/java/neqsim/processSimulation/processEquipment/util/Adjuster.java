@@ -343,9 +343,25 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
   public void setMaxAdjustedValue(double maxVal) {
     maxAdjustedValue = maxVal;
+    if (maxAdjustedValue < minAdjustedValue) {
+      minAdjustedValue = maxAdjustedValue;
+    }
   }
 
   public void setMinAdjustedValue(double minVal) {
     minAdjustedValue = minVal;
+    if (minAdjustedValue > maxAdjustedValue) {
+      maxAdjustedValue = minAdjustedValue;
+    }
+
   }
+
+  public double getMaxAdjustedValue() {
+    return maxAdjustedValue;
+  }
+
+  public double getMinAdjustedValue() {
+    return minAdjustedValue;
+  }
+
 }
