@@ -36,7 +36,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   // Roughness of the pipe wall [m]
   private double pipeWallRoughness = 1e-5;
 
-  // Flag to run isothermal calculations 
+  // Flag to run isothermal calculations
   private boolean runIsothermal = false;
 
   // Flow pattern of the fluid in the pipe
@@ -109,7 +109,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   private double cumulativeElevation;
 
-  //For segment calculation
+  // For segment calculation
   double length;
   double elevation;
 
@@ -340,7 +340,7 @@ public class PipeBeggsAndBrills extends Pipeline {
       throw new RuntimeException(
           new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "calcMissingValue",
               "elevation or length or angle", "cannot be null"));
-  }
+    }
 
   }
 
@@ -675,7 +675,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     testOps.TPflash();
     system.initProperties();
 
-    if (!runIsothermal){
+    if (!runIsothermal) {
       enthalpyInlet = system.getEnthalpy();
     }
     double pipeInletPressure = system.getPressure();
@@ -700,7 +700,7 @@ public class PipeBeggsAndBrills extends Pipeline {
       }
 
       system.setPressure(pressureOut);
-      if (!runIsothermal){
+      if (!runIsothermal) {
         testOps.PHflash(enthalpyInlet);
       }
       system.initProperties();
@@ -709,6 +709,21 @@ public class PipeBeggsAndBrills extends Pipeline {
     totalPressureDrop = pipeInletPressure - system.getPressure();
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * runTransient.
+   * </p>
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    run(id);
+    increaseTime(dt);
+    return;
+
   }
 
   /** {@inheritDoc} */
@@ -740,14 +755,14 @@ public class PipeBeggsAndBrills extends Pipeline {
 
 
   /**
-   * @return total length of the pipe in m 
+   * @return total length of the pipe in m
    */
   public double getLength() {
     return cumulativeLength;
   }
 
-    /**
-   * @return total elevation of the pipe in m 
+  /**
+   * @return total elevation of the pipe in m
    */
   public double getElevation() {
     return cumulativeElevation;

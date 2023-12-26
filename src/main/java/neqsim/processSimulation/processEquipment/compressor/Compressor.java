@@ -34,6 +34,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public SystemInterface thermoSystem;
   private double outTemperature = 298.15;
   private boolean useOutTemperature = false;
+  private double compressionRatio = 2.0;
+  private boolean useCompressionRatio = false;
   private CompressorPropertyProfile propertyProfile = new CompressorPropertyProfile();
   public double dH = 0.0;
   public double inletEnthalpy = 0;
@@ -360,6 +362,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     double orginalMolarFLow = thermoSystem.getTotalNumberOfMoles();
     double fractionAntiSurge = 0.0;
     double kappa = 0.0;
+    if (useCompressionRatio) {
+      setOutletPressure(presinn * compressionRatio);
+    }
     if (useOutTemperature) {
       if (useRigorousPolytropicMethod) {
         solveEfficiency(outTemperature);
@@ -668,7 +673,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     polytropicFluidHead =
         getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
     polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
-
+    compressionRatio = getOutletPressure() / presinn;
     setCalculationIdentifier(id);
   }
 
@@ -1400,5 +1405,14 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   public double getMinimumSpeed() {
     return minspeed;
+  }
+
+  public void setCompressionRatio(double compRatio) {
+    this.compressionRatio = compRatio;
+    useCompressionRatio = true;
+  }
+
+  public double getCompressionRatio() {
+    return compressionRatio;
   }
 }
