@@ -188,5 +188,31 @@ public class WellFlowTest {
     }
   }
 
+  @Test
+  void testCalcWellFlow() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
+    fluid1.addComponent("water", 3.599);
+    fluid1.addComponent("nitrogen", 0.599);
+    fluid1.addComponent("CO2", 0.51);
+    fluid1.addComponent("methane", 62.8);
+    fluid1.setMixingRule(2);
+    fluid1.setMultiPhaseCheck(true);
+
+    SimpleReservoir reservoirOps = new SimpleReservoir("Well 1 reservoir");
+    reservoirOps.setReservoirFluid(fluid1, 1e9, 1.0, 10.0e7);
+    reservoirOps.setLowPressureLimit(10.0, "bara");
+
+    StreamInterface producedGasStream = reservoirOps.addGasProducer("gasproducer_1");
+    producedGasStream.setFlowRate(9.0, "MSm3/day");
+
+    WellFlow wellflow = new WellFlow("well flow unit");
+    wellflow.setInletStream(producedGasStream);
+
+    double permeability = 50.0; // milli darcy
+    // wellflow.setDarcyLawParameters(permeability, );
+    // wellflow.setWellProductionIndex(10.000100751427403E-3);
+  }
+
 
 }
