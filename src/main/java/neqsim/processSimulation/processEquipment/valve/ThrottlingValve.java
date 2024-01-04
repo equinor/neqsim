@@ -310,14 +310,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     try {
       inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
       inStream.getThermoSystem().init(1);
-      // inStream.run(id);
+      inStream.run(id);
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
     try {
       outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
       outStream.getThermoSystem().init(1);
-      // outStream.run(id);
+      outStream.run(id);
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
@@ -339,7 +339,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @param id Calculation identifier
    */
   public void runController(double dt, UUID id) {
-    if (hasController) {
+    if (hasController && getController().isActive()) {
       getController().runTransient(this.percentValveOpening, dt, id);
       this.percentValveOpening = getController().getResponse();
       if (this.percentValveOpening > maxValveOpening) {

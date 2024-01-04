@@ -162,6 +162,32 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     return (int) Math.round(newspeed);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getFlow(double head, double speed, double guessFlow) {
+    int iter = 1;
+    double error = 1.0;
+    double derrordspeed = 1.0;
+    double newflow = guessFlow;
+    double newhead = 0.0;
+    double oldflow = newflow * 1.1;
+    double oldhead = getPolytropicHead(oldflow, speed);
+    double olderror = oldhead - head;
+    do {
+      iter++;
+      newhead =
+          getPolytropicHead(newflow, speed) / (getPolytropicEfficiency(newflow, speed) / 100.0);
+      error = newhead - head;
+      derrordspeed = (error - olderror) / (newflow - oldflow);
+      newflow -= error / derrordspeed;
+      // System.out.println("newflow " + newflow);
+    } while (Math.abs(error) > 1e-6 && iter < 100);
+
+    // change speed to minimize
+    // Math.abs(head - reducedHeadFitterFunc.value(flow / speed) * speed * speed);
+    return newflow;
+  }
+
   /**
    * <p>
    * addSurgeCurve.

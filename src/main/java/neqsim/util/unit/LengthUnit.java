@@ -23,8 +23,8 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit {
    * Constructor for LengthUnit.
    * </p>
    * 
-   * @param value
-   * @param name
+   * @param value Numeric value
+   * @param name Name of unit
    */
   public LengthUnit(double value, String name) {
     super(value, name);

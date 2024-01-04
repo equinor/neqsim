@@ -182,7 +182,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.12.0</version>
 				<configuration>
-					<release>11</release> <!-- Upgrade jdk version to 11 if you are having issues compiling -->
+					<release>21</release> <!-- Upgrade jdk version to 21 if you are having issues compiling -->
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<!-- Uncomment below to get compiler warnings
 					<compilerArgs>
@@ -215,7 +215,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.0.0-M7</version>
+				<version>3.2.3</version>
 			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>

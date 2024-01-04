@@ -10,7 +10,6 @@ import java.util.UUID;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowSolver.FlowSolverInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
-import neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterInterface;
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualizationInterface;
 import neqsim.fluidMechanics.util.timeSeries.TimeSeries;
 import neqsim.thermo.system.SystemInterface;
@@ -78,17 +77,6 @@ public interface FlowSystemInterface {
    *         object
    */
   public FlowSystemVisualizationInterface getDisplay();
-
-  /**
-   * <p>
-   * getFileWriter.
-   * </p>
-   *
-   * @param i a int
-   * @return a {@link neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterInterface}
-   *         object
-   */
-  public FileWriterInterface getFileWriter(int i);
 
   /**
    * <p>

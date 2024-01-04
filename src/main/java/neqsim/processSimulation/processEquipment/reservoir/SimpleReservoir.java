@@ -325,69 +325,42 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     this.gasVolume = gasVolume;
     this.waterVolume = waterVolume;
 
-    if (gasVolume > 1e-10 && oilVolume > 1e-10) {
-      ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
+    ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
+    ops.TPflash();
+
+    if (waterVolume > 1e-10 && !thermoSystem.hasPhaseType("aqueous")) {
+      thermoSystem.addComponent("water", thermoSystem.getTotalNumberOfMoles());
       ops.TPflash();
-      thermoSystem.initProperties();
-      SystemInterface thermoSystem2 = thermoSystem.clone();
-      thermoSystem.setEmptyFluid();
-      for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
-        double relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
-        if (j >= 1) {
-          if (j == 1) {
-            relFact = oilVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
-            // totalliquidVolume += oilVolume / thermoSystem2.getPhase(j).getMolarVolume();
-          } else if (j == 2) {
-            relFact = waterVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
-            // totalliquidVolume += waterVolume /
-            // thermoSystem2.getPhase(j).getMolarVolume();
-          }
-        }
-        for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
-          thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentNumber(),
-              relFact * thermoSystem2.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
-        }
+    }
+
+    thermoSystem.initProperties();
+    SystemInterface thermoSystem2 = thermoSystem.clone();
+    thermoSystem.setEmptyFluid();
+    for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
+      String phaseType = thermoSystem.getPhase(j).getPhaseTypeName();
+      double relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
+      if (phaseType.equals("oil")) {
+        relFact = oilVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
+        // totalliquidVolume += oilVolume / thermoSystem2.getPhase(j).getMolarVolume();
+      } else if (phaseType.equals("aqueous")) {
+        relFact = waterVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
+      } else {
+        relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
       }
-    } else {
-      ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
-      ops.TPflash();
-      thermoSystem.initProperties();
-      SystemInterface thermoSystem2 = thermoSystem.clone();
-      thermoSystem.setEmptyFluid();
-      double relFact = (gasVolume + oilVolume) / (thermoSystem2.getPhase(0).getVolume("m3"));
-      for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
-        thermoSystem.addComponent(thermoSystem.getComponent(i).getComponentNumber(),
-            relFact * thermoSystem2.getComponent(i).getNumberOfMolesInPhase());
-      }
-      thermoSystem2.initProperties();
-      double relFactWater = waterVolume / (thermoSystem2.getPhase("aqueous").getVolume("m3"));
-      for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
-        thermoSystem.addComponent(thermoSystem.getComponent(i).getComponentNumber(), relFactWater
-            * thermoSystem2.getPhase("aqueous").getComponent(i).getNumberOfMolesInPhase());
+      for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
+        thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentNumber(),
+            relFact * thermoSystem2.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
       }
     }
 
-    /*
-     * if (thermoSystem.hasPhaseType("gas")) { thermoSystem.setBeta(gasVolume /
-     * thermoSystem2.getPhase(0).getMolarVolume() / (gasVolume /
-     * thermoSystem2.getPhase(0).getMolarVolume() + oilVolume /
-     * thermoSystem2.getPhase(1).getMolarVolume())); }
-     */
+
     ThermodynamicOperations ops2 = new ThermodynamicOperations(thermoSystem);
     ops2.TPflash();
     thermoSystem.initProperties();
-    // thermoSystem.display();
-    // gasOutStream = new Stream();
-    // gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));
     reservoirVolume = gasVolume + oilVolume + waterVolume;
 
-    OOIP =
-
-        getOilInPlace("Sm3");
+    OOIP = getOilInPlace("Sm3");
     OGIP = getGasInPlace("Sm3");
-    // oilOutStream = new Stream();
-    // oilOutStream.setFluid(thermoSystem.phaseToSystem("oil"));
-
     lowPressureLimit = 50.0;
   }
 
