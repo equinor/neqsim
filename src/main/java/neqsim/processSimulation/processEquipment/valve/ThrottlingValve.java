@@ -37,6 +37,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   private String pressureUnit = "bara";
   private boolean acceptNegativeDP = true;
   ValveMechanicalDesign valveMechanicalDesign;
+  boolean isCalcPressure = false;
+
+
 
   /**
    * <p>
@@ -185,6 +188,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoSystem.init(3);
     double enthalpy = thermoSystem.getEnthalpy();
+
+    if (valveCvSet && isCalcPressure) {
+      double outp = (inStream.getThermoSystem().getPressure()
+          - Math.pow(inStream.getThermoSystem().getTotalNumberOfMoles() / Cv
+              / getPercentValveOpening() * 100.0, 2.0) * thermoSystem.getDensity());
+      setOutletPressure(outp);
+    }
+
     if ((thermoSystem.getPressure(pressureUnit) - pressure) < 0) {
       if (isAcceptNegativeDP()) {
         thermoSystem.setPressure(pressure, pressureUnit);
@@ -192,6 +203,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     } else {
       thermoSystem.setPressure(pressure, pressureUnit);
     }
+
 
     if (getSpecification().equals("out stream")) {
       thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
@@ -458,5 +470,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   @Override
   public ValveMechanicalDesign getMechanicalDesign() {
     return valveMechanicalDesign;
+  }
+
+  public void setIsCalcOutPressure(boolean isSetPres) {
+    isCalcPressure = isSetPres;
   }
 }

@@ -354,14 +354,17 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
       thermoSystem.initProperties();
       SystemInterface thermoSystem2 = thermoSystem.clone();
       thermoSystem.setEmptyFluid();
-      double relFact = (gasVolume + oilVolume) / (thermoSystem2.getPhase("oil").getVolume("m3"));
+      double relFact = (gasVolume + oilVolume) / (thermoSystem2.getPhase(0).getVolume("m3"));
       for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
         thermoSystem.addComponent(thermoSystem.getComponent(i).getComponentNumber(),
             relFact * thermoSystem2.getComponent(i).getNumberOfMolesInPhase());
       }
-      double relFactWater = (waterVolume) / (thermoSystem2.getPhase("aqueous").getVolume("m3"));
-      thermoSystem.addComponent("water", relFactWater
-          * thermoSystem2.getPhase("aqueous").getComponent("water").getNumberOfMolesInPhase());
+      thermoSystem2.initProperties();
+      double relFactWater = waterVolume / (thermoSystem2.getPhase("aqueous").getVolume("m3"));
+      for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
+        thermoSystem.addComponent(thermoSystem.getComponent(i).getComponentNumber(), relFactWater
+            * thermoSystem2.getPhase("aqueous").getComponent(i).getNumberOfMolesInPhase());
+      }
     }
 
     /*
@@ -867,6 +870,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
   public double getLowPressureLimit(String unit) {
     PressureUnit conver = new PressureUnit(lowPressureLimit, "bara");
-    return  conver.getValue(unit);
+    return conver.getValue(unit);
   }
 }
