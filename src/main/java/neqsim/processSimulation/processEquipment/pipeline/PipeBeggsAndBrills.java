@@ -18,6 +18,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class PipeBeggsAndBrills extends Pipeline {
   private static final long serialVersionUID = 1001;
 
+  int iteration;
+
   // Inlet pressure of the pipeline (initialization)
   private double inletPressure = 0;
 
@@ -581,8 +583,13 @@ public class PipeBeggsAndBrills extends Pipeline {
 
     if (system.getNumberOfPhases() != 1) {
       if (regime != "Single Phase") {
-        double y = Math.log(inputVolumeFractionLiquid / (Math.pow(El, 2)));
-        S = y / (-0.0523 + 3.18 * y - 0.872 * Math.pow(y, 2.0) + 0.01853 * Math.pow(y, 4));
+        double y = inputVolumeFractionLiquid / (Math.pow(El, 2));
+        if(1 < y && y < 1.2){
+        S = Math.log(2.2*y - 1.2);
+        }
+        else {
+        S = Math.log(y) / (-0.0523 + 3.18 * Math.log(y) - 0.872 * Math.pow(Math.log(y), 2.0) + 0.01853 * Math.pow(Math.log(y), 4));
+        }
         if (system.getNumberOfPhases() == 3) {
           rhoNoSlip = mixtureLiquidDensity * inputVolumeFractionLiquid
               + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
@@ -642,12 +649,17 @@ public class PipeBeggsAndBrills extends Pipeline {
     frictionPressureLoss = calcFrictionPressureLoss();
     pressureDrop = (hydrostaticPressureDrop + frictionPressureLoss);
     convertSystemUnitToMetric();
+    iteration = iteration + 1; 
+
     return pressureDrop;
   }
 
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+
+    iteration = 0;
+
     pressureProfile = new ArrayList<>();
     temperatureProfile = new ArrayList<>();
 
