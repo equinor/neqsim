@@ -249,7 +249,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    system = inStream.getThermoSystem();
+    system = inStream.getThermoSystem().clone();
     GeometryDefinitionInterface[] pipeGemometry = new PipeData[numberOfLegs + 1];
     for (int i = 0; i < pipeDiameters.length; i++) {
       pipeGemometry[i] = new PipeData(pipeDiameters[i], pipeWallRoughness[i]);
@@ -343,5 +343,10 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   public double getEntropyProduction(String unit) {
     return outStream.getThermoSystem().getEntropy(unit)
         - inStream.getThermoSystem().getEntropy(unit);
+  }
+
+
+  public double getOutletPressure(String unit) {
+    return outStream.getPressure(unit);
   }
 }
