@@ -30,8 +30,6 @@ public class PipelineTest {
     stream_1.setPressure(pressure, "bara");
 
     stream_1.run();
-    stream_1.getFluid().prettyPrint();
-
     OnePhasePipeLine pipeline = new OnePhasePipeLine("pipeline", stream_1);
     pipeline.setNumberOfLegs(1);
     pipeline.setPipeDiameters(new double[] {diameter, diameter});
