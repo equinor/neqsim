@@ -165,6 +165,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate("kg/hr");
     } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate(adjustedVariableUnit);
+    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+      inputValue = ((Stream) adjustedEquipment).getPressure(adjustedVariableUnit);
+    } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+      inputValue = ((Stream) adjustedEquipment).getTemperature(adjustedVariableUnit);
     } else {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getNumberOfMoles();
     }
@@ -193,7 +197,6 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     double deviation = targetValue - targetValueCurrent;
 
     error = deviation;
-    logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
     if (iterations < 2) {
       if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
@@ -201,6 +204,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(
             inputValue + Math.signum(deviation) * inputValue / 100.0, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setPressure(inputValue + deviation / 10.0,
+            adjustedVariableUnit);
+      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setTemperature(inputValue + deviation / 10.0,
+            adjustedVariableUnit);
       } else {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
             "mol/sec");
@@ -210,11 +219,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       double newVal = error / derivate;
       if (inputValue - newVal > maxAdjustedValue) {
         newVal = inputValue - maxAdjustedValue;
-        error = 0;
       }
       if (inputValue - newVal < minAdjustedValue) {
         newVal = inputValue - minAdjustedValue;
-        error = 0;
       }
       if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
@@ -222,6 +229,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
             adjustedVariableUnit);
+      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setPressure(inputValue - newVal, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setTemperature(inputValue - newVal, adjustedVariableUnit);
       } else {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
             "mol/sec");
