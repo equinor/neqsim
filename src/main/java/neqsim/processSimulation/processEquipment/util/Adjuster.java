@@ -68,8 +68,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param adjustedEquipment a
-   *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
-   * @param adjstedVariable a {@link java.lang.String} object
+   *                          {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *                          object
+   * @param adjstedVariable   a {@link java.lang.String} object
    */
   public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
       String adjstedVariable, String unit) {
@@ -84,8 +85,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param adjustedEquipment a
-   *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
-   * @param adjstedVariable a {@link java.lang.String} object
+   *                          {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *                          object
+   * @param adjstedVariable   a {@link java.lang.String} object
    */
   public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
       String adjstedVariable) {
@@ -99,10 +101,11 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a
-   *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
-   * @param targetValue a double
-   * @param targetUnit a {@link java.lang.String} object
+   *                        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *                        object
+   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetValue     a double
+   * @param targetUnit      a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
       double targetValue, String targetUnit) {
@@ -118,11 +121,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a
-   *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
-   * @param targetValue a double
-   * @param targetUnit a {@link java.lang.String} object
-   * @param targetPhase a {@link java.lang.String} object
+   *                        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *                        object
+   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetValue     a double
+   * @param targetUnit      a {@link java.lang.String} object
+   * @param targetPhase     a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
       double targetValue, String targetUnit, String targetPhase) {
@@ -139,11 +143,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a
-   *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
-   * @param targetVariable a {@link java.lang.String} object
-   * @param targetValue a double
-   * @param targetUnit a {@link java.lang.String} object
-   * @param targetPhase a {@link java.lang.String} object
+   *                        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *                        object
+   * @param targetVariable  a {@link java.lang.String} object
+   * @param targetValue     a double
+   * @param targetUnit      a {@link java.lang.String} object
+   * @param targetPhase     a {@link java.lang.String} object
    * @param targetComponent a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
@@ -165,6 +170,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate("kg/hr");
     } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate(adjustedVariableUnit);
+    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+      inputValue = ((Stream) adjustedEquipment).getPressure(adjustedVariableUnit);
+    } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+      inputValue = ((Stream) adjustedEquipment).getTemperature(adjustedVariableUnit);
     } else {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getNumberOfMoles();
     }
@@ -201,6 +210,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(
             inputValue + Math.signum(deviation) * inputValue / 100.0, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+        inputValue = ((Stream) adjustedEquipment).setPressure(inputValue + deviation / 10.0, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+        inputValue = ((Stream) adjustedEquipment).setTemperature(inputValue + deviation / 10.0, adjustedVariableUnit);
       } else {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
             "mol/sec");
@@ -222,6 +235,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
             adjustedVariableUnit);
+      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setPressure(inputValue - newVal, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setTemperature(inputValue - newVal, adjustedVariableUnit);
       } else {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
             "mol/sec");
@@ -245,7 +262,8 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   /**
    * <p>
@@ -300,8 +318,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    */
   public static void main(String[] args) {
     // test code for adjuster...
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
     testSystem.addComponent("methane", 1000.00);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
@@ -311,8 +328,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     adjuster1.setAdjustedVariable(stream_1, "molarFlow");
     adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "MSm3/day", "");
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(adjuster1);
 
