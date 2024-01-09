@@ -197,7 +197,6 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     double deviation = targetValue - targetValueCurrent;
 
     error = deviation;
-    System.out.println("adjuster deviation " + deviation + " inputValue " + inputValue);
     if (iterations < 2) {
       if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
