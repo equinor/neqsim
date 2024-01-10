@@ -1,4 +1,4 @@
-name: Assert package builds, tests run and javadoc builds
+name: Run build, test and javadoc
 
 on:
   workflow_dispatch:  
