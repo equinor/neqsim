@@ -224,6 +224,32 @@ public class ProcessModule extends SimulationBaseClass {
     return null; // no unit found with the given name
   }
 
+
+
+    /**
+   * Returns the unit with the given name from the list of added unit operations and list of added
+   * modules.
+   *
+   * @param name the name of the unit to retrieve
+   * @return the unit with the given name, or {@code null} if no such unit is found
+   */
+  public Object getMeasurumentDevice(String name) {
+    for (ProcessSystem processSystem : addedUnitOperations) {
+      Object unit = processSystem.getMeasurementDevice(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+
+    for (ProcessModule processModule : addedModules) {
+      Object unit = processModule.getMeasurumentDevice(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+    return null; // no unit found with the given name
+  }
+
   /**
    * <p>
    * Create deep copy.
