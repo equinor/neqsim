@@ -126,8 +126,7 @@ public class WellFlowTest {
           .println("top side pressure " + pipeline.getOutletStream().getPressure("bara") + " bara");
       System.out
           .println("Total produced gas " + reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3");
-      System.out.println("gas velocity " + pipeline.getSuperficialVelocity());
-
+      System.out.println("gas velocity " + pipeline.getInletSuperficialVelocity());
     }
 
   }
