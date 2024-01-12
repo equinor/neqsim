@@ -90,6 +90,7 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(pressureOut, 27.5402, 1e-4);
     Assertions.assertEquals(temperatureOut, 39.3374, 1e-4);
+    Assertions.assertEquals(pipe.getOutletSuperficialVelocity(), pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
 
   }
 
@@ -139,6 +140,7 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(pressureOut, 13.735508907175728, 1e-4);
     Assertions.assertEquals(temperatureOut, 38.82331519652632, 1e-4);
+    Assertions.assertEquals(pipe.getOutletSuperficialVelocity(), pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
 
   }
 
@@ -196,15 +198,17 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getSegmentPressureDrop(10), 1.5468048987983438, 1.0);
     Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 79.80343029302054, 1.0);
     Assertions.assertEquals(pipe.getSegmentFlowRegime(10), "INTERMITTENT");
-    Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 233.1155792052253, 1.0);
+    Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 224.31571593591167, 1.0);
     Assertions.assertEquals(pipe.getSegmentLiquidSuperficialVelocity(10), 3.357338501138603, 1.0);
     Assertions.assertEquals(pipe.getSegmentGasSuperficialVelocity(10), 7.109484383317198, 1.0);
     Assertions.assertEquals(pipe.getSegmentMixtureSuperficialVelocity(10), 10.466822884455802, 1.0);
     Assertions.assertEquals(pipe.getSegmentMixtureViscosity(10), 0.14329203901478244, 1.0);
     Assertions.assertEquals(pipe.getSegmentLiquidHoldup(10), 0.42601098053163294, 1.0);
-    Assertions.assertEquals(pipe.getSegmentMixtureReynoldsNumber(10), 2127138.3343691113, 1.0);
+    Assertions.assertEquals(pipe.getSegmentMixtureReynoldsNumber(10), 2196973.270922545, 1.0);
     Assertions.assertEquals(pipe.getSegmentLength(10), 410.0, 1.0);
     Assertions.assertEquals(pipe.getSegmentElevation(10), 300, 1.0);
+    Assertions.assertEquals(pipe.getOutletSuperficialVelocity(), pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
+
   }
 
 
@@ -251,6 +255,25 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(temperatureOut, 75.0748, 1e-4);
     Assertions.assertEquals(pressureOut, 124.04439, 1e-4);
+
+
+    Assertions.assertEquals(pipe.getPressureDrop(), 25.955604559293917, 1.0);
+    Assertions.assertEquals(pipe.getSegmentPressure(10), 124.04439544070608, 1.0);
+    Assertions.assertEquals(pipe.getSegmentPressure(0), 150, 1.0);
+    Assertions.assertEquals(pipe.getSegmentPressureDrop(10), 2.9204245897598162, 1.0);
+    Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 75.07486781297496, 1.0);
+    Assertions.assertEquals(pipe.getSegmentFlowRegime(10), "Single Phase");
+    Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 73.54613545016805, 1.0);
+    Assertions.assertEquals(pipe.getSegmentLiquidSuperficialVelocity(10), 0.0, 1.0);
+    Assertions.assertEquals(pipe.getSegmentGasSuperficialVelocity(10), 33.85480591912372, 1.0);
+    Assertions.assertEquals(pipe.getSegmentMixtureSuperficialVelocity(10), 33.85480591912372, 1.0);
+    Assertions.assertEquals(pipe.getSegmentMixtureViscosity(10), 0.14329203901478244, 1.0);
+    Assertions.assertEquals(pipe.getSegmentLiquidHoldup(10), 0.0, 0.01);
+    Assertions.assertEquals(pipe.getSegmentMixtureReynoldsNumber(10), 2.014803001851525E7, 1.0);
+    Assertions.assertEquals(pipe.getSegmentLength(10), 1500.0, 1.0);
+    Assertions.assertEquals(pipe.getSegmentElevation(10), -1000, 1.0);
+    Assertions.assertEquals(pipe.getNumberOfIncrements(), 10, 0.1);
+    Assertions.assertEquals(pipe.getOutletSuperficialVelocity(), pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
 
 
     neqsim.thermo.system.SystemInterface testSystem2 =
