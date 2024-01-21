@@ -293,6 +293,13 @@ public class GlycolRigTest2 extends neqsim.NeqSimTest {
     strippingFlareGasTPsetter.setOutTemperature(stripping_gas_feed_temperature, "C");
     strippingFlareGasTPsetter.run();
 
+    StreamInterface recycleFlareGasStream = strippingFlareGasTPsetter.getOutletStream();
+
+    Recycle recycleFlareGas = new Recycle("stripping gas recirc Flare Gas");
+    recycleFlareGas.addStream(recycleFlareGasStream);
+    recycleFlareGas.setOutletStream(stripping_gas);
+    recycleFlareGas.setCompositionAccuracy(1e-6);
+
     Stream liquid_to_treatment = new Stream(sep_regen_gas.getLiquidOutStream());
     liquid_to_treatment.setName("water to treatment");
 
@@ -307,11 +314,7 @@ public class GlycolRigTest2 extends neqsim.NeqSimTest {
     recycle_gas_from_stripper.addStream(stripper.getGasOutStream());
     recycle_gas_from_stripper.setOutletStream(gas_to_reboiler);
 
-    StreamInterface recycleFlareGasStream = strippingFlareGasTPsetter.getOutletStream();
 
-    Recycle recycleFlareGas = new Recycle("stripping gas recirc Flare Gas");
-    recycleFlareGas.addStream(recycleFlareGasStream);
-    recycleFlareGas.setOutletStream(stripping_gas);
 
     neqsim.thermo.system.SystemInterface pure_teg = dry_feed_gas.getFluid().clone();
     double[] molarComp2 = new double[components_list.size()];
@@ -332,13 +335,13 @@ public class GlycolRigTest2 extends neqsim.NeqSimTest {
 
     Calculator makeup_calculator = new Calculator("TEG makeup calculator");
     makeup_calculator.addInputVariable(dehydrated_gas);
+    makeup_calculator.addInputVariable(splitterGasToFlare.getSplitStream(1));
     makeup_calculator.addInputVariable(flash_gas);
-    makeup_calculator.addInputVariable(gasToFlare);
     makeup_calculator.addInputVariable(liquid_to_treatment);
     makeup_calculator.setOutputVariable(makeup_teg);
 
     StaticMixer makeup_mixer = new StaticMixer("makeup mixer");
-    makeup_mixer.addStream(stripper.getLiquidOutStream());
+    makeup_mixer.addStream(stripper.getSolventOutStream());
     makeup_mixer.addStream(makeup_teg);
 
     Pump hotLeanTEGPump = new Pump(makeup_mixer.getOutStream());
@@ -351,12 +354,16 @@ public class GlycolRigTest2 extends neqsim.NeqSimTest {
     cooler_hot_teg3.setOutTemperature(273.15 + lean_teg_temperature);
 
     cond_heat.setEnergyStream(column.getCondenser().getEnergyStream());
+
     StreamInterface lean_TEG_to_abs = cooler_hot_teg3.getOutStream();
     lean_TEG_to_abs.setName("lean TEG to absorber");
 
     Recycle recycle_lean_teg = new Recycle("lean TEG resycle");
     recycle_lean_teg.addStream(lean_TEG_to_abs);
     recycle_lean_teg.setOutletStream(teg_feed);
+    recycle_lean_teg.setPriority(200);
+    recycle_lean_teg.setFlowAccuracy(1e-6);
+    recycle_lean_teg.setDownstreamProperty("flow rate");
 
     ProcessSystem operations = new ProcessSystem();
     operations.add(dry_feed_gas);
@@ -364,9 +371,10 @@ public class GlycolRigTest2 extends neqsim.NeqSimTest {
     operations.add(water_saturated_feed_gas);
     operations.add(feed_tp_setter_to_absorber);
     operations.add(hydrate_t_analyser2);
-    operations.add(teg_feed);
     operations.add(feed_to_absorber);
+    operations.add(teg_feed);
     operations.add(absorber);
+    operations.add(dehydrated_gas);
     operations.add(rich_teg);
     operations.add(cond_heat);
     operations.add(glycol_flash_valve);
@@ -376,48 +384,56 @@ public class GlycolRigTest2 extends neqsim.NeqSimTest {
     operations.add(flash_liquid);
     operations.add(fine_filter);
     operations.add(heat_ex);
-    operations.add(stripping_gas);
-    operations.add(gas_to_reboiler);
     operations.add(glycol_flash_valve2);
+    operations.add(gas_to_reboiler);
     operations.add(column);
-    operations.add(stripper);
-    operations.add(splitterGasToFlare);
-    operations.add(strippingFlareGasTPsetter);
-    operations.add(recycle_gas_from_stripper);
     operations.add(cooler_regen_gas);
     operations.add(sep_regen_gas);
-    operations.add(gasToFlare);
     operations.add(liquid_to_treatment);
+    operations.add(gasToFlare);
+    operations.add(splitterGasToFlare);
+    operations.add(strippingFlareGasTPsetter);
     operations.add(recycleFlareGasStream);
     operations.add(recycleFlareGas);
-    operations.add(makeup_teg);
+    operations.add(stripper);
+    operations.add(recycle_gas_from_stripper);
+    operations.add(stripping_gas);
     operations.add(makeup_calculator);
+    operations.add(makeup_teg);
     operations.add(makeup_mixer);
     operations.add(hotLeanTEGPump);
     operations.add(cooler_hot_teg3);
     operations.add(lean_TEG_to_abs);
-    operations.add(recycle_lean_teg);
-    operations.add(dehydrated_gas);
-    operations.add(water_dew_point_analyser);
-    operations.add(water_dew_point_analyser2);
-    operations.add(water_dew_point_analyser_to_absorber);
+
+    /*
+     * 
+     * 
+     * operations.add(water_dew_point_analyser); operations.add(water_dew_point_analyser2);
+     * operations.add(water_dew_point_analyser_to_absorber);
+     */
     operations.run();
 
     double waterOut = ((Stream) dehydrated_gas).getFluid().getComponent("water").getx() * 1E6;
     System.out.println("Water in the dehydrated stream after first run " + waterOut + " ppm");
-
+    System.out.println("TEG " + lean_TEG_to_abs.getFluid().getPhase(0).getWtFrac("TEG"));
+    System.out.println("makeup " + makeup_teg.getFlowRate("kg/hr"));
     operations.run();
 
     double waterOut2 = ((Stream) dehydrated_gas).getFluid().getComponent("water").getx() * 1E6;
     System.out.println("Water in the dehydrated stream after second run " + waterOut2 + " ppm");
-
+    System.out.println("TEG " + lean_TEG_to_abs.getFluid().getPhase(0).getWtFrac("TEG"));
+    System.out.println("makeup " + makeup_teg.getFlowRate("kg/hr"));
     operations.run();
-    operations.run();
-    operations.run();
-
     double waterOut3 = ((Stream) dehydrated_gas).getFluid().getComponent("water").getx() * 1E6;
-    System.out.println("Water in the dehydrated stream after 5 run " + waterOut3 + " ppm");
+    System.out.println("Water in the dehydrated stream after second run " + waterOut3 + " ppm");
+    System.out.println("TEG " + lean_TEG_to_abs.getFluid().getPhase(0).getWtFrac("TEG"));
+    System.out.println("makeup " + makeup_teg.getFlowRate("kg/hr"));
 
+    operations.run();
+    double waterOut4 = ((Stream) dehydrated_gas).getFluid().getComponent("water").getx() * 1E6;
+    System.out.println("Water in the dehydrated stream after second run " + waterOut4 + " ppm");
+    System.out.println("TEG " + lean_TEG_to_abs.getFluid().getPhase(0).getWtFrac("TEG"));
+    System.out.println("makeup " + makeup_teg.getFlowRate("kg/hr"));
     // // Check recycles
     // double reboilerStripperMethane =
     // ((Stream) gas_to_reboiler).getFluid().getComponent("methane").getx() * 1E6;
