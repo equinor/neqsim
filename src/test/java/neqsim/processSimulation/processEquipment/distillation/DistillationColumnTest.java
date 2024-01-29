@@ -216,4 +216,49 @@ public class DistillationColumnTest {
 
     assertEquals(0.0, massbalance, 0.2);
   }
+
+  /**
+   * @throws java.lang.Exception
+   */
+  @Test
+  public void methanolDistTest() throws Exception {
+    neqsim.thermo.system.SystemInterface gasToDbutanizer =
+        new neqsim.thermo.system.SystemPrEos(289.0, 11.00);
+    gasToDbutanizer.addComponent("CO2", 0.157762111894405);
+    gasToDbutanizer.addComponent("methane", 1.04994750262487e-002);
+    gasToDbutanizer.addComponent("ethane", 0.831688415579221);
+    gasToDbutanizer.addComponent("methanol", 4.99975001249937e-005);
+    gasToDbutanizer.setMixingRule(2);
+    gasToDbutanizer.setMultiPhaseCheck(true);
+    gasToDbutanizer.init(0);
+
+    StreamInterface gasToDebutanizerStream = new Stream("gasToDbutanizer", gasToDbutanizer);
+    gasToDebutanizerStream.setFlowRate(100.0, "kg/hr");
+    gasToDebutanizerStream.setTemperature(6.0, "C");
+    gasToDebutanizerStream.setPressure(35.0, "bara");
+    gasToDebutanizerStream.run();
+    gasToDebutanizerStream.getFluid().prettyPrint();
+
+    DistillationColumn column = new DistillationColumn(10, true, true);
+    column.setName("Deethanizer");
+    column.addFeedStream(gasToDebutanizerStream, 5);
+    ((Condenser) column.getCondenser()).setRefluxRatio(0.5);
+    ((Reboiler) column.getReboiler()).setRefluxRatio(0.8);
+    column.setTopPressure(35.0);
+    column.setBottomPressure(35.0);
+    column.run();
+    column.run();
+
+    column.getReboiler().getLiquidOutStream().getFluid().prettyPrint();
+    column.getCondenser().getGasOutStream().getFluid().prettyPrint();
+
+
+    gasToDebutanizerStream.getFluid().prettyPrint();
+    double massbalance = (gasToDebutanizerStream.getFlowRate("kg/hr")
+        - column.getReboiler().getLiquidOutStream().getFlowRate("kg/hr")
+        - ((Condenser) column.getCondenser()).getProductOutStream().getFlowRate("kg/hr"))
+        / gasToDebutanizerStream.getFlowRate("kg/hr") * 100;
+
+    assertEquals(0.0, massbalance, 0.2);
+  }
 }
