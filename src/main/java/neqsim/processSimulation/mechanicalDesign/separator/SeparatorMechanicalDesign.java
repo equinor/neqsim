@@ -32,6 +32,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   double volumeSafetyFactor = 1.0;
   double Fg = 1.0;
   double retentionTime = 60.0;
+  double defaultLiquidDensity = 1000.0;
+  double defaultLiquidViscosity = 0.001012;
 
   /**
    * <p>
@@ -163,11 +165,15 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     double materialsCost = 0.0;
     double gasDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0)
         .getPhysicalProperties().getDensity();
+
     double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
         .getPhysicalProperties().getDensity();
     double liqViscosity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
         .getPhysicalProperties().getViscosity();
-
+    if (((SeparatorInterface) getProcessEquipment()).getThermoSystem().getNumberOfPhases() == 1) {
+      liqDensity = defaultLiquidDensity;
+      liqViscosity = defaultLiquidViscosity;
+    }
     maxDesignVolumeFlow = volumeSafetyFactor
         * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume()
         / 1e5;
@@ -297,5 +303,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   @Override
   public void setOuterDiameter(double outerDiameter) {
     this.outerDiameter = outerDiameter;
+  }
+
+  public void setDefaultLiquidDensity(double defaultLiqDens) {
+    this.defaultLiquidDensity = defaultLiqDens;
   }
 }

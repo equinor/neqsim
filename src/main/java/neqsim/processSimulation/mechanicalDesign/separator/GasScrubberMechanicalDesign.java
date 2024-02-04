@@ -72,7 +72,9 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
         .getPhysicalProperties().getDensity();
     double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
         .getPhysicalProperties().getDensity();
-
+    if (((SeparatorInterface) getProcessEquipment()).getThermoSystem().getNumberOfPhases() == 1) {
+      liqDensity = defaultLiquidDensity;
+    }
     maxDesignVolumeFlow = volumeSafetyFactor
         * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume()
         / 1e5;
@@ -104,6 +106,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     moduleLength = innerDiameter * 2.5;
     moduleLength = tantanLength * 1.5;
     moduleHeight = innerDiameter * 2;
+    setOuterDiameter(innerDiameter+2*wallThickness);
     // }
 
     setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
