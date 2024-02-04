@@ -1,6 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.separator;
 
 import neqsim.processSimulation.mechanicalDesign.designStandards.GasScrubberDesignStandard;
+import neqsim.processSimulation.mechanicalDesign.separator.sectionType.SepDesignSection;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
@@ -88,9 +89,13 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     // calculating from standard codes
     // sepLength = innerDiameter * 2.0;
     emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;
+
+    setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
+    System.out.println("outer Diameter " + outerDiameter);
     for (SeparatorSection sep : separator.getSeparatorSections()) {
-      sep.getMechanicalDesign().calcDesign();
-      internalsWeight += sep.getMechanicalDesign().getTotalWeight();
+      SepDesignSection sect = sep.getMechanicalDesign();
+      sect.calcDesign();
+      internalsWeight += sect.getTotalWeight();
     }
 
     System.out.println("internal weight " + internalsWeight);
@@ -106,10 +111,6 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     moduleLength = innerDiameter * 2.5;
     moduleLength = tantanLength * 1.5;
     moduleHeight = innerDiameter * 2;
-    setOuterDiameter(innerDiameter+2*wallThickness);
-    // }
-
-    setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
 
     System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() + " m");
     System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");

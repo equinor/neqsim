@@ -424,7 +424,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * @return a double
    */
   public double getOuterDiameter() {
-    return 1.0; // processEquipment.getInternalDiameter();
+    return outerDiameter;
   }
 
   /**

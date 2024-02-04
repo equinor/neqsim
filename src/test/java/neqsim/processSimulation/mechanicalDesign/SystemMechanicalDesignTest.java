@@ -10,6 +10,7 @@ import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
 import neqsim.processSimulation.processEquipment.pump.Pump;
+import neqsim.processSimulation.processEquipment.separator.GasScrubber;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -167,8 +168,10 @@ public class SystemMechanicalDesignTest {
     inlets.setFlowRate(15.0, "MSm3/day");
     inlets.run();
 
-    Separator sep1 = new Separator(inlets);
+    GasScrubber sep1 = new GasScrubber(inlets);
+    sep1.addSeparatorSection("first mesh", "meshpad");
     sep1.run();
+
 
     GasScrubberMechanicalDesign sepMechDesign = new GasScrubberMechanicalDesign(sep1);
     sepMechDesign.setMaxOperationPressure(180);
@@ -176,9 +179,6 @@ public class SystemMechanicalDesignTest {
     System.out.println("separator inner diameter " + sepMechDesign.innerDiameter);
     System.out.println("separator weight vessel shell " + sepMechDesign.weigthVesselShell);
     System.out.println("separator weight structual steel " + sepMechDesign.weightStructualSteel);
-
-    sep1.addSeparatorSection("filters", "meshpad");
-    sepMechDesign.calcDesign();
 
   }
 

@@ -6,13 +6,8 @@
 
 package neqsim.processSimulation.processEquipment.separator;
 
-import java.util.ArrayList;
-import java.util.UUID;
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
-import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
@@ -24,18 +19,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class GasScrubber extends Separator {
   private static final long serialVersionUID = 1000;
-
-  SystemInterface thermoSystem;
-
-  SystemInterface gasSystem;
-  SystemInterface waterSystem;
-  SystemInterface liquidSystem;
-  SystemInterface thermoSystemCloned;
-
-  ArrayList<SeparatorSection> scrubberSection = null;
-  StreamInterface inletStream;
-  StreamInterface gasOutStream;
-  StreamInterface liquidOutStream;
 
   /**
    * <p>
@@ -94,76 +77,4 @@ public class GasScrubber extends Separator {
     return new GasScrubberMechanicalDesign(this);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Setter for the field <code>inletStream</code>.
-   * </p>
-   */
-  public void setInletStream(StreamInterface inletStream) {
-    this.inletStream = inletStream;
-
-    thermoSystem = inletStream.getThermoSystem().clone();
-    gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
-    gasOutStream = new Stream("gasOutStream", gasSystem);
-
-    thermoSystem = inletStream.getThermoSystem().clone();
-    liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-    liquidOutStream = new Stream("liquidOutStream", liquidSystem);
-  }
-
-  /**
-   * <p>
-   * addScrubberSection.
-   * </p>
-   *
-   * @param type a {@link java.lang.String} object
-   */
-  public void addScrubberSection(String type) {
-    scrubberSection.add(new SeparatorSection("section" + scrubberSection.size() + 1, type, this));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public StreamInterface getLiquidOutStream() {
-    return liquidOutStream;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public StreamInterface getGasOutStream() {
-    return gasOutStream;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public StreamInterface getGas() {
-    return getGasOutStream();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public StreamInterface getLiquid() {
-    return getLiquidOutStream();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void run(UUID id) {
-    thermoSystem = inletStream.getThermoSystem().clone();
-    gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
-    gasSystem.setNumberOfPhases(1);
-    gasOutStream.setThermoSystem(gasSystem);
-
-    thermoSystem = inletStream.getThermoSystem().clone();
-    liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-    liquidSystem.setNumberOfPhases(1);
-    liquidOutStream.setThermoSystem(liquidSystem);
-    setCalculationIdentifier(id);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void displayResult() {}
 }

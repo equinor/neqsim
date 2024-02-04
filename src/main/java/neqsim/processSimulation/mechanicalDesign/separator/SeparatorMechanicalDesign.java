@@ -25,9 +25,6 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  */
 public class SeparatorMechanicalDesign extends MechanicalDesign {
   private static final long serialVersionUID = 1000;
-
-  double wallThickness = 0.0;
-  private double outerDiameter = 0.0;
   double gasLoadFactor = 1.0;
   double volumeSafetyFactor = 1.0;
   double Fg = 1.0;
@@ -217,6 +214,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // sepLength = innerDiameter * 2.0;
     emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;
 
+    setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
     for (SeparatorSection sep : separator.getSeparatorSections()) {
       sep.getMechanicalDesign().calcDesign();
       internalsWeight += sep.getMechanicalDesign().getTotalWeight();
@@ -236,7 +234,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     moduleHeight = innerDiameter * 2 + 1.0;
     // }
 
-    setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
 
     System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() + " m");
     System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
