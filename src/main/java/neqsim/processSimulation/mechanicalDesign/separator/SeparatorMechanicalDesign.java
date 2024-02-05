@@ -188,12 +188,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     double sepratorLength = tantanLength + innerDiameter;
 
     if (sepratorLength / innerDiameter > 6 || sepratorLength / innerDiameter < 3) {
-      System.out
-          .println("Fg need to be modified ... L/D separator= " + sepratorLength / innerDiameter);
+      // System.out
+      // .println("Fg need to be modified ... L/D separator= " + sepratorLength / innerDiameter);
       tantanLength = innerDiameter * 5.0;
       sepratorLength = tantanLength + innerDiameter;
     }
-    System.out.println("inner Diameter " + innerDiameter);
+    // System.out.println("inner Diameter " + innerDiameter);
 
     // alternative design
     double bubbleDiameter = 250.0e-6;
@@ -219,7 +219,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       internalsWeight += sep.getMechanicalDesign().getTotalWeight();
     }
 
-    System.out.println("internal weight " + internalsWeight);
+    // System.out.println("internal weight " + internalsWeight);
 
     externalNozzelsWeight = 0.0; // need to be implemented
     double Wv = emptyVesselWeight + internalsWeight + externalNozzelsWeight;
@@ -233,14 +233,14 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     moduleHeight = innerDiameter * 2 + 1.0;
     // }
 
-
-    System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() + " m");
-    System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
-    System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-    System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength + " height "
-        + moduleHeight + " meter.");
-    System.out.println("mechanical price: " + materialsCost + " kNOK");
-
+    /*
+     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
+     * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
+     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
+     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
+     * materialsCost + " kNOK");
+     */
     setWeigthVesselShell(emptyVesselWeight);
 
     // tantanLength = innerDiameter * 5;

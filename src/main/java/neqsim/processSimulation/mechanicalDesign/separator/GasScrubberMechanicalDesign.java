@@ -84,7 +84,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     innerDiameter = Math.sqrt(4.0 * getMaxDesignVolumeFlow()
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
     tantanLength = innerDiameter * 5.0;
-    System.out.println("inner Diameter " + innerDiameter);
+    // System.out.println("inner Diameter " + innerDiameter);
 
     // calculating from standard codes
     // sepLength = innerDiameter * 2.0;
@@ -98,7 +98,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
       internalsWeight += sect.getTotalWeight();
     }
 
-    System.out.println("internal weight " + internalsWeight);
+    // System.out.println("internal weight " + internalsWeight);
 
     externalNozzelsWeight = 0.0;
     double Wv = emptyVesselWeight + internalsWeight + externalNozzelsWeight;
@@ -111,14 +111,14 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     moduleLength = innerDiameter * 2.5;
     moduleLength = tantanLength * 1.5;
     moduleHeight = innerDiameter * 2;
-
-    System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() + " m");
-    System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
-    System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-    System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength + " height "
-        + moduleHeight + " meter.");
-    System.out.println("mechanical price: " + materialsCost + " kNOK");
-
+    /*
+     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
+     * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
+     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
+     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
+     * materialsCost + " kNOK");
+     */
     setWeigthVesselShell(emptyVesselWeight);
 
     tantanLength = innerDiameter * 5;
