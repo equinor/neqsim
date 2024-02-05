@@ -373,7 +373,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    * </p>
    */
   public void checkReferenceCondition() {
-    Double[] validvalues = {0.0, 15.0, 15.55, 20.0};
+    Double[] validvalues = {0.0, 15.0, 15.55, 20.0, 25.0};
 
     if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(energyRefT)::equals)) {
       energyRefT = 25.0;
