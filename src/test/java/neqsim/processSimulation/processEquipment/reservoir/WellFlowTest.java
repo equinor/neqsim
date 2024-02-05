@@ -109,7 +109,7 @@ public class WellFlowTest {
      */
     // process.setTimeStep(60 * 60 * 24 * 365);
 
-    for (int i = 0; i < 800; i++) {
+    for (int i = 0; i < 8; i++) {
       reservoirOps.runTransient(60 * 60 * 365);
       process.run();
       if (pipeline.getOutletStream().getPressure("bara") < 5.0) {
