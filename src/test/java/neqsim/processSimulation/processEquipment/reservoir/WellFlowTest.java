@@ -115,18 +115,18 @@ public class WellFlowTest {
       if (pipeline.getOutletStream().getPressure("bara") < 5.0) {
         continue;
       }
-
-      System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
-      System.out.println("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
-      System.out
-          .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") + " bara");
-
-      System.out.println("xmas pressure " + pipe.getOutletStream().getPressure("bara") + " bara");
-      System.out
-          .println("top side pressure " + pipeline.getOutletStream().getPressure("bara") + " bara");
-      System.out
-          .println("Total produced gas " + reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3");
-      System.out.println("gas velocity " + pipeline.getInletSuperficialVelocity());
+      /*
+       * System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
+       * System.out.println("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
+       * System.out .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") +
+       * " bara");
+       * 
+       * System.out.println("xmas pressure " + pipe.getOutletStream().getPressure("bara") +
+       * " bara"); System.out .println("top side pressure " +
+       * pipeline.getOutletStream().getPressure("bara") + " bara"); System.out
+       * .println("Total produced gas " + reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3");
+       * System.out.println("gas velocity " + pipeline.getInletSuperficialVelocity());
+       */
     }
 
   }
