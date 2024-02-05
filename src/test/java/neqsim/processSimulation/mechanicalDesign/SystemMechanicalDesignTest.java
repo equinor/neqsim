@@ -169,7 +169,6 @@ public class SystemMechanicalDesignTest {
     inlets.run();
 
     GasScrubber sep1 = new GasScrubber(inlets);
-    sep1.addSeparatorSection("first mesh", "meshpad");
     sep1.run();
 
 
@@ -179,6 +178,8 @@ public class SystemMechanicalDesignTest {
     System.out.println("separator inner diameter " + sepMechDesign.innerDiameter);
     System.out.println("separator weight vessel shell " + sepMechDesign.weigthVesselShell);
     System.out.println("separator weight structual steel " + sepMechDesign.weightStructualSteel);
+    sep1.addSeparatorSection("first mesh", "meshpad");
+    sepMechDesign.calcDesign();
 
   }
 

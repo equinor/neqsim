@@ -29,8 +29,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   double volumeSafetyFactor = 1.0;
   double Fg = 1.0;
   double retentionTime = 60.0;
-  double defaultLiquidDensity = 1000.0;
-  double defaultLiquidViscosity = 0.001012;
 
   /**
    * <p>
@@ -168,8 +166,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     double liqViscosity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
         .getPhysicalProperties().getViscosity();
     if (((SeparatorInterface) getProcessEquipment()).getThermoSystem().getNumberOfPhases() == 1) {
-      liqDensity = defaultLiquidDensity;
-      liqViscosity = defaultLiquidViscosity;
+      liqDensity = getDefaultLiquidDensity();
+      liqViscosity = getDefaultLiquidViscosity();
     }
     maxDesignVolumeFlow = volumeSafetyFactor
         * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume()
@@ -216,6 +214,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
     for (SeparatorSection sep : separator.getSeparatorSections()) {
+      sep.setOuterDiameter(getOuterDiameter());
       sep.getMechanicalDesign().calcDesign();
       internalsWeight += sep.getMechanicalDesign().getTotalWeight();
     }
@@ -276,33 +275,5 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
     ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
     // this method will be implemented to set calculated design...
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getOuterDiameter() {
-    return outerDiameter;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getWallThickness() {
-    return wallThickness;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setWallThickness(double wallThickness) {
-    this.wallThickness = wallThickness;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setOuterDiameter(double outerDiameter) {
-    this.outerDiameter = outerDiameter;
-  }
-
-  public void setDefaultLiquidDensity(double defaultLiqDens) {
-    this.defaultLiquidDensity = defaultLiqDens;
   }
 }

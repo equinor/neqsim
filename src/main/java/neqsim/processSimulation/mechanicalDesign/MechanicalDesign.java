@@ -119,6 +119,8 @@ public class MechanicalDesign implements java.io.Serializable {
   public double moduleLength = 0.0;
   public Hashtable<String, DesignStandard> designStandard = new Hashtable<String, DesignStandard>();
   public UnitCostEstimateBaseClass costEstimate = null;
+  double defaultLiquidDensity = 1000.0;
+  double defaultLiquidViscosity = 0.001012;
 
   /**
    * <p>
@@ -1081,6 +1083,22 @@ public class MechanicalDesign implements java.io.Serializable {
     return costEstimate;
   }
 
+  public void setDefaultLiquidDensity(double defaultLiqDens) {
+    this.defaultLiquidDensity = defaultLiqDens;
+  }
+
+  public double getDefaultLiquidDensity() {
+    return defaultLiquidDensity;
+  }
+
+  public void setDefaultLiquidViscosity(double defaultLiqVisc) {
+    this.defaultLiquidViscosity = defaultLiqVisc;
+  }
+
+  public double getDefaultLiquidViscosity() {
+    return defaultLiquidViscosity;
+  }
+
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
@@ -1170,4 +1188,6 @@ public class MechanicalDesign implements java.io.Serializable {
         && Double.doubleToLongBits(weigthVesselShell) == Double
             .doubleToLongBits(other.weigthVesselShell);
   }
+
+
 }
