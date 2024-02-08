@@ -442,9 +442,11 @@ public class PipeBeggsAndBrills extends Pipeline {
         regime = "TRANSITION";
       } else if (inputVolumeFractionLiquid < 0.1 || inputVolumeFractionLiquid > 0.9) {
         regime = "INTERMITTENT";
-
+      } else if (mixtureFroudeNumber > 110) {
+        regime = "INTERMITTENT";
       } else {
-        logger.debug("Flow regime is not found");
+        throw new RuntimeException(new neqsim.util.exception.InvalidOutputException(
+            "PipeBeggsAndBrills", "run: calcFlowRegime", "FlowRegime", "Flow regime is not found"));
       }
     }
 

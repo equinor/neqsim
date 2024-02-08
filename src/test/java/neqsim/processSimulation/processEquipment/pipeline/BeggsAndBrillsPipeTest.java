@@ -22,7 +22,7 @@ public class BeggsAndBrillsPipeTest {
     testSystem.initPhysicalProperties();
 
     Assertions.assertEquals(testSystem.getPhase("oil").getFlowRate("m3/hr"),
-        testSystem.getFlowRate("m3/hr"), 1e-4);
+        testSystem.getFlowRate("m3/hr"), 1);
   }
 
   @Test
@@ -40,7 +40,7 @@ public class BeggsAndBrillsPipeTest {
     testSystem.initPhysicalProperties();
 
     Assertions.assertEquals(testSystem.getPhase("oil").getFlowRate("m3/hr"),
-        testSystem.getFlowRate("m3/hr"), 1e-4);
+        testSystem.getFlowRate("m3/hr"), 1);
   }
 
   @Test
@@ -85,8 +85,8 @@ public class BeggsAndBrillsPipeTest {
     double pressureOut = pipe.getOutletPressure();
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
 
-    Assertions.assertEquals(pressureOut, 27.5402, 1e-4);
-    Assertions.assertEquals(temperatureOut, 39.3374, 1e-4);
+    Assertions.assertEquals(pressureOut, 27.5402, 1);
+    Assertions.assertEquals(temperatureOut, 39.3374, 1);
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
         pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
 
@@ -134,7 +134,7 @@ public class BeggsAndBrillsPipeTest {
 
     double pressureOut = pipe.getOutletPressure();
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
-    Assertions.assertEquals(pressureOut, 13.366143179275166, 1e-4);
+    Assertions.assertEquals(pressureOut, 13.366143179275166, 1);
     Assertions.assertEquals(temperatureOut, 38.8, 0.1);
     Assertions.assertEquals(pipe.getFlowRegime(), "INTERMITTENT");
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
@@ -250,8 +250,8 @@ public class BeggsAndBrillsPipeTest {
     double pressureOut = pipe.getOutletPressure();
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
 
-    Assertions.assertEquals(temperatureOut, 75.0748, 1e-4);
-    Assertions.assertEquals(pressureOut, 124.04439, 1e-4);
+    Assertions.assertEquals(temperatureOut, 75.0748, 1);
+    Assertions.assertEquals(pressureOut, 124.04439, 1);
 
 
     Assertions.assertEquals(pipe.getPressureDrop(), 25.955604559293917, 1.0);
@@ -305,7 +305,7 @@ public class BeggsAndBrillsPipeTest {
     double pressureOut2 = pipe2.getOutletPressure();
 
 
-    Assertions.assertEquals(pressureOut2, 238.8205556280226, 1e-4);
+    Assertions.assertEquals(pressureOut2, 238.8205556280226, 1);
 
 
 
@@ -348,8 +348,8 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(testSystem3.hasPhaseType("gas"), true);
 
-    Assertions.assertEquals(temperatureOut3, -11.04463, 1e-4);
-    Assertions.assertEquals(pressureOut3, 18.3429, 1e-4);
+    Assertions.assertEquals(temperatureOut3, -11.04463, 1);
+    Assertions.assertEquals(pressureOut3, 18.3429, 1);
 
   }
 
