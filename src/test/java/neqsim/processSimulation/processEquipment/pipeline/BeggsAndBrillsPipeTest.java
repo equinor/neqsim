@@ -144,8 +144,6 @@ public class BeggsAndBrillsPipeTest {
 
   }
 
-
-
   @Test
   public void testPipeLineBeggsAndBrills3() {
 

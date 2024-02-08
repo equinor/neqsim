@@ -725,6 +725,8 @@ public class PipeBeggsAndBrills extends Pipeline {
       system.setPressure(pressureOut);
       if (!runIsothermal) {
         testOps.PHflash(enthalpyInlet);
+      } else {
+        testOps.TPflash();
       }
       system.initProperties();
       temperatureProfile.add(system.getTemperature());
