@@ -39,7 +39,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   private double pipeWallRoughness = 1e-5;
 
   // Flag to run isothermal calculations
-  private boolean runIsothermal = false;
+  private boolean runIsothermal = true;
 
   // Flow pattern of the fluid in the pipe
   private String regime;

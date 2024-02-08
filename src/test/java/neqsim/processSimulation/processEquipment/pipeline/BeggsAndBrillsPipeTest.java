@@ -75,6 +75,7 @@ public class BeggsAndBrillsPipeTest {
     pipe.setAngle(0);
     pipe.setDiameter(0.125);
     pipe.setNumberOfIncrements(20);
+    pipe.setRunIsothermal(false);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -125,6 +126,7 @@ public class BeggsAndBrillsPipeTest {
     pipe.setAngle(90);
     pipe.setDiameter(0.125);
     pipe.setNumberOfIncrements(50);
+    pipe.setRunIsothermal(false);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -178,6 +180,7 @@ public class BeggsAndBrillsPipeTest {
     pipe.setElevation(300);
     pipe.setDiameter(0.125);
     pipe.setNumberOfIncrements(10);
+    pipe.setRunIsothermal(false);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -207,6 +210,10 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
         pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
 
+    pipe.setRunIsothermal(true);
+    pipe.run();
+    Assertions.assertEquals(pipe.getSegmentPressure(10), 34.4716898025371, 1.0);
+    Assertions.assertEquals(pipe.getOutletStream().getTemperature() - 273.15, 80, 1.0);
   }
 
 
@@ -239,6 +246,7 @@ public class BeggsAndBrillsPipeTest {
     pipe.setElevation(-1000);
     pipe.setDiameter(0.125);
     pipe.setNumberOfIncrements(10);
+    pipe.setRunIsothermal(false);
 
     // test with only water phase
     neqsim.processSimulation.processSystem.ProcessSystem operations =
@@ -295,6 +303,7 @@ public class BeggsAndBrillsPipeTest {
     pipe2.setElevation(-1000);
     pipe2.setDiameter(0.125);
     pipe2.setNumberOfIncrements(10);
+    pipe2.setRunIsothermal(false);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations2 =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -336,6 +345,7 @@ public class BeggsAndBrillsPipeTest {
     pipe3.setElevation(1500);
     pipe3.setDiameter(0.125);
     pipe3.setNumberOfIncrements(10);
+    pipe3.setRunIsothermal(false);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations3 =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -350,6 +360,7 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(temperatureOut3, -11.04463, 1);
     Assertions.assertEquals(pressureOut3, 18.3429, 1);
+
 
   }
 
