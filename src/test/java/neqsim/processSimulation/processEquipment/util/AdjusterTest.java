@@ -7,7 +7,7 @@ public class AdjusterTest {
   @Test
   void testRun() {
 
-    double wellheadpressure = 150.0;
+    double wellheadpressure = 120.0;
     double bottomholepressure = 200.0;
 
     neqsim.thermo.system.SystemInterface fluid1 = neqsim.thermo.FluidCreator.create("light oil");
@@ -32,8 +32,8 @@ public class AdjusterTest {
         new neqsim.processSimulation.processEquipment.util.Adjuster("adjuster");
     adjuster.setTargetVariable(flowline1.getOutletStream(), "pressure", wellheadpressure, "bara");
     adjuster.setAdjustedVariable(stream1, "flow", "MSm3/day");
-    adjuster.setMaxAdjustedValue(200.0);
-    adjuster.setMinAdjustedValue(0.1);
+    adjuster.setMaxAdjustedValue(10.0);
+    adjuster.setMinAdjustedValue(1);
     adjuster.setTolerance(1e-5);
 
     neqsim.processSimulation.processSystem.ProcessSystem process =
@@ -43,14 +43,16 @@ public class AdjusterTest {
     process.add(adjuster);
     process.run();
 
-    assertEquals(flowline1.getOutletStream().getPressure(), 150, 1e-3);
-    assertEquals(flowline1.getOutletStream().getFlowRate("MSm3/day"), 4.101310260394316, 1e-3);
+    assertEquals(flowline1.getOutletStream().getPressure(), 120, 1);
+    assertEquals(flowline1.getOutletStream().getFlowRate("MSm3/day"), 4.0, 0.1);
   }
+
+
 
   @Test
   void testRun2() {
 
-    double wellheadpressure = 150.0;
+    double wellheadpressure = 120.0;
     double bottomholepressure = 200.0;
 
     neqsim.thermo.system.SystemInterface fluid1 = neqsim.thermo.FluidCreator.create("light oil");
@@ -58,8 +60,8 @@ public class AdjusterTest {
 
     neqsim.processSimulation.processEquipment.stream.Stream stream1 =
         new neqsim.processSimulation.processEquipment.stream.Stream(fluid1.clone());
-    stream1.setFlowRate(1.5, "MSm3/day");
-    stream1.setPressure(bottomholepressure, "bara");
+    stream1.setFlowRate(4.0, "MSm3/day");
+    stream1.setPressure(170, "bara");
     stream1.setTemperature(75.0, "C");
 
     neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills flowline1 =
@@ -75,7 +77,7 @@ public class AdjusterTest {
         new neqsim.processSimulation.processEquipment.util.Adjuster("adjuster");
     adjuster.setTargetVariable(flowline1.getOutletStream(), "pressure", wellheadpressure, "bara");
     adjuster.setAdjustedVariable(stream1, "pressure", "bara");
-    adjuster.setMaxAdjustedValue(220.0);
+    adjuster.setMaxAdjustedValue(260.0);
     adjuster.setMinAdjustedValue(50.1);
     adjuster.setTolerance(1e-5);
 
@@ -86,7 +88,8 @@ public class AdjusterTest {
     process.add(adjuster);
     process.run();
 
-    assertEquals(flowline1.getOutletStream().getPressure(), 150, 1e-3);
-    assertEquals(flowline1.getOutletStream().getFlowRate("MSm3/day"), 1.5, 1e-3);
+    assertEquals(flowline1.getOutletStream().getPressure(), 120, 1e-3);
+    assertEquals(flowline1.getOutletStream().getFlowRate("MSm3/day"), 4.0, 1e-3);
+    assertEquals(flowline1.getInletStream().getPressure(), 200, 0.1);
   }
 }

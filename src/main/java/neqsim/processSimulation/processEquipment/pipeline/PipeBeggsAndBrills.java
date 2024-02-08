@@ -21,7 +21,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   int iteration;
 
   // Inlet pressure of the pipeline (initialization)
-  private double inletPressure = 0;
+  private double inletPressure = Double.NaN;
 
   private double totalPressureDrop = 0;
 
@@ -33,16 +33,16 @@ public class PipeBeggsAndBrills extends Pipeline {
   String maxflowunit = "kg/hr";
 
   // Inside diameter of the pipe [m]
-  private double insideDiameter = 0.1;
+  private double insideDiameter = Double.NaN;
 
   // Roughness of the pipe wall [m]
   private double pipeWallRoughness = 1e-5;
 
   // Flag to run isothermal calculations
-  private boolean runIsothermal = false;
+  private boolean runIsothermal = true;
 
   // Flow pattern of the fluid in the pipe
-  private String regime = "unknown";
+  private String regime;
 
   // Volume fraction of liquid in the input mixture
   private double inputVolumeFractionLiquid;
@@ -129,7 +129,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   private List<Double> mixtureViscosityProfile;
   private List<Double> mixtureDensityProfile;
-  
+
   private List<Double> liquidHoldupProfile;
   private List<Double> mixtureReynoldsNumber;
 
@@ -339,11 +339,11 @@ public class PipeBeggsAndBrills extends Pipeline {
           new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "calcMissingValue",
               "elevation", "- cannot be higher than length of the pipe" + length));
     }
-
-    if (Double.isNaN(totalElevation) || Double.isNaN(totalLength) || Double.isNaN(angle)) {
+    if (Double.isNaN(totalElevation) || Double.isNaN(totalLength) || Double.isNaN(angle)
+        || Double.isNaN(insideDiameter)) {
       throw new RuntimeException(
           new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "calcMissingValue",
-              "elevation or length or angle", "cannot be null"));
+              "elevation or length or angle or inlet diameter", "cannot be null"));
     }
 
   }
@@ -397,6 +397,7 @@ public class PipeBeggsAndBrills extends Pipeline {
       } else {
         supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
       }
+
       supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
       supMixVel = supLiquidVel + supGasVel;
 
@@ -440,9 +441,12 @@ public class PipeBeggsAndBrills extends Pipeline {
       } else if (mixtureFroudeNumber > L2 && mixtureFroudeNumber < L3) {
         regime = "TRANSITION";
       } else if (inputVolumeFractionLiquid < 0.1 || inputVolumeFractionLiquid > 0.9) {
-        regime = "Single Phase";
+        regime = "INTERMITTENT";
+      } else if (mixtureFroudeNumber > 110) {
+        regime = "INTERMITTENT";
       } else {
-        logger.debug("Flow regime is not found");
+        throw new RuntimeException(new neqsim.util.exception.InvalidOutputException(
+            "PipeBeggsAndBrills", "run: calcFlowRegime", "FlowRegime", "Flow regime is not found"));
       }
     }
 
@@ -646,13 +650,13 @@ public class PipeBeggsAndBrills extends Pipeline {
    */
   public double calcPressureDrop() {
     convertSystemUnitToImperial();
+    regime = "unknown";
     calcFlowRegime();
     hydrostaticPressureDrop = calcHydrostaticPressureDifference();
     frictionPressureLoss = calcFrictionPressureLoss();
     pressureDrop = (hydrostaticPressureDrop + frictionPressureLoss);
     convertSystemUnitToMetric();
     iteration = iteration + 1;
-
     return pressureDrop;
   }
 
@@ -702,7 +706,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     for (int i = 1; i <= numberOfIncrements; i++) {
       lengthProfile.add(cumulativeLength);
       elevationProfile.add(cumulativeElevation);
-      incrementsProfile.add(i-1); 
+      incrementsProfile.add(i - 1);
 
       cumulativeLength += length;
       cumulativeElevation += elevation;
@@ -721,6 +725,8 @@ public class PipeBeggsAndBrills extends Pipeline {
       system.setPressure(pressureOut);
       if (!runIsothermal) {
         testOps.PHflash(enthalpyInlet);
+      } else {
+        testOps.TPflash();
       }
       system.initProperties();
       temperatureProfile.add(system.getTemperature());
@@ -794,7 +800,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   public int getNumberOfIncrements() {
     return numberOfIncrements;
   }
-
 
 
 
