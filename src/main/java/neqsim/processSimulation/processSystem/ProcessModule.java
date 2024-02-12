@@ -3,11 +3,9 @@ package neqsim.processSimulation.processSystem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
@@ -233,7 +231,7 @@ public class ProcessModule extends SimulationBaseClass {
    * @param name the name of the unit to retrieve
    * @return the unit with the given name, or {@code null} if no such unit is found
    */
-  public Object getMeasurumentDevice(String name) {
+  public Object getMeasurementDevice(String name) {
     for (ProcessSystem processSystem : addedUnitOperations) {
       Object unit = processSystem.getMeasurementDevice(name);
       if (unit != null) {
@@ -242,7 +240,7 @@ public class ProcessModule extends SimulationBaseClass {
     }
 
     for (ProcessModule processModule : addedModules) {
-      Object unit = processModule.getMeasurumentDevice(name);
+      Object unit = processModule.getMeasurementDevice(name);
       if (unit != null) {
         return unit;
       }
