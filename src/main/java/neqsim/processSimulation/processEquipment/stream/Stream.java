@@ -192,7 +192,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (stream != null) {
       clonedSystem.setStream((Stream) stream.clone());
     }
-    clonedSystem.thermoSystem = thermoSystem.clone();
+    if (thermoSystem != null) {
+      clonedSystem.thermoSystem = thermoSystem.clone();
+    }
+
+
     return clonedSystem;
   }
 
