@@ -345,7 +345,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 
-    if (thermoSystem.getNumberOfComponents() == 1 && getSpecification().equals("TP")) {
+    if (stream != null && thermoSystem.getNumberOfComponents() == 1
+        && getSpecification().equals("TP")) {
       setSpecification("PH");
     }
     if (getSpecification().equals("TP")) {
