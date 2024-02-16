@@ -234,8 +234,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     } else {
       this.thermoSystem = thermoSystem;
     }
-    // TODO: when is stream not null?
-
   }
 
   /** {@inheritDoc} */
@@ -292,7 +290,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public void setFlowRate(double flowrate, String unit) {
-    this.getFluid().setTotalFlowRate(flowrate, unit);
+    getFluid().setTotalFlowRate(flowrate, unit);
   }
 
   /** {@inheritDoc} */
@@ -311,12 +309,15 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   @Override
   public void runTPflash() {
     if (stream != null) {
-      thermoSystem = this.stream.getThermoSystem().clone();
+      thermoSystem = stream.getThermoSystem().clone();
     }
 
-    ThermodynamicOperations thermoOps = new ThermodynamicOperations(getFluid());
+    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoOps.TPflash();
-    getFluid().initProperties();
+    thermoSystem.initProperties();
+    if (stream != null) {
+      stream.setFluid(thermoSystem);
+    }
   }
 
   /** {@inheritDoc} */
