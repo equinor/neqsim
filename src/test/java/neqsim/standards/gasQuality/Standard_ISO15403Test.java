@@ -55,4 +55,13 @@ public class Standard_ISO15403Test {
   void testIsOnSpec() {
     assertEquals(true, ISO15403.isOnSpec());
   }
+
+  @Test
+  void testDisplay() {
+    Standard_ISO15403 s = new Standard_ISO15403(null);
+    s.display("test");
+
+    s = new Standard_ISO15403(testSystem);
+    s.display("test");
+  }
 }

@@ -50,4 +50,15 @@ class BaseContractTest extends neqsim.NeqSimTest {
     assertEquals(2.18817727816606, Double.parseDouble(standard.getResultTable()[1][1]), 1e-6);
     // standard.prettyPrint();
   }
+
+  @Test
+  void testDisplay() {
+    standard.display();
+
+    BaseContract bc = new BaseContract();
+    bc.display();
+
+    bc = new BaseContract(null);
+    bc.display();
+  }
 }

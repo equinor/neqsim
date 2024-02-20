@@ -330,6 +330,12 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     }
   }
 
+  @Test
+  void testDisplay() {
+    ThermodynamicOperations ops = new ThermodynamicOperations();
+    ops.display();
+  }
+
   private List<List<Double>> createDummyRequest(double[] fractions, int len) {
     List<List<Double>> onlineFractions = new ArrayList<List<Double>>();
 

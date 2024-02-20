@@ -166,4 +166,13 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
      * 150.0));
      */
   }
+
+  @Test
+  void testDisplay() {
+    Standard_ISO6976 s = new Standard_ISO6976(null);
+    s.display("test");
+
+    s = new Standard_ISO6976(testSystem);
+    s.display("test");
+  }
 }

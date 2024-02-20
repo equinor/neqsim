@@ -90,4 +90,12 @@ class SystemThermoTest extends neqsim.NeqSimTest {
         1e-4);
     assertEquals(0.0, fluid.getPressure("barg"), 1e-4);
   }
+
+  @Test
+  void testDisplay() {
+    testSystem.display();
+
+    SystemEos s = new SystemPrEos();
+    s.display();
+  }
 }
