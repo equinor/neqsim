@@ -112,13 +112,20 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   @Override
   public String[][] createTable(String name) {
     thermoSystem.setNumberOfPhases(1);
-
     thermoSystem.createTable(name);
 
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
-    String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
+
+    int rows = 0;
+    if (thermoSystem == null) {
+      String[][] table = new String[0][6];
+      return table;
+    }
+
+    rows = thermoSystem.getPhases()[0].getNumberOfComponents() + 30;
+    String[][] table = new String[rows][6];
     // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     table[0][0] = ""; // getPhases()[0].getType(); //"";
 

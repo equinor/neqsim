@@ -127,15 +127,10 @@ public class StratifiedFlowNodeTest {
     // "flux methane " + test3.getFluidBoundary().getInterphaseMolarFlux(0) + " [mol/m2*sec]");
     // System.out.println(
     // "flux nC10 " + test3.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
-
-
   }
-
-
 
   @Test
   void testInit3() {
-
     SystemInterface[] gasPhases = new SystemInterface[10];
     SystemInterface[] oilPhases = new SystemInterface[10];
     StratifiedFlowNode[] nodes = new StratifiedFlowNode[10];
@@ -165,7 +160,6 @@ public class StratifiedFlowNodeTest {
     }
 
     for (int time = 0; time < 100; time++) {
-
       for (int i = 0; i < 9; i++) {
         fluids[i] = new SystemSrkEos(278.3, 100.01325);
         fluids[i].addFluid(gasPhases[i], 0);
@@ -212,7 +206,6 @@ public class StratifiedFlowNodeTest {
     }
 
     for (int time = 0; time < 20; time++) {
-
       for (int i = 0; i < 9; i++) {
         fluids[i] = new SystemSrkEos(278.3, 100.01325);
         fluids[i].addFluid(gasPhases[i], 0);
@@ -256,7 +249,11 @@ public class StratifiedFlowNodeTest {
       // + " liquid "
       // + nodes[0].getBulkSystem().getPhase(1).getComponent(1).getNumberOfMolesInPhase());
     }
-
   }
 
+  @Test
+  void testDisplay() {
+    StratifiedFlowNode node = new StratifiedFlowNode();
+    node.display();
+  }
 }
