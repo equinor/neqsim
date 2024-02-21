@@ -6,6 +6,7 @@
 
 package neqsim.thermo.phase;
 
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGEUniquac;
 
@@ -33,7 +34,7 @@ public class PhaseGEUniquac extends PhaseGE {
    */
   public PhaseGEUniquac() {
     super();
-    componentArray = new ComponentGEInterface[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentGEInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**

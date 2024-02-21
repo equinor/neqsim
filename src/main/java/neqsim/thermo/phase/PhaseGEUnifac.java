@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
@@ -32,7 +33,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
    */
   public PhaseGEUnifac() {
     super();
-    componentArray = new ComponentGEUnifac[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentGEUnifac[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
