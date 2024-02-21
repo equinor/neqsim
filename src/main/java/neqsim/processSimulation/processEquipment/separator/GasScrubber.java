@@ -76,5 +76,4 @@ public class GasScrubber extends Separator {
   public GasScrubberMechanicalDesign getMechanicalDesign() {
     return new GasScrubberMechanicalDesign(this);
   }
-
 }

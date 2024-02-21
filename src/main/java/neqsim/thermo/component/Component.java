@@ -150,7 +150,6 @@ public abstract class Component implements ComponentInterface {
   private double[] CpLiquid = new double[5];
   private double heatOfFusion = 0.0;
 
-
   double triplePointDensity = 10.0;
   double triplePointPressure = 0.0;
   private double triplePointTemperature = 1000.0;

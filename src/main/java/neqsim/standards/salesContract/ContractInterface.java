@@ -135,5 +135,4 @@ public interface ContractInterface {
   public default void prettyPrint() {
     neqsim.thermo.util.readwrite.TablePrinter.printTable(getResultTable());
   }
-
 }

@@ -90,9 +90,7 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(temperatureOut, 39.3374, 1);
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
         pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
-
   }
-
 
   @Test
   public void testPipeLineBeggsAndBrills2() {
@@ -214,8 +212,6 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getOutletStream().getTemperature() - 273.15, 80, 1.0);
   }
 
-
-
   @Test
   public void testPipeLineBeggsAndBrills4() {
     // One phase
@@ -259,7 +255,6 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(temperatureOut, 75.0748, 1);
     Assertions.assertEquals(pressureOut, 124.04439, 1);
 
-
     Assertions.assertEquals(pipe.getPressureDrop(), 25.955604559293917, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressure(10), 124.04439544070608, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressure(0), 150, 1.0);
@@ -278,7 +273,6 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getNumberOfIncrements(), 10, 0.1);
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
         pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
-
 
     neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos(
         (273.15 + 45), ThermodynamicConstantsInterface.referencePressure);
@@ -311,10 +305,7 @@ public class BeggsAndBrillsPipeTest {
 
     double pressureOut2 = pipe2.getOutletPressure();
 
-
     Assertions.assertEquals(pressureOut2, 238.8205556280226, 1);
-
-
 
     neqsim.thermo.system.SystemInterface testSystem3 = new neqsim.thermo.system.SystemSrkEos(
         (273.15 + 45), ThermodynamicConstantsInterface.referencePressure);
@@ -358,9 +349,5 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(temperatureOut3, -11.04463, 1);
     Assertions.assertEquals(pressureOut3, 18.3429, 1);
-
-
   }
-
-
 }

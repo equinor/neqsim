@@ -235,5 +235,4 @@ public class GasTurbine extends TwoPortEquipment {
     double AFR = A * (32.0 + 3.76 * 28.0) / 1000.0 / molMassHC * wtFracHC;
     return AFR;
   }
-
 }

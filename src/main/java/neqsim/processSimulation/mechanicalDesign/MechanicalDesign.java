@@ -1188,6 +1188,4 @@ public class MechanicalDesign implements java.io.Serializable {
         && Double.doubleToLongBits(weigthVesselShell) == Double
             .doubleToLongBits(other.weigthVesselShell);
   }
-
-
 }

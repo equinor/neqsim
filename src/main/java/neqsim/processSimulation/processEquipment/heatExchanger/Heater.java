@@ -234,9 +234,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
       increaseTime(dt);
       return;
     }
-
   }
-
 
   /** {@inheritDoc} */
   @Override

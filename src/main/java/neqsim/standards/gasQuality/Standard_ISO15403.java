@@ -73,5 +73,4 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
   public boolean isOnSpec() {
     return true;
   }
-
 }

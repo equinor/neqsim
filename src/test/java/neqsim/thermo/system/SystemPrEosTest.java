@@ -54,8 +54,6 @@ class SystemPrEoSTest extends neqsim.NeqSimTest {
         testSystem.getMolarMass("kg/mol") / testSystem.getDensity("kg/m3"));
   }
 
-
-
   /**
    * <p>
    * testTPflash2.

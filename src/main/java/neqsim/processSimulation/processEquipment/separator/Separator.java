@@ -60,8 +60,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** Inner diameter/height of separator volume. */
   private double internalDiameter = 1.0;
 
-
-
   /** LiquidLevel as volume fraction of liquidvolume/(liquid + gas volume). */
   private double liquidLevel = 0.5;
   double liquidVolume =

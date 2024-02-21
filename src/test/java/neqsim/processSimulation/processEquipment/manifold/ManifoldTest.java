@@ -89,7 +89,5 @@ public class ManifoldTest {
         manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
     assertEquals(5.0, manifold1.getMixedStream().getFlowRate("MSm3/day"), 0.01);
 
-
-
   }
 }

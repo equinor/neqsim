@@ -179,7 +179,6 @@ class Degasser {
 
   }
 
-
   /**
    * Test method for
    */

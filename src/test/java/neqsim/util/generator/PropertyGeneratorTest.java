@@ -31,6 +31,5 @@ public class PropertyGeneratorTest {
     PropertyGenerator generator = new PropertyGenerator(fluid, temps, pres);
     generator.calculate();
 
-
   }
 }

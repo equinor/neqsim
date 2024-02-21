@@ -374,5 +374,4 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   public double getMinAdjustedValue() {
     return minAdjustedValue;
   }
-
 }

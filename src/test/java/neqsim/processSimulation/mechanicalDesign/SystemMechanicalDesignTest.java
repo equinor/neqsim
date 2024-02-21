@@ -171,7 +171,6 @@ public class SystemMechanicalDesignTest {
     GasScrubber sep1 = new GasScrubber(inlets);
     sep1.run();
 
-
     GasScrubberMechanicalDesign sepMechDesign = new GasScrubberMechanicalDesign(sep1);
     sepMechDesign.setMaxOperationPressure(180);
     sepMechDesign.calcDesign();

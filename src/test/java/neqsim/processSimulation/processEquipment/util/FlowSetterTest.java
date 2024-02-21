@@ -90,7 +90,6 @@ public class FlowSetterTest {
 
     StreamInterface gasFromSepStream = separator.getGasOutStream();
 
-
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(stream_1);
@@ -136,7 +135,6 @@ public class FlowSetterTest {
     flowset.setOilFlowRate(oilFlow, "m3/hr");
     flowset.setWaterFlowRate(waterFlow, "m3/hr");
     flowset.run();
-
 
     assertEquals(gasFlow,
         ((StreamInterface) flowset.getReferenceProcess().getUnit("gas")).getFlowRate("MSm3/day"),

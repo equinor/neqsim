@@ -82,7 +82,6 @@ public class WellFlowTest {
     chokeValve.setInletStream(pipeline.getOutletStream());
     chokeValve.setOutletPressure(5.0, "bara");
 
-
     Adjuster adjuster = new Adjuster("adjuster");
     adjuster.setTargetVariable(pipeline.getOutletStream(), "pressure",
         chokeValve.getOutletPressure(), "bara");
@@ -131,7 +130,6 @@ public class WellFlowTest {
 
   }
 
-
   @Test
   void testCalcWellFlow() {
     neqsim.thermo.system.SystemInterface fluid1 =
@@ -157,6 +155,4 @@ public class WellFlowTest {
     // wellflow.setDarcyLawParameters(permeability, );
     // wellflow.setWellProductionIndex(10.000100751427403E-3);
   }
-
-
 }

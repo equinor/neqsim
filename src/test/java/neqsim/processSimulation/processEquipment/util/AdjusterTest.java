@@ -27,7 +27,6 @@ public class AdjusterTest {
     flowline1.setElevation(1200.0);
     flowline1.setNumberOfIncrements(20);
 
-
     neqsim.processSimulation.processEquipment.util.Adjuster adjuster =
         new neqsim.processSimulation.processEquipment.util.Adjuster("adjuster");
     adjuster.setTargetVariable(flowline1.getOutletStream(), "pressure", wellheadpressure, "bara");
@@ -46,8 +45,6 @@ public class AdjusterTest {
     assertEquals(flowline1.getOutletStream().getPressure(), 120, 1);
     assertEquals(flowline1.getOutletStream().getFlowRate("MSm3/day"), 4.0, 0.1);
   }
-
-
 
   @Test
   void testRun2() {
@@ -71,7 +68,6 @@ public class AdjusterTest {
     flowline1.setLength(1200);
     flowline1.setElevation(1200.0);
     flowline1.setNumberOfIncrements(20);
-
 
     neqsim.processSimulation.processEquipment.util.Adjuster adjuster =
         new neqsim.processSimulation.processEquipment.util.Adjuster("adjuster");

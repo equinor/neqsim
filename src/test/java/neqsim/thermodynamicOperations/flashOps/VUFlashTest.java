@@ -45,5 +45,4 @@ class VUFlashTest {
 
     assertEquals(21.387, testSystem.getPressure(), 0.01);
   }
-
 }

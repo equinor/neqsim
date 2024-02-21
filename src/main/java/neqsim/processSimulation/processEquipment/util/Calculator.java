@@ -8,7 +8,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 
-
 /**
  * <p>
  * Calculator class.

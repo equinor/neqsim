@@ -56,7 +56,6 @@ public class CompressorModule extends neqsim.NeqSimTest {
         0.050908, 0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355,
         0.007658, 0.003861, 0.003301, 0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916});
 
-
     Stream feedStream = new Stream("feed stream", thermoSystem);
     feedStream.setFlowRate(604094, "kg/hr");
     feedStream.setTemperature(25.5, "C");
@@ -109,7 +108,6 @@ public class CompressorModule extends neqsim.NeqSimTest {
     Recycle recycle2 = new Recycle("recycle 2");
     recycle2.addStream(recycleValve.getOutletStream());
     recycle2.setOutletStream(gasResycleStream);
-
 
     Recycle recycle1 = new Recycle("recycle 1");
     recycle1.addStream(scrubber1.getLiquidOutStream());

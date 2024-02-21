@@ -392,8 +392,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
      */
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
 
-
-
     // System.out.println("steady state with compressor curves.....");
     neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
         new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
@@ -483,7 +481,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     PressureTransmitter separatorPressureTransmitter =
         new PressureTransmitter(separator2.getGasOutStream());
 
-
     ControllerDeviceInterface speedController = new ControllerDeviceBaseClass();
     speedController.setReverseActing(true);
     speedController.setTransmitter(separatorPressureTransmitter);
@@ -498,8 +495,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     p.add(separatorPressureTransmitter);
     p.add(valve2);
     compressor1.setController(speedController);
-
-
 
     p.run();
     /*
@@ -728,7 +723,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
       p.runTransient();
     }
 
-
     valve1.setPercentValveOpening(1.0);
     valve2.setPercentValveOpening(1.0);
 
@@ -778,5 +772,4 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
       p.runTransient();
     }
   }
-
 }

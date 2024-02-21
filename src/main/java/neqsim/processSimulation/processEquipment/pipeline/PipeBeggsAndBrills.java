@@ -115,7 +115,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   double length;
   double elevation;
 
-
   // Results initialization (for each segment)
 
   private List<Double> pressureProfile;
@@ -207,7 +206,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.totalElevation = elevation;
   }
 
-
   /**
    * <p>
    * Setter for the field <code>length</code>.
@@ -229,7 +227,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   public void setDiameter(double diameter) {
     insideDiameter = diameter;
   }
-
 
   /**
    * <p>
@@ -264,7 +261,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.numberOfIncrements = numberOfIncrements;
   }
 
-
   /**
    * <p>
    * Setter for the field <code>runIsothermal</code>.
@@ -275,7 +271,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   public void setRunIsothermal(boolean runIsothermal) {
     this.runIsothermal = runIsothermal;
   }
-
 
   /**
    * Converts the input values from the system measurement units to imperial units. Needed because
@@ -322,9 +317,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     length = length / 3.2808399;
     pipeWallRoughness = pipeWallRoughness / 3.2808399;
     pressureDrop = pressureDrop * 1.48727E-05;
-
   }
-
 
   public void calculateMissingValue() {
     if (Double.isNaN(totalLength)) {
@@ -456,8 +449,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     return regime;
   }
 
-
-
   /**
    * <p>
    * calcHydrostaticPressureDifference
@@ -511,7 +502,6 @@ public class PipeBeggsAndBrills extends Pipeline {
       } else {
         SG = system.getPhase(1).getDensity("lb/ft3") / (1000 * 0.0624279606);
       }
-
 
       double APIgrav = (141.5 / (SG)) - 131.0;
       double sigma68 = 39.0 - 0.2571 * APIgrav;
@@ -737,7 +727,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     elevationProfile.add(cumulativeElevation);
     incrementsProfile.add(getNumberOfIncrements());
 
-
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
 
@@ -777,7 +766,6 @@ public class PipeBeggsAndBrills extends Pipeline {
         / (Math.PI / 4.0 * Math.pow(insideDiameter, 2.0));
   }
 
-
   /**
    * <p>
    * getOutletSuperficialVelocity.
@@ -788,7 +776,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   public double getOutletSuperficialVelocity() {
     return getSegmentMixtureSuperficialVelocity(numberOfIncrements);
   }
-
 
   /**
    * <p>
@@ -801,15 +788,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     return numberOfIncrements;
   }
 
-
-
   /**
    * @return angle in degrees
    */
   public double getAngle() {
     return angle;
   }
-
 
   /**
    * @return total length of the pipe in m
@@ -824,8 +808,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   public double getElevation() {
     return cumulativeElevation;
   }
-
-
 
   /**
    * <p>
@@ -849,7 +831,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     return regime;
   }
 
-
   /**
    * <p>
    * Getter for the field <code>LastSegmentPressureDrop</code>.
@@ -872,7 +853,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     return totalPressureDrop;
   }
 
-
   /**
    * <p>
    * Getter for the field <code>PressureProfile</code>.
@@ -883,8 +863,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   public List<Double> getPressureProfile() {
     return new ArrayList<>(pressureProfile);
   }
-
-
 
   /**
    * <p>
@@ -902,7 +880,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
-
   /**
    * 
    * @return list of results
@@ -911,7 +888,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   public List<Double> getPressureDropProfile() {
     return new ArrayList<>(pressureDropProfile);
   }
-
 
   /**
    * @param index segment number
@@ -925,14 +901,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
-
   /**
    * @return list of temperatures
    */
   public List<Double> getTemperatureProfile() {
     return new ArrayList<>(temperatureProfile);
   }
-
 
   /**
    * @param index segment number
@@ -946,14 +920,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
-
   /**
    * @return list of flow regime names
    */
   public List<String> getFlowRegimeProfile() {
     return new ArrayList<>(flowRegimeProfile);
   }
-
 
   /**
    * @param index segment number
@@ -967,16 +939,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
-
-
   /**
    * @return list of liquid superficial velocity profile
    */
   public List<Double> getLiquidSuperficialVelocityProfile() {
     return new ArrayList<>(liquidSuperficialVelocityProfile);
   }
-
-
 
   /**
    * @return list of gas superficial velocities
@@ -985,15 +953,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     return new ArrayList<>(gasSuperficialVelocityProfile);
   }
 
-
   /**
    * @return list of mixture superficial velocity profile
    */
   public List<Double> getMixtureSuperficialVelocityProfile() {
     return new ArrayList<>(mixtureSuperficialVelocityProfile);
   }
-
-
 
   /**
    * @return list of mixture viscosity
@@ -1002,16 +967,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     return new ArrayList<>(mixtureViscosityProfile);
   }
 
-
-
   /**
    * @return list of density profile
    */
   public List<Double> getMixtureDensityProfile() {
     return new ArrayList<>(mixtureDensityProfile);
   }
-
-
 
   /**
    * @return list of hold-up
@@ -1020,16 +981,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     return new ArrayList<>(liquidHoldupProfile);
   }
 
-
-
   /**
    * @return list of reynold numbers
    */
   public List<Double> getMixtureReynoldsNumber() {
     return new ArrayList<>(mixtureReynoldsNumber);
   }
-
-
 
   /**
    * @return list of length profile
@@ -1045,16 +1002,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     return new ArrayList<>(incrementsProfile);
   }
 
-
-
   /**
    * @return list of elevation profile
    */
   public List<Double> getElevationProfile() {
     return new ArrayList<>(elevationProfile);
   }
-
-
 
   /**
    * @param index segment number
@@ -1068,8 +1021,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
-
-
   /**
    * @param index segment number
    * @return Double
@@ -1081,8 +1032,6 @@ public class PipeBeggsAndBrills extends Pipeline {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
-
-
 
   /**
    * @param index segment number
@@ -1096,7 +1045,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
-
   /**
    * @param index segment number
    * @return Double
@@ -1108,8 +1056,6 @@ public class PipeBeggsAndBrills extends Pipeline {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
-
-
 
   /**
    * @param index segment number
@@ -1123,7 +1069,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
-
   /**
    * @param index segment number
    * @return Double
@@ -1135,8 +1080,6 @@ public class PipeBeggsAndBrills extends Pipeline {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
-
-
 
   /**
    * @param index segment number
@@ -1150,8 +1093,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
-
-
   /**
    * @param index segment number
    * @return Double
@@ -1164,8 +1105,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
-
-
   /**
    * @param index segment number
    * @return Double
@@ -1177,5 +1116,4 @@ public class PipeBeggsAndBrills extends Pipeline {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
-
 }

@@ -10,7 +10,6 @@ class SaturationPressureTest extends neqsim.NeqSimTest {
   @BeforeAll
   static void setUpBeforeClass() throws Exception {}
 
-
   @Test
   void testCalcSaturationPressure() {
     SystemInterface tempSystem = new SystemSrkEos(273.15 + 20, 10.0);
