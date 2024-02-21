@@ -3621,12 +3621,6 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void display() {
-    display(this.getFluidName());
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void display(String name) {
     javax.swing.JFrame dialog = new javax.swing.JFrame("System-Report");
     java.awt.Dimension screenDimension = java.awt.Toolkit.getDefaultToolkit().getScreenSize();

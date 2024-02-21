@@ -1556,7 +1556,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * display.
    * </p>
    */
-  public void display();
+  public default void display() {
+    display(this.getFluidName());
+  }
 
   /**
    * <p>
