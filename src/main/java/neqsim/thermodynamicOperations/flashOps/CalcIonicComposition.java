@@ -1,5 +1,5 @@
 /*
- * calcIonicComposition.java
+ * CalcIonicComposition.java
  *
  * Created on 8. mars 2001, 10:56
  */
@@ -14,28 +14,28 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
- * calcIonicComposition class.
+ * CalcIonicComposition class.
  * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
  */
-public class calcIonicComposition extends Flash {
+public class CalcIonicComposition extends Flash {
   private static final long serialVersionUID = 1000;
-  Logger logger = LogManager.getLogger(calcIonicComposition.class);
+  Logger logger = LogManager.getLogger(CalcIonicComposition.class);
 
   int phaseNumber;
   String[][] resultTable = null;
 
   /**
    * <p>
-   * Constructor for calcIonicComposition.
+   * Constructor for CalcIonicComposition.
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phase a int
    */
-  public calcIonicComposition(SystemInterface system, int phase) {
+  public CalcIonicComposition(SystemInterface system, int phase) {
     this.system = system;
     phaseNumber = phase;
   }

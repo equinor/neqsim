@@ -10,7 +10,7 @@
 	<version>${revision}${sha1}${changelist}</version>
 
 	<properties>
-		<revision>2.5.16</revision>
+		<revision>2.5.17</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1/>
@@ -96,7 +96,7 @@
 		<dependency>
 			<groupId>org.ojalgo</groupId>
 			<artifactId>ojalgo</artifactId>
-			<version>53.1.1</version>
+			<version>53.2.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
