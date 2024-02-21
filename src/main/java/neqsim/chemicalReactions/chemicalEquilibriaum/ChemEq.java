@@ -243,9 +243,7 @@ public class ChemEq implements java.io.Serializable {
     double[] n_omega = new double[NSPEC];
     double[] chem_pot_omega = new double[NSPEC];
     double[] chem_pot = new double[NSPEC];
-    double G_1;
 
-    double G_0;
     check = 0;
     step = 1;
 
@@ -262,8 +260,8 @@ public class ChemEq implements java.io.Serializable {
       }
     }
 
-    G_1 = 0;
-
+    double G_0;
+    double G_1 = 0;
     for (i = 0; i < NSPEC; i++) {
       G_1 += chem_pot_omega[i] * d_n[i];
     }

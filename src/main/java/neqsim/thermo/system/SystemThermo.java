@@ -3622,6 +3622,9 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void display(String name) {
+    if (this.getNumberOfComponents() == 0) {
+      return;
+    }
     javax.swing.JFrame dialog = new javax.swing.JFrame("System-Report");
     java.awt.Dimension screenDimension = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
     java.awt.Container dialogContentPane = dialog.getContentPane();

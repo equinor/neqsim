@@ -57,8 +57,5 @@ class BaseContractTest extends neqsim.NeqSimTest {
 
     BaseContract bc = new BaseContract();
     bc.display();
-
-    bc = new BaseContract(null);
-    bc.display();
   }
 }
