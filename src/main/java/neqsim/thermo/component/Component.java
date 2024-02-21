@@ -9,6 +9,7 @@ package neqsim.thermo.component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -123,10 +124,17 @@ public abstract class Component implements ComponentInterface {
   protected double paulingAnionicDiameter = 0;
 
   private int orginalNumberOfAssociationSites = 0;
+
+  /* Derivative of fugacity wrt temperature */
   protected double dfugdt = 0.1;
+  /* Derivative of fugacity wrt pressure */
   protected double dfugdp = 0.1;
-  protected double[] dfugdn = new double[MAX_NUMBER_OF_COMPONENTS];
-  public double[] dfugdx = new double[MAX_NUMBER_OF_COMPONENTS];
+  /* Derivative of fugacity wrt mole fraction (of each ) */
+  protected double[] dfugdn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  /* Derivative of fugacity wrt temperature */
+  public double[] dfugdx = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+
+  // Parameters for Antoine equation
   double AntoineA = 0;
   double AntoineB = 0;
   double AntoineC = 0;
@@ -141,14 +149,15 @@ public abstract class Component implements ComponentInterface {
   private double[] CpSolid = new double[5];
   private double[] CpLiquid = new double[5];
   private double heatOfFusion = 0.0;
+
+
   double triplePointDensity = 10.0;
   double triplePointPressure = 0.0;
-
   private double triplePointTemperature = 1000.0;
   double meltingPointTemperature = 110.0;
+
   private double idealGasEnthalpyOfFormation = 0.0;
   double idealGasGibbsEnergyOfFormation = 0.0;
-
   double idealGasAbsoluteEntropy = 0.0;
 
   double Hsub = 0.0;

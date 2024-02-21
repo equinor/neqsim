@@ -8,6 +8,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.attractiveEosTerm.AtractiveTermMatCopPRUMRNew;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermCPAstatoil;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermGERG;
@@ -57,8 +58,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   public double aDiffDiffT = 0;
 
-  public double[] Aij = new double[MAX_NUMBER_OF_COMPONENTS];
-  public double[] Bij = new double[MAX_NUMBER_OF_COMPONENTS];
+  public double[] Aij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  public double[] Bij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   protected double delta1 = 0;
 
   protected double delta2 = 0;
@@ -75,8 +76,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   protected double bDerTn = 0;
 
-  protected double[] dAdndn = new double[MAX_NUMBER_OF_COMPONENTS];
-  protected double[] dBdndn = new double[MAX_NUMBER_OF_COMPONENTS];
+  protected double[] dAdndn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  protected double[] dBdndn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   private AttractiveTermInterface attractiveParameter;
   static Logger logger = LogManager.getLogger(ComponentEos.class);
 
@@ -340,7 +341,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     double pressure = phase.getPressure();
     double logFugacityCoefficient =
         dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
-        - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
+            - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
     fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }

@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
 
@@ -27,7 +28,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   double QComp = 0.0;
   double QMix = 0.0;
   public double[] QMixdN = null; // , xMixdN = null;
-  double[] lnGammaMixdn = new double[MAX_NUMBER_OF_COMPONENTS];
+  double[] lnGammaMixdn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   double lnGammaComp = 0.0;
   double lnGammaMix = 0.0;
   double lnGammaCompdT = 0.0;

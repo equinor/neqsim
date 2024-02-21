@@ -2,6 +2,7 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacPSRK;
 import neqsim.thermo.component.ComponentGEUniquac;
@@ -25,7 +26,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
    */
   public PhaseGEUnifacPSRK() {
     super();
-    componentArray = new ComponentGEUnifacPSRK[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentGEUnifacPSRK[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**

@@ -8,6 +8,7 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
@@ -57,7 +58,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public PhaseEos() {
     super();
     mixSelect = new EosMixingRules();
-    componentArray = new ComponentEosInterface[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentEosInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
     mixRule = mixSelect.getMixingRule(1);
     // solver = new newtonRhapson();
   }
