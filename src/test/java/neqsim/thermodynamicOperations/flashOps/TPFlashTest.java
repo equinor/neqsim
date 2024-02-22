@@ -168,6 +168,5 @@ class TPFlashTest {
     testOps.TPflash();
     assertEquals(2, testSystem.getNumberOfPhases());
     // testSystem.prettyPrint();
-
   }
 }

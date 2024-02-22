@@ -8,7 +8,6 @@ public class PipelineTest {
 
   @Test
   public void testMain() {
-
     double flow = 60.0;
     double temperature = 20.0;
     double pressure = 200.0;

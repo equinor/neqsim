@@ -156,7 +156,6 @@ public class SystemMechanicalDesignTest {
 
   @Test
   void testRunDesignCalculationforGasScrubber() {
-
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 120.0);
     thermoSystem.addComponent("nitrogen", 1.0);
     thermoSystem.addComponent("methane", 99.0);
@@ -171,7 +170,6 @@ public class SystemMechanicalDesignTest {
     GasScrubber sep1 = new GasScrubber(inlets);
     sep1.run();
 
-
     GasScrubberMechanicalDesign sepMechDesign = new GasScrubberMechanicalDesign(sep1);
     sepMechDesign.setMaxOperationPressure(180);
     sepMechDesign.calcDesign();
@@ -180,7 +178,6 @@ public class SystemMechanicalDesignTest {
     System.out.println("separator weight structual steel " + sepMechDesign.weightStructualSteel);
     sep1.addSeparatorSection("first mesh", "meshpad");
     sepMechDesign.calcDesign();
-
   }
 
   @Test
@@ -193,7 +190,6 @@ public class SystemMechanicalDesignTest {
 
   @Test
   void testRunDesignForPipeline() {
-
     AdiabaticPipe pipe = new AdiabaticPipe("pipe1",
         ((neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator) operations
             .getUnit("1st stage separator")).getGasOutStream());

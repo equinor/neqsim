@@ -353,7 +353,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
       }
     }
 
-
     ThermodynamicOperations ops2 = new ThermodynamicOperations(thermoSystem);
     ops2.TPflash();
     thermoSystem.initProperties();

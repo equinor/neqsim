@@ -33,7 +33,6 @@ public class SimpleFlowLine extends TwoPortEquipment {
   @Deprecated
   public SimpleFlowLine(StreamInterface inStream) {
     this("SimpleFlowLine", inStream);
-
   }
 
   /**

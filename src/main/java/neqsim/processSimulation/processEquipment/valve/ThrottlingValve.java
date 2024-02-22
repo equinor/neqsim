@@ -54,9 +54,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * Constructor for ThrottlingValve.
    * </p>
    *
-   * @param inletStream a
-   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *                    object
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
    */
   @Deprecated
   public ThrottlingValve(StreamInterface inletStream) {
@@ -77,10 +76,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * Constructor for ThrottlingValve.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
-   * @param inletStream a
-   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *                    object
+   * @param name a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
    */
   public ThrottlingValve(String name, StreamInterface inletStream) {
     super(name);
@@ -138,7 +136,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure, unit);
@@ -157,7 +155,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setOutletPressure(double pressure, String unit) {
     pressureUnit = unit;
@@ -464,9 +462,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   /**
    * {@inheritDoc}
    *
-   * @return a
-   *         {@link neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign}
-   *         object
+   * @return a {@link neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign} object
    */
   @Override
   public ValveMechanicalDesign getMechanicalDesign() {
@@ -476,5 +472,4 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   public void setIsCalcOutPressure(boolean isSetPres) {
     isCalcPressure = isSetPres;
   }
-
 }

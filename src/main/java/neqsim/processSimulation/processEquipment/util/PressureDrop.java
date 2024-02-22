@@ -73,5 +73,4 @@ public class PressureDrop extends ThrottlingValve {
 
     outStream.setFluid(thermoSystem);
   }
-
 }

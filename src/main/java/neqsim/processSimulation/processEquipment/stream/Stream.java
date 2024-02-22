@@ -196,7 +196,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       clonedSystem.thermoSystem = thermoSystem.clone();
     }
 
-
     return clonedSystem;
   }
 
@@ -607,5 +606,4 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       return thermoSystem;
     }
   }
-
 }

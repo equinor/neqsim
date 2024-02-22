@@ -70,7 +70,6 @@ public class PumpTest extends neqsim.NeqSimTest {
 
   @Test
   void testSimplePumpCurve() {
-
     neqsim.thermo.system.SystemInterface feedDecane =
         new neqsim.thermo.system.SystemSrkEos(273.15 + 20.0, 10.00);
     feedDecane.addComponent("n-pentane", 0.5, "kg/sec");
@@ -99,8 +98,5 @@ public class PumpTest extends neqsim.NeqSimTest {
     pump1.run();
 
     Assertions.assertEquals(7.274237081101, pump1.getOutletPressure(), 1e-5);
-
   }
-
-
 }

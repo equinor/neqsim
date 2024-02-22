@@ -10,7 +10,6 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 public class WellFlowTest {
   @Test
   void testRun() {
-
     neqsim.thermo.system.SystemInterface fluid1 =
         new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
     fluid1.addComponent("water", 3.599);
@@ -82,7 +81,6 @@ public class WellFlowTest {
     chokeValve.setInletStream(pipeline.getOutletStream());
     chokeValve.setOutletPressure(5.0, "bara");
 
-
     Adjuster adjuster = new Adjuster("adjuster");
     adjuster.setTargetVariable(pipeline.getOutletStream(), "pressure",
         chokeValve.getOutletPressure(), "bara");
@@ -128,9 +126,7 @@ public class WellFlowTest {
        * System.out.println("gas velocity " + pipeline.getInletSuperficialVelocity());
        */
     }
-
   }
-
 
   @Test
   void testCalcWellFlow() {
@@ -157,6 +153,4 @@ public class WellFlowTest {
     // wellflow.setDarcyLawParameters(permeability, );
     // wellflow.setWellProductionIndex(10.000100751427403E-3);
   }
-
-
 }

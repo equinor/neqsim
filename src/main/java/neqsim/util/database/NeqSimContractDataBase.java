@@ -55,7 +55,6 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
     }
   }
 
-
   /**
    * Drops and re-creates table from contents in csv file.
    * 
@@ -64,7 +63,6 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
   public static void updateTable(String tableName) {
     updateTable(tableName, "commercial/" + tableName + ".csv");
   }
-
 
   public static void initH2DatabaseFromCSVfiles() {
     h2IsInitalizing = true;

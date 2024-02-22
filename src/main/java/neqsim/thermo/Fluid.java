@@ -306,7 +306,6 @@ public class Fluid {
    */
   public void setHasWater(boolean hasWater) {
     this.hasWater = hasWater;
-
   }
 
   /**

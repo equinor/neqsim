@@ -269,7 +269,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
             phasenumb);
       }
 
-
       // changeMoles += n_mol[i] -
       // system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
       // .getNumberOfMolesInPhase();

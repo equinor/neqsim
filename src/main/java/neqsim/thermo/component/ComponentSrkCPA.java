@@ -505,7 +505,6 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
         + ((ComponentEosInterface) phase.getComponent(j)).getBi() * temp3 * (temp1 + temp2)) / temp1
         / temp1 / temp2 / temp2;
     return 2.0 * (getBij(j) * temp + getBi() * tempj);
-
   }
 
   /** {@inheritDoc} */

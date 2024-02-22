@@ -222,9 +222,7 @@ public class ProcessModule extends SimulationBaseClass {
     return null; // no unit found with the given name
   }
 
-
-
-    /**
+  /**
    * Returns the unit with the given name from the list of added unit operations and list of added
    * modules.
    *

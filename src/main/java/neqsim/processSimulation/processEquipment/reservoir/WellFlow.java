@@ -26,7 +26,6 @@ public class WellFlow extends TwoPortEquipment {
   boolean useWellProductionIndex = false;
   boolean calcpressure = true;
 
-
   /**
    * <p>
    * Constructor for WellFlow.
@@ -104,5 +103,4 @@ public class WellFlow extends TwoPortEquipment {
     useWellProductionIndex = true;
     this.wellProductionIndex = wellProductionIndex;
   }
-
 }

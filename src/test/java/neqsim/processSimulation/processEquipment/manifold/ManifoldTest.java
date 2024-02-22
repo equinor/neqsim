@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemSrkEos;
 public class ManifoldTest {
   @Test
   void testRun() {
-
     SystemSrkEos testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("ethane", 10.0);
@@ -46,7 +45,6 @@ public class ManifoldTest {
 
   @Test
   void testRun2() {
-
     SystemSrkEos testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("ethane", 10.0);
@@ -88,8 +86,5 @@ public class ManifoldTest {
     assertEquals(stream1FromManifold.getFluid().getComponent(0).getx(),
         manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
     assertEquals(5.0, manifold1.getMixedStream().getFlowRate("MSm3/day"), 0.01);
-
-
-
   }
 }
