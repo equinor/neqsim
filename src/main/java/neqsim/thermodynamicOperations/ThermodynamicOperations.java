@@ -1794,6 +1794,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    */
   public void display() {
+    if (resultTable == null) {
+      return;
+    }
+
     JFrame dialog = new JFrame("System-Report");
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
