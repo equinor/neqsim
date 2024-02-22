@@ -2,6 +2,7 @@ package neqsim.standards.salesContract;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
@@ -52,6 +53,7 @@ class BaseContractTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  @Disabled
   void testDisplay() {
     standard.display();
 

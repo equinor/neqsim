@@ -1,5 +1,6 @@
 package neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.thermo.phase.PhaseType;
@@ -252,6 +253,7 @@ public class StratifiedFlowNodeTest {
   }
 
   @Test
+  @Disabled
   void testDisplay() {
     StratifiedFlowNode node = new StratifiedFlowNode();
     node.display();

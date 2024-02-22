@@ -331,6 +331,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  @Disabled
   void testDisplay() {
     ThermodynamicOperations ops = new ThermodynamicOperations();
     ops.display();

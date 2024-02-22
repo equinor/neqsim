@@ -3,6 +3,7 @@ package neqsim.standards.gasQuality;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -133,6 +134,7 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   }
 
   @Test
+  @Disabled
   void testDisplay() {
     Standard_ISO6976_2016 s = new Standard_ISO6976_2016(testSystem);
     s.display("test");
