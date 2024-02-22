@@ -12,6 +12,7 @@ import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
+import neqsim.thermodynamicOperations.flashOps.CalcIonicComposition;
 import neqsim.thermodynamicOperations.flashOps.CriticalPointFlash;
 import neqsim.thermodynamicOperations.flashOps.PHflash;
 import neqsim.thermodynamicOperations.flashOps.PHflashSingleComp;
@@ -27,7 +28,6 @@ import neqsim.thermodynamicOperations.flashOps.TSFlash;
 import neqsim.thermodynamicOperations.flashOps.TVflash;
 import neqsim.thermodynamicOperations.flashOps.VHflashQfunc;
 import neqsim.thermodynamicOperations.flashOps.VUflashQfunc;
-import neqsim.thermodynamicOperations.flashOps.calcIonicComposition;
 import neqsim.thermodynamicOperations.flashOps.dTPflash;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.ConstantDutyFlashInterface;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.HCdewPointPressureFlash;
@@ -143,7 +143,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void TPflash() {
     double flowRate = system.getTotalNumberOfMoles();
     double minimumFlowRate = 1e-50;
-    if (flowRate < 1e-3) {
+    if (flowRate < 1e-5) {
       system.setTotalNumberOfMoles(1.0);
       system.init(1);
     }
@@ -154,13 +154,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else {
       run();
     }
-    if (flowRate < 1e-3) {
+    if (flowRate < 1e-5) {
       if (flowRate < minimumFlowRate) {
         system.setTotalNumberOfMoles(minimumFlowRate);
       } else {
         system.setTotalNumberOfMoles(flowRate);
       }
-      system.init(2);
+      system.init(1);
     }
   }
 
@@ -1896,7 +1896,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param phaseNumber a int
    */
   public void calcIonComposition(int phaseNumber) {
-    operation = new calcIonicComposition(system, phaseNumber);
+    operation = new CalcIonicComposition(system, phaseNumber);
     getOperation().run();
     resultTable = getOperation().getResultTable();
   }
@@ -2087,7 +2087,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         fluidProperties[t] = this.system.getProperties().getValues();
       } catch (Exception ex) {
         calculationError[t] = ex.getMessage();
-        logger.error(ex.getMessage(), ex);
+        logger.warn(calculationError[t]);
       }
     }
 

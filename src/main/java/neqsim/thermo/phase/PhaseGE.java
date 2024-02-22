@@ -9,6 +9,7 @@ package neqsim.thermo.phase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
@@ -28,7 +29,6 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
   EosMixingRules mixSelect = new EosMixingRules();
   EosMixingRulesInterface mixRuleEos;
 
-
   /**
    * <p>
    * Constructor for PhaseGE.
@@ -37,7 +37,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
   public PhaseGE() {
     super();
     setType(PhaseType.LIQUID);
-    componentArray = new ComponentGEInterface[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentGEInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
     useVolumeCorrection = false;
   }
 
@@ -85,11 +85,11 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
     if (initType != 0) {
-      getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, phase);
+      getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, phase.getValue());
     }
 
     double sumHydrocarbons = 0.0;
@@ -159,7 +159,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase);
-    // todo: compNumber not in use
+    // TODO: compNumber not in use
   }
 
   /**
@@ -237,9 +237,9 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
     refPhase[k].setTemperature(temperature);
     refPhase[k].setPressure(pressure);
-    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getPhaseType(), 1.0);
+    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getType(), 1.0);
     ((PhaseGEInterface) refPhase[k]).getExcessGibbsEnergy(refPhase[k], 2,
-        refPhase[k].getTemperature(), refPhase[k].getPressure(), refPhase[k].getPhaseType());
+        refPhase[k].getTemperature(), refPhase[k].getPressure(), refPhase[k].getType().getValue());
     return ((ComponentGEInterface) refPhase[k].getComponent(0)).getGamma();
   }
 
@@ -256,9 +256,9 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     dilphase.addMoles(k, -(1.0 - 1e-10) * dilphase.getComponent(k).getNumberOfMolesInPhase());
     dilphase.getComponent(k).setx(1e-10);
     dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1,
-        dilphase.getPhaseType(), 1.0);
+        dilphase.getType(), 1.0);
     ((PhaseGEInterface) dilphase).getExcessGibbsEnergy(dilphase, 2, dilphase.getTemperature(),
-        dilphase.getPressure(), dilphase.getPhaseType());
+        dilphase.getPressure(), dilphase.getType().getValue());
     return ((ComponentGEInterface) dilphase.getComponent(0)).getGamma();
   }
 
@@ -291,11 +291,11 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     return getCp();
   }
 
-  // return speed of sound in water constant 1470.0 m/sec
   /** {@inheritDoc} */
   @Override
   public double getZ() {
-    double densityIdealGas = pressure * 1e5 / 8.314 / temperature * getMolarMass();
+    double densityIdealGas =
+        pressure * 1e5 / ThermodynamicConstantsInterface.R / temperature * getMolarMass();
     return densityIdealGas / getDensity("kg/m3");
   }
 

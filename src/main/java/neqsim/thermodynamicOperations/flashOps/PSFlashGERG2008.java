@@ -26,13 +26,6 @@ public class PSFlashGERG2008 extends QfuncFlash {
    * <p>
    * Constructor for PSFlashGERG2008.
    * </p>
-   */
-  public PSFlashGERG2008() {}
-
-  /**
-   * <p>
-   * Constructor for PSFlashGERG2008.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double

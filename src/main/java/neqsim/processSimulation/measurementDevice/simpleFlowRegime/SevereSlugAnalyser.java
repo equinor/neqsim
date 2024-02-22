@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -368,7 +369,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * @return a double
    */
   public double gasConst(FluidSevereSlug fluid) {
-    return 8.314 / fluid.getMolecularWeight() * (273.15 + temperature);
+    return ThermodynamicConstantsInterface.R / fluid.getMolecularWeight() * (273.15 + temperature);
   }
 
   // Declare the variables for resuts after creating an object Severe slug with required number of
@@ -426,7 +427,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     gamma2 = 2.2;
     iter = 0;
     while (Math.abs(gamma2 - gamma1) > 1e-5 && iter < 200) {
-
       holdUp2 = (gamma2 - 0.5 * Math.sin(2 * gamma2)) / (pi);
       function2 = Math.pow(holdUp2, 3) * Math.pow((pi / gamma2), (n + 1)) - friction;
 
@@ -770,7 +770,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   // iter = 0;
 
   // while(Math.abs(usg1 - usg2) > 1e-5 && iter < 200){
-
   // severeSlug.setSuperficialGasVelocity(usg1);
   // severeSlug.checkFlowRegime(fluid, pipe, severeSlug);
   // function1 = severeSlug.slugValue - 0.05;

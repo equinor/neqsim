@@ -9,12 +9,13 @@ package neqsim.thermo.component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
-abstract class Component implements ComponentInterface {
+public abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Component.class);
 
@@ -25,9 +26,11 @@ abstract class Component implements ComponentInterface {
   protected int componentNumber;
   /** Name of component. */
   protected String componentName = "default";
+
+  // TODO: what does "HC", "inert" and "Component" mean?
   /**
-   * Type of component. Can be "normal", "TBP", "plus", "ion", what about "HC", "inert" and
-   * "Component?"
+   * Type of component. Can be "normal", "TBP", "plus", "ion", but what does "HC", "inert" and
+   * "Component?" do?
    */
   private String componentType = "Component";
 
@@ -45,13 +48,13 @@ abstract class Component implements ComponentInterface {
 
   protected int attractiveTermNumber = 0;
   protected int numberOfAssociationSites = 0;
-  protected double logFugacityCoefficient = 0.0;
   protected double associationVolume = 0.0;
   protected double associationEnergy = 0.0;
   protected double aCPA = 0.0;
   protected double bCPA = 0.0;
   protected double mCPA = 0.0;
   protected double srkacentricFactor = 0.0;
+  // TODO: what are the available options here?
   protected String referenceStateType = "solvent";
   protected String associationScheme = "0";
   protected String antoineLiqVapPresType = null;
@@ -121,10 +124,17 @@ abstract class Component implements ComponentInterface {
   protected double paulingAnionicDiameter = 0;
 
   private int orginalNumberOfAssociationSites = 0;
+
+  /* Derivative of fugacity wrt temperature */
   protected double dfugdt = 0.1;
+  /* Derivative of fugacity wrt pressure */
   protected double dfugdp = 0.1;
-  protected double[] dfugdn = new double[MAX_NUMBER_OF_COMPONENTS];
-  public double[] dfugdx = new double[MAX_NUMBER_OF_COMPONENTS];
+  /* Derivative of fugacity wrt mole fraction (of each ) */
+  protected double[] dfugdn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  /* Derivative of fugacity wrt temperature */
+  public double[] dfugdx = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+
+  // Parameters for Antoine equation
   double AntoineA = 0;
   double AntoineB = 0;
   double AntoineC = 0;
@@ -139,14 +149,15 @@ abstract class Component implements ComponentInterface {
   private double[] CpSolid = new double[5];
   private double[] CpLiquid = new double[5];
   private double heatOfFusion = 0.0;
+
+
   double triplePointDensity = 10.0;
   double triplePointPressure = 0.0;
-
   private double triplePointTemperature = 1000.0;
   double meltingPointTemperature = 110.0;
+
   private double idealGasEnthalpyOfFormation = 0.0;
   double idealGasGibbsEnergyOfFormation = 0.0;
-
   double idealGasAbsoluteEntropy = 0.0;
 
   double Hsub = 0.0;
@@ -490,39 +501,18 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addMolesChemReac(double dn) {
-    numberOfMoles += dn;
-    numberOfMolesInPhase += dn;
-    if (numberOfMoles < 0) {
-      numberOfMoles = 0;
-    }
-    if (numberOfMolesInPhase < 0) {
-      numberOfMolesInPhase = 0;
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void addMolesChemReac(double dn, double totdn) {
+    if (numberOfMoles + totdn < 0 || numberOfMolesInPhase + dn < 0) {
+      String msg = "will lead to negative number of moles of component in phase for component "
+          + getComponentName() + "  who has " + numberOfMolesInPhase
+          + " in phase  and chage request was " + dn;
+      neqsim.util.exception.InvalidInputException ex =
+          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
+      throw new RuntimeException(ex);
+      // logger.error(ex.getMessage());
+    }
     numberOfMoles += totdn;
-
-    if (numberOfMoles < 0) {
-      numberOfMoles = 0;
-    }
-
     numberOfMolesInPhase += dn;
-    if (numberOfMolesInPhase < 0) {
-      numberOfMolesInPhase = 0;
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void addMoles(double dn) {
-    numberOfMolesInPhase += dn;
-    if (numberOfMolesInPhase < 0) {
-      numberOfMolesInPhase = 0;
-    }
   }
 
   /** {@inheritDoc} */
@@ -539,7 +529,6 @@ abstract class Component implements ComponentInterface {
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
       int type) {
-
     if (totalNumberOfMoles == 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
           "totalNumberOfMoles", "must be larger than 0"));
@@ -965,7 +954,6 @@ abstract class Component implements ComponentInterface {
     fugacityCoefficient = 1.0;
     // this.fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
     // phase.getPressure());
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
 
@@ -1360,13 +1348,13 @@ abstract class Component implements ComponentInterface {
   public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
     double dp = phase.getPressure() / 1.0e5;
-    double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setPressure(phase.getPressure() - dp);
-    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
-    double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setPressure(phase.getPressure() + dp);
-    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
     dfugdp = (Math.log(temp1) - Math.log(temp2)) / dp;
     return dfugdp;
@@ -1377,14 +1365,14 @@ abstract class Component implements ComponentInterface {
   public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
     double dt = phase.getTemperature() / 1.0e6;
-    double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setTemperature(phase.getTemperature() - dt);
-    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
-    double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     // phase.setTemperature(phase.getTemperature()+dt);
     // System.out.println("temp " + phase.getTemperature());
-    // phase.init(numberOfMolesInPhase, numberOfComponents, 1,phase.getPhaseType(),
+    // phase.init(numberOfMolesInPhase, numberOfComponents, 1,
     // phase.getBeta());
     // phase.getComponents()[componentNumber].fugcoef(phase, numberOfComponents,
     // phase.getTemperature(), phase.getPressure());
@@ -1434,12 +1422,6 @@ abstract class Component implements ComponentInterface {
    */
   public void setPaulingAnionicDiameter(double paulingAnionicDiameter) {
     this.paulingAnionicDiameter = paulingAnionicDiameter;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final double getLogFugacityCoefficient() {
-    return logFugacityCoefficient;
   }
 
   /** {@inheritDoc} */
@@ -1520,7 +1502,6 @@ abstract class Component implements ComponentInterface {
   @Override
   public void setFugacityCoefficient(double val) {
     fugacityCoefficient = val;
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
   }
 
   /** {@inheritDoc} */
@@ -2257,12 +2238,12 @@ abstract class Component implements ComponentInterface {
       return numberOfMolesInPhase * getMolarMass() * 3600.0;
     } else if (flowunit.equals("tonnes/year")) {
       return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 365.0 / 1000.0;
-    } else if (flowunit.equals("m3/hr")) {
-      return getVoli() / 1.0e5 * 3600.0;
-    } else if (flowunit.equals("m3/min")) {
-      return getVoli() / 1.0e5 * 60.0;
     } else if (flowunit.equals("m3/sec")) {
       return getVoli() / 1.0e5;
+    } else if (flowunit.equals("m3/min")) {
+      return getVoli() / 1.0e5 * 60.0;
+    } else if (flowunit.equals("m3/hr")) {
+      return getVoli() / 1.0e5 * 3600.0;
     } else if (flowunit.equals("mole/sec")) {
       return numberOfMolesInPhase;
     } else if (flowunit.equals("mole/min")) {

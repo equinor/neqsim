@@ -17,11 +17,15 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  */
 public class Adjuster extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Adjuster.class);
 
   ProcessEquipmentInterface adjustedEquipment = null;
   ProcessEquipmentInterface targetEquipment = null;
 
-  String adjustedVarialble = "";
+  String adjustedVariable = "";
+  String adjustedVariableUnit = "";
+  double maxAdjustedValue = 1e10;
+  double minAdjustedValue = -1e10;
   String targetVariable = "";
   String targetPhase = "";
   String targetComponent = "";
@@ -36,8 +40,6 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
   int iterations = 0;
   private boolean activateWhenLess = false;
-
-  static Logger logger = LogManager.getLogger(Adjuster.class);
 
   /**
    * <p>
@@ -70,9 +72,25 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * @param adjstedVariable a {@link java.lang.String} object
    */
   public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
+      String adjstedVariable, String unit) {
+    this.adjustedEquipment = adjustedEquipment;
+    this.adjustedVariable = adjstedVariable;
+    this.adjustedVariableUnit = unit;
+  }
+
+  /**
+   * <p>
+   * setAdjustedVariable.
+   * </p>
+   *
+   * @param adjustedEquipment a
+   *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+   * @param adjstedVariable a {@link java.lang.String} object
+   */
+  public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
       String adjstedVariable) {
     this.adjustedEquipment = adjustedEquipment;
-    this.adjustedVarialble = adjstedVariable;
+    this.adjustedVariable = adjstedVariable;
   }
 
   /**
@@ -143,8 +161,14 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   public void run(UUID id) {
     oldError = error;
 
-    if (adjustedVarialble.equals("mass flow")) {
+    if (adjustedVariable.equals("mass flow")) {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate("kg/hr");
+    } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
+      inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate(adjustedVariableUnit);
+    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+      inputValue = ((Stream) adjustedEquipment).getPressure(adjustedVariableUnit);
+    } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+      inputValue = ((Stream) adjustedEquipment).getTemperature(adjustedVariableUnit);
     } else {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getNumberOfMoles();
     }
@@ -173,11 +197,19 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     double deviation = targetValue - targetValueCurrent;
 
     error = deviation;
-    logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
     if (iterations < 2) {
-      if (adjustedVarialble.equals("mass flow")) {
+      if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
             "kg/hr");
+      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(
+            inputValue + Math.signum(deviation) * inputValue / 100.0, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setPressure(inputValue + deviation / 10.0,
+            adjustedVariableUnit);
+      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setTemperature(inputValue + deviation / 10.0,
+            adjustedVariableUnit);
       } else {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
             "mol/sec");
@@ -185,9 +217,22 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     } else {
       double derivate = (error - oldError) / (inputValue - oldInputValue);
       double newVal = error / derivate;
-      if (adjustedVarialble.equals("mass flow")) {
+      if (inputValue - newVal > maxAdjustedValue) {
+        newVal = inputValue - maxAdjustedValue;
+      }
+      if (inputValue - newVal < minAdjustedValue) {
+        newVal = inputValue - minAdjustedValue;
+      }
+      if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
             "kg/hr");
+      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
+            adjustedVariableUnit);
+      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setPressure(inputValue - newVal, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setTemperature(inputValue - newVal, adjustedVariableUnit);
       } else {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
             "mol/sec");
@@ -306,4 +351,28 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   public void setActivateWhenLess(boolean activateWhenLess) {
     this.activateWhenLess = activateWhenLess;
   }
+
+  public void setMaxAdjustedValue(double maxVal) {
+    maxAdjustedValue = maxVal;
+    if (maxAdjustedValue < minAdjustedValue) {
+      minAdjustedValue = maxAdjustedValue;
+    }
+  }
+
+  public void setMinAdjustedValue(double minVal) {
+    minAdjustedValue = minVal;
+    if (minAdjustedValue > maxAdjustedValue) {
+      maxAdjustedValue = minAdjustedValue;
+    }
+
+  }
+
+  public double getMaxAdjustedValue() {
+    return maxAdjustedValue;
+  }
+
+  public double getMinAdjustedValue() {
+    return minAdjustedValue;
+  }
+
 }

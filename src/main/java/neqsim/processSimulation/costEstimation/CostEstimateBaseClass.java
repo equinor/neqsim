@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processSystem.ProcessSystem;
 
 /**
  * <p>
@@ -19,7 +19,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(CostEstimateBaseClass.class);
 
-  private ProcessSystem processSystem;
+  private SystemMechanicalDesign processdesign;
   private double CAPEXperWeight = 1000.0; // KNOK/tones
 
   /**
@@ -27,20 +27,23 @@ public class CostEstimateBaseClass implements java.io.Serializable {
    * Constructor for CostEstimateBaseClass.
    * </p>
    *
-   * @param process a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+   * @param processdesign a {@link neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign}
+   *        object
    */
-  public CostEstimateBaseClass(ProcessSystem process) {
-    this.processSystem = process;
+  public CostEstimateBaseClass(SystemMechanicalDesign processdesign) {
+    this.processdesign = processdesign;
   }
 
   /**
-   * <p>Constructor for CostEstimateBaseClass.</p>
+   * <p>
+   * Constructor for CostEstimateBaseClass.
+   * </p>
    *
-   * @param process input process
+   * @param processdesign a {@link neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign}
    * @param costFactor cost factor
    */
-  public CostEstimateBaseClass(ProcessSystem process, double costFactor) {
-    this(process);
+  public CostEstimateBaseClass(SystemMechanicalDesign processdesign, double costFactor) {
+    this(processdesign);
     this.CAPEXperWeight = costFactor;
   }
 
@@ -52,7 +55,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
    * @return a double
    */
   public double getWeightBasedCAPEXEstimate() {
-    return this.processSystem.getSystemMechanicalDesign().getTotalWeight() * CAPEXperWeight;
+    return this.processdesign.getTotalWeight() * CAPEXperWeight;
   }
 
   /**
@@ -64,12 +67,14 @@ public class CostEstimateBaseClass implements java.io.Serializable {
    */
   public double getCAPEXestimate() {
     double cost = 0;
-    ArrayList<String> names = this.processSystem.getAllUnitNames();
+    ArrayList<String> names = processdesign.getProcess().getAllUnitNames();
     for (int i = 0; i < names.size(); i++) {
       try {
-        if (!((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)) == null)) {
-          cost += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
-              .getMechanicalDesign().getCostEstimate().getTotaltCost();
+        if (!((ProcessEquipmentInterface) this.processdesign.getProcess()
+            .getUnit(names.get(i)) == null)) {
+          cost +=
+              ((ProcessEquipmentInterface) this.processdesign.getProcess().getUnit(names.get(i)))
+                  .getMechanicalDesign().getCostEstimate().getTotaltCost();
         }
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
@@ -87,12 +92,15 @@ public class CostEstimateBaseClass implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     CostEstimateBaseClass other = (CostEstimateBaseClass) obj;
     return Double.doubleToLongBits(CAPEXperWeight) == Double.doubleToLongBits(other.CAPEXperWeight);
   }

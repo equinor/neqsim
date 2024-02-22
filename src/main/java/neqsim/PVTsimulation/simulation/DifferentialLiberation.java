@@ -2,6 +2,7 @@ package neqsim.PVTsimulation.simulation;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -113,7 +114,6 @@ public class DifferentialLiberation extends BasePVTsimulation {
       }
       totalVolume[i] = getThermoSystem().getVolume();
       liquidVolume[i] = getThermoSystem().getVolume();
-      System.out.println("volume " + totalVolume[i]);
 
       if (getThermoSystem().getNumberOfPhases() > 1) {
         if (!saturationConditionFound) {
@@ -126,7 +126,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
           }
         }
         gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume()
-            * getThermoSystem().getPhase(0).getPressure() / 1.01325
+            * getThermoSystem().getPhase(0).getPressure()
+            / ThermodynamicConstantsInterface.referencePressure
             / getThermoSystem().getPhase(0).getZ() * 288.15 / getThermoSystem().getTemperature();
         totalGasStandardVolume += getGasStandardVolume()[i];
         // if (totalVolume[i] > saturationVolume) {
@@ -156,12 +157,20 @@ public class DifferentialLiberation extends BasePVTsimulation {
         double test = volumeCorrection / getThermoSystem().getPhase(0).getMolarVolume();
 
         for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-          getThermoSystem().addComponent(j,
-              -test * getThermoSystem().getPhase(0).getComponent(j).getx());
+          try {
+            double change =
+                (test * getThermoSystem().getPhase(0).getComponent(j).getx() < getThermoSystem()
+                    .getPhase(0).getComponent(j).getNumberOfMolesInPhase())
+                        ? test * getThermoSystem().getPhase(0).getComponent(j).getx()
+                        : test * getThermoSystem().getPhase(0).getComponent(j).getx();
+            getThermoSystem().addComponent(j, -change);
+          } catch (Exception e) {
+            logger.debug(e.getMessage());
+          }
         }
       }
     }
-    getThermoSystem().setPressure(1.01325);
+    getThermoSystem().setPressure(ThermodynamicConstantsInterface.referencePressure);
     getThermoSystem().setTemperature(288.15);
     try {
       thermoOps.TPflash();
@@ -180,11 +189,12 @@ public class DifferentialLiberation extends BasePVTsimulation {
         Bg[i] = gasVolume[i] / getGasStandardVolume()[i];
         Rs[i] = (totalGasStandardVolume - total) / VoilStd;
       }
-      System.out.println("Bo " + getBo()[i] + " Bg " + getBg()[i] + " Rs " + getRs()[i]
-          + " oil density " + getOilDensity()[i] + "  gas gracvity " + getRelGasGravity()[i]
-          + " Zgas " + getZgas()[i] + " gasstdvol " + getGasStandardVolume()[i]);
+      /*
+       * System.out.println("Bo " + getBo()[i] + " Bg " + getBg()[i] + " Rs " + getRs()[i] +
+       * " oil density " + getOilDensity()[i] + "  gas gracvity " + getRelGasGravity()[i] + " Zgas "
+       * + getZgas()[i] + " gasstdvol " + getGasStandardVolume()[i]);
+       */
     }
-    System.out.println("test finished");
   }
 
   /**

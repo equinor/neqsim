@@ -161,6 +161,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
 
         if (!thermoSystem.hasPhaseType("gas")) {
+          // TODO: here is a bug, calling with input oil does nothing.
           thermoSystem.setPhaseType("oil", 1);
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
@@ -170,6 +171,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
 
         if (!thermoSystem.hasPhaseType("oil")) {
+          // TODO: here is a bug, calling with input gas does nothing.
           thermoSystem.setPhaseType("gas", 1);
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
@@ -235,7 +237,6 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
   public void writeOLGAinpFile(String filename) {
     try (Writer writer = new BufferedWriter(
         new OutputStreamWriter(new FileOutputStream("c:/temp/filename.txt"), "utf-8"))) {
-
       writer.write("PRESSURE= (");
       for (int i = 0; i < pressures.length; i++) {
         thermoSystem.setPressure(pressures[i]);

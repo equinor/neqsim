@@ -13,6 +13,7 @@ import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Recycle;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * Test class for GlycolRig.
@@ -63,8 +64,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.getCondenser().setOutTemperature(273.15 + 104.0);
     column.getTray(1).addStream(gasToReboiler);
     // column.getReboiler().addStream(gasToReboiler);
-    column.setTopPressure(0.1 + 1.01325);
-    column.setBottomPressure(0.2 + 1.01325);
+    column.setTopPressure(0.1 + ThermodynamicConstantsInterface.referencePressure);
+    column.setBottomPressure(0.2 + ThermodynamicConstantsInterface.referencePressure);
 
     WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
     stripper.addSolventInStream(column.getLiquidOutStream());
@@ -126,7 +127,6 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     try {
       runThr.join(10 * 60000);
     } catch (Exception ex) {
-
     }
     double wtpWaterRichTEG =
         TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
@@ -200,8 +200,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.addFeedStream(feedToRegenerator, 1);
     column.getReboiler().setOutTemperature(273.15 + 70.0);
     column.getCondenser().setOutTemperature(273.15 - 10.0);
-    column.setTopPressure(1.0 + 1.01325);
-    column.setBottomPressure(1.0 + 1.01325);
+    column.setTopPressure(1.0 + ThermodynamicConstantsInterface.referencePressure);
+    column.setBottomPressure(1.0 + ThermodynamicConstantsInterface.referencePressure);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();

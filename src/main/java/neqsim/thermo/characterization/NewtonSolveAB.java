@@ -15,14 +15,15 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class NewtonSolveAB implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NewtonSolveAB.class);
+
   int iter = 0;
   Matrix Jac;
   Matrix fvec;
-  Matrix sol, dx;
+  Matrix sol;
+  Matrix dx;
   int numberOfComponents = 0;
   TBPCharacterize characterizeClass;
-  static Logger logger = LogManager.getLogger(NewtonSolveAB.class);
-
   SystemInterface system = null;
 
   /**

@@ -21,13 +21,6 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
    * <p>
    * Constructor for freezingPointTemperatureFlashOld.
    * </p>
-   */
-  public freezingPointTemperatureFlashOld() {}
-
-  /**
-   * <p>
-   * Constructor for freezingPointTemperatureFlashOld.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

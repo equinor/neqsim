@@ -17,9 +17,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
    * Constructor of a fluid object using the CPA-EoS version of Equinor.
    */
   public SystemSrkCPAstatoil() {
-    super();
-    attractiveTermNumber = 15;
-    modelName = "CPAs-SRK-EOS-statoil";
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -29,15 +27,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkCPAstatoil(double T, double P) {
-    super(T, P);
-    modelName = "CPAs-SRK-EOS-statoil";
-    attractiveTermNumber = 15;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseSrkCPAs();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-    this.useVolumeCorrection(true);
+    this(T, P, false);
   }
 
   /**
@@ -48,7 +38,8 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkCPAstatoil(double T, double P, boolean checkForSolids) {
-    super(T, P, checkForSolids);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     modelName = "CPAs-SRK-EOS-statoil";
     attractiveTermNumber = 15;
     for (int i = 0; i < numberOfPhases; i++) {
@@ -59,7 +50,6 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
     this.useVolumeCorrection(true);
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -67,7 +57,6 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
     }
 
     if (hydrateCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhaseHydrate();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

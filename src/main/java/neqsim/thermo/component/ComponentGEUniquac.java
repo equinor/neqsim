@@ -20,11 +20,10 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentGEUniquac extends ComponentGE {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentGEUniquac.class);
 
   double r = 0;
   double q = 0;
-
-  static Logger logger = LogManager.getLogger(ComponentGEUniquac.class);
 
   /**
    * <p>
@@ -71,15 +70,16 @@ public class ComponentGEUniquac extends ComponentGE {
 
   /**
    * <p>
-   * fugcoef.
+   * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient
+   *        of.
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
    * @param phasetype a int
-   * @return a double
+   * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, int phasetype) {

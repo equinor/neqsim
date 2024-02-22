@@ -13,9 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
-import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
-import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
@@ -32,9 +30,10 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ProcessSystem extends SimulationBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   transient Thread thisThread;
-  String[][] signalDB = new String[1000][100];
+  String[][] signalDB = new String[10000][100];
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   private ArrayList<ProcessEquipmentInterface> unitOperations =
@@ -43,7 +42,6 @@ public class ProcessSystem extends SimulationBaseClass {
       new ArrayList<MeasurementDeviceInterface>(0);
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
-  static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   /**
    * <p>
@@ -92,6 +90,38 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     getUnitOperations().add(operation);
+    if (operation instanceof ModuleInterface) {
+      ((ModuleInterface) operation).initializeModule();
+    }
+  }
+
+  /**
+   * <p>
+   * add.
+   * </p>
+   *
+   */
+  public void add(int position, ProcessEquipmentInterface operation) {
+    ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
+
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit == operation) {
+        return;
+      }
+    }
+
+    if (getAllUnitNames().contains(operation.getName())) {
+      String currClass = operation.getClass().getSimpleName();
+      int num = 1;
+      for (ProcessEquipmentInterface unit : units) {
+        if (unit.getClass().getSimpleName().equals(currClass)) {
+          num++;
+        }
+      }
+      operation.setName(currClass + Integer.toString(num));
+    }
+
+    getUnitOperations().add(position, operation);
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
     }
@@ -398,7 +428,10 @@ public class ProcessSystem extends SimulationBaseClass {
       for (int i = 0; i < unitOperations.size(); i++) {
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
+            if (iter == 1
+                || ((ProcessEquipmentInterface) unitOperations.get(i)).needRecalculation()) {
+              ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
+            }
           } catch (Exception ex) {
             // String error = ex.getMessage();
             logger.error(ex.getMessage(), ex);
@@ -407,7 +440,7 @@ public class ProcessSystem extends SimulationBaseClass {
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
             && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
+            ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
           } catch (Exception ex) {
             // String error = ex.getMessage();
             logger.error(ex.getMessage(), ex);
@@ -713,28 +746,6 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * Get a SystemMechanicalDesign object from processSystem.
-   * </p>
-   *
-   * @return a new SystemMechanicalDesign object
-   */
-  public SystemMechanicalDesign getSystemMechanicalDesign() {
-    return new SystemMechanicalDesign(this);
-  }
-
-  /**
-   * <p>
-   * Get a CostEstimateBaseClass object from processSystem.
-   * </p>
-   *
-   * @return a new CostEstimateBaseClass object
-   */
-  public CostEstimateBaseClass getCostEstimator() {
-    return new CostEstimateBaseClass(this);
-  }
-
-  /**
-   * <p>
    * getEntropyProduction.
    * </p>
    *
@@ -814,7 +825,13 @@ public class ProcessSystem extends SimulationBaseClass {
                 .getDuty();
       }
     }
-    return heat;
+    if (unit.equals("MW")) {
+      return heat / 1.0e6;
+    } else if (unit.equals("kW")) {
+      return heat / 1.0e3;
+    } else {
+      return heat;
+    }
   }
 
   /**
@@ -834,26 +851,13 @@ public class ProcessSystem extends SimulationBaseClass {
                 .getDuty();
       }
     }
-    return heat;
-  }
-
-  /**
-   * <p>
-   * getMechanicalWeight.
-   * </p>
-   *
-   * @param unit a {@link java.lang.String} object
-   * @return a double
-   */
-  public double getMechanicalWeight(String unit) {
-    double weight = 0.0;
-    for (int i = 0; i < unitOperations.size(); i++) {
-      unitOperations.get(i).getMechanicalDesign().calcDesign();
-      System.out.println("Name " + unitOperations.get(i).getName() + "  weight "
-          + unitOperations.get(i).getMechanicalDesign().getWeightTotal());
-      weight += unitOperations.get(i).getMechanicalDesign().getWeightTotal();
+    if (unit.equals("MW")) {
+      return heat / 1.0e6;
+    } else if (unit.equals("kW")) {
+      return heat / 1.0e3;
+    } else {
+      return heat;
     }
-    return weight;
   }
 
   /**

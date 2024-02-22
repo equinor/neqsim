@@ -2,6 +2,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -76,25 +77,15 @@ public class ComponentHydrateKluda extends Component {
 
   /**
    * <p>
-   * setStructure.
+   * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param structure a int
-   */
-  public void setStructure(int structure) {
-    this.hydrateStructure = structure;
-  }
-
-  /**
-   * <p>
-   * fugcoef.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient
+   *        of.
    * @param numberOfComps a int
    * @param temp a double
    * @param pres a double
-   * @return a double
+   * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
     if (componentName.equals("water")) {
@@ -125,15 +116,13 @@ public class ComponentHydrateKluda extends Component {
                 * ((pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp))) * 1e5)
             / pres;
         // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
-        // logFugacityCoefficient = Math.log(fugacityCoefficient);
-        // logFugacityCoefficient += val*boltzmannConstant/R;
-
-        // fugacityCoefficient = Math.exp(logFugacityCoefficient);
+        // fugacityCoefficient = Math.exp(Math.log(fugacityCoefficient) + val*boltzmannConstant/R);
         logger.info("fugacityCoefficient " + fugacityCoefficient);
       } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-8);
     } else {
       fugacityCoefficient = 1e5;
     }
+
     // System.out.println("fug " + fugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -162,6 +151,17 @@ public class ComponentHydrateKluda extends Component {
 
   /**
    * <p>
+   * setStructure.
+   * </p>
+   *
+   * @param structure a int
+   */
+  public void setStructure(int structure) {
+    this.hydrateStructure = structure;
+  }
+
+  /**
+   * <p>
    * getEmptyHydrateStructureVapourPressure.
    * </p>
    *
@@ -179,7 +179,8 @@ public class ComponentHydrateKluda extends Component {
           + par4_struc1 * temperature) / 1.0e5;
     }
     if (type == 1) {
-      return Math.exp(par1_struc2 + par2_struc2 / temperature) * 1.01325;
+      return Math.exp(par1_struc2 + par2_struc2 / temperature)
+          * ThermodynamicConstantsInterface.referencePressure;
     } else {
       return 0.0;
     }

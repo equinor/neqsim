@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.reservoir;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.NamedBaseClass;
@@ -74,7 +75,7 @@ public class Well extends NamedBaseClass {
   public double getGOR() {
     SystemInterface locStream = (stream.getFluid()).clone();
     locStream.setTemperature(288.15);
-    locStream.setPressure(1.01325);
+    locStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
     double GOR = Double.NaN;
@@ -94,10 +95,10 @@ public class Well extends NamedBaseClass {
   public double getStdGasProduction() {
     SystemInterface locStream = (stream.getFluid()).clone();
     locStream.setTemperature(288.15);
-    locStream.setPressure(1.01325);
+    locStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
-    double volume = Double.NaN;
+    double volume = 0;
     if (locStream.hasPhaseType("gas")) {
       volume = locStream.getPhase("gas").getVolume("m3");
     }
@@ -114,12 +115,32 @@ public class Well extends NamedBaseClass {
   public double getStdOilProduction() {
     SystemInterface locStream = (stream.getFluid()).clone();
     locStream.setTemperature(288.15);
-    locStream.setPressure(1.01325);
+    locStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
-    double volume = Double.NaN;
+    double volume = 0;
     if (locStream.hasPhaseType("oil")) {
       volume = locStream.getPhase("oil").getVolume("m3");
+    }
+    return volume;
+  }
+
+  /**
+   * <p>
+   * getStdWaterProduction.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getStdWaterProduction() {
+    SystemInterface locStream = (stream.getFluid()).clone();
+    locStream.setTemperature(288.15);
+    locStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
+    ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
+    ops.TPflash();
+    double volume = 0;
+    if (locStream.hasPhaseType("aqueous")) {
+      volume = locStream.getPhase("aqueous").getVolume("m3");
     }
     return volume;
   }

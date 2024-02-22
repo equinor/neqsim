@@ -8,6 +8,7 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
@@ -16,7 +17,7 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  *
  * @author Even Solbraa
  */
-abstract class PhaseEos extends Phase implements PhaseEosInterface {
+public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhaseEos.class);
 
@@ -57,7 +58,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public PhaseEos() {
     super();
     mixSelect = new EosMixingRules();
-    componentArray = new ComponentEosInterface[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentEosInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
     mixRule = mixSelect.getMixingRule(1);
     // solver = new newtonRhapson();
   }
@@ -76,10 +77,10 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
-    if (phase > 1) {
-      phase = 0;
+    if (phase.getValue() > 1) {
+      phase = PhaseType.LIQUID;
     }
     if (!mixingRuleDefined) {
       setMixingRule(1);
@@ -102,7 +103,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         if (calcMolarVolume) {
           molarVolume = molarVolume(pressure, temperature,
               getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase,
-              phase);
+              phase.getValue());
         }
       } catch (Exception ex) {
         logger.error("Failed to solve for molarVolume within the iteration limit.");

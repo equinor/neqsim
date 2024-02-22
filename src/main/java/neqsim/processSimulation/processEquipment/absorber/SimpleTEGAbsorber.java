@@ -70,7 +70,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     if (numberOfInputStreams == 0) {
       mixedStream = (Stream) streams.get(0).clone();
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
       mixedStream.getThermoSystem().init(3);
     }
@@ -87,7 +86,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    *        object
    */
   public void addGasInStream(StreamInterface newStream) {
-    // todo: fail if gasInStream is not null?
+    // TODO: fail if gasInStream is not null?
     gasInStream = (Stream) newStream;
     gasOutStream = (Stream) newStream.clone();
     addStream(newStream);
@@ -102,7 +101,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    *        object
    */
   public void addSolventInStream(StreamInterface newStream) {
-    // todo: fail if solventInStream is not null?
+    // TODO: fail if solventInStream is not null?
     solventInStream = (Stream) newStream;
     solventOutStream = (Stream) newStream.clone();
     addStream(newStream);
@@ -118,7 +117,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    *        object
    */
   public void replaceSolventInStream(StreamInterface newStream) {
-    // todo: fails if solventStreamNumber is 0, i.e. no solventinstream set?
+    // TODO: fails if solventStreamNumber is 0, i.e. no solventinstream set?
     solventInStream = (Stream) newStream;
     streams.set(solventStreamNumber, solventInStream);
   }
@@ -329,7 +328,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // double yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
       mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
       mixStream();
       // System.out.println("feed total number of water " +

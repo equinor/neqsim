@@ -196,8 +196,9 @@ public class AnnularFlow extends TwoPhaseFlowNode {
       // test.write(("node " + i), fileName, false);
       // System.out.println("velocity " + test.getVelocity(1));
       // test.getInterphaseSystem().display("length ");
-      test.display("testnode " + i);
-      test.getBulkSystem().display("test");
+      test.getBulkSystem().prettyPrint();
+      // test.display("testnode " + i);
+      // test.getBulkSystem().display("test");
       // test.getFluidBoundary().display("test");
     }
     // test.display("testnode last");
@@ -210,8 +211,8 @@ public class AnnularFlow extends TwoPhaseFlowNode {
       test.calcFluxes();
       test.update();
       if (i % 100 == 0) {
-        test.display("testnode " + i);
-        test.getBulkSystem().display("test " + i);
+        // test.display("testnode " + i);
+        test.getBulkSystem().prettyPrint();
       }
       System.out.println("aqueous phase " + test.getBulkSystem().getPhaseFraction("oil", "wt"));
     }

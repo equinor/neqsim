@@ -21,13 +21,6 @@ public class SeparatorResponse {
    * <p>
    * Constructor for SeparatorResponse.
    * </p>
-   */
-  public SeparatorResponse() {}
-
-  /**
-   * <p>
-   * Constructor for SeparatorResponse.
-   * </p>
    *
    * @param inputSeparator a
    *        {@link neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator} object

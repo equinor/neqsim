@@ -25,6 +25,5 @@ public class FrictionTheoryViscosityMethodTest extends neqsim.NeqSimTest{
         double expected = 1.11212E-5;
         double actual = testSystem.getPhase("gas").getViscosity("kg/msec");
         assertEquals(expected, actual, 1e-6);
-
     }
 }

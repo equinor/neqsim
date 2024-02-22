@@ -281,6 +281,8 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   /** {@inheritDoc} */
   @Override
   public void init() {
+    bulkSystem.initBeta();
+    bulkSystem.init_x_y();
     bulkSystem.init(3);
     bulkSystem.initPhysicalProperties();
   }
@@ -288,6 +290,8 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   /** {@inheritDoc} */
   @Override
   public void initBulkSystem() {
+    bulkSystem.initBeta();
+    bulkSystem.init_x_y();
     bulkSystem.init(3);
     bulkSystem.initPhysicalProperties();
   }

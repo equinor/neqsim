@@ -15,7 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
  *
  * @author Even Solbraa
  */
-abstract class ComponentGE extends Component implements ComponentGEInterface {
+public abstract class ComponentGE extends Component implements ComponentGEInterface {
   private static final long serialVersionUID = 1000;
 
   protected double gamma = 0;
@@ -63,7 +63,6 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
       // gamma* benyttes ikke
       gammaRefCor = activinf;
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
 
     return fugacityCoefficient;
   }

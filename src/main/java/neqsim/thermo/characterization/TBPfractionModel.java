@@ -2,6 +2,7 @@ package neqsim.thermo.characterization;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,8 +15,9 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class TBPfractionModel implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  String name = "";
   static Logger logger = LogManager.getLogger(TBPfractionModel.class);
+
+  String name = "";
 
   /**
    * <p>
@@ -24,6 +26,9 @@ public class TBPfractionModel implements java.io.Serializable {
    */
   public TBPfractionModel() {}
 
+  /**
+   * Base model for something.
+   */
   public abstract class TBPBaseModel implements TBPModelInterface, Cloneable, java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
@@ -51,7 +56,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
       double TBR = TB / TC;
-      double PBR = 1.01325 / PC;
+      double PBR = ThermodynamicConstantsInterface.referencePressure / PC;
       if (TBR < 0.8) {
         return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR)
             - 0.169347 * Math.pow(TBR, 6.0))
@@ -68,7 +73,8 @@ public class TBPfractionModel implements java.io.Serializable {
       double TC = calcTC(molarMass, density);
       double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
-      return 3.0 / 7.0 * Math.log10(PC / 1.01325) / (TC / TB - 1.0) - 1.0;
+      return 3.0 / 7.0 * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure)
+          / (TC / TB - 1.0) - 1.0;
     }
 
     @Override
@@ -76,10 +82,11 @@ public class TBPfractionModel implements java.io.Serializable {
       double TC = calcTC(molarMass, density);
       double PC = calcPC(molarMass, density);
       double acs = calcAcentricFactor(molarMass, density); // thermoSystem.getPhase(thermoSystem.getPhaseIndex(0)).getComponent(0).getAcentricFactor();
-      double criticaVol = (0.2918 - 0.0928 * acs) * 8.314 * TC / PC * 10.0;
+      double criticaVol =
+          (0.2918 - 0.0928 * acs) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
       if (criticaVol < 0) {
         // logger.info("acentric factor in calc critVol " + acs);
-        criticaVol = (0.2918 - 0.0928) * 8.314 * TC / PC * 10.0;
+        criticaVol = (0.2918 - 0.0928) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
       }
       return criticaVol;
     }
@@ -103,6 +110,9 @@ public class TBPfractionModel implements java.io.Serializable {
     }
   }
 
+  /**
+   * PedersenTBPModelSRK
+   */
   public class PedersenTBPModelSRK extends TBPBaseModel {
     private static final long serialVersionUID = 1000;
 
@@ -271,7 +281,8 @@ public class TBPfractionModel implements java.io.Serializable {
       double TC = calcTC(molarMass, density);
       double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
-      return 3.0 / 7.0 * Math.log10(PC / 1.01325) / (TC / TB - 1.0) - 1.0;
+      return 3.0 / 7.0 * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure)
+          / (TC / TB - 1.0) - 1.0;
     }
 
     @Override
@@ -288,7 +299,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
       double TBR = TB / TC;
-      double PBR = 1.01325 / PC;
+      double PBR = ThermodynamicConstantsInterface.referencePressure / PC;
       if (TBR < 0.8) {
         return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR)
             - 0.169347 * Math.pow(TBR, 6.0))

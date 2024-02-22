@@ -22,6 +22,8 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   private boolean multiPhase = true;
   private double approachToSaturation = 1.0;
 
+  protected double oldInletFlowRate = 0.0;
+
   /**
    * <p>
    * Constructor for StreamSaturatorUtil.
@@ -62,8 +64,25 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    if (outStream == null || inStream == null) {
+      return true;
+    }
+    if (inStream.getTemperature() == outStream.getTemperature()
+        && inStream.getPressure() == outStream.getPressure()
+        && Math.abs(inStream.getFlowRate("kg/hr") - oldInletFlowRate)
+            / inStream.getFlowRate("kg/hr") < 1e-3) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     boolean changeBack = false;
+
     thermoSystem = inStream.getThermoSystem().clone();
     if (multiPhase && !thermoSystem.doMultiPhaseCheck()) {
       thermoSystem.setMultiPhaseCheck(true);
@@ -88,6 +107,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     }
 
     outStream.setThermoSystem(thermoSystem);
+    oldInletFlowRate = inStream.getFlowRate("kg/hr");
     setCalculationIdentifier(id);
   }
 

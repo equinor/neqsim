@@ -131,11 +131,13 @@ public class ProcessModule extends SimulationBaseClass {
           int index = operationsIndex.indexOf(i);
           for (ProcessEquipmentInterface unitOperation : addedUnitOperations.get(index)
               .getUnitOperations()) {
-            unitOperation.run();
+            if (iteration == 0 || unitOperation.needRecalculation()) {
+              unitOperation.run(id);
+            }
           }
         } else if (modulesIndex.contains(i)) {
           int index = modulesIndex.indexOf(i);
-          addedModules.get(index).run();
+          addedModules.get(index).run(id);
         }
       }
       iteration++;
@@ -213,6 +215,32 @@ public class ProcessModule extends SimulationBaseClass {
 
     for (ProcessModule processModule : addedModules) {
       Object unit = processModule.getUnit(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+    return null; // no unit found with the given name
+  }
+
+
+
+    /**
+   * Returns the unit with the given name from the list of added unit operations and list of added
+   * modules.
+   *
+   * @param name the name of the unit to retrieve
+   * @return the unit with the given name, or {@code null} if no such unit is found
+   */
+  public Object getMeasurementDevice(String name) {
+    for (ProcessSystem processSystem : addedUnitOperations) {
+      Object unit = processSystem.getMeasurementDevice(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+
+    for (ProcessModule processModule : addedModules) {
+      Object unit = processModule.getMeasurementDevice(name);
       if (unit != null) {
         return unit;
       }

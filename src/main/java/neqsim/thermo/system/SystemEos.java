@@ -4,7 +4,7 @@ package neqsim.thermo.system;
  *
  * @author Even Solbraa
  */
-abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
+public abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
   private static final long serialVersionUID = 1000;
 
   /**
@@ -13,7 +13,7 @@ abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
    * </p>
    */
   public SystemEos() {
-    super();
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -25,6 +25,11 @@ abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemEos(double T, double P) {
+    this(T, P, false);
+  }
+
+  public SystemEos(double T, double P, boolean checkForSolids) {
     super(T, P);
+    this.solidPhaseCheck = checkForSolids;
   }
 }

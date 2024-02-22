@@ -1,6 +1,7 @@
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import Jama.Matrix;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -51,13 +52,6 @@ public class CricondenBarFlash extends pTphaseEnvelope {
    * <p>
    * Constructor for CricondenBarFlash.
    * </p>
-   */
-  public CricondenBarFlash() {}
-
-  /**
-   * <p>
-   * Constructor for CricondenBarFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param name a {@link java.lang.String} object
@@ -87,8 +81,8 @@ public class CricondenBarFlash extends pTphaseEnvelope {
     Pini = P;
     bubblePointFirst = false;
     system.setBeta(beta);
-    system.setPhaseType(0, "oil");
-    system.setPhaseType(1, "gas");
+    system.setPhaseType(0, PhaseType.OIL);
+    system.setPhaseType(1, PhaseType.GAS);
 
     for (int ii = 0; ii < numberOfComponents; ii++) {
       u.set(ii, 0, cricondenBarY[ii] / cricondenBarX[ii]);

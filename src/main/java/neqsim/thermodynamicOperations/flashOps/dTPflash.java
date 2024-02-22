@@ -28,13 +28,6 @@ public class dTPflash extends TPflash {
    * <p>
    * Constructor for dTPflash.
    * </p>
-   */
-  public dTPflash() {}
-
-  /**
-   * <p>
-   * Constructor for dTPflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param comps an array of {@link java.lang.String} objects

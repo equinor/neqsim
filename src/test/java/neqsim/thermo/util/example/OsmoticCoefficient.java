@@ -1,5 +1,6 @@
 package neqsim.thermo.util.example;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 
@@ -22,11 +23,13 @@ public class OsmoticCoefficient {
      */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemElectrolyteCPAstatoil(298.0, 1.01325);
-        // SystemInterface testSystem = new SystemElectrolyteCPA(298.15,1.01325201325);
-        // SystemInterface testSystem = new SystemSrkCPAs(298.15,1.01325);
+      SystemInterface testSystem =
+          new SystemElectrolyteCPAstatoil(298.0, ThermodynamicConstantsInterface.referencePressure);
+      // SystemInterface testSystem = new SystemElectrolyteCPA(298.15,1.01325201325);
         // SystemInterface testSystem = new
-        // SystemSrkSchwartzentruberEos(298.15,1.01325);
+        // SystemSrkCPAs(298.15,ThermodynamicConstantsInterface.referencePressure);
+        // SystemInterface testSystem = new
+        // SystemSrkSchwartzentruberEos(298.15,ThermodynamicConstantsInterface.referencePressure);
 
         // creates a 0.1 molar solution 0.0018
         testSystem.addComponent("methane", 10.0);

@@ -17,26 +17,20 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  */
 public class SetPoint extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(SetPoint.class);
 
   ProcessEquipmentInterface sourceEquipment = null;
-
   ProcessEquipmentInterface targetEquipment = null;
 
-  String sourceVarialble = "";
-
+  String sourceVariable = "";
   String targetVariable = "";
-
   String targetPhase = "";
-
   String targetComponent = "";
 
   double targetValue = 0.0;
   String targetUnit = "";
   double inputValue = 0.0;
-
   double oldInputValue = 0.0;
-
-  static Logger logger = LogManager.getLogger(SetPoint.class);
 
   /**
    * <p>
@@ -77,7 +71,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
     this.targetEquipment = targetEquipment;
     this.targetVariable = targetVariable;
     this.sourceEquipment = sourceEquipment;
-    run();
+    // run();
   }
 
   /**
@@ -92,7 +86,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment,
       String adjstedVariable) {
     this.sourceEquipment = adjustedEquipment;
-    this.sourceVarialble = adjstedVariable;
+    this.sourceVariable = adjstedVariable;
   }
 
   /**

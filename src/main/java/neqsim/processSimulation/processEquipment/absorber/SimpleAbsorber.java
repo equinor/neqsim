@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.absorber;
 
 import java.util.UUID;
+
 import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -213,7 +214,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     SystemInterface systemOut1 = inStream[1].getThermoSystem().clone();
     outStream[0].setThermoSystem(systemOut1);
     outStream[0].run(id);
-    outStream[1].run();
+    outStream[1].run(id);
 
     double error = 1e5;
     error = absorptionEfficiency - (outStream[1].getThermoSystem().getPhase(1).getComponent("CO2")

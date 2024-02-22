@@ -444,7 +444,7 @@ public class ComponentGeDuanSun extends ComponentGE {
       // phase.getPressure(); //gamma* benyttes ikke
       gammaRefCor = activinf;
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
+
     return fugacityCoefficient;
   }
 

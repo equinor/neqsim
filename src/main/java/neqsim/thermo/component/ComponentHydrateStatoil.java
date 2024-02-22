@@ -101,8 +101,6 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
       fugacityCoefficient = 1e50;
     }
 
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
-
     return fugacityCoefficient;
   }
 

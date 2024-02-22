@@ -33,13 +33,6 @@ public class PumpResponse {
      * <p>
      * Constructor for PumpResponse.
      * </p>
-     */
-    public PumpResponse() {}
-
-    /**
-     * <p>
-     * Constructor for PumpResponse.
-     * </p>
      *
      * @param inputPump a {@link neqsim.processSimulation.processEquipment.pump.Pump} object
      */

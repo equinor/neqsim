@@ -30,13 +30,13 @@ public class ComponentWonWax extends ComponentSolid {
     super(component_name, moles, molesInPhase, compnumber);
   }
 
-  // Uses Claperyons equation to calculate the solid fugacity
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase1) {
     if (!isWaxFormer()) {
       return 1.0e30;
     }
+
     return fugcoef2(phase1);
   }
 
@@ -58,12 +58,9 @@ public class ComponentWonWax extends ComponentSolid {
             * (1.0 - phase1.getTemperature() / getTriplePointTemperature()));
 
     fugacityCoefficient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
   }
 
-  // public double fugcoef(PhaseInterface phase, int numberOfComps, double temp,
-  // double pres){
   /**
    * <p>
    * getWonActivityCoefficient.

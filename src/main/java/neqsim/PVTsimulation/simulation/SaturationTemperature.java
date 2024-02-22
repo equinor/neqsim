@@ -31,7 +31,11 @@ public class SaturationTemperature extends BasePVTsimulation {
    * @return a double
    */
   public double calcSaturationTemperature() {
-    getThermoSystem().isImplementedCompositionDeriativesofFugacity(false);
+    boolean isMultiPhaseCheckChanged = false;
+    if (!getThermoSystem().doMultiPhaseCheck()) {
+      isMultiPhaseCheckChanged = true;
+      getThermoSystem().setMultiPhaseCheck(true);
+    }
     do {
       getThermoSystem().setTemperature(getThermoSystem().getTemperature() - 10.0);
       thermoOps.TPflash();
@@ -57,6 +61,9 @@ public class SaturationTemperature extends BasePVTsimulation {
     } while (Math.abs(maxTemp - minTemp) > 1e-5 && iteration < 500);
     getThermoSystem().setTemperature(maxTemp);
     thermoOps.TPflash();
+    if (isMultiPhaseCheckChanged) {
+      getThermoSystem().setMultiPhaseCheck(false);
+    }
     return getThermoSystem().getTemperature();
   }
 
@@ -98,7 +105,7 @@ public class SaturationTemperature extends BasePVTsimulation {
 
     SimulationInterface satPresSim = new SaturationTemperature(tempSystem);
     satPresSim.run();
-    satPresSim.getThermoSystem().display();
+    // satPresSim.getThermoSystem().display();
     /*
      * double saturationPressure = 350.0; double saturationTemperature = 273.15 + 80;
      * 

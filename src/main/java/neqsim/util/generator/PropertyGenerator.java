@@ -129,7 +129,7 @@ public class PropertyGenerator {
       Z[i] = fluid.getZ();
       viscosity[i] = fluid.getViscosity("cP");
       enthalpy[i] = fluid.getEnthalpy("J/mol");
-      entropy[i] = fluid.getEnthalpy("J/molK");
+      entropy[i] = fluid.getEntropy("J/molK");
       Cp[i] = fluid.getCp("kJ/kgK");
       Cv[i] = fluid.getCp("kJ/kgK");
       density[i] = fluid.getDensity("kg/m3");

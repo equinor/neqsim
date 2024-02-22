@@ -106,7 +106,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
       case GAS:
         return gasPhysicalProperties;
       case LIQUID:
-        // todo: check if it should be AQUEOUS?
+        // TODO: check if it should be AQUEOUS?
       case OIL:
         return oilPhysicalProperties;
       case AQUEOUS:

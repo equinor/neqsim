@@ -30,13 +30,6 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
    * <p>
    * Constructor for ReactiveFluidBoundary.
    * </p>
-   */
-  public ReactiveFluidBoundary() {}
-
-  /**
-   * <p>
-   * Constructor for ReactiveFluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -36,6 +36,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   public HashMap<String, String> properties = new HashMap<String, String>();
   public EnergyStream energyStream = new EnergyStream();
   private boolean isSetEnergyStream = false;
+  protected boolean isSolved = false;
 
   /**
    * <p>
@@ -120,6 +121,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public void initMechanicalDesign() {}
+
+  /** {@inheritDoc} */
+  @Override
   public String getSpecification() {
     return specification;
   }
@@ -139,7 +144,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    return true;
+    return isSolved;
   }
 
   /**

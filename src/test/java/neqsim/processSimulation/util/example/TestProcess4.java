@@ -37,7 +37,7 @@ public class TestProcess4 {
         Separator separator = new Separator("Separator 1", stream_1);
 
         // ThrottlingValve valve_1 = new ThrottlingValve(separator.getGasOutStream());
-        // valve_1.setOutletPressure(75.0 + 1.01325);
+        // valve_1.setOutletPressure(75.0 + ThermodynamicConstantsInterface.referencePressure);
         // valve_1.setIsoThermal(true);
 
         // Heater heater = new Heater(valve_1.getOutStream());

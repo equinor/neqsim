@@ -2,6 +2,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
@@ -32,8 +33,7 @@ public class ComponentHydrate extends Component {
   // double[] dHfHydrate = {-292714.5, -292016.0};
   double[] dGfHydrate = {-235557, -235614};
   double[] dHfHydrate = {-291786, -292016};
-  double[] reffug =
-      new double[neqsim.thermo.ThermodynamicConstantsInterface.MAX_NUMBER_OF_COMPONENTS];
+  double[] reffug = new double[neqsim.thermo.ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   private double sphericalCoreRadiusHydrate = 0.0;
   private double lennardJonesEnergyParameterHydrate = 0.0;
   private double lennardJonesMolecularDiameterHydrate = 0.0;
@@ -128,36 +128,15 @@ public class ComponentHydrate extends Component {
 
   /**
    * <p>
-   * Setter for the field <code>hydrateStructure</code>.
+   * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param structure a int
-   */
-  public void setHydrateStructure(int structure) {
-    this.hydrateStructure = structure;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>hydrateStructure</code>.
-   * </p>
-   *
-   * @return a int
-   */
-  public int getHydrateStructure() {
-    return this.hydrateStructure;
-  }
-
-  /**
-   * <p>
-   * fugcoef.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient
+   *        of.
    * @param numberOfComps a int
    * @param temp a double
    * @param pres a double
-   * @return a double
+   * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
     if (componentName.equals("water")) {
@@ -199,17 +178,37 @@ public class ComponentHydrate extends Component {
         // getEmptyHydrateStructureVapourPressure(hydrateStructure,temp) *
         // Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)))*1e5)/pres;
         // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
-        // logFugacityCoefficient = Math.log(fugacityCoefficient);
-        // logFugacityCoefficient += val*boltzmannConstant/R;
-        // fugacityCoefficient = Math.exp(logFugacityCoefficient);
+        // fugacityCoefficient = Math.exp(Math.log(fugacityCoefficient) + val*boltzmannConstant/R);
         // System.out.println("fugacityCoefficient " + fugacityCoefficient);
       } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-6);
     } else {
       fugacityCoefficient = 1e5;
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
+
     // System.out.println("fug " + fugacityCoefficient);
     return fugacityCoefficient;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>hydrateStructure</code>.
+   * </p>
+   *
+   * @param structure a int
+   */
+  public void setHydrateStructure(int structure) {
+    this.hydrateStructure = structure;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>hydrateStructure</code>.
+   * </p>
+   *
+   * @return a int
+   */
+  public int getHydrateStructure() {
+    return this.hydrateStructure;
   }
 
   /**
@@ -225,8 +224,10 @@ public class ComponentHydrate extends Component {
     if (type == -1) {
       return getSolidVaporPressure(temperature);
     } else {
-      return Math.exp(getEmptyHydrateVapourPressureConstant(type, 0)
-          + getEmptyHydrateVapourPressureConstant(type, 1) / temperature) * 1.01325;
+      return Math
+          .exp(getEmptyHydrateVapourPressureConstant(type, 0)
+              + getEmptyHydrateVapourPressureConstant(type, 1) / temperature)
+          * ThermodynamicConstantsInterface.referencePressure;
     }
   }
 
@@ -685,24 +686,25 @@ public class ComponentHydrate extends Component {
   // Math.exp(par1_struc1*Math.log(temperature)+par2_struc1/temperature+par3_struc1+par4_struc1*temperature)/1.0e5;
   // }
   // if(type==1){
-  // return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
+  // return
+  // Math.exp(par1_struc2+par2_struc2/temperature)*ThermodynamicConstantsInterface.referencePressure;
   // } else return 0.0;
   // }
 
   // public double getEmptyHydrateStructureVapourPressure(int type, double
   // temperature){
-
   // if(type==0){
-  // return Math.exp(par1_struc1+par2_struc1/temperature)*1.01325;
+  // return
+  // Math.exp(par1_struc1+par2_struc1/temperature)*ThermodynamicConstantsInterface.referencePressure;
   // }
   // if(type==1){
-  // return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
+  // return
+  // Math.exp(par1_struc2+par2_struc2/temperature)*ThermodynamicConstantsInterface.referencePressure;
   // } else return 0.0;
   // }
 
   // public double getEmptyHydrateStructureVapourPressuredT(int type, double
   // temperature){
-
   // if(type==0){
   // return
   // -par2_struc1/(temperature*temperature)*Math.exp(par1_struc1+par2_struc1/temperature);

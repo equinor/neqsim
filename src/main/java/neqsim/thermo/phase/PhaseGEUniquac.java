@@ -6,6 +6,7 @@
 
 package neqsim.thermo.phase;
 
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGEUniquac;
 
@@ -33,7 +34,7 @@ public class PhaseGEUniquac extends PhaseGE {
    */
   public PhaseGEUniquac() {
     super();
-    componentArray = new ComponentGEInterface[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentGEInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
@@ -69,19 +70,6 @@ public class PhaseGEUniquac extends PhaseGE {
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase);
     componentArray[compNumber] = new ComponentGEUniquac(name, moles, molesInPhase, compNumber);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
   }
 
   /** {@inheritDoc} */

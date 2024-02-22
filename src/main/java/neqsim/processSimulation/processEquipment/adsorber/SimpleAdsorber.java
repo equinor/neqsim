@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.adsorber;
 
 import java.util.UUID;
+
 import neqsim.processSimulation.mechanicalDesign.adsorber.AdsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -198,7 +199,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     SystemInterface systemOut1 = inStream[1].getThermoSystem().clone();
     outStream[0].setThermoSystem(systemOut1);
     outStream[0].run(id);
-    outStream[1].run();
+    outStream[1].run(id);
 
     double error = 1e5;
     error = absorptionEfficiency - (outStream[1].getThermoSystem().getPhase(1).getComponent("CO2")
@@ -218,7 +219,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
       // outStream[1].getThermoSystem().addComponent("CO2",(20.0-outStream[1].getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase()),0);
       outStream[1].getThermoSystem().addComponent("MDEA", -error * factor);
       outStream[1].getThermoSystem().addComponent("water", -error * 10.0 * factor);
-      outStream[1].run();
+      outStream[1].run(id);
       error = absorptionEfficiency - ((outStream[1].getThermoSystem().getPhase(1)
           .getComponent("CO2").getNumberOfMolesInPhase()
           + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-")

@@ -79,7 +79,6 @@ public class VLSolidTray extends SimpleTray {
     if (streams.size() > 0) {
       // mixedStream.getThermoSystem().setSolidPhaseCheck("CO2");
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
 
       mixStream();

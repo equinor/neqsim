@@ -86,8 +86,6 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     reynoldsNumber[0] = Math.pow(stirrerDiameter[0], 2.0) * stirrerRate[0]
         * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
         / bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
-    System.out.println("rey liq " + reynoldsNumber[1]);
-    System.out.println("rey gas " + reynoldsNumber[0]);
     return reynoldsNumber[1];
   }
 
@@ -228,7 +226,8 @@ public class StirredCellNode extends TwoPhaseFlowNode {
    */
   @SuppressWarnings("unused")
   public static void main(String[] args) {
-    // SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
+    // SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3,
+    // ThermodynamicConstantsInterface.referencePressure);
     // SystemInterface testSystem = new SystemSrkEos(313.3, 70.01325);
     SystemInterface testSystem = new SystemSrkCPAstatoil(313.3, 70.01325);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -244,7 +243,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     test.setInterphaseModelType(1);
     test.getFluidBoundary().useFiniteFluxCorrection(true);
     test.getFluidBoundary().useThermodynamicCorrections(true);
-    test.setStirrerSpeed(111350.0 / 60.0);
+    test.setStirrerSpeed(10.0 / 60.0);
     test.setStirrerDiameter(0.05);
     test.setDt(1.10);
 
@@ -252,15 +251,16 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     // testSystem.init(0);
     // testOps.TPflash();
 
-    test.display();
+    // test.display();
     for (int i = 0; i < 120; i++) {
       test.initFlowCalc();
       test.calcFluxes();
       test.update();
       // test.display("new");
-      test.getBulkSystem().display();
+      // test.getBulkSystem().display();
       // test.getFluidBoundary().display("test");
     }
+    test.getBulkSystem().prettyPrint();
   }
 
   /**

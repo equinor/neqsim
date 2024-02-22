@@ -9,6 +9,7 @@ package neqsim.util.unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * <p>
@@ -66,9 +67,11 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
    */
   public double getConversionFactor(String name) {
     double mol_m3 = 0.0;
-    double mol_Sm3 = 101325.0 / (ThermodynamicConstantsInterface.R * standardStateTemperature);
+    double mol_Sm3 = ThermodynamicConstantsInterface.atm
+        / (ThermodynamicConstantsInterface.R * standardStateTemperature);
     if (boilp < 25) {
-      mol_m3 = 101325.0 / (ThermodynamicConstantsInterface.R * standardStateTemperature);
+      mol_m3 = ThermodynamicConstantsInterface.atm
+          / (ThermodynamicConstantsInterface.R * standardStateTemperature);
     } else {
       mol_m3 = 1.0 / (molarmass) * stddens * 1000;
     }
@@ -113,7 +116,8 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
     } else if (name.equals("idSm3/day")) {
       factor = 1.0 / molarmass / (3600.0 * 24.0) * stddens;
     } else {
-      logger.error("unit not supported " + name);
+      throw new RuntimeException(
+          new InvalidInputException(this, "getConversionFactor", "unit", "not supported"));
     }
 
     return factor;

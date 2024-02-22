@@ -36,6 +36,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   protected SystemInterface thermoSystem;
   protected ThermodynamicOperations thermoOps;
   private String referenceState = "real"; // "ideal"real
+  private double referencePressure = 70.0;
 
   /**
    * Constructor for Standard.
@@ -196,5 +197,17 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
    */
   public void setReferenceState(String referenceState) {
     this.referenceState = referenceState;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getReferencePressure() {
+    return referencePressure;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setReferencePressure(double referencePressure) {
+    this.referencePressure = referencePressure;
   }
 }

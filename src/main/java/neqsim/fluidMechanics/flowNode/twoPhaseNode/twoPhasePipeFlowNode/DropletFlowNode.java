@@ -152,7 +152,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   @SuppressWarnings("unused")
   public static void mainOld(String[] args) {
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 11.0, 60.0);
-    // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3, 1.01325);
+    // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3,
+    // ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     PipeData pipe1 = new PipeData(0.203, 0.00025);
 

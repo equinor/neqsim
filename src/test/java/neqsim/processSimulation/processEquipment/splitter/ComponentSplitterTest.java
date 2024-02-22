@@ -49,6 +49,27 @@ class ComponentSplitterTest {
   }
 
   @Test
+  public void configSplitter() {
+    testSystem = new SystemSrkEos(298.0, 10.0);
+    testSystem.addComponent("methane", 100.0);
+    testSystem.addComponent("ethane", 10.0);
+    testSystem.addComponent("propane", 10.0);
+    processOps = new ProcessSystem();
+    Stream inletStream = new Stream("inletStream", testSystem);
+    inletStream.setName("inlet stream");
+    inletStream.setPressure(pressure_inlet, "bara");
+    inletStream.setTemperature(temperature_inlet, "C");
+    inletStream.setFlowRate(gasFlowRate, "MSm3/day");
+    inletStream.run();
+    Splitter splitter = new Splitter("splitter", inletStream, 3);
+    splitter.setSplitFactors(new double[] {0.8, 0.2, 0.0});
+    splitter.run();
+    assertEquals(0.815104472498348, splitter.getSplitStream(0).getFluid().getPhase(0).getZ(), 0.01);
+    assertEquals(0.815104472498348, splitter.getSplitStream(1).getFluid().getPhase(0).getZ(), 0.01);
+    assertEquals(0.815104472498348, splitter.getSplitStream(2).getFluid().getPhase(0).getZ(), 0.01);
+  }
+
+  @Test
   public void testRun() {
     processOps.run();
     // ((StreamInterface)processOps.getUnit("stream 1")).displayResult();
@@ -157,7 +178,6 @@ class ComponentSplitterTest {
     processOps.add(exportStream);
 
     processOps.run();
-
     assertEquals(5.0, exportStream.getFlowRate("MSm3/day"), 1e-6);
     assertEquals(0.1, resycStream1.getFlowRate("MSm3/day"), 1e-6);
     // assertEquals(8.43553108874272, valve1.getPercentValveOpening(), 1e-2);

@@ -19,15 +19,7 @@ public class SystemGERG2004Eos extends SystemEos {
    * </p>
    */
   public SystemGERG2004Eos() {
-    super();
-    modelName = "GERG2004-EOS";
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseGERG2004Eos();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-    }
-    this.useVolumeCorrection(false);
-    commonInitialization();
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -39,15 +31,7 @@ public class SystemGERG2004Eos extends SystemEos {
    * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemGERG2004Eos(double T, double P) {
-    super(T, P);
-    modelName = "GERG2004-EOS";
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseGERG2004Eos();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-    this.useVolumeCorrection(false);
-    commonInitialization();
+    this(T, P, false);
   }
 
   /**
@@ -60,11 +44,10 @@ public class SystemGERG2004Eos extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemGERG2004Eos(double T, double P, boolean checkForSolids) {
-    this(T, P);
+    super(T, P);
+    this.solidPhaseCheck = checkForSolids;;
     modelName = "GERG2004-EOS";
 
-    setNumberOfPhases(5);
-    solidPhaseCheck = checkForSolids;
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseGERG2004Eos();
       phaseArray[i].setTemperature(T);
@@ -72,15 +55,15 @@ public class SystemGERG2004Eos extends SystemEos {
     }
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
+      setNumberOfPhases(5);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
       phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
     }
 
+    // What could set hydratecheck? Will never be true
     if (hydrateCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhaseHydrate();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

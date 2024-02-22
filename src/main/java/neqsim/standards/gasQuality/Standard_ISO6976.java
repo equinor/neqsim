@@ -5,6 +5,7 @@ import java.text.FieldPosition;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -18,16 +19,18 @@ import neqsim.thermo.system.SystemInterface;
 public class Standard_ISO6976 extends neqsim.standards.Standard
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Standard_ISO6976.class);
 
   // metering conditions
   ArrayList<String> componentsNotDefinedByStandard = new ArrayList<String>();
   double volRefT = 0;
-  double volRefP = 1.01325;
+  double volRefP = ThermodynamicConstantsInterface.referencePressure;
+  // ThermodynamicConstantsInterface.R
   double R = 8.314510;
   double molRefm3 = 0.0;
   // combustion conditions
   double energyRefT = 25;
-  double energyRefP = 1.01325;
+  double energyRefP = ThermodynamicConstantsInterface.referencePressure;
   String referenceType = "volume"; // mass volume molar
   String energyUnit = "KJ/Nm3";
   double energy = 1.0;
@@ -73,8 +76,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   double relDensReal = 0.0;
   double densIdeal = 0.0;
   double densReal = 0.0;
-
-  static Logger logger = LogManager.getLogger(Standard_ISO6976.class);
 
   /**
    * Constructor for Standard_ISO6976.
@@ -123,7 +124,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         try {
-          dataSet = database.getResultSet(("SELECT * FROM iso6976constants WHERE ComponentName='"
+          dataSet = database.getResultSet(("SELECT * FROM ISO6976constants WHERE ComponentName='"
               + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
           dataSet.next();
           dataSet.getString("ID");
@@ -248,7 +249,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   /** {@inheritDoc} */
   @Override
   public double getValue(String returnParameter, java.lang.String returnUnit) {
-
     checkReferenceCondition();
 
     if (returnParameter.equals("GCV")) {
@@ -373,8 +373,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    * </p>
    */
   public void checkReferenceCondition() {
-
-    Double[] validvalues = {0.0, 15.0, 15.55, 20.0};
+    Double[] validvalues = {0.0, 15.0, 15.55, 20.0, 25.0};
 
     if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(energyRefT)::equals)) {
       energyRefT = 25.0;

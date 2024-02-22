@@ -144,7 +144,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
   }
 
-  // TODO add unit conversion implementation to interfacial tension
+  // TODO: add unit conversion implementation to interfacial tension
   /** {@inheritDoc} */
   @Override
   public double getSurfaceTension(int numb1, int numb2, String unit) {

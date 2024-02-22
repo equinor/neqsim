@@ -13,7 +13,6 @@ public class CompressorChartTest {
 
   @BeforeEach
   public void setUp() {
-
     SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
 
     // testFluid.addComponent("methane", 1.0);

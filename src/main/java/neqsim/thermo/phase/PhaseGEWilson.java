@@ -1,5 +1,6 @@
 package neqsim.thermo.phase;
 
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEWilson;
 
 /**
@@ -22,7 +23,7 @@ public class PhaseGEWilson extends PhaseGE {
    */
   public PhaseGEWilson() {
     super();
-    componentArray = new ComponentGEWilson[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentGEWilson[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**

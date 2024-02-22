@@ -26,7 +26,7 @@ public class TestFluidIssues {
         // SystemInterface testSystem = new SystemSrkEos(303.15, 10.01325);
         SystemInterface testSystem = new SystemSrkCPAstatoil(303.15, 15.0);
         // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(298.15,
-        // 1.01325);
+        // ThermodynamicConstantsInterface.referencePressure);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testSystem.addComponent("methane", 100.0);
         // testSystem.addComponent("water", 100.0);

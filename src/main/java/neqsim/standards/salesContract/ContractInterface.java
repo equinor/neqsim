@@ -127,4 +127,13 @@ public interface ContractInterface {
    * @param contractName a {@link java.lang.String} object
    */
   public void setContractName(String contractName);
+
+  /**
+   * Prints the contract.
+   *
+   */
+  public default void prettyPrint() {
+    neqsim.thermo.util.readwrite.TablePrinter.printTable(getResultTable());
+  }
+
 }

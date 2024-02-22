@@ -120,13 +120,13 @@ public class ComponentDesmukhMather extends ComponentGE {
       fugacityCoefficient =
           gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
     } else if (ionicCharge == 0 && referenceStateType.equals("solute")) {
-      // todo: sjekk denne
+      // TODO: sjekk denne
       fugacityCoefficient = gamma * getHenryCoef(phase.getTemperature()) / phase.getPressure();
     } else {
       fugacityCoefficient = 1e-15;
       // System.out.println("fug " + fugacityCoefficient);
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
+
     return fugacityCoefficient;
   }
 

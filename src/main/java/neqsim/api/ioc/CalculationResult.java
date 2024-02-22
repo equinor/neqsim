@@ -14,11 +14,6 @@ public class CalculationResult {
 
   /**
    * <p>Constructor for CalculationResult.</p>
-   */
-  public CalculationResult() {}
-
-  /**
-   * <p>Constructor for CalculationResult.</p>
    *
    * @param fluidProperties an array of {@link java.lang.Double} objects
    * @param calculationError an array of {@link java.lang.String} objects

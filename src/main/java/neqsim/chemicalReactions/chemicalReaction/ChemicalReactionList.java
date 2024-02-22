@@ -39,19 +39,13 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
 
   /**
    * <p>
-   * Constructor for ChemicalReactionList.
-   * </p>
-   */
-  public ChemicalReactionList() {}
-
-  /**
-   * <p>
    * readReactions.
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public void readReactions(SystemInterface system) {
+    // TODO: refact and combine with chemicalreactionfactory?
     chemicalReactionList.clear();
     ArrayList<String> names = new ArrayList<String>();
     ArrayList<String> stocCoef = new ArrayList<String>();
@@ -148,7 +142,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         return chemicalReactionList.get(i);
       }
     }
-    System.out.println("did not find reaction: " + name);
+    logger.warn("did not find reaction: " + name);
     return null;
   }
 

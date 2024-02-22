@@ -39,7 +39,6 @@ public class LinearProgrammingChemicalEquilibrium
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(LinearProgrammingChemicalEquilibrium.class);
 
-
   double[] xEts = null;
   double[][] Amatrix;
   double[] chemRefPot;
@@ -51,13 +50,6 @@ public class LinearProgrammingChemicalEquilibrium
   int maxChanges = 0;
 
   ChemicalReactionOperations operations;
-
-  /**
-   * <p>
-   * Constructor for LinearProgrammingChemicalEquilibrium.
-   * </p>
-   */
-  public LinearProgrammingChemicalEquilibrium() {}
 
   /**
    * <p>

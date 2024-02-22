@@ -169,7 +169,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     for (int i = 0; i < numberOfComponents; i++) {
       componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,

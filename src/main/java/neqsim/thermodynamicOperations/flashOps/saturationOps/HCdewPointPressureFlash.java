@@ -20,13 +20,6 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
    * <p>
    * Constructor for HCdewPointPressureFlash.
    * </p>
-   */
-  public HCdewPointPressureFlash() {}
-
-  /**
-   * <p>
-   * Constructor for HCdewPointPressureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

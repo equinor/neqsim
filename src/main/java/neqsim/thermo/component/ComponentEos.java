@@ -8,6 +8,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.attractiveEosTerm.AtractiveTermMatCopPRUMRNew;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermCPAstatoil;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermGERG;
@@ -34,7 +35,7 @@ import neqsim.thermo.phase.PhaseInterface;
 /**
  * @author Even Solbraa
  */
-abstract class ComponentEos extends Component implements ComponentEosInterface {
+public abstract class ComponentEos extends Component implements ComponentEosInterface {
   private static final long serialVersionUID = 1000;
 
   public double a = 1;
@@ -57,8 +58,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
 
   public double aDiffDiffT = 0;
 
-  public double[] Aij = new double[MAX_NUMBER_OF_COMPONENTS];
-  public double[] Bij = new double[MAX_NUMBER_OF_COMPONENTS];
+  public double[] Aij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  public double[] Bij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   protected double delta1 = 0;
 
   protected double delta2 = 0;
@@ -75,8 +76,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
 
   protected double bDerTn = 0;
 
-  protected double[] dAdndn = new double[MAX_NUMBER_OF_COMPONENTS];
-  protected double[] dBdndn = new double[MAX_NUMBER_OF_COMPONENTS];
+  protected double[] dAdndn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  protected double[] dBdndn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   private AttractiveTermInterface attractiveParameter;
   static Logger logger = LogManager.getLogger(ComponentEos.class);
 
@@ -338,8 +339,9 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
   public double fugcoef(PhaseInterface phase) {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
-    logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
-        - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
+    double logFugacityCoefficient =
+        dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
+            - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
     fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }

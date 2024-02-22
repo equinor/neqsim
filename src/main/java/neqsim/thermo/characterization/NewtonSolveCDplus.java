@@ -15,6 +15,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class NewtonSolveCDplus implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
+
   int iter = 0;
   Matrix Jac;
   Matrix fvec;
@@ -23,7 +25,6 @@ public class NewtonSolveCDplus implements java.io.Serializable {
   int numberOfComponents = 0;
   PlusCharacterize characterizeClass;
   // SystemInterface system = null;
-  static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
 
   /**
    * <p>

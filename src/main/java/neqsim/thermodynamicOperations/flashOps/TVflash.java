@@ -26,13 +26,6 @@ public class TVflash extends Flash {
    * <p>
    * Constructor for TVflash.
    * </p>
-   */
-  public TVflash() {}
-
-  /**
-   * <p>
-   * Constructor for TVflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double
@@ -87,8 +80,11 @@ public class TVflash extends Flash {
       oldPres = nyPres;
       system.init(3);
       nyPres = oldPres - (iterations) / (iterations + 10.0) * calcdQdV() / calcdQdVV();
-      if (nyPres <= 0.0 || Math.abs(oldPres - nyPres) > 10.0) {
-        nyPres = Math.abs(oldPres - 1.0);
+      if (nyPres <= 0.0) {
+        nyPres = oldPres / 2.0;
+      }
+      if (nyPres >= oldPres * 2) {
+        nyPres = oldPres * 2.0;
       }
       system.setPressure(nyPres);
       tpFlash.run();

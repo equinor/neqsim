@@ -1,5 +1,6 @@
 package neqsim.thermo.phase;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentGERG2004;
 import neqsim.thermo.util.JNI.GERG2004EOS;
 
@@ -80,14 +81,14 @@ public class PhaseGERG2004Eos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
-    IPHASE = phase == 0 ? -1 : -2;
+    IPHASE = phase.getValue() == 0 ? -1 : -2;
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     setxFracGERG();
 
     if (!okVolume) {
-      IPHASE = phase == 0 ? -2 : -1;
+      IPHASE = phase.getValue() == 0 ? -2 : -1;
       super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
     if (type >= 1) {
@@ -187,16 +188,17 @@ public class PhaseGERG2004Eos extends PhaseEos {
   public double molarVolume(double pressure, double temperature, double A, double B, int phase)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double temp =
-        GERG2004EOS.ZOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2],
-            xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8],
-            xFracGERG[9], xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14],
-            xFracGERG[15], xFracGERG[16], xFracGERG[17], IPHASE) * 8.314 * temperature / (pressure);
+    double temp = GERG2004EOS.ZOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1],
+        xFracGERG[2], xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7],
+        xFracGERG[8], xFracGERG[9], xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13],
+        xFracGERG[14], xFracGERG[15], xFracGERG[16], xFracGERG[17], IPHASE)
+        * ThermodynamicConstantsInterface.R * temperature / (pressure);
 
     temp = GERG2004EOS.ZOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2],
         xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8],
         xFracGERG[9], xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14],
-        xFracGERG[15], xFracGERG[16], xFracGERG[17], IPHASE) * 8.314 * temperature / (pressure);
+        xFracGERG[15], xFracGERG[16], xFracGERG[17], IPHASE) * ThermodynamicConstantsInterface.R
+        * temperature / (pressure);
     okVolume = !(Math.abs(2222 + temp) < 0.1 || Math.abs(1111 + temp) < 0.1);
     return temp;
   }

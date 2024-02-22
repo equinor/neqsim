@@ -26,11 +26,11 @@ public interface Unit {
 
   /**
    * <p>
-   * getValue.
+   * Get process value in specified unit.
    * </p>
    *
-   * @param tounit a {@link java.lang.String} object
-   * @return a double
+   * @param tounit Unit to get process value in.
+   * @return Value converted to the specified unit.
    */
   double getValue(String tounit);
 

@@ -106,13 +106,16 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
   /**
    * <p>
-   * getFlowRate.
+   * getFlowRate. Wrapper for SystemInterface.getFlowRate().
    * </p>
    *
-   * @param unit a {@link java.lang.String} object
-   * @return a double
+   * @param unit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min, m3/hr, Sm3/sec,
+   *        Sm3/hr, Sm3/day, MSm3/day, mole/sec, mole/min, mole/hr
+   * @return flow rate in specified unit
    */
-  public double getFlowRate(String unit);
+  public default double getFlowRate(String unit) {
+    return this.getFluid().getFlowRate(unit);
+  }
 
   /**
    * <p>
@@ -232,4 +235,5 @@ public interface StreamInterface extends ProcessEquipmentInterface {
   /** {@inheritDoc} */
   @Override
   public int hashCode();
+
 }

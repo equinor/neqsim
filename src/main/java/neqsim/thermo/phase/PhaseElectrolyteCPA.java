@@ -22,6 +22,7 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
 public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     implements PhaseCPAInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseElectrolyteCPA.class);
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
@@ -70,8 +71,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   DMatrixRMaj corr3Matrix = null;
   DMatrixRMaj corr4Matrix = null;
 
-  static Logger logger = LogManager.getLogger(PhaseElectrolyteCPA.class);
-
   /**
    * <p>
    * Constructor for PhaseElectrolyteCPA.
@@ -105,7 +104,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
       double beta) {
     if (type == 0) {
       setTotalNumberOfAccociationSites(0);

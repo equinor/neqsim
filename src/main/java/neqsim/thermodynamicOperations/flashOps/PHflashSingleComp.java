@@ -20,13 +20,6 @@ public class PHflashSingleComp extends Flash {
    * <p>
    * Constructor for PHflashSingleComp.
    * </p>
-   */
-  public PHflashSingleComp() {}
-
-  /**
-   * <p>
-   * Constructor for PHflashSingleComp.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
@@ -48,7 +41,11 @@ public class PHflashSingleComp extends Flash {
       try {
         bubOps.TPflash();
         if (system.getPhase(0).getType() == PhaseType.GAS) {
-          bubOps.dewPointTemperatureFlash();
+          try {
+            bubOps.dewPointTemperatureFlash();
+          } catch (Exception e) {
+            system.setTemperature(298.0);
+          }
         } else {
           bubOps.bubblePointTemperatureFlash();
         }

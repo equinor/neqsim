@@ -15,12 +15,11 @@ import neqsim.thermo.component.ComponentGEInterface;
  */
 public class PhaseDesmukhMather extends PhaseGE {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseDesmukhMather.class);
 
   double GE = 0.0;
   double[][] aij;
   double[][] bij;
-
-  static Logger logger = LogManager.getLogger(PhaseDesmukhMather.class);
 
   /**
    * <p>
@@ -40,11 +39,11 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType phase,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
     if (initType != 0) {
-      setType(PhaseType.byValue(phase));
+      setType(phase);
       // phaseTypeName = phase == 0 ? "liquid" : "gas";
     }
     setMolarVolume(0.980e-3 * getMolarMass() * 1e5);

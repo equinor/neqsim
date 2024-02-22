@@ -14,6 +14,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class Characterise implements java.io.Serializable, Cloneable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Characterise.class);
+
   SystemInterface system = null;
   TBPCharacterize TBPCharacterise = null;
   private TBPModelInterface TBPfractionModel = null;
@@ -23,7 +25,6 @@ public class Characterise implements java.io.Serializable, Cloneable {
   protected String TBPFractionModelName = "PedersenSRK";
   protected LumpingModel lumpingModelSelector = null;
   protected TBPfractionModel TBPfractionModelSelector;
-  static Logger logger = LogManager.getLogger(Characterise.class);
 
   /**
    * <p>Constructor for Characterise.</p>

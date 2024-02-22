@@ -36,6 +36,10 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     this.processSystem = processSystem;
   }
 
+  public ProcessSystem getProcess() {
+    return processSystem;
+  }
+
   /**
    * <p>
    * setCompanySpecificDesignStandards.
@@ -45,7 +49,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    */
   public void setCompanySpecificDesignStandards(String name) {
     for (int i = 0; i < this.processSystem.getUnitOperations().size(); i++) {
-      this.processSystem.getUnitOperations().get(i).getMechanicalDesign()
+      this.getProcess().getUnitOperations().get(i).getMechanicalDesign()
           .setCompanySpecificDesignStandards(name);
     }
   }
@@ -60,6 +64,8 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     for (int i = 0; i < names.size(); i++) {
       try {
         if (!((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)) == null)) {
+          ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
+              .initMechanicalDesign();
           ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
               .getMechanicalDesign().calcDesign();
           totalPlotSpace += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
@@ -133,6 +139,25 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     return numberOfModules;
   }
 
+  /**
+   * <p>
+   * getMechanicalWeight.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getMechanicalWeight(String unit) {
+    double weight = 0.0;
+    for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
+      processSystem.getUnitOperations().get(i).getMechanicalDesign().calcDesign();
+      System.out.println("Name " + processSystem.getUnitOperations().get(i).getName() + "  weight "
+          + processSystem.getUnitOperations().get(i).getMechanicalDesign().getWeightTotal());
+      weight += processSystem.getUnitOperations().get(i).getMechanicalDesign().getWeightTotal();
+    }
+    return weight;
+  }
+
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
@@ -142,12 +167,15 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     SystemMechanicalDesign other = (SystemMechanicalDesign) obj;
     return numberOfModules == other.numberOfModules
         && Objects.equals(processSystem, other.processSystem)

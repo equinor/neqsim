@@ -46,6 +46,8 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   double[] outerHeatTransferCoeffs = {1e-5, 1e-5}; // , 1e-5, 1e-5, 1e-5};
   double[] wallHeatTransferCoeffs = {1e-5, 1e-5}; // , 1e-5, 1e-5, 1e-5};
 
+  PipelineMechanicalDesign pipelineMechanicalDesign = null;
+
   /**
    * <p>
    * Constructor for Pipeline.
@@ -93,6 +95,12 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
     super(name, inStream);
   }
 
+  @Override
+  public void initMechanicalDesign() {
+    pipelineMechanicalDesign = new PipelineMechanicalDesign(this);
+  }
+
+
   /**
    * {@inheritDoc}
    *
@@ -101,7 +109,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    */
   @Override
   public PipelineMechanicalDesign getMechanicalDesign() {
-    return new PipelineMechanicalDesign(this);
+    return pipelineMechanicalDesign;
   }
 
   /** {@inheritDoc} */
@@ -241,7 +249,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    system = inStream.getThermoSystem();
+    system = inStream.getThermoSystem().clone();
     GeometryDefinitionInterface[] pipeGemometry = new PipeData[numberOfLegs + 1];
     for (int i = 0; i < pipeDiameters.length; i++) {
       pipeGemometry[i] = new PipeData(pipeDiameters[i], pipeWallRoughness[i]);
@@ -335,5 +343,10 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   public double getEntropyProduction(String unit) {
     return outStream.getThermoSystem().getEntropy(unit)
         - inStream.getThermoSystem().getEntropy(unit);
+  }
+
+
+  public double getOutletPressure(String unit) {
+    return outStream.getPressure(unit);
   }
 }

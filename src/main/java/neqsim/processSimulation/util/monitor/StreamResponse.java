@@ -23,12 +23,6 @@ public class StreamResponse {
 
     /**
      * <p>Constructor for StreamResponse.</p>
-     */
-    public StreamResponse() {
-    }
-
-    /**
-     * <p>Constructor for StreamResponse.</p>
      *
      * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */

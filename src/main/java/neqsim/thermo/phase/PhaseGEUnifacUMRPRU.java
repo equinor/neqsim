@@ -2,6 +2,7 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacUMRPRU;
 import neqsim.thermo.component.ComponentGEUniquac;
@@ -16,13 +17,13 @@ import neqsim.thermo.component.ComponentGEUniquac;
  */
 public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseGEUnifacUMRPRU.class);
+
   double[] Qmix = null;
   double[][] QmixdN = null;
   String[] gropuNames = null;
   double VCommontemp = 0.0;
   double FCommontemp = 0.0;
-
-  static Logger logger = LogManager.getLogger(PhaseGEUnifacUMRPRU.class);
 
   /**
    * <p>
@@ -31,7 +32,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    */
   public PhaseGEUnifacUMRPRU() {
     super();
-    componentArray = new ComponentGEUnifacUMRPRU[MAX_NUMBER_OF_COMPONENTS];
+    componentArray =
+        new ComponentGEUnifacUMRPRU[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**

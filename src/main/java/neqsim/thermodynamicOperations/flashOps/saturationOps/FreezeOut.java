@@ -31,13 +31,6 @@ public class FreezeOut extends constantDutyTemperatureFlash
    * <p>
    * Constructor for FreezeOut.
    * </p>
-   */
-  public FreezeOut() {}
-
-  /**
-   * <p>
-   * Constructor for FreezeOut.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

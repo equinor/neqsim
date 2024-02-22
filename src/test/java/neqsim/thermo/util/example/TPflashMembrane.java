@@ -2,6 +2,8 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -29,7 +31,8 @@ public class TPflashMembrane {
     // SystemInterface testSystem2 =
     // util.serialization.SerializationManager.open("c:/test.fluid");
     // testSystem2.display();
-    SystemInterface testSystem = new SystemSrkEos(298, 1.01325);
+    SystemInterface testSystem =
+        new SystemSrkEos(298, ThermodynamicConstantsInterface.referencePressure);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
@@ -45,7 +48,7 @@ public class TPflashMembrane {
     testSystem.init_x_y();
     testSystem.getPhase(0).setPressure(30.0);
     testSystem.getPhase(1).setPressure(2.0);
-    testSystem.setPhaseType("all", 1);
+    testSystem.setAllPhaseType(PhaseType.byValue(1));
     testSystem.allowPhaseShift(false);
 
     try {

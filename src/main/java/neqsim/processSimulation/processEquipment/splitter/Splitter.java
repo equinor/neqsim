@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -98,7 +99,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     splitNumber = i;
     splitFactor = new double[splitNumber];
     splitFactor[0] = 1.0;
-    setInletStream(inletStream);
+    if (inletStream != null) {
+      setInletStream(inletStream);
+    }
   }
 
   /**
@@ -147,7 +150,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>calcSplitFactors.</p>
+   * <p>
+   * calcSplitFactors.
+   * </p>
    */
   public void calcSplitFactors() {
     double sum = 0.0;
@@ -225,13 +230,41 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       for (int j = 0; j < inletStream.getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
         int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
         double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
-        splitStream[i].getThermoSystem().addComponent(index, moles * splitFactor[i] - moles);
+        double change =
+            (moles * splitFactor[i] - moles > 0) ? moles : moles * splitFactor[i] - moles;
+        splitStream[i].getThermoSystem().addComponent(index, change);
       }
       ThermodynamicOperations thermoOps =
           new ThermodynamicOperations(splitStream[i].getThermoSystem());
       thermoOps.TPflash();
     }
+
     setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    } else {
+
+      Mixer mixer = new Mixer();
+      for (int i = 0; i < splitStream.length; i++) {
+        splitStream[i].setPressure(inletStream.getPressure());
+        splitStream[i].setTemperature(inletStream.getTemperature("C"), "C");
+        splitStream[i].run();
+        mixer.addStream(splitStream[i]);
+      }
+      mixer.run();
+
+      inletStream.setThermoSystem(mixer.getThermoSystem());
+      inletStream.run();
+      setCalculationIdentifier(id);
+      return;
+    }
   }
 
   /** {@inheritDoc} */

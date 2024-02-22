@@ -60,12 +60,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
    */
   public WaxDepositionFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {
-    super(system, pipe);
-    this.flowNodeType = "wax deposition node";
-    this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-            this);
+    this(system, pipe);
   }
 
   /** {@inheritDoc} */
@@ -126,7 +121,8 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
   @SuppressWarnings("unused")
   public static void main(String[] args) {
     SystemInterface testSystem = new SystemSrkEos(273.15 + 40.0, 10.0);
-    // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3, 1.01325);
+    // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3,
+    // ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     PipeData pipe1 = new PipeData(0.203, 0.00025);
 

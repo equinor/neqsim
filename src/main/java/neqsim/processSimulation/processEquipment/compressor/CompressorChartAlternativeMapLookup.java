@@ -191,7 +191,6 @@ public class CompressorChartAlternativeMapLookup
       }
     }
     String msg = "Does not match any speed in the chart.";
-    logger.error(msg);
     neqsim.util.exception.InvalidInputException ex =
         new neqsim.util.exception.InvalidInputException(this, "getCurveAtRefSpeed", "refSpeed",
             msg);
@@ -398,7 +397,7 @@ public class CompressorChartAlternativeMapLookup
             {52.3295, 51.0573, 49.5283, 46.3326, 42.3685, 37.2502, 31.4884, 25.598},
             {40.6578, 39.6416, 37.6008, 34.6603, 30.9503, 27.1116, 23.2713, 20.4546},
             {35.2705, 34.6359, 32.7228, 31.0645, 27.0985, 22.7482, 18.0113},
-            {32.192, 31.1756, 29.1329, 26.833, 23.8909, 21.3324, 18.7726, 16.3403},};
+            {32.192, 31.1756, 29.1329, 26.833, 23.8909, 21.3324, 18.7726, 16.3403}};
     double[][] polyEff = new double[][] {
         {77.2452238409573, 79.4154186459363, 80.737960012489, 80.5229826589649, 79.2210931638144,
             75.4719133864634, 69.6034181197298, 58.7322388482707},
@@ -542,4 +541,10 @@ public class CompressorChartAlternativeMapLookup
   /** {@inheritDoc} */
   @Override
   public void plot() {}
+
+  /** {@inheritDoc} */
+  @Override
+  public double getFlow(double head, double speed, double guessFlow) {
+    return 0.0;
+  }
 }

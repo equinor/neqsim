@@ -1,6 +1,7 @@
 package neqsim.chemicalReactions.chemicalEquilibriaum;
 
 import Jama.Matrix;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>
@@ -14,7 +15,7 @@ public class ChemEq implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
   int NSPEC = 10;
   int NELE = 3;
-  double R = 8.3143;
+  double R = ThermodynamicConstantsInterface.R;
   double G_min = 0;
   double T = 3500;
   double P = 51;

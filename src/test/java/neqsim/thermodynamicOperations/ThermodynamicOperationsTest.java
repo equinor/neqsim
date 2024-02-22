@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import neqsim.api.ioc.CalculationResult;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
@@ -31,7 +32,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
     double P = 10;
     double T = 20;
-    String unitP = "Bar";
+    String unitP = "bara";
     String unitT = "C";
 
     ops.flash(FlashType.PT, P, T, unitP, unitT);
@@ -76,10 +77,16 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(res2.calculationError[0],
         "neqsim.util.exception.InvalidInputException: ThermodynamicOperations:propertyFlash - Input FlashMode must be 1, 2 or 3");
 
-    Assertions.assertEquals(res2, res2);
     Assertions.assertFalse(res2 == null);
+    Assertions.assertEquals(res2, res2);
+    Assertions.assertNotEquals(res2, null);
+    Assertions.assertNotEquals(res2, new Object());
     Assertions.assertEquals(res2.hashCode(), res2.hashCode());
     Assertions.assertFalse(res2 == res);
+
+    CalculationResult res2_copy =
+        new CalculationResult(res2.fluidProperties, res2.calculationError);
+    Assertions.assertEquals(res2, res2_copy);
   }
 
   @Test
@@ -99,7 +106,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
         new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
 
     double temp = 373.15;
-    double press = 60.0 + 1.013;
+    double press = 60.0 + ThermodynamicConstantsInterface.referencePressure;
 
     List<Double> jP = Arrays.asList(new Double[] {press});
     List<Double> jT = Arrays.asList(new Double[] {temp});
@@ -267,7 +274,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   @Test
   @SuppressWarnings("unchecked")
   void testpropertyFlashRegressions() throws IOException {
-    // todo: make these tests work
+    // TODO: make these tests work
     // make output log of differences per failing test and see check if it is related to change in
     // component input data
     Collection<TestData> testData = getTestData();
@@ -363,7 +370,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   }
 
   private class TestData {
-
     private final String name;
     private String inputFile;
     private String outputFile;

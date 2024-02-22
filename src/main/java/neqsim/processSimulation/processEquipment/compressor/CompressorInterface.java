@@ -71,4 +71,14 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
    * @return a {@link neqsim.processSimulation.processEquipment.compressor.AntiSurge} object
    */
   public AntiSurge getAntiSurge();
+
+  public double getDistanceToSurge();
+
+  public void setMaximumSpeed(double maxSpeed);
+
+  public void setMinimumSpeed(double minspeed);
+
+  public double getMaximumSpeed();
+
+  public double getMinimumSpeed();
 }
