@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -731,7 +732,7 @@ public class OLGApropertyTableGeneratorWaterStudents
           } while (k < 17); // names[k] = "GAS DENSITY";
           // units[k] = "KG/M3";
         } else {
-          oilSystem.setPhaseType(0, 0);
+          oilSystem.setPhaseType(0, PhaseType.byValue(0));
           oilSystem.setTemperature(temperatures[j]);
           oilSystem.setPressure(pressures[i]);
           oilSystem.init(3);
@@ -931,7 +932,7 @@ public class OLGApropertyTableGeneratorWaterStudents
         } else {
           waterSystem.setTemperature(temperatures[j]);
           waterSystem.setPressure(pressures[i]);
-          waterSystem.setPhaseType(0, 0);
+          waterSystem.setPhaseType(0, PhaseType.byValue(0));
           waterSystem.init(3);
           waterSystem.initPhysicalProperties();
 

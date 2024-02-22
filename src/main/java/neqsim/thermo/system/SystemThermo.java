@@ -2968,7 +2968,6 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /** {@inheritDoc} */
-  @Override
   public void setPhaseType(int phaseToChange, String phaseTypeName) {
     // System.out.println("new phase type: cha " + newPhaseType);
     int newPhaseType = 0;
@@ -2981,15 +2980,6 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     setPhaseType(phaseToChange, PhaseType.byValue(newPhaseType));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setPhaseType(String phases, int newPhaseType) {
-    // System.out.println("new phase type: cha " + newPhaseType);
-    if (phases.equals("all")) {
-      setAllPhaseType(PhaseType.byValue(newPhaseType));
-    }
   }
 
   /** {@inheritDoc} */
