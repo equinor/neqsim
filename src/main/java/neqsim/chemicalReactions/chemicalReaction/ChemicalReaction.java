@@ -133,24 +133,6 @@ public class ChemicalReaction extends NamedBaseClass
 
   /**
    * <p>
-   * getK.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
-   */
-  public double getK(PhaseInterface phase) {
-    double temperature = phase.getTemperature();
-    lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
-    if (shiftSignK) {
-      lnK = -lnK;
-    }
-    // System.out.println("K " + Math.exp(lnK));
-    return Math.exp(lnK);
-  }
-
-  /**
-   * <p>
    * Getter for the field <code>stocCoefs</code>.
    * </p>
    *
@@ -466,6 +448,24 @@ public class ChemicalReaction extends NamedBaseClass
    */
   public double[] getK() {
     return this.K;
+  }
+
+  /**
+   * <p>
+   * getK.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return a double
+   */
+  public double getK(PhaseInterface phase) {
+    double temperature = phase.getTemperature();
+    lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
+    if (shiftSignK) {
+      lnK = -lnK;
+    }
+    // System.out.println("K " + Math.exp(lnK));
+    return Math.exp(lnK);
   }
 
   /**
