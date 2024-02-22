@@ -91,7 +91,7 @@ public class TPflashDehyd {
      * 
      * testSystem.initPhysicalProperties(); testSystem.init(1);
      * 
-     * System.out.println("start....."); testSystem.removeMoles();
+     * System.out.println("start....."); testSystem.setEmptyFluid();
      * testSystem.setMolarComposition(new double[]{1.0, 1e-20, 1e-20}); testSystem.init(0, 0);
      * testSystem.init(1); testSystem.display();
      * 

@@ -799,7 +799,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     // system.getTemperature();
     // }
 
-    // if(system.doHydrateCheck()){
+    // if(system.getHydrateCheck()){
     // hydrateFormationTemperature(1);
     // if(system.getTemperature()>lowTemperature) lowTemperature =
     // system.getTemperature();

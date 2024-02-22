@@ -9,6 +9,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 
@@ -342,9 +343,9 @@ public abstract class Flash extends BaseOperation {
       system.setNumberOfPhases(1);
 
       if (lowestGibbsEnergyPhase == 0) {
-        system.setPhaseType(0, 1);
+        system.setPhaseType(0, PhaseType.byValue(1));
       } else {
-        system.setPhaseType(0, 0);
+        system.setPhaseType(0, PhaseType.byValue(0));
       }
       system.init(1);
       if (solidCheck && !system.doMultiPhaseCheck()) {
