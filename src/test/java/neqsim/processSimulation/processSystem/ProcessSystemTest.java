@@ -171,9 +171,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void testDisplayResult() {}
-
-  @Test
   void testGetAllUnitNames() {}
 
   @Test
