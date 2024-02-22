@@ -2684,36 +2684,6 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /** {@inheritDoc} */
-  @Deprecated
-  @Override
-  public double getConductivity() {
-    double cond = 0;
-    for (int i = 0; i < numberOfPhases; i++) {
-      cond += beta[phaseIndex[i]] * getPhase(i).getPhysicalProperties().getConductivity();
-    }
-    return cond;
-  }
-
-  /** {@inheritDoc} */
-  @Deprecated
-  @Override
-  public double getConductivity(String unit) {
-    double refConductivity = getConductivity(); // conductivity in W/m*K
-    double conversionFactor = 1.0;
-    switch (unit) {
-      case "W/mK":
-        conversionFactor = 1.0;
-        break;
-      case "W/cmK":
-        conversionFactor = 0.01;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
-    }
-    return refConductivity * conversionFactor;
-  }
-
-  /** {@inheritDoc} */
   @Override
   public double getThermalConductivity() {
     double cond = 0;
@@ -2726,7 +2696,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getThermalConductivity(String unit) {
-    double refConductivity = getConductivity(); // conductivity in W/m*K
+    double refConductivity = getThermalConductivity(); // conductivity in W/m*K
     double conversionFactor = 1.0;
     switch (unit) {
       case "W/mK":
@@ -3817,12 +3787,6 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public boolean checkStability() {
     return checkStability;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean doHydrateCheck() {
-    return hydrateCheck;
   }
 
   /** {@inheritDoc} */

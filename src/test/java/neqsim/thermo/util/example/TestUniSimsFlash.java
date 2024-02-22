@@ -42,7 +42,7 @@ public class TestUniSimsFlash {
     testSystem.display();
 
     double[] composition = new double[] {0.1, 0.0, 1.1, 1.0, 1.0};
-    // testSystem.removeMoles();
+    // testSystem.setEmptyFluid();
     testSystem.setMolarComposition(composition);
     testSystem.init(0);
     // testSystem.setMultiPhaseCheck(true);
@@ -53,7 +53,7 @@ public class TestUniSimsFlash {
     testSystem.display();
 
     /*
-     * composition = new double[]{0.1, 0.0, 1.1, 1.0, 1.0}; testSystem.removeMoles();
+     * composition = new double[]{0.1, 0.0, 1.1, 1.0, 1.0}; testSystem.setEmptyFluid();
      * testSystem.setMolarComposition(composition); for (int i = 0; i < 1; i++) { testOps.TPflash();
      * } testSystem.display();
      */

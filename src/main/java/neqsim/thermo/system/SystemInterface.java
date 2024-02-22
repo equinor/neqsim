@@ -462,16 +462,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setForcePhaseTypes(boolean forcePhaseTypes);
 
   /**
-   * Set the flow rate of all components to zero.
-   *
-   * @deprecated use {@link #setEmptyFluid()} instead.
-   */
-  @Deprecated
-  public default void removeMoles() {
-    setEmptyFluid();
-  }
-
-  /**
    * Set the flow rate (moles) of all components to zero.
    */
   public void setEmptyFluid();
@@ -1605,16 +1595,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @return a boolean
    */
-  @Deprecated
-  public boolean doHydrateCheck();
-
-  /**
-   * <p>
-   * Getter for property hydrateCheck.
-   * </p>
-   *
-   * @return a boolean
-   */
   public boolean getHydrateCheck();
 
   /**
@@ -2163,25 +2143,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return viscosity in specified unit
    */
   public double getViscosity(String unit);
-
-  /**
-   * method to return thermal conductivity.
-   *
-   * @return conductivity in unit W/mK
-   * @deprecated use {@link #getThermalConductivity()} instead.
-   */
-  @Deprecated
-  public double getConductivity();
-
-  /**
-   * method to return thermal conductivity in a specified unit.
-   *
-   * @param unit Supported units are W/mK, W/cmK
-   * @return conductivity in specified unit
-   * @deprecated use {@link #getThermalConductivity(String unit)} instead.
-   */
-  @Deprecated
-  public double getConductivity(String unit);
 
   /**
    * method to return conductivity of a fluid.

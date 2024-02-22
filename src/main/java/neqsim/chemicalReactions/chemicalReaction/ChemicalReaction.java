@@ -45,20 +45,6 @@ public class ChemicalReaction extends NamedBaseClass
    * Constructor for ChemicalReaction.
    * </p>
    *
-   * @deprecated use
-   *             {@link #ChemicalReaction(String, String[], double[], double[], double, double, double)}
-   *             instead
-   */
-  @Deprecated
-  public ChemicalReaction() {
-    super("ChemicalReaction");
-  }
-
-  /**
-   * <p>
-   * Constructor for ChemicalReaction.
-   * </p>
-   *
    * @param name a {@link java.lang.String} object
    * @param names an array of {@link java.lang.String} objects
    * @param stocCoefs an array of {@link double} objects

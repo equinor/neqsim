@@ -607,19 +607,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getTripplePointDensity.
-   * </p>
-   *
-   * @return a double
-   * @deprecated Replaced by {@link getTriplePointDensity}
-   */
-  @Deprecated
-  public default double getTripplePointDensity() {
-    return getTriplePointDensity();
-  }
-
-  /**
-   * <p>
    * getCriticalCompressibilityFactor.
    * </p>
    *
@@ -766,20 +753,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getIdealGasGibsEnergyOfFormation.
-   * </p>
-   *
-   * @return a double
-   * @deprecated Replaced by {@link getIdealGasGibbsEnergyOfFormation}
-   */
-  @Deprecated
-  public default double getIdealGasGibsEnergyOfFormation() {
-    return getIdealGasGibbsEnergyOfFormation();
-  }
-
-  /**
-   * <p>
-   * getIdealGasGibsEnergyOfFormation.
+   * getIdealGasGibbsEnergyOfFormation.
    * </p>
    *
    * @return a double

@@ -116,19 +116,6 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
 
   /**
    * <p>
-   * Getter for the field <code>alkalinity</code>.
-   * </p>
-   *
-   * @return the alkalinity
-   * @deprecated Replaced by {@link getAlkalinity}
-   */
-  @Deprecated
-  public double getAlkanility() {
-    return getAlkalinity();
-  }
-
-  /**
-   * <p>
    * Setter for the field <code>alkalinity</code>.
    * </p>
    *
@@ -136,18 +123,5 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
    */
   public void setAlkalinity(double alkalinity) {
     this.alkalinity = alkalinity;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>alkalinity</code>.
-   * </p>
-   *
-   * @param alkalinity the alkalinity to set
-   * @deprecated Replaced by {@link setAlkalinity}
-   */
-  @Deprecated
-  public void setAlkanility(double alkalinity) {
-    setAlkalinity(alkalinity);
   }
 }
