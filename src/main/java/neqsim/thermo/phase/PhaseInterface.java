@@ -33,22 +33,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * addcomponent.
-   * </p>
-   *
-   * @param name Name of component.
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compNumber a int
-   * @deprecated Replaced by {@link addComponent}
-   */
-  @Deprecated
-  public default void addcomponent(String name, double moles, double molesInPhase, int compNumber) {
-    this.addComponent(name, moles, molesInPhase, compNumber);
-  }
-
-  /**
-   * <p>
    * setMoleFractions.
    * </p>
    *
@@ -534,33 +518,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   public double getMixGibbsEnergy();
-
-  /**
-   * <p>
-   * getExessGibbsEnergy.
-   * </p>
-   *
-   * @return a double
-   * @deprecated Replaced by {@link getExcessGibbsEnergy}.
-   */
-  @Deprecated
-  public default double getExessGibbsEnergy() {
-    return getExcessGibbsEnergy();
-  }
-
-  /**
-   * <p>
-   * getExessGibbsEnergySymetric.
-   * </p>
-   *
-   *
-   * @return a double
-   * @deprecated Replace by {@link getExcessGibbsEnergySymetric}.
-   */
-  @Deprecated
-  public default double getExessGibbsEnergySymetric() {
-    return getExcessGibbsEnergySymetric();
-  }
 
   /**
    * <p>
@@ -1123,25 +1080,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return viscosity in specified unit
    */
   public double getViscosity(String unit);
-
-  /**
-   * method to return conductivity of a phase.
-   *
-   * @return conductivity in unit W/m*K
-   * @deprecated use {@link #getThermalConductivity()} instead.
-   */
-  @Deprecated
-  public double getConductivity();
-
-  /**
-   * method to return conductivity in a specified unit.
-   *
-   * @param unit Supported units are W/mK, W/cmK
-   * @return conductivity in specified unit
-   * @deprecated use {@link #getThermalConductivity(String unit)} instead.
-   */
-  @Deprecated
-  public double getConductivity(String unit);
 
   /**
    * method to return conductivity of a phase.

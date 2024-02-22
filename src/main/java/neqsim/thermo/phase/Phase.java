@@ -1209,32 +1209,6 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  @Deprecated
-  public double getConductivity() {
-    return getPhysicalProperties().getConductivity();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @Deprecated
-  public double getConductivity(String unit) {
-    double refConductivity = getConductivity(); // conductivity in W/m*K
-    double conversionFactor = 1.0;
-    switch (unit) {
-      case "W/mK":
-        conversionFactor = 1.0;
-        break;
-      case "W/cmK":
-        conversionFactor = 0.01;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
-    }
-    return refConductivity * conversionFactor;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void initRefPhases(boolean onlyPure) {
     if (refPhase == null) {
       initRefPhases(onlyPure, "water");

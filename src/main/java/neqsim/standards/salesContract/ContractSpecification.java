@@ -25,16 +25,18 @@ public class ContractSpecification extends NamedBaseClass {
   private String terminal = "";
   private double minValue = 0;
   private double maxValue = 0;
-  private double referenceTemperatureMeasurement = 0, referenceTemperatureCombustion = 0;
+  private double referenceTemperatureMeasurement = 0;
+  private double referenceTemperatureCombustion = 0;
   private double referencePressure = 0;
-  private String unit = "", comments = "";
+  private String unit = "";
+  private String comments = "";
 
-  @Deprecated
   /**
    * <p>
    * Constructor for ContractSpecification.
    * </p>
    */
+  @Deprecated
   public ContractSpecification() {
     super("ContractSpecification");
   }
