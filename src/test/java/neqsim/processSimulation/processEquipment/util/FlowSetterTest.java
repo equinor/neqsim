@@ -55,7 +55,6 @@ public class FlowSetterTest {
 
   @Test
   void testProcessWithFlowSetter() {
-
     double gasFlow = 10.0; // MSm3/day
     double oilFlow = 2000.0; // m3/hr
     double waterFLow = 1000.0; // m3/hr
@@ -103,7 +102,6 @@ public class FlowSetterTest {
 
   @Test
   void testProcessWithFlowSetter2() {
-
     double gasFlow = 10.0; // MSm3/day
     double oilFlow = 2000.0; // m3/hr
     double waterFlow = 1000.0; // m3/hr

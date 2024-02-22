@@ -7,7 +7,6 @@ import neqsim.thermo.system.SystemSrkEos;
 public class PropertyGeneratorTest {
   @Test
   void testCalculate() {
-
     SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 22.0);
     fluid.addComponent("water", 0.1);
     fluid.addComponent("nitrogen", 0.02);
@@ -30,6 +29,5 @@ public class PropertyGeneratorTest {
     double[] pres = new double[] {10.0, 20.0};
     PropertyGenerator generator = new PropertyGenerator(fluid, temps, pres);
     generator.calculate();
-
   }
 }

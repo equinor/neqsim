@@ -45,7 +45,6 @@ public class BeggsAndBrillsPipeTest {
 
   @Test
   public void testPipeLineBeggsAndBrills() {
-
     double pressure = 50; // bara
     double temperature = 40; // C
     double massFlowRate = 1100000.000000000;
@@ -94,7 +93,6 @@ public class BeggsAndBrillsPipeTest {
 
   @Test
   public void testPipeLineBeggsAndBrills2() {
-
     double pressure = 50; // bara
     double temperature = 40; // C
     double massFlowRate = 110000.000000000;
@@ -143,7 +141,6 @@ public class BeggsAndBrillsPipeTest {
 
   @Test
   public void testPipeLineBeggsAndBrills3() {
-
     double pressure = 50; // bara
     double temperature = 80; // C
     double massFlowRate = 110000.000000000;

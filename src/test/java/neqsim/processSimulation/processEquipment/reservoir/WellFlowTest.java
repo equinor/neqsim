@@ -10,7 +10,6 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 public class WellFlowTest {
   @Test
   void testRun() {
-
     neqsim.thermo.system.SystemInterface fluid1 =
         new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
     fluid1.addComponent("water", 3.599);

@@ -156,7 +156,6 @@ public class SystemMechanicalDesignTest {
 
   @Test
   void testRunDesignCalculationforGasScrubber() {
-
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 120.0);
     thermoSystem.addComponent("nitrogen", 1.0);
     thermoSystem.addComponent("methane", 99.0);
@@ -191,7 +190,6 @@ public class SystemMechanicalDesignTest {
 
   @Test
   void testRunDesignForPipeline() {
-
     AdiabaticPipe pipe = new AdiabaticPipe("pipe1",
         ((neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator) operations
             .getUnit("1st stage separator")).getGasOutStream());

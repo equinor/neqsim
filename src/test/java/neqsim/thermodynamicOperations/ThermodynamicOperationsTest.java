@@ -439,7 +439,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
         for (int kProp = 0; kProp < calcresult.get(kSample).size(); kProp++) {
           try {
             calcResult[kSample][kProp] = calcresult.get(kSample).get(kProp);
-
           } catch (Exception e) {
             calcResult[kSample][kProp] = Double.NaN;
           }

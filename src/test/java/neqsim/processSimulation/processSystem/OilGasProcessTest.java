@@ -125,6 +125,5 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     // System.out.println("recycle flow " + recycle1.getOutletStream().getFlowRate("kg/hr"));
     // valveLP1.getOutletStream().getFluid().prettyPrint();
-
   }
 }

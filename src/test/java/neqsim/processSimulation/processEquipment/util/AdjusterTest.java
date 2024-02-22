@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 public class AdjusterTest {
   @Test
   void testRun() {
-
     double wellheadpressure = 120.0;
     double bottomholepressure = 200.0;
 
@@ -48,7 +47,6 @@ public class AdjusterTest {
 
   @Test
   void testRun2() {
-
     double wellheadpressure = 120.0;
     double bottomholepressure = 200.0;
 
