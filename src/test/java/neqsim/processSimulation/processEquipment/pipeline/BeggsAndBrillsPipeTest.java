@@ -139,7 +139,6 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getFlowRegime(), "INTERMITTENT");
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
         pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
-
   }
 
   @Test

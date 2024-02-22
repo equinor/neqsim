@@ -338,7 +338,6 @@ public class PipeBeggsAndBrills extends Pipeline {
           new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "calcMissingValue",
               "elevation or length or angle or inlet diameter", "cannot be null"));
     }
-
   }
 
   /**
@@ -729,7 +728,6 @@ public class PipeBeggsAndBrills extends Pipeline {
 
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
-
   }
 
   /**
@@ -744,7 +742,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     run(id);
     increaseTime(dt);
     return;
-
   }
 
   /** {@inheritDoc} */

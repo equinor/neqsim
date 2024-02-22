@@ -10,7 +10,9 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentPRvolcor;
 
 /**
- * <p>PhasePrEosvolcor class.</p>
+ * <p>
+ * PhasePrEosvolcor class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -37,11 +39,12 @@ public class PhasePrEosvolcor extends PhasePrEos {
     super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     loc_C = calcC(this, temperature, pressure, numberOfComponents);
     CT = calcCT(this, temperature, pressure, numberOfComponents);
-
   }
 
   /**
-   * <p>getCT.</p>
+   * <p>
+   * getCT.
+   * </p>
    *
    * @return a double
    */
@@ -50,7 +53,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>getCTT.</p>
+   * <p>
+   * getCTT.
+   * </p>
    *
    * @return a double
    */
@@ -77,14 +82,15 @@ public class PhasePrEosvolcor extends PhasePrEos {
   public double dFdV() {
     // return super.dFdV();
     return -numberOfMolesInPhase * gV() - getA() / temperature * fv();
-
   }
 
   // note that in future the next thre lines should be modified to handle various mixing rules for
   // the translation
 
   /**
-   * <p>getcij.</p>
+   * <p>
+   * getcij.
+   * </p>
    *
    * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
@@ -96,7 +102,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>getcijT.</p>
+   * <p>
+   * getcijT.
+   * </p>
    *
    * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
@@ -108,7 +116,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>getcijTT.</p>
+   * <p>
+   * getcijTT.
+   * </p>
    *
    * @param compi a {@link neqsim.thermo.component.ComponentPRvolcor} object
    * @param compj a {@link neqsim.thermo.component.ComponentPRvolcor} object
@@ -121,7 +131,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   // @Override
   /**
-   * <p>calcCi.</p>
+   * <p>
+   * calcCi.
+   * </p>
    *
    * @param compNumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -145,7 +157,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>calcCij.</p>
+   * <p>
+   * calcCij.
+   * </p>
    *
    * @param compNumb a int
    * @param compNumbj a int
@@ -166,7 +180,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>calcCiT.</p>
+   * <p>
+   * calcCiT.
+   * </p>
    *
    * @param compNumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -190,7 +206,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>calcCT.</p>
+   * <p>
+   * calcCT.
+   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
@@ -203,7 +221,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>calcC.</p>
+   * <p>
+   * calcC.
+   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
@@ -231,7 +251,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>getc.</p>
+   * <p>
+   * getc.
+   * </p>
    *
    * @return a double
    */
@@ -240,7 +262,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>getC.</p>
+   * <p>
+   * getC.
+   * </p>
    *
    * @return a double
    */
@@ -273,7 +297,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>gVVV.</p>
+   * <p>
+   * gVVV.
+   * </p>
    *
    * @return a double
    */
@@ -306,7 +332,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>fVVV.</p>
+   * <p>
+   * fVVV.
+   * </p>
    *
    * @return a double
    */
@@ -336,7 +364,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   // derivative of small g with regards to c
   /**
-   * <p>gc.</p>
+   * <p>
+   * gc.
+   * </p>
    *
    * @return a double
    */
@@ -347,7 +377,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   // derivative of small f with regards to c-->equal to fv
   /**
-   * <p>fc.</p>
+   * <p>
+   * fc.
+   * </p>
    *
    * @return a double
    */
@@ -364,7 +396,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   // second derivative of small f with regards to cc-->equal to fvv
   /**
-   * <p>fcc.</p>
+   * <p>
+   * fcc.
+   * </p>
    *
    * @return a double
    */
@@ -374,7 +408,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   // second derivative of small f with regards to bc-->equal to fvv
   /**
-   * <p>fbc.</p>
+   * <p>
+   * fbc.
+   * </p>
    *
    * @return a double
    */
@@ -384,7 +420,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   // second derivative of small f with regards to cv-->equal to fvv
   /**
-   * <p>fcv.</p>
+   * <p>
+   * fcv.
+   * </p>
    *
    * @return a double
    */
@@ -424,7 +462,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   // second derivative of small g with regards to bc-->
   /**
-   * <p>gBC.</p>
+   * <p>
+   * gBC.
+   * </p>
    *
    * @return a double
    */
@@ -435,7 +475,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   // second derivative of small g with regards to cv-->
   /**
-   * <p>gCV.</p>
+   * <p>
+   * gCV.
+   * </p>
    *
    * @return a double
    */
@@ -446,7 +488,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   // second derivative of small g with regards to cc-->
   /**
-   * <p>gCC.</p>
+   * <p>
+   * gCC.
+   * </p>
    *
    * @return a double
    */
@@ -466,7 +510,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   // derivative of big F with regards to C
   // @Override
   /**
-   * <p>FC.</p>
+   * <p>
+   * FC.
+   * </p>
    *
    * @return a double
    */
@@ -475,7 +521,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>FnC.</p>
+   * <p>
+   * FnC.
+   * </p>
    *
    * @return a double
    */
@@ -484,7 +532,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>FTC.</p>
+   * <p>
+   * FTC.
+   * </p>
    *
    * @return a double
    */
@@ -493,7 +543,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>FBC.</p>
+   * <p>
+   * FBC.
+   * </p>
    *
    * @return a double
    */
@@ -502,7 +554,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>FCV.</p>
+   * <p>
+   * FCV.
+   * </p>
    *
    * @return a double
    */
@@ -511,7 +565,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>FCC.</p>
+   * <p>
+   * FCC.
+   * </p>
    *
    * @return a double
    */
@@ -520,7 +576,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
   }
 
   /**
-   * <p>FCD.</p>
+   * <p>
+   * FCD.
+   * </p>
    *
    * @return a double
    */

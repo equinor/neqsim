@@ -30,7 +30,6 @@ class LNGshipTest {
     assertEquals(474.3293447569919, testShip.getLiquidDensity());
     assertEquals(10_000.0, testShip.dailyBoilOffVolume);
     assertEquals(2.7513223265419292E10, testShip.initialNumberOffMoles);
-
   }
 
   @Test

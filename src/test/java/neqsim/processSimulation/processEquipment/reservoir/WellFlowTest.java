@@ -127,7 +127,6 @@ public class WellFlowTest {
        * System.out.println("gas velocity " + pipeline.getInletSuperficialVelocity());
        */
     }
-
   }
 
   @Test

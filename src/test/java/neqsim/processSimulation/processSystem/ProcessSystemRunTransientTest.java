@@ -434,7 +434,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure());
      */
-
   }
 
   @Test

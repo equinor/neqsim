@@ -53,7 +53,6 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
               "parameter not supported");
       throw new RuntimeException(ex);
     }
-
   }
 
   /** {@inheritDoc} */

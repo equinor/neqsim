@@ -94,7 +94,6 @@ public class ComponentPRvolcor extends ComponentPR {
     super(component_name, moles, molesInPhase, compnumber);
     c = (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R * criticalTemperature
         / criticalPressure;
-
   }
 
   /** {@inheritDoc} */

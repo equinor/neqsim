@@ -23,9 +23,7 @@ class VUFlashTest {
    * @throws java.lang.Exception
    */
   @BeforeEach
-  void setUp() throws Exception {
-
-  }
+  void setUp() throws Exception {}
 
   @Test
   void testVUflash() {

@@ -119,7 +119,6 @@ public class DistillationColumnTest {
      * ((Condenser) column.getCondenser()).getDuty());
      */
     assertEquals(totalWaterIn, totalWaterOut, 1.0);
-
   }
 
   /**

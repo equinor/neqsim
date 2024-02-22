@@ -179,7 +179,6 @@ public class SystemMechanicalDesignTest {
     System.out.println("separator weight structual steel " + sepMechDesign.weightStructualSteel);
     sep1.addSeparatorSection("first mesh", "meshpad");
     sepMechDesign.calcDesign();
-
   }
 
   @Test

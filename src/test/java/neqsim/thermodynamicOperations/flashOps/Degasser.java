@@ -161,7 +161,6 @@ class Degasser {
 
     System.out.println("Gas out from degasser2 " + heater_TP_setter_test_stream2.getOutStream()
         .getFluid().getPhase("gas").getFlowRate("kg/hr"));
-
   }
 
   private int findComponentIndex(String[] componentNames, String componentName) {
@@ -176,7 +175,6 @@ class Degasser {
     }
 
     return -1; // Component not found
-
   }
 
   /**

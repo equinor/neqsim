@@ -44,7 +44,6 @@ class PTPhaseEnvelopeTest {
             46.42490219574348, 46.83203503669948, 46.869568345957006, 46.903557772489435};
     System.out.println(Arrays.toString(dewPointPressures));
     assertArrayEquals(expectedDewPointPressures, dewPointPressures, 10E-10);
-
   }
 
   @Test
