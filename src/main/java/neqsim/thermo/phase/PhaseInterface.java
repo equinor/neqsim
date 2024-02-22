@@ -1923,32 +1923,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * Getter for property phasetype as int.
-   * </p>
-   *
-   * @return a int
-   * @deprecated Replace with {@link getType}
-   */
-  @Deprecated
-  public default int getPhaseType() {
-    return getType().getValue();
-  }
-
-  /**
-   * <p>
-   * Setter for property phaseType.
-   * </p>
-   *
-   * @param phaseType Phasetype as int.
-   * @deprecated Replace with {@link setType}
-   */
-  @Deprecated
-  public default void setPhaseType(int phaseType) {
-    setType(PhaseType.byValue(phaseType));
-  }
-
-  /**
-   * <p>
    * Getter for property phaseTypeName.
    * </p>
    *
