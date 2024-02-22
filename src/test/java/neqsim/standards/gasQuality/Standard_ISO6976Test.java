@@ -3,6 +3,7 @@ package neqsim.standards.gasQuality;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -165,5 +166,12 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
      * logger.info("Hres " + testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 -
      * 150.0));
      */
+  }
+
+  @Test
+  @Disabled
+  void testDisplay() {
+    Standard_ISO6976 s = new Standard_ISO6976(testSystem);
+    s.display("test");
   }
 }

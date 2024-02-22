@@ -73,7 +73,6 @@ public class FlowSetter extends TwoPortEquipment {
     super(name, stream);
   }
 
-
   /**
    * {@inheritDoc}
    *
@@ -400,5 +399,4 @@ public class FlowSetter extends TwoPortEquipment {
     this.temperature = temperature;
     this.unitT = unitT;
   }
-
 }

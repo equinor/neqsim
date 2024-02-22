@@ -619,18 +619,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param i Phase number
    * @return True if phase exists, false if not.
-   * @deprecated use {@link #isPhase(int i)} instead
-   */
-  @Deprecated
-  public default boolean IsPhase(int i) {
-    return isPhase(i);
-  }
-
-  /**
-   * Returns true if phase exists and is not null.
-   *
-   * @param i Phase number
-   * @return True if phase exists, false if not.
    */
   public boolean isPhase(int i);
 
@@ -1109,28 +1097,29 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void addComponent(ComponentInterface inComponent);
 
   /**
-   * add a component to a fluid. If component already exists, the moles will be added to the
-   * existing component.
+   * add a component to a fluid with no moles.
    *
    * @param name Name of the component to add. See NeqSim database for component in the database.
    */
-  public void addComponent(String name);
+  public default void addComponent(String name) {
+    addComponent(name, 0);
+  }
 
   /**
    * add a component to a fluid. If component already exists, the moles will be added to the
    * existing component.
    *
-   * @param moles number of moles (per second) of the component to be added to the fluid
    * @param name Name of the component to add. See NeqSim database for component in the database.
+   * @param moles number of moles (per second) of the component to be added to the fluid
    */
   public void addComponent(String name, double moles);
 
   /**
-   * add a component to a fluid. If component already exists, the moles will be added to the
+   * add a component to a fluid. If component already exists, the amount will be added to the
    * existing component.
    *
    * @param name Name of the component to add. See NeqSim database for component in the database.
-   * @param value The amount
+   * @param value The amount.
    * @param unitName the unit of rate (sported units are kg/sec, mol/sec, Nlitre/min, kg/hr,
    *        Sm^3/hr, Sm^3/day, MSm^3/day ..
    */
@@ -1567,7 +1556,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * display.
    * </p>
    */
-  public void display();
+  public default void display() {
+    display(this.getFluidName());
+  }
 
   /**
    * <p>
@@ -1811,7 +1802,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * method to return molar volume of the fluid: eventual volume correction included.
-   * 
+   *
    * @param unit Supported units are m3/mol, litre/mol
    *
    * @return molar volume volume in unit

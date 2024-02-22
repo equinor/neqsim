@@ -100,7 +100,6 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
     pipelineMechanicalDesign = new PipelineMechanicalDesign(this);
   }
 
-
   /**
    * {@inheritDoc}
    *
@@ -344,7 +343,6 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
     return outStream.getThermoSystem().getEntropy(unit)
         - inStream.getThermoSystem().getEntropy(unit);
   }
-
 
   public double getOutletPressure(String unit) {
     return outStream.getPressure(unit);

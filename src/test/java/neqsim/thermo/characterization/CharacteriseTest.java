@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class CharacteriseTest  extends neqsim.NeqSimTest{
+public class CharacteriseTest extends neqsim.NeqSimTest {
   static SystemInterface thermoSystem = null;
 
   @Test
@@ -18,7 +18,7 @@ public class CharacteriseTest  extends neqsim.NeqSimTest{
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
     thermoSystem.addTBPfraction("C8", 1.0, 120.0 / 1000.0, 0.76);
     thermoSystem.addTBPfraction("C9", 1.0, 140.0 / 1000.0, 0.79);
-    thermoSystem.addPlusFraction("C10", 11.0, 290.0/1000.0, 0.82);
+    thermoSystem.addPlusFraction("C10", 11.0, 290.0 / 1000.0, 0.82);
     thermoSystem.getCharacterization().setLumpingModel("no lumping");
     thermoSystem.getCharacterization().characterisePlusFraction();
     // logger.info("number of components " + thermoSystem.getNumberOfComponents());
@@ -32,11 +32,10 @@ public class CharacteriseTest  extends neqsim.NeqSimTest{
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
     thermoSystem.addTBPfraction("C8", 1.0, 120.0 / 1000.0, 0.76);
     thermoSystem.addTBPfraction("C9", 1.0, 140.0 / 1000.0, 0.79);
-    thermoSystem.addPlusFraction("C10", 11.0, 290.0/1000.0, 0.82);
+    thermoSystem.addPlusFraction("C10", 11.0, 290.0 / 1000.0, 0.82);
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
     thermoSystem.getCharacterization().setLumpingModel("PVTlumpingModel");
     thermoSystem.getCharacterization().characterisePlusFraction();
     assertEquals(15, thermoSystem.getNumberOfComponents());
-
   }
 }

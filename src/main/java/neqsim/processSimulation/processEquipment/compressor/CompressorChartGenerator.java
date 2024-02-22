@@ -51,7 +51,6 @@ public class CompressorChartGenerator {
     compChart.setHeadUnit("kJ/kg");
     compChart.setCurves(chartConditions, speed, flow, head, polyEff);
 
-
     // Generating surge curve
     double minFlowSurgeFlow = 0.7 * refflow;
     double refSurgeFlow = 0.8 * refflow;

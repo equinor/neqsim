@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.exception.InvalidInputException;
@@ -70,7 +71,7 @@ public abstract class Phase implements PhaseInterface {
    * </p>
    */
   public Phase() {
-    componentArray = new ComponentInterface[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /** {@inheritDoc} */

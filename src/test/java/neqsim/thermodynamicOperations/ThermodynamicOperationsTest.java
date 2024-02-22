@@ -330,6 +330,13 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     }
   }
 
+  @Test
+  @Disabled
+  void testDisplay() {
+    ThermodynamicOperations ops = new ThermodynamicOperations();
+    ops.display();
+  }
+
   private List<List<Double>> createDummyRequest(double[] fractions, int len) {
     List<List<Double>> onlineFractions = new ArrayList<List<Double>>();
 
@@ -432,7 +439,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
         for (int kProp = 0; kProp < calcresult.get(kSample).size(); kProp++) {
           try {
             calcResult[kSample][kProp] = calcresult.get(kSample).get(kProp);
-
           } catch (Exception e) {
             calcResult[kSample][kProp] = Double.NaN;
           }

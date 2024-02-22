@@ -209,11 +209,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
       for (int i = 0; i < system.getPhase(j).getNumberOfComponents(); i++) {
         temp1 += system.getPhase(j).getComponents()[i].getNumberOfMolesInPhase()
             * system.getPhase(j).getComponents()[i].getdfugdp();
-
       }
       temp1 -= (system.getPhase(j).getZ() - 1.0) * system.getPhase(j).getNumberOfMolesInPhase()
           / system.getPhase(j).getPressure();
-
     }
     sum = Math.abs(temp1) + Math.abs(temp2);
     // logger.info("test fugdp gas : " + temp1);

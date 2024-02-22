@@ -69,7 +69,6 @@ public class Manifold extends ProcessEquipmentBaseClass {
     return localsplitter.getSplitStream(i);
   }
 
-
   /**
    * <p>
    * getMixedStream.
@@ -88,5 +87,4 @@ public class Manifold extends ProcessEquipmentBaseClass {
     localsplitter.setInletStream(localmixer.getOutletStream());
     localsplitter.run();
   }
-
 }

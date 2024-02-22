@@ -10,7 +10,6 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 public class WellFlowTest {
   @Test
   void testRun() {
-
     neqsim.thermo.system.SystemInterface fluid1 =
         new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
     fluid1.addComponent("water", 3.599);
@@ -82,7 +81,6 @@ public class WellFlowTest {
     chokeValve.setInletStream(pipeline.getOutletStream());
     chokeValve.setOutletPressure(5.0, "bara");
 
-
     Adjuster adjuster = new Adjuster("adjuster");
     adjuster.setTargetVariable(pipeline.getOutletStream(), "pressure",
         chokeValve.getOutletPressure(), "bara");
@@ -109,29 +107,26 @@ public class WellFlowTest {
      */
     // process.setTimeStep(60 * 60 * 24 * 365);
 
-    for (int i = 0; i < 800; i++) {
+    for (int i = 0; i < 8; i++) {
       reservoirOps.runTransient(60 * 60 * 365);
       process.run();
       if (pipeline.getOutletStream().getPressure("bara") < 5.0) {
         continue;
       }
-
-      System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
-      System.out.println("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
-      System.out
-          .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") + " bara");
-
-      System.out.println("xmas pressure " + pipe.getOutletStream().getPressure("bara") + " bara");
-      System.out
-          .println("top side pressure " + pipeline.getOutletStream().getPressure("bara") + " bara");
-      System.out
-          .println("Total produced gas " + reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3");
-      System.out.println("gas velocity " + pipeline.getSuperficialVelocity());
-
+      /*
+       * System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
+       * System.out.println("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
+       * System.out .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") +
+       * " bara");
+       * 
+       * System.out.println("xmas pressure " + pipe.getOutletStream().getPressure("bara") +
+       * " bara"); System.out .println("top side pressure " +
+       * pipeline.getOutletStream().getPressure("bara") + " bara"); System.out
+       * .println("Total produced gas " + reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3");
+       * System.out.println("gas velocity " + pipeline.getInletSuperficialVelocity());
+       */
     }
-
   }
-
 
   @Test
   void testCalcWellFlow() {
@@ -158,6 +153,4 @@ public class WellFlowTest {
     // wellflow.setDarcyLawParameters(permeability, );
     // wellflow.setWellProductionIndex(10.000100751427403E-3);
   }
-
-
 }

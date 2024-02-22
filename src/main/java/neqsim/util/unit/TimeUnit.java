@@ -28,5 +28,4 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit {
   public TimeUnit(double value, String name) {
     super(value, name);
   }
-
 }

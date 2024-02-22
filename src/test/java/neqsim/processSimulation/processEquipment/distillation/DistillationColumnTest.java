@@ -101,7 +101,6 @@ public class DistillationColumnTest {
             * column.getLiquidOutStream().getFluid().getComponent("water").getMolarMass()
             * column.getLiquidOutStream().getFluid().getComponent("water").getz();
 
-
     double totalWaterIn = waterFlowRateInColumn2 + waterFlowRateInColumnGasToReb;
     double totalWaterOut = waterFlowRateOutColumn + waterFlowRateOutColumnLeanTEG;
     /*
@@ -120,7 +119,6 @@ public class DistillationColumnTest {
      * ((Condenser) column.getCondenser()).getDuty());
      */
     assertEquals(totalWaterIn, totalWaterOut, 1.0);
-
   }
 
   /**

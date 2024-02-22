@@ -8,7 +8,6 @@ public class PipelineTest {
 
   @Test
   public void testMain() {
-
     double flow = 60.0;
     double temperature = 20.0;
     double pressure = 200.0;
@@ -52,6 +51,7 @@ public class PipelineTest {
     beggsBrilsPipe.setLength(length);
     beggsBrilsPipe.setElevation(elevation);
     beggsBrilsPipe.setDiameter(diameter);
+    beggsBrilsPipe.setRunIsothermal(false);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -62,6 +62,8 @@ public class PipelineTest {
     operations.run();
 
     // pipeline.run();
+
+    System.out.println(beggsBrilsPipe.getOutletStream().getTemperature());
 
     Assertions.assertEquals(123.876927, pipeline.getOutletPressure("bara"), 0.1);
     Assertions.assertEquals(120.711887695240, simplePipeline.getOutletPressure(), 0.1);

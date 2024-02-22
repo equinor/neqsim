@@ -26,7 +26,6 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
     super("gas chromotography", "Gas composition", thermoSystem);
   }
 
-
   /** {@inheritDoc} */
   @Override
   public void calculate() {

@@ -590,10 +590,12 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);
-    Jtab.setRowHeight(dialog.getHeight() / table.length);
-    Jtab.setFont(new Font("Serif", Font.PLAIN,
-        dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
-    // dialog.pack();
+    if (table.length > 0) {
+      Jtab.setRowHeight(dialog.getHeight() / table.length);
+      Jtab.setFont(new Font("Serif", Font.PLAIN,
+          dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
+      // dialog.pack();
+    }
     dialog.setVisible(true);
   }
 
@@ -643,11 +645,19 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
    * @return an array of {@link java.lang.String} objects
    */
   public String[][] createTable(String name) {
+    int rows = 0;
+    if (bulkSystem == null) {
+      String[][] table = new String[0][5];
+      return table;
+    }
+
+    rows = bulkSystem.getPhases()[0].getNumberOfComponents() * 10;
+    String[][] table = new String[rows][5];
+
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
 
-    String[][] table = new String[bulkSystem.getPhases()[0].getNumberOfComponents() * 10][5];
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";
@@ -689,7 +699,6 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
       table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 5][4] = "[-]";
 
       // Double.longValue(system.getPhase(phaseIndex[i]).getBeta());
-
       buf = new StringBuffer();
       table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 6][0] = "Velocity";
       table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 6][i + 1] =
@@ -739,6 +748,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
       table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 13][i + 1] = name;
       table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
     }
+
     return table;
   }
 

@@ -87,19 +87,16 @@ class Degasser {
     String[] componentNames = fluid1.getComponentNames();
 
     for (int i = 0; i < intParameter.length; i++) {
-
       int componentIndex = findComponentIndex(componentNames, componentNames[i + 1]);// except
                                                                                      // nitrogen 0
       int waterIndex = findComponentIndex(componentNames, "water");
 
       if (componentIndex != -1 && waterIndex != -1) {
-
         ((PhaseEosInterface) fluid1.getPhases()[0]).getMixingRule()
             .setBinaryInteractionParameter(componentIndex, waterIndex, intParameter[i]);
 
         ((PhaseEosInterface) fluid1.getPhases()[1]).getMixingRule()
             .setBinaryInteractionParameter(componentIndex, waterIndex, intParameter[i]);
-
       } else {
       }
     }
@@ -161,24 +158,18 @@ class Degasser {
 
     System.out.println("Gas out from degasser2 " + heater_TP_setter_test_stream2.getOutStream()
         .getFluid().getPhase("gas").getFlowRate("kg/hr"));
-
   }
 
   private int findComponentIndex(String[] componentNames, String componentName) {
-
     for (int i = 0; i < componentNames.length; i++) {
 
       if (componentNames[i].equals(componentName)) {
-
         return i;
-
       }
     }
 
     return -1; // Component not found
-
   }
-
 
   /**
    * Test method for

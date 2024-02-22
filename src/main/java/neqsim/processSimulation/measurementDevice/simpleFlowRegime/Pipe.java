@@ -175,5 +175,4 @@ public class Pipe {
   public double getArea() {
     return pi * Math.pow(this.internalDiameter, 2) / 4;
   }
-
 }

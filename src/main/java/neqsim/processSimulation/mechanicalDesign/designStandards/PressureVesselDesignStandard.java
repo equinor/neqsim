@@ -64,7 +64,6 @@ public class PressureVesselDesignStandard extends DesignStandard {
                   - 0.2 * equipment.getMaxOperationPressure() / 10.0)
               + equipment.getCorrosionAllowanse();
     }
-
     return wallT / 1000.0; // return wall thickness in meter
   }
 }

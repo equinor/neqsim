@@ -458,7 +458,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       logger.debug("Could not find solution for stratified flow holdup");
     } else {
       holdUp = (gamma - 0.5 * Math.sin(2 * gamma)) / (pi);
-
     }
     return holdUp;
   }
@@ -754,7 +753,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     // inputStream.setFlowRate(0.00001, "MSm^3/day");
     // System.out.println(inputStream.getFlowRate("kg/sec"));
     // mySevereSlug4.getPredictedFlowRegime();
-
   }
 
   // To be implemented

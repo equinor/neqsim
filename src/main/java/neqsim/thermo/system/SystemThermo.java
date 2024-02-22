@@ -1123,12 +1123,6 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addComponent(String name) {
-    addComponent(name, 0.0);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void addComponent(String componentName, double moles) {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
@@ -1201,6 +1195,7 @@ public abstract class SystemThermo implements SystemInterface {
       stddens = Double.parseDouble(dataSet.getString("stddens"));
       boilp = Double.parseDouble(dataSet.getString("normboil"));
     } catch (Exception ex) {
+      // todo: mole amount may be not set. should not be caught?
       logger.error("failed ", ex);
     }
     neqsim.util.unit.Unit unit =
@@ -1799,7 +1794,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void init(int type) {
-    if (!isInitialized) {
+    if (!this.isInitialized) {
       initBeta();
       init_x_y();
     }
@@ -1808,6 +1803,7 @@ public abstract class SystemThermo implements SystemInterface {
     } else {
       initAnalytic(type);
     }
+    this.isInitialized = true;
   }
 
   /** {@inheritDoc} */
@@ -3415,10 +3411,6 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public String[][] createTable(String name) {
-
-    if (!isInitialized) {
-      init_x_y();
-    }
     initProperties();
 
     java.text.DecimalFormat nf = new java.text.DecimalFormat();
@@ -3622,21 +3614,17 @@ public abstract class SystemThermo implements SystemInterface {
       table[getPhases()[0].getNumberOfComponents() + 25][i + 2] = name;
       table[getPhases()[0].getNumberOfComponents() + 25][6] = "-";
     }
-    resultTable = table;
 
+    resultTable = table;
     return table;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void display() {
-    display(this.getFluidName());
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void display(String name) {
-
+    if (this.getNumberOfComponents() == 0) {
+      return;
+    }
     javax.swing.JFrame dialog = new javax.swing.JFrame("System-Report");
     java.awt.Dimension screenDimension = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
     java.awt.Container dialogContentPane = dialog.getContentPane();

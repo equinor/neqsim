@@ -1,9 +1,3 @@
-/*
- * ThermodynamicConstantsInterface.java
- *
- * Created on 3. juni 2000, 19:07
- */
-
 package neqsim.thermo;
 
 /**
@@ -23,8 +17,6 @@ public interface ThermodynamicConstantsInterface extends java.io.Serializable {
   double gravity = 9.80665;
   /** Constant <code>avagadroNumber=6.023e23</code>. */
   double avagadroNumber = 6.023e23;
-  /** Constant <code>MAX_NUMBER_OF_COMPONENTS=100</code>. */
-  static final int MAX_NUMBER_OF_COMPONENTS = 100;
   /** Constant <code>referenceTemperature=273.15</code> [K]. */
   double referenceTemperature = 273.15;
   /** Constant <code>referencePressure=1.01325</code> [bar]. */
