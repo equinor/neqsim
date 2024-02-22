@@ -26,7 +26,6 @@ import neqsim.thermo.phase.PhaseSolid;
 import neqsim.thermo.phase.PhaseSolidComplex;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseWax;
-import neqsim.thermo.phase.StateOfMatter;
 import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.exception.InvalidInputException;
 
@@ -2968,21 +2967,6 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /** {@inheritDoc} */
-  public void setPhaseType(int phaseToChange, String phaseTypeName) {
-    // System.out.println("new phase type: cha " + newPhaseType);
-    int newPhaseType = 0;
-    if (phaseTypeName.equals("gas")) {
-      newPhaseType = 1;
-    } else if (StateOfMatter.isLiquid(PhaseType.byDesc(phaseTypeName))) {
-      newPhaseType = 0;
-    } else {
-      newPhaseType = 0;
-    }
-
-    setPhaseType(phaseToChange, PhaseType.byValue(newPhaseType));
-  }
-
-  /** {@inheritDoc} */
   @Override
   public void setAllPhaseType(PhaseType pt) {
     if (allowPhaseShift) {
@@ -2995,6 +2979,14 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void invertPhaseTypes() {
+    // Following code was from public void setPhaseType(int phaseToChange, String phaseTypeName) {
+
+    /*
+     * int newPhaseType = 0; if (phaseTypeName.equals("gas")) { newPhaseType = 1; } else if
+     * (StateOfMatter.isLiquid(PhaseType.byDesc(phaseTypeName))) { newPhaseType = 0; } else {
+     * newPhaseType = 0; }
+     */
+
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       if (phaseType[i] == PhaseType.byValue(0)) {
         phaseType[i] = PhaseType.byValue(1);
