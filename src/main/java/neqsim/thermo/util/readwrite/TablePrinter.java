@@ -99,6 +99,7 @@ public class TablePrinter implements Serializable {
    * Returns a 2D string table in a formatted and visually appealing way.
    *
    * @param doubleArray The 2D double table to be printed.
+   * @return 2d string table
    */
   public static String[][] convertDoubleToString(double[][] doubleArray) {
     // Initialize the 2D String array with the same dimensions as the double array
