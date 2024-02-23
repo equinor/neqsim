@@ -125,17 +125,17 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+      double temperature, double pressure, PhaseType phasetype) {
     GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (type == 0) {
         GE += phase.getComponents()[i].getx() * Math
             .log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
-                temperature, pressure, phasetype, alpha, Dij, intparam, mixRule));
+                temperature, pressure, phasetype.getValue(), alpha, Dij, intparam, mixRule));
       } else if (type == 1) {
         GE += phase.getComponents()[i].getx() * Math
             .log(((ComponentGENRTLmodifiedHV) componentArray[i]).getGamma(phase, numberOfComponents,
-                temperature, pressure, phasetype, alpha, Dij, DijT, intparam, mixRule));
+                temperature, pressure, phasetype.getValue(), alpha, Dij, DijT, intparam, mixRule));
       }
     }
     return (R * phase.getTemperature() * GE) * phase.getNumberOfMolesInPhase();

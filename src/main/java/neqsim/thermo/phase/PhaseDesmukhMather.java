@@ -178,11 +178,11 @@ public class PhaseDesmukhMather extends PhaseGE {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+      double temperature, double pressure, PhaseType phasetype) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
+          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype.getValue()));
     }
     // System.out.println("ge " + GE);
     return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*

@@ -111,9 +111,9 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+      double temperature, double pressure, PhaseType phaseType) {
     double GE = 0.0;
-    calcCommontemp(phase, numberOfComponents, temperature, pressure, phasetype);
+    calcCommontemp(phase, numberOfComponents, temperature, pressure, phaseType.getValue());
     // ((ComponentGEUnifacUMRPRU) phase.getComponents()[0]).commonInit(phase, numberOfComponents,
     // temperature, pressure, phasetype);
 
@@ -123,7 +123,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     }
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEUniquac) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
+          .getGamma(phase, numberOfComponents, temperature, pressure, phaseType.getValue()));
     }
     return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();
   }

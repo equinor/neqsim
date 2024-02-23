@@ -247,24 +247,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * init.
-   * </p>
-   *
-   * @param totalNumberOfMoles Total number of moles in system.
-   * @param numberOfComponents Number of components in system.
-   * @param type a int. Use 0 to init, and 1 to reset.
-   * @param ptNumber Phase type index.
-   * @param beta Mole fraction of this phase in system.
-   * @deprecated Replace with init-function using PhaseType input.
-   */
-  @Deprecated
-  public default void init(double totalNumberOfMoles, int numberOfComponents, int type,
-      int ptNumber, double beta) {
-    init(totalNumberOfMoles, numberOfComponents, type, PhaseType.byValue(ptNumber), beta);
-  }
-
-  /**
-   * <p>
    * initPhysicalProperties.
    * </p>
    */
