@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
@@ -659,7 +660,7 @@ public class ComponentHydrate extends Component {
       refPhase.setTemperature(273.0);
       refPhase.setPressure(1.0);
       refPhase.addComponent("water", 10.0, 10.0, 0);
-      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
+      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.byValue(1), 1.0);
     } catch (Exception ex) {
       logger.error("error occured", ex);
     }

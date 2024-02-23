@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -94,7 +95,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
 
       refPhase.setTemperature(temp);
       refPhase.setPressure(pres);
-      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, 0, 1.0);
+      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, PhaseType.byValue(0), 1.0);
       double refWaterFugacityCoef = Math.log(refPhase.getComponent("water").fugcoef(refPhase));
 
       double dhf = 6010.0;

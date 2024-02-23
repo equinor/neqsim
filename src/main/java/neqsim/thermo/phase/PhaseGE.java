@@ -51,17 +51,17 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
    * @param totalNumberOfMoles a double
    * @param beta a double
    * @param numberOfComponents a int
-   * @param type a int
+   * @param PhaseType a int
    * @param phase a int
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int numberOfComponents, int type, int phase) {
+      int numberOfComponents, PhaseType type, int phase) {
     if (totalNumberOfMoles <= 0) {
       new neqsim.util.exception.InvalidInputException(this, "init", "totalNumberOfMoles",
           "must be larger than zero.");
     }
     for (int i = 0; i < numberOfComponents; i++) {
-      componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type);
+      componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type.getValue());
     }
     this.getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, type);
 
@@ -85,11 +85,11 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType phase,
-      double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType,
+      PhaseType phaseType, double beta) {
+    super.init(totalNumberOfMoles, numberOfComponents, initType, phaseType, beta);
     if (initType != 0) {
-      getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, phase.getValue());
+      getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, phaseType);
     }
 
     double sumHydrocarbons = 0.0;
@@ -190,7 +190,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+      double temperature, double pressure, PhaseType phasetype) {
     logger.error("this getExcessGibbsEnergy should never be used.......");
     return 0;
   }
@@ -239,7 +239,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     refPhase[k].setPressure(pressure);
     refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getType(), 1.0);
     ((PhaseGEInterface) refPhase[k]).getExcessGibbsEnergy(refPhase[k], 2,
-        refPhase[k].getTemperature(), refPhase[k].getPressure(), refPhase[k].getType().getValue());
+        refPhase[k].getTemperature(), refPhase[k].getPressure(), refPhase[k].getType());
     return ((ComponentGEInterface) refPhase[k].getComponent(0)).getGamma();
   }
 
@@ -258,7 +258,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1,
         dilphase.getType(), 1.0);
     ((PhaseGEInterface) dilphase).getExcessGibbsEnergy(dilphase, 2, dilphase.getTemperature(),
-        dilphase.getPressure(), dilphase.getType().getValue());
+        dilphase.getPressure(), dilphase.getType());
     return ((ComponentGEInterface) dilphase.getComponent(0)).getGamma();
   }
 

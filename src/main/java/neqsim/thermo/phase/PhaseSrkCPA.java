@@ -1450,10 +1450,10 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @param totalNumberOfMoles a double
    * @param numberOfComponents a int
    * @param type a int
-   * @param phase a int
+   * @param phaseType a int
    * @param beta a double
    */
-  public void initOld2(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void initOld2(double totalNumberOfMoles, int numberOfComponents, int type, int phaseType,
       double beta) {
     // type = 0 start init, type = 1 gi nye betingelser
     if (type == 0) {
@@ -1531,11 +1531,11 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       cpamix = cpaSelect.getMixingRule(1, this);
     }
 
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, PhaseType.byValue(phaseType), beta);
     if (type > 0 && isConstantPhaseVolume()) {
       calcDelta();
       solveX();
-      super.init(totalNumberOfMoles, numberOfComponents, 1, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, 1, PhaseType.byValue(phaseType), beta);
       gcpa = calc_g();
       // lngcpa = Math.log(gcpa);
       setGcpav(calc_lngV());
