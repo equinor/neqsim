@@ -8,8 +8,6 @@ import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
-import neqsim.thermo.phase.PhaseType;
-
 
 /**
  * <p>

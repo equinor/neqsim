@@ -11,7 +11,6 @@ import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
 
-
 /**
  * <p>
  * PhaseElectrolyteCPA class.

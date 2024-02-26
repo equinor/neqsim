@@ -2,8 +2,6 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGENRTLmodifiedWS;
-import neqsim.thermo.phase.PhaseType;
-
 
 /**
  * <p>

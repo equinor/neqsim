@@ -8,7 +8,6 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
 
-
 /**
  * <p>
  * PhaseElectrolyteCPAOld class.

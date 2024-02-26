@@ -6,7 +6,6 @@ import neqsim.thermo.phase.PhaseDesmukhMather;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
-
 /**
  * <p>
  * ComponentDesmukhMather class.
