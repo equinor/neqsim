@@ -38,7 +38,7 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phasetype) {
+      double temperature, double pressure, PhaseType phaseType) {
     double GE = 0;
 
     /*
@@ -46,7 +46,7 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
      * 
      * for (int i = 0; i < numberOfComponents; i++) { GE = GE + comp_Array[i].getx() *
      * Math.log(comp_Array[i].getGamma(phase, numberOfComponents, temperature, pressure,
-     * phasetype)); }
+     * phaseType)); }
      */
 
     return R * temperature * GE * numberOfMolesInPhase;

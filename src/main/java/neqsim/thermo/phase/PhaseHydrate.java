@@ -64,8 +64,8 @@ public class PhaseHydrate extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase)
-      throws neqsim.util.exception.IsNaNException,
+  public double molarVolume(double pressure, double temperature, double A, double B,
+      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double sum = 1.0;
     int hydrateStructure = ((ComponentHydrate) getComponent(0)).getHydrateStructure();
@@ -102,9 +102,9 @@ public class PhaseHydrate extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
       double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
     setType(PhaseType.HYDRATE);
   }
 

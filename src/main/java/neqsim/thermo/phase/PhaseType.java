@@ -6,11 +6,11 @@ import neqsim.util.exception.InvalidInputException;
 /**
  * Types of phases.
  */
-public enum PhaseType implements Serializable{
+public enum PhaseType implements Serializable {
   LIQUID("liquid", 0), GAS("gas", 1), OIL("oil", 2), AQUEOUS("aqueous", 3), HYDRATE("hydrate",
       4), WAX("wax", 5), SOLID("solid", 6), SOLIDCOMPLEX("solidComplex", 7);
 
-  /** Holder for old style integer phasetype. */
+  /** Holder for old style integer phaseType. */
   private final int value;
   /** Holder for old style string phasetypename. */
   private final String desc;

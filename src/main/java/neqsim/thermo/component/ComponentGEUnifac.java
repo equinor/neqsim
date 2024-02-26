@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -133,9 +134,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType phaseType) {
     fugacityCoefficient =
-        (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
+        (this.getGamma(phase, numberOfComponents, temperature, pressure, phaseType)
             * this.getAntoineVaporPressure(temperature) / pressure);
     return fugacityCoefficient;
   }
@@ -189,7 +190,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType phaseType) {
     double lngammaCombinational = 0.0;
     double lngammaResidual = 0.0;
     dlngammadn = new double[numberOfComponents];
@@ -243,9 +244,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   /** {@inheritDoc} */
   @Override
   public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
-    dfugdp = (Math.log(fugcoef(phase, numberOfComponents, temperature, pressure + 0.01, phasetype))
-        - Math.log(fugcoef(phase, numberOfComponents, temperature, pressure - 0.01, phasetype)))
+      double pressure, PhaseType phaseType) {
+    dfugdp = (Math.log(fugcoef(phase, numberOfComponents, temperature, pressure + 0.01, phaseType))
+        - Math.log(fugcoef(phase, numberOfComponents, temperature, pressure - 0.01, phaseType)))
         / 0.02;
     return dfugdp;
   }
@@ -253,27 +254,27 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   /** {@inheritDoc} */
   @Override
   public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
-    dfugdt = (Math.log(fugcoef(phase, numberOfComponents, temperature + 0.01, pressure, phasetype))
-        - Math.log(fugcoef(phase, numberOfComponents, temperature - 0.01, pressure, phasetype)))
+      double pressure, PhaseType phaseType) {
+    dfugdt = (Math.log(fugcoef(phase, numberOfComponents, temperature + 0.01, pressure, phaseType))
+        - Math.log(fugcoef(phase, numberOfComponents, temperature - 0.01, pressure, phaseType)))
         / 0.02;
     return dfugdt;
   }
 
   /*
    * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, int phasetype){ // NumericalDerivative deriv = new NumericalDerivative(); //
-   * System.out.println("dfugdP : " + NumericalDerivative.fugcoefDiffPres(this, phase,
-   * numberOfComponents, temperature, pressure, phasetype)); return
+   * double pressure, PhaseType phaseType){ // NumericalDerivative deriv = new
+   * NumericalDerivative(); // System.out.println("dfugdP : " +
    * NumericalDerivative.fugcoefDiffPres(this, phase, numberOfComponents, temperature, pressure,
-   * phasetype); }
+   * phaseType)); return NumericalDerivative.fugcoefDiffPres(this, phase, numberOfComponents,
+   * temperature, pressure, phaseType); }
    * 
    * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, int phasetype){ NumericalDerivative deriv = new NumericalDerivative(); //
-   * System.out.println("dfugdT : " + NumericalDerivative.fugcoefDiffTemp(this, phase,
-   * numberOfComponents, temperature, pressure, phasetype)); return
+   * double pressure, PhaseType phaseType){ NumericalDerivative deriv = new NumericalDerivative();
+   * // System.out.println("dfugdT : " + NumericalDerivative.fugcoefDiffTemp(this, phase,
+   * numberOfComponents, temperature, pressure, phaseType)); return
    * NumericalDerivative.fugcoefDiffTemp(this, phase, numberOfComponents, temperature, pressure,
-   * phasetype);
+   * phaseType);
    * 
    * }
    */

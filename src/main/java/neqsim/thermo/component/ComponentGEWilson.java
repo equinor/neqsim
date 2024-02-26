@@ -2,6 +2,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -39,13 +40,13 @@ public class ComponentGEWilson extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param phaseType a int
    * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType phaseType) {
     fugacityCoefficient =
-        (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
+        (this.getGamma(phase, numberOfComponents, temperature, pressure, phaseType)
             * this.getAntoineVaporPressure(temperature) / pressure);
     return fugacityCoefficient;
   }
@@ -59,19 +60,19 @@ public class ComponentGEWilson extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param phaseType a int
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType phaseType) {
     return getWilsonActivityCoefficient(phase);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule) {
+      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij,
+      double[][] intparam, String[][] mixRule) {
     return 0.0;
   }
 

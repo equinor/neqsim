@@ -1,6 +1,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -43,10 +44,10 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] WSalpha, double[][] WSgij, double[][] intparam,
-      String[][] mixRule) {
+      double pressure, PhaseType phaseType, double[][] WSalpha, double[][] WSgij,
+      double[][] intparam, String[][] mixRule) {
     double[][] WSgijT = new double[numberOfComponents][numberOfComponents];
-    return getGamma(phase, numberOfComponents, temperature, pressure, phasetype, WSalpha, WSgij,
+    return getGamma(phase, numberOfComponents, temperature, pressure, phaseType, WSalpha, WSgij,
         WSgijT, intparam, mixRule);
   }
 
@@ -59,7 +60,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param phaseType a int
    * @param WSalpha an array of {@link double} objects
    * @param WSgij an array of {@link double} objects
    * @param WSgijT an array of {@link double} objects
@@ -69,7 +70,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
    */
   @SuppressWarnings("unused")
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] WSalpha, double[][] WSgij, double[][] WSgijT,
+      double pressure, PhaseType phaseType, double[][] WSalpha, double[][] WSgij, double[][] WSgijT,
       double[][] intparam, String[][] mixRule) {
     double type = phase.getInitType();
     double A = 0;
@@ -244,7 +245,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
     // dlngammadt = (lngammaold-lngamma)/0.002;
 
     // phaseny.getExcessGibbsEnergy(numberOfComponents, temperature, pressure,
-    // phasetype)
+    // phaseType)
     gamma = Math.exp(lngamma);
 
     // if derivates....

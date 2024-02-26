@@ -109,7 +109,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
       double beta) {
     if (type > 0) {
       for (int i = 0; i < numberOfComponents; i++) {
@@ -117,7 +117,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
             numberOfComponents, type);
       }
     }
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
   }
 
   /**
@@ -1155,11 +1155,12 @@ public class PhasePCSAFT extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase)
-      throws neqsim.util.exception.IsNaNException,
+  public double molarVolume(double pressure, double temperature, double A, double B,
+      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV =
+        phaseType.getValue() == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     // double BonV = phase== 0 ? 0.99:1e-5;
     if (BonV < 0) {
       BonV = 1.0e-6;

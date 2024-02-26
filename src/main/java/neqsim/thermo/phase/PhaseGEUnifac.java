@@ -8,6 +8,8 @@ import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
+import neqsim.thermo.phase.PhaseType;
+
 
 /**
  * <p>
@@ -79,12 +81,12 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
       double beta) {
     // if(type==0) calcaij();
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
     if (type == 0) {
-      super.init(totalNumberOfMoles, numberOfComponents, 1, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, 1, phaseType, beta);
     }
   }
 
@@ -187,11 +189,11 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phasetype) {
+      double temperature, double pressure, PhaseType phaseType) {
     double GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEUniquac) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype.getValue()));
+          .getGamma(phase, numberOfComponents, temperature, pressure, phaseType));
     }
     return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();
   }
