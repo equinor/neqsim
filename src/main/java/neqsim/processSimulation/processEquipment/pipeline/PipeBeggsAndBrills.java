@@ -20,6 +20,8 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   int iteration;
 
+  private double Cp; 
+
   // Inlet pressure of the pipeline (initialization)
   private double inletPressure = Double.NaN;
 
@@ -40,6 +42,14 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   // Flag to run isothermal calculations
   private boolean runIsothermal = true;
+  private boolean runAdiabatic = true;
+  private boolean runConstantSurfaceTemperature = false;
+
+  private double constantSurfaceTemperature;
+
+  private double convectionCoefficient;
+
+  private String convectionCoefficientMethod = "Estimate";
 
   // Flow pattern of the fluid in the pipe
   private String regime;
@@ -137,6 +147,27 @@ public class PipeBeggsAndBrills extends Pipeline {
   private List<Double> elevationProfile;
   private List<Integer> incrementsProfile;
 
+  double Tmi;
+  double Tmo;
+  double Ts;
+  double error;
+  double iterationT;
+  double dTlm;
+  double cp;
+  double q1;
+  double q2;
+  double ReNoSlip;
+  double S = 0;
+  double rhoNoSlip = 0;
+  double muNoSlip = 0;
+  double thermalConductivity;
+  double Pr;
+  double frictionFactor;
+  double frictionTwoPhase;
+  double Nu;
+  double criticalPressure;
+  double hmax;
+  double X;
   /**
    * <p>
    * Constructor for PipeBeggsAndBrills.
@@ -227,7 +258,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @param diameter the diameter to set
    */
   public void setDiameter(double diameter) {
-    insideDiameter = diameter;
+    this.insideDiameter = diameter;
   }
 
 
@@ -274,6 +305,39 @@ public class PipeBeggsAndBrills extends Pipeline {
    */
   public void setRunIsothermal(boolean runIsothermal) {
     this.runIsothermal = runIsothermal;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>constantSurfaceTemperature</code>.
+   * </p>
+   *
+   * @param temperature a double
+   */
+  public void setConstantSurfaceTemperature(double temperature, String unit) {
+    if (unit.equals("K")) {
+      this.constantSurfaceTemperature = temperature - 273.15;
+    } else if (unit.equals("C")) {
+      this.constantSurfaceTemperature = temperature;
+    } else {
+      throw new RuntimeException("unit not supported " + unit);
+    }
+    this.runIsothermal = false;
+    this.runAdiabatic = false;
+    this.runConstantSurfaceTemperature = true;
+  }
+
+
+    /**
+   * <p>
+   * Setter for the field <code>conv</code>.
+   * </p>
+   *
+   * @param temperature a double
+   */
+  public void setConvectionCoefficient(double convectionCoefficient) {
+    this.convectionCoefficient = convectionCoefficient;
+    this.convectionCoefficientMethod = "Defined";
   }
 
 
@@ -509,7 +573,11 @@ public class PipeBeggsAndBrills extends Pipeline {
 
         SG = (mixtureLiquidDensity) / (1000 * 0.0624279606);
       } else {
-        SG = system.getPhase(1).getDensity("lb/ft3") / (1000 * 0.0624279606);
+        mixtureOilMassFraction = 1.0;
+        mixtureOilVolumeFraction = 1.0;
+        mixtureLiquidViscosity = system.getPhase(1).getViscosity("cP");
+        mixtureLiquidDensity = system.getPhase(1).getDensity("lb/ft3");
+        SG = (mixtureLiquidDensity) / (1000 * 0.0624279606);
       }
 
 
@@ -583,9 +651,9 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return a double
    */
   public double calcFrictionPressureLoss() {
-    double S = 0;
-    double rhoNoSlip = 0;
-    double muNoSlip = 0;
+    S = 0;
+    rhoNoSlip = 0;
+    muNoSlip = 0;
 
     if (system.getNumberOfPhases() != 1) {
       if (regime != "Single Phase") {
@@ -599,33 +667,34 @@ public class PipeBeggsAndBrills extends Pipeline {
         if (system.getNumberOfPhases() == 3) {
           rhoNoSlip = mixtureLiquidDensity * inputVolumeFractionLiquid
               + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-          muNoSlip = mixtureLiquidViscosity * inputVolumeFractionLiquid
-              + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+        //  muNoSlip = mixtureLiquidViscosity * inputVolumeFractionLiquid
+             // + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
         }
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
             + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-        muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
-            + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+        //muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
+           // + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
       } else {
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
             + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-        muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
-            + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+        //muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
+            //+ (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
       }
     } else {
       if (system.hasPhaseType("gas")) {
         rhoNoSlip = (system.getPhase(0).getDensity("lb/ft3"));
-        muNoSlip = (system.getPhase(0).getViscosity("cP"));
+       //muNoSlip = (system.getPhase(0).getViscosity("cP"));
       } else {
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3"));
-        muNoSlip = (system.getPhase(1).getViscosity("cP"));
+        //muNoSlip = (system.getPhase(1).getViscosity("cP"));
       }
     }
-
+    muNoSlip = system.getViscosity("cP"); // Gives more correct result (checked by Pr number for different mixtures)
+    //rhoNoSlip = system.getDensity("lb/ft3");
     mixtureViscosityProfile.add(muNoSlip);
     mixtureDensityProfile.add(rhoNoSlip * 16.01846);
 
-    double ReNoSlip =
+    ReNoSlip =
         rhoNoSlip * supMixVel * insideDiameter * (16 / (3.28 * 3.28)) / (0.001 * muNoSlip);
 
     mixtureReynoldsNumber.add(ReNoSlip);
@@ -633,8 +702,8 @@ public class PipeBeggsAndBrills extends Pipeline {
     double E = pipeWallRoughness / insideDiameter;
 
     // Haaland equation
-    double frictionFactor = Math.pow(1 / (-1.8 * Math.log10((E / 3.7) + (6.9 / ReNoSlip))), 2);
-    double frictionTwoPhase = frictionFactor * Math.exp(S);
+    frictionFactor = Math.pow(1 / (-1.8 * Math.log10((E / 3.7) + (6.9 / ReNoSlip))), 2);
+    frictionTwoPhase = frictionFactor * Math.exp(S);
 
     frictionPressureLoss =
         frictionTwoPhase * Math.pow(supMixVel, 2) * rhoNoSlip * (length) / (2 * insideDiameter);
@@ -659,6 +728,142 @@ public class PipeBeggsAndBrills extends Pipeline {
     iteration = iteration + 1;
     return pressureDrop;
   }
+
+  public double estimateHeatTransferCoefficent(SystemInterface system, double heatFlux, boolean baseSignlePhase){
+    cp = system.getCp("J/kgK");
+    thermalConductivity = system.getThermalConductivity();
+    Pr = 0.001*muNoSlip * cp / thermalConductivity;
+    if( ReNoSlip < 3000 ){
+      Nu = 3.66; 
+    }else{
+      if(Pr < 2000 && Pr > 0.5  && ReNoSlip < 5E6){
+      Nu = ((frictionTwoPhase/8)*(ReNoSlip - 1000)*Pr)/(1 + 12.7*Math.pow(frictionTwoPhase, 0.5)*(Math.pow(Pr,0.66)-1));
+      }
+    }
+    convectionCoefficient = Nu*thermalConductivity/(insideDiameter);
+    if(baseSignlePhase){
+      return convectionCoefficient;
+    }
+
+    if (system.getNumberOfPhases() > 1){
+      X = system.getPhase(0).getFlowRate("kg/sec") / system.getFlowRate("kg/sec");
+      convectionCoefficient = (-31.469*Math.pow(X, 2) + 31.469*X+0.007)*convectionCoefficient;
+      // double Xtt = (Math.pow(((1-X)/X),0.9)*Math.pow((system.getPhase(0).getDensity()/mixtureLiquidDensity), 0.5)*
+      // Math.pow(mixtureLiquidViscosity/(0.001*system.getPhase(0).getViscosity()), 0.1));
+      // double E = 0.8897*(1/Xtt) + 1.0392;
+      // double Retp = ReNoSlip*Math.pow(E, 1.25);
+      // double S;
+      // if (Retp < 1E5){
+      //   S = 0.9;
+      // }
+      // else if(Retp <= 1E6){
+      //   S = -5.6*1E-7*Retp + 0.9405;
+      // }
+      // else if(Retp < 1E7)
+      //   S = 1368.9*Math.pow(Retp, -0.601);
+      // else{
+      //   S = 0.1;
+      // }
+
+      // double reducedPressure = system.getPressure()*100/criticalPressure;
+      // double Fp = 1.8*Math.pow(reducedPressure, 0.17) + 4*Math.pow(reducedPressure, 1.2) + 10*Math.pow(reducedPressure, 10);
+      // double hb = 0.00417*Math.pow(criticalPressure, 0.69)*Math.pow(heatFlux/100, 0.7)*Fp;
+      // convectionCoefficient = E*convectionCoefficient + S*hb;         
+    }
+
+    return convectionCoefficient;
+  }
+
+  public double calcTemperatureDifference(SystemInterface system){
+    double deriv;
+    Tmi = system.getTemperature("C");
+    Tmo = Tmi;
+    Ts = constantSurfaceTemperature;
+    if (Ts > Tmi){
+      Tmo = Tmi + 0.1;
+    }
+    else{
+      Tmo = Tmi - 0.1;
+    }
+    error = 999;
+    double errorOld = 1000;
+    double TmoOld = 999;
+    iterationT = 0;
+    if (Math.abs(Ts - Tmi) < 1){
+      return 0.0;
+    }
+    cp = system.getCp("J/kgK");
+    double q1max = Math.abs(system.getFlowRate("kg/sec")*cp*(Ts - Tmi));
+    double dTlmin = ((0.1) - (Ts - Tmi))/(Math.log((0.1)/(Ts - Tmi)));
+    hmax = Math.abs(system.getFlowRate("kg/sec")*cp*(Ts - Tmi))/(3.1415*insideDiameter*length*dTlmin);
+
+    while (Math.abs(error) > 1e-4 && iterationT < 500){
+      iterationT = iterationT + 1;
+      dTlm = ((Ts - Tmo) - (Ts - Tmi))/(Math.log((Ts - Tmo)/(Ts - Tmi)));
+      cp = system.getCp("J/kgK");
+      q1 = system.getFlowRate("kg/sec")*cp*(Tmo - Tmi);
+      if(convectionCoefficientMethod == "Estimate"){
+        if (iterationT == 1 && !(system.getNumberOfPhases() == 1)){
+          convectionCoefficient = convectionCoefficient = estimateHeatTransferCoefficent(system, 999, true);
+        }
+        else if (iterationT%5 == 0){
+          double timeQ = length/supMixVel;
+          convectionCoefficient = estimateHeatTransferCoefficent(system, Math.abs(q1max/(timeQ*insideDiameter*length)), false);
+        }
+      }
+      if(convectionCoefficient > hmax){
+        convectionCoefficient = 0.9*hmax;
+      }
+      q2 = convectionCoefficient*3.1415*insideDiameter*length*dTlm;
+      error = Math.abs(q1 - q2);
+      if (iterationT < 2)
+      { 
+        errorOld = error;
+        TmoOld = Tmo;
+        if (Ts > Tmi){
+          Tmo = Tmo + 0.1;
+        }
+        else{
+          Tmo = Tmo - 0.1;
+        }
+      }
+      else{
+        deriv = (error - errorOld) / (Tmo - TmoOld);
+        TmoOld = Tmo;
+        Tmo = TmoOld -  ((errorOld)/deriv)/10;
+        errorOld = error;
+        if (Ts > Tmi && (Tmo > Ts || Tmo < -273.15)){
+          Tmo = Ts - 0.1;
+        }
+        if (Ts < Tmi && (Tmo < Ts || Tmo < -273.15)){
+          Tmo = Ts + 0.1;
+        }        
+      }
+    }
+    if (iterationT > 500){
+      throw new RuntimeException(new neqsim.util.exception.InvalidOutputException(
+        "PipeBeggsAndBrills", "run: calcTemperature", "Could not find temperature - limit reached"));
+    }
+    return Tmo - Tmi;
+  }
+  
+  public double calcEnthalpy(double enthalpy, SystemInterface system, ThermodynamicOperations testOps){
+    Cp = system.getCp("J/kgK");
+    if (!runAdiabatic) {
+      if(convectionCoefficientMethod == "Estimate" && system.getNumberOfPhases() > 1){
+        SystemInterface system2 = system.clone();
+        ThermodynamicOperations testOps2 = new ThermodynamicOperations(system2);
+        testOps2.calcPTphaseEnvelope();
+        criticalPressure = system2.getPC()*100; // kPa
+
+      }
+    enthalpy = enthalpy + system.getFlowRate("kg/sec")*Cp*calcTemperatureDifference(system);
+    }
+    testOps.PHflash(enthalpy);
+
+    return enthalpy;
+  }
+  
 
   /** {@inheritDoc} */
   @Override
@@ -716,15 +921,16 @@ public class PipeBeggsAndBrills extends Pipeline {
       pressureDropProfile.add(pressureDrop);
       pressureOut = inletPressure - pressureDrop;
       pressureProfile.add(pressureOut);
-      if (pressureOut < 0) {
+      if (pressureOut < 0 || Double.isNaN(pressureOut)) {
         throw new RuntimeException(new neqsim.util.exception.InvalidOutputException(
             "PipeBeggsAndBrills", "run: calcOutletPressure", "pressure out",
-            "- Outlet pressure is negative" + pressureOut));
+            "- Outlet pressure is negative or NaN : " + pressureOut));
       }
 
       system.setPressure(pressureOut);
+
       if (!runIsothermal) {
-        testOps.PHflash(enthalpyInlet);
+        enthalpyInlet = calcEnthalpy(enthalpyInlet, system, testOps);
       } else {
         testOps.TPflash();
       }
