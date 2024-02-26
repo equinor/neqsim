@@ -540,7 +540,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType.getValue() == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     double Btemp = getB();
     setMolarVolume(1.0 / BonV * Btemp); // numberOfMolesInPhase;

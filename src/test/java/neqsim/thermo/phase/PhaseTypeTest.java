@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class PhaseTypeTest {
+  @SuppressWarnings("deprecation")
   @Test
   void testValues() {
     for (PhaseType pt : PhaseType.values()) {

@@ -51,7 +51,7 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType a int
+   * @param phaseType the PhaseType of the phase.
    * @param HValpha an array of {@link double} objects
    * @param HVgij an array of {@link double} objects
    * @return a double
@@ -272,7 +272,7 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType a int
+   * @param phaseType the PhaseType of the phase.
    * @param HValpha an array of {@link double} objects
    * @param HVgij an array of {@link double} objects
    * @return a double
@@ -459,7 +459,7 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType a int
+   * @param phaseType the PhaseType of the phase.
    * @param salinity a double
    * @return a double
    */

@@ -1,5 +1,7 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity;
 
+import neqsim.thermo.phase.PhaseType;
+
 /**
  * <p>
  * CorrespondingStatesDiffusivity class.
@@ -39,7 +41,7 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
   /** {@inheritDoc} */
   @Override
   public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
-    if (phase.getPhase().getType().getValue() == 0) {
+    if (phase.getPhase().getType() == PhaseType.LIQUID) {
       binaryDiffusionCoefficients[i][j] =
           1.0e-4 * 9.89e-8 * Math.pow(phase.getViscosity() * 1e3, -0.907)
               * Math.pow(1.0 / phase.getPhase().getComponents()[i].getNormalLiquidDensity()

@@ -683,7 +683,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType.getValue() == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
     if (BonV < 0) {
@@ -1222,7 +1222,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param phaseType a int
+   * @param phaseType the PhaseType of the phase.
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -1231,7 +1231,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType.getValue() == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        phaseType == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     // double BonV = calcRootVolFinder(phaseType);
     // double BonVInit = BonV;
@@ -1295,9 +1295,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV =
-              phaseType.getValue() == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-                  : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          BonV = phaseType == PhaseType.GAS
+              ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {
         BonV += 0.5 * d1;
@@ -1310,9 +1310,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         if (iterations < 3) {
           BonV = (BonVold + BonV) / 2.0;
         } else {
-          BonV =
-              phaseType.getValue() == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-                  : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          BonV = phaseType == PhaseType.GAS
+              ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       }
 
@@ -1320,9 +1320,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         if (iterations < 3) {
           BonV = Math.abs(BonVold + BonV) / 2.0;
         } else {
-          BonV =
-              phaseType.getValue() == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-                  : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          BonV = phaseType == PhaseType.GAS
+              ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       }
 
@@ -1455,7 +1455,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @param totalNumberOfMoles a double
    * @param numberOfComponents a int
    * @param type a int
-   * @param phaseType a int
+   * @param phaseType the PhaseType of the phase.
    * @param beta a double
    */
   public void initOld2(double totalNumberOfMoles, int numberOfComponents, int type,
@@ -1564,7 +1564,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   public double molarVolume2(double pressure, double temperature, double A, double B,
       PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    Z = phaseType.getValue() == 0 ? 1.0 : 1.0e-5;
+    Z = phaseType == PhaseType.LIQUID ? 1.0 : 1.0e-5;
     setMolarVolume(Z * R * temperature / pressure);
     // super.molarVolume(pressure,temperature, A, B, phase);
     int iterations = 0;
@@ -2011,7 +2011,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param phaseType a int
+   * @param phaseType the PhaseType of the phase.
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -2020,7 +2020,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType.getValue() == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     // if (pressure > 1000) {
     // BonV = 0.9999;
@@ -2090,9 +2090,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV =
-              phaseType.getValue() == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-                  : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          BonV = phaseType == PhaseType.GAS
+              ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {
         BonV += 0.5 * d1;

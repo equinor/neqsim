@@ -51,7 +51,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
    * @param totalNumberOfMoles a double
    * @param beta a double
    * @param numberOfComponents a int
-   * @param phaseType a PhaseType enum
+   * @param phaseType the PhaseType of the phase.
    * @param phase a int
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,

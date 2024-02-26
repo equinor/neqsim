@@ -97,7 +97,7 @@ public final class NumericalDerivative implements java.io.Serializable {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType a int
+   * @param phaseType the PhaseType of the phase.
    * @return a double
    */
   public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase,

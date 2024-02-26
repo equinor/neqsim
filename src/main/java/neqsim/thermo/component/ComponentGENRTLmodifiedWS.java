@@ -60,7 +60,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType a int
+   * @param phaseType the PhaseType of the phase.
    * @param WSalpha an array of {@link double} objects
    * @param WSgij an array of {@link double} objects
    * @param WSgijT an array of {@link double} objects
