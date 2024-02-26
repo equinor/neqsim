@@ -22,7 +22,7 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class PhaseGE extends Phase implements PhaseGEInterface {
+public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhaseGE.class);
 
@@ -135,81 +135,10 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt) {
-    return 1;
-  }
-
-  /**
-   * <p>
-   * molarVolumeAnalytic.
-   * </p>
-   *
-   * @param pressure a double
-   * @param temperature a double
-   * @param A a double
-   * @param B a double
-   * @param phase a int
-   * @return a double
-   */
-  public double molarVolumeAnalytic(double pressure, double temperature, double A, double B,
-      int phase) {
-    return 1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase);
     // TODO: compNumber not in use
   }
-
-  /**
-   * <p>
-   * setAlpha.
-   * </p>
-   *
-   * @param alpha an array of {@link double} objects
-   */
-  public void setAlpha(double[][] alpha) {}
-
-  /**
-   * <p>
-   * setDij.
-   * </p>
-   *
-   * @param Dij an array of {@link double} objects
-   */
-  public void setDij(double[][] Dij) {}
-
-  /** {@inheritDoc} */
-  @Override
-  public double getExcessGibbsEnergy() {
-    logger.error("this getExcessGibbsEnergy should never be used.......");
-    return 0;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
-    logger.error("this getExcessGibbsEnergy should never be used.......");
-    return 0;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getGibbsEnergy() {
-    return 0;
-  }
-
-  /**
-   * <p>
-   * setDijT.
-   * </p>
-   *
-   * @param DijT an array of {@link double} objects
-   */
-  public void setDijT(double[][] DijT) {}
 
   /** {@inheritDoc} */
   @Override

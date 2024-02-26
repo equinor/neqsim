@@ -29,4 +29,31 @@ public interface PhaseGEInterface {
    */
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, PhaseType pt);
+
+  /**
+   * <p>
+   * setAlpha.
+   * </p>
+   *
+   * @param alpha an array of {@link double} objects
+   */
+  public void setAlpha(double[][] alpha);
+
+  /**
+   * <p>
+   * setDij.
+   * </p>
+   *
+   * @param Dij an array of {@link double} objects
+   */
+  public void setDij(double[][] Dij);
+
+  /**
+   * <p>
+   * setDijT.
+   * </p>
+   *
+   * @param DijT an array of {@link double} objects
+   */
+  public void setDijT(double[][] DijT);
 }

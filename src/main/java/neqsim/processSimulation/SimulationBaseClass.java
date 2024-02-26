@@ -2,6 +2,7 @@ package neqsim.processSimulation;
 
 import java.util.UUID;
 import neqsim.util.NamedBaseClass;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * Base class for process simulation objects.
@@ -20,7 +21,9 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
   protected double time = 0;
 
   /**
-   * <p>Constructor for SimulationBaseClass.</p>
+   * <p>
+   * Constructor for SimulationBaseClass.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -67,8 +70,8 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
   /** {@inheritDoc} */
   public void increaseTime(double dt) {
     if (dt < 0) {
-      throw new UnsupportedOperationException(
-          "Input dt is negative - not allowed to go backwards in time.");
+      throw new RuntimeException(new InvalidInputException(this, "increaseTime", "dt",
+          "Negative values are not allowed. Not possible to go backwards in time."));
     }
     this.time = this.time + dt;
   }
