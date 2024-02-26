@@ -4,6 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseDesmukhMather;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
+
 
 /**
  * <p>
@@ -58,9 +60,9 @@ public class ComponentDesmukhMather extends ComponentGE {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule) {
-    return getGamma(phase, numberOfComponents, temperature, pressure, phasetype);
+      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij,
+      double[][] intparam, String[][] mixRule) {
+    return getGamma(phase, numberOfComponents, temperature, pressure, phaseType);
   }
 
   /**
@@ -72,11 +74,11 @@ public class ComponentDesmukhMather extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param phaseType a int
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType phaseType) {
     double A = 1.174;
 
     double B = 3.32384e9;

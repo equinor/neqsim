@@ -40,7 +40,7 @@ public class Manifold extends ProcessEquipmentBaseClass {
    * <p>
    * Constructor for Splitter with name as input.
    * </p>
-   * 
+   *
    * @param name name of manifold
    */
   public Manifold(String name) {

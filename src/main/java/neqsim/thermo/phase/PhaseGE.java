@@ -51,19 +51,20 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
    * @param totalNumberOfMoles a double
    * @param beta a double
    * @param numberOfComponents a int
-   * @param type a PhaseType enum
+   * @param phaseType a PhaseType enum
    * @param phase a int
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int numberOfComponents, PhaseType type, int phase) {
+      int numberOfComponents, PhaseType phaseType, int phase) {
     if (totalNumberOfMoles <= 0) {
       new neqsim.util.exception.InvalidInputException(this, "init", "totalNumberOfMoles",
           "must be larger than zero.");
     }
     for (int i = 0; i < numberOfComponents; i++) {
-      componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type.getValue());
+      // todo: Conflating init type and phase type?
+      componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, phaseType.getValue());
     }
-    this.getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, type);
+    this.getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, phaseType);
 
     double sumHydrocarbons = 0.0;
     double sumAqueous = 0.0;
@@ -134,7 +135,8 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase) {
+  public double molarVolume(double pressure, double temperature, double A, double B,
+      PhaseType phaseType) {
     return 1;
   }
 
@@ -190,7 +192,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phasetype) {
+      double temperature, double pressure, PhaseType phaseType) {
     logger.error("this getExcessGibbsEnergy should never be used.......");
     return 0;
   }

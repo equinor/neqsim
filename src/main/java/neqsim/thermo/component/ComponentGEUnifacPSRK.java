@@ -2,6 +2,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -142,7 +143,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType phaseType) {
     int initType = phase.getInitType();
     double lngammaCombinational = 0.0;
     double lngammaResidual = 0.0;

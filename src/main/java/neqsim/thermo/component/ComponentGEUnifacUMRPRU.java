@@ -6,6 +6,7 @@ import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -353,7 +354,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType phaseType) {
     int initType = phase.getInitType();
     double lngammaCombinational;
     double lngammaResidual;
@@ -519,22 +520,22 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param phaseType a int
    */
   public void calcGammaNumericalDerivatives(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+      double temperature, double pressure, PhaseType phaseType) {
     phase.setInitType(1);
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       double dn = getNumberOfMolesInPhase() / 1e6;
       phase.addMoles(getComponentNumber(), dn);
       x = getNumberOfmoles() / getNumberOfMolesInPhase();
-      getGamma(phase, numberOfComponents, temperature, pressure, phasetype);
+      getGamma(phase, numberOfComponents, temperature, pressure, phaseType);
       double oldGamma = lngamma;
       phase.addMoles(getComponentNumber(), dn);
 
       x = getNumberOfmoles() / getNumberOfMolesInPhase();
 
-      getGamma(phase, numberOfComponents, temperature, pressure, phasetype);
+      getGamma(phase, numberOfComponents, temperature, pressure, phaseType);
 
       double dlnGammadn = (oldGamma - lngamma) / dn;
       // System.out.println("dlnGammadn " + dlnGammadn);

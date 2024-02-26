@@ -2,6 +2,8 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGENRTLmodifiedWS;
+import neqsim.thermo.phase.PhaseType;
+
 
 /**
  * <p>
@@ -92,18 +94,18 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phasetype) {
+      double temperature, double pressure, PhaseType phaseType) {
     double GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (type == 0) {
         GE += phase.getComponents()[i].getx() * Math
             .log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
-                temperature, pressure, phasetype.getValue(), alpha, Dij, intparam, mixRule));
+                temperature, pressure, phaseType, alpha, Dij, intparam, mixRule));
       }
       if (type == 1) {
         GE += phase.getComponents()[i].getx() * Math
             .log(((ComponentGENRTLmodifiedWS) componentArray[i]).getGamma(phase, numberOfComponents,
-                temperature, pressure, phasetype.getValue(), alpha, Dij, DijT, intparam, mixRule));
+                temperature, pressure, phaseType, alpha, Dij, DijT, intparam, mixRule));
       }
     }
     return R * temperature * GE * numberOfMolesInPhase;

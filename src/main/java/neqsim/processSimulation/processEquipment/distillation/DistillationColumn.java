@@ -403,7 +403,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * component componentMassBalanceCheck.
    * </p>
-   * 
+   *
    * @param componentName component name to heck mass balance for
    * @return a boolean
    */

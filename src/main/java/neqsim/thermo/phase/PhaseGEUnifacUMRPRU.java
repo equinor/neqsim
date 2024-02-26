@@ -68,10 +68,10 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param phaseType a int
    */
   public void calcCommontemp(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType phaseType) {
     FCommontemp = 0;
     VCommontemp = 0;
     ComponentGEUnifac[] compArray = (ComponentGEUnifac[]) phase.getcomponentArray();
@@ -113,9 +113,9 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, PhaseType phaseType) {
     double GE = 0.0;
-    calcCommontemp(phase, numberOfComponents, temperature, pressure, phaseType.getValue());
+    calcCommontemp(phase, numberOfComponents, temperature, pressure, phaseType);
     // ((ComponentGEUnifacUMRPRU) phase.getComponents()[0]).commonInit(phase, numberOfComponents,
-    // temperature, pressure, phasetype);
+    // temperature, pressure, phaseType);
 
     initQmix();
     if (getInitType() > 2) {
@@ -123,7 +123,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     }
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEUniquac) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phaseType.getValue()));
+          .getGamma(phase, numberOfComponents, temperature, pressure, phaseType));
     }
     return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();
   }

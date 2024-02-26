@@ -65,17 +65,17 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
       double beta) {
     double oldtemp = temperature;
     if (type == 0) {
-      refBWRSPhase.init(1.0, 1, 0, phase, 1.0);
-      refBWRSPhase.init(1.0, 1, 3, phase, 1.0);
+      refBWRSPhase.init(1.0, 1, 0, phaseType, 1.0);
+      refBWRSPhase.init(1.0, 1, 3, phaseType, 1.0);
     } else {
-      refBWRSPhase.init(1.0, 1, 3, phase, 1.0);
+      refBWRSPhase.init(1.0, 1, 3, phaseType, 1.0);
     }
     do {
-      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
       oldtemp = refBWRSPhase.getTemperature();
       h_scale_mix = getNumberOfMolesInPhase() * getb() / brefBWRSPhase;
       double term1 = getA() / ((ComponentEosInterface) refBWRSPhase.getComponent(0)).getaT();
@@ -84,7 +84,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
       refBWRSPhase.setMolarVolume(getTotalVolume() / h_scale_mix);
       // refBWRSPhase.setPressure(refBWRSPhase.calcPressure());
       refBWRSPhase.setPressure(pressure * h_scale_mix / f_scale_mix);
-      refBWRSPhase.init(1.0, 1, type, phase, 1.0);
+      refBWRSPhase.init(1.0, 1, type, phaseType, 1.0);
     } while (Math.abs((oldtemp - refBWRSPhase.getTemperature()) / oldtemp) > 1e-8);
   }
 
@@ -211,11 +211,12 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase)
-      throws neqsim.util.exception.IsNaNException,
+  public double molarVolume(double pressure, double temperature, double A, double B,
+      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV =
+        phaseType.getValue() == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     if (BonV < 0) {
       BonV = 0.0;
     }

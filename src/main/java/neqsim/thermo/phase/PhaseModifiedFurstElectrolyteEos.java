@@ -92,9 +92,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
       double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
     if (type == 0) {
       electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
     }
@@ -497,12 +497,12 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase)
-      throws neqsim.util.exception.IsNaNException,
+  public double molarVolume(double pressure, double temperature, double A, double B,
+      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     // double BonV = phase== 0 ?
     // 2.0/(2.0+temperature/getPseudoCriticalTemperature()):0.1*pressure*getB()/(numberOfMolesInPhase*temperature*R);
-    double BonV = phase == 0 ? 0.99 : 1e-5;
+    double BonV = phaseType.getValue() == 0 ? 0.99 : 1e-5;
 
     if (BonV < 0) {
       BonV = 1.0e-6;
@@ -547,8 +547,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
         double hnew = h + d2 * -h / d1;
         if (Math.abs(hnew) > Math.abs(h)) {
           logger.info("volume correction needed....");
-          BonV = phase == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          BonV =
+              phaseType.getValue() == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+                  : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       }
 

@@ -21,6 +21,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class PFCTViscosityMethod extends Viscosity {
   private static final long serialVersionUID = 1000;
 
+  // todo: is this parameter required?
   int phaseTypeNumb = 1;
   SystemInterface referenceSystem =
       new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
@@ -65,7 +66,7 @@ public class PFCTViscosityMethod extends Viscosity {
   /** {@inheritDoc} */
   @Override
   public double calcViscosity() {
-    int phaseTypeNumb = 0;
+    // int phaseTypeNumb = 0;
     // if(phase.getPhase().getPhaseType()==0) phaseTypeNumb=1;
 
     double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC();
@@ -116,6 +117,8 @@ public class PFCTViscosityMethod extends Viscosity {
     referenceSystem.setPressure(phase.getPhase().getPressure()
         * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
     referenceSystem.init(1);
+
+    // todo: mixing phasetype and phase index?
     double molDens = 1.0 / referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
     double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
     double redDens = molDens / critMolDens;

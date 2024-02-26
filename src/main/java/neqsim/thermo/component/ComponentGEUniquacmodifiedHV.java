@@ -7,6 +7,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  *
@@ -33,10 +34,10 @@ abstract class ComponentGEUniquacmodifiedHV extends ComponentGEUniquac {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType phaseType) {
     // PhaseGEInterface phaseny = (PhaseGEInterface) phase.getPhase();
     // PhaseGEInterface GEPhase = phaseny.getGEphase();
 
-    return 1; // super.getGamma(GEPhase, numberOfComponents, temperature, pressure, phasetype);
+    return 1; // super.getGamma(GEPhase, numberOfComponents, temperature, pressure, phaseType);
   }
 }

@@ -2,6 +2,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -36,9 +37,9 @@ public class ComponentGeDuanSun extends ComponentGE {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule) {
-    return getGamma(phase, numberOfComponents, temperature, pressure, phasetype, HValpha, HVgij);
+      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij,
+      double[][] intparam, String[][] mixRule) {
+    return getGamma(phase, numberOfComponents, temperature, pressure, phaseType, HValpha, HVgij);
   }
 
   /**
@@ -50,13 +51,13 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param phaseType a int
    * @param HValpha an array of {@link double} objects
    * @param HVgij an array of {@link double} objects
    * @return a double
    */
   public double getGammaNRTL(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij) {
+      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij) {
     double type = phase.getInitType();
     // double ny = 0, Djj = 0, Dii = 0, gij = 0, gjj = 0, gji = 0, gii = 0, F2T = 0, tot2 = 0;
     double A = 0;
@@ -208,7 +209,7 @@ public class ComponentGeDuanSun extends ComponentGE {
     // dlngammadt = (lngammaold-lngamma)/0.002;
 
     // phaseny.getExcessGibbsEnergy(numberOfComponents, temperature, pressure,
-    // phasetype)
+    // phaseType)
     gamma = Math.exp(lngamma);
     // System.out.println("gamma " +gamma);
     // if derivates....
@@ -271,13 +272,13 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param phaseType a int
    * @param HValpha an array of {@link double} objects
    * @param HVgij an array of {@link double} objects
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij) {
+      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij) {
     if (componentName.equals("CO2")) {
       return 0.9;
     } else if (componentName.equals("water")) {
@@ -458,12 +459,12 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param phaseType a int
    * @param salinity a double
    * @return a double
    */
   public double getGammaPitzer(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double salinity) {
+      double pressure, PhaseType phaseType, double salinity) {
     double P = pressure;
     double T = temperature;
     double S = salinity;
@@ -518,14 +519,14 @@ public class ComponentGeDuanSun extends ComponentGE {
   /////////////////////////////////////////////////////
   /*
    * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, int phasetype){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature, pressure+0.01, phasetype))-Math.log(fugcoef(phase, numberOfComponents,
-   * temperature, pressure-0.01, phasetype)))/0.02; return dfugdp; }
+   * double pressure, PhaseType phaseType){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
+   * temperature, pressure+0.01, phaseType))-Math.log(fugcoef(phase, numberOfComponents,
+   * temperature, pressure-0.01, phaseType)))/0.02; return dfugdp; }
    * 
    * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, int phasetype){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature+0.01, pressure, phasetype))-Math.log(fugcoef(phase, numberOfComponents,
-   * temperature-0.01, pressure, phasetype)))/0.02; return dfugdt; }
+   * double pressure, PhaseType phaseType){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
+   * temperature+0.01, pressure, phaseType))-Math.log(fugcoef(phase, numberOfComponents,
+   * temperature-0.01, pressure, phaseType)))/0.02; return dfugdt; }
    */
 
   /**

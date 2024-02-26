@@ -1,6 +1,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -35,8 +36,8 @@ public class ComponentGeNRTL extends ComponentGE {
   @Override
   @SuppressWarnings("unused")
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule) {
+      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij,
+      double[][] intparam, String[][] mixRule) {
     double type = phase.getInitType();
     double A = 0;
     double B = 0;
@@ -200,7 +201,7 @@ public class ComponentGeNRTL extends ComponentGE {
     // dlngammadt = (lngammaold-lngamma)/0.002;
 
     // phaseny.getExcessGibbsEnergy(numberOfComponents, temperature, pressure,
-    // phasetype)
+    // phaseType)
     gamma = Math.exp(lngamma);
     // System.out.println("gamma " +gamma);
     // if derivates....
@@ -256,14 +257,14 @@ public class ComponentGeNRTL extends ComponentGE {
 
   /*
    * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, int phasetype){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature, pressure+0.01, phasetype))-Math.log(fugcoef(phase, numberOfComponents,
-   * temperature, pressure-0.01, phasetype)))/0.02; return dfugdp; }
+   * double pressure, PhaseType phaseType){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
+   * temperature, pressure+0.01, phaseType))-Math.log(fugcoef(phase, numberOfComponents,
+   * temperature, pressure-0.01, phaseType)))/0.02; return dfugdp; }
    * 
    * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, int phasetype){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature+0.01, pressure, phasetype))-Math.log(fugcoef(phase, numberOfComponents,
-   * temperature-0.01, pressure, phasetype)))/0.02; return dfugdt; }
+   * double pressure, PhaseType phaseType){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
+   * temperature+0.01, pressure, phaseType))-Math.log(fugcoef(phase, numberOfComponents,
+   * temperature-0.01, pressure, phaseType)))/0.02; return dfugdt; }
    */
 
   /**
