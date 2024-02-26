@@ -109,7 +109,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
     if (type > 0) {
       for (int i = 0; i < numberOfComponents; i++) {
@@ -117,7 +117,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
             numberOfComponents, type);
       }
     }
-    super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
   }
 
   /**
@@ -1155,11 +1155,11 @@ public class PhasePCSAFT extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B,
-      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     // double BonV = phase== 0 ? 0.99:1e-5;
     if (BonV < 0) {
@@ -1217,8 +1217,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
     }
 
-    // if(phaseType==0) System.out.println("density " + getDensity()); //"BonV: " +
-    // BonV + " "+" itert: " + iterations +" " + " phase " + phaseType+ " " + h + "
+    // if(pt==0) System.out.println("density " + getDensity()); //"BonV: " +
+    // BonV + " "+" itert: " + iterations +" " + " phase " + pt+ " " + h + "
     // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
     // + fVV());
 

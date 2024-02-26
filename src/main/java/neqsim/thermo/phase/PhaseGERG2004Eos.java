@@ -81,15 +81,15 @@ public class PhaseGERG2004Eos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
-    IPHASE = phaseType == PhaseType.LIQUID ? -1 : -2;
-    super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
+    IPHASE = pt == PhaseType.LIQUID ? -1 : -2;
+    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     setxFracGERG();
 
     if (!okVolume) {
-      IPHASE = phaseType == PhaseType.LIQUID ? -2 : -1;
-      super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
+      IPHASE = pt == PhaseType.LIQUID ? -2 : -1;
+      super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     }
     if (type >= 1) {
       double[] temp = new double[18];
@@ -137,7 +137,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
                            // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       CvGERG = alloTPX[5]; // gergEOS.CPOTPX(temperature,pressure/10.0,
                            // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     }
   }
 
@@ -186,7 +186,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B,
-      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
+      PhaseType pt) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double temp = GERG2004EOS.ZOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1],
         xFracGERG[2], xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7],

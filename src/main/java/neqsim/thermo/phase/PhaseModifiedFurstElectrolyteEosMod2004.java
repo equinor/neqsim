@@ -108,9 +108,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     if (type == 0) {
       electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
     }
@@ -433,7 +433,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * @return a double
    */
   public double calcShieldingParameter() {
-    // if(phaseType==1) return 0.0;
+    // if(pt==1) return 0.0;
     double df = 0;
     double f = 0;
     int ions = 0;
@@ -468,7 +468,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
   }
 
   // public double calcShieldingParameter2(){
-  // if(phaseType==1) return 0.0;
+  // if(pt==1) return 0.0;
 
   // double df=0, f=0;
   // int ions=0;
@@ -503,12 +503,12 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B,
-      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     // double BonV = phase== 0 ?
     // 2.0/(2.0+temperature/getPseudoCriticalTemperature()):0.1*pressure*getB()/(numberOfMolesInPhase*temperature*R);
-    double BonV = phaseType == PhaseType.LIQUID ? 0.99 : 1e-5;
+    double BonV = pt == PhaseType.LIQUID ? 0.99 : 1e-5;
 
     if (BonV < 0) {
       BonV = 1.0e-6;
@@ -553,8 +553,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
         double hnew = h + d2 * -h / d1;
         if (Math.abs(hnew) > Math.abs(h)) {
           logger.info("volume correction needed....");
-          BonV = phaseType == PhaseType.GAS
-              ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
               : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       }
@@ -580,8 +579,8 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
     }
 
-    // if(phaseType==0) System.out.println("density " + getDensity()); //"BonV: " +
-    // BonV + " "+" itert: " + iterations +" " + " phase " + phaseType+ " " + h + "
+    // if(pt==0) System.out.println("density " + getDensity()); //"BonV: " +
+    // BonV + " "+" itert: " + iterations +" " + " phase " + pt+ " " + h + "
     // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
     // + fVV());
 
@@ -952,7 +951,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * @return a double
    */
   public double XLRdGammaLR() {
-    // if(phaseType==1) return 0.0;
+    // if(pt==1) return 0.0;
     double ans = 0.0;
     double ans2 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {

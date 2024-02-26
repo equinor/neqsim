@@ -81,7 +81,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
     if (type == 0) {
       selfAccociationScheme = new int[numberOfComponents][0][0];
@@ -94,7 +94,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
       }
     }
     do {
-      super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     } while (!solveX());
   }
 
@@ -373,11 +373,11 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B,
-      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     // double BonV = phase== 0 ? 0.99:1e-5;
 
@@ -454,12 +454,12 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     }
     if (Double.isNaN(getMolarVolume())) {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
-      // if(phaseType==0)
+      // if(pt==0)
       // System.out.println("density " +
       // getDensity()); //"BonV: " + BonV + "
       // "+" itert: " +
       // iterations +" " + " phase " +
-      // phaseType+ " " + h +
+      // pt+ " " + h +
       // " +dh + " B " + Btemp + " D " +
       // Dtemp + " gv" + gV()
       // + " fv " + fv() + " fvv" + fVV());

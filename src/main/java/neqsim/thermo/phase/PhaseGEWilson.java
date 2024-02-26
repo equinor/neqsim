@@ -73,14 +73,14 @@ public class PhaseGEWilson extends PhaseGE {
   @Override
   public double getExcessGibbsEnergy() {
     // GE = getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure,
-    // phaseType);
+    // pt);
     return GE;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phaseType) {
+      double temperature, double pressure, PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx()

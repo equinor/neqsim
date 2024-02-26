@@ -2270,17 +2270,17 @@ public abstract class SystemThermo implements SystemInterface {
    * @param pt PhaseType to look for.
    * @return True if system contains a phase of requested type.
    */
-  public boolean hasPhaseType(PhaseType phaseType) {
+  public boolean hasPhaseType(PhaseType pt) {
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i) == null) {
         continue;
       }
-      if (getPhase(i).getType() == phaseType) {
+      if (getPhase(i).getType() == pt) {
         return true;
       }
-      if (getPhase(i).getPhaseTypeName().equals(phaseType.getDesc())) {
+      if (getPhase(i).getPhaseTypeName().equals(pt.getDesc())) {
         logger.error(
-            "Bug in setting phaseType somewhere. Phasetype and phasetypename should be the same.");
+            "Bug in setting phasetype somewhere. Phasetype and phasetypename should be the same.");
         return true;
       }
     }
@@ -2987,7 +2987,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * Re-initialize phaseType, beta and phaseindex arrays, same initialization which is used in
+   * Re-initialize phasetype, beta and phaseindex arrays, same initialization which is used in
    * constructor.
    */
   public void reInitPhaseInformation() {

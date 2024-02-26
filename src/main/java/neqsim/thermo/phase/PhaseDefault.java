@@ -59,8 +59,8 @@ public class PhaseDefault extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B,
-      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     return 1.0;
   }

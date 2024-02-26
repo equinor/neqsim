@@ -77,18 +77,18 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
 
-    // Replace with phaseType != PhaseType.GAS?
-    if (phaseType.getValue() > 1) {
-      phaseType = PhaseType.LIQUID;
+    // Replace with pt != PhaseType.GAS?
+    if (pt.getValue() > 1) {
+      pt = PhaseType.LIQUID;
     }
     if (!mixingRuleDefined) {
       setMixingRule(1);
     }
 
-    super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
 
     if (type != 0) {
       loc_B = calcB(this, temperature, pressure, numberOfComponents);
@@ -105,7 +105,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         if (calcMolarVolume) {
           molarVolume = molarVolume(pressure, temperature,
               getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase,
-              phaseType);
+              pt);
         }
       } catch (Exception ex) {
         logger.error("Failed to solve for molarVolume within the iteration limit.");
@@ -195,16 +195,16 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param phaseType the PhaseType of the phase.
+   * @param pt the PhaseType of the phase.
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public double molarVolume2(double pressure, double temperature, double A, double B,
-      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
+  public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     if (BonV < 0) {
       BonV = 0.0;
@@ -285,11 +285,11 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B,
-      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
     if (BonV < 0) {
@@ -339,8 +339,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = phaseType == PhaseType.GAS
-              ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
               : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {
@@ -363,9 +362,8 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       if (iterations > 150 && error > errorOld && !changeFase) {
         changeFase = true;
         BonVold = 10.0;
-        BonV =
-            phaseType == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-                : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+        BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
       }
 
       setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
@@ -783,7 +781,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   // NYE metoder fredag 25.08.public double dFdN(PhaseInterface phase, int
-  // numberOfComponents, double temperature, double pressure, PhaseType phaseType){
+  // numberOfComponents, double temperature, double pressure, PhaseType pt){
   /** {@inheritDoc} */
   @Override
   public double FnV() {

@@ -51,20 +51,20 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
    * @param totalNumberOfMoles a double
    * @param beta a double
    * @param numberOfComponents a int
-   * @param phaseType the PhaseType of the phase.
+   * @param pt the PhaseType of the phase.
    * @param phase a int
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int numberOfComponents, PhaseType phaseType, int phase) {
+      int numberOfComponents, PhaseType pt, int phase) {
     if (totalNumberOfMoles <= 0) {
       new neqsim.util.exception.InvalidInputException(this, "init", "totalNumberOfMoles",
           "must be larger than zero.");
     }
     for (int i = 0; i < numberOfComponents; i++) {
       // todo: Conflating init type and phase type?
-      componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, phaseType.getValue());
+      componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, pt.getValue());
     }
-    this.getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, phaseType);
+    this.getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, pt);
 
     double sumHydrocarbons = 0.0;
     double sumAqueous = 0.0;
@@ -86,11 +86,11 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType,
-      PhaseType phaseType, double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, initType, phaseType, beta);
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
+      double beta) {
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType != 0) {
-      getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, phaseType);
+      getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, pt);
     }
 
     double sumHydrocarbons = 0.0;
@@ -135,8 +135,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B,
-      PhaseType phaseType) {
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt) {
     return 1;
   }
 
@@ -192,7 +191,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phaseType) {
+      double temperature, double pressure, PhaseType pt) {
     logger.error("this getExcessGibbsEnergy should never be used.......");
     return 0;
   }

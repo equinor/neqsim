@@ -354,7 +354,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType) {
+      double pressure, PhaseType pt) {
     int initType = phase.getInitType();
     double lngammaCombinational;
     double lngammaResidual;
@@ -520,22 +520,22 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType the PhaseType of the phase.
+   * @param pt the PhaseType of the phase.
    */
   public void calcGammaNumericalDerivatives(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phaseType) {
+      double temperature, double pressure, PhaseType pt) {
     phase.setInitType(1);
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       double dn = getNumberOfMolesInPhase() / 1e6;
       phase.addMoles(getComponentNumber(), dn);
       x = getNumberOfmoles() / getNumberOfMolesInPhase();
-      getGamma(phase, numberOfComponents, temperature, pressure, phaseType);
+      getGamma(phase, numberOfComponents, temperature, pressure, pt);
       double oldGamma = lngamma;
       phase.addMoles(getComponentNumber(), dn);
 
       x = getNumberOfmoles() / getNumberOfMolesInPhase();
 
-      getGamma(phase, numberOfComponents, temperature, pressure, phaseType);
+      getGamma(phase, numberOfComponents, temperature, pressure, pt);
 
       double dlnGammadn = (oldGamma - lngamma) / dn;
       // System.out.println("dlnGammadn " + dlnGammadn);

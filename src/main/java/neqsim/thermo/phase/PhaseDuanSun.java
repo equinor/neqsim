@@ -63,14 +63,14 @@ public class PhaseDuanSun extends PhaseGE {
   @Override
   public double getExcessGibbsEnergy() {
     // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
-    // pressure, phaseType);
+    // pressure, pt);
     return GE;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phaseType) {
+      double temperature, double pressure, PhaseType pt) {
     GE = 0;
     double salinity = 0.0;
     // double k=0.0;
@@ -98,9 +98,9 @@ public class PhaseDuanSun extends PhaseGE {
     for (int i = 0; i < numberOfComponents; i++) {
       // GE += phase.getComponents()[i].getx()*Math.log(((ComponentGeDuanSun)
       // componentArray[i]).getGammaNRTL(phase, numberOfComponents, temperature, pressure,
-      // phaseType, alpha, Dij));
+      // pt, alpha, Dij));
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentGeDuanSun) componentArray[i])
-          .getGammaPitzer(phase, numberOfComponents, temperature, pressure, phaseType, salinity));
+          .getGammaPitzer(phase, numberOfComponents, temperature, pressure, pt, salinity));
     }
 
     return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*

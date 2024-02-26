@@ -403,7 +403,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
     if (totalNumberOfMoles <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
@@ -412,8 +412,8 @@ public abstract class Phase implements PhaseInterface {
 
     this.beta = beta;
     numberOfMolesInPhase = beta * totalNumberOfMoles;
-    if (this.pt != phaseType) {
-      setType(phaseType);
+    if (this.pt != pt) {
+      setType(pt);
       // setPhysicalProperties(physicalPropertyType);
     }
     this.setInitType(type);
