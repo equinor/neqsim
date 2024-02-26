@@ -27,7 +27,7 @@ public interface ComponentGEInterface extends ComponentInterface {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType the PhaseType of the phase.
+   * @param pt the PhaseType of the phase.
    * @param HValpha an array of {@link double} objects
    * @param HVgij an array of {@link double} objects
    * @param intparam an array of {@link double} objects
@@ -35,8 +35,8 @@ public interface ComponentGEInterface extends ComponentInterface {
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij,
-      double[][] intparam, String[][] mixRule);
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
+      String[][] mixRule);
 
   /**
    * <p>

@@ -143,7 +143,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType) {
+      double pressure, PhaseType pt) {
     int initType = phase.getInitType();
     double lngammaCombinational = 0.0;
     double lngammaResidual = 0.0;

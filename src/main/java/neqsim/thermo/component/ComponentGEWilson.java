@@ -40,14 +40,13 @@ public class ComponentGEWilson extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType the PhaseType of the phase.
+   * @param pt the PhaseType of the phase.
    * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType) {
-    fugacityCoefficient =
-        (this.getGamma(phase, numberOfComponents, temperature, pressure, phaseType)
-            * this.getAntoineVaporPressure(temperature) / pressure);
+      double pressure, PhaseType pt) {
+    fugacityCoefficient = (this.getGamma(phase, numberOfComponents, temperature, pressure, pt)
+        * this.getAntoineVaporPressure(temperature) / pressure);
     return fugacityCoefficient;
   }
 
@@ -60,19 +59,19 @@ public class ComponentGEWilson extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType the PhaseType of the phase.
+   * @param pt the PhaseType of the phase.
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType) {
+      double pressure, PhaseType pt) {
     return getWilsonActivityCoefficient(phase);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij,
-      double[][] intparam, String[][] mixRule) {
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
+      String[][] mixRule) {
     return 0.0;
   }
 

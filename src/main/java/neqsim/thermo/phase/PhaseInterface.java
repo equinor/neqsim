@@ -836,12 +836,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param phaseType the PhaseType of the phase.
+   * @param pt the PhaseType of the phase.
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  double molarVolume(double pressure, double temperature, double A, double B, PhaseType phaseType)
+  double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException;
 
   /**

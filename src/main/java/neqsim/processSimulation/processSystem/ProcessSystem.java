@@ -100,6 +100,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * add.
    * </p>
    *
+   * @param position a int
+   * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *        object
    */
   public void add(int position, ProcessEquipmentInterface operation) {
     ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();

@@ -34,9 +34,9 @@ public class PhasePrEosvolcor extends PhasePrEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     loc_C = calcC(this, temperature, pressure, numberOfComponents);
     CT = calcCT(this, temperature, pressure, numberOfComponents);
   }

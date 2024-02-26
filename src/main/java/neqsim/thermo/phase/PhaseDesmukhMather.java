@@ -39,12 +39,11 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType,
-      PhaseType phaseType, double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, initType, phaseType, beta);
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
+      double beta) {
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType != 0) {
-      setType(phaseType);
-      // phaseTypeName = phase == 0 ? "liquid" : "gas";
+      setType(pt);
     }
     setMolarVolume(0.980e-3 * getMolarMass() * 1e5);
     Z = pressure * getMolarVolume() / (R * temperature);
@@ -171,18 +170,18 @@ public class PhaseDesmukhMather extends PhaseGE {
   @Override
   public double getExcessGibbsEnergy() {
     // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
-    // pressure, phaseType);
+    // pressure, pt);
     return GE;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phaseType) {
+      double temperature, double pressure, PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phaseType));
+          .getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     // System.out.println("ge " + GE);
     return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*

@@ -44,11 +44,11 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType, double[][] WSalpha, double[][] WSgij,
-      double[][] intparam, String[][] mixRule) {
+      double pressure, PhaseType pt, double[][] WSalpha, double[][] WSgij, double[][] intparam,
+      String[][] mixRule) {
     double[][] WSgijT = new double[numberOfComponents][numberOfComponents];
-    return getGamma(phase, numberOfComponents, temperature, pressure, phaseType, WSalpha, WSgij,
-        WSgijT, intparam, mixRule);
+    return getGamma(phase, numberOfComponents, temperature, pressure, pt, WSalpha, WSgij, WSgijT,
+        intparam, mixRule);
   }
 
   /**
@@ -60,7 +60,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType the PhaseType of the phase.
+   * @param pt the PhaseType of the phase.
    * @param WSalpha an array of {@link double} objects
    * @param WSgij an array of {@link double} objects
    * @param WSgijT an array of {@link double} objects
@@ -70,7 +70,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
    */
   @SuppressWarnings("unused")
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType, double[][] WSalpha, double[][] WSgij, double[][] WSgijT,
+      double pressure, PhaseType pt, double[][] WSalpha, double[][] WSgij, double[][] WSgijT,
       double[][] intparam, String[][] mixRule) {
     double type = phase.getInitType();
     double A = 0;
@@ -245,7 +245,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
     // dlngammadt = (lngammaold-lngamma)/0.002;
 
     // phaseny.getExcessGibbsEnergy(numberOfComponents, temperature, pressure,
-    // phaseType)
+    // pt)
     gamma = Math.exp(lngamma);
 
     // if derivates....

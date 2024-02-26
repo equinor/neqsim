@@ -82,19 +82,19 @@ public class PhaseGEUniquac extends PhaseGE {
   @Override
   public double getExcessGibbsEnergy() {
     // GE = getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure,
-    // phaseType);
+    // pt);
     return GE;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phaseType) {
+      double temperature, double pressure, PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx()
           * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
-              temperature, pressure, phaseType, alpha, Dij, intparam, mixRule));
+              temperature, pressure, pt, alpha, Dij, intparam, mixRule));
     }
 
     return R * temperature * numberOfMolesInPhase * GE;

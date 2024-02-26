@@ -60,9 +60,9 @@ public class ComponentDesmukhMather extends ComponentGE {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij,
-      double[][] intparam, String[][] mixRule) {
-    return getGamma(phase, numberOfComponents, temperature, pressure, phaseType);
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
+      String[][] mixRule) {
+    return getGamma(phase, numberOfComponents, temperature, pressure, pt);
   }
 
   /**
@@ -74,11 +74,11 @@ public class ComponentDesmukhMather extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType the PhaseType of the phase.
+   * @param pt the PhaseType of the phase.
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType) {
+      double pressure, PhaseType pt) {
     double A = 1.174;
 
     double B = 3.32384e9;

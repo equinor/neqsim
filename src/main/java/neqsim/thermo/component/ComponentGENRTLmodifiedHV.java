@@ -38,11 +38,11 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij,
-      double[][] intparam, String[][] mixRule) {
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
+      String[][] mixRule) {
     double[][] HVgijT = new double[numberOfComponents][numberOfComponents];
-    return getGamma(phase, numberOfComponents, temperature, pressure, phaseType, HValpha, HVgij,
-        HVgijT, intparam, mixRule);
+    return getGamma(phase, numberOfComponents, temperature, pressure, pt, HValpha, HVgij, HVgijT,
+        intparam, mixRule);
   }
 
   /**
@@ -54,7 +54,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType the PhaseType of the phase.
+   * @param pt the PhaseType of the phase.
    * @param HValpha an array of {@link double} objects
    * @param HVgij an array of {@link double} objects
    * @param HVgijT an array of {@link double} objects
@@ -63,7 +63,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType phaseType, double[][] HValpha, double[][] HVgij, double[][] HVgijT,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] HVgijT,
       double[][] intparam, String[][] mixRule) {
     int type = phase.getInitType();
     double A = 0;

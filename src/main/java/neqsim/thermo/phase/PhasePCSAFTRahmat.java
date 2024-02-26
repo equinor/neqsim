@@ -169,13 +169,13 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
     for (int i = 0; i < numberOfComponents; i++) {
       componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,
           numberOfComponents, type);
     }
-    super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
   }
 
   /** {@inheritDoc} */
@@ -1385,11 +1385,11 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B,
-      PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     // double BonV = phase== 0 ? 0.99:1e-5;
 
@@ -1470,9 +1470,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
      * } if(iterations>=6000) throw new util.exception.TooManyIterationsException();
      * if(Double.isNaN(getMolarVolume())) throw new util.exception.IsNaNException();
      * 
-     * // if(phaseType==0) System.out.println("density " + getDensity()); //"BonV: " + BonV +
-     * " "+"  itert: " + iterations +" " + "  phase " + phaseType+ "  " + h + " " +dh + " B " +
-     * Btemp + "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
+     * // if(pt==0) System.out.println("density " + getDensity()); //"BonV: " + BonV +
+     * " "+"  itert: " + iterations +" " + "  phase " + pt+ "  " + h + " " +dh + " B " + Btemp +
+     * "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
      */
     return getMolarVolume();
   }

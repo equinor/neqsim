@@ -74,11 +74,11 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType phaseType) {
+      double temperature, double pressure, PhaseType pt) {
     double GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEUniquac) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phaseType));
+          .getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase(); // phase.getNumberOfMolesInPhase()*
   }
