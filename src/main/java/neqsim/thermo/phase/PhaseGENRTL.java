@@ -8,6 +8,8 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGeNRTL;
+import neqsim.util.exception.IsNaNException;
+import neqsim.util.exception.TooManyIterationsException;
 
 /**
  * <p>
@@ -99,6 +101,12 @@ public class PhaseGENRTL extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  public void setDijT(double[][] DijT) {
+    throw new UnsupportedOperationException("Unimplemented method 'setDijT'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getExcessGibbsEnergy() {
     // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
     // pressure, pt);
@@ -123,5 +131,11 @@ public class PhaseGENRTL extends PhaseGE {
   @Override
   public double getGibbsEnergy() {
     return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
+  }
+
+  @Override
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws IsNaNException, TooManyIterationsException {
+    throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
   }
 }

@@ -9,6 +9,8 @@ package neqsim.thermo.phase;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGEUniquac;
+import neqsim.util.exception.IsNaNException;
+import neqsim.util.exception.TooManyIterationsException;
 
 /**
  * <p>
@@ -67,6 +69,24 @@ public class PhaseGEUniquac extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  public void setAlpha(double[][] alpha) {
+    throw new UnsupportedOperationException("Unimplemented method 'setAlpha'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDij(double[][] Dij) {
+    throw new UnsupportedOperationException("Unimplemented method 'setDij'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDijT(double[][] DijT) {
+    throw new UnsupportedOperationException("Unimplemented method 'setDijT'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase);
     componentArray[compNumber] = new ComponentGEUniquac(name, moles, molesInPhase, compNumber);
@@ -98,5 +118,11 @@ public class PhaseGEUniquac extends PhaseGE {
     }
 
     return R * temperature * numberOfMolesInPhase * GE;
+  }
+
+  @Override
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws IsNaNException, TooManyIterationsException {
+    throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
   }
 }
