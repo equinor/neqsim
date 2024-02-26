@@ -9,7 +9,6 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGENRTLmodifiedHV;
 
-
 /**
  * <p>
  * PhaseGENRTLmodifiedHV class.
