@@ -96,7 +96,7 @@
 		<dependency>
 			<groupId>org.ojalgo</groupId>
 			<artifactId>ojalgo</artifactId>
-			<version>53.2.0</version>
+			<version>53.3.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
