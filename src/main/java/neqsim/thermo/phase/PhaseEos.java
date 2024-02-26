@@ -79,6 +79,8 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
       double beta) {
+
+    // Replace with phaseType != PhaseType.GAS?
     if (phaseType.getValue() > 1) {
       phaseType = PhaseType.LIQUID;
     }
@@ -193,7 +195,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param phaseType a int
+   * @param phaseType the PhaseType of the phase.
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -202,7 +204,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType.getValue() == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     if (BonV < 0) {
       BonV = 0.0;
@@ -287,7 +289,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType.getValue() == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
     if (BonV < 0) {
@@ -337,9 +339,9 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV =
-              phaseType.getValue() == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-                  : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          BonV = phaseType == PhaseType.GAS
+              ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {
         BonV += d1 * (0.1);
@@ -362,7 +364,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         changeFase = true;
         BonVold = 10.0;
         BonV =
-            phaseType.getValue() == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            phaseType == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
       }
 

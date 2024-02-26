@@ -215,7 +215,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
       PhaseType phaseType) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double BonV =
-        phaseType.getValue() == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        phaseType == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     if (BonV < 0) {
       BonV = 0.0;

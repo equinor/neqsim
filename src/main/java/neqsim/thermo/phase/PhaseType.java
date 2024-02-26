@@ -35,6 +35,7 @@ public enum PhaseType implements Serializable {
    *
    * @return Numeric index of phase type
    */
+  @Deprecated
   public int getValue() {
     return this.value;
   }

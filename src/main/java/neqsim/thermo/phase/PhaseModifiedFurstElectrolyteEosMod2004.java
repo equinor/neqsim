@@ -411,7 +411,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * @return a double
    */
   public double calcGammaLRdV() {
-    if (pt.getValue() == 1) {
+    if (pt == PhaseType.GAS) {
       return 0.0;
     }
     // return 0.0; // problem ved ren komponent
@@ -508,7 +508,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
       neqsim.util.exception.TooManyIterationsException {
     // double BonV = phase== 0 ?
     // 2.0/(2.0+temperature/getPseudoCriticalTemperature()):0.1*pressure*getB()/(numberOfMolesInPhase*temperature*R);
-    double BonV = phaseType.getValue() == 0 ? 0.99 : 1e-5;
+    double BonV = phaseType == PhaseType.LIQUID ? 0.99 : 1e-5;
 
     if (BonV < 0) {
       BonV = 1.0e-6;
@@ -553,9 +553,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
         double hnew = h + d2 * -h / d1;
         if (Math.abs(hnew) > Math.abs(h)) {
           logger.info("volume correction needed....");
-          BonV =
-              phaseType.getValue() == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-                  : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          BonV = phaseType == PhaseType.GAS
+              ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       }
 

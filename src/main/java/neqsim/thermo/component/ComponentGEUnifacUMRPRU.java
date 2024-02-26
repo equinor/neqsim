@@ -520,7 +520,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType a int
+   * @param phaseType the PhaseType of the phase.
    */
   public void calcGammaNumericalDerivatives(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, PhaseType phaseType) {

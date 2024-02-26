@@ -83,12 +83,12 @@ public class PhaseGERG2004Eos extends PhaseEos {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phaseType,
       double beta) {
-    IPHASE = phaseType.getValue() == 0 ? -1 : -2;
+    IPHASE = phaseType == PhaseType.LIQUID ? -1 : -2;
     super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
     setxFracGERG();
 
     if (!okVolume) {
-      IPHASE = phaseType.getValue() == 0 ? -2 : -1;
+      IPHASE = phaseType == PhaseType.LIQUID ? -2 : -1;
       super.init(totalNumberOfMoles, numberOfComponents, type, phaseType, beta);
     }
     if (type >= 1) {

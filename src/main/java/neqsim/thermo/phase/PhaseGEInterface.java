@@ -24,7 +24,7 @@ public interface PhaseGEInterface {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phaseType a PhaseType enum object
+   * @param phaseType the PhaseType of the phase.
    * @return a double
    */
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
