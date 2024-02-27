@@ -203,8 +203,7 @@ public class PhaseDesmukhMather extends PhaseGE {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
           .getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
-    // System.out.println("ge " + GE);
-    return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
+    return R * temperature * numberOfMolesInPhase * GE;
   }
 
   /** {@inheritDoc} */

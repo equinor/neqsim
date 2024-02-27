@@ -337,7 +337,8 @@ public abstract class Phase implements PhaseInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       gmix += getComponent(i).getx() * Math.log(getComponent(i).getx());
     }
-    return getExcessGibbsEnergy() + R * temperature * gmix * numberOfMolesInPhase;
+    // todo: is this correct?
+    return R * temperature * numberOfMolesInPhase * getExcessGibbsEnergy() * gmix;
   }
 
   /** {@inheritDoc} */
