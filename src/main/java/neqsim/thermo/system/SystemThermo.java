@@ -2354,13 +2354,6 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public PhaseInterface getPhase(String phaseTypeName) {
-    PhaseType pt = PhaseType.byDesc(phaseTypeName);
-    return getPhase(pt);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public PhaseInterface getPhaseOfType(String phaseTypeName) {
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
@@ -2392,7 +2385,7 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public int getPhaseIndex(String phaseTypeName) {
     // TODO: returning first if not found, not same as the others.
-    for (int i = 0; i < numberOfPhases; i++) {
+    for (int i = 0; i < getNumberOfPhases(); i++) {
       if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
         return phaseIndex[i];
       }

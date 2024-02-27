@@ -628,7 +628,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param phaseTypeName a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.phase.PhaseInterface} object
    */
-  public PhaseInterface getPhase(String phaseTypeName);
+  @Deprecated
+  public default PhaseInterface getPhase(String phaseTypeName) {
+    return getPhase(PhaseType.byDesc(phaseTypeName));
+  }
 
   /**
    * <p>
@@ -666,6 +669,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param phaseTypeName a {@link java.lang.String} object
    * @return PhaseIndex to index into phaseArray.
    */
+  @Deprecated
   public int getPhaseIndex(String phaseTypeName);
 
   /**
@@ -925,6 +929,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *        supported)
    * @return a {@link neqsim.thermo.phase.PhaseInterface} object
    */
+  @Deprecated
   public PhaseInterface getPhaseOfType(String phaseTypeName);
 
   /**
@@ -1018,6 +1023,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param phaseTypeName PhaseType to look for
    * @return True if system contains a phase of requested type
    */
+  @Deprecated
   public default boolean hasPhaseType(String phaseTypeName) {
     return hasPhaseType(PhaseType.byDesc(phaseTypeName));
   }
@@ -2209,6 +2215,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param unit mole/volume/weight
    * @return phase: fraction in specified unit
    */
+  @Deprecated
   public double getPhaseFraction(String phaseTypeName, String unit);
 
   /**
@@ -2383,6 +2390,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param phaseTypeName Name of phase type to look for
    * @return Phase number
    */
+  @Deprecated
   public default int getPhaseNumberOfPhase(String phaseTypeName) {
     return getPhaseNumberOfPhase(PhaseType.byDesc(phaseTypeName));
   }
