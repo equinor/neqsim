@@ -1930,31 +1930,21 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     if (isPhase(phase)) {
-      if (type == 0) {
-        getPhase(phase).init(getTotalNumberOfMoles(), numberOfComponents, 0,
-            phaseType[phaseIndex[phase]], beta[phaseIndex[phase]]);
-      } else if (type == 1) {
-        getPhase(phase).init(getTotalNumberOfMoles(), numberOfComponents, 1,
-            phaseType[phaseIndex[phase]], beta[phaseIndex[phase]]);
-
+      getPhase(phase).init(getTotalNumberOfMoles(), numberOfComponents, type,
+          phaseType[phaseIndex[phase]], beta[phaseIndex[phase]]);
+      if (type > 0) {
         for (int j = 0; j < numberOfComponents; j++) {
           getPhase(phase).getComponents()[j].fugcoef(getPhase(phase));
         }
-      } else if (type == 2) {
-        getPhase(phase).init(getTotalNumberOfMoles(), numberOfComponents, 2,
-            phaseType[phaseIndex[phase]], beta[phaseIndex[phase]]);
-
+      }
+      if (type > 1) {
         for (int j = 0; j < numberOfComponents; j++) {
-          getPhase(phase).getComponents()[j].fugcoef(getPhase(phase));
           getPhase(phase).getComponents()[j].logfugcoefdT(getPhase(phase));
           getPhase(phase).getComponents()[j].logfugcoefdP(getPhase(phase));
         }
-      } else if (type == 3) {
-        getPhase(phase).init(getTotalNumberOfMoles(), numberOfComponents, 3,
-            phaseType[phaseIndex[phase]], beta[phaseIndex[phase]]);
-
+      }
+      if (type > 2) {
         for (int j = 0; j < numberOfComponents; j++) {
-          getPhase(phase).getComponents()[j].fugcoef(getPhase(phase));
           getPhase(phase).getComponents()[j].logfugcoefdT(getPhase(phase));
           getPhase(phase).getComponents()[j].logfugcoefdP(getPhase(phase));
           getPhase(phase).getComponents()[j].logfugcoefdN(getPhase(phase));
@@ -1967,6 +1957,7 @@ public abstract class SystemThermo implements SystemInterface {
         tmpPhase.setType(PhaseType.OIL);
       }
     }
+
     this.isInitialized = true;
   }
 
