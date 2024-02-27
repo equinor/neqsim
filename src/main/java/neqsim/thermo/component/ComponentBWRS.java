@@ -102,8 +102,8 @@ public class ComponentBWRS extends ComponentSrk {
   /** {@inheritDoc} */
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
+      int initType) {
+    super.init(temperature, pressure, totalNumberOfMoles, beta, initType);
 
     BP[0] = R * temperature;
     BP[1] = aBWRS[0] * temperature + aBWRS[1] * Math.sqrt(temperature) + aBWRS[2]

@@ -129,14 +129,14 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temp, double pres, double totMoles, double beta, int type) {
-    super.init(temp, pres, totMoles, beta, type);
+  public void init(double temp, double pres, double totMoles, double beta, int initType) {
+    super.init(temp, pres, totMoles, beta, initType);
     a = calca();
     b = calcb();
     reducedTemperature = reducedTemperature(temp);
     reducedPressure = reducedPressure(pres);
     aT = a * alpha(temp);
-    if (type >= 2) {
+    if (initType >= 2) {
       aDiffT = diffaT(temp);
       aDiffDiffT = diffdiffaT(temp);
     }
@@ -145,10 +145,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {
+      int numberOfComponents, int initType) {
     Bi = phase.calcBi(componentNumber, phase, temp, pres, numberOfComponents);
     Ai = phase.calcAi(componentNumber, phase, temp, pres, numberOfComponents);
-    if (type >= 2) {
+    if (initType >= 2) {
       AiT = phase.calcAiT(componentNumber, phase, temp, pres, numberOfComponents);
     }
     double totVol = phase.getMolarVolume() * phase.getNumberOfMolesInPhase();
@@ -157,7 +157,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
         / (-R * temp * phase.dFdVdV()
             - phase.getNumberOfMolesInPhase() * R * temp / (totVol * totVol));
 
-    if (type >= 3) {
+    if (initType >= 3) {
       for (int j = 0; j < numberOfComponents; j++) {
         Aij[j] = phase.calcAij(componentNumber, j, phase, temp, pres, numberOfComponents);
         Bij[j] = phase.calcBij(componentNumber, j, phase, temp, pres, numberOfComponents);
