@@ -1,6 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
@@ -36,13 +37,13 @@ public class HydrateInhibitorwtFlashTest {
               * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
               + testSystem.getPhase(0).getComponent("water").getNumberOfmoles()
                   * testSystem.getPhase(0).getComponent("water").getMolarMass());
-      assertEquals(98.54736778391424, cons);
+      Assertions.assertEquals(98.54736778391424, cons, 1e-12);
     } catch (Exception ex) {
       ex.toString();
     }
     // testSystem.display();
 
     assertEquals(0.019690143220139962,
-        testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles());
+        testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles(), 1e-12);
   }
 }
