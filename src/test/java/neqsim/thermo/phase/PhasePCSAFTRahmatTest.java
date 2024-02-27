@@ -13,8 +13,8 @@ public class PhasePCSAFTRahmatTest {
   @BeforeEach
   void setUp() {
     testSystem = new SystemPCSAFT(150.0, 10.0);
-    testSystem.addComponent("methane", 1.0);
-    testSystem.addComponent("n-hexane", 10.0001);
+    testSystem.addComponent("methane", 100.0);
+    testSystem.addComponent("n-hexane", 1000.0001);
     testSystem.setMixingRule(1);
     testSystem.createDatabase(true);
     testSystem.init(0);
@@ -39,181 +39,181 @@ public class PhasePCSAFTRahmatTest {
   @Test
   void testF_DISP1_SAFT() {
     double value = p.F_DISP1_SAFT();
-    assertEquals(-3.4043342994822865, value);
+    assertEquals(-593.232372549217, value);
   }
 
   @Test
   void testF_DISP2_SAFT() {
     double value = p.F_DISP2_SAFT();
-    assertEquals(-3.814909891308209, value);
+    assertEquals(-633.8617101154254, value);
   }
 
   @Test
   void testF_HC_SAFT() {
     double value = p.F_HC_SAFT();
-    assertEquals(0.6241746766202064, value);
+    assertEquals(109.10070086992114, value);
   }
 
   @Test
   void testCalcF1dispI1() {
     double value = p.calcF1dispI1();
-    assertEquals(0.6987233400953171, value);
+    assertEquals(0.7039321962898899, value);
   }
 
   @Test
   void testCalcF1dispI1dN() {
     double value = p.calcF1dispI1dN();
-    assertEquals(0.8636251080330241, value);
+    assertEquals(0.8729608222468556, value);
   }
 
   @Test
   void testCalcF1dispI1dNdN() {
     double value = p.calcF1dispI1dNdN();
-    assertEquals(1.7511845029582653, value);
+    assertEquals(1.3690787135656468, value);
   }
 
   @Test
   void testCalcF1dispI1dNdNdN() {
     double value = p.calcF1dispI1dNdNdN();
-    assertEquals(-67.25771342213771, value);
+    assertEquals(-60.233815812511885, value);
   }
 
   @Test
   void testCalcF1dispI1dm() {
     double value = p.calcF1dispI1dm();
-    assertEquals(-0.05419441760656525, value);
+    assertEquals(-0.053549895709883576, value);
   }
 
   @Test
   void testCalcF1dispSumTerm() {
     double value = p.calcF1dispSumTerm();
-    assertEquals(7.022496186615598E-28, value);
+    assertEquals(7.022486947548597E-28, value);
   }
 
   @Test
   void testCalcF2dispI2() {
     double value = p.calcF2dispI2();
-    assertEquals(0.3898434802348004, value);
+    assertEquals(0.40519775405102854, value);
   }
 
   @Test
   void testCalcF2dispI2dN() {
     double value = p.calcF2dispI2dN();
-    assertEquals(2.584338688968146, value);
+    assertEquals(2.535051300634048, value);
   }
 
   @Test
   void testCalcF2dispI2dNdN() {
     double value = p.calcF2dispI2dNdN();
-    assertEquals(-7.8201230061788705, value);
+    assertEquals(-8.594085139826845, value);
   }
 
   @Test
   void testCalcF2dispI2dNdNdN() {
     double value = p.calcF2dispI2dNdNdN();
-    assertEquals(-139.85014225523986, value);
+    assertEquals(-118.18119091396187, value);
   }
 
   @Test
   void testCalcF2dispI2dm() {
     double value = p.calcF2dispI2dm();
-    assertEquals(-0.05060155476938381, value);
+    assertEquals(-0.0505631231034932, value);
   }
 
   @Test
   void testCalcF2dispSumTerm() {
     double value = p.calcF2dispSumTerm();
-    assertEquals(1.0974433985688316E-27, value);
+    assertEquals(1.0974418484311756E-27, value);
   }
 
   @Test
   void testCalcF2dispZHC() {
     double value = p.calcF2dispZHC();
-    assertEquals(0.8954508454156733, value);
+    assertEquals(0.8275770986522495, value);
   }
 
   @Test
   void testCalcF2dispZHCdN() {
     double value = p.calcF2dispZHCdN();
-    assertEquals(-11.876697166471468, value);
+    assertEquals(-10.778804485725638, value);
   }
 
   @Test
   void testCalcF2dispZHCdNdN() {
     double value = p.calcF2dispZHCdNdN();
-    assertEquals(194.1247342386087, value);
+    assertEquals(172.4903319088591, value);
   }
 
   @Test
   void testCalcF2dispZHCdNdNdN() {
     double value = p.calcF2dispZHCdNdNdN();
-    assertEquals(2459111.1880325177, value);
+    assertEquals(1869552.2739122098, value);
   }
 
   @Test
   void testCalcF2dispZHCdm() {
     double value = p.calcF2dispZHCdm();
-    assertEquals(-0.02097670842244946, value);
+    assertEquals(-0.03234376503647885, value);
   }
 
   @Test
   void testCalcdF1dispI1dT() {
     double value = p.calcdF1dispI1dT();
-    assertEquals(-3.275063704056996E-25, value);
+    assertEquals(-5.726124600545992E-25, value);
   }
 
   @Test
   void testCalcdF1dispSumTermdT() {
     double value = p.calcdF1dispSumTermdT();
-    assertEquals(-4.681664124410399E-30, value);
+    assertEquals(-4.6816579650323984E-30, value);
   }
 
   @Test
   void testCalcdF2dispI2dT() {
     double value = p.calcdF2dispI2dT();
-    assertEquals(-9.800402698465971E-25, value);
+    assertEquals(-1.6628489213118322E-24, value);
   }
 
   @Test
   void testCalcdF2dispSumTermdT() {
     double value = p.calcdF2dispSumTermdT();
-    assertEquals(-1.4632578647584427E-29, value);
+    assertEquals(-1.4632557979082342E-29, value);
   }
 
   @Test
   void testCalcdF2dispZHCdT() {
     double value = p.calcdF2dispZHCdT();
-    assertEquals(4.503913592732077E-24, value);
+    assertEquals(7.070270274051911E-24, value);
   }
 
   @Test
   void testCalcdSAFT() {
     double value = p.calcdSAFT();
-    assertEquals(1.5637594774229341E-28, value);
+    assertEquals(1.5637585192262192E-28, value);
   }
 
   @Test
   void testCalcdmeanSAFT() {
     double value = p.calcdmeanSAFT();
-    assertEquals(3.790836816021272E-10, value);
+    assertEquals(3.7908367828047096E-10, value);
   }
 
   @Test
   void testCalcmSAFT() {
     double value = p.calcmSAFT();
-    assertEquals(2.8705471550258634, value);
+    assertEquals(2.8705454715504115, value);
   }
 
   @Test
   void testCalcmdSAFT() {
     double value = p.calcmdSAFT();
-    assertEquals(1.5637594774229341E-28, value);
+    assertEquals(1.5637585192262194E-28, value);
   }
 
   @Test
   void testCalcmmin1SAFT() {
     double value = p.calcmmin1SAFT();
-    assertEquals(1.8705471550258634, value);
+    assertEquals(1.8705454715504115, value);
   }
 
   @Test
