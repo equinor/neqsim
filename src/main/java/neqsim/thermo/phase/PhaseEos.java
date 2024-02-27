@@ -108,7 +108,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
               pt);
         }
       } catch (Exception ex) {
-        logger.error("Failed to solve for molarVolume within the iteration limit.");
+        logger.warn("Failed to solve for molarVolume within the iteration limit.");
         throw new RuntimeException(ex);
         // logger.error("too many iterations in volume calc!", ex);
         // logger.info("moles " + numberOfMolesInPhase);

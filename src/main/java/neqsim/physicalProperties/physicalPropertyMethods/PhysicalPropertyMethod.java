@@ -50,7 +50,7 @@ public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
   /** {@inheritDoc} */
   @Override
   public void tuneModel(double val, double temperature, double pressure) {
-    logger.error("model tuning not implemented!");
+    throw new UnsupportedOperationException("Unimplemented method 'tuneModel'");
   }
   // should contain phase objects ++ get diffusivity methods .. more ?
 }
