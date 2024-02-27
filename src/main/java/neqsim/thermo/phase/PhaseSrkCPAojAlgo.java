@@ -122,9 +122,9 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-    if (type == 0) {
+    if (initType == 0) {
       setTotalNumberOfAccociationSites(0);
       selfAccociationScheme = new int[numberOfComponents][0][0];
       crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
@@ -199,8 +199,8 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
       cpamix = cpaSelect.getMixingRule(1, this);
     }
 
-    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
-    if (type > 0 && isConstantPhaseVolume()) {
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    if (initType > 0 && isConstantPhaseVolume()) {
       calcDelta();
       solveX();
       super.init(totalNumberOfMoles, numberOfComponents, 1, pt, beta);
@@ -211,12 +211,12 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
       gcpavvv = calc_lngVVV();
     }
 
-    if (type > 0) {
+    if (initType > 0) {
       hcpatot = calc_hCPA();
     }
 
-    if (type > 1) {
-      initCPAMatrix(type);
+    if (initType > 1) {
+      initCPAMatrix(initType);
       // hcpatotdT = calc_hCPAdT();
       // super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }

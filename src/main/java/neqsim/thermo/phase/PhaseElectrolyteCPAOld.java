@@ -67,9 +67,9 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-    if (type == 0) {
+    if (initType == 0) {
       selfAccociationScheme = new int[numberOfComponents][0][0];
       crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
       for (int i = 0; i < numberOfComponents; i++) {
@@ -80,11 +80,11 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
       }
     }
     do {
-      super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     } while (!solveX());
 
     // System.out.println("test1 " + dFCPAdT());
-    if (type > 1) {
+    if (initType > 1) {
       // calcXsitedT();
       // System.out.println("test2 " + dFCPAdT());
       hcpatotdT = calc_hCPAdT();

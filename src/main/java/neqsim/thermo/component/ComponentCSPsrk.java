@@ -64,15 +64,15 @@ public class ComponentCSPsrk extends ComponentSrk {
   /** {@inheritDoc} */
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
+      int initType) {
+    super.init(temperature, pressure, totalNumberOfMoles, beta, initType);
     h_scale_mix_i = Bi / (refPhaseBWRS.getRefBWRSPhase().getB()
         / refPhaseBWRS.getRefBWRSPhase().getNumberOfMolesInPhase());
 
     double termfi1 = Ai / refPhaseBWRS.getA();
     double termfi2 = h_scale_mix_i / refPhaseBWRS.getH_scale_mix();
-    double termfi3 = ((ComponentEosInterface) refPhaseBWRS.getRefBWRSPhase().getComponent(0))
-        .getaDiffT()
+    double termfi3 =
+        ((ComponentEosInterface) refPhaseBWRS.getRefBWRSPhase().getComponent(0)).getaDiffT()
             / ((ComponentEosInterface) refPhaseBWRS.getRefBWRSPhase().getComponent(0)).getaT()
             * refPhaseBWRS.getRefBWRSPhase().getTemperature()
             / refPhaseBWRS.getNumberOfMolesInPhase();

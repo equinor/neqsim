@@ -77,7 +77,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
 
     // Replace with pt != PhaseType.GAS?
@@ -88,9 +88,9 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       setMixingRule(1);
     }
 
-    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
 
-    if (type != 0) {
+    if (initType != 0) {
       loc_B = calcB(this, temperature, pressure, numberOfComponents);
       loc_A = calcA(this, temperature, pressure, numberOfComponents);
     }
@@ -100,7 +100,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       pressure = calcPressure();
     }
 
-    if (type != 0) {
+    if (initType != 0) {
       try {
         if (calcMolarVolume) {
           molarVolume = molarVolume(pressure, temperature,
@@ -121,13 +121,13 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       Z = pressure * getMolarVolume() / (R * temperature);
       for (int i = 0; i < numberOfComponents; i++) {
         componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,
-            numberOfComponents, type);
+            numberOfComponents, initType);
       }
 
       f_loc = calcf();
       g = calcg();
 
-      if (type >= 2) {
+      if (initType >= 2) {
         loc_AT = calcAT(this, temperature, pressure, numberOfComponents);
         loc_ATT = calcATT(this, temperature, pressure, numberOfComponents);
       }

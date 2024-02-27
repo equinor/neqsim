@@ -223,12 +223,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    *
    * @param totalNumberOfMoles Total number of moles in all phases of Stream.
    * @param numberOfComponents Number of components in system.
-   * @param type a int. Use 0 to init, and 1 to reset.
+   * @param initType a int. Use 0 to init, and 1 to reset.
    * @param beta Mole fraction of this phase in system.
    */
-  public default void init(double totalNumberOfMoles, int numberOfComponents, int type,
+  public default void init(double totalNumberOfMoles, int numberOfComponents, int initType,
       double beta) {
-    init(totalNumberOfMoles, numberOfComponents, type, getType(), beta);
+    init(totalNumberOfMoles, numberOfComponents, initType, getType(), beta);
   }
 
   /**
@@ -238,11 +238,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    *
    * @param totalNumberOfMoles Total number of moles in all phases of Stream.
    * @param numberOfComponents Number of components in system.
-   * @param type a int. Use 0 to init, and 1 to reset.
+   * @param initType a int. Use 0 to init, and 1 to reset.
    * @param pt Type of phase.
    * @param beta Mole fraction of this phase in system.
    */
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta);
 
   /**

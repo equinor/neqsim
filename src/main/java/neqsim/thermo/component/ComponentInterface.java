@@ -816,10 +816,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @param pressure Pressure in unit ?. Used to calculate <code>K</code>.
    * @param totalNumberOfMoles Total number of moles of component.
    * @param beta Beta value, i.e.,
-   * @param type Init type. Calculate <code>K</code>, <code>z</code>, <code>x</code> if type == 0.
+   * @param initType Init type. Calculate <code>K</code>, <code>z</code>, <code>x</code> if type ==
+   *        0.
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type);
+      int initType);
 
   /**
    * <p>
@@ -832,10 +833,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @param totalNumberOfMoles a double
    * @param beta a double
    * @param numberOfComponents a int
-   * @param type a int
+   * @param initType a int
    */
   public void Finit(PhaseInterface phase, double temperature, double pressure,
-      double totalNumberOfMoles, double beta, int numberOfComponents, int type);
+      double totalNumberOfMoles, double beta, int numberOfComponents, int initType);
 
   /**
    * <p>
