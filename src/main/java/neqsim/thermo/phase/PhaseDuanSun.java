@@ -111,7 +111,7 @@ public class PhaseDuanSun extends PhaseGE {
           .getGammaPitzer(phase, numberOfComponents, temperature, pressure, pt, salinity));
     }
 
-    return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
+    return R * temperature * numberOfMolesInPhase * GE;
   }
 
   /** {@inheritDoc} */

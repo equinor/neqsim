@@ -18,9 +18,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   double nSAFT = 1.0;
   double dnSAFTdV = 1.0;
-
   double dnSAFTdVdV = 1.0;
-
   double dnSAFTdVdVdV = 1.0;
 
   double dmeanSAFT = 0.0;
@@ -34,33 +32,23 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   double volumeSAFT = 1.0;
   double daHCSAFTdN = 1.0;
   double daHSSAFTdN = 1.0;
-
   double dgHSSAFTdN = 1.0;
-
   double daHSSAFTdNdN = 1.0;
-
   double dgHSSAFTdNdN = 1.0;
-
   double daHSSAFTdNdNdN = 1.0;
-
   double dgHSSAFTdNdNdN = 1.0;
 
   // by Rahmat
   double dNSAFTdT = 1.0;
   double dF1dispVolTermdT = 0.0;
   double dF1dispI1dT = 1.0;
-
   double dF2dispI2dT = 1.0;
-
   double dF2dispZHCdT = 1.0;
   double dF1dispSumTermdT = 1.0;
-
   double dF2dispSumTermdT = 1.0;
 
   int useHS = 1;
-
   int useDISP1 = 1;
-
   int useDISP2 = 1;
 
   private double[][] aConstSAFT = {
@@ -78,63 +66,34 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
       {0.0976883116, -0.2557574982, -9.1558561530, 20.642075974, -38.804430052, 93.626774077,
           -29.666905585}};
   private double F1dispVolTerm = 1.0;
-
   private double F1dispSumTerm = 1.0;
-
   private double F1dispI1 = 1.0;
-
   private double F2dispI2 = 1.0;
-
   private double F2dispZHC = 1.0;
-
   private double F2dispZHCdN = 1.0;
-
   private double F2dispZHCdm = 1.0;
-
   private double F2dispZHCdV = 1.0;
-
   private double F2dispI2dVdV;
-
   private double F2dispI2dVdVdV = 0.0;
-
   private double F2dispZHCdVdV = 1.0;
-
   private double F2dispZHCdVdVdV = 1.0;
-
   private double F1dispI1dNdN = 1.0;
-
   private double F1dispI1dNdNdN = 1.0;
-
   private double F1dispVolTermdV = 1.0;
-
   private double F1dispVolTermdVdV = 1.0;
-
   private double F1dispI1dN = 1.0;
-
   private double F1dispI1dm = 1.0;
-
   private double F1dispI1dV = 1.0;
-
   private double F2dispI2dV = 1.0;
-
   private double F2dispI2dN = 1.0;
-
   private double F2dispI2dm = 1.0;
-
   private double F2dispSumTerm = 0.0;
-
   private double F2dispZHCdNdN = 1.0;
-
   private double F2dispZHCdNdNdN = 1.0;
-
   private double F2dispI2dNdN = 1.0;
-
   private double F2dispI2dNdNdN = 1.0;
-
   private double F1dispI1dVdV = 1.0;
-
   private double F1dispI1dVdVdV = 1.0;
-
   private double F1dispVolTermdVdVdV = 1.0;
   static Logger logger = LogManager.getLogger(PhasePCSAFTRahmat.class);
 
@@ -162,19 +121,15 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
-  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
-    componentArray[compNumber] = new ComponentPCSAFT(name, moles, molesInPhase, compNumber);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
+    // missing?
+    // if (initType > 0) {
     for (int i = 0; i < numberOfComponents; i++) {
       componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,
           numberOfComponents, initType);
     }
+    // }
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
   }
 
@@ -298,100 +253,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     F2dispZHCdVdVdV = F2dispZHCdNdNdN * getDnSAFTdV() * getDnSAFTdV() * getDnSAFTdV()
         + F2dispZHCdNdN * 2.0 * getDnSAFTdV() * dnSAFTdVdV + F2dispZHCdNdN * dnSAFTdVdV
         + F2dispZHCdN * dnSAFTdVdVdV;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcF2dispZHC() {
-    double temp = 1.0
-        + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0))
-            / Math.pow(1.0 - getNSAFT(), 4.0)
-        + (1.0 - getmSAFT())
-            * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2.0) + 12 * Math.pow(getNSAFT(), 3.0)
-                - 2 * Math.pow(getNSAFT(), 4.0))
-            / Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
-    return 1.0 / temp;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcF2dispZHCdm() {
-    double temp = -Math.pow(F2dispZHC, 2.0);
-    return temp
-        * ((8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)) / Math.pow(1.0 - getNSAFT(), 4.0)
-            - (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2.0) + 12 * Math.pow(getNSAFT(), 3.0)
-                - 2 * Math.pow(getNSAFT(), 4.0))
-                / Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcF2dispZHCdN() {
-    double temp0 = -Math.pow(F2dispZHC, 2.0);
-    double temp1 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
-    double temp2 = 20.0 * getNSAFT() - 27.0 * Math.pow(getNSAFT(), 2.0)
-        + 12.0 * Math.pow(getNSAFT(), 3.0) - 2.0 * Math.pow(getNSAFT(), 4.0);
-    // ikke rett implementert
-    return temp0 * (getmSAFT()
-        * ((8.0 - 4.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 4.0)
-            - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0)
-                * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)))
-        / Math.pow(1.0 - getNSAFT(), 8.0)
-        + (1.0 - getmSAFT()) * ((20.0 - (2.0 * 27.0) * getNSAFT()
-            + (12.0 * 3.0) * Math.pow(getNSAFT(), 2.0) - 8.0 * Math.pow(getNSAFT(), 3.0)) * temp1
-            - (2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0))
-                * (-3.0 + 2.0 * getNSAFT())) * temp2)
-            / Math.pow(temp1, 2.0));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcF2dispZHCdNdN() {
-    double temp0 = 2.0 * Math.pow(F2dispZHC, 3.0);
-    double temp1 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
-    double temp11 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 3.0);
-    double temp2 = 20.0 * getNSAFT() - 27.0 * Math.pow(getNSAFT(), 2.0)
-        + 12.0 * Math.pow(getNSAFT(), 3.0) - 2.0 * Math.pow(getNSAFT(), 4.0);
-
-    double temp1der =
-        2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0)) * (-3.0 + 2.0 * getNSAFT());
-    double temp11der = 3.0 * Math.pow(2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0), 2.0)
-        * (-3.0 + 2.0 * getNSAFT());
-    // ikke rett implementert
-    double temp3 = (getmSAFT()
-        * ((8.0 - 4.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 4.0)
-            - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0)
-                * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)))
-        / Math.pow(1.0 - getNSAFT(), 8.0)
-        + (1.0 - getmSAFT()) * ((20.0 - (2.0 * 27.0) * getNSAFT()
-            + (12.0 * 3.0) * Math.pow(getNSAFT(), 2.0) - 8.0 * Math.pow(getNSAFT(), 3.0)) * temp1
-            - (2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0))
-                * (-3.0 + 2.0 * getNSAFT())) * temp2)
-            / Math.pow(temp1, 2.0));
-
-    double temp4 = -Math.pow(F2dispZHC, 2.0);
-    double dZdndn = getmSAFT()
-        * ((-4.0 * Math.pow(1.0 - getNSAFT(), 4.0)
-            - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 - 4.0 * getNSAFT()))
-            / Math.pow(1.0 - getNSAFT(), 8.0)
-            + ((32.0 - 16.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 5.0)
-                - 5.0 * Math.pow(1.0 - getNSAFT(), 4.0) * (-1.0)
-                    * (32.0 * getNSAFT() - 8.0 * Math.pow(getNSAFT(), 2.0)))
-                / Math.pow(1.0 - getNSAFT(), 10.0))
-        + (1.0 - getmSAFT())
-            * (((-54.0 + 72.0 * getNSAFT() - 24.0 * Math.pow(getNSAFT(), 2.0)) * temp1
-                - temp1der * (20.0 - 54.0 * getNSAFT() + 36.0 * Math.pow(getNSAFT(), 2.0)
-                    - 8.0 * Math.pow(getNSAFT(), 3.0)))
-                / Math.pow(temp1, 2.0)
-                - ((-40.0 * Math.pow(getNSAFT(), 4.0) + 240.0 * Math.pow(getNSAFT(), 3.0)
-                    - 3.0 * 180.0 * Math.pow(getNSAFT(), 2.0) + 242.0 * 2.0 * getNSAFT() - 120.0)
-                    * temp11
-                    - temp11der * (-8.0 * Math.pow(getNSAFT(), 5.0)
-                        + 60.0 * Math.pow(getNSAFT(), 4.0) - 180.0 * Math.pow(getNSAFT(), 3.0)
-                        + 242.0 * Math.pow(getNSAFT(), 2.0) - 120.0 * getNSAFT()))
-                    / Math.pow(temp11, 2.0));
-
-    return temp0 * Math.pow(temp3, 2.0) + temp4 * dZdndn;
   }
 
   /**
@@ -551,37 +412,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     return temp0 * (temp1 + temp2);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double calcmSAFT() {
-    double temp2 = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      temp2 += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-          / getNumberOfMolesInPhase();
-    }
-
-    return temp2;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcF1dispSumTerm() {
-    double temp1 = 0.0;
-
-    for (int i = 0; i < numberOfComponents; i++) {
-      for (int j = 0; j < numberOfComponents; j++) {
-        temp1 +=
-            getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
-                * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
-                * Math.sqrt(getComponent(i).getEpsikSAFT() / temperature
-                    * getComponent(j).getEpsikSAFT() / temperature)
-                * (1.0 - mixRule.getBinaryInteractionParameter(i, j)) * Math.pow(
-                    0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0);
-      }
-    }
-    return temp1 / Math.pow(getNumberOfMolesInPhase(), 2.0);
-  }
-
   // added by rahmat
   /**
    * <p>
@@ -633,43 +463,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     return temp1 / Math.pow(getNumberOfMolesInPhase(), 2.0);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double calcF2dispSumTerm() {
-    double temp1 = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      for (int j = 0; j < numberOfComponents; j++) {
-        temp1 += getComponent(i).getNumberOfMolesInPhase()
-            * getComponent(j).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-            * getComponent(j).getmSAFTi() * getComponent(i).getEpsikSAFT() / temperature
-            * getComponent(j).getEpsikSAFT() / temperature
-            * Math.pow((1.0 - mixRule.getBinaryInteractionParameter(i, j)), 2.0) * Math.pow(
-                0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0);
-      }
-    }
-    return temp1 / Math.pow(getNumberOfMolesInPhase(), 2.0);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcF1dispI1dN() {
-    double temp1 = 0.0;
-    for (int i = 1; i < 7; i++) {
-      temp1 += i * getaSAFT(i, getmSAFT(), aConstSAFT) * Math.pow(getNSAFT(), i - 1.0);
-    }
-    return temp1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcF1dispI1dNdN() {
-    double temp1 = 0.0;
-    for (int i = 2; i < 7; i++) {
-      temp1 += (i - 1.0) * i * getaSAFT(i, getmSAFT(), aConstSAFT) * Math.pow(getNSAFT(), i - 2.0);
-    }
-    return temp1;
-  }
-
   // added by Rahmat
   /**
    * <p>
@@ -683,16 +476,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     for (int i = 2; i < 7; i++) {
       temp1 += (i - 1.0) * (i - 2.0) * i * getaSAFT(i, getmSAFT(), aConstSAFT)
           * Math.pow(getNSAFT(), i - 3.0);
-    }
-    return temp1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcF1dispI1dm() {
-    double temp1 = 0.0;
-    for (int i = 0; i < 7; i++) {
-      temp1 += getaSAFTdm(i, getmSAFT(), aConstSAFT) * Math.pow(getNSAFT(), i);
     }
     return temp1;
   }
@@ -729,26 +512,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     for (int i = 2; i < 7; i++) {
       temp1 += (i - 1.0) * (i - 2.0) * i * getaSAFT(i, getmSAFT(), bConstSAFT)
           * Math.pow(getNSAFT(), i - 3.0);
-    }
-    return temp1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcF2dispI2dm() {
-    double temp1 = 0.0;
-    for (int i = 0; i < 7; i++) {
-      temp1 += getaSAFTdm(i, getmSAFT(), bConstSAFT) * Math.pow(getNSAFT(), i);
-    }
-    return temp1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcF1dispI1() {
-    double temp1 = 0.0;
-    for (int i = 0; i < 7; i++) {
-      temp1 += getaSAFT(i, getmSAFT(), aConstSAFT) * Math.pow(getNSAFT(), i);
     }
     return temp1;
   }
@@ -792,114 +555,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
       temp1 += getaSAFT(i, getmSAFT(), bConstSAFT) * Math.pow(getNSAFT(), i);
     }
     return temp1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getaSAFT(int i, double m, double[][] ab) {
-    return ab[0][i] + (m - 1.0) / m * ab[1][i] + (m - 1.0) / m * (m - 2.0) / m * ab[2][i];
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getaSAFTdm(int i, double m, double[][] ab) {
-    return (m - (m - 1.0)) / (m * m) * ab[1][i]
-        + ((2.0 * m - 3.0) * m * m - 2 * m * (m * m - 3 * m + 2)) / Math.pow(m, 4.0) * ab[2][i];
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcmdSAFT() {
-    double temp2 = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      temp2 += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase()
-          * getComponent(i).getmSAFTi()
-          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
-    }
-
-    return temp2;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcmmin1SAFT() {
-    double temp2 = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      temp2 += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase()
-          * (getComponent(i).getmSAFTi() - 1.0);
-    }
-
-    return temp2;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcdmeanSAFT() {
-    double temp = 0.0;
-    double temp2 = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      temp += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
-      temp2 += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi();
-    }
-    return Math.pow(temp / temp2, 1.0 / 3.0);
-  }
-
-  // need to check (modified by rahmat)
-  /** {@inheritDoc} */
-  @Override
-  public double calcdSAFT() {
-    double temp1 = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
-    }
-    // System.out.println("d saft calc " + temp/getNumberOfMolesInPhase());
-    return temp1 / getNumberOfMolesInPhase();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getNSAFT() {
-    return nSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setNSAFT(double nSAFT) {
-    this.nSAFT = nSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getDSAFT() {
-    return dSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setDSAFT(double dSAFT) {
-    this.dSAFT = dSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getGhsSAFT() {
-    return ghsSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setGhsSAFT(double ghsSAFT) {
-    this.ghsSAFT = ghsSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double F_HC_SAFT() {
-    return getNumberOfMolesInPhase()
-        * (getmSAFT() * getAHSSAFT() - getMmin1SAFT() * Math.log(getGhsSAFT()));
-    // (ThermodynamicConstantsInterface.R*temperature);
   }
 
   /** {@inheritDoc} */
@@ -978,15 +633,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
-  public double dF_DISP1_SAFTdV() {
-    return getNumberOfMolesInPhase() * (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTermdV
-        * getF1dispSumTerm() * getF1dispI1()
-        - 2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm()
-            * F1dispI1dV); // (ThermodynamicConstantsInterface.R*temperature);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double dF_DISP1_SAFTdVdV() {
     return getNumberOfMolesInPhase() * ((-2.0 * ThermodynamicConstantsInterface.pi
         * F1dispVolTermdVdV * getF1dispSumTerm() * getF1dispI1())
@@ -1061,40 +707,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     return getNumberOfMolesInPhase() * (-ThermodynamicConstantsInterface.pi * getmSAFT()
         * getF1dispVolTerm() * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC());
     // (ThermodynamicConstantsInterface.R*temperature);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double dF_DISP2_SAFTdV() {
-    return getNumberOfMolesInPhase() * (-ThermodynamicConstantsInterface.pi * getmSAFT()
-        * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC()
-        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm()
-            * F2dispI2dV * getF2dispZHC()
-        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm()
-            * getF2dispI2() * F2dispZHCdV); // (ThermodynamicConstantsInterface.R*temperature);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double dF_DISP2_SAFTdVdV() {
-    return getNumberOfMolesInPhase() * ((-ThermodynamicConstantsInterface.pi * getmSAFT()
-        * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC())
-        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm()
-            * getF2dispZHC() * F2dispI2dV)
-        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm()
-            * getF2dispI2() * F2dispZHCdV)
-        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm()
-            * F2dispI2dV * getF2dispZHC()
-        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm()
-            * F2dispI2dVdV * getF2dispZHC()
-        - ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm()
-            * F2dispI2dV * F2dispZHCdV
-        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTermdV * getF2dispSumTerm()
-            * getF2dispI2() * F2dispZHCdV)
-        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm()
-            * F2dispI2dV * F2dispZHCdV)
-        - (ThermodynamicConstantsInterface.pi * getmSAFT() * F1dispVolTerm * getF2dispSumTerm()
-            * getF2dispI2() * F2dispZHCdVdV));
   }
 
   /**
@@ -1181,118 +793,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
-  public double getF() {
-    // System.out.println("F-HC " + useHS*F_HC_SAFT());
-
-    // System.out.println("F-DISP1 " + useDISP1*F_DISP1_SAFT());
-
-    // System.out.println("F-DISP2 " + useDISP2*F_DISP2_SAFT());
-    return useHS * F_HC_SAFT() + useDISP1 * F_DISP1_SAFT() + useDISP2 * F_DISP2_SAFT();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double dFdV() {
-    // System.out.println("N-saft " + getNSAFT());
-    // System.out.println("F-HC " + useHS*F_HC_SAFT());
-    // System.out.println("F-DISP1 " + useDISP1*F_DISP1_SAFT());
-
-    // System.out.println("F-DISP2 " + useDISP2*F_DISP2_SAFT());
-
-    return (useHS * dF_HC_SAFTdV() + useDISP1 * dF_DISP1_SAFTdV() + useDISP2 * dF_DISP2_SAFTdV())
-        * 1.0e-5;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double dFdVdV() {
-    return (useHS * dF_HC_SAFTdVdV() + useDISP1 * dF_DISP1_SAFTdVdV()
-        + useDISP2 * dF_DISP2_SAFTdVdV()) * 1.0e-10;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double dFdVdVdV() {
     return (useHS * dF_HC_SAFTdVdVdV() + useDISP1 * dF_DISP1_SAFTdVdVdV()
         + useDISP2 * dF_DISP2_SAFTdVdVdV()) * 1.0e-20;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getmdSAFT() {
-    return mdSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setmdSAFT(double mdSAFT) {
-    this.mdSAFT = mdSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getmSAFT() {
-    return mSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setmSAFT(double mSAFT) {
-    this.mSAFT = mSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getAHSSAFT() {
-    return aHSSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setAHSSAFT(double aHSSAFT) {
-    this.aHSSAFT = aHSSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getMmin1SAFT() {
-    return mmin1SAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setMmin1SAFT(double mmin1SAFT) {
-    this.mmin1SAFT = mmin1SAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getVolumeSAFT() {
-    return volumeSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setVolumeSAFT(double volumeSAFT) {
-    this.volumeSAFT = volumeSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getDgHSSAFTdN() {
-    return dgHSSAFTdN;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setDgHSSAFTdN(double dgHSSAFTdN) {
-    this.dgHSSAFTdN = dgHSSAFTdN;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getDnSAFTdV() {
-    return dnSAFTdV;
   }
 
   // added by rahmat
@@ -1319,72 +822,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
-  public void setDnSAFTdV(double dnSAFTdV) {
-    this.dnSAFTdV = dnSAFTdV;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getF1dispVolTerm() {
-    return F1dispVolTerm;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setF1dispVolTerm(double F1dispVolTerm) {
-    this.F1dispVolTerm = F1dispVolTerm;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getF1dispSumTerm() {
-    return F1dispSumTerm;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getF1dispI1() {
-    return F1dispI1;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getF2dispI2() {
-    return F2dispI2;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setF2dispI2(double F2dispI2) {
-    this.F2dispI2 = F2dispI2;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getF2dispZHC() {
-    return F2dispZHC;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setF2dispZHC(double F2dispZHC) {
-    this.F2dispZHC = F2dispZHC;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getF2dispZHCdN() {
-    return F2dispZHCdN;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getF2dispZHCdm() {
-    return F2dispZHCdm;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
@@ -1392,7 +829,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     // double BonV = phase== 0 ? 0.99:1e-5;
-
     if (BonV < 0) {
       BonV = 1.0e-6;
     }
@@ -1413,7 +849,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
     int iterations = 0;
     double oldMolarVolume = 0.0;
-    // System.out.println("volume " + getVolume());
     do {
       iterations++;
       this.volInit();
@@ -1475,47 +910,5 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
      * "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
      */
     return getMolarVolume();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getDmeanSAFT() {
-    return dmeanSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setDmeanSAFT(double dmeanSAFT) {
-    this.dmeanSAFT = dmeanSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getNmSAFT() {
-    return nmSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setNmSAFT(double nmSAFT) {
-    this.nmSAFT = nmSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getF2dispSumTerm() {
-    return F2dispSumTerm;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setF2dispSumTerm(double F2dispSumTerm) {
-    this.F2dispSumTerm = F2dispSumTerm;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setF2dispZHCdm(double F2dispZHCdm) {
-    this.F2dispZHCdm = F2dispZHCdm;
   }
 }
