@@ -16,6 +16,7 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -256,19 +257,19 @@ public class TEGdehydrationProcessDistillation {
         + ((Reboiler) ((DistillationColumn) operations.getUnit("TEG regeneration column"))
             .getReboiler()).getDuty() / 1.0e3);
     System.out.println("wt lean TEG " + ((WaterStripperColumn) operations.getUnit("TEG stripper"))
-        .getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG") * 100.0);
+        .getSolventOutStream().getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("TEG") * 100.0);
 
     double waterInWetGasppm =
         waterSaturatedFeedGas.getFluid().getPhase(0).getComponent("water").getz() * 1.0e6;
     double waterInWetGaskgMSm3 = waterInWetGasppm * 0.01802 * ThermodynamicConstantsInterface.atm
         / (ThermodynamicConstantsInterface.R * 288.15);
-    double TEGfeedwt = TEGFeed.getFluid().getPhase("aqueous").getWtFrac("TEG");
+    double TEGfeedwt = TEGFeed.getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("TEG");
     double TEGfeedflw = TEGFeed.getFlowRate("kg/hr");
     double waterInDehydratedGasppm =
         dehydratedGas.getFluid().getPhase(0).getComponent("water").getz() * 1.0e6;
     double waterInDryGaskgMSm3 = waterInDehydratedGasppm * 0.01802
         * ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15);
-    double richTEG2 = richTEG.getFluid().getPhase("aqueous").getWtFrac("TEG");
+    double richTEG2 = richTEG.getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("TEG");
     System.out.println("reboiler duty (KW) " + ((Reboiler) column.getReboiler()).getDuty() / 1.0e3);
     System.out.println("flow rate from reboiler "
         + ((Reboiler) column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
@@ -284,7 +285,7 @@ public class TEGdehydrationProcessDistillation {
     System.out.println("pump power " + hotLeanTEGPump.getDuty());
     System.out.println("pump2 power " + hotLeanTEGPump2.getDuty());
     System.out.println("wt lean TEG after reboiler "
-        + column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
+        + column.getLiquidOutStream().getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("TEG"));
     System.out.println(
         "temperature from pump " + (hotLeanTEGPump2.getOutletStream().getTemperature() - 273.15));
 

@@ -2,6 +2,7 @@ package neqsim.processSimulation.processEquipment.reservoir;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.NamedBaseClass;
@@ -140,7 +141,7 @@ public class Well extends NamedBaseClass {
     ops.TPflash();
     double volume = 0;
     if (locStream.hasPhaseType("aqueous")) {
-      volume = locStream.getPhase("aqueous").getVolume("m3");
+      volume = locStream.getPhase(PhaseType.AQUEOUS).getVolume("m3");
     }
     return volume;
   }

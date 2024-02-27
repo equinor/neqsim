@@ -7,6 +7,7 @@ import neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFit
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -131,7 +132,7 @@ public class DensitySim extends BasePVTsimulation {
       }
       if (getThermoSystem().hasPhaseType("aqueous")) {
         aqueousDensity[i] =
-            getThermoSystem().getPhase("aqueous").getPhysicalProperties().getViscosity();
+            getThermoSystem().getPhase(PhaseType.AQUEOUS).getPhysicalProperties().getViscosity();
       }
     }
   }

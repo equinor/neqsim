@@ -2,6 +2,7 @@ package neqsim.physicalProperties.util.examples;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -49,8 +50,8 @@ public class TestDiffusionCoefficient {
     System.out.println(
         "binary diffusion coefficient nitrogen in liquid n-heptane " + testSystem.getPhase("oil")
             .getPhysicalProperties().getDiffusionCoefficient("nitrogen", "n-heptane") + " m2/sec");
-    System.out
-        .println("binary diffusion coefficient nitrogen in water " + testSystem.getPhase("aqueous")
+    System.out.println(
+        "binary diffusion coefficient nitrogen in water " + testSystem.getPhase(PhaseType.AQUEOUS)
             .getPhysicalProperties().getDiffusionCoefficient("nitrogen", "water") + " m2/sec");
 
     System.out.println("effective diffusion coefficient water in gas " + testSystem.getPhase("gas")
@@ -58,8 +59,9 @@ public class TestDiffusionCoefficient {
     System.out.println(
         "effective diffusion coefficient nitrogen in liquid n-heptane " + testSystem.getPhase("oil")
             .getPhysicalProperties().getEffectiveDiffusionCoefficient("nitrogen") + " m2/sec");
-    System.out.println(
-        "effective diffusion coefficient nitrogen in water " + testSystem.getPhase("aqueous")
-            .getPhysicalProperties().getEffectiveDiffusionCoefficient("nitrogen") + " m2/sec");
+    System.out.println("effective diffusion coefficient nitrogen in water "
+        + testSystem.getPhase(PhaseType.AQUEOUS).getPhysicalProperties()
+            .getEffectiveDiffusionCoefficient("nitrogen")
+        + " m2/sec");
   }
 }

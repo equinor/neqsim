@@ -9,6 +9,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.util.Adjuster;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessSystem;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -112,7 +113,7 @@ public class SubseaWell extends TwoPortEquipment {
     reservoirOps.run();
 
     System.out.println("water volume"
-        + reservoirOps.getReservoirFluid().getPhase("aqueous").getVolume("m3") / 1.0e6);
+        + reservoirOps.getReservoirFluid().getPhase(PhaseType.AQUEOUS).getVolume("m3") / 1.0e6);
     System.out
         .println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
     System.out

@@ -8,6 +8,7 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -82,7 +83,7 @@ public class ScalePotentialCheck {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    logger.info("pH " + testSystem.getPhase("aqueous").getpH());
+    logger.info("pH " + testSystem.getPhase(PhaseType.AQUEOUS).getpH());
     // testSystem.display();
   }
 }

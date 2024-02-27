@@ -2,6 +2,7 @@ package neqsim.physicalProperties.util.examples;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -46,7 +47,7 @@ public class TPflashWater {
     }
     testSystem.initPhysicalProperties();
     // System.out.println("viscosity " + testSystem.getViscosity());
-    System.out.println("viscosity " + testSystem.getPhase("aqueous").getViscosity());
+    System.out.println("viscosity " + testSystem.getPhase(PhaseType.AQUEOUS).getViscosity());
     testSystem.display();
     // System.out.println("surftens 0-2 " +
     // testSystem.getInterphaseProperties().getSurfaceTension(0,2));

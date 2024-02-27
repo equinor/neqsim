@@ -1,5 +1,6 @@
 package neqsim.processSimulation.measurementDevice.simpleFlowRegime;
 
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -42,8 +43,8 @@ public class FluidSevereSlug {
     }
     if (fluid.hasPhaseType("aqueous")) {
       phaseNumber = fluid.getPhaseNumberOfPhase("aqueous");
-      waterDensity = fluid.getPhase("aqueous").getDensity("kg/m3");
-      waterViscosity = fluid.getPhase("aqueous").getViscosity("kg/msec");
+      waterDensity = fluid.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3");
+      waterViscosity = fluid.getPhase(PhaseType.AQUEOUS).getViscosity("kg/msec");
       waterWtFraction = fluid.getWtFraction(phaseNumber) * 100;
     }
 

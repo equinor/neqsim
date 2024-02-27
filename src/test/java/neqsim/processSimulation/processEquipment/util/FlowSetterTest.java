@@ -6,6 +6,7 @@ import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
 import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -141,7 +142,7 @@ public class FlowSetterTest {
         ((StreamInterface) flowset.getReferenceProcess().getUnit("oil")).getFlowRate("m3/hr"),
         0.01);
     assertEquals(waterFlow * 1000, ((StreamInterface) flowset.getOutletStream()).getFluid()
-        .getPhase("aqueous").getFlowRate("kg/hr"), waterFlow * 1000 / 100.0);
+        .getPhase(PhaseType.AQUEOUS).getFlowRate("kg/hr"), waterFlow * 1000 / 100.0);
 
     assertEquals(16.09, 16.09, 0.1);
   }

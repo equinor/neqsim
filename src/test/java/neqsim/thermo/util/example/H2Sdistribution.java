@@ -2,6 +2,7 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -51,6 +52,6 @@ public class H2Sdistribution {
     } catch (Exception ex) {
     }
     testSystem.display();
-    System.out.println("pH " + testSystem.getPhase("aqueous").getpH());
+    System.out.println("pH " + testSystem.getPhase(PhaseType.AQUEOUS).getpH());
   }
 }

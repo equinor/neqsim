@@ -12,6 +12,7 @@ import neqsim.processSimulation.processEquipment.util.Calculator;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -247,7 +248,7 @@ public class TEGdehydrationProcess2 {
 
     System.out.println(
         "wt lean TEG after stripper " + ((WaterStripperColumn) operations.getUnit("TEG stripper"))
-            .getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
+            .getSolventOutStream().getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("TEG"));
 
     operations.save("c:/temp/TEGprocessSimple.neqsim");
   }

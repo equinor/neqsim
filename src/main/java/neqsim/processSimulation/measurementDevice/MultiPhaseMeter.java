@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -192,7 +193,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
         return Double.NaN;
       }
       tempFluid.initPhysicalProperties("density");
-      return tempFluid.getPhase("aqueous").getFlowRate(unit);
+      return tempFluid.getPhase(PhaseType.AQUEOUS).getFlowRate(unit);
     }
     if (measurement.equals("gasDensity") || measurement.equals("oilDensity")
         || measurement.equals("waterDensity")) {
@@ -225,7 +226,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
         if (!tempFluid.hasPhaseType("aqueous")) {
           return 0.0;
         } else {
-          return tempFluid.getPhase("aqueous").getDensity("kg/m3");
+          return tempFluid.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3");
         }
       }
       return 0.0;

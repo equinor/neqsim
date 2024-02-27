@@ -13,6 +13,7 @@ import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.unit.PressureUnit;
@@ -368,7 +369,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   public void run(UUID id) {
     // System.out.println("gas volume " + thermoSystem.getPhase("gas").getVolume("m3"));
     // System.out.println("oil volume " + thermoSystem.getPhase("oil").getVolume("m3"));
-    // System.out.println("water volume " + thermoSystem.getPhase("aqueous").getVolume("m3"));
+    // System.out.println("water volume " +
+    // thermoSystem.getPhase(PhaseType.AQUEOUS).getVolume("m3"));
 
     for (int i = 0; i < gasProducer.size(); i++) {
       gasProducer.get(i).getStream().run(id);
@@ -536,7 +538,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * thermoSystem.getPhase("gas").getVolume("m3")); if (thermoSystem.hasPhaseType("oil"))
      * System.out.println("oil volume " + thermoSystem.getPhase("oil").getVolume("m3")); if
      * (thermoSystem.hasPhaseType("aqueous")) System.out.println("water volume " +
-     * thermoSystem.getPhase("aqueous").getVolume("m3"));
+     * thermoSystem.getPhase(PhaseType.AQUEOUS).getVolume("m3"));
      */
     // System.out.println("pressure " + thermoSystem.getPressure("bara"));
 
@@ -557,7 +559,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     /*
      * if(thermoSystem.hasPhaseType("aqueous")) { for (int k = 0; k < waterInjector.size(); k++) {
      * waterInjector.get(k).getStream().getFluid()
-     * .setMolarComposition(thermoSystem.getPhase("aqueous").getMolarComposition());
+     * .setMolarComposition(thermoSystem.getPhase(PhaseType.AQUEOUS).getMolarComposition());
      * waterInjector.get(k).getStream().run(); }
      */
     for (int k = 0; k < waterInjector.size(); k++) {
@@ -577,7 +579,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
     // getReservoirFluid().getPhase("gas").getVolume("m3")/1.0e6 + " oil volume "+
     // getReservoirFluid().getPhase("oil").getVolume("m3")/1.0e6 + " water volume "+
-    // getReservoirFluid().getPhase("aqueous").getVolume("m3")/1.0e6);
+    // getReservoirFluid().getPhase(PhaseType.AQUEOUS).getVolume("m3")/1.0e6);
     // oilOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("oil").getMolarComposition());
     // oilOutStream.run(id);
 
@@ -680,7 +682,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     for (int i = 0; i < 1; i++) {
       reservoirOps.runTransient(60 * 60 * 24 * 15);
       System.out.println("water volume"
-          + reservoirOps.getReservoirFluid().getPhase("aqueous").getVolume("m3") / 1.0e6);
+          + reservoirOps.getReservoirFluid().getPhase(PhaseType.AQUEOUS).getVolume("m3") / 1.0e6);
       System.out
           .println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
       System.out

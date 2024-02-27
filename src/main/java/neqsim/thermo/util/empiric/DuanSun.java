@@ -3,6 +3,7 @@ package neqsim.thermo.util.empiric;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -683,6 +684,7 @@ public class DuanSun {
         .println("CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getLogFugacityCoefficient());
     System.out
         .println("CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getFugacityCoefficient());
-    System.out.println("CO2 in liquid " + fluid1.getPhase("aqueous").getComponent("CO2").getx());
+    System.out
+        .println("CO2 in liquid " + fluid1.getPhase(PhaseType.AQUEOUS).getComponent("CO2").getx());
   }
 }

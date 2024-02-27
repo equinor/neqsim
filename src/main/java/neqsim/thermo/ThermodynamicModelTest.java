@@ -95,7 +95,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
     // logger.info("Total fug gas : " + temp1);
     // logger.info("Total fug liq : " + temp2);
     // logger.info("MOLAR VOLUME 1 " + system.getPhase("gas").getMolarVolume());
-    // logger.info("MOLAR VOLUME 2 " + system.getPhase("aqueous").getMolarVolume());
+    // logger.info("MOLAR VOLUME 2 " + system.getPhase(PhaseType.AQUEOUS).getMolarVolume());
     // logger.info("number of phases " + system.getNumberOfPhases());
     // logger.info("number of components " + system.getNumberOfComponents());
     // temp1 -= system.getPhase(j).getGresTP() / (R * system.getTemperature());

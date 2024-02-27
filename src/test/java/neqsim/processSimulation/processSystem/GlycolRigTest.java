@@ -14,6 +14,7 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * Test class for GlycolRig.
@@ -129,23 +130,25 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     } catch (Exception ex) {
     }
     double wtpWaterRichTEG =
-        TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
+        TEGtoRegenerator.getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("water") * 100.0;
     double wtpWaterFromReboil =
-        column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
+        column.getLiquidOutStream().getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("water")
+            * 100.0;
     double wtpWaterFromStripper =
-        stripper.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("water") * 100.0;
+        stripper.getSolventOutStream().getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("water")
+            * 100.0;
     logger.info("wtpRichTEG " + wtpWaterRichTEG);
     logger.info("wtpWaterFromReboil " + wtpWaterFromReboil);
     logger.info("wtpWaterFromStripper " + wtpWaterFromStripper);
     // double wtpWaterFromReboiler =
-    // column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("water")*100.0
+    // column.getLiquidOutStream().getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("water")*100.0
     // double wtpTEGSeparatorOut =
-    // liquidToTreatment.getFluid().getPhase("aqueous").getWtFrac("TEG")*100.0
+    // liquidToTreatment.getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("TEG")*100.0
     // double flowrateLiquidSeparatorOut = liquidToTreatment.getFlowRate("kg/hr")
     // double wtWaterFromStripper =
-    // stripper.getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("water")*100.0
+    // stripper.getSolventOutStream().getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("water")*100.0
     // double wtWaterBufferTank =
-    // liquidFromBufferTank.getFluid().getPhase("aqueous").getWtFrac("water")*100.0
+    // liquidFromBufferTank.getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("water")*100.0
     // TEGtoRegenerator.displayResult();
     logger.info("water to regenerator "
         + TEGtoRegenerator.getFluid().getComponent("water").getTotalFlowRate("kg/hr"));
@@ -171,10 +174,10 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     logger.info("water balance " + waterBalanceColumn);
 
     logger.info("wt water to reboil "
-        + TEGtoRegenerator.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0);
+        + TEGtoRegenerator.getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("water") * 100.0);
 
     logger.info("wt water from mixer "
-        + TEGWaterMixer.getFluid().getPhase("aqueous").getWtFrac("water") * 100.0);
+        + TEGWaterMixer.getFluid().getPhase(PhaseType.AQUEOUS).getWtFrac("water") * 100.0);
     // strippingGas.displayResult();
     logger.info("stripping gas rate " + strippingGas.getFlowRate("kg/hr"));
     Assertions.assertEquals(0.0, waterBalanceColumn, 1e-3);

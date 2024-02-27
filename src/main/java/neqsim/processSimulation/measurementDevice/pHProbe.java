@@ -1,6 +1,7 @@
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -92,7 +93,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
         }
         thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
         thermoOps.TPflash();
-        return reactiveThermoSystem.getPhase("aqueous").getpH();
+        return reactiveThermoSystem.getPhase(PhaseType.AQUEOUS).getpH();
       } else {
         System.out.println("no aqueous phase for pH analyser");
         return 7.0;

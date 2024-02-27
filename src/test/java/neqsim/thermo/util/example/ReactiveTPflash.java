@@ -2,6 +2,7 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -69,8 +70,8 @@ public class ReactiveTPflash {
     testSystem.display();
     System.out.println("pH " + testSystem.getPhase(1).getpH());
     logger.info("pH " + testSystem.getPhase(1).getpH());
-    logger.info(
-        "activity coefficiet water " + testSystem.getPhase("aqueous").getActivityCoefficient(2));
+    logger.info("activity coefficiet water "
+        + testSystem.getPhase(PhaseType.AQUEOUS).getActivityCoefficient(2));
 
     // for(int i=0;i<23;i++){
     // try{

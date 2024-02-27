@@ -5,6 +5,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.TwoPhaseFlowNode;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -180,7 +181,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
         k++;
         test.display("length " + length);
         System.out.println("length " + length + " wt% MEG "
-            + test.getBulkSystem().getPhase("aqueous").getWtFrac("MEG") * 100.0);
+            + test.getBulkSystem().getPhase(PhaseType.AQUEOUS).getWtFrac("MEG") * 100.0);
         // test.getBulkSystem().display("length " + length);
         // test.getInterphaseSystem().display("length " + length);
         // test.getFluidBoundary().display("length " + length);

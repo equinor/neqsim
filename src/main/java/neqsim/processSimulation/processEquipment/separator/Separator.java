@@ -21,6 +21,7 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
 import neqsim.processSimulation.processEquipment.separator.sectionType.ValveSection;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -370,7 +371,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
         }
         if (thermoSystem.hasPhaseType("aqueous")) {
-          volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
+          volumeLoc += thermoSystem.getPhase(PhaseType.AQUEOUS).getVolume("m3");
         }
         liquidLevel = volumeLoc / (liquidVolume + gasVolume);
       }
