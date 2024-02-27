@@ -709,7 +709,7 @@ public class GTSurfaceTensionFullGT {
       maxerr = Math.max(maxerr, Math.abs(mueq[i] / mueq2[i] - 1.0));
     }
     if (maxerr > reltol) {
-      logger.error("Flash is not properly solved.  Maximum relative error in chemical potential:  "
+      logger.warn("Flash is not properly solved.  Maximum relative error in chemical potential:  "
           + maxerr + " > " + reltol);
       throw new RuntimeException("Flash not solved!");
     }
