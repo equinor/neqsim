@@ -38,6 +38,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
+
     return clonedPhase;
   }
 
