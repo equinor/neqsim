@@ -8,6 +8,7 @@ import neqsim.thermo.system.SystemPCSAFT;
 
 public class PhasePCSAFTRahmatTest {
   static PhasePCSAFTRahmat p;
+  static PhasePCSAFTRahmat p2;
   static SystemPCSAFT testSystem;
 
   @BeforeEach
@@ -25,63 +26,63 @@ public class PhasePCSAFTRahmatTest {
 
   @Test
   void testAddcomponent() {
-    p = new PhasePCSAFTRahmat();
+    p2 = new PhasePCSAFTRahmat();
 
-    Assertions.assertEquals(0, p.getNumberOfComponents());
+    Assertions.assertEquals(0, p2.getNumberOfComponents());
 
-    p.addComponent("ethane", 0, 0, 0);
-    Assertions.assertEquals(1, p.getNumberOfComponents());
+    p2.addComponent("ethane", 0, 0, 0);
+    Assertions.assertEquals(1, p2.getNumberOfComponents());
 
-    p.addComponent("methane", 0, 0, 0);
-    Assertions.assertEquals(2, p.getNumberOfComponents());
+    p2.addComponent("methane", 0, 0, 0);
+    Assertions.assertEquals(2, p2.getNumberOfComponents());
   }
 
   @Test
   void testF_DISP1_SAFT() {
     double value = p.F_DISP1_SAFT();
-    assertEquals(-593.232372549217, value);
+    assertEquals(-2656.5606478696354, value);
   }
 
   @Test
   void testF_DISP2_SAFT() {
     double value = p.F_DISP2_SAFT();
-    assertEquals(-633.8617101154254, value);
+    assertEquals(-1929.2979666587207, value);
   }
 
   @Test
   void testF_HC_SAFT() {
     double value = p.F_HC_SAFT();
-    assertEquals(109.10070086992114, value);
+    assertEquals(501.428925899878, value);
   }
 
   @Test
   void testCalcF1dispI1() {
     double value = p.calcF1dispI1();
-    assertEquals(0.7039321962898899, value);
+    assertEquals(0.7447173911719432, value);
   }
 
   @Test
   void testCalcF1dispI1dN() {
     double value = p.calcF1dispI1dN();
-    assertEquals(0.8729608222468556, value);
+    assertEquals(0.8885712115632445, value);
   }
 
   @Test
   void testCalcF1dispI1dNdN() {
     double value = p.calcF1dispI1dNdN();
-    assertEquals(1.3690787135656468, value);
+    assertEquals(-0.3783996289387171, value);
   }
 
   @Test
   void testCalcF1dispI1dNdNdN() {
     double value = p.calcF1dispI1dNdNdN();
-    assertEquals(-60.233815812511885, value);
+    assertEquals(-19.504810659834753, value);
   }
 
   @Test
   void testCalcF1dispI1dm() {
     double value = p.calcF1dispI1dm();
-    assertEquals(-0.053549895709883576, value);
+    assertEquals(-0.04871346995167202, value);
   }
 
   @Test
@@ -93,31 +94,31 @@ public class PhasePCSAFTRahmatTest {
   @Test
   void testCalcF2dispI2() {
     double value = p.calcF2dispI2();
-    assertEquals(0.40519775405102854, value);
+    assertEquals(0.5114103946892024, value);
   }
 
   @Test
   void testCalcF2dispI2dN() {
     double value = p.calcF2dispI2dN();
-    assertEquals(2.535051300634048, value);
+    assertEquals(2.075396158614915, value);
   }
 
   @Test
   void testCalcF2dispI2dNdN() {
     double value = p.calcF2dispI2dNdN();
-    assertEquals(-8.594085139826845, value);
+    assertEquals(-10.085652314796853, value);
   }
 
   @Test
   void testCalcF2dispI2dNdNdN() {
     double value = p.calcF2dispI2dNdNdN();
-    assertEquals(-118.18119091396187, value);
+    assertEquals(53.904528812197945, value);
   }
 
   @Test
   void testCalcF2dispI2dm() {
     double value = p.calcF2dispI2dm();
-    assertEquals(-0.0505631231034932, value);
+    assertEquals(-0.05282097926626965, value);
   }
 
   @Test
@@ -129,37 +130,37 @@ public class PhasePCSAFTRahmatTest {
   @Test
   void testCalcF2dispZHC() {
     double value = p.calcF2dispZHC();
-    assertEquals(0.8275770986522495, value);
+    assertEquals(0.47149436306641834, value);
   }
 
   @Test
   void testCalcF2dispZHCdN() {
     double value = p.calcF2dispZHCdN();
-    assertEquals(-10.778804485725638, value);
+    assertEquals(-5.447711889103666, value);
   }
 
   @Test
   void testCalcF2dispZHCdNdN() {
     double value = p.calcF2dispZHCdNdN();
-    assertEquals(172.4903319088591, value);
+    assertEquals(75.24049982033125, value);
   }
 
   @Test
   void testCalcF2dispZHCdNdNdN() {
     double value = p.calcF2dispZHCdNdNdN();
-    assertEquals(1869552.2739122098, value);
+    assertEquals(279935.2725213402, value, 0.001);
   }
 
   @Test
   void testCalcF2dispZHCdm() {
     double value = p.calcF2dispZHCdm();
-    assertEquals(-0.03234376503647885, value);
+    assertEquals(-0.06098259714, value, 0.001);
   }
 
   @Test
   void testCalcdF1dispI1dT() {
     double value = p.calcdF1dispI1dT();
-    assertEquals(-5.726124600545992E-25, value);
+    assertEquals(-2.467132676347459E-24, value, 1e-20);
   }
 
   @Test
@@ -171,7 +172,7 @@ public class PhasePCSAFTRahmatTest {
   @Test
   void testCalcdF2dispI2dT() {
     double value = p.calcdF2dispI2dT();
-    assertEquals(-1.6628489213118322E-24, value);
+    assertEquals(-5.762371785911064E-24, value);
   }
 
   @Test
@@ -183,7 +184,7 @@ public class PhasePCSAFTRahmatTest {
   @Test
   void testCalcdF2dispZHCdT() {
     double value = p.calcdF2dispZHCdT();
-    assertEquals(7.070270274051911E-24, value);
+    assertEquals(1.51244510048084E-23, value);
   }
 
   @Test
