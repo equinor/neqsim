@@ -98,8 +98,8 @@ public class ComponentPRvolcor extends ComponentPR {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temp, double pres, double totMoles, double beta, int type) {
-    super.init(temp, pres, totMoles, beta, type);
+  public void init(double temp, double pres, double totMoles, double beta, int initType) {
+    super.init(temp, pres, totMoles, beta, initType);
     c = calcc();
   }
 
@@ -123,14 +123,14 @@ public class ComponentPRvolcor extends ComponentPR {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {
-    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, type);
+      int numberOfComponents, int initType) {
+    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, initType);
     Ci = ((PhasePrEosvolcor) phase).calcCi(componentNumber, phase, temp, pres, numberOfComponents);
-    if (type >= 2) {
+    if (initType >= 2) {
       ((PhasePrEosvolcor) phase).calcCiT(componentNumber, phase, temp, pres, numberOfComponents);
     }
 
-    if (type >= 3) {
+    if (initType >= 3) {
       for (int j = 0; j < numberOfComponents; j++) {
         Cij[j] = ((PhasePrEosvolcor) phase).calcCij(componentNumber, j, phase, temp, pres,
             numberOfComponents);

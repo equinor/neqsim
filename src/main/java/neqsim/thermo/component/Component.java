@@ -527,12 +527,12 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
+      int initType) {
     if (totalNumberOfMoles == 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
           "totalNumberOfMoles", "must be larger than 0"));
     }
-    if (type == 0) {
+    if (initType == 0) {
       K = Math.exp(Math.log(criticalPressure / pressure)
           + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
       z = numberOfMoles / totalNumberOfMoles;
@@ -556,7 +556,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {}
+      int numberOfComponents, int initType) {}
 
   /** {@inheritDoc} */
   @Override
