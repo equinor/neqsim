@@ -31,18 +31,17 @@ public class ComponentGEUniquac extends ComponentGE {
    * Constructor for ComponentGEUniquac.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGEUniquac(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGEUniquac(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     if (!this.getClass().equals(ComponentGEUniquac.class)) {
       return;
     }
-    if (component_name.contains("_PC")) {
+    if (name.contains("_PC")) {
       // double number = getMolarMass() / 0.014;
       // int intNumb = (int) Math.round(number) - 2;
       r = 1.0;
@@ -52,14 +51,12 @@ public class ComponentGEUniquac extends ComponentGE {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-        dataSet =
-            database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + component_name + "'"));
+        dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + name + "'"));
         dataSet.next();
         dataSet.getClob("name");
       } catch (Exception ex) {
         dataSet.close();
-        dataSet =
-            database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + component_name + "'"));
+        dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + name + "'"));
         dataSet.next();
       }
       r = Double.parseDouble(dataSet.getString("rUNIQUAQ"));

@@ -194,41 +194,38 @@ public abstract class Component implements ComponentInterface {
    * Constructor for Component.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public Component(String component_name, double moles, double molesInPhase, int compnumber) {
-    createComponent(component_name, moles, molesInPhase, compnumber);
+  public Component(String name, double moles, double molesInPhase, int compIndex) {
+    createComponent(name, moles, molesInPhase, compIndex);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void createComponent(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    if (component_name == null) {
+  public void createComponent(String name, double moles, double molesInPhase, int compIndex) {
+    if (name == null) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "createComponent", "component_name", "can not be null"));
+          "createComponent", "name", "can not be null"));
     }
-    if (component_name.trim() == "") {
+    if (name.trim() == "") {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "createComponent", "component_name", "can not be empty"));
+          "createComponent", "name", "can not be empty"));
     }
-    component_name = ComponentInterface.getComponentNameFromAlias(component_name);
-    componentName = component_name;
+    name = ComponentInterface.getComponentNameFromAlias(name);
+    componentName = name;
     numberOfMoles = moles;
     numberOfMolesInPhase = molesInPhase;
     java.sql.ResultSet dataSet = null;
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      if (!component_name.equals("default")) {
+      if (!name.equals("default")) {
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
-            dataSet = database
-                .getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
           } else {
-            dataSet =
-                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           }
           dataSet.next();
           dataSet.getString("ID");
@@ -237,9 +234,8 @@ public abstract class Component implements ComponentInterface {
           try {
             dataSet.close();
             // logger.info("no parameters in tempcomp -- trying comp.. " +
-            // component_name);
-            dataSet =
-                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            // name);
+            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
             dataSet.next();
           } catch (Exception e2) {
             throw new RuntimeException(e2);
@@ -445,7 +441,7 @@ public abstract class Component implements ComponentInterface {
         waxFormer = Integer.parseInt(dataSet.getString("waxformer")) == 1;
         // System.out.println(componentName + " pure component parameters: ok...");
       }
-      componentNumber = compnumber;
+      componentNumber = compIndex;
     } catch (Exception ex) {
       logger.error("error in comp", ex);
     }

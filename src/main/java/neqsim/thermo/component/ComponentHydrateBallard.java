@@ -22,14 +22,13 @@ public class ComponentHydrateBallard extends ComponentHydrate {
    * Constructor for ComponentHydrateBallard.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentHydrateBallard(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentHydrateBallard(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     coordNumb[0][0] = 20.0;
     coordNumb[0][1] = 24.0;
     cavRadius[0][0] = 3.908;
