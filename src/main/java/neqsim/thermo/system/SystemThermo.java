@@ -3168,7 +3168,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * getPdVtn. TODO: document
+   * getPdVtn.
    *
    * @return dpdv
    */

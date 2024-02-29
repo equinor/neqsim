@@ -31,10 +31,10 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
    * Constructor for ComponentElectrolyteCPAOld.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param component_name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compnumber Index number of component in phase object component array.
    */
   public ComponentElectrolyteCPAOld(String component_name, double moles, double molesInPhase,
       int compnumber) {
@@ -271,8 +271,8 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     return 2.0 * getBi() * (10.0)
         / ((8.0 * phase.getTotalVolume() - phase.getB())
             * (4.0 * phase.getTotalVolume() - phase.getB()))
-        - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB()) * (32
-            * Math.pow(phase.getTotalVolume(), 2.0)
+        - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
+            * (32 * Math.pow(phase.getTotalVolume(), 2.0)
                 - 12.0 * phase.getTotalVolume() * phase.getB() + Math.pow(phase.getB(), 2.0))
             / Math.pow(((8.0 * phase.getTotalVolume() - phase.getB())
                 * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
