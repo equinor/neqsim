@@ -26,10 +26,10 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
    * Constructor for ComponentPCSAFTa.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param component_name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compnumber Index number of component in phase object component array.
    */
   public ComponentPCSAFTa(String component_name, double moles, double molesInPhase,
       int compnumber) {
