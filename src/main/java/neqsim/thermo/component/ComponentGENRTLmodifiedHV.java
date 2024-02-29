@@ -25,14 +25,13 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    * Constructor for ComponentGENRTLmodifiedHV.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGENRTLmodifiedHV(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGENRTLmodifiedHV(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /** {@inheritDoc} */

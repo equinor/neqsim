@@ -25,30 +25,27 @@ public class ComponentHydrateGF extends ComponentHydrate {
    * Constructor for ComponentHydrateGF.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentHydrateGF(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentHydrateGF(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
 
     java.sql.ResultSet dataSet = null;
-    if (!component_name.equals("default")) {
+    if (!name.equals("default")) {
       try (neqsim.util.database.NeqSimDataBase database =
           new neqsim.util.database.NeqSimDataBase()) {
         // System.out.println("reading GF hydrate parameters ..............");
         try {
-          dataSet =
-              database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
           dataSet.getString("ID");
         } catch (Exception ex) {
-          logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
+          logger.info("no parameters in tempcomp -- trying comp.. " + name);
           dataSet.close();
-          dataSet =
-              database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
         }
         Ak[0][0] = Double.parseDouble(dataSet.getString("A1_SmallGF"));

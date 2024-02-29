@@ -18,13 +18,13 @@ public class ComponentTST extends ComponentEos {
    * Constructor for ComponentTST.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentTST(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentTST(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
 
     a = 0.427481 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     b = .086641 * R * criticalTemperature / criticalPressure;

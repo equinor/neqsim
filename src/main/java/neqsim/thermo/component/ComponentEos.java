@@ -86,13 +86,13 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * Constructor for ComponentEos.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentEos(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentEos(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /**
@@ -732,8 +732,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param compNumb1 a int
-   * @param compNumb2 a int
+   * @param compIndex1 a int
+   * @param compIndex2 a int
    * @return a double
    */
   public double getdUdndnSV(PhaseInterface phase, int compNumb1, int compNumb2) {
