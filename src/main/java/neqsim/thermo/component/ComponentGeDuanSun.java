@@ -33,6 +33,32 @@ public class ComponentGeDuanSun extends ComponentGE {
     super(name, moles, molesInPhase, compIndex);
   }
 
+  /**
+   * <p>
+   * getGamma.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase.
+   * @param HValpha an array of {@link double} objects
+   * @param HVgij an array of {@link double} objects
+   * @return a double
+   */
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij) {
+    if (componentName.equals("CO2")) {
+      return 0.9;
+    } else if (componentName.equals("water")) {
+      return 1.0;
+    } else {
+      return 1.0;
+    }
+  }
+
+
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
@@ -260,31 +286,6 @@ public class ComponentGeDuanSun extends ComponentGE {
     }
 
     return gamma;
-  }
-
-  /**
-   * <p>
-   * getGamma.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @param pt the PhaseType of the phase.
-   * @param HValpha an array of {@link double} objects
-   * @param HVgij an array of {@link double} objects
-   * @return a double
-   */
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij) {
-    if (componentName.equals("CO2")) {
-      return 0.9;
-    } else if (componentName.equals("water")) {
-      return 1.0;
-    } else {
-      return 1.0;
-    }
   }
 
   /*
