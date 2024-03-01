@@ -257,7 +257,7 @@ public class ComponentHydrateKluda extends Component {
    * setRefFug.
    * </p>
    *
-   * @param compIndexm a int
+   * @param compNumbm a int
    * @param val a double
    */
   public void setRefFug(int compNumbm, double val) {

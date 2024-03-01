@@ -602,7 +602,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * </p>
    *
    * @param xNumb a int
-   * @param compIndexi a int
+   * @param compNumbi a int
    * @return a double
    */
   public double getXsitedni(int xNumb, int compNumbi) {
