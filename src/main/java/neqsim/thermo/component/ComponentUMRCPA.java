@@ -28,17 +28,10 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
    * Constructor for ComponentSrkCPA.
    * </p>
    *
-   * <<<<<<< HEAD
-   * 
-   * @param component_name Name of component.
-   * @param moles Total number of moles of component.
-   * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array. =======
    * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array. >>>>>>>
-   *        upstream/master
+   * @param compIndex Index number of component in phase object component array.
    */
   public ComponentUMRCPA(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
