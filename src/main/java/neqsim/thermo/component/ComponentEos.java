@@ -226,6 +226,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
+   * Get reduced temperature.
+   * 
    * @param temperature temperature of fluid
    * @return double reduced temperature T/TC
    */
@@ -234,6 +236,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
+   * <p>
+   * Get reduced pressure.
+   * </p>
+   *
    * @param pressure pressure in unit bara
    * @return double
    */
@@ -732,8 +738,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param compIndex1 a int
-   * @param compIndex2 a int
+   * @param compNumb1 a int
+   * @param compNumb2 a int
    * @return a double
    */
   public double getdUdndnSV(PhaseInterface phase, int compNumb1, int compNumb2) {
