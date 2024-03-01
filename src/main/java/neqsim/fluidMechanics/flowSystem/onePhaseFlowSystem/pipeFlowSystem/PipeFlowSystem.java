@@ -103,7 +103,7 @@ public class PipeFlowSystem
       // System.out.println("time step: " + i + " " +
       // this.getTimeSeries().getTimeStep()[i]);
       // System.out.println("time: " + i + " " + this.getTimeSeries().getTime()[i]);
-      // flowSolver.solveTDMA();
+      flowSolver.solveTDMA();
       display.setNextData(this, this.getTimeSeries().getTime(i));
     }
     calcIdentifier = id;
