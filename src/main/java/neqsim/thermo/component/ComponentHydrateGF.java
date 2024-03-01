@@ -15,10 +15,10 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ComponentHydrateGF extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
   double[][] Ak = new double[2][2]; // [structure][cavitytype]
   double[][] Bk = new double[2][2]; // [structure][cavitytype]
-  static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
   /**
    * <p>
@@ -68,13 +68,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
         }
       }
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double fugcoef(PhaseInterface phase) {
-    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure());
   }
 
   /** {@inheritDoc} */
