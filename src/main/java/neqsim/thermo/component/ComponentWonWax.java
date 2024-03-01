@@ -35,7 +35,8 @@ public class ComponentWonWax extends ComponentSolid {
   @Override
   public double fugcoef(PhaseInterface phase1) {
     if (!isWaxFormer()) {
-      return 1.0e30;
+      fugacityCoefficient = 1.0e30;
+      return fugacityCoefficient;
     }
 
     return fugcoef2(phase1);

@@ -54,13 +54,6 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
 
   /** {@inheritDoc} */
   @Override
-  public double fugcoef(PhaseInterface phase) {
-    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure());
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
     if (componentName.equals("water")) {
       double solvol = getMolarVolumeHydrate(hydrateStructure, temp);

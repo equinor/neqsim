@@ -15,6 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentHydrateKluda extends Component {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentHydrateKluda.class);
 
   double par1_struc1 = 17.44;
   double par2_struc1 = -6003.9;
@@ -26,7 +27,6 @@ public class ComponentHydrateKluda extends Component {
   double[][] cavNumb = new double[2][2]; // [structure][cavitytype]
   double[][] cavprwat = new double[2][2]; // [structure][cavitytype]
   double[] reffug = new double[20];
-  static Logger logger = LogManager.getLogger(ComponentHydrateKluda.class);
 
   /**
    * <p>
@@ -65,13 +65,6 @@ public class ComponentHydrateKluda extends Component {
     cavNumb[1][1] = 8.0;
     cavprwat[1][0] = 2.0 / 17.0;
     cavprwat[1][1] = 1.0 / 17.0;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double fugcoef(PhaseInterface phase) {
-    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure());
   }
 
   /**
