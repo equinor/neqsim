@@ -1360,12 +1360,10 @@ public abstract class SystemThermo implements SystemInterface {
         getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).removeComponent(name, getTotalNumberOfMoles(),
-          phaseArray[phaseIndex[i]].getComponent(name).getNumberOfMolesInPhase(),
-          phaseArray[phaseIndex[i]].getComponent(name).getComponentNumber());
+          getPhase(i).getComponent(name).getNumberOfMolesInPhase());
     }
 
     componentNames.remove(name);
-    // System.out.println("removing " + componentNames.toString());
     numberOfComponents--;
   }
 
