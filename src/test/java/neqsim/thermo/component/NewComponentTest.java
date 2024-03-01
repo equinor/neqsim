@@ -25,7 +25,7 @@ public class NewComponentTest extends neqsim.NeqSimTest {
       p.addComponent("", 0, 0, 0);
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: ComponentSrk:createComponent - Input component_name can not be empty",
+        "neqsim.util.exception.InvalidInputException: ComponentSrk:createComponent - Input name can not be empty",
         thrown.getMessage());
 
     RuntimeException thrown_2 = Assertions.assertThrows(RuntimeException.class, () -> {

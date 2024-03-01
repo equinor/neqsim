@@ -39,16 +39,15 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * Constructor for ComponentGEUnifacUMRPRU.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGEUnifacUMRPRU(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGEUnifacUMRPRU(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     // System.out.println("finished reading UNIFAC ");
-    if (component_name.contains("_PC")) {
+    if (name.contains("_PC")) {
       double number = getMolarMass() / 0.014;
       int intNumb = (int) Math.round(number) - 2;
       unifacGroups.clear();
@@ -67,14 +66,14 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-        dataSet = database
-            .getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + component_name + "'"));
+        dataSet =
+            database.getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + name + "'"));
         dataSet.next();
         // dataSet.getClob("name");
       } catch (Exception ex) {
         dataSet.close();
-        dataSet = database
-            .getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + component_name + "'"));
+        dataSet =
+            database.getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + name + "'"));
         dataSet.next();
         logger.error("Something went wrong. Closing database.", ex);
       }
@@ -83,7 +82,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         int temp = Integer.parseInt(dataSet.getString("sub" + Integer.toString(p)));
         if (temp > 0) {
           unifacGroups.add(new UNIFACgroup(p, temp));
-          // System.out.println("compUMR " + component_name + " adding UNIFAC group " +
+          // System.out.println("compUMR " + name + " adding UNIFAC group " +
           // p);
         }
       }

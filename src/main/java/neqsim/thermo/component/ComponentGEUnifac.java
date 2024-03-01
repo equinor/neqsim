@@ -39,18 +39,17 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
    * Constructor for ComponentGEUnifac.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGEUnifac(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGEUnifac(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     if (!this.getClass().equals(ComponentGEUnifac.class)) {
       return;
     }
-    if (component_name.contains("_PC")) {
+    if (name.contains("_PC")) {
       double number = getMolarMass() / 0.014;
       int intNumb = (int) Math.round(number) - 2;
       unifacGroups.add(new UNIFACgroup(1, 2));
@@ -62,14 +61,12 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-        dataSet =
-            database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + component_name + "'"));
+        dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + name + "'"));
         dataSet.next();
         dataSet.getClob("name");
       } catch (Exception ex) {
         dataSet.close();
-        dataSet =
-            database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + component_name + "'"));
+        dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + name + "'"));
         dataSet.next();
       }
 
@@ -77,7 +74,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         int temp = Integer.parseInt(dataSet.getString("sub" + Integer.toString(p)));
         if (temp > 0) {
           unifacGroups.add(new UNIFACgroup(p, temp));
-          // System.out.println("comp " + component_name + " adding UNIFAC group " + p);
+          // System.out.println("comp " + name + " adding UNIFAC group " + p);
         }
       }
 

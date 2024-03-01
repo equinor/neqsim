@@ -31,14 +31,13 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
    * Constructor for ComponentElectrolyteCPAOld.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentElectrolyteCPAOld(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentElectrolyteCPAOld(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     xsite = new double[numberOfAssociationSites];
     xsitedV = new double[numberOfAssociationSites];
     xsiteOld = new double[numberOfAssociationSites];

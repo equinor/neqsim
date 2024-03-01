@@ -28,13 +28,20 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
    * Constructor for ComponentSrkCPA.
    * </p>
    *
+   * <<<<<<< HEAD
+   * 
    * @param component_name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compnumber Index number of component in phase object component array. =======
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array. >>>>>>>
+   *        upstream/master
    */
-  public ComponentUMRCPA(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentUMRCPA(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     xsite = new double[numberOfAssociationSites];
     xsitedni = new double[numberOfAssociationSites][100];
     xsitedV = new double[numberOfAssociationSites];
@@ -102,9 +109,8 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
 
   /** {@inheritDoc} */
   @Override
-  public void createComponent(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super.createComponent(component_name, moles, molesInPhase, compnumber);
+  public void createComponent(String name, double moles, double molesInPhase, int compIndex) {
+    super.createComponent(name, moles, molesInPhase, compIndex);
     // criticalTemperature = 305.4;
     // criticalPressure = 135.62;
     // acentricFactor = 0.1609;

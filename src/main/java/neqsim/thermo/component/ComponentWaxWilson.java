@@ -1,5 +1,7 @@
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -14,23 +16,23 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ComponentWaxWilson extends ComponentSolid {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentWaxWilson.class);
 
   /**
    * <p>
    * Constructor for ComponentWaxWilson.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentWaxWilson(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentWaxWilson(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
-  /** * {@inheritDoc} */
+  /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase1) {
     if (!isWaxFormer()) {

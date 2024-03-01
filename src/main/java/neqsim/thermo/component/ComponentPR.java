@@ -18,13 +18,13 @@ public class ComponentPR extends ComponentEos {
    * Constructor for ComponentPR.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentPR(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentPR(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
 
     a = .45724333333 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     b = .077803333 * R * criticalTemperature / criticalPressure;
