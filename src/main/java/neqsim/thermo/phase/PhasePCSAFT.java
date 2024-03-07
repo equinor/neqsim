@@ -334,7 +334,6 @@ public class PhasePCSAFT extends PhaseSrkEos {
    */
   public double calcF1dispSumTerm() {
     double temp1 = 0.0;
-
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
         temp1 +=
@@ -358,7 +357,6 @@ public class PhasePCSAFT extends PhaseSrkEos {
    */
   public double calcF2dispSumTerm() {
     double temp1 = 0.0;
-
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
         temp1 += getComponent(i).getNumberOfMolesInPhase()

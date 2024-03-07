@@ -93,19 +93,19 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure, PhaseType pt) {
+    // TODO: why is GE a local variable?
     double GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (type == 0) {
         GE += phase.getComponents()[i].getx()
             * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,
                 numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRule));
-      }
-      if (type == 1) {
+      } else if (type == 1) {
         GE += phase.getComponents()[i].getx() * Math
             .log(((ComponentGENRTLmodifiedWS) componentArray[i]).getGamma(phase, numberOfComponents,
                 temperature, pressure, pt, alpha, Dij, DijT, intparam, mixRule));
       }
     }
-    return R * temperature * GE * numberOfMolesInPhase;
+    return R * temperature * numberOfMolesInPhase * GE;
   }
 }

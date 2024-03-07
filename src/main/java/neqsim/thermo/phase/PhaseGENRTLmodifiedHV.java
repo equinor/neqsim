@@ -138,7 +138,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
                 temperature, pressure, pt, alpha, Dij, DijT, intparam, mixRule));
       }
     }
-    return (R * phase.getTemperature() * GE) * phase.getNumberOfMolesInPhase();
+    return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;
   }
 
   /** {@inheritDoc} */
@@ -149,7 +149,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
       val +=
           getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugacityCoefficient()); // +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
     }
-    return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
+    return R * temperature * numberOfMolesInPhase * (val + Math.log(pressure));
   }
 
   /** {@inheritDoc} */

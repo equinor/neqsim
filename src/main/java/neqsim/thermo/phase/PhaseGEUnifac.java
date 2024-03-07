@@ -193,7 +193,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEUniquac) componentArray[i])
           .getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
-    return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();
+    return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;
   }
 
   /** {@inheritDoc} */
@@ -204,7 +204,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
       val +=
           getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugacityCoefficient());
     }
-    return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
+    return R * temperature * numberOfMolesInPhase * (val + Math.log(pressure));
   }
 
   /**
