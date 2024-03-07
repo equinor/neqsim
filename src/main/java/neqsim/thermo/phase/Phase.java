@@ -130,7 +130,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void removeComponent(String name, double moles, double molesInPhase, int compNumber) {
+  public void removeComponent(String name, double moles, double molesInPhase) {
     name = ComponentInterface.getComponentNameFromAlias(name);
 
     ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();
