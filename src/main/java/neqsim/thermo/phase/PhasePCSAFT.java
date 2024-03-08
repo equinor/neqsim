@@ -40,43 +40,43 @@ public class PhasePCSAFT extends PhaseSrkEos {
   int useDISP1 = 1;
   int useDISP2 = 1;
 
-  private double[][] aConstSAFT = {
+  protected double[][] aConstSAFT = {
       {0.9105631445, 0.6361281449, 2.6861347891, -26.547362491, 97.759208784, -159.59154087,
           91.297774084},
       {-0.3084016918, 0.1860531159, -2.5030047259, 21.419793629, -65.255885330, 83.318680481,
           -33.746922930},
       {-0.0906148351, 0.4527842806, 0.5962700728, -1.7241829131, -4.1302112531, 13.776631870,
           -8.6728470368}};
-  private double[][] bConstSAFT = {
+  protected double[][] bConstSAFT = {
       {0.7240946941, 2.2382791861, -4.0025849485, -21.003576815, 26.855641363, 206.55133841,
           -355.60235612},
       {-0.5755498075, 0.6995095521, 3.8925673390, -17.215471648, 192.67226447, -161.82646165,
           -165.20769346},
       {0.0976883116, -0.2557574982, -9.1558561530, 20.642075974, -38.804430052, 93.626774077,
           -29.666905585}};
-  private double F1dispVolTerm = 1.0;
-  private double F1dispSumTerm = 1.0;
-  private double F1dispI1 = 1.0;
-  private double F2dispI2 = 1.0;
-  private double F2dispZHC = 1.0;
-  private double F2dispZHCdN = 1.0;
-  private double F2dispZHCdm = 1.0;
-  private double F2dispZHCdV = 1.0;
-  private double F2dispI2dVdV = 0.0;
-  private double F2dispZHCdVdV = 0.0;
-  private double F1dispI1dNdN = 1.0;
-  private double F1dispVolTermdV = 1.0;
-  private double F1dispVolTermdVdV = 1.0;
-  private double F1dispI1dN = 1.0;
-  private double F1dispI1dm = 1.0;
-  private double F1dispI1dV = 1.0;
-  private double F2dispI2dV = 1.0;
-  private double F2dispI2dN = 1.0;
-  private double F2dispI2dm = 1.0;
-  private double F2dispSumTerm = 0.0;
-  private double F2dispZHCdNdN = 1.0;
-  private double F2dispI2dNdN = 1.0;
-  private double F1dispI1dVdV = 0.0;
+  protected double F1dispVolTerm = 1.0;
+  protected double F1dispSumTerm = 1.0;
+  protected double F1dispI1 = 1.0;
+  protected double F2dispI2 = 1.0;
+  protected double F2dispZHC = 1.0;
+  protected double F2dispZHCdN = 1.0;
+  protected double F2dispZHCdm = 1.0;
+  protected double F2dispZHCdV = 1.0;
+  protected double F2dispI2dVdV = 0.0;
+  protected double F2dispZHCdVdV = 0.0;
+  protected double F1dispI1dNdN = 1.0;
+  protected double F1dispVolTermdV = 1.0;
+  protected double F1dispVolTermdVdV = 1.0;
+  protected double F1dispI1dN = 1.0;
+  protected double F1dispI1dm = 1.0;
+  protected double F1dispI1dV = 1.0;
+  protected double F2dispI2dV = 1.0;
+  protected double F2dispI2dN = 1.0;
+  protected double F2dispI2dm = 1.0;
+  protected double F2dispSumTerm = 0.0;
+  protected double F2dispZHCdNdN = 1.0;
+  protected double F2dispI2dNdN = 1.0;
+  protected double F1dispI1dVdV = 0.0;
 
   /**
    * <p>
