@@ -1438,45 +1438,4 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     return getMolarVolume();
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getDmeanSAFT() {
-    return dmeanSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setDmeanSAFT(double dmeanSAFT) {
-    this.dmeanSAFT = dmeanSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getNmSAFT() {
-    return nmSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setNmSAFT(double nmSAFT) {
-    this.nmSAFT = nmSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getF2dispSumTerm() {
-    return F2dispSumTerm;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setF2dispSumTerm(double F2dispSumTerm) {
-    this.F2dispSumTerm = F2dispSumTerm;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setF2dispZHCdm(double F2dispZHCdm) {
-    this.F2dispZHCdm = F2dispZHCdm;
-  }
 }
