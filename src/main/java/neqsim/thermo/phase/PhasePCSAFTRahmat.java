@@ -15,6 +15,7 @@ import neqsim.thermo.component.ComponentPCSAFT;
  */
 public class PhasePCSAFTRahmat extends PhasePCSAFT {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhasePCSAFTRahmat.class);
 
   double nSAFT = 1.0;
   double dnSAFTdV = 1.0;
@@ -46,7 +47,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   double dF2dispZHCdT = 1.0;
   double dF1dispSumTermdT = 1.0;
   double dF2dispSumTermdT = 1.0;
-
   int useHS = 1;
   int useDISP1 = 1;
   int useDISP2 = 1;
@@ -95,7 +95,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   private double F1dispI1dVdV = 1.0;
   private double F1dispI1dVdVdV = 1.0;
   private double F1dispVolTermdVdVdV = 1.0;
-  static Logger logger = LogManager.getLogger(PhasePCSAFTRahmat.class);
 
   /**
    * <p>

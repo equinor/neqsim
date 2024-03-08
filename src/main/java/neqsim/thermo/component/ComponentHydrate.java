@@ -507,6 +507,17 @@ public class ComponentHydrate extends Component {
 
   /**
    * <p>
+   * Getter for the field <code>dHfHydrate</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
+  public double[] getDHfHydrate() {
+    return dHfHydrate;
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>dHfHydrate</code>.
    * </p>
    *
@@ -515,17 +526,6 @@ public class ComponentHydrate extends Component {
    */
   public void setDHfHydrate(double dHfHydrate, int i) {
     this.dHfHydrate[i] = dHfHydrate;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>dHfHydrate</code>.
-   * </p>
-   *
-   * @return an array of {@link double} objects
-   */
-  public double[] getDHfHydrate() {
-    return dHfHydrate;
   }
 
   /**
