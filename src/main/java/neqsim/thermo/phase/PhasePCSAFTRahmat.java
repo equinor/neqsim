@@ -17,25 +17,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhasePCSAFTRahmat.class);
 
-  double nSAFT = 1.0;
-  double dnSAFTdV = 1.0;
-  double dnSAFTdVdV = 1.0;
   double dnSAFTdVdVdV = 1.0;
 
-  double dmeanSAFT = 0.0;
-  double dSAFT = 1.0;
-  double mSAFT = 1.0;
-  double mdSAFT = 1.0;
-  double nmSAFT = 1.0;
-  double mmin1SAFT = 1.0;
-  double ghsSAFT = 1.0;
-  double aHSSAFT = 1.0;
-  double volumeSAFT = 1.0;
-  double daHCSAFTdN = 1.0;
-  double daHSSAFTdN = 1.0;
-  double dgHSSAFTdN = 1.0;
-  double daHSSAFTdNdN = 1.0;
-  double dgHSSAFTdNdN = 1.0;
   double daHSSAFTdNdNdN = 1.0;
   double dgHSSAFTdNdNdN = 1.0;
 
@@ -47,54 +30,16 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   double dF2dispZHCdT = 1.0;
   double dF1dispSumTermdT = 1.0;
   double dF2dispSumTermdT = 1.0;
-  int useHS = 1;
-  int useDISP1 = 1;
-  int useDISP2 = 1;
-
-  private double[][] aConstSAFT = {
-      {0.9105631445, 0.6361281449, 2.6861347891, -26.547362491, 97.759208784, -159.59154087,
-          91.297774084},
-      {-0.3084016918, 0.1860531159, -2.5030047259, 21.419793629, -65.255885330, 83.318680481,
-          -33.746922930},
-      {-0.0906148351, 0.4527842806, 0.5962700728, -1.7241829131, -4.1302112531, 13.776631870,
-          -8.6728470368}};
-  private double[][] bConstSAFT = {
-      {0.7240946941, 2.2382791861, -4.0025849485, -21.003576815, 26.855641363, 206.55133841,
-          -355.60235612},
-      {-0.5755498075, 0.6995095521, 3.8925673390, -17.215471648, 192.67226447, -161.82646165,
-          -165.20769346},
-      {0.0976883116, -0.2557574982, -9.1558561530, 20.642075974, -38.804430052, 93.626774077,
-          -29.666905585}};
-  private double F1dispVolTerm = 1.0;
-  private double F1dispSumTerm = 1.0;
-  private double F1dispI1 = 1.0;
-  private double F2dispI2 = 1.0;
-  private double F2dispZHC = 1.0;
-  private double F2dispZHCdN = 1.0;
-  private double F2dispZHCdm = 1.0;
-  private double F2dispZHCdV = 1.0;
-  private double F2dispI2dVdV;
-  private double F2dispI2dVdVdV = 0.0;
-  private double F2dispZHCdVdV = 1.0;
-  private double F2dispZHCdVdVdV = 1.0;
-  private double F1dispI1dNdN = 1.0;
-  private double F1dispI1dNdNdN = 1.0;
-  private double F1dispVolTermdV = 1.0;
-  private double F1dispVolTermdVdV = 1.0;
-  private double F1dispI1dN = 1.0;
-  private double F1dispI1dm = 1.0;
-  private double F1dispI1dV = 1.0;
-  private double F2dispI2dV = 1.0;
-  private double F2dispI2dN = 1.0;
-  private double F2dispI2dm = 1.0;
-  private double F2dispSumTerm = 0.0;
-  private double F2dispZHCdNdN = 1.0;
-  private double F2dispZHCdNdNdN = 1.0;
-  private double F2dispI2dNdN = 1.0;
-  private double F2dispI2dNdNdN = 1.0;
-  private double F1dispI1dVdV = 1.0;
-  private double F1dispI1dVdVdV = 1.0;
-  private double F1dispVolTermdVdVdV = 1.0;
+  protected double F2dispI2dVdV;
+  protected double F2dispI2dVdVdV = 0.0;
+  protected double F2dispZHCdVdV = 1.0;
+  protected double F2dispZHCdVdVdV = 1.0;
+  protected double F1dispI1dNdNdN = 1.0;
+  protected double F2dispZHCdNdNdN = 1.0;
+  protected double F2dispI2dNdNdN = 1.0;
+  protected double F1dispI1dVdV = 1.0;
+  protected double F1dispI1dVdVdV = 1.0;
+  protected double F1dispVolTermdVdVdV = 1.0;
 
   /**
    * <p>
@@ -1436,47 +1381,5 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
      * "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
      */
     return getMolarVolume();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getDmeanSAFT() {
-    return dmeanSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setDmeanSAFT(double dmeanSAFT) {
-    this.dmeanSAFT = dmeanSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getNmSAFT() {
-    return nmSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setNmSAFT(double nmSAFT) {
-    this.nmSAFT = nmSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getF2dispSumTerm() {
-    return F2dispSumTerm;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setF2dispSumTerm(double F2dispSumTerm) {
-    this.F2dispSumTerm = F2dispSumTerm;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setF2dispZHCdm(double F2dispZHCdm) {
-    this.F2dispZHCdm = F2dispZHCdm;
   }
 }
