@@ -503,6 +503,78 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
+  public double getaSAFT(int i, double m, double[][] ab) {
+    return ab[0][i] + (m - 1.0) / m * ab[1][i] + (m - 1.0) / m * (m - 2.0) / m * ab[2][i];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getaSAFTdm(int i, double m, double[][] ab) {
+    return (m - (m - 1.0)) / (m * m) * ab[1][i]
+        + ((2.0 * m - 3.0) * m * m - 2 * m * (m * m - 3 * m + 2)) / Math.pow(m, 4.0) * ab[2][i];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcmdSAFT() {
+    double temp2 = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      temp2 += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase()
+          * getComponent(i).getmSAFTi()
+          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
+    }
+
+    return temp2;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcmmin1SAFT() {
+    double temp2 = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      temp2 += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase()
+          * (getComponent(i).getmSAFTi() - 1.0);
+    }
+
+    return temp2;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcdmeanSAFT() {
+    double temp = 0.0;
+    double temp2 = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      temp += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
+          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
+      temp2 += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi();
+    }
+    return Math.pow(temp / temp2, 1.0 / 3.0);
+  }
+
+  // need to check (modified by rahmat)
+  /** {@inheritDoc} */
+  @Override
+  public double calcdSAFT() {
+    double temp1 = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
+          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
+    }
+    // System.out.println("d saft calc " + temp/getNumberOfMolesInPhase());
+    return temp1 / getNumberOfMolesInPhase();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double F_HC_SAFT() {
+    return getNumberOfMolesInPhase()
+        * (getmSAFT() * getAHSSAFT() - getMmin1SAFT() * Math.log(getGhsSAFT()));
+    // (ThermodynamicConstantsInterface.R*temperature);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double dF_HC_SAFTdV() {
     return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdN * getDnSAFTdV()
         - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * getDnSAFTdV());
@@ -834,7 +906,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
        */
       // setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
       Z = pressure * getMolarVolume() / (R * temperature);
-      // System.out.println("BonV " + BonV);
     } while (Math.abs((oldMolarVolume - getMolarVolume()) / oldMolarVolume) > 1.0e-10
         && iterations < 100);
     // while(Math.abs((BonV-BonVold)/BonV)>1.0e-10 && iterations<500);
