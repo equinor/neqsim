@@ -766,42 +766,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
 
   /** {@inheritDoc} */
   @Override
-  public double getNSAFT() {
-    return nSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setNSAFT(double nSAFT) {
-    this.nSAFT = nSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getDSAFT() {
-    return dSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setDSAFT(double dSAFT) {
-    this.dSAFT = dSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getGhsSAFT() {
-    return ghsSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setGhsSAFT(double ghsSAFT) {
-    this.ghsSAFT = ghsSAFT;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double F_HC_SAFT() {
     return getNumberOfMolesInPhase()
         * (getmSAFT() * getAHSSAFT() - getMmin1SAFT() * Math.log(getGhsSAFT()));
@@ -1154,7 +1118,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     // double BonV = phase== 0 ? 0.99:1e-5;
-
     if (BonV < 0) {
       BonV = 1.0e-6;
     }
@@ -1217,7 +1180,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
        */
       // setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
       Z = pressure * getMolarVolume() / (R * temperature);
-      // System.out.println("BonV " + BonV);
     } while (Math.abs((oldMolarVolume - getMolarVolume()) / oldMolarVolume) > 1.0e-10
         && iterations < 100);
     // while(Math.abs((BonV-BonVold)/BonV)>1.0e-10 && iterations<500);
