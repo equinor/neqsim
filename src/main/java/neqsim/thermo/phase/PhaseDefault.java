@@ -62,7 +62,7 @@ public class PhaseDefault extends Phase {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    return 1.0;
+    throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
   }
 
   /** {@inheritDoc} */
@@ -72,7 +72,7 @@ public class PhaseDefault extends Phase {
   /** {@inheritDoc} */
   @Override
   public double getMolarVolume() {
-    return 1.0;
+    throw new UnsupportedOperationException("Unimplemented method 'getMolarVolume'");
   }
 
   /** {@inheritDoc} */

@@ -142,8 +142,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
   /** {@inheritDoc} */
   @Override
   public double getSurfaceExcess(int component) {
-    // TODO: remove not in use
-    return 1.0;
+    throw new UnsupportedOperationException("Unimplemented method 'getValue'");
   }
 
   /** {@inheritDoc} */
