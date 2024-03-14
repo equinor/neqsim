@@ -156,7 +156,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     if (type == 1) {
       interphaseTransportCoefficient = new InterphaseTransportCoefficientBaseClass(this);
     } else {
-      System.out.println("error chhosing friction type");
+      System.out.println("error choosing friction type");
     }
   }
 

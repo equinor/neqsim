@@ -211,10 +211,13 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * init.
+   * Init using current phase properties.
    * </p>
    */
-  public void init();
+  public default void init() {
+    init(getNumberOfMolesInPhase() / getBeta(), getNumberOfComponents(), getInitType(), getType(),
+        getBeta());
+  }
 
   /**
    * <p>
@@ -715,7 +718,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * not change the total number of moles of component in system.
    * 
    * NB! Phase fraction <code>beta</code> is not updated by this method. Must be done separately to
-   * keep consistency between phase and component calculation of of total number of moles in system.
+   * keep consistency between phase and component calculation of total number of moles in system.
    * </p>
    *
    * @param component Component number to change
@@ -732,7 +735,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * amount.
    * 
    * NB! Phase fraction <code>beta</code> is not updated by this method. Must be done separately to
-   * keep consistency between phase and component calculation of of total number of moles in system.
+   * keep consistency between phase and component calculation of total number of moles in system.
    * </p>
    *
    * @param component Component number to change
@@ -750,7 +753,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * <code>numberOfMoles</code> with separate amounts.
    * 
    * NB! Phase fraction <code>beta</code> is not updated by this method. Must be done separately to
-   * keep consistency between phase and component calculation of of total number of moles in system.
+   * keep consistency between phase and component calculation of total number of moles in system.
    * </p>
    *
    * @param component Component number to change
