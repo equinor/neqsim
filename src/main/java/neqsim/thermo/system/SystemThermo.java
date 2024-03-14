@@ -1312,8 +1312,8 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     if (!this.isBetaValid()) {
-      logger.error("Beta array contains invalid values");
-      return;
+      logger.warn("Beta array contains invalid values");
+      // return;
     }
 
     for (int phaseNum = 0; phaseNum < getNumberOfPhases(); phaseNum++) {
