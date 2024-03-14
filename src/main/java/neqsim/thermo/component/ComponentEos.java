@@ -86,13 +86,13 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * Constructor for ComponentEos.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentEos(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentEos(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /**
@@ -226,6 +226,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
+   * Get reduced temperature.
+   * 
    * @param temperature temperature of fluid
    * @return double reduced temperature T/TC
    */
@@ -234,6 +236,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
+   * <p>
+   * Get reduced pressure.
+   * </p>
+   *
    * @param pressure pressure in unit bara
    * @return double
    */

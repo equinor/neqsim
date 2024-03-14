@@ -15,40 +15,37 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ComponentHydrateGF extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
   double[][] Ak = new double[2][2]; // [structure][cavitytype]
   double[][] Bk = new double[2][2]; // [structure][cavitytype]
-  static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
   /**
    * <p>
    * Constructor for ComponentHydrateGF.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentHydrateGF(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentHydrateGF(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
 
     java.sql.ResultSet dataSet = null;
-    if (!component_name.equals("default")) {
+    if (!name.equals("default")) {
       try (neqsim.util.database.NeqSimDataBase database =
           new neqsim.util.database.NeqSimDataBase()) {
         // System.out.println("reading GF hydrate parameters ..............");
         try {
-          dataSet =
-              database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
           dataSet.getString("ID");
         } catch (Exception ex) {
-          logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
+          logger.info("no parameters in tempcomp -- trying comp.. " + name);
           dataSet.close();
-          dataSet =
-              database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
         }
         Ak[0][0] = Double.parseDouble(dataSet.getString("A1_SmallGF"));
@@ -71,13 +68,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
         }
       }
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double fugcoef(PhaseInterface phase) {
-    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure());
   }
 
   /** {@inheritDoc} */

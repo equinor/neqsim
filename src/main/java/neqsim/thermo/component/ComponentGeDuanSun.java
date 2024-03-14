@@ -24,15 +24,40 @@ public class ComponentGeDuanSun extends ComponentGE {
    * Constructor for ComponentGeDuanSun.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGeDuanSun(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGeDuanSun(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
+
+  /**
+   * <p>
+   * getGamma.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase.
+   * @param HValpha an array of {@link double} objects
+   * @param HVgij an array of {@link double} objects
+   * @return a double
+   */
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij) {
+    if (componentName.equals("CO2")) {
+      return 0.9;
+    } else if (componentName.equals("water")) {
+      return 1.0;
+    } else {
+      return 1.0;
+    }
+  }
+
 
   /** {@inheritDoc} */
   @Override
@@ -261,31 +286,6 @@ public class ComponentGeDuanSun extends ComponentGE {
     }
 
     return gamma;
-  }
-
-  /**
-   * <p>
-   * getGamma.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @param pt the PhaseType of the phase.
-   * @param HValpha an array of {@link double} objects
-   * @param HVgij an array of {@link double} objects
-   * @return a double
-   */
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij) {
-    if (componentName.equals("CO2")) {
-      return 0.9;
-    } else if (componentName.equals("water")) {
-      return 1.0;
-    } else {
-      return 1.0;
-    }
   }
 
   /*

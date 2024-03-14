@@ -45,14 +45,13 @@ public class ComponentHydrate extends Component {
    * Constructor for ComponentHydrate.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentHydrate(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentHydrate(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     coordNumb[0][0] = 20.0;
     coordNumb[0][1] = 24.0;
     cavRadius[0][0] = 3.95;
@@ -76,22 +75,19 @@ public class ComponentHydrate extends Component {
 
     java.sql.ResultSet dataSet = null;
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      if (!component_name.equals("default")) {
+      if (!name.equals("default")) {
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
-            dataSet = database
-                .getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
           } else {
-            dataSet =
-                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           }
           dataSet.next();
           dataSet.getString("FORMULA");
         } catch (Exception ex) {
           dataSet.close();
-          logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-          dataSet =
-              database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+          logger.info("no parameters in tempcomp -- trying comp.. " + name);
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
         }
         lennardJonesMolecularDiameterHydrate =
@@ -511,6 +507,17 @@ public class ComponentHydrate extends Component {
 
   /**
    * <p>
+   * Getter for the field <code>dHfHydrate</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
+  public double[] getDHfHydrate() {
+    return dHfHydrate;
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>dHfHydrate</code>.
    * </p>
    *
@@ -519,17 +526,6 @@ public class ComponentHydrate extends Component {
    */
   public void setDHfHydrate(double dHfHydrate, int i) {
     this.dHfHydrate[i] = dHfHydrate;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>dHfHydrate</code>.
-   * </p>
-   *
-   * @return an array of {@link double} objects
-   */
-  public double[] getDHfHydrate() {
-    return dHfHydrate;
   }
 
   /**

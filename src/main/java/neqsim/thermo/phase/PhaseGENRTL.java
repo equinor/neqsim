@@ -124,7 +124,7 @@ public class PhaseGENRTL extends PhaseGE {
               temperature, pressure, pt, alpha, Dij, intparam, mixRule));
     }
 
-    return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
+    return R * temperature * numberOfMolesInPhase * GE;
   }
 
   /** {@inheritDoc} */

@@ -21,14 +21,14 @@ abstract class ComponentGEUniquacmodifiedHV extends ComponentGEUniquac {
    * Constructor for ComponentGEUniquacmodifiedHV.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGEUniquacmodifiedHV(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGEUniquacmodifiedHV(String name, double moles, double molesInPhase,
+      int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /** {@inheritDoc} */

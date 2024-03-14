@@ -28,13 +28,13 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * Constructor for ComponentSrkCPA.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentSrkCPA(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentSrkCPA(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     xsite = new double[numberOfAssociationSites];
     xsitedni = new double[numberOfAssociationSites][100];
     xsitedV = new double[numberOfAssociationSites];

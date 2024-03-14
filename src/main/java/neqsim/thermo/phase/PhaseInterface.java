@@ -25,11 +25,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    *
    * @param name Name of component.
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compNumber a int
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public void addComponent(String name, double moles, double molesInPhase, int compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compIndex);
 
   /**
    * <p>
@@ -418,15 +418,14 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * removeComponent.
+   * Remove component from Phase.
    * </p>
    *
-   * @param name a {@link String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compNumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
    */
-  public void removeComponent(String name, double moles, double molesInPhase, int compNumber);
+  public void removeComponent(String name, double moles, double molesInPhase);
 
   /**
    * <p>

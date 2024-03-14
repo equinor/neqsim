@@ -26,13 +26,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Helper function to create component. Typically called from constructors.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component in system.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public void createComponent(String component_name, double moles, double molesInPhase,
-      int compnumber);
+  public void createComponent(String name, double moles, double molesInPhase, int compIndex);
 
   /**
    * <p>
