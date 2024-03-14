@@ -398,12 +398,6 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init() {
-    init(numberOfMolesInPhase / beta, numberOfComponents, initType, getType(), beta);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
     if (totalNumberOfMoles <= 0) {
