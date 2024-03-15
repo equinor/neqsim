@@ -97,9 +97,8 @@ public class Expander extends Compressor implements ExpanderInterface {
        * 1.0); oldPolyt = polytropicEfficiency; polytropicEfficiency = factor *
        * isentropicEfficiency; dH = thermoSystem.getEnthalpy() - hinn; hout = hinn + dH /
        * polytropicEfficiency; thermoOps.PHflash(hout, 0); System.out.println(" factor " + factor +
-       * " n " + n + " k " + k + " polytropic effici " + polytropicEfficiency + " iter " + iter);
-       *
-       * } while (Math.abs((oldPolyt - polytropicEfficiency) / oldPolyt) > 1e-5 && iter < 500); //
+       * " n " + n + " k " + k + " polytropic effici " + polytropicEfficiency + " iter " + iter); }
+       * while (Math.abs((oldPolyt - polytropicEfficiency) / oldPolyt) > 1e-5 && iter < 500); //
        * polytropicEfficiency = isentropicEfficiency * ();
        */
     } else {

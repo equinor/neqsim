@@ -315,14 +315,11 @@ public class LinearProgrammingChemicalEquilibrium
    * btemp; Matrix mutemp = new
    * Matrix(chemRefPot,1).times(1.0/(R*system.getPhase(phase).getTemperature())). copy(); Matrix
    * ntemp; atemp = new Matrix(7,7); btemp = new Matrix(1,7); //for (i=0;i<4;i++) for (i=0;i<5;i++)
-   * { for (j=0;j<7;j++) atemp.set(i,j,Amatrix[i][j]); btemp.set(0,i,bVector[i]);
-   *
-   * } atemp.set(5,4,1); atemp.set(6,5,1); //atemp.set(4,4,1); //atemp.set(5,5,1);
-   * //atemp.set(6,1,1); //atemp.print(5,1); //btemp.print(5,5); //mutemp.print(5,5); ntemp =
+   * { for (j=0;j<7;j++) atemp.set(i,j,Amatrix[i][j]); btemp.set(0,i,bVector[i]); }
+   * atemp.set(5,4,1); atemp.set(6,5,1); //atemp.set(4,4,1); //atemp.set(5,5,1); //atemp.set(6,1,1);
+   * //atemp.print(5,1); //btemp.print(5,5); //mutemp.print(5,5); ntemp =
    * atemp.solve(btemp.transpose()); ntemp.print(5,5); for (i=0;i<7;i++) n[i] = ntemp.get(i,0); int
-   * rank = atemp.rank(); return n;
-   *
-   * }
+   * rank = atemp.rank(); return n; }
    */
 
   // Method updated to use Apache Commons Math 3 by Marlene 07.12.18

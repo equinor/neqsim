@@ -480,9 +480,7 @@ public class ProcessSystem extends SimulationBaseClass {
        * measurementDevices.get(i)) .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
        * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
        * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
-       * measurementDevices.get(i)) .getUnit();
-       *
-       * }
+       * measurementDevices.get(i)) .getUnit(); }
        */
     } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
 

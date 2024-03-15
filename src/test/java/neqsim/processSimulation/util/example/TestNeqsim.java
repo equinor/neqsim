@@ -140,20 +140,13 @@ public class TestNeqsim {
   }
   // catch(Exception ex){
   /*
-   * System.out.println( "P_out" ); for (int i=0;i<10;i++ ) { System.out.println(20 + 5*i);
-   *
-   * }
+   * System.out.println( "P_out" ); for (int i=0;i<10;i++ ) { System.out.println(20 + 5*i); }
    *
    * System.out.println( "Temperature" ); for (int i=0;i<10;i++ ) { System.out.println(
-   * temperature[i] );
+   * temperature[i] ); }
    *
-   * }
-   *
-   * System.out.println( "Work" ); for (int i=0;i<10;i++ ) { System.out.println( work [i] );
-   *
-   * } System.out.println( "Cp" ); for (int i=0;i<10;i++ ) { System.out.println( Cp [i] );
-   *
-   * }
+   * System.out.println( "Work" ); for (int i=0;i<10;i++ ) { System.out.println( work [i] ); }
+   * System.out.println( "Cp" ); for (int i=0;i<10;i++ ) { System.out.println( Cp [i] ); }
    *
    * System.out.println( "Density" ); for (int i=0;i<10;i++ ) { System.out.println( Density [i] );
    */

@@ -136,9 +136,7 @@ public class ComponentGEUniquac extends ComponentGE {
      *
      * for (k=0;k< numberOfComponents;k++){ temp5 = 0; for (j=0;j< numberOfComponents;j++){ temp5 =
      * temp5 + compArray[j].getq() * compArray[j].getx() *
-     * Math.exp(-intparam[compArray[j].getIndex()][compArray[k].getIndex()]/ temperature);
-     *
-     * }
+     * Math.exp(-intparam[compArray[j].getIndex()][compArray[k].getIndex()]/ temperature); }
      *
      * temp3 = temp3 + (compArray[k].getq() * compArray[k].getx() * Math.exp(-
      * intparam[this.getIndex()][compArray[k].getIndex()]/temperature)) / temp5; }
@@ -205,9 +203,7 @@ public class ComponentGEUniquac extends ComponentGE {
    * System.out.println("dfugdT : " + NumericalDerivative.fugcoefDiffTemp(this, phase,
    * numberOfComponents, temperature, pressure, pt)); return
    * NumericalDerivative.fugcoefDiffTemp(this, phase, numberOfComponents, temperature, pressure,
-   * pt);
-   *
-   * }
+   * pt); }
    */
 
   /**

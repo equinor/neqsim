@@ -1188,9 +1188,8 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     // System.out.println("iterations " + iterations);
     /*
      * if(BonV<0){ BonV = pressure*getB()/(numberOfMolesInPhase*temperature*R); setMolarVolume(1.0 /
-     * BonV * Btemp / numberOfMolesInPhase); Z = pressure*getMolarVolume()/(R*temperature);
-     *
-     * } if(iterations>=6000) throw new util.exception.TooManyIterationsException();
+     * BonV * Btemp / numberOfMolesInPhase); Z = pressure*getMolarVolume()/(R*temperature); }
+     * if(iterations>=6000) throw new util.exception.TooManyIterationsException();
      * if(Double.isNaN(getMolarVolume())) throw new util.exception.IsNaNException();
      *
      * // if(pt==0) System.out.println("density " + getDensity()); //"BonV: " + BonV +
