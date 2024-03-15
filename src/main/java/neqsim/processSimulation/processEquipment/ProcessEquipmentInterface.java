@@ -45,7 +45,6 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * </p>
    *
    * @return true or false
-   * 
    */
   public default boolean needRecalculation() {
     return true;

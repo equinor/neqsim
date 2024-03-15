@@ -73,7 +73,7 @@ public class Manifold extends ProcessEquipmentBaseClass {
    * <p>
    * getMixedStream.
    * </p>
-   * 
+   *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    **/
   public StreamInterface getMixedStream() {

@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * Abstract class ComponentGE.
  *
  * @author Even Solbraa
  */

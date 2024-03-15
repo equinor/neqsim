@@ -107,13 +107,11 @@ public class DistillationColumnTest {
      * System.out.println("Column in is " + totalWaterIn + " kg/hr");
      * System.out.println("Column out is " + totalWaterOut + " kg/hr");
      * System.out.println("Column is solved  " + column.solved());
-     * 
-     * 
-     * 
+     *
      * System.out.println("Calc Water Flow rate via fluid component " + waterFlowRateInColumn);
      * System.out.println("Calc Water Flow rate via molar mass and flow rate total " +
      * waterFlowRateInColumn2 + " kg/hr");
-     * 
+     *
      * System.out .println("condenser temperature " +
      * column.getCondenser().getFluid().getTemperature("C")); System.out.println("condenser duty " +
      * ((Condenser) column.getCondenser()).getDuty());

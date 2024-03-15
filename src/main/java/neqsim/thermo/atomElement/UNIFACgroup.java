@@ -284,7 +284,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
   /*
    * public double calcXMix(PhaseGEUnifac phase) { double temp = 0.0, temp2 = 0.0, tempVal = 0.0;
-   * 
+   *
    * for (int j = 0; j < phase.getNumberOfComponents(); j++) { for (int i = 0; i <
    * ((ComponentGEUnifac) phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) { tempVal =
    * phase.getComponent(j).getNumberOfMolesInPhase() * ((ComponentGEUnifac)
@@ -409,7 +409,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
   /*
    * public double getXMixdN(int comp) { return xMixdN[comp]; }
-   * 
+   *
    * public void setXMixdN(double[] xMixdN) { this.xMixdN = xMixdN; }
    */
 

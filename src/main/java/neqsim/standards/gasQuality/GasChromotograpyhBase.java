@@ -20,7 +20,6 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
    * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * 
    */
   public GasChromotograpyhBase(SystemInterface thermoSystem) {
     super("gas chromotography", "Gas composition", thermoSystem);

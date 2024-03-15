@@ -294,9 +294,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public void run(UUID id) {
     iterations++;
     /*
-     * if(firstTime || iterations>maxIterations) { firstTime=false; return;
-     * 
-     * }
+     * if(firstTime || iterations>maxIterations) { firstTime=false; return; }
      */
     double enthalpy = 0.0;
 

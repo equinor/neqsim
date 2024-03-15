@@ -122,11 +122,11 @@ public class TestTransientFlow {
      * // transient behaviour operations.setTimeStep(1.1); for(int i=0;i<50;i++){
      * operations.runTransient(); System.out.println("liquid level " + separator_1.getLiquidLevel()+
      * " PRESSURE " + separator_1.getGasOutStream().getPressure()); }
-     * 
+     *
      * operations.setTimeStep(30.0); for(int i=0;i<2000;i++){ operations.runTransient();
      * System.out.println("liquid level " + separator_1.getLiquidLevel()+ " PRESSURE " +
      * separator_1.getGasOutStream().getPressure()); } operations.displayResult();
-     * 
+     *
      * operations.displayResult();
      */
   }

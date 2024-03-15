@@ -11,7 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   static SystemInterface testSystem = null;
@@ -126,7 +125,7 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
      * StandardInterface standardUK = new UKspecifications_ICF_SI(testSystem);
      * standardUK.calculate(); logger.info("ICF " +
      * standardUK.getValue("IncompleteCombustionFactor", ""));
-     * 
+     *
      * logger.info("HID " + testSystem.getPhase(0).getComponent("methane").getHID(273.15 - 150.0));
      * logger.info("Hres " + testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 -
      * 150.0));

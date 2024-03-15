@@ -12,7 +12,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class SaturationTemperatureTest extends neqsim.NeqSimTest {
   /**
@@ -57,7 +56,7 @@ class SaturationTemperatureTest extends neqsim.NeqSimTest {
    * <p>
    * checkSaturationTemperatureToPhaseEnvelope.
    * </p>
-   * 
+   *
    * @throws Exception
    */
   @Test

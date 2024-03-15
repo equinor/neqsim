@@ -43,7 +43,7 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
 
     /*
      * ComponentGEInterface[] comp_Array = (ComponentGEInterface[]) this.getcomponentArray();
-     * 
+     *
      * for (int i = 0; i < numberOfComponents; i++) { GE = GE + comp_Array[i].getx() *
      * Math.log(comp_Array[i].getGamma(phase, numberOfComponents, temperature, pressure, pt)); }
      */

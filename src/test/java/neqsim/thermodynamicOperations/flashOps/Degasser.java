@@ -9,7 +9,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class Degasser {
   static neqsim.thermo.system.SystemInterface testSystem = null;
@@ -181,7 +180,7 @@ class Degasser {
      * "/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml");
      * String xmlContents = ""; try { //xmlContents = Files.readString(filePath); } catch
      * (IOException e) { e.printStackTrace(); }
-     * 
+     *
      * // Deserialize from xml neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
      * (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
      * operationsCopy.run(); neqsim.processSimulation.processEquipment.separator.Separator

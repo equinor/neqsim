@@ -415,9 +415,9 @@ public class OLGApropertyTableGeneratorWaterEven
          * { aMatrix.set(ii, 0, 1.0); aMatrix.set(ii, 1, pressures[i - ii]); aMatrix.set(ii, 2,
          * pressures[i - ii] * pressures[i - ii]); aMatrix.set(ii, 3, pressures[i - ii] *
          * pressures[i - ii] * pressures[i - ii]); }
-         * 
+         *
          * for (int jj = 0; jj < 9; jj++) { Matrix xg = XMatrixgas.getMatrix(jj, jj, 0, 3);
-         * 
+         *
          * try { xcoef[jj] = aMatrix.solve(xg.transpose()); } catch (Exception ex) {
          * logger.error(ex.getMessage(),e); } // logger.info("xcoef " + j); // xcoef.print(10, 10);
          * //logger.info("dss: " +ds * dxds.get(speceq, 0)); // specVal = xcoef.get(0, 0) + sny *

@@ -57,7 +57,7 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
 
   /**
    * Drops and re-creates table from contents in csv file.
-   * 
+   *
    * @param tableName Name of table to replace
    */
   public static void updateTable(String tableName) {

@@ -84,9 +84,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
   /*
    * public StreamInterface getGasOutStream() { return gasOutStream; }
-   * 
-   * 
-   * 
+   *
    * public StreamInterface getOilOutStream() { return oilOutStream; }
    */
 

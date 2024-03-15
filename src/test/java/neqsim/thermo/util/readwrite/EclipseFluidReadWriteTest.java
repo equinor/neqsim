@@ -8,7 +8,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
@@ -28,7 +27,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   /**
    * Test method for
    * {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite#read(java.lang.String)}.
-   * 
+   *
    * @throws IOException
    */
   @Test

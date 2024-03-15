@@ -262,15 +262,13 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
    * numberOfComponents, temperature, pressure, pt)); return
    * NumericalDerivative.fugcoefDiffPres(this, phase, numberOfComponents, temperature, pressure,
    * pt); }
-   * 
+   *
    * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
    * double pressure, PhaseType pt){ NumericalDerivative deriv = new NumericalDerivative(); //
    * System.out.println("dfugdT : " + NumericalDerivative.fugcoefDiffTemp(this, phase,
    * numberOfComponents, temperature, pressure, pt)); return
    * NumericalDerivative.fugcoefDiffTemp(this, phase, numberOfComponents, temperature, pressure,
-   * pt);
-   * 
-   * }
+   * pt); }
    */
 
   /**

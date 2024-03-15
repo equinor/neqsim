@@ -342,7 +342,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   /**
    * Calculates the length based on the elevation and angle.
-   * 
+   *
    * @return the calculated length.
    */
   private double calculateLength() {
@@ -350,9 +350,8 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * 
    * Calculates the elevation based on the length and angle.
-   * 
+   *
    * @return the calculated elevation.
    */
   private double calculateElevation() {
@@ -360,9 +359,8 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * 
    * Calculates the angle based on the length and elevation.
-   * 
+   *
    * @return the calculated angle.
    */
   private double calculateAngle() {
@@ -370,7 +368,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * 
    * /**
    * <p>
    * calcFlowRegime.
@@ -878,9 +875,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * 
-   * @return list of results
-   * 
+   * Get Pressure
+   *
+   * @return ArrayList of pressure drop profile
    */
   public List<Double> getPressureDropProfile() {
     return new ArrayList<>(pressureDropProfile);

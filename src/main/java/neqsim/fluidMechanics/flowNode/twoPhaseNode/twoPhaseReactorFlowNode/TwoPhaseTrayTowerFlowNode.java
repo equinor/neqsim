@@ -132,7 +132,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
      * System.out.println("Starter....."); SystemSrkEos testSystem = new SystemSrkEos(275.3,
      * ThermodynamicConstantsInterface.referencePressure); ThermodynamicOperations testOps = new
      * ThermodynamicOperations(testSystem); PipeData pipe1 = new PipeData(10.0, 0.025);
-     * 
+     *
      * testSystem.addComponent("methane", 0.011152181, 0); testSystem.addComponent("ethane",
      * 0.00011152181, 0); testSystem.addComponent("water", 0.00462204876, 1);
      * testSystem.addComponent("methane", 0.061152181, 0); testSystem.addComponent("water",

@@ -14,6 +14,7 @@ import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
 
 /**
+ * Abstract class PhaseEos.
  *
  * @author Even Solbraa
  */

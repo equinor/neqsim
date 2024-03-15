@@ -134,7 +134,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
            * (getEmptyHydrateStructureVapourPressure(hydrateStructure, temp) * Math.exp(solvol / (R
            * * temp) * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) *
            * 1e5)));
-           * 
            */
           // System.out.println("pointing "
           // +(Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStruct,temp))*1e5))));

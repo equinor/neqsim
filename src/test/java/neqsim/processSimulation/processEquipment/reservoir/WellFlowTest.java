@@ -118,7 +118,7 @@ public class WellFlowTest {
        * System.out.println("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
        * System.out .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") +
        * " bara");
-       * 
+       *
        * System.out.println("xmas pressure " + pipe.getOutletStream().getPressure("bara") +
        * " bara"); System.out .println("top side pressure " +
        * pipeline.getOutletStream().getPressure("bara") + " bara"); System.out

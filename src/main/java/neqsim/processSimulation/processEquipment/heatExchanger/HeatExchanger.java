@@ -7,7 +7,6 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import java.util.UUID;
-
 import neqsim.processSimulation.conditionMonitor.ConditionMonitorSpecifications;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -359,12 +358,12 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
       /*
        * if (systemOut0.getTemperature() <= inTemp1 - dT) { systemOut0.setTemperature(inTemp1);
        * outStream[0].setThermoSystem(systemOut0); outStream[0].run(); //inStream[0].run();
-       * 
+       *
        * dEntalphy = outStream[0].getThermoSystem().getEnthalpy() -
        * inStream[0].getThermoSystem().getEnthalpy(); corrected_Entalphy = dEntalphy *
        * inStream[0].getThermoSystem().getNumberOfMoles() /
        * inStream[1].getThermoSystem().getNumberOfMoles();
-       * 
+       *
        * systemOut1 = inStream[1].getThermoSystem().clone(); System.out.println("dent " +
        * dEntalphy); testOps = new ThermodynamicOperations(systemOut1);
        * testOps.PHflash(systemOut1.getEnthalpy() - corrected_Entalphy, 0);
@@ -551,7 +550,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   }
 
   /**
-   * <p>Getter for the field <code>flowArrangement</code>.</p>
+   * <p>
+   * Getter for the field <code>flowArrangement</code>.
+   * </p>
    *
    * @return String
    */
@@ -560,7 +561,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   }
 
   /**
-   * <p>Setter for the field <code>flowArrangement</code>.</p>
+   * <p>
+   * Setter for the field <code>flowArrangement</code>.
+   * </p>
    *
    * @param flowArrangement name of flow arrangement
    */

@@ -9,11 +9,11 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  * <p> PhaseEnvelope class. Created on 27. september 2001, 10:21 Updated on May 2019 by Nefeli </p>
- * 
+ *
  * @author esol
- * 
+ *
  * @version $Id: $Id
- * 
+ *
  * @since 2.2.3
  */
 public class PhaseEnvelope {

@@ -106,7 +106,6 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * @param M Molar mass
    * @param a Acentric factor
    * @param moles Number of moles
-   * 
    */
   public ComponentEos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -227,7 +226,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   /**
    * Get reduced temperature.
-   * 
+   *
    * @param temperature temperature of fluid
    * @return double reduced temperature T/TC
    */

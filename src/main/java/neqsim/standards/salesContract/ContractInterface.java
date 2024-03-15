@@ -130,7 +130,6 @@ public interface ContractInterface {
 
   /**
    * Prints the contract.
-   *
    */
   public default void prettyPrint() {
     neqsim.thermo.util.readwrite.TablePrinter.printTable(getResultTable());

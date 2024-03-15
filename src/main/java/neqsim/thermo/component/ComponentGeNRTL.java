@@ -190,7 +190,7 @@ public class ComponentGeNRTL extends ComponentGE {
         - dA6dTetter);
     /*
      * if(w==0){ dlngammadtold = dlngammadt; temperature +=0.0001; }
-     * 
+     *
      * if(w==1){ lngammaold = lngamma; temperature -=0.0002; } }
      */
     // System.out.println("deriv: " + lngammaold + " " + lngamma + " " +
@@ -260,7 +260,7 @@ public class ComponentGeNRTL extends ComponentGE {
    * double pressure, PhaseType pt){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
    * temperature, pressure+0.01, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature,
    * pressure-0.01, pt)))/0.02; return dfugdp; }
-   * 
+   *
    * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
    * double pressure, PhaseType pt){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
    * temperature+0.01, pressure, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature-0.01,

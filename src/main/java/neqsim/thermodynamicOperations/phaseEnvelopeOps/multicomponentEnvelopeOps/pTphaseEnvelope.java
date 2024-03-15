@@ -7,14 +7,11 @@
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import java.text.DecimalFormat;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
@@ -108,8 +105,7 @@ public class pTphaseEnvelope extends BaseOperation {
    * Constructor for pTphaseEnvelope.
    * </p>
    */
-  public pTphaseEnvelope() {
-  }
+  public pTphaseEnvelope() {}
 
   /**
    * <p>
@@ -514,7 +510,7 @@ public class pTphaseEnvelope extends BaseOperation {
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
        * file1.setOutputFileName(name1); file1.setXvalues(points2[2], "temp", "sec");
        * file1.setYvalues(points2[3], "pres", "meter"); file1.createFile();
-       * 
+       *
        * String name2 = new String(); name2 = fileName + "Bub.nc"; file2 = new
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
        * file2.setOutputFileName(name2); file2.setXvalues(points2[0], "temp", "sec");
