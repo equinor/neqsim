@@ -54,4 +54,3 @@ public class PhaseSrkEos extends PhaseEos {
     componentArray[compNumber] = new ComponentSrk(name, moles, molesInPhase, compNumber);
   }
 }
-
