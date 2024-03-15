@@ -3,7 +3,9 @@ package neqsim.api.ioc;
 import java.util.Arrays;
 
 /**
- * <p>CalculationResult class.</p>
+ * <p>
+ * CalculationResult class.
+ * </p>
  *
  * @author jo.lyshoel
  * @version $Id: $Id
@@ -13,7 +15,9 @@ public class CalculationResult {
   public String[] calculationError;
 
   /**
-   * <p>Constructor for CalculationResult.</p>
+   * <p>
+   * Constructor for CalculationResult.
+   * </p>
    *
    * @param fluidProperties an array of {@link java.lang.Double} objects
    * @param calculationError an array of {@link java.lang.String} objects

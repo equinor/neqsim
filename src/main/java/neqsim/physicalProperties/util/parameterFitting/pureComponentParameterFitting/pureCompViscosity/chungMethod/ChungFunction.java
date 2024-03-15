@@ -11,29 +11,29 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class ChungFunction extends LevenbergMarquardtFunction {
-    /**
-     * <p>
-     * Constructor for ChungFunction.
-     * </p>
-     */
-    public ChungFunction() {
-        params = new double[1];
-    }
+  /**
+   * <p>
+   * Constructor for ChungFunction.
+   * </p>
+   */
+  public ChungFunction() {
+    params = new double[1];
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double calcValue(double[] dependentValues) {
-        system.setTemperature(dependentValues[0]);
-        system.init(1);
-        system.initPhysicalProperties();
-        return system.getPhases()[1].getPhysicalProperties().getViscosity();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double calcValue(double[] dependentValues) {
+    system.setTemperature(dependentValues[0]);
+    system.init(1);
+    system.initPhysicalProperties();
+    return system.getPhases()[1].getPhysicalProperties().getViscosity();
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void setFittingParams(int i, double value) {
-        params[i] = value;
-        system.getPhases()[0].getComponents()[i].setViscosityAssociationFactor(value);
-        system.getPhases()[1].getComponents()[i].setViscosityAssociationFactor(value);
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setFittingParams(int i, double value) {
+    params[i] = value;
+    system.getPhases()[0].getComponents()[i].setViscosityAssociationFactor(value);
+    system.getPhases()[1].getComponents()[i].setViscosityAssociationFactor(value);
+  }
 }
