@@ -101,7 +101,6 @@ public class Expander extends Compressor implements ExpanderInterface {
        *
        * } while (Math.abs((oldPolyt - polytropicEfficiency) / oldPolyt) > 1e-5 && iter < 500); //
        * polytropicEfficiency = isentropicEfficiency * ();
-       *
        */
     } else {
       getThermoSystem().setPressure(pressure);

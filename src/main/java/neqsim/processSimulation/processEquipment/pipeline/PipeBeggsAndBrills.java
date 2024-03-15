@@ -878,7 +878,6 @@ public class PipeBeggsAndBrills extends Pipeline {
    * Get Pressure
    *
    * @return ArrayList of pressure drop profile
-   *
    */
   public List<Double> getPressureDropProfile() {
     return new ArrayList<>(pressureDropProfile);

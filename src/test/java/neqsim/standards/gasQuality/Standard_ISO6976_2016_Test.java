@@ -11,7 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   static SystemInterface testSystem = null;

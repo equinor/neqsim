@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * @author ESOL
- *
  */
 class BaseContractTest extends neqsim.NeqSimTest {
   static SystemInterface testSystem = null;

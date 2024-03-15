@@ -11,7 +11,6 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 /**
  * @author ESOL
- *
  */
 class SeparatorTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;

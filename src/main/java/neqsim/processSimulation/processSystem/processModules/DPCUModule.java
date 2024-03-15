@@ -200,7 +200,6 @@ public class DPCUModule extends ProcessModuleBaseClass {
      * getOperations().add(firstStageCompressor); getOperations().add(glycolMixer);
      * getOperations().add(mixerAfterCooler); getOperations().add(glycolScrubber);
      * getOperations().add(secondStageCompressor); getOperations().add(secondStageAfterCooler);
-     *
      */
   }
 

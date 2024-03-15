@@ -7,7 +7,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class PSFlashGERG2008Test {
   static neqsim.thermo.system.SystemInterface testSystem = null;

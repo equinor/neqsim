@@ -184,7 +184,6 @@ public class GTSurfaceTension extends SurfaceTension {
      * Tolerances for the odesystem.abstol and .reltol should be less than the integrator tolerances
      * for stability. Default Newton-Rhapson values are odesystem.normtol = 1e-10; odesystem.reltol
      * = 1e-8;
-     *
      */
     odesystem.normtol = 1e-10;
     odesystem.reltol = 1e-8;

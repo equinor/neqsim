@@ -1009,7 +1009,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
        * systemTemp.init(0); systemTemp.display(); try { opsTemp.hydrateFormationTemperature(); }
        * catch (Exception ex) { logger.error(ex.getMessage(),e); } systemTemp.display(); hydTemps[i]
        * = systemTemp.getTemperature();
-       *
        */
       opsTemp = new ThermodynamicOperations(systemTemp);
       systemTemp.setTemperature(temperature[i]);

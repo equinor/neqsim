@@ -132,7 +132,6 @@ public class OffshoreProcess3 {
      * HeatExchanger heatEx = new HeatExchanger(lpcompressor.getOutStream());
      * heatEx.setName("LP heat Exchanger"); heatEx.setGuessOutTemperature(273.15+40.0);
      * heatEx.setUAvalue(45000.0); heatEx.setFeedStream(1, coolingWater);
-     *
      */
 
     Cooler lpHeatExchanger =

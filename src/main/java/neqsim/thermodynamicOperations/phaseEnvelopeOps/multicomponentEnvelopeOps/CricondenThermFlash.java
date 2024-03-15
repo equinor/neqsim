@@ -100,7 +100,6 @@ public class CricondenThermFlash extends pTphaseEnvelope {
      * double sumK=0.; for (int i=0 ; i < numberOfComponents ; i++ ){ sumK=
      * sumK+(uold.get(i,0)-u.get(i,0))*(uold.get(i,0)-u.get(i,0)); } if (iterX == 10000 ){ ITERX=-1;
      * u=uini.copy(); setNewX(); break; } if (sumK <= 1E-7){ ITERX=iterX; setNewX(); break; } }
-     *
      */
     // starting loops
     for (int iter = 0; iter < 1000; iter++) {

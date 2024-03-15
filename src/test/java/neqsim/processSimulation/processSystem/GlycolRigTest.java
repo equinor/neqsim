@@ -339,7 +339,6 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
      *
      * System.out .println("flow rate gas " + feedToRegenerator2.getFluid().getFlowRate("kg/hr") +
      * " kg/hr"); column.massBalanceCheck();
-     *
      */
   }
 }

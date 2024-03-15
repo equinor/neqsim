@@ -12,7 +12,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class SaturationTemperatureTest extends neqsim.NeqSimTest {
   /**

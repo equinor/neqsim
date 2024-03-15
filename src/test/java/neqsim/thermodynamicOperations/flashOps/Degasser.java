@@ -9,7 +9,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class Degasser {
   static neqsim.thermo.system.SystemInterface testSystem = null;

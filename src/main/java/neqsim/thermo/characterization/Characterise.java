@@ -173,6 +173,5 @@ public class Characterise implements java.io.Serializable, Cloneable {
    * public boolean characterize2() { if (TBPCharacterise.groupTBPfractions()) {
    * TBPCharacterise.solve(); return true; } else { System.out.println("not able to generate pluss
    * fraction"); return false; } }
-   *
    */
 }
