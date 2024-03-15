@@ -3070,7 +3070,7 @@ public abstract class SystemThermo implements SystemInterface {
 
   /**
    * Verify if beta array has valid values and sum is approximately equal to 1.
-   * 
+   *
    * @return True if beta values are valid. False indicates that a flash must be done.
    */
   public final boolean isBetaValid() {
@@ -3888,9 +3888,9 @@ public abstract class SystemThermo implements SystemInterface {
        * if (!text.isEmpty()) { ps = con.prepareStatement(
        * "REPLACE INTO fluidinfo (ID, TEXT) VALUES (?,?)"); ps.setInt(1, ID); ps.setString(2, text);
        * }
-       * 
+       *
        * ps.executeUpdate();
-       * 
+       *
        */
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

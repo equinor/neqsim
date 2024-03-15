@@ -28,7 +28,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   /**
    * Test method for
    * {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite#read(java.lang.String)}.
-   * 
+   *
    * @throws IOException
    */
   @Test

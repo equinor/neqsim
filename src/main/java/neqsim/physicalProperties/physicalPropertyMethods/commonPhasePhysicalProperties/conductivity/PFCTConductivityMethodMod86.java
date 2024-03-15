@@ -318,7 +318,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
      * phase.getPhase().getComponent(i).getx() *
      * Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 2.0); Mmtemp +=
      * phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getMolarMass(); }
-     * 
+     *
      * PCmix = 8.0 * tempPC1 / (tempPC2 * tempPC2); TCmix = tempTC1 / tempTC2; Mmix = (Mmtemp +
      * 1.304e-4 * (Math.pow(Mwtemp / Mmtemp, 2.303) - Math.pow(Mmtemp, 2.303))) * 1e3;
      * //phase.getPhase().getMolarMass();

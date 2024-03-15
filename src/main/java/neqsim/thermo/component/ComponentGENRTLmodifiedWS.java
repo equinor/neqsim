@@ -233,7 +233,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
         - dA6dTetter);
     /*
      * if(w==0){ dlngammadtold = dlngammadt; temperature +=0.0001; }
-     * 
+     *
      * if(w==1){ lngammaold = lngamma; temperature -=0.0002; } }
      */
     // System.out.println("deriv: " + lngammaold + " " + lngamma + " " +

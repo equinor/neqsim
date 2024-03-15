@@ -781,7 +781,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
        * // BonV = 0.9999; // BonV = pt == 1 ? 2.0 / (2.0 + temperature /
        * getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature *
        * R); }
-       * 
+       *
        * } else if (BonV < 0) { if (iterations < 10) { BonV = Math.abs(BonVold + BonV) / 2.0; } else
        * { // BonV = calcRootVolFinder(pt); // return molarVolumeChangePhase(pressure, temperature,
        * A, B, pt); // BonV = pt == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) :

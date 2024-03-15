@@ -112,16 +112,13 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
      * testSystem.addComponent("22-dim-C3", 0.001015); testSystem.addComponent("n-hexane",
      * 0.002865); testSystem.addComponent("nitrogen", 0.01023); testSystem.addComponent("CO2",
      * 0.015236);
-     * 
      */
 
     /*
-     * 
      * testSystem.addComponent("methane", 0.9247); testSystem.addComponent("ethane", 0.035);
      * testSystem.addComponent("propane", 0.0098); testSystem.addComponent("n-butane", 0.0022);
      * testSystem.addComponent("i-butane", 0.0034); testSystem.addComponent("n-pentane", 0.0006);
      * testSystem.addComponent("nitrogen", 0.0175); testSystem.addComponent("CO2", 0.0068);
-     * 
      */
 
     // testSystem.addComponent("water", 0.016837);
@@ -130,7 +127,7 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
      * testSystem.addComponent("n-hexane", 0.0); testSystem.addComponent("n-heptane", 0.0);
      * testSystem.addComponent("n-octane", 0.0); testSystem.addComponent("n-nonane", 0.0);
      * testSystem.addComponent("nC10", 0.0);
-     * 
+     *
      * testSystem.addComponent("CO2", 0.68); testSystem.addComponent("H2S", 0.0);
      * testSystem.addComponent("water", 0.0); testSystem.addComponent("oxygen", 0.0);
      * testSystem.addComponent("carbonmonoxide", 0.0); testSystem.addComponent("nitrogen", 1.75);
@@ -161,7 +158,7 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
      * StandardInterface standardUK = new UKspecifications_ICF_SI(testSystem);
      * standardUK.calculate(); logger.info("ICF " +
      * standardUK.getValue("IncompleteCombustionFactor", ""));
-     * 
+     *
      * logger.info("HID " + testSystem.getPhase(0).getComponent("methane").getHID(273.15 - 150.0));
      * logger.info("Hres " + testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 -
      * 150.0));

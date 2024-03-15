@@ -223,7 +223,7 @@ public class ComponentGeDuanSun extends ComponentGE {
         - dA6dTetter);
     /*
      * if(w==0){ dlngammadtold = dlngammadt; temperature +=0.0001; }
-     * 
+     *
      * if(w==1){ lngammaold = lngamma; temperature -=0.0002; } }
      */
     // System.out.println("deriv: " + lngammaold + " " + lngamma + " " +
@@ -292,9 +292,7 @@ public class ComponentGeDuanSun extends ComponentGE {
    * public double getHenryCoef(double temperature) { // System.out.println("henry " + //
    * Math.exp(henryCoefParameter[0]+henryCoefParameter[1]/temperature+
    * henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature )*100*0.01802);
-   * if (componentName.equals("CO2")) { // return } return super.getHenryCoef(temperature);
-   * 
-   * }
+   * if (componentName.equals("CO2")) { // return } return super.getHenryCoef(temperature); }
    */
 
   /** {@inheritDoc} */
@@ -522,7 +520,7 @@ public class ComponentGeDuanSun extends ComponentGE {
    * double pressure, PhaseType pt){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
    * temperature, pressure+0.01, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature,
    * pressure-0.01, pt)))/0.02; return dfugdp; }
-   * 
+   *
    * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
    * double pressure, PhaseType pt){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
    * temperature+0.01, pressure, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature-0.01,

@@ -155,7 +155,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
 
     /*
      * do{ err=0; pipe.getNode(0).init(); for(int i = 0;i<numberOfNodes-1;i++){
-     * 
+     *
      * //setting temperatures oldTemp = pipe.getNode(i+1).getBulkSystem().getTemperature(); dpdx =
      * (pipe.getNode(i+1).getBulkSystem().getPressure()-pipe.getNode(i).
      * getBulkSystem().getPressure())/((pipe.getNode(i+1).getGeometry().
@@ -170,7 +170,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
      * ).getPhases()[0].getJouleThomsonCoefficient()*dpdx)*(pipe.getNode(i+1).
      * getGeometry().getNodeLength()+pipe.getNode(i).getGeometry().getNodeLength())* 0.5 +
      * pipe.getNode(i).getBulkSystem().getTemperature()); pipe.getNode(i+1).init();
-     * 
+     *
      * // setting pressures oldPres = pipe.getNode(i+1).getBulkSystem().getPressure();
      * pipe.getNode(i+1).getBulkSystem().setPressure(-pipe.getNode(i). getWallFrictionFactor()*
      * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()*pipe.velocity[i]*

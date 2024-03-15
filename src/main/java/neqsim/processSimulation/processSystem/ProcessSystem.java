@@ -473,7 +473,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
       /*
        * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
-       * 
+       *
        * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i
        * < measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
        * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface)
@@ -481,7 +481,7 @@ public class ProcessSystem extends SimulationBaseClass {
        * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
        * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
        * measurementDevices.get(i)) .getUnit();
-       * 
+       *
        * }
        */
     } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
@@ -948,12 +948,12 @@ public class ProcessSystem extends SimulationBaseClass {
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public
    * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
-   * 
+   *
    * Report(){ name= getName();
-   * 
+   *
    * for (int i = 0; i < unitOperations.size(); i++) {
    * unitOperationsReports.add(unitOperations.getReport()); } } }
-   * 
+   *
    * public Report getReport(){ return this.new Report(); }
    */
 }

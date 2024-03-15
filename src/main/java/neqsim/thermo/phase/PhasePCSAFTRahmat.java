@@ -1159,23 +1159,22 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
        * = 1.0 + Btemp/Math.pow(BonVold,2.0)*(Btemp/numberOfMolesInPhase*dFdVdV()); //dhh =
        * -2.0*Btemp/Math.pow(BonV,3.0)*(Btemp/numberOfMolesInPhase*dFdVdV())-Math.pow(
        * Btemp,2.0)/Math.pow(BonV,4.0)*(Btemp/numberOfMolesInPhase*dFdVdVdV());
-       * 
+       *
        * //made by Rahmat
-       * 
+       *
        * BonV = BonVold - 0.5* (2* h * dh / ((2* Math.pow(dh,2) - h * dhh)));
-       * 
+       *
        * double dBonV = BonV - BonVold; dhh = (dh - dhOld)/ dBonV; dhOld = dh;
-       * 
+       *
        * hOld = h;
-       * 
-       * 
+       *
        * //d1 = - h/dh; //d2 = - dh/dhh; //BonV += d1; //*(1.0+0.5*-1.0); /*
        * if(Math.abs(d1/d2)<=1.0){ BonV += d1*(1.0+0.5*d1/d2); } else if(d1/d2<-1){ BonV +=
        * d1*(1.0+0.5*-1.0); } else if(d1/d2>1){ BonV += d2; double hnew = h +d2*-h/d1;
        * if(Math.abs(hnew)>Math.abs(h)){ System.out.println("volume correction needed...."); BonV =
        * phase== 1 ? 2.0/(2.0+temperature/getPseudoCriticalTemperature()):pressure*getB()/(
        * numberOfMolesInPhase*temperature*R); } }
-       * 
+       *
        * if(BonV>1){ BonV=1.0-1.0e-6; BonVold=10; } if (BonV < 0) { BonV = 1.0e-16; BonVold = 10; }
        */
       // setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
@@ -1190,10 +1189,10 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     /*
      * if(BonV<0){ BonV = pressure*getB()/(numberOfMolesInPhase*temperature*R); setMolarVolume(1.0 /
      * BonV * Btemp / numberOfMolesInPhase); Z = pressure*getMolarVolume()/(R*temperature);
-     * 
+     *
      * } if(iterations>=6000) throw new util.exception.TooManyIterationsException();
      * if(Double.isNaN(getMolarVolume())) throw new util.exception.IsNaNException();
-     * 
+     *
      * // if(pt==0) System.out.println("density " + getDensity()); //"BonV: " + BonV +
      * " "+"  itert: " + iterations +" " + "  phase " + pt+ "  " + h + " " +dh + " B " + Btemp +
      * "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());

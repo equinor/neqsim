@@ -111,47 +111,44 @@ public class ComponentGEUniquac extends ComponentGE {
     /*
      * double V = 0, F = 0, a, gammaC = 0, gammaR = 0, temp1 = 0, temp2 = 0, temp3=0, temp4 = 0,
      * temp5=0, gamma; int j, k;
-     * 
-     * 
+     *
      * ComponentGEInterface[] compArray = (ComponentGEInterface[]) phase.getcomponentArray();
-     * 
-     * 
+     *
      * for (j=0;j< numberOfComponents;j++){
-     * 
+     *
      * temp1 = temp1 + compArray[j].getx()*((ComponentGEUniquac) compArray[j]).getr(); temp2 = temp2
      * + (((ComponentGEUniquac) compArray[j]).getq() * compArray[j].getx()); }
-     * 
-     * 
+     *
      * V = V + this.getr() / temp1; //System.out.println("V: " + V); F = F + this.getq() / temp2;
      * //System.out.println("F: " + F);
-     * 
+     *
      * gammaC = 1 - V + Math.log(V) - 5 * this.getq() * (1 - V/F + Math.log(V/F));
-     * 
+     *
      * // System.out.println("gammaC: " + gammaC);
-     * 
+     *
      * temp1 = 0; temp2 = 0; temp3 = 0;
-     * 
+     *
      * for (k=0;k< numberOfComponents;k++){ temp4 = 0; temp4 =
      * (intparam[compArray[k].getIndex()][this.getIndex()]/temperature); temp1 = temp1 +
      * compArray[k].getq() * compArray[k].getx() *
      * Math.exp(-intparam[compArray[k].getIndex()][this.getIndex()]/temperature); temp2 = temp2 +
      * compArray[k].getq() * compArray[k].getx(); }
-     * 
+     *
      * for (k=0;k< numberOfComponents;k++){ temp5 = 0; for (j=0;j< numberOfComponents;j++){ temp5 =
      * temp5 + compArray[j].getq() * compArray[j].getx() *
      * Math.exp(-intparam[compArray[j].getIndex()][compArray[k].getIndex()]/ temperature);
-     * 
+     *
      * }
-     * 
+     *
      * temp3 = temp3 + (compArray[k].getq() * compArray[k].getx() * Math.exp(-
      * intparam[this.getIndex()][compArray[k].getIndex()]/temperature)) / temp5; }
-     * 
+     *
      * gammaR = this.getq() * (1 - Math.log(temp1/temp2) - temp3);
-     * 
+     *
      * //System.out.println("gammaR: " + gammaR);
-     * 
+     *
      * gamma = Math.exp(gammaR + gammaC);
-     * 
+     *
      * //System.out.println("comp: " + this.getIndex() + " gamma NRTL : " +gamma);
      * //System.out.println("gamma: " + gamma);
      */
@@ -202,14 +199,14 @@ public class ComponentGEUniquac extends ComponentGE {
    * numberOfComponents, temperature, pressure, pt)); return
    * NumericalDerivative.fugcoefDiffPres(this, phase, numberOfComponents, temperature, pressure,
    * pt); }
-   * 
+   *
    * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
    * double pressure, PhaseType pt){ NumericalDerivative deriv = new NumericalDerivative(); //
    * System.out.println("dfugdT : " + NumericalDerivative.fugcoefDiffTemp(this, phase,
    * numberOfComponents, temperature, pressure, pt)); return
    * NumericalDerivative.fugcoefDiffTemp(this, phase, numberOfComponents, temperature, pressure,
    * pt);
-   * 
+   *
    * }
    */
 

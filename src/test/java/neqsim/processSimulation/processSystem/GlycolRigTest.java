@@ -212,20 +212,19 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     /*
      * logger.info("wt n-hexane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("n-hexane") * 100.0);
-     * 
+     *
      * logger.info("wt methane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("methane") * 100.0);
-     * 
+     *
      * logger.info("wt propane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("propane") * 100.0);
-     * 
-     * 
+     *
      * logger.info("wt n-hexane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("n-hexane") * 100.0);
-     * 
+     *
      * logger.info("wt methane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("methane") * 100.0);
-     * 
+     *
      * logger.info("wt propane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("propane") * 100.0);
      */
@@ -262,14 +261,13 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     /*
      * logger.info("wt n-hexane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("n-hexane") * 100.0);
-     * 
+     *
      * logger.info("wt propane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("propane") * 100.0);
-     * 
-     * 
+     *
      * logger.info("wt n-hexane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("n-hexane") * 100.0);
-     * 
+     *
      * logger.info("wt propane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("propane") * 100.0);
      */
@@ -320,29 +318,28 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     /*
      * logger.info("wt n-hexane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("n-hexane") * 100.0);
-     * 
+     *
      * logger.info("wt ethane from column " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getWtFrac("ethane") * 100.0);
-     * 
-     * 
+     *
      * logger.info("wt n-hexane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("n-hexane") * 100.0);
-     * 
+     *
      * logger.info("wt ethane from gas column " +
      * column.getGasOutStream().getFluid().getPhase("gas").getWtFrac("ethane") * 100.0);
-     * 
+     *
      * logger.info("flow rate gas " +
      * column.getGasOutStream().getFluid().getPhase("gas").getFlowRate("kg/hr") + " kg/hr");
-     * 
+     *
      * logger.info("flow rate oil " +
      * column.getLiquidOutStream().getFluid().getPhase("oil").getFlowRate("kg/hr") + " kg/hr");
-     * 
+     *
      * System.out .println("flow rate oil " + feedToRegenerator.getFluid().getFlowRate("kg/hr") +
      * " kg/hr");
-     * 
+     *
      * System.out .println("flow rate gas " + feedToRegenerator2.getFluid().getFlowRate("kg/hr") +
      * " kg/hr"); column.massBalanceCheck();
-     * 
+     *
      */
   }
 }

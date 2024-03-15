@@ -875,7 +875,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /*
    * private class SeparatorReport extends Object{ public Double gasLoadFactor; SeparatorReport(){
    * gasLoadFactor = getGasLoadFactor(); } }
-   * 
+   *
    * public SeparatorReport getReport(){ return this.new SeparatorReport(); }
    */
 }

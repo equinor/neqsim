@@ -89,7 +89,6 @@ public class Expander extends Compressor implements ExpanderInterface {
       /*
        * HYSYS method double oldPolyt = 10.5; int iter = 0; do {
        *
-       *
        * iter++; double n = Math.log(thermoSystem.getPressure() / presinn) /
        * Math.log(thermoSystem.getDensity() / densInn); double k =
        * Math.log(thermoSystem.getPressure() / presinn) / Math.log(densOutIdeal / densInn); double

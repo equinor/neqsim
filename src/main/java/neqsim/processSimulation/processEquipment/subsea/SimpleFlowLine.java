@@ -75,21 +75,21 @@ public class SimpleFlowLine extends TwoPortEquipment {
 
     /*
      * System.out.println("stary P " );
-     * 
+     *
      * SystemInterface fluidIn = (inStream.getFluid()).clone(); fluidIn.initProperties();
-     * 
+     *
      * double density = fluidIn.getDensity("kg/m3");
-     * 
+     *
      * double deltaP = density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1.
      * 0e5;
-     * 
+     *
      * System.out.println("density " +density + " delta P " + deltaP);
-     * 
+     *
      * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP);
      * fluidIn.setTemperature(outletTemperature);
-     * 
+     *
      * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn); ops.TPflash();
-     * 
+     *
      * getOutletStream().setFluid(fluidIn);
      */
     setCalculationIdentifier(id);

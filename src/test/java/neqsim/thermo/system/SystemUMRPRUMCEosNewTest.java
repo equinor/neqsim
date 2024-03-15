@@ -189,7 +189,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * <p>
    * checkPhaseEnvelope.
    * </p>
-   * 
+   *
    * @throws Exception
    */
   @Test
@@ -220,7 +220,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * <p>
    * checkPhaseEnvelope2.
    * </p>
-   * 
+   *
    * @throws Exception
    */
   @Test

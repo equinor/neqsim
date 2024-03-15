@@ -21,7 +21,7 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit {
    * <p>
    * Constructor for LengthUnit.
    * </p>
-   * 
+   *
    * @param value Numeric value
    * @param name Name of unit
    */

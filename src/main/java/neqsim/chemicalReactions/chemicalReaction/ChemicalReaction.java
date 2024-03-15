@@ -57,7 +57,7 @@ public class ChemicalReaction extends NamedBaseClass
       double activationEnergy, double refT) {
     /*
      * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
-     * 
+     *
      */
     super(name);
     this.names = new String[names.length];

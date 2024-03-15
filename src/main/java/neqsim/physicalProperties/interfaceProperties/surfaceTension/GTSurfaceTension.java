@@ -15,7 +15,6 @@ import neqsim.thermo.system.SystemInterface;
  * method assumes the number of components to be two or more, and that the species set is equal and
  * in the same component order for both phases.
  *
- *
  * Near a fluid-fluid interface, we consider the variation of densities of chemical species,
  * \f$\boldsymbol{n}(z)\f$, as function of position, \f$z\f$, where element \f$k\f$ of the vector
  * \f$\boldsymbol{n}(z)\f$ is the number density of chemical species \f$k\f$ in the mixture. The
@@ -185,7 +184,7 @@ public class GTSurfaceTension extends SurfaceTension {
      * Tolerances for the odesystem.abstol and .reltol should be less than the integrator tolerances
      * for stability. Default Newton-Rhapson values are odesystem.normtol = 1e-10; odesystem.reltol
      * = 1e-8;
-     * 
+     *
      */
     odesystem.normtol = 1e-10;
     odesystem.reltol = 1e-8;
@@ -215,7 +214,6 @@ public class GTSurfaceTension extends SurfaceTension {
    * around the interface. The distance \f$L\f$ should be large enough that it does not disturb the
    * results. The boundary conditions are the homogeneous densities of the two fluids in contact, as
    * calculated by a flash calculation.
-   *
    *
    * We approximate the solution on a equi-spaced grid with \f$2^N+1\f$ points where \f$N\f$ is an
    * integer. Using a Finite Difference approximation, the equation for \f$\delta\mu\f$ can then be

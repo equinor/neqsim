@@ -1999,9 +1999,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else {
       /*
        * // New attempt:
-       * 
+       *
        * // Have to init here to get correct MoleFractionsSum() this.system.init(0);
-       * 
+       *
        * // Annoying that MoleFractionsSum is not normalized. sum[0] =
        * this.system.getMoleFractionsSum();
        */
@@ -2047,14 +2047,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         if (hasOnlineFractions) {
           /*
            * // New attempt:
-           * 
+           *
            * this.system.setEmptyFluid();
-           * 
+           *
            * // Components in system with no corresponding value in onlineFractions will be zero.
            * for (int componentNumber = 0; componentNumber < onlineFractions .size();
            * componentNumber++) { this.system.addComponent(componentNumber,
            * onlineFractions.get(componentNumber).get(t).doubleValue()); }
-           * 
+           *
            * if (this.system.getTotalNumberOfMoles() < 1e-5) { this.system.setTotalNumberOfMoles(1);
            * }
            */

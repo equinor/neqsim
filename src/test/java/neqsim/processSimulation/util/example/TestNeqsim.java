@@ -118,12 +118,12 @@ public class TestNeqsim {
     /*
      * temperature[i] = compressor1.getOutStream().getTemperature(); work [i] =
      * compressor1.getTotalWork();
-     * 
+     *
      * Cp_Vapour [i] = compressor1.getOutStream().getThermoSystem().getPhase(0).getCp(); Cp_liquid
      * [i] = compressor1.getOutStream().getThermoSystem().getPhase(1).getCp(); Cp [i] =
      * compressor1.getOutStream().getThermoSystem().getPhase(0).getBeta() * Cp_Vapour [i] +
      * compressor1.getOutStream().getThermoSystem().getPhase(1).getBeta()* Cp_liquid [i];
-     * 
+     *
      * Density_Vapour [i] = compressor1.getOutStream().getThermoSystem().getPhase(0).getDensity();
      * Density_liquid [i] = compressor1.getOutStream().getThermoSystem().getPhase(1).getDensity();
      * Density [i] = compressor1.getOutStream().getThermoSystem().getWtFraction(0) * Density_Vapour
@@ -141,20 +141,20 @@ public class TestNeqsim {
   // catch(Exception ex){
   /*
    * System.out.println( "P_out" ); for (int i=0;i<10;i++ ) { System.out.println(20 + 5*i);
-   * 
+   *
    * }
-   * 
+   *
    * System.out.println( "Temperature" ); for (int i=0;i<10;i++ ) { System.out.println(
    * temperature[i] );
-   * 
+   *
    * }
-   * 
+   *
    * System.out.println( "Work" ); for (int i=0;i<10;i++ ) { System.out.println( work [i] );
-   * 
+   *
    * } System.out.println( "Cp" ); for (int i=0;i<10;i++ ) { System.out.println( Cp [i] );
-   * 
+   *
    * }
-   * 
+   *
    * System.out.println( "Density" ); for (int i=0;i<10;i++ ) { System.out.println( Density [i] );
    */
 }

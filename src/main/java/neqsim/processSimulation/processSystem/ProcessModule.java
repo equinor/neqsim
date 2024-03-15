@@ -16,9 +16,7 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
  * then run only once.
  *
  * @author [seros]
- * 
  * @version 1.0
- * 
  */
 public class ProcessModule extends SimulationBaseClass {
   private static final long serialVersionUID = 1000;
