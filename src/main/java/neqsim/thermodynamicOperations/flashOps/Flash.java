@@ -47,7 +47,7 @@ public abstract class Flash extends BaseOperation {
   double[] tm;
   int lowestGibbsEnergyPhase = 0;
   sysNewtonRhapsonTPflash secondOrderSolver;
-  /** Set true to check for solid phase and do solid phase calculations. */
+  /** Set true to do solid phase check and calculations */
   protected boolean solidCheck = false;
   protected boolean stabilityCheck = false;
   protected boolean findLowestGibbsPhaseIsChecked = false;

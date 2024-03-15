@@ -50,12 +50,6 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
       logger.error("Cloning failed.", ex);
     }
 
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseModifiedFurstElectrolyteEos)
-    // phaseArray[i].clone();
-    // }
-
     return clonedSystem;
   }
 }

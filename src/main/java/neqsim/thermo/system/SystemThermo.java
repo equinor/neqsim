@@ -150,8 +150,9 @@ public abstract class SystemThermo implements SystemInterface {
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemThermo(double T, double P) {
+  public SystemThermo(double T, double P, boolean checkForSolids) {
     this();
     if (T < 0.0) {
       neqsim.util.exception.InvalidInputException ex =
@@ -166,6 +167,8 @@ public abstract class SystemThermo implements SystemInterface {
               "SystemThermo", "P", "is negative");
       throw new RuntimeException(ex);
     }
+
+    this.solidPhaseCheck = checkForSolids;
   }
 
   /** {@inheritDoc} */
@@ -547,6 +550,7 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       clonedSystem.phaseArray[i] = phaseArray[i].clone();
     }
+
     return clonedSystem;
   }
 

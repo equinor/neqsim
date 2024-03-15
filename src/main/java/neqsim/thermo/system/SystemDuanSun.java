@@ -48,8 +48,7 @@ public class SystemDuanSun extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemDuanSun(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     attractiveTermNumber = 0;
     modelName = "Duan-Sun-model";
 

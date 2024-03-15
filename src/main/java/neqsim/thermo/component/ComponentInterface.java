@@ -1835,7 +1835,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Setter for field <code>solidCheck</code>.
    * </p>
    *
-   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
   public void setSolidCheck(boolean checkForSolids);
 
