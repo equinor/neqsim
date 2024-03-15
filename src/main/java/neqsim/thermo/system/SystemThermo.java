@@ -1311,16 +1311,10 @@ public abstract class SystemThermo implements SystemInterface {
       return;
     }
 
-    if (!this.isBetaValid()) {
-      logger.warn("Beta array contains invalid values");
-      // return;
-    }
-
-    for (int phaseNum = 0; phaseNum < getNumberOfPhases(); phaseNum++) {
-      PhaseInterface tmpPhase = getPhase(phaseNum);
+    for (PhaseInterface tmpPhase : phaseArray) {
+      // TODO: adding moles to all phases, not just the active ones.
       if (tmpPhase != null) {
-        double currBeta = this.beta[getPhaseIndex(tmpPhase)];
-        tmpPhase.addMolesChemReac(index, currBeta * moles, currBeta * moles);
+        tmpPhase.addMolesChemReac(index, moles, moles);
       }
     }
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
@@ -1644,9 +1638,6 @@ public abstract class SystemThermo implements SystemInterface {
     }
     if (this.getSumBeta() < 1.0 - ThermodynamicModelSettings.phaseFractionMinimumLimit
         || this.getSumBeta() > 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit) {
-      logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0");
-    }
-    if (this.getSumBeta() != 1.0) {
       logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0");
     }
   }
@@ -3068,28 +3059,6 @@ public abstract class SystemThermo implements SystemInterface {
     return sum;
   }
 
-  /**
-   * Verify if beta array has valid values and sum is approximately equal to 1.
-   *
-   * @return True if beta values are valid. False indicates that a flash must be done.
-   */
-  public final boolean isBetaValid() {
-    for (double b : this.beta) {
-      if (b < 0) {
-        return false;
-      }
-      if (b > 1.0) {
-        return false;
-      }
-    }
-
-    double betaSum = getSumBeta();
-    boolean valid = betaSum > 1 - ThermodynamicModelSettings.phaseFractionMinimumLimit
-        && betaSum < 1 + ThermodynamicModelSettings.phaseFractionMinimumLimit;
-
-    return valid;
-  }
-
   /** {@inheritDoc} */
   @Override
   public void setAttractiveTerm(int i) {
@@ -3888,9 +3857,9 @@ public abstract class SystemThermo implements SystemInterface {
        * if (!text.isEmpty()) { ps = con.prepareStatement(
        * "REPLACE INTO fluidinfo (ID, TEXT) VALUES (?,?)"); ps.setInt(1, ID); ps.setString(2, text);
        * }
-       *
+       * 
        * ps.executeUpdate();
-       *
+       * 
        */
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
