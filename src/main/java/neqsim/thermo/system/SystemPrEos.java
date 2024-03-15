@@ -38,8 +38,7 @@ public class SystemPrEos extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPrEos(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     attractiveTermNumber = 1;
     modelName = "PR-EOS";
     getCharacterization().setTBPModel("PedersenPR");
@@ -76,10 +75,6 @@ public class SystemPrEos extends SystemEos {
       logger.error("Cloning failed.", ex);
     }
 
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
     return clonedSystem;
   }
 }

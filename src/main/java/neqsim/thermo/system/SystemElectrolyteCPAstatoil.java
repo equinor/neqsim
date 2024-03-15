@@ -52,10 +52,6 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
       logger.error("Cloning failed.", ex);
     }
 
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] =(PhaseElectrolyteCPA) phaseArray[i].clone();
-    // }
-
     return clonedSystem;
   }
 }

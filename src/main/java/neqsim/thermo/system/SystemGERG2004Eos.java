@@ -44,8 +44,7 @@ public class SystemGERG2004Eos extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemGERG2004Eos(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     modelName = "GERG2004-EOS";
 
     for (int i = 0; i < numberOfPhases; i++) {

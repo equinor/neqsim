@@ -46,8 +46,7 @@ public class SystemBWRSEos extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemBWRSEos(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     modelName = "BWRS-EOS";
     attractiveTermNumber = 0;
 
@@ -82,11 +81,6 @@ public class SystemBWRSEos extends SystemEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }
