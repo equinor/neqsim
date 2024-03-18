@@ -77,7 +77,7 @@ public class AdiabaticPipe extends Pipeline {
   public AdiabaticPipe(String name, StreamInterface inStream) {
     this(name);
     this.inStream = inStream;
-    outStream = (Stream) inStream.clone();
+    outStream = inStream.clone();
   }
 
   /**

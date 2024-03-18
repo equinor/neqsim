@@ -70,7 +70,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   public void addStream(StreamInterface newStream) {
     streams.add(newStream);
     if (numberOfInputStreams == 0) {
-      mixedStream = (Stream) streams.get(0).clone();
+      mixedStream = streams.get(0).clone();
       mixedStream.getThermoSystem().setNumberOfPhases(2);
       mixedStream.getThermoSystem().init(0);
       mixedStream.getThermoSystem().init(3);
@@ -88,8 +88,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
    *        object
    */
   public void addGasInStream(StreamInterface newStream) {
-    gasInStream = (Stream) newStream;
-    gasOutStream = (Stream) newStream.clone();
+    gasInStream = newStream;
+    gasOutStream = newStream.clone();
     addStream(newStream);
   }
 
@@ -102,8 +102,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
    *        object
    */
   public void addSolventInStream(StreamInterface newStream) {
-    solventInStream = (Stream) newStream;
-    solventOutStream = (Stream) newStream.clone();
+    solventInStream = newStream;
+    solventOutStream = newStream.clone();
     addStream(newStream);
     solventStreamNumber = streams.size() - 1;
   }
@@ -117,7 +117,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    *        object
    */
   public void replaceSolventInStream(StreamInterface newStream) {
-    solventInStream = (Stream) newStream;
+    solventInStream = newStream;
     streams.set(solventStreamNumber, solventInStream);
   }
 

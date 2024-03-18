@@ -97,6 +97,7 @@ public class GasScrubberSimple extends Separator {
    * Setter for the field <code>inletStream</code>.
    * </p>
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;
 

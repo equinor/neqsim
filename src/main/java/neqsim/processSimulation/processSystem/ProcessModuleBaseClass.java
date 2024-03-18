@@ -227,6 +227,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    *
    * @return an array of {@link java.lang.String} objects
    */
+  @Override
   public String[][] getResultTable() {
     return null;
   }
@@ -238,6 +239,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    * getPressure.
    * </p>
    */
+  @Override
   public double getPressure(String unit) {
     return 1.0;
   }

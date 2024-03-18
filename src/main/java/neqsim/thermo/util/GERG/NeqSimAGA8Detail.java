@@ -302,7 +302,7 @@ public class NeqSimAGA8Detail {
           if (molarMass > 121.0 / 1000.0)
             notNormalizedGERGComposition[14] += phase.getComponent(i).getx();
           break;
-      };
+      }
     }
     normalizeComposition();
   }

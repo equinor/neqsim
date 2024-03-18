@@ -829,6 +829,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    *
    * @return a double
    */
+  @Override
   public double getTime() {
     return time;
   }

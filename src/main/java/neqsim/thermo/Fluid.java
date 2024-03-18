@@ -39,7 +39,7 @@ public class Fluid {
   }
 
   /**
-   * 
+   *
    */
   private void setThermoModel() {
     if (thermoModel.equals("srk")) {
@@ -83,7 +83,7 @@ public class Fluid {
       String unit) {
     setThermoModel();
     createFluid(componentNames, flowrate, unit);
-    if (isHasWater() == true) {
+    if (isHasWater()) {
       fluid.addComponent("water", 0.1);
     }
     fluid.createDatabase(true);
@@ -208,7 +208,7 @@ public class Fluid {
       return null;
     }
 
-    if (isHasWater() == true) {
+    if (isHasWater()) {
       fluid.addComponent("water", 0.1);
     }
     fluid.createDatabase(true);

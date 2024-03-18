@@ -1299,7 +1299,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void bubblePointPressureFlash(boolean derivatives) throws Exception {
     ConstantDutyFlashInterface operation = null;
-    if (derivatives == true) {
+    if (derivatives) {
       operation = new bubblePointPressureFlashDer(system);
     } else {
       operation = new bubblePointPressureFlash(system);
@@ -1977,7 +1977,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     Double[] sum = new Double[Spec1.size()];
 
     // Verify that sum of fractions equals 1/100, i.e., assume percentages
-    Boolean hasOnlineFractions = onlineFractions != null;
+    boolean hasOnlineFractions = onlineFractions != null;
     if (hasOnlineFractions) {
       double range = 5;
       for (int t = 0; t < sum.length; t++) {

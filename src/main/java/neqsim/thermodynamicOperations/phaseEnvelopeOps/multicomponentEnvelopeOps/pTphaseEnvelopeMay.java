@@ -129,11 +129,11 @@ public class pTphaseEnvelopeMay extends BaseOperation {
       // based on the desired first point, dew/bubble
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-          if (bubblePointFirst == true && system.getPhase(0).getComponents()[speceq]
+          if (bubblePointFirst && system.getPhase(0).getComponents()[speceq]
               .getTC() > system.getPhase(0).getComponents()[i].getTC()) {
             speceq = system.getPhase(0).getComponent(i).getComponentNumber();
           }
-          if (bubblePointFirst == false && system.getPhase(0).getComponents()[speceq]
+          if (!bubblePointFirst && system.getPhase(0).getComponents()[speceq]
               .getTC() < system.getPhase(0).getComponents()[i].getTC()) {
             speceq = system.getPhase(0).getComponent(i).getComponentNumber();
           }
@@ -252,7 +252,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         // System.out.println(np + " " + system.getTemperature() + " " +
         // system.getPressure() + " " + densV + " " + densL );
 
-        if ((nonLinSolver.etterCP == false)) {
+        if (!nonLinSolver.etterCP) {
           if (Kvallc < 1.05 && Kvalhc > 0.95) {
             // close to the critical point
             // invert phase types and find the CP Temp and Press

@@ -376,12 +376,12 @@ public class ChemicalReaction extends NamedBaseClass
           test = false;
         }
       }
-      if (test == false) {
+      if (!test) {
         break;
       }
     }
 
-    if (test == false) {
+    if (!test) {
       for (int j = 0; j < productNames.length; j++) {
         for (int i = 0; i < names.length; i++) {
           if (names[i].equals(productNames[j])) {
@@ -391,7 +391,7 @@ public class ChemicalReaction extends NamedBaseClass
             test = false;
           }
         }
-        if (test == false) {
+        if (!test) {
           break;
         }
       }

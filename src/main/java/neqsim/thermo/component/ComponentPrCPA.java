@@ -5,7 +5,7 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * Abstract class ComponentPrCPA.
- * 
+ *
  * @author Even Solbraa
  */
 abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterface {

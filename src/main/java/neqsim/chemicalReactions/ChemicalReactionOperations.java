@@ -413,7 +413,7 @@ public class ChemicalReactionOperations
     // System.out.println("pressure1");
     calcChemRefPot(phase);
     // System.out.println("pressure2");
-    if (firsttime == true || type == 0) {
+    if (firsttime || type == 0) {
       try {
         // System.out.println("Calculating initial estimates");
         nVector = calcNVector();

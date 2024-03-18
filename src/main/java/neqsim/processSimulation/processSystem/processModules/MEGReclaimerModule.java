@@ -73,13 +73,13 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
   public void initializeStreams() {
     isInitializedStreams = true;
     try {
-      this.streamToWaterRemoval = (Stream) this.streamToReclaimer.clone();
+      this.streamToWaterRemoval = this.streamToReclaimer.clone();
       this.streamToWaterRemoval.setName("Desalted MEG stream");
 
-      this.streamFromBoosterCompressor = (Stream) this.streamToReclaimer.clone();
+      this.streamFromBoosterCompressor = this.streamToReclaimer.clone();
       this.streamFromBoosterCompressor.setName("Stream from Booster Compressor");
 
-      this.streamWithWaste = (Stream) this.streamToReclaimer.clone();
+      this.streamWithWaste = this.streamToReclaimer.clone();
       this.streamWithWaste.setName("Reclaimer Waste Stream");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

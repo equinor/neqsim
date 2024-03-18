@@ -7,6 +7,8 @@ import java.io.Serializable;
  */
 public class TablePrinter implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   /**
    * Prints a 2D string table in a formatted and visually appealing way.
    *

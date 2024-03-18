@@ -432,8 +432,8 @@ public class ProcessSystem extends SimulationBaseClass {
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
             if (iter == 1
-                || ((ProcessEquipmentInterface) unitOperations.get(i)).needRecalculation()) {
-              ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
+                || unitOperations.get(i).needRecalculation()) {
+              unitOperations.get(i).run(id);
             }
           } catch (Exception ex) {
             // String error = ex.getMessage();
@@ -443,7 +443,7 @@ public class ProcessSystem extends SimulationBaseClass {
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
             && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
+            unitOperations.get(i).run(id);
           } catch (Exception ex) {
             // String error = ex.getMessage();
             logger.error(ex.getMessage(), ex);
@@ -485,7 +485,7 @@ public class ProcessSystem extends SimulationBaseClass {
     } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
 
     for (int i = 0; i < unitOperations.size(); i++) {
-      ((ProcessEquipmentInterface) unitOperations.get(i)).setCalculationIdentifier(id);
+      unitOperations.get(i).setCalculationIdentifier(id);
     }
 
     setCalculationIdentifier(id);
@@ -541,6 +541,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return a double
    */
+  @Override
   public double getTime() {
     return time;
   }
@@ -730,6 +731,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return the name
    */
+  @Override
   public String getName() {
     return name;
   }
@@ -741,6 +743,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Setter for the field <code>name</code>.
    * </p>
    */
+  @Override
   public void setName(String name) {
     this.name = name;
   }

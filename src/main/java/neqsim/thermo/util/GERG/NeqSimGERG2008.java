@@ -310,7 +310,7 @@ public class NeqSimGERG2008 {
             notNormalizedGERGComposition[14] += phase.getComponent(i).getx();
           }
           break;
-      };
+      }
     }
     normalizeComposition();
   }

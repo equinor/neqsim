@@ -190,7 +190,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       ex.printStackTrace();
     }
     if (stream != null) {
-      clonedSystem.setStream((Stream) stream.clone());
+      clonedSystem.setStream(stream.clone());
     }
     if (thermoSystem != null) {
       clonedSystem.thermoSystem = thermoSystem.clone();
@@ -434,6 +434,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    *
    * @return an array of {@link java.lang.String} objects
    */
+  @Override
   public String[][] getResultTable() {
     return getFluid().getResultTable();
   }

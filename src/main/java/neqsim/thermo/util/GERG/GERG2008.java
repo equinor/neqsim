@@ -3196,7 +3196,6 @@ public class GERG2008 {
       n0i[i][2] = n0i[i][2] - T0;
       n0i[i][1] = n0i[i][1] - Math.log(d0);
     }
-    return;
 
     // Code to produce nearly exact values for n0(1) and n0(2)
     // This is not called in the current code, but included below to show how the values were

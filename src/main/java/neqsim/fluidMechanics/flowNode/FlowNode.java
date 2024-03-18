@@ -444,7 +444,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
   /** {@inheritDoc} */
   @Override
   public FlowNodeInterface getNextNode() {
-    return (FlowNodeInterface) this.clone();
+    return this.clone();
   }
 
   /** {@inheritDoc} */

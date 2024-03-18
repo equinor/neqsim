@@ -423,7 +423,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
   /**
    * Setter for property <code>maxError</code>.
-   * 
+   *
    * @param maxErr before test will report failed Set maximum allowed error in model check
    */
   public void setMaxError(double maxErr) {

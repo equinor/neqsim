@@ -133,6 +133,7 @@ public class GasTurbine extends TwoPortEquipment {
    * Setter for the field <code>inletStream</code>.
    * </p>
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {

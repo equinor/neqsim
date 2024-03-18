@@ -314,7 +314,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       run(id);
       increaseTime(dt);
       setCalculationIdentifier(id);
-      return;
     } else {
       inletStreamMixer.run(id);
       thermoSystem.init(3);
@@ -380,7 +379,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           * getInternalDiameter() * getSeparatorLength();
       // System.out.println("gas volume " + gasVolume + " liq volime " + liquidVolume);
       setCalculationIdentifier(id);
-      return;
     }
   }
 
@@ -479,6 +477,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * </p>
    *
    **/
+  @Override
   public void setLiquidLevel(double liquidlev) {
     liquidLevel = liquidlev;
   }

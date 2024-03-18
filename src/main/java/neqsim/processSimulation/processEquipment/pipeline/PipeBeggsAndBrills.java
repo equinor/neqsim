@@ -738,7 +738,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   public void runTransient(double dt, UUID id) {
     run(id);
     increaseTime(dt);
-    return;
   }
 
   /** {@inheritDoc} */

@@ -78,7 +78,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
                              // design")).getLiquidRetentionTime("API12J", this);
     } else {
       System.out.println("no separator process design specified......");
-      return;
     }
   }
 
