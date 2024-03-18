@@ -270,6 +270,29 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(len, s.fluidProperties.length);
   }
 
+  @Test
+  void testpropertyFlashOnlineComponentMisMatch() {
+    String[] components = {"nitrogen", "oxygen"};
+    double[] fractions = {0.79, 0.21};
+    int len = 10;
+    List<List<Double>> onlineFractions = createDummyRequest(fractions, len);
+
+    SystemInterface fluid = new SystemSrkEos(298, 1.0);
+    // Add extra component C1
+    fluid.addComponent("C1");
+    fluid.addComponents(components);
+    // Add extra component iC4
+    fluid.addComponent("iC4");
+
+    Double[] pressure = {1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 4.0, 3.5, 3.0, 2.5};
+    Double[] temperature = {301.0, 301.5, 302.0, 302.5, 303.0, 304.0, 304.0, 303.5, 303.0, 302.5};
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,
+        Arrays.asList(components), onlineFractions);
+    Assertions.assertEquals(len, s.fluidProperties.length);
+  }
+
   @Disabled
   @Test
   @SuppressWarnings("unchecked")

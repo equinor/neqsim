@@ -1975,6 +1975,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     String[] calculationError = new String[Spec1.size()];
 
     Double[] sum = new Double[Spec1.size()];
+    String[] systemComponents = this.system.getComponentNames();
 
     // Verify that sum of fractions equals 1/100, i.e., assume percentages
     boolean hasOnlineFractions = onlineFractions != null;
@@ -2059,9 +2060,17 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
            */
 
           // Remaining fractions will be set to 0.0
+
           double[] fraction = new double[this.system.getNumberOfComponents()];
-          for (int comp = 0; comp < onlineFractions.size(); comp++) {
-            fraction[comp] = onlineFractions.get(comp).get(t).doubleValue();
+          // For all components defined in fluid
+          for (int compIndex = 0; compIndex < fraction.length; compIndex++) {
+            // Loop all input components
+            for (int index = 0; index < components.size(); index++) {
+              if (systemComponents[compIndex] == components.get(index)) {
+                fraction[compIndex] = onlineFractions.get(index).get(t).doubleValue();
+                break;
+              }
+            }
           }
 
           this.system.setMolarComposition(fraction);
