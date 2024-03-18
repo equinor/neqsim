@@ -151,7 +151,6 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
         && Math.abs(system.getPhases()[1].getComponents()[0].getFugacityCoefficient()
             / system.getPhases()[0].getComponents()[0].getFugacityCoefficient() - 1.0) < 1e-20) {
       setSuperCritical(true);
-      return;
     }
   }
 

@@ -32,11 +32,13 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
   }
 
   /** {@inheritDoc} */
+  @Override
   public UUID getCalculationIdentifier() {
     return calcIdentifier;
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setCalculationIdentifier(UUID value) {
     if (this.calcIdentifier == null || this.calcIdentifier != value) {
       this.calcIdentifier = value;
@@ -58,16 +60,19 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
   }
 
   /** {@inheritDoc} */
+  @Override
   public double getTime() {
     return this.time;
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setTime(double value) {
     this.time = value;
   }
 
   /** {@inheritDoc} */
+  @Override
   public void increaseTime(double dt) {
     if (dt < 0) {
       throw new RuntimeException(new InvalidInputException(this, "increaseTime", "dt",

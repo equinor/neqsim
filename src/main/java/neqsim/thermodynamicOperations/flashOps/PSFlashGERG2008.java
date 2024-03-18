@@ -105,6 +105,5 @@ public class PSFlashGERG2008 extends QfuncFlash {
     }
     solveQ();
     system.init(3);
-    return;
   }
 }

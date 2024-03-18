@@ -6,7 +6,6 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class PressureDropTest {
-
   @Test
   void testRun() {
     double pressure_inlet = 85.0;

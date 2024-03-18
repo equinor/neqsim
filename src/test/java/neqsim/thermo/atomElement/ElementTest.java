@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ElementTest {
-
   @Test
   public void testExistingElement() {
     ArrayList<String> names = Element.getAllElementComponentNames();

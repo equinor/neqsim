@@ -225,13 +225,11 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     if (getCalculateSteadyState()) {
       run(id);
       increaseTime(dt);
-      return;
     } else {
       inStream.setPressure(outStream.getPressure());
       inStream.run();
       run(id);
       increaseTime(dt);
-      return;
     }
   }
 

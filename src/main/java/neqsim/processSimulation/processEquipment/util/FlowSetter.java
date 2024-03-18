@@ -80,6 +80,7 @@ public class FlowSetter extends TwoPortEquipment {
    * Setter for the field <code>inletStream</code>.
    * </p>
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
@@ -320,7 +321,6 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   public ProcessSystem createReferenceProcess(StreamInterface feedStream) {
-
     ProcessSystem referenceProcess = new ProcessSystem();
 
     StreamInterface feedStream1 = new Stream("feed stream", feedStream.getFluid());

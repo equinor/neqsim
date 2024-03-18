@@ -57,8 +57,8 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     this("SimpleAdsorber");
     this.inStream[0] = inStream1;
     this.inStream[1] = inStream1;
-    outStream[0] = (Stream) inStream1.clone();
-    outStream[1] = (Stream) inStream1.clone();
+    outStream[0] = inStream1.clone();
+    outStream[1] = inStream1.clone();
 
     SystemInterface systemOut1 = inStream1.getThermoSystem().clone();
     outStream[0].setThermoSystem(systemOut1);
@@ -98,8 +98,8 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     this(name);
     this.inStream[0] = inStream1;
     this.inStream[1] = inStream1;
-    outStream[0] = (Stream) inStream1.clone();
-    outStream[1] = (Stream) inStream1.clone();
+    outStream[0] = inStream1.clone();
+    outStream[1] = inStream1.clone();
     setName(name);
 
     SystemInterface systemOut1 = inStream1.getThermoSystem().clone();

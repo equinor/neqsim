@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * * Abstract class for Viscosity property.
- * 
+ *
  * @author Even Solbraa
  */
 abstract class Viscosity extends

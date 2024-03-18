@@ -152,6 +152,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    *
    * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
    */
+  @Override
   public Compressor copy() {
     return (Compressor) super.copy();
   }
@@ -204,6 +205,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    *
    * @return a double
    */
+  @Override
   public double getOutletPressure() {
     return pressure;
   }
@@ -1006,6 +1008,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return getAntiSurge().isSurge();
   }
 
+  @Override
   public double getDistanceToSurge() {
     return (getInletStream().getFlowRate("m3/hr")
         - getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead()))
@@ -1391,18 +1394,22 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
   }
 
+  @Override
   public void setMaximumSpeed(double maxSpeed) {
     this.maxspeed = maxSpeed;
   }
 
+  @Override
   public void setMinimumSpeed(double minspeed) {
     this.minspeed = minspeed;
   }
 
+  @Override
   public double getMaximumSpeed() {
     return maxspeed;
   }
 
+  @Override
   public double getMinimumSpeed() {
     return minspeed;
   }

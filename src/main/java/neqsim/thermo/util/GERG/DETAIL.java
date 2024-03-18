@@ -251,7 +251,6 @@ public class DETAIL {
     ierr.val = 1;
     herr.val = "Calculation failed to converge in DETAIL method, ideal gas density returned.";
     D.val = P / RDetail / T;
-    return;
   }
 
   /**
@@ -1480,7 +1479,6 @@ public class DETAIL {
       n0i[i][3] = n0i[i][3] - 1;
       n0i[i][1] = n0i[i][1] - Math.log(d0);
     }
-    return;
 
     // Code to produce nearly exact values for n0[1] and n0[2]
     // This is not called in the current code, but included below to show how the

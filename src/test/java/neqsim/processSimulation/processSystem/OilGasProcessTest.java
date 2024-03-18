@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class OilGasProcessTest extends neqsim.NeqSimTest {
-
   @Test
   public void runProcess() throws InterruptedException {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);

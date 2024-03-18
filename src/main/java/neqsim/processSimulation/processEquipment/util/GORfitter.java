@@ -83,6 +83,7 @@ public class GORfitter extends TwoPortEquipment {
    * Setter for the field <code>inletStream</code>.
    * </p>
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
@@ -99,6 +100,7 @@ public class GORfitter extends TwoPortEquipment {
    *
    * @return a double
    */
+  @Override
   public double getPressure() {
     return pressure;
   }

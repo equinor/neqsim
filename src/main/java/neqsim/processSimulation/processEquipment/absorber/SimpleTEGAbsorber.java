@@ -68,7 +68,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   public void addStream(StreamInterface newStream) {
     streams.add(newStream);
     if (numberOfInputStreams == 0) {
-      mixedStream = (Stream) streams.get(0).clone();
+      mixedStream = streams.get(0).clone();
       mixedStream.getThermoSystem().setNumberOfPhases(2);
       mixedStream.getThermoSystem().init(0);
       mixedStream.getThermoSystem().init(3);
@@ -87,8 +87,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    */
   public void addGasInStream(StreamInterface newStream) {
     // TODO: fail if gasInStream is not null?
-    gasInStream = (Stream) newStream;
-    gasOutStream = (Stream) newStream.clone();
+    gasInStream = newStream;
+    gasOutStream = newStream.clone();
     addStream(newStream);
   }
 
@@ -102,8 +102,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    */
   public void addSolventInStream(StreamInterface newStream) {
     // TODO: fail if solventInStream is not null?
-    solventInStream = (Stream) newStream;
-    solventOutStream = (Stream) newStream.clone();
+    solventInStream = newStream;
+    solventOutStream = newStream.clone();
     addStream(newStream);
     solventStreamNumber = streams.size() - 1;
   }
@@ -118,7 +118,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    */
   public void replaceSolventInStream(StreamInterface newStream) {
     // TODO: fails if solventStreamNumber is 0, i.e. no solventinstream set?
-    solventInStream = (Stream) newStream;
+    solventInStream = newStream;
     streams.set(solventStreamNumber, solventInStream);
   }
 
@@ -430,6 +430,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    *
    * @return a double
    */
+  @Override
   public double getGasLoadFactor() {
     double intArea = 3.14 * getInternalDiameter() * getInternalDiameter() / 4.0;
     double vs = getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea;

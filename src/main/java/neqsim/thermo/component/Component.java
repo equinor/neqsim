@@ -2188,6 +2188,7 @@ public abstract class Component implements ComponentInterface {
    *
    * @return a double
    */
+  @Override
   public double getVolumeCorrection() {
     return 0.0;
   }

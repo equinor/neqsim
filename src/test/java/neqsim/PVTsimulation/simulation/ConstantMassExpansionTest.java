@@ -6,7 +6,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ConstantMassExpansionTest {
-
   @Test
   void testRunCalc() {
     SystemInterface tempSystem = new SystemSrkEos(273.15 + 73.0, 10.0);

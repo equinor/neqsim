@@ -5,7 +5,6 @@ import neqsim.thermo.FluidCreator;
 import neqsim.thermo.system.SystemInterface;
 
 public class DifferentialLiberationTest {
-
   @Test
   void testRunCalc() {
     SystemInterface tempSystem = FluidCreator.create("black oil");

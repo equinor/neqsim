@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 
 class LNGshipTest {
-
   LNGship testShip;
   SystemInterface testSystem;
 

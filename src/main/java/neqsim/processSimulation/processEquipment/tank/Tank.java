@@ -122,7 +122,7 @@ public class Tank extends ProcessEquipmentBaseClass {
    */
   public void addStream(StreamInterface newStream) {
     if (numberOfInputStreams == 0) {
-      setInletStream((Stream) newStream);
+      setInletStream(newStream);
     } else {
       inletStreamMixer.addStream(newStream);
     }

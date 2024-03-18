@@ -152,7 +152,7 @@ public class ProcessModule extends SimulationBaseClass {
     for (ProcessSystem operation : addedUnitOperations) {
       for (ProcessEquipmentInterface unitOperation : operation.getUnitOperations()) {
         if (unitOperation instanceof Recycle) {
-          recycleModules.add((Recycle) unitOperation);
+          recycleModules.add(unitOperation);
         }
       }
     }

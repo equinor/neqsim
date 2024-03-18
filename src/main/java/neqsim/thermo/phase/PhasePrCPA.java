@@ -75,7 +75,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         gcpavv = calc_lngVV();
         gcpavvv = calc_lngVVV();
       }
-    } while (Xsolved != true && totiter < 5);
+    } while (!Xsolved && totiter < 5);
 
     if (initType > 1) {
       hcpatotdT = calc_hCPAdT();

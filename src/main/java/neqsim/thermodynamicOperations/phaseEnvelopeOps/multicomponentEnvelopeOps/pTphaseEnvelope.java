@@ -156,11 +156,11 @@ public class pTphaseEnvelope extends BaseOperation {
           continue;
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-          if (bubblePointFirst == true && system.getPhase(0).getComponents()[speceq]
+          if (bubblePointFirst && system.getPhase(0).getComponents()[speceq]
               .getTC() > system.getPhase(0).getComponents()[i].getTC()) {
             speceq = system.getPhase(0).getComponent(i).getComponentNumber();
           }
-          if (bubblePointFirst == false && system.getPhase(0).getComponents()[speceq]
+          if (!bubblePointFirst && system.getPhase(0).getComponents()[speceq]
               .getTC() < system.getPhase(0).getComponents()[i].getTC()) {
             speceq = system.getPhase(0).getComponent(i).getComponentNumber();
           }
@@ -230,7 +230,6 @@ public class pTphaseEnvelope extends BaseOperation {
           // double TT = system.getPhase(0).getTemperature();
           // double PP = system.getPhase(0).getPressure();
         } catch (Exception e0) {
-
           // the envelope crushed.
           // this part keeps the old values
           // restarts the envelope from the other side
@@ -293,7 +292,7 @@ public class pTphaseEnvelope extends BaseOperation {
         // System.out.println(np + " " + system.getTemperature() + " " +
         // system.getPressure() + " " + densV + " " + densL );
 
-        if ((nonLinSolver.etterCP == false)) {
+        if (!nonLinSolver.etterCP) {
           if (Kvallc < 1.05 && Kvalhc > 0.95) {
             // close to the critical point
             // invert phase types and find the CP Temp and Press

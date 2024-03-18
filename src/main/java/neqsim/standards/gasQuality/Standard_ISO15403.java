@@ -42,7 +42,6 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public double getValue(String returnParameter) {
-
     if (returnParameter.equals("MON")) {
       return MON;
     } else if (returnParameter.equals("NM")) {

@@ -108,7 +108,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
       for (int i = 0; i < numberOfAdsorptionBeds; i++) {
         adsorber[i] = new SimpleAdsorber("SimpleAdsorber_" + i + 1, gasStreamToAdsorber);
       }
-      this.gasStreamFromAdsorber = (Stream) this.gasStreamToAdsorber.clone();
+      this.gasStreamFromAdsorber = this.gasStreamToAdsorber.clone();
       this.gasStreamFromAdsorber.setName("Stream from Adsorber");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

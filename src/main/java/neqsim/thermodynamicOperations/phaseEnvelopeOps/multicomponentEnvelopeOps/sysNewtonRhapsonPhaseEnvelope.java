@@ -424,7 +424,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       double Kvalhc =
           system.getPhase(0).getComponent(hc).getx() / system.getPhase(1).getComponent(hc).getx();
 
-      if ((etterCP == false)) {
+      if (!etterCP) {
         if (Kvallc < 1.05 && Kvalhc > 0.95) {
           calcCP = true;
           etterCP = true;

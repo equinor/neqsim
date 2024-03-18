@@ -5,6 +5,7 @@ import java.util.Map;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseClass {
+  private static final long serialVersionUID = 1L;
 
   // Composition of natural gas (in mole percent)
   private static final Map<String, Double> NATURAL_GAS_COMPOSITION = new HashMap<>();

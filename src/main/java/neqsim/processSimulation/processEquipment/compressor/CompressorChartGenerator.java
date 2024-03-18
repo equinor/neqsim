@@ -4,7 +4,6 @@ package neqsim.processSimulation.processEquipment.compressor;
  * Compressor chart generator.
  */
 public class CompressorChartGenerator {
-
   Compressor compressor = null;
 
   public CompressorChartGenerator(Compressor inpcompressor) {
@@ -16,7 +15,6 @@ public class CompressorChartGenerator {
    * @return a {@link neqsim.processSimulation.processEquipment.compressor.CompressorChart} object
    */
   public CompressorChart generateCompressorChart(String generationOption) {
-
     // Generation compressor chart
     double[] chartConditions = new double[3];
     chartConditions[0] = compressor.getOutletStream().getFluid().getMolarMass("kg/mol");

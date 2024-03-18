@@ -2245,6 +2245,7 @@ public abstract class SystemThermo implements SystemInterface {
    * @param pt PhaseType to look for.
    * @return True if system contains a phase of requested type.
    */
+  @Override
   public boolean hasPhaseType(PhaseType pt) {
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i) == null) {
@@ -2925,7 +2926,6 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void invertPhaseTypes() {
     // Following code was from public void setPhaseType(int phaseToChange, String phaseTypeName) {
-
     /*
      * int newPhaseType = 0; if (phaseTypeName.equals("gas")) { newPhaseType = 1; } else if
      * (StateOfMatter.isLiquid(PhaseType.byDesc(phaseTypeName))) { newPhaseType = 0; } else {
@@ -3857,9 +3857,8 @@ public abstract class SystemThermo implements SystemInterface {
        * if (!text.isEmpty()) { ps = con.prepareStatement(
        * "REPLACE INTO fluidinfo (ID, TEXT) VALUES (?,?)"); ps.setInt(1, ID); ps.setString(2, text);
        * }
-       * 
+       *
        * ps.executeUpdate();
-       * 
        */
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -5131,6 +5130,7 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /** {@inheritDoc} */
+  @Override
   public double getIdealLiquidDensity(String unit) {
     double normalLiquidDensity = 0.0;
     double molarMass = getMolarMass();

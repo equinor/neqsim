@@ -303,6 +303,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
    *
    * @return a double
    */
+  @Override
   public double gVVV() {
     double val1 = numberOfMolesInPhase * getMolarVolume();
     double val2 = val1 + getC() - getB();
@@ -338,6 +339,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
    *
    * @return a double
    */
+  @Override
   public double fVVV() {
     double val1 = numberOfMolesInPhase * molarVolume + getB() * delta1 + getC();
     double val2 = numberOfMolesInPhase * molarVolume + getB() * delta2 + getC();
