@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class PipelineTest {
-
   @Test
   public void testMain() {
     double flow = 60.0;

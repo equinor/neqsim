@@ -321,7 +321,6 @@ public class FlowSetter extends TwoPortEquipment {
   }
 
   public ProcessSystem createReferenceProcess(StreamInterface feedStream) {
-
     ProcessSystem referenceProcess = new ProcessSystem();
 
     StreamInterface feedStream1 = new Stream("feed stream", feedStream.getFluid());

@@ -59,9 +59,7 @@ class Degasser {
 
     testOps.TPflash();
 
-    double[] intParameter = {
-
-        -0.24, // "CO2"
+    double[] intParameter = {-0.24, // "CO2"
 
         -0.721, // "methane"
 
@@ -161,7 +159,6 @@ class Degasser {
 
   private int findComponentIndex(String[] componentNames, String componentName) {
     for (int i = 0; i < componentNames.length; i++) {
-
       if (componentNames[i].equals(componentName)) {
         return i;
       }

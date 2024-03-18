@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class SystemPCSAFTTest {
-
   @Test
   public void testInit() {
     SystemInterface testSystem = new SystemPCSAFT(250.0, 10.0);

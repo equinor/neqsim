@@ -230,7 +230,6 @@ public class pTphaseEnvelope extends BaseOperation {
           // double TT = system.getPhase(0).getTemperature();
           // double PP = system.getPhase(0).getPressure();
         } catch (Exception e0) {
-
           // the envelope crushed.
           // this part keeps the old values
           // restarts the envelope from the other side

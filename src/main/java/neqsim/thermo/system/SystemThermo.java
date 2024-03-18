@@ -2926,7 +2926,6 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void invertPhaseTypes() {
     // Following code was from public void setPhaseType(int phaseToChange, String phaseTypeName) {
-
     /*
      * int newPhaseType = 0; if (phaseTypeName.equals("gas")) { newPhaseType = 1; } else if
      * (StateOfMatter.isLiquid(PhaseType.byDesc(phaseTypeName))) { newPhaseType = 0; } else {

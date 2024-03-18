@@ -6,7 +6,6 @@ import java.io.Serializable;
  * A utility class for pretty printing a 2D string table.
  */
 public class TablePrinter implements Serializable {
-
   private static final long serialVersionUID = 1L;
 
   /**

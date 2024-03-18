@@ -80,7 +80,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-
     // Replace with pt != PhaseType.GAS?
     if (pt.getValue() > 1) {
       pt = PhaseType.LIQUID;

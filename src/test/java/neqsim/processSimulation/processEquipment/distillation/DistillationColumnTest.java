@@ -6,13 +6,11 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 public class DistillationColumnTest {
-
   /**
    * @throws java.lang.Exception
    */
   @Test
   public void DistillationColumnTest() throws Exception {
-
     neqsim.thermo.system.SystemInterface richTEG =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     richTEG.addComponent("nitrogen", 0.0003884521907420086);

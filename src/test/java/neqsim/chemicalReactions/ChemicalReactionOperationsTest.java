@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeAll;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ChemicalReactionOperationsTest {
-
   static SystemSrkEos testSystem;
 
   @BeforeAll

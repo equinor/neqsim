@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class Standard_ISO15403Test {
-
   private static SystemInterface testSystem = null;
   private static Standard_ISO15403 ISO15403 = null;
 

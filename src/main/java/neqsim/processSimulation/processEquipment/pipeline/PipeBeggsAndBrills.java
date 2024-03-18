@@ -480,7 +480,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
 
     if (regime != "Single Phase") {
-
       double SG;
       if (system.getNumberOfPhases() == 3) {
         mixtureOilMassFraction = system.getPhase(1).getFlowRate("kg/hr")
@@ -649,7 +648,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-
     iteration = 0;
 
     pressureProfile = new ArrayList<>();
