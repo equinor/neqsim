@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -1976,16 +1977,21 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     Double[] sum = new Double[Spec1.size()];
     String[] systemComponents = this.system.getComponentNames();
-    for (String inputCompName : components) {
-      if (!this.system.hasComponent(inputCompName)) {
-        for (int t = 0; t < Spec1.size(); t++) {
-          calculationError[t] = "Input component list does not match fluid component list.";
+    if (components != null) {
+      for (String inputCompName : components) {
+        if (!this.system.hasComponent(inputCompName)) {
+          for (int t = 0; t < Spec1.size(); t++) {
+            calculationError[t] = "Input component list does not match fluid component list.";
+          }
         }
       }
+    } else {
+      components = Arrays.asList(systemComponents);
     }
 
     // Verify that sum of fractions equals 1/100, i.e., assume percentages
     boolean hasOnlineFractions = onlineFractions != null;
+
     if (hasOnlineFractions) {
       double range = 5;
       for (int t = 0; t < sum.length; t++) {
@@ -2098,6 +2104,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     return new CalculationResult(fluidProperties, calculationError);
   }
+
 
   /**
    * Definitions of flash types.
