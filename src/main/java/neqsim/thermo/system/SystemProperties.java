@@ -11,10 +11,20 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class SystemProperties {
-  private Double[] values;
-  private String[] names;
   /** Constant <code>nCols=(16 * 4) + 6</code>. */
   public static final int nCols = (16 * 4) + 6;
+  /**
+   * Get names of properties.
+   *
+   * @return Array of names of properties
+   */
+  public static String[] getPropertyNames() {
+    SystemProperties p = new SystemProperties(new SystemSrkEos());
+    return p.names;
+  }
+  private String[] names;
+
+  private Double[] values;
 
   /**
    * Constructur for SystemProperties.
@@ -203,15 +213,5 @@ public class SystemProperties {
    */
   public Double[] getValues() {
     return this.values;
-  }
-
-  /**
-   * Get names of properties.
-   *
-   * @return Array of names of properties
-   */
-  public static String[] getPropertyNames() {
-    SystemProperties p = new SystemProperties(new SystemSrkEos());
-    return p.names;
   }
 }
