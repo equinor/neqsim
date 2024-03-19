@@ -59,25 +59,13 @@ public class SampleXYDataSource {
   }
 
   /**
-   * Returns the x-value for the specified series and item. Series are numbered 0, 1, ...
+   * Returns the number of items in the specified series.
    *
    * @param series The index (zero-based) of the series;
-   * @param item The index (zero-based) of the required item;
-   * @return The x-value for the specified series and item.
+   * @return The number of items in the specified series.
    */
-  public Number getXValue(int series, int item) {
-    return (Double.valueOf(points[2 * series][item]));
-  }
-
-  /**
-   * Returns the y-value for the specified series and item. Series are numbered 0, 1, ...
-   *
-   * @param series The index (zero-based) of the series;
-   * @param item The index (zero-based) of the required item;
-   * @return The y-value for the specified series and item.
-   */
-  public Number getYValue(int series, int item) {
-    return (Double.valueOf(points[(series * 2 + 1)][item]));
+  public int getItemCount(int series) {
+    return items[series];
   }
 
   /**
@@ -100,12 +88,24 @@ public class SampleXYDataSource {
   }
 
   /**
-   * Returns the number of items in the specified series.
+   * Returns the x-value for the specified series and item. Series are numbered 0, 1, ...
    *
    * @param series The index (zero-based) of the series;
-   * @return The number of items in the specified series.
+   * @param item The index (zero-based) of the required item;
+   * @return The x-value for the specified series and item.
    */
-  public int getItemCount(int series) {
-    return items[series];
+  public Number getXValue(int series, int item) {
+    return (Double.valueOf(points[2 * series][item]));
+  }
+
+  /**
+   * Returns the y-value for the specified series and item. Series are numbered 0, 1, ...
+   *
+   * @param series The index (zero-based) of the series;
+   * @param item The index (zero-based) of the required item;
+   * @return The y-value for the specified series and item.
+   */
+  public Number getYValue(int series, int item) {
+    return (Double.valueOf(points[(series * 2 + 1)][item]));
   }
 }
