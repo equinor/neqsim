@@ -1976,6 +1976,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     Double[] sum = new Double[Spec1.size()];
     String[] systemComponents = this.system.getComponentNames();
+    for (String inputCompName : components) {
+      if (!this.system.hasComponent(inputCompName)) {
+        for (int t = 0; t < Spec1.size(); t++) {
+          calculationError[t] = "Input component list does not match fluid component list.";
+        }
+      }
+    }
 
     // Verify that sum of fractions equals 1/100, i.e., assume percentages
     boolean hasOnlineFractions = onlineFractions != null;
@@ -2045,26 +2052,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
 
         if (hasOnlineFractions) {
-          /*
-           * // New attempt:
-           *
-           * this.system.setEmptyFluid();
-           *
-           * // Components in system with no corresponding value in onlineFractions will be zero.
-           * for (int componentNumber = 0; componentNumber < onlineFractions .size();
-           * componentNumber++) { this.system.addComponent(componentNumber,
-           * onlineFractions.get(componentNumber).get(t).doubleValue()); }
-           *
-           * if (this.system.getTotalNumberOfMoles() < 1e-5) { this.system.setTotalNumberOfMoles(1);
-           * }
-           */
-
-          // Remaining fractions will be set to 0.0
-
+          // Assure that fraction is inserted for the correct component (in case of mismatch of
+          // component input and fluid component list)
           double[] fraction = new double[this.system.getNumberOfComponents()];
-          // For all components defined in fluid
+          // For all components defined in system
           for (int compIndex = 0; compIndex < fraction.length; compIndex++) {
-            // Loop all input components
+            // Loop all input component names / fractions
             for (int index = 0; index < components.size(); index++) {
               if (systemComponents[compIndex] == components.get(index)) {
                 fraction[compIndex] = onlineFractions.get(index).get(t).doubleValue();
