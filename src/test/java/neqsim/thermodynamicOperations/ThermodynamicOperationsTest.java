@@ -291,6 +291,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,
         Arrays.asList(components), onlineFractions);
     Assertions.assertEquals(len, s.fluidProperties.length);
+    Assertions.assertNull(s.calculationError[0]);
   }
 
   @Test
