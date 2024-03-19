@@ -2105,7 +2105,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     return new CalculationResult(fluidProperties, calculationError);
   }
 
-
   /**
    * Definitions of flash types.
    */

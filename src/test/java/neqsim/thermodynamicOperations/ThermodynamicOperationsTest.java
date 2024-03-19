@@ -303,7 +303,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     Double[] pressure = {1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 4.0, 3.5, 3.0, 2.5};
     Double[] temperature = {301.0, 301.5, 302.0, 302.5, 303.0, 304.0, 304.0, 303.5, 303.0, 302.5};
 
-
     List<List<Double>> onlineFractions_too_many = createDummyRequest(fractions_to_many, len);
     SystemInterface fluid = new SystemSrkEos(298, 1.0);
 

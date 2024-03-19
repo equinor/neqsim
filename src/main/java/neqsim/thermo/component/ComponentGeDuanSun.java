@@ -58,7 +58,6 @@ public class ComponentGeDuanSun extends ComponentGE {
     }
   }
 
-
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
