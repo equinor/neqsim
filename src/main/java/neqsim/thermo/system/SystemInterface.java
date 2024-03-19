@@ -1613,6 +1613,21 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public double getZ();
 
+  /**
+   * Verify if system has a component.
+   *
+   * @param name Name of component to look for.
+   * @return True if component is found.
+   */
+  public default boolean hasComponent(String name) {
+    for (String fluidComp : getComponentNames()) {
+      if (name == fluidComp) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /** {@inheritDoc} */
   @Override
   public int hashCode();

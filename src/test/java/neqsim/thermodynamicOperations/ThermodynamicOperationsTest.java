@@ -270,6 +270,53 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(len, s.fluidProperties.length);
   }
 
+  @Test
+  void testpropertyFlashOnlineTooFewInputComponents() {
+    String[] components = {"nitrogen", "oxygen"};
+    double[] fractions = {0.79, 0.21};
+    int len = 10;
+    List<List<Double>> onlineFractions = createDummyRequest(fractions, len);
+
+    Double[] pressure = {1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 4.0, 3.5, 3.0, 2.5};
+    Double[] temperature = {301.0, 301.5, 302.0, 302.5, 303.0, 304.0, 304.0, 303.5, 303.0, 302.5};
+
+    SystemInterface fluid = new SystemSrkEos(298, 1.0);
+    // Add extra component C1
+    fluid.addComponent("C1");
+    fluid.addComponents(components);
+    // Add extra component iC4
+    fluid.addComponent("iC4");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,
+        Arrays.asList(components), onlineFractions);
+    Assertions.assertEquals(len, s.fluidProperties.length);
+    Assertions.assertNull(s.calculationError[0]);
+  }
+
+  @Test
+  void testPropertyFlashTooManyInputComponents() {
+    int len = 10;
+    String[] components_too_many = {"nitrogen", "oxygen", "water"};
+    double[] fractions_to_many = {0.79, 0.21, 0.01};
+
+    Double[] pressure = {1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 4.0, 3.5, 3.0, 2.5};
+    Double[] temperature = {301.0, 301.5, 302.0, 302.5, 303.0, 304.0, 304.0, 303.5, 303.0, 302.5};
+
+    List<List<Double>> onlineFractions_too_many = createDummyRequest(fractions_to_many, len);
+    SystemInterface fluid = new SystemSrkEos(298, 1.0);
+
+    // Add only two components to fluid
+    String[] components = {"nitrogen", "oxygen"};
+    fluid.addComponents(components);
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,
+        Arrays.asList(components_too_many), onlineFractions_too_many);
+    Assertions.assertEquals(len, s.fluidProperties.length);
+    Assertions.assertEquals("Input component list does not match fluid component list.",
+        s.calculationError[0]);
+  }
+
   @Disabled
   @Test
   @SuppressWarnings("unchecked")
