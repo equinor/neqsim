@@ -27,59 +27,6 @@ public class dataHandeling {
   public dataHandeling() {}
 
   /**
-   * <p>
-   * getXValue.
-   * </p>
-   *
-   * @param series a int
-   * @param item a int
-   * @return a {@link java.lang.Number} object
-   */
-  public Number getXValue(int series, int item) {
-    return Double.valueOf(-10.0 + (item * 0.2));
-  }
-
-  /**
-   * Returns the y-value for the specified series and item. Series are numbered 0, 1, ...
-   *
-   * @param series The index (zero-based) of the series;
-   * @param item The index (zero-based) of the required item;
-   * @return The y-value for the specified series and item.
-   */
-  public Number getYValue(int series, int item) {
-    if (series == 0) {
-      return Double.valueOf(Math.cos(-10.0 + (item * 0.2)));
-    } else {
-      return Double.valueOf(2 * (Math.sin(-10.0 + (item * 0.2))));
-    }
-  }
-
-  /**
-   * Returns the number of series in the data source.
-   *
-   * @return The number of series in the data source.
-   */
-  public int getSeriesCount() {
-    return 2;
-  }
-
-  /**
-   * Returns the name of the series.
-   *
-   * @param series The index (zero-based) of the series;
-   * @return The name of the series.
-   */
-  public String getSeriesName(int series) {
-    if (series == 0) {
-      return "y = cosine(x)";
-    } else if (series == 1) {
-      return "y = 2*sine(x)";
-    } else {
-      return "Error";
-    }
-  }
-
-  /**
    * Returns the number of items in the specified series.
    *
    * @param series The index (zero-based) of the series;
@@ -112,6 +59,59 @@ public class dataHandeling {
     str[1] = "";
     str[2] = "";
     return str;
+  }
+
+  /**
+   * Returns the number of series in the data source.
+   *
+   * @return The number of series in the data source.
+   */
+  public int getSeriesCount() {
+    return 2;
+  }
+
+  /**
+   * Returns the name of the series.
+   *
+   * @param series The index (zero-based) of the series;
+   * @return The name of the series.
+   */
+  public String getSeriesName(int series) {
+    if (series == 0) {
+      return "y = cosine(x)";
+    } else if (series == 1) {
+      return "y = 2*sine(x)";
+    } else {
+      return "Error";
+    }
+  }
+
+  /**
+   * <p>
+   * getXValue.
+   * </p>
+   *
+   * @param series a int
+   * @param item a int
+   * @return a {@link java.lang.Number} object
+   */
+  public Number getXValue(int series, int item) {
+    return Double.valueOf(-10.0 + (item * 0.2));
+  }
+
+  /**
+   * Returns the y-value for the specified series and item. Series are numbered 0, 1, ...
+   *
+   * @param series The index (zero-based) of the series;
+   * @param item The index (zero-based) of the required item;
+   * @return The y-value for the specified series and item.
+   */
+  public Number getYValue(int series, int item) {
+    if (series == 0) {
+      return Double.valueOf(Math.cos(-10.0 + (item * 0.2)));
+    } else {
+      return Double.valueOf(2 * (Math.sin(-10.0 + (item * 0.2))));
+    }
   }
 
   /**

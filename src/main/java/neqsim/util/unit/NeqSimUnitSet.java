@@ -9,6 +9,14 @@ package neqsim.util.unit;
  * @version $Id: $Id
  */
 public class NeqSimUnitSet {
+  private String temperatureUnit = "K";
+
+  private String pressureUnit = "bara";
+
+  private String flowRateUnit = "mol/sec";
+
+  private String componentConcentrationUnit = "molefraction";
+
   /**
    * <p>
    * Getter for the field <code>componentConcentrationUnit</code>.
@@ -18,17 +26,6 @@ public class NeqSimUnitSet {
    */
   public String getComponentConcentrationUnit() {
     return componentConcentrationUnit;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>componentConcentrationUnit</code>.
-   * </p>
-   *
-   * @param componentConcentrationUnit the componentConcentrationUnit to set
-   */
-  public void setComponentConcentrationUnit(String componentConcentrationUnit) {
-    this.componentConcentrationUnit = componentConcentrationUnit;
   }
 
   /**
@@ -44,17 +41,6 @@ public class NeqSimUnitSet {
 
   /**
    * <p>
-   * Setter for the field <code>flowRateUnit</code>.
-   * </p>
-   *
-   * @param flowRateUnit the flowRateUnit to set
-   */
-  public void setFlowRateUnit(String flowRateUnit) {
-    this.flowRateUnit = flowRateUnit;
-  }
-
-  /**
-   * <p>
    * Getter for the field <code>pressureUnit</code>.
    * </p>
    *
@@ -62,17 +48,6 @@ public class NeqSimUnitSet {
    */
   public String getPressureUnit() {
     return pressureUnit;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>pressureUnit</code>.
-   * </p>
-   *
-   * @param pressureUnit the pressureUnit to set
-   */
-  public void setPressureUnit(String pressureUnit) {
-    this.pressureUnit = pressureUnit;
   }
 
   /**
@@ -88,6 +63,36 @@ public class NeqSimUnitSet {
 
   /**
    * <p>
+   * Setter for the field <code>componentConcentrationUnit</code>.
+   * </p>
+   *
+   * @param componentConcentrationUnit the componentConcentrationUnit to set
+   */
+  public void setComponentConcentrationUnit(String componentConcentrationUnit) {
+    this.componentConcentrationUnit = componentConcentrationUnit;
+  }
+  /**
+   * <p>
+   * Setter for the field <code>flowRateUnit</code>.
+   * </p>
+   *
+   * @param flowRateUnit the flowRateUnit to set
+   */
+  public void setFlowRateUnit(String flowRateUnit) {
+    this.flowRateUnit = flowRateUnit;
+  }
+  /**
+   * <p>
+   * Setter for the field <code>pressureUnit</code>.
+   * </p>
+   *
+   * @param pressureUnit the pressureUnit to set
+   */
+  public void setPressureUnit(String pressureUnit) {
+    this.pressureUnit = pressureUnit;
+  }
+  /**
+   * <p>
    * Setter for the field <code>temperatureUnit</code>.
    * </p>
    *
@@ -96,9 +101,4 @@ public class NeqSimUnitSet {
   public void setTemperatureUnit(String temperatureUnit) {
     this.temperatureUnit = temperatureUnit;
   }
-
-  private String temperatureUnit = "K";
-  private String pressureUnit = "bara";
-  private String flowRateUnit = "mol/sec";
-  private String componentConcentrationUnit = "molefraction";
 }
