@@ -1904,12 +1904,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getActivityCoefficientUnSymetric(int k);
 
   /**
-   * <p>
-   * hasComponent.
-   * </p>
+   * Verify if phase has a component.
    *
-   * @param name a {@link String} object
-   * @return a boolean
+   * @param name Name of component to look for.
+   * @return True if component is found.
    */
   public boolean hasComponent(String name);
 
