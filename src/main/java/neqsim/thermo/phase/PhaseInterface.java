@@ -329,12 +329,20 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * getcomponentArray.
+   * Get component array of Phase.
    * </p>
    *
    * @return an array of {@link neqsim.thermo.component.ComponentInterface} objects
    */
   public ComponentInterface[] getcomponentArray();
+
+
+  /**
+   * Get normalized names of components in phase.
+   *
+   * @return Array of names of components in phase.
+   */
+  public String[] getComponentNames();
 
   /**
    * <p>
@@ -1906,10 +1914,21 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * Verify if phase has a component.
    *
-   * @param name Name of component to look for.
+   * @param name Name of component to look for. NB! Converts name to normalized name.
    * @return True if component is found.
    */
-  public boolean hasComponent(String name);
+  public default boolean hasComponent(String name) {
+    return hasComponent(name, true);
+  }
+
+  /**
+   * Verify if phase has a component.
+   *
+   * @param name Name of component to look for.
+   * @param normalized Set true to convert input name to normalized component name.
+   * @return True if component is found.
+   */
+  public boolean hasComponent(String name, boolean normalized);
 
   /**
    * <p>

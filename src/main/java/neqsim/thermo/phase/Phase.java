@@ -1768,10 +1768,37 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public boolean hasComponent(String name) {
+  public String[] getComponentNames() {
+    ArrayList<String> components = new ArrayList<String>();
+
+    for (int j = 0; j < componentArray.length; j++) {
+      if (componentArray[j] != null) {
+        components.add(componentArray[j].getComponentName());
+      }
+    }
+
+    String[] componentList = new String[components.size()];
+    for (int j = 0; j < numberOfComponents; j++) {
+      componentList[j] = components.get(j);
+    }
+    return componentList;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasComponent(String name, boolean normalized) {
     for (int i = 0; i < numberOfComponents; i++) {
-      if (componentArray[i].getName().equals(name)) {
-        return true;
+      if (componentArray != null) {
+        if (normalized) {
+          if (componentArray[i].getComponentName()
+              .equals(ComponentInterface.getComponentNameFromAlias(name))) {
+            return true;
+          }
+        } else {
+          if (componentArray[i].getName().equals(name)) {
+            return true;
+          }
+        }
       }
     }
     return false;

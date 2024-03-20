@@ -18,6 +18,9 @@ public class PhaseSrkEosTest {
 
     p.addComponent("ethane", 0, 0, 0);
     Assertions.assertEquals(1, p.getNumberOfComponents());
+    Assertions.assertTrue(p.hasComponent("ethane"));
+    Assertions.assertTrue(p.hasComponent("C2"));
+    Assertions.assertFalse(p.hasComponent("C2", false));
     try {
       p.addComponent("methane", 0, 0, 0);
     } catch (Exception e) {
@@ -27,6 +30,9 @@ public class PhaseSrkEosTest {
 
     p.addComponent("methane", 0, 0, 1);
     Assertions.assertEquals(2, p.getNumberOfComponents());
+    String[] d = p.getComponentNames();
+    Assertions.assertTrue(d[0].equals("ethane"));
+    Assertions.assertTrue(d[1].equals("methane"));
   }
 
   @Test

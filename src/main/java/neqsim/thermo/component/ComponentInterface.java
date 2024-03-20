@@ -1416,7 +1416,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getName.
+   * Getter for property <code>componentName</code>, i.e., normalized component name.
    * </p>
    *
    * @return a {@link java.lang.String} object

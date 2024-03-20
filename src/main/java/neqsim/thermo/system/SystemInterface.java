@@ -644,9 +644,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public String[] getCompIDs();
 
   /**
-   * Get names of all components in System.
+   * Get normalized names of all components in System.
    *
-   * @return an array of {@link java.lang.String} objects
+   * @return Array of names of components in System.
    */
   public String[] getCompNames();
 
@@ -675,13 +675,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
-   * <p>
-   * Getter for property <code>componentNames</code>.
-   * </p>
+   * Get normalized names of components in System.
    *
-   * @return Component names in system.
+   * @return Array of names of components in system.
    */
-  public String[] getComponentNames();
+  public default String[] getComponentNames() {
+    return getPhase(0).getComponentNames();
+  }
+
 
   /**
    * <p>
@@ -1616,16 +1617,22 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * Verify if system has a component.
    *
-   * @param name Name of component to look for.
+   * @param name Name of component to look for. NB! Converts name to normalized name.
    * @return True if component is found.
    */
   public default boolean hasComponent(String name) {
-    for (String fluidComp : getComponentNames()) {
-      if (name == fluidComp) {
-        return true;
-      }
-    }
-    return false;
+    return hasComponent(name, true);
+  }
+
+  /**
+   * Verify if system has a component.
+   *
+   * @param name Name of component to look for.
+   * @param normalized Set true to convert input name to normalized component name.
+   * @return True if component is found.
+   */
+  public default boolean hasComponent(String name, boolean normalized) {
+    return getPhase(0).hasComponent(name, normalized);
   }
 
   /** {@inheritDoc} */
