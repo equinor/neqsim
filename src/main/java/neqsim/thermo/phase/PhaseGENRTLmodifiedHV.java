@@ -86,7 +86,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] =
         new ComponentGENRTLmodifiedHV(name, moles, molesInPhase, compNumber);
   }

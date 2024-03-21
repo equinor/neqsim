@@ -88,7 +88,7 @@ public class PhaseGEUniquac extends PhaseGE {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGEUniquac(name, moles, molesInPhase, compNumber);
   }
 

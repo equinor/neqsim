@@ -18,8 +18,14 @@ public class PhaseSrkEosTest {
 
     p.addComponent("ethane", 0, 0, 0);
     Assertions.assertEquals(1, p.getNumberOfComponents());
+    try {
+      p.addComponent("methane", 0, 0, 0);
+    } catch (Exception e) {
+      // Do nothing.
+    }
+    Assertions.assertEquals(1, p.getNumberOfComponents());
 
-    p.addComponent("methane", 0, 0, 0);
+    p.addComponent("methane", 0, 0, 1);
     Assertions.assertEquals(2, p.getNumberOfComponents());
   }
 

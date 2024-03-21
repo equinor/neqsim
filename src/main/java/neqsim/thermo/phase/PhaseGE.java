@@ -135,13 +135,6 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
-    // TODO: compNumber not in use
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getActivityCoefficientSymetric(int k) {
     return ((ComponentGEInterface) getComponent(k)).getGamma();
   }

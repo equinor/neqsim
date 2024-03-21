@@ -635,7 +635,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentPRvolcor(name, moles, molesInPhase, compNumber);
   }
 }
