@@ -15,9 +15,20 @@ public class PhaseSrkEosTest {
   @Test
   void testAddcomponent() {
     Assertions.assertEquals(0, p.getNumberOfComponents());
+    Assertions.assertFalse(p.hasComponent("ethane"));
 
     p.addComponent("ethane", 0, 0, 0);
     Assertions.assertEquals(1, p.getNumberOfComponents());
+
+    Assertions.assertTrue(p.hasComponent("ethane"));
+
+    // Expects True because C2 normalized -> ethane
+    Assertions.assertTrue(p.hasComponent("C2"));
+    // Expects True because was created as ethane
+    Assertions.assertTrue(p.hasComponent("ethane", false));
+    // expects False because C2 is not equal to ethane
+    Assertions.assertFalse(p.hasComponent("C2", false));
+
     try {
       p.addComponent("methane", 0, 0, 0);
     } catch (Exception e) {
@@ -27,6 +38,9 @@ public class PhaseSrkEosTest {
 
     p.addComponent("methane", 0, 0, 1);
     Assertions.assertEquals(2, p.getNumberOfComponents());
+    String[] d = p.getComponentNames();
+    Assertions.assertTrue(d[0].equals("ethane"));
+    Assertions.assertTrue(d[1].equals("methane"));
   }
 
   @Test

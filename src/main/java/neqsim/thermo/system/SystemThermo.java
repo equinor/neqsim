@@ -33,10 +33,12 @@ import neqsim.util.exception.InvalidInputException;
  * This is the base class of the System classes.
  */
 public abstract class SystemThermo implements SystemInterface {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SystemThermo.class);
   // Class variables
   private static final int MAX_PHASES = 6;
 
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected int a;
@@ -945,7 +947,7 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setIsTBPfraction(true);
       getPhase(i).getComponent(componentName).setParachorParameter(
           characterization.getTBPModel().calcParachorParameter(molarMass, density)); // 59.3+2.34*molarMass*1000.0);
-                                                                                     // //0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
+                                                                                     // 0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
       getPhase(i).getComponent(componentName).setCriticalViscosity(
           characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density)); // 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
                                                                                               // 1.0/6.0)*1e-7);
@@ -1932,21 +1934,6 @@ public abstract class SystemThermo implements SystemInterface {
       names[compNumb] = getPhase(0).getComponent(compNumb).getComponentName();
     }
     return names;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public String[] getComponentNames() {
-    ArrayList<String> components = new ArrayList<String>();
-
-    for (int j = 0; j < numberOfComponents; j++) {
-      components.add(phaseArray[0].getComponents()[j].getName());
-    }
-    String[] componentList = new String[components.size()];
-    for (int j = 0; j < numberOfComponents; j++) {
-      componentList[j] = components.get(j);
-    }
-    return componentList;
   }
 
   /** {@inheritDoc} */
@@ -3038,6 +3025,11 @@ public abstract class SystemThermo implements SystemInterface {
     return standard;
   }
 
+  /**
+   * Get sum of phase <code>beta</code> values.
+   *
+   * @return Sum of <code>beta</code> beta values
+   */
   public final double getSumBeta() {
     double sum = 0;
     for (int k = 0; k < numberOfPhases; k++) {
