@@ -73,7 +73,7 @@ public class PhaseGEWilson extends PhaseGE {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGEWilson(name, moles, molesInPhase, compNumber);
   }
 

@@ -33,7 +33,7 @@ public class PhasePCSAFTRahmatTest {
     p2.addComponent("ethane", 0, 0, 0);
     Assertions.assertEquals(1, p2.getNumberOfComponents());
 
-    p2.addComponent("methane", 0, 0, 0);
+    p2.addComponent("methane", 0, 0, 1);
     Assertions.assertEquals(2, p2.getNumberOfComponents());
   }
 

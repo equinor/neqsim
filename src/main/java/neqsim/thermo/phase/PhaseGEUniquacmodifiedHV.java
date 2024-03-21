@@ -29,7 +29,8 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
+    // todo: does not work? does not add component.
     // componentArray[compNumber] = new ComponentGEUniquacmodifiedHV(name, moles, molesInPhase,
     // compNumber);
     // creates PhaseGEUniquac type component

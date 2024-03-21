@@ -69,7 +69,7 @@ public class PhaseGENRTL extends PhaseGE {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGeNRTL(name, moles, molesInPhase, compNumber);
   }
 
