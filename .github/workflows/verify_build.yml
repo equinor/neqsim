@@ -29,11 +29,11 @@ jobs:
       - name: Create coverage report from jacoco execution data
         run: mvn -B jacoco:report -ntp
       - name: Upload jacoco coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: jacoco.xml
           name: codecov
-          tags: coverage
+          # tags: coverage
         
   test_java_8:
     name: Assert tests with java 8
