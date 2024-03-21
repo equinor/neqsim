@@ -101,7 +101,7 @@ public abstract class Phase implements PhaseInterface {
 
   /**
    * <p>
-   * addcomponent. Increase number of components and add moles to phase.
+   * Increase number of components and add moles to phase.
    *
    * NB! Does not actually add component to componentarray.
    * </p>

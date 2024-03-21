@@ -21,7 +21,7 @@ import neqsim.thermo.system.SystemInterface;
 public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneable {
   /**
    * <p>
-   * addcomponent.
+   * Add component to component array and update moles variables.
    * </p>
    *
    * @param name Name of component.
