@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.component.ComponentHydrate;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
 import neqsim.thermodynamicOperations.flashOps.CalcIonicComposition;
@@ -2031,6 +2032,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         for (int t = 0; t < Spec1.size(); t++) {
           calculationError[t] = "Sum of fractions must be approximately to 1 or 100, currently ("
               + String.valueOf(sum[0]) + ")";
+          if (sum[0] == 0.0) {
+            calculationError[t] = calculationError[t] + ". Have you called init(0)?";
+          }
         }
       }
     }
@@ -2065,7 +2069,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
           for (int compIndex = 0; compIndex < fraction.length; compIndex++) {
             // Loop all input component names / fractions
             for (int index = 0; index < components.size(); index++) {
-              if (systemComponents[compIndex] == components.get(index)) {
+              if (systemComponents[compIndex] == ComponentInterface
+                  .getComponentNameFromAlias(components.get(index))) {
                 fraction[compIndex] = onlineFractions.get(index).get(t).doubleValue();
                 break;
               }
