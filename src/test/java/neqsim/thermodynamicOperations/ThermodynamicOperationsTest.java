@@ -54,6 +54,81 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void testFluidDefined() {
+    double[] fractions = new double[] {98.0, 2.0};
+    List<Double> Sp1 =
+        Arrays.asList(new Double[] {22.1, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 22.7});
+    List<Double> Sp2 = Arrays.asList(
+        new Double[] {288.1, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7});
+    List<String> components = Arrays.asList(new String[] {"O2", "N2"});
+    List<List<Double>> onlineFractions = new ArrayList<List<Double>>();
+
+    for (double d : fractions) {
+      ArrayList<Double> l = new ArrayList<Double>();
+      for (int i = 0; i < Sp1.size(); i++) {
+        l.add(d);
+      }
+      onlineFractions.add(l);
+    }
+
+    SystemInterface fluid_static = new SystemSrkEos(273.15 + 45.0, 22.0);
+    fluid_static.addComponent("N2", fractions[0]);
+    fluid_static.addComponent("O2", fractions[1]);
+    fluid_static.setMixingRule(2);
+    fluid_static.useVolumeCorrection(true);
+    fluid_static.setMultiPhaseCheck(true);
+    // fluid_static.init(0);
+
+    ThermodynamicOperations fluidOps_static = new ThermodynamicOperations(fluid_static);
+    CalculationResult res_static = fluidOps_static.propertyFlash(Sp1, Sp2, 1, null, null);
+
+    for (String err : res_static.calculationError) {
+      Assertions.assertEquals(err,
+          "Sum of fractions must be approximately to 1 or 100, currently (0.0). Have you called init(0)?");
+    }
+    // fluid_static.setTotalNumberOfMoles(1);
+    fluid_static.init(0);
+    res_static = fluidOps_static.propertyFlash(Sp1, Sp2, 1, null, null);
+    for (String err : res_static.calculationError) {
+      Assertions.assertEquals(err, null);
+    }
+
+    SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 22.0);
+    fluid.addComponent("nitrogen", 0.79);
+    fluid.addComponent("oxygen", 0.21);
+    fluid.setMixingRule(2);
+    fluid.useVolumeCorrection(true);
+    fluid.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations fluidOps = new ThermodynamicOperations(fluid);
+    CalculationResult res = fluidOps.propertyFlash(Sp1, Sp2, 1, components, onlineFractions);
+    Assertions.assertEquals(Sp1.size(), res.calculationError.length);
+    for (String err : res.calculationError) {
+      Assertions.assertNull(err);
+    }
+
+    fluid = new SystemSrkEos(273.15 + 45.0, 22.0);
+    fluid.addComponent("N2", 0.79);
+    fluid.addComponent("O2", 0.21);
+    fluid.setMixingRule(2);
+    fluid.useVolumeCorrection(true);
+    fluid.setMultiPhaseCheck(true);
+
+
+    fluidOps = new ThermodynamicOperations(fluid);
+    CalculationResult res2 = fluidOps.propertyFlash(Sp1, Sp2, 1, components, onlineFractions);
+    Assertions.assertEquals(Sp1.size(), res2.calculationError.length);
+    for (String err : res2.calculationError) {
+      Assertions.assertNull(err);
+    }
+
+    Assertions.assertEquals(res, res2);
+    // todo: why does below not work?
+
+    // Assertions.assertArrayEquals(res_static.fluidProperties[0], res.fluidProperties[0]);
+  }
+
+  @Test
   void testNeqSimPython() {
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(280.0, 10.0);
     thermoSystem.addComponent("methane", 0.7);
