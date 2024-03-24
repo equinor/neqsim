@@ -2431,6 +2431,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public void setPhaseType(int phaseToChange, PhaseType pt);
 
+    /**
+   * Change the phase type of a given phase.
+   *
+   * @param phaseToChange the phase number of the phase to set phase type
+   * @param phaseName     String to set
+   */
+  public void setPhaseType(int phaseToChange, String phaseName);
+  
   /**
    * Set the physical property model type for each phase of the System.
    *
