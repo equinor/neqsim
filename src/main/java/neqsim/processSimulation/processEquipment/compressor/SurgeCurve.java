@@ -61,6 +61,7 @@ public class SurgeCurve implements java.io.Serializable {
     this.flow = flow;
     this.head = head;
     this.chartConditions = chartConditions;
+    flowFitter.clear();
     for (int i = 0; i < flow.length; i++) {
       flowFitter.add(head[i], flow[i]);
     }
